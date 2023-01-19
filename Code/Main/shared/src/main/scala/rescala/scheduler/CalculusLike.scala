@@ -3,9 +3,9 @@
   */
 package rescala.scheduler
 
-import rescala.core.Core
+import rescala.core.{AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
 
-trait CalculusLike extends Core {
+trait CalculusLike {
 
   type State[V] = StoreValue[V]
 
@@ -15,7 +15,7 @@ trait CalculusLike extends Core {
     * The store mapping does not exist as a single object, but instead each reactive has this state.
     */
   class StoreValue[V](var value: V) {
-    var inputs: Set[ReSource]     = Set.empty
+    var inputs: Set[ReSource.of[State]]     = Set.empty
     override def toString: String = s""
   }
 
@@ -24,14 +24,18 @@ trait CalculusLike extends Core {
     * The formalization does not support this, to keep the complexity of the proofs in check.
     */
   final class SimpleCreation() extends Initializer {
+
+    override type State[V] = CalculusLike.this.State[V]
+
+
     override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
       new StoreValue[V](initialValue)
 
-    override protected[this] def register(reactive: ReSource): Unit = FScheduler.allReactives += reactive
+    override protected[this] def register(reactive: ReSource.of[State]): Unit = FScheduler.allReactives += reactive
 
     override protected[this] def initialize(
-        reactive: Derived,
-        incoming: Set[ReSource],
+        reactive: Derived.of[State],
+        incoming: Set[ReSource.of[State]],
         needsReevaluation: Boolean
     ): Unit = {
       println(s"creating $reactive $needsReevaluation")
@@ -47,7 +51,7 @@ trait CalculusLike extends Core {
       }
     }
 
-    def requiresReev(reSource: ReSource): Boolean = {
+    def requiresReev(reSource: ReSource.of[State]): Boolean = {
       if (FScheduler.currentPropagation == null) false
       else
         FScheduler.currentPropagation.isReady(reSource) &&
@@ -56,17 +60,18 @@ trait CalculusLike extends Core {
 
   }
 
-  case class FTransaction(override val initializer: Initializer) extends Transaction {
-    override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
+  case class FTransaction(override val initializer: Initializer.of[CalculusLike.this.State]) extends Transaction {
+    override type State[V] = CalculusLike.this.State[V]
+    override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                             = obs.execute()
   }
 
   object FScheduler
-      extends SchedulerImpl[FTransaction] {
+      extends SchedulerImpl[State, FTransaction] {
 
     override def schedulerName: String = "FormalizationLike"
 
-    var allReactives                    = Set.empty[ReSource]
+    var allReactives                    = Set.empty[ReSource.of[State]]
     var currentPropagation: Propagation = null
 
     var idle = true
@@ -75,7 +80,7 @@ trait CalculusLike extends Core {
       * The initial writes contains the reactives which change (only one for fire),
       * and teh admission phase updates their values to the fired values (μ(r).val ← v)
       */
-    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+    override def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R =
       synchronized {
         // some broken user code may start a new transaction during an ongoing one
         // this is not supported by this propagation algorithm,
@@ -122,14 +127,14 @@ trait CalculusLike extends Core {
           idle = true
         }
       }
-    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A =
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A =
       reactive.read(reactive.state.value)
   }
 
   case class Propagation(
-      active: Set[ReSource],
-      processed: Set[ReSource],
-      knownReactives: Set[ReSource],
+      active: Set[ReSource.of[State]],
+      processed: Set[ReSource.of[State]],
+      knownReactives: Set[ReSource.of[State]],
       transaction: FTransaction
   ) {
 
@@ -194,10 +199,10 @@ trait CalculusLike extends Core {
     }
 
     /** helper for better inspection */
-    lazy val unprocessed: Set[ReSource] = knownReactives -- processed
+    lazy val unprocessed: Set[ReSource.of[State]] = knownReactives -- processed
 
     /** Compute the set of all ready reactives. Logic is identical to the paper. */
-    lazy val ready: Set[ReSource] = {
+    lazy val ready: Set[ReSource.of[State]] = {
       unprocessed.filter { r =>
         // intersect with all known reactives
         // as there may be new inputs that were created during this propagation
@@ -206,31 +211,31 @@ trait CalculusLike extends Core {
       }
     }
 
-    def isReady(r: ReSource): Boolean = {
+    def isReady(r: ReSource.of[State]): Boolean = {
       r.state.inputs.intersect(knownReactives).subsetOf(processed + r)
     }
 
     /** Compute outdated reactives. Logic is identical to the paper. */
-    lazy val outdated: Set[ReSource] = {
+    lazy val outdated: Set[ReSource.of[State]] = {
       knownReactives.filter(isOutdated)
     }
-    def isOutdated(r: ReSource): Boolean = {
+    def isOutdated(r: ReSource.of[State]): Boolean = {
       r.state.inputs.exists(active.contains)
     }
   }
 
   object Reevaluate {
     def evaluate(
-        reactive: Derived,
-        dynamicOk: ReSource => Boolean,
+        reactive: Derived.of[State],
+        dynamicOk: ReSource.of[State] => Boolean,
         transaction: FTransaction
     ): (Boolean, Boolean) = {
-      val dt = new ReevTicket[reactive.Value](
+      val dt = new ReevTicket[State, reactive.Value](
         transaction,
         reactive.state.value,
-        new AccessHandler {
-          override def dynamicAccess(input: ReSource): input.Value = input.state.value
-          override def staticAccess(input: ReSource): input.Value  = input.state.value
+        new AccessHandler[State] {
+          override def dynamicAccess(input: ReSource.of[State]): input.Value = input.state.value
+          override def staticAccess(input: ReSource.of[State]): input.Value  = input.state.value
         }
       )
 

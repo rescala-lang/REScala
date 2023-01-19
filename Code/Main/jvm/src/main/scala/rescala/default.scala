@@ -1,5 +1,6 @@
 package rescala
 
+import rescala.core.Scheduler
 import rescala.parrp.{Backoff, ParRP}
 
 /** REScala has two main abstractions. [[rescala.default.Event]] and [[rescala.default.Signal]] commonly referred to as reactives.
@@ -9,5 +10,5 @@ import rescala.parrp.{Backoff, ParRP}
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
 object default extends interface.RescalaInterface with ParRP {
-  override val scheduler: Scheduler = parrpWithBackoff(() => new Backoff())
+  override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
 }

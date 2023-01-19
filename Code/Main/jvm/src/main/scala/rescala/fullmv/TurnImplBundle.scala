@@ -1,7 +1,8 @@
 package rescala.fullmv
 
+import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.mirrors.{Host, Mirror}
-import rescala.fullmv.sgt.synchronization._
+import rescala.fullmv.sgt.synchronization.*
 import rescala.fullmv.tasks.TaskBundle
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
@@ -18,7 +19,7 @@ trait TurnImplBundle extends FullMVBundle {
       val userlandThread: Thread,
       initialLock: SubsumableLock
   ) extends FullMVTurn {
-    var initialChanges: collection.Map[ReSource, InitialChange] = _
+    var initialChanges: collection.Map[ReSource.of[State], InitialChange[State]] = _
 
     // read and write order between the various volatiles:
     // phase is written after activeBranches and selfNode is read (phase switches only occur once no tasks remain or can be spawned by predecessors)

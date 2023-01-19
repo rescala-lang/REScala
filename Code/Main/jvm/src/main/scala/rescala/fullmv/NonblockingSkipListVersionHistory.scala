@@ -1,5 +1,6 @@
 package rescala.fullmv
 
+import rescala.core.Derived
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
@@ -29,8 +30,8 @@ trait FullMvStateBundle extends FullMVBundle {
     * @tparam InDep  the type of incoming dependency nodes
     * @tparam OutDep the type of outgoing dependency nodes
     */
-  class NonblockingSkipListVersionHistory[V, T <: FullMVTurn, InDep, OutDep](init: T, val valuePersistency: V)
-      extends FullMVState[V, T, InDep, OutDep] {
+  class NonblockingSkipListVersionHistory[V, T <: FullMVTurn](init: T, val valuePersistency: V)
+      extends FullMVState[V, T] {
     override val host = init.host
 
     /** @param txn                  the transaction to which this version belongs

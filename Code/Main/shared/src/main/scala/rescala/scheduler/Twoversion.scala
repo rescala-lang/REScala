@@ -1,6 +1,6 @@
 package rescala.scheduler
 
-import rescala.core.Core
+import rescala.core.{AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
 
 import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
@@ -8,9 +8,11 @@ import scala.util.control.NonFatal
 
 class Token()
 
-trait Twoversion extends Core {
+trait Twoversion {
 
   type State[V] <: TwoVersionState[V]
+  type ReSource = rescala.core.ReSource.of[State]
+  type Derived = rescala.core.Derived.of[State]
 
   /** State that implements both the buffered pulse and the buffering capabilities itself. */
   abstract class TwoVersionState[V](protected[rescala] var current: V) {
@@ -52,8 +54,8 @@ trait Twoversion extends Core {
     * @tparam Tx Transaction type used by the scheduler
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
-      extends SchedulerImpl[Tx] {
-    private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A =
+    extends SchedulerImpl[State, Tx] {
+    private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A =
       reactive.read(reactive.state.base(null))
 
     /** goes through the whole turn lifecycle
@@ -73,7 +75,7 @@ trait Twoversion extends Core {
       *     - run the party! phase
       *   - not yet implemented
       */
-    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R = {
+    override def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R = {
       val tx = makeTransaction(_currentTransaction.value)
 
       val result =
@@ -107,6 +109,8 @@ trait Twoversion extends Core {
   /** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements. */
   sealed trait TwoVersionTransaction extends Transaction {
 
+    override type State[V] = Twoversion.this.State[V]
+
     /** Schedules a temporarily written change to be committed by the turn. */
     def schedule(committable: ReSource): Unit
 
@@ -117,7 +121,7 @@ trait Twoversion extends Core {
     def preparationPhase(initialWrites: Set[ReSource]): Unit
 
     /** Starts the propagation by applying the initial changes */
-    def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit
+    def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit
 
     /** Performs the actual propagation, setting the new (not yet committed) values for each reactive element. */
     def propagationPhase(): Unit
@@ -136,7 +140,7 @@ trait Twoversion extends Core {
       */
     def releasePhase(): Unit
 
-    private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket
+    private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket[State]
 
   }
 
@@ -144,6 +148,8 @@ trait Twoversion extends Core {
     * Only compatible with spore definitions that store a pulse value and support graph operations.
     */
   trait TwoVersionTransactionImpl extends TwoVersionTransaction {
+
+    override type State[V] = Twoversion.this.State[V]
 
     val token: Token = new Token()
 
@@ -194,16 +200,16 @@ trait Twoversion extends Core {
     /** allow the propagation to handle dynamic access to reactives */
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit
 
-    object accessHandler extends AccessHandler {
+    object accessHandler extends AccessHandler[State] {
       override def dynamicAccess(reactive: ReSource): reactive.Value =
         TwoVersionTransactionImpl.this.dynamicAfter(reactive)
       override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
     }
 
-    override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket =
+    override private[rescala] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket[State] =
       new AdmissionTicket(this, initialWrites)
-    private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[V] =
-      new ReevTicket[V](this, b, accessHandler)
+    private[rescala] def makeDynamicReevaluationTicket[V, N](b: V): ReevTicket[State, V] =
+      new ReevTicket(this, b, accessHandler)
 
     override def access(reactive: ReSource): reactive.Value =
       TwoVersionTransactionImpl.this.dynamicAfter(reactive)

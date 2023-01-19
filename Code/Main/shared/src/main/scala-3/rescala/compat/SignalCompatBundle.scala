@@ -1,6 +1,6 @@
 package rescala.compat
 
-import rescala.core.Core
+import rescala.core.ReSource
 import rescala.interface.RescalaInterface
 import rescala.macros.ReadableMacroBundle
 import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
@@ -36,12 +36,12 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     */
   object Signal {
     inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
-      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource, StaticTicket, true](expr)
+      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource.of[State], StaticTicket, true](expr)
       bundle.Signals.static(sources: _*)(fun)
     }
 
     inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
-      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource, DynamicTicket, false](expr)
+      val (sources, fun, isStatic) = rescala.macros.getDependencies[T, ReSource.of[State], DynamicTicket, false](expr)
       bundle.Signals.dynamic(sources: _*)(fun)
     }
   }

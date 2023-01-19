@@ -1,6 +1,7 @@
 package rescala.interface
 
-import rescala.operator._
+import rescala.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
+import rescala.operator.*
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -25,12 +26,12 @@ import rescala.operator._
 trait RescalaInterface extends Operators {
 
   /** @group internal */
-  def scheduler: Scheduler
+  def scheduler: Scheduler[State]
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
   /** @group internal */
-  implicit def implicitScheduler: Scheduler = scheduler
+  implicit def implicitScheduler: Scheduler[State] = scheduler
 
   implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
   implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)
@@ -46,7 +47,7 @@ trait RescalaInterface extends Operators {
     * @group update
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
-  def transaction[R](initialWrites: ReSource*)(admissionPhase: AdmissionTicket => R): R = {
+  def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
     scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
   }
 
@@ -54,7 +55,7 @@ trait RescalaInterface extends Operators {
     * @see transaction
     * @group update
     */
-  def transactionWithWrapup[I, R](iw: ReSource*)(ap: AdmissionTicket => I)(wrapUp: (I, Transaction) => R): R = {
+  def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (I, Transaction.of[State]) => R): R = {
     var res: Option[R] = None
     transaction(iw: _*)(at => {
       val apr: I = ap(at)

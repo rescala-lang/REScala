@@ -1,5 +1,7 @@
 package rescala.scheduler
 
+import rescala.core.{InitialChange, Initializer, ReSource, ReevTicket}
+
 import java.util.PriorityQueue
 import scala.collection.mutable.ListBuffer
 
@@ -23,6 +25,8 @@ trait Levelbased extends Twoversion {
   /** Further implementation of level-based propagation based on the common propagation implementation. */
   trait LevelBasedTransaction extends TwoVersionTransactionImpl with LevelQueue.Evaluator with Initializer {
 
+    override type State[V] = Levelbased.this.State[V]
+
     /** Stores all active reactives in case we create more later and need to reevaluate them. */
     private val _propagating: ListBuffer[ReSource] = ListBuffer[ReSource]()
 
@@ -31,11 +35,11 @@ trait Levelbased extends Twoversion {
     /** Store a single resettable ticket for the whole evaluation.
       * This optimization drastically reduces garbage generation of a relatively expensive object
       */
-    private val reevaluationTicket: ReevTicket[_] = makeDynamicReevaluationTicket(null)
+    private val reevaluationTicket: ReevTicket[State, _] = makeDynamicReevaluationTicket(null)
 
     /** Overrides the evaluator, this is essentially an inlined callback */
     override def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
-    def evaluateIn(head: Derived)(dt: ReevTicket[head.Value]): Unit = {
+    def evaluateIn(head: Derived)(dt: ReevTicket[head.State, head.Value]): Unit = {
       val reevRes = head.reevaluate(dt)
 
       val dependencies: Option[Set[ReSource]] = reevRes.inputs()
@@ -60,7 +64,7 @@ trait Levelbased extends Twoversion {
     private def nextLevel(dependencies: Set[ReSource]): Int =
       if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
-    override def initializer: Initializer = this
+    override def initializer: Initializer.of[State] = this
 
     override protected def initialize(
         reactive: Derived,
@@ -85,10 +89,10 @@ trait Levelbased extends Twoversion {
       }
     }
 
-    final override def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit =
+    final override def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit =
       initialChanges.values.foreach(prepareInitialChange)
 
-    final def prepareInitialChange(ic: InitialChange): Unit = {
+    final def prepareInitialChange(ic: InitialChange[State]): Unit = {
       val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
       if (n) enqueueOutgoing(ic.source, LevelQueue.noLevelIncrease)
     }

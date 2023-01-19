@@ -1,13 +1,13 @@
 package rescala.operator
 
-import rescala.core.ReName
+import rescala.core.{AdmissionTicket, Base, InitialChange, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch}
 
 trait Sources {
   self: Operators =>
 
   trait Source[T] extends ReSource {
-    final def admit(value: T)(implicit ticket: AdmissionTicket): Unit = admitPulse(Pulse.Value(value))
-    def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit
+    final def admit(value: T)(implicit ticket: AdmissionTicket[State]): Unit = admitPulse(Pulse.Value(value))
+    def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit
   }
 
   /** Source events with imperative occurrences
@@ -17,7 +17,7 @@ trait Sources {
     * @tparam S Struct type used for the propagation of the event
     */
   class Evt[T] private[rescala] (initialState: State[Pulse[T]], name: ReName)
-      extends Base[Pulse[T]](initialState, name)
+      extends Base[State, Pulse[T]](initialState, name)
       with Source[T]
       with Event[T] {
     override type Value = Pulse[T]
@@ -28,9 +28,9 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler, scopeSearch: ScopeSearch): Unit        = fire(value)
-    def fire()(implicit fac: Scheduler, scopeSearch: ScopeSearch, ev: Unit =:= T): Unit = fire(ev(()))
-    def fire(value: T)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
+    def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit        = fire(value)
+    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
+    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -38,8 +38,8 @@ trait Sources {
           })
       }
     override def disconnect(): Unit = ()
-    def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket): Unit = {
-      ticket.recordChange(new InitialChange {
+    def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit = {
+      ticket.recordChange(new InitialChange[State] {
         override val source: Evt.this.type = Evt.this
         override def writeValue(base: Pulse[T], writeCallback: Pulse[T] => Unit): Boolean = {
           writeCallback(pulse); true
@@ -58,14 +58,15 @@ trait Sources {
     * @tparam A Type stored by the signal
     * @tparam S Struct type used for the propagation of the signal
     */
-  class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName) extends Base[Pulse[A]](initialState, name)
+  class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
+      extends Base[State, Pulse[A]](initialState, name)
       with Source[A] with Signal[A] with ReadAs[A] {
     override type Value = Pulse[A]
 
     override val resource: Signal[A] = this
     override def disconnect(): Unit  = ()
 
-    def set(value: A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit =
+    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -73,7 +74,7 @@ trait Sources {
           })
       }
 
-    def transform(f: A => A)(implicit sched: Scheduler, scopeSearch: ScopeSearch): Unit = {
+    def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
       def newTx() = sched.forceNewTransaction(this) { t =>
         admit(f(t.tx.now(this)))(t)
       }
@@ -83,9 +84,9 @@ trait Sources {
       }
     }
 
-    def setEmpty()(implicit fac: Scheduler): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
+    def setEmpty()(implicit fac: Scheduler[State]): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
 
-    def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket): Unit = {
+    def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[State]): Unit = {
       ticket.recordChange(new InitialChange {
         override val source: Var.this.type = Var.this
         override def writeValue(base: Pulse[A], writeCallback: Pulse[A] => Unit): Boolean =

@@ -1,6 +1,7 @@
 package rescala.operator
 
 import rescala.compat.EventCompatBundle
+import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -51,6 +52,7 @@ trait EventBundle extends EventCompatBundle {
     * @groupprio accessor 5
     */
   trait Event[+T] extends EventCompat[T] with Disconnectable {
+    override type State[V] = selfType.State[V]
 
     implicit def internalAccess(v: Value): Pulse[T]
     def resource: ReadAs[Option[T]] = this
@@ -277,7 +279,7 @@ trait EventBundle extends EventCompatBundle {
 
     /** the basic method to create static events */
     @cutOutOfUserComputation
-    def staticNamed[T](name: String, dependencies: ReSource*)(expr: StaticTicket => Pulse[T])(implicit
+    def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket => Pulse[T])(implicit
         ticket: CreationTicket
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
@@ -287,20 +289,20 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource*)(expr: StaticTicket => Option[T])(implicit
+    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] =
       staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def staticNoVarargs[T](dependencies: Seq[ReSource])(expr: StaticTicket => Option[T])(implicit
+    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = static(dependencies: _*)(expr)
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
-    def dynamic[T](dependencies: ReSource*)(expr: DynamicTicket => Option[T])(implicit
+    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = {
       val staticDeps = dependencies.toSet
@@ -311,7 +313,7 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
-    def dynamicNoVarargs[T](dependencies: Seq[ReSource])(expr: DynamicTicket => Option[T])(implicit
+    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = dynamic(dependencies: _*)(expr)
 
@@ -320,7 +322,7 @@ trait EventBundle extends EventCompatBundle {
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
         val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
-          Set[ReSource](signal),
+          Set[ReSource.of[State]](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
         ) { state =>
@@ -333,7 +335,7 @@ trait EventBundle extends EventCompatBundle {
     def foldOne[A, T](dependency: Event[A], init: T)(expr: (T, A) => T)(implicit
         ticket: CreationTicket
     ): Signal[T] = {
-      fold(Set[ReSource](dependency), init) { st => acc =>
+      fold(Set(dependency), init) { st => acc =>
         val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
         expr(acc(), a)
       }
@@ -344,7 +346,7 @@ trait EventBundle extends EventCompatBundle {
       * @see [[rescala.operator.EventBundle.Event.fold]]
       */
     @cutOutOfUserComputation
-    def fold[T](dependencies: Set[ReSource], init: T)(expr: DynamicTicket => (() => T) => T)(implicit
+    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket => (() => T) => T)(implicit
         ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
@@ -402,11 +404,11 @@ trait EventBundle extends EventCompatBundle {
       }
 
       ticket.create(
-        staticInputs.toSet[ReSource],
+        staticInputs.toSet,
         Pulse.tryCatch[A](Pulse.Value(init)),
         needsReevaluation = true
       ) {
-        state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet[ReSource]))
+        state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet))
       }
     }
 
@@ -434,7 +436,7 @@ trait EventBundle extends EventCompatBundle {
 
     class CBResult[T, R](val event: Event[T], val data: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
-      def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler): CBResult[T, R] = {
+      def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler[State]): CBResult[T, R] = {
         val evt: Evt[T] = Evt[T]()(ct)
         val res         = body(evt.fire(_))
         new CBResult(evt, res)

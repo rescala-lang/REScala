@@ -1,9 +1,9 @@
 package rescala.fullmv
 
-import rescala.core.{Core}
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult._
-import rescala.fullmv.NotificationBranchResult._
-import rescala.fullmv.mirrors.{Host, HostImpl, _}
+import rescala.core.{AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, SchedulerImpl, Transaction}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.*
+import rescala.fullmv.NotificationBranchResult.*
+import rescala.fullmv.mirrors.{Host, HostImpl, *}
 import rescala.fullmv.sgt.synchronization.{SubsumableLockBundle, SubsumableLockEntryPoint}
 import rescala.fullmv.tasks.TaskBundle
 
@@ -12,15 +12,18 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinPool, ForkJoinTask}
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.util.Try
 
-trait FullMVBundle extends Core {
+trait FullMVBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
-  type State[V] = FullMVState[V, FullMVTurn, ReSource, Derived]
+  type State[V] = FullMVState[V, FullMVTurn]
 
-  trait FullMVState[V, T <: FullMVTurn, Reactive, OutDep] {
+  type Reactive = ReSource.of[State]
+  type OutDep = Derived.of[State]
+
+  trait FullMVState[V, T <: FullMVTurn] {
     val host: FullMVEngine
 
     var incomings: Set[Reactive] = Set.empty
@@ -111,15 +114,16 @@ trait FullMVBundle extends Core {
   }
 
   case class TransactionHandle(ti: FullMVTurn) extends Transaction {
-    override private[rescala] def access(reactive: ReSource): reactive.Value = ti.dynamicBefore(reactive)
-    override def initializer: Initializer                                    = ti
+    type State[V] = FullMVBundle.this.State[V]
+    override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = ti.dynamicBefore(reactive)
+    override def initializer: Initializer.of[State]                                    = ti
     override def observe(obs: Observation): Unit                             = ti.observe(() => obs.execute())
   }
 
   class FullMVEngine(val timeout: Duration, val schedulerName: String)
-      extends SchedulerImpl[TransactionHandle]
-      with FullMVTurnHost
-      with HostImpl[FullMVTurn] {
+    extends SchedulerImpl[State, TransactionHandle]
+    with FullMVTurnHost
+    with HostImpl[FullMVTurn] {
 
     override object lockHost extends SubsumableLockHostImpl {
       override def toString: String = s"[LockHost ${hashCode()} for $schedulerName ${schedulerName.hashCode}]"
@@ -139,10 +143,10 @@ trait FullMVBundle extends Core {
       override def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
     }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]) =
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]) =
       reactive.read(reactive.state.latestValue)
 
-    override def forceNewTransaction[R](declaredWrites: Set[ReSource], admissionPhase: (AdmissionTicket) => R): R = {
+    override def forceNewTransaction[R](declaredWrites: Set[ReSource.of[State]], admissionPhase: (AdmissionTicket[State]) => R): R = {
       val turn        = newTurn()
       val transaction = TransactionHandle(turn)
       withDynamicInitializer(transaction) {
@@ -289,8 +293,8 @@ trait FullMVBundle extends Core {
     // ========================================================Scheduler Interface============================================================
 
     override def makeDerivedStructState[V](initialValue: V)
-        : NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived] = {
-      val state = new NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived](
+        : NonblockingSkipListVersionHistory[V, FullMVTurn] = {
+      val state = new NonblockingSkipListVersionHistory[V, FullMVTurn](
         host.dummy,
         initialValue
       )
@@ -299,7 +303,7 @@ trait FullMVBundle extends Core {
     }
 
     override protected def makeSourceStructState[V](initialValue: V)
-        : NonblockingSkipListVersionHistory[V, FullMVTurn, ReSource, Derived] = {
+        : NonblockingSkipListVersionHistory[V, FullMVTurn] = {
       val state = makeDerivedStructState(initialValue)
       val res   = state.notify(this, changed = false)
       assert(res == true -> PureNotifyOnly(Set.empty))
@@ -307,8 +311,8 @@ trait FullMVBundle extends Core {
     }
 
     override def initialize(
-        reactive: Derived,
-        incoming: Set[ReSource],
+        reactive: Derived.of[State],
+        incoming: Set[ReSource.of[State]],
         needsReevaluation: Boolean
     ): Unit = {
 //    assert(Thread.currentThread() == userlandThread, s"$this ignition of $reactive on different thread ${Thread.currentThread().getName}")
@@ -365,7 +369,7 @@ trait FullMVBundle extends Core {
       }
     }
 
-    def discover(node: ReSource, addOutgoing: Derived): Unit = {
+    def discover(node: ReSource.of[State], addOutgoing: Derived.of[State]): Unit = {
       val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
       if (FullMVUtil.DEBUG)
@@ -376,7 +380,7 @@ trait FullMVBundle extends Core {
       newBranches.foreach(_.activeBranchDifferential(TurnPhase.Executing, 1))
     }
 
-    def drop(node: ReSource, removeOutgoing: Derived): Unit = {
+    def drop(node: ReSource.of[State], removeOutgoing: Derived.of[State]): Unit = {
       val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
       if (FullMVUtil.DEBUG)
@@ -387,13 +391,15 @@ trait FullMVBundle extends Core {
       deletedBranches.foreach(_.activeBranchDifferential(TurnPhase.Executing, -1))
     }
 
-    private[rescala] def writeIndeps(node: Derived, indepsAfter: Set[ReSource]): Unit =
+    private[rescala] def writeIndeps(node: Derived.of[State], indepsAfter: Set[ReSource.of[State]]): Unit =
       node.state.incomings = indepsAfter
 
-    private[rescala] def staticBefore(reactive: ReSource)  = reactive.state.staticBefore(this)
-    private[rescala] def staticAfter(reactive: ReSource)   = reactive.state.staticAfter(this)
-    private[rescala] def dynamicBefore(reactive: ReSource) = reactive.state.dynamicBefore(this)
-    private[rescala] def dynamicAfter(reactive: ReSource)  = reactive.state.dynamicAfter(this)
+    type State[V] = FullMVBundle.this.State[V]
+
+    private[rescala] def staticBefore(reactive: ReSource.of[State])  = reactive.state.staticBefore(this)
+    private[rescala] def staticAfter(reactive: ReSource.of[State])   = reactive.state.staticAfter(this)
+    private[rescala] def dynamicBefore(reactive: ReSource.of[State]) = reactive.state.dynamicBefore(this)
+    private[rescala] def dynamicAfter(reactive: ReSource.of[State])  = reactive.state.dynamicAfter(this)
 
     def observe(f: () => Unit): Unit = f()
   }

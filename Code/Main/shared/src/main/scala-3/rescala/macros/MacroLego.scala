@@ -2,7 +2,6 @@ package rescala.macros
 
 import rescala.macros.MacroAccess
 import rescala.operator.Operators
-import rescala.core.Core
 
 import scala.quoted.*
 

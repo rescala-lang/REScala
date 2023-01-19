@@ -1,6 +1,6 @@
 package rescala.extra.reactor
 
-import rescala.core.ReName
+import rescala.core.{Derived, ReName, ReadAs, Scheduler}
 import rescala.interface.RescalaInterface
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
@@ -10,6 +10,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   ) extends Derived with ReadableMacro[T] {
 
     override type Value = ReactorState[T]
+    type State[V] = ReactorBundle.this.api.State[V]
+
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
     def name: ReName                                              = "Custom Reactor"
@@ -102,7 +104,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
     override def resource: ReadAs[T] = this
 
-    def now(implicit scheduler: Scheduler): T = scheduler.singleReadValueOnce(this)
+    def now(implicit scheduler: Scheduler[State]): T = scheduler.singleReadValueOnce(this)
   }
 
   object Reactor {

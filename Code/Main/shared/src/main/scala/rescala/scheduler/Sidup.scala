@@ -1,5 +1,7 @@
 package rescala.scheduler
 
+import rescala.core.{InitialChange, Initializer, ReevTicket}
+
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 
@@ -36,6 +38,8 @@ trait Sidup extends Twoversion {
   }
 
   class SidupInitializer(currentTx: SidupTransaction) extends Initializer {
+    override type State[V] = Sidup.this.State[V]
+
     override protected[this] def makeDerivedStructState[V](initialValue: V): SidupState[V] =
       new SidupState(initialValue)
     override protected def initialize(
@@ -63,9 +67,12 @@ trait Sidup extends Twoversion {
   }
 
   class SidupTransaction extends TwoVersionTransactionImpl {
+
+    override type State[V] = Sidup.this.State[V]
+
     var sources: Set[SourceId] = null
 
-    override def initializationPhase(initialChanges: Map[ReSource, InitialChange]): Unit = {
+    override def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit = {
       val initsources = initialChanges.flatMap { case (s, ic) =>
         val isChange = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
         if (isChange) {
@@ -82,7 +89,7 @@ trait Sidup extends Twoversion {
     /** Store a single resettable ticket for the whole evaluation.
       * This optimization drastically reduces garbage generation of a relatively expensive object
       */
-    private val reevaluationTicket: ReevTicket[_] = makeDynamicReevaluationTicket(null)
+    private val reevaluationTicket: ReevTicket[State, _] = makeDynamicReevaluationTicket(null)
 
     private var evaluating: List[Derived]      = List.empty
     private var evaluatingLater: List[Derived] = List.empty
@@ -91,7 +98,7 @@ trait Sidup extends Twoversion {
 
     /** Overrides the evaluator, this is essentially an inlined callback */
     def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
-    def evaluateIn(reactive: Derived)(dt: ReevTicket[reactive.Value]): Unit = {
+    def evaluateIn(reactive: Derived)(dt: ReevTicket[State, reactive.Value]): Unit = {
       if (!reactive.state.done) {
         val rinc = relevantIncoming(reactive)
         if (rinc.forall(_.state.done)) {
@@ -146,7 +153,7 @@ trait Sidup extends Twoversion {
       }
     }
     override def releasePhase(): Unit     = ()
-    override def initializer: Initializer = new SidupInitializer(this)
+    override def initializer: Initializer.of[State] = new SidupInitializer(this)
   }
 
 }

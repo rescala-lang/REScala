@@ -1,13 +1,16 @@
 package rescala.scheduler
 
-import rescala.core.Core
+import rescala.core.{AccessHandler, AdmissionTicket, Initializer, Observation, ReadAs, ReevTicket, SchedulerImpl, Transaction}
 import rescala.operator.ObserveBundle
 
 import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-trait TopoBundle extends Core with ObserveBundle {
+trait TopoBundle extends ObserveBundle {
   type State[V] <: TopoState[V]
+
+  type Derived  = rescala.core.Derived.of[State]
+  type ReSource = rescala.core.ReSource.of[State]
 
   class TopoState[V](var value: V) {
 
@@ -30,6 +33,9 @@ trait TopoBundle extends Core with ObserveBundle {
   def makeDerivedStructStateBundle[V](ip: V): State[V]
 
   class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
+
+    override type State[V] = TopoBundle.this.State[V]
+
     override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] =
       makeDerivedStructStateBundle(initialValue)
 
@@ -72,13 +78,15 @@ trait TopoBundle extends Core with ObserveBundle {
   }
 
   case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction {
+    override type State[V] = TopoBundle.this.State[V]
+
     override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                             = initializer.observe(obs)
   }
 
   object TopoScheduler extends TopoSchedulerInterface
 
-  trait TopoSchedulerInterface extends SchedulerImpl[TopoTransaction] {
+  trait TopoSchedulerInterface extends SchedulerImpl[State, TopoTransaction] {
 
     override def schedulerName: String = "Simple"
 
@@ -88,7 +96,7 @@ trait TopoBundle extends Core with ObserveBundle {
 
     def beforeCleanupHook(@nowarn all: Seq[ReSource], @nowarn initialWrites: Set[ReSource]): Unit = ()
 
-    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket => R): R =
+    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R =
       synchronized {
         if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
         idle = false
@@ -99,8 +107,8 @@ trait TopoBundle extends Core with ObserveBundle {
             val transaction = TopoTransaction(creation)
             withDynamicInitializer(transaction) {
               // admission
-              val admissionTicket: AdmissionTicket = new AdmissionTicket(transaction, initialWrites)
-              val admissionResult                  = admissionPhase(admissionTicket)
+              val admissionTicket: AdmissionTicket[State] = new AdmissionTicket(transaction, initialWrites)
+              val admissionResult                         = admissionPhase(admissionTicket)
               val sources = admissionTicket.initialChanges.values.collect {
                 case iv if iv.writeValue(iv.source.state.value, iv.source.state.value = _) => iv.source
               }.toSeq
@@ -145,7 +153,7 @@ trait TopoBundle extends Core with ObserveBundle {
         res
       }
 
-    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs[A]): A = {
+    override private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A = {
       val id = reactive
       id.read(id.state.value)
     }
@@ -198,10 +206,10 @@ trait TopoBundle extends Core with ObserveBundle {
         afterCommitObservers: ListBuffer[Observation]
     ): Boolean = {
       var potentialGlitch = false
-      val dt = new ReevTicket[reactive.Value](
+      val dt = new ReevTicket[State, reactive.Value](
         creationTicket,
         reactive.state.value,
-        new AccessHandler {
+        new AccessHandler[State] {
           override def dynamicAccess(input: ReSource): input.Value = {
             if (input.state.discovered && !input.state.done) {
               potentialGlitch = true

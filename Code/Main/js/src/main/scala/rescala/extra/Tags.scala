@@ -3,6 +3,7 @@ package rescala.extra
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, Node}
+import rescala.core.{CreationTicket, Disconnectable, DynamicScope}
 import rescala.interface.RescalaInterface
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
@@ -36,7 +37,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalToScalatags(val signal: Signal[TypedTag[Element]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: DynamicScope): Modifier = {
+    def asModifier(implicit engine: DynamicScope[State]): Modifier = {
       new REFragModifier(signal, engine)
     }
   }
@@ -44,7 +45,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalStrToScalatags(val signal: Signal[StringFrag]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifier(implicit engine: DynamicScope): Modifier = {
+    def asModifier(implicit engine: DynamicScope[State]): Modifier = {
       new REFragModifier(signal, engine)
     }
   }
@@ -52,12 +53,12 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   implicit class SignalTagListToScalatags(val signal: Signal[Seq[TypedTag[Element]]]) {
 
     /** converts a Signal of a scalatags Tag to a scalatags Frag which automatically reflects changes to the signal in the dom */
-    def asModifierL(implicit engine: DynamicScope): Modifier = {
+    def asModifierL(implicit engine: DynamicScope[State]): Modifier = {
       new RETagListModifier(signal.withDefault(Nil)(engine), engine)
     }
   }
 
-  private class REFragModifier(rendered: Signal[Frag], engine: DynamicScope) extends Modifier {
+  private class REFragModifier(rendered: Signal[Frag], engine: DynamicScope[State]) extends Modifier {
     var observe: Disconnectable = null
     var currentNode: Node       = null
     override def applyTo(parent: Element): Unit = {
@@ -111,7 +112,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
         }
     }
 
-  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: DynamicScope)
+  private class RETagListModifier(rendered: Signal[Seq[TypedTag[Element]]], scheduler: DynamicScope[State])
       extends Modifier {
     var observe: Disconnectable             = null
     var currentNodes: Seq[Element]          = Nil
@@ -144,7 +145,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   }
 
   implicit def genericReactiveAttrValue[T: AttrValue, Sig[T2] <: Signal[T2]](implicit
-      engine: DynamicScope
+      engine: DynamicScope[State]
   ): AttrValue[Sig[T]] =
     new AttrValue[Sig[T]] {
       def apply(t: dom.Element, a: Attr, signal: Sig[T]): Unit = {
@@ -167,7 +168,7 @@ class Tags[Api <: RescalaInterface](val api: Api) {
   // : AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
   def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit
-      engine: DynamicScope,
+      engine: DynamicScope[State],
       tstyle: StyleValue[T]
   ): StyleValue[Sig[T]] =
     new StyleValue[Sig[T]] {
@@ -179,10 +180,10 @@ class Tags[Api <: RescalaInterface](val api: Api) {
       }
     }
 
-  implicit def varStyleValue[T: StyleValue](implicit ds: DynamicScope): StyleValue[Var[T]] =
+  implicit def varStyleValue[T: StyleValue](implicit ds: DynamicScope[State]): StyleValue[Var[T]] =
     genericReactiveStyleValue[T, ({ type λ[T2] = Var[T2] })#λ](ds, implicitly)
 
-  implicit def signalStyleValue[T: StyleValue](implicit ds: DynamicScope): StyleValue[Signal[T]] =
+  implicit def signalStyleValue[T: StyleValue](implicit ds: DynamicScope[State]): StyleValue[Signal[T]] =
     genericReactiveStyleValue[T, ({ type λ[T2] = Signal[T2] })#λ](ds, implicitly)
 
   implicit def bindEvt[T]: generic.AttrValue[Element, Evt[T]] =

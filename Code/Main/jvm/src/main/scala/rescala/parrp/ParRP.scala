@@ -1,13 +1,14 @@
 package rescala.parrp
 
-import rescala.locking._
+import rescala.core.Scheduler
+import rescala.locking.*
 import rescala.scheduler.Levelbased
 
 trait ParRP extends Levelbased {
 
   override type State[V] = ParRPState[V]
 
-  def parrpWithBackoff(backOff: () => Backoff): Scheduler =
+  def parrpWithBackoff(backOff: () => Backoff): Scheduler[State] =
     new TwoVersionScheduler[ParRPTransaction] {
       override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
         new ParRPTransaction(backOff(), priorTx)

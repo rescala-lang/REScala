@@ -8,7 +8,7 @@ import rescala.operator.{EventBundle, SignalBundle, cutOutOfUserComputation}
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
-trait IncrementalBundle extends Core {
+trait IncrementalBundle {
   self: EventBundle with SignalBundle with SignalCompatBundle with RescalaInterface =>
 
   /** @tparam T Type of values inside Deltas
@@ -20,6 +20,8 @@ trait IncrementalBundle extends Core {
 
     /** the value of deltas send through the set */
     override type Value = Delta[T]
+
+    override type State[V] = IncrementalBundle.this.State[V]
 
     /** Returns current ReactiveDeltaSeq as an Event
       *
@@ -319,7 +321,7 @@ trait IncrementalBundle extends Core {
   class ConcatenateDeltaSeq[T](left: ReactiveDeltaSeq[T], right: ReactiveDeltaSeq[T])(
       initialState: IncSeq.SeqState[T],
       name: ReName
-  ) extends Base[Delta[T]](initialState, name)
+  ) extends Base[State, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] with DisconnectableImpl {
 
     /** @param input
@@ -352,7 +354,7 @@ trait IncrementalBundle extends Core {
   class FilterDeltaSeq[T](in: ReactiveDeltaSeq[T], expression: T => Boolean)(
       initialState: IncSeq.SeqState[T],
       name: ReName
-  ) extends Base[Delta[T]](initialState, name) with Derived
+  ) extends Base[State, Delta[T]](initialState, name) with Derived
       with ReactiveDeltaSeq[T] {
 
     /** @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
@@ -377,7 +379,7 @@ trait IncrementalBundle extends Core {
   class MapDeltaSeq[T, A](in: ReactiveDeltaSeq[T], op: T => A)(
       initialState: IncSeq.SeqState[A],
       name: ReName
-  ) extends Base[Delta[A]](initialState, name)
+  ) extends Base[State, Delta[A]](initialState, name)
       with ReactiveDeltaSeq[A] {
 
     /** @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
@@ -425,24 +427,24 @@ trait IncrementalBundle extends Core {
     * @tparam S Struct type used for the propagation of the event
     */
   class IncSeq[T] private[rescala] (initialState: IncSeq.SeqState[T], name: ReName)
-      extends Base[Delta[T]](initialState, name)
+      extends Base[State, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] {
 
     private val elements: mutable.Map[T, Int] = mutable.HashMap()
 
     override protected[rescala] def guardedReevaluate(input: ReIn): Rout = ??? // TODO what comes here...
 
-    def add(value: T)(implicit fac: Scheduler): Unit =
+    def add(value: T)(implicit fac: Scheduler[State]): Unit =
       fac.forceNewTransaction(this) {
         addInTx(Addition(value))(_)
       }
 
-    def remove(value: T)(implicit fac: Scheduler): Unit =
+    def remove(value: T)(implicit fac: Scheduler[State]): Unit =
       fac.forceNewTransaction(this) {
         addInTx(Removal(value))(_)
       }
 
-    def addInTx(delta: Delta[T])(implicit ticket: AdmissionTicket): Unit = {
+    def addInTx(delta: Delta[T])(implicit ticket: AdmissionTicket[State]): Unit = {
       (delta: @unchecked) match {
         case Addition(value) => {
           val counter = elements.getOrElse(value, 0)

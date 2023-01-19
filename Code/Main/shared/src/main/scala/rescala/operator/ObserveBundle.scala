@@ -1,8 +1,8 @@
 package rescala.operator
 
-import rescala.core.Core
+import rescala.core.{Base, CreationTicket, Derived, Disconnectable, DisconnectableImpl, Observation, ReSource}
 
-trait ObserveBundle extends Core {
+trait ObserveBundle {
 
   trait ObserveInteract extends Observation {
     // if true, the observer will remove all of its inputs, which allows eventual collection
@@ -14,10 +14,12 @@ trait ObserveBundle extends Core {
     def strong[T](
         dependency: ReSource,
         fireImmediately: Boolean
-    )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket): Disconnectable = {
-      ct.create[Pulse[Nothing], Disconnectable with Derived](Set(dependency), Pulse.NoChange, fireImmediately) {
+    )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket[dependency.State]): Disconnectable = {
+      ct.create[Pulse[Nothing], Disconnectable with Derived.of[dependency.State]](Set(dependency), Pulse.NoChange, fireImmediately) {
         state =>
-          class Obs extends Base[Pulse[Nothing]](state, ct.rename) with Derived with DisconnectableImpl {
+          class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.rename) with Derived with DisconnectableImpl {
+
+            type State[V] = dependency.State[V]
 
             override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 

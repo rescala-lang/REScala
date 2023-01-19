@@ -1,7 +1,5 @@
 package rescala.operator
 
-import rescala.core.Core
-
 /** To support virtual State types, everything is put into the bundle traits.
   * But because the operators all have cyclic dependencies to each other,
   * we need this combining bundle, which all other operator bundles use as a self type
@@ -14,5 +12,10 @@ trait Operators extends AnyRef // to make the below more symmetric
     with SignalBundle
     with FlattenApi
     with Sources
-    with ObserveBundle
-    with Core
+    with ObserveBundle {
+  type State[_]
+  type DynamicTicket  = rescala.core.DynamicTicket[State]
+  type CreationTicket = rescala.core.CreationTicket[State]
+  type StaticTicket   = rescala.core.StaticTicket[State]
+
+}
