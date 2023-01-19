@@ -82,8 +82,8 @@ object DottedLattice {
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
 
-    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] = List(a)
     // // TODO: figure out what decompose means for dotted values
+    // override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
     // Range(0, lattices.productArity).flatMap { j =>
     //  lat(j).decompose(a.map(_.productElement(j))).map {
     //    _.map { elem =>
