@@ -1,5 +1,6 @@
 package rescala.macros
 
+import rescala.core.ScopeSearch
 import rescala.macros.MacroAccess
 import rescala.operator.Operators
 
@@ -7,7 +8,7 @@ import scala.quoted.*
 
 inline def getDependencies[Res, ReSource, Ticket, ForceStatic <: Boolean](inline expr: Res)
     : (List[ReSource], Ticket => Res, Boolean) =
-  ${ rescala.macros.reactiveMacro[Res, ReSource, Ticket, ForceStatic]('expr) }
+  ${ rescala.macros.reactiveMacro[Res, ReSource, Ticket, ForceStatic]('{ expr }) }
 
 def reactiveMacro[Res: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
     expr: Expr[Res]
@@ -102,9 +103,15 @@ class MacroLego[ReSource: Type, Ticket: Type](
   class ReplaceImplicitTickets(ticket: Term) extends TreeMap {
 
     override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
+      //println(tree.toString)
+      //println(tree.show)
+      //println()
       tree match
         case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
           Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket))
+        case Apply(TypeApply(Ident("fromSchedulerImplicit"), ta), _) =>
+          //println("matched!")
+          Apply(TypeApply(Ident(TermRef(TypeRepr.of[ScopeSearch.type], "fromTicketImplicit")), ta), List(ticket))
         case other => super.transformTerm(tree)(owner)
     }
   }
