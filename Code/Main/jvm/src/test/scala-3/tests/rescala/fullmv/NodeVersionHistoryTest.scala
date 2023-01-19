@@ -16,7 +16,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn](createN, 10)
     createN.completeExecuting()
 
     val turn1 = engine.newTurn()
@@ -47,7 +47,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn](createN, 10)
     createN.completeExecuting()
 
     val turn1 = engine.newTurn()
@@ -81,7 +81,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
 
     val createN = engine.newTurn()
     createN.beginExecuting()
-    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn, Int, Int](createN, 10)
+    val n = new NonblockingSkipListVersionHistory[Int, FullMVTurn](createN, 10)
     createN.completeExecuting()
 
     val reevaluate = engine.newTurn()

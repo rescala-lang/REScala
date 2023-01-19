@@ -1,5 +1,6 @@
 package rescala.core.infiltration
 
+import rescala.core.Scheduler
 import rescala.interface.RescalaInterface
 import rescala.scheduler.Levelbased
 
@@ -11,7 +12,7 @@ class Infiltrator(val api: RescalaInterface with Levelbased) {
       reactive: ReSource,
       level: Int,
       text: String = "level did not match"
-  )(implicit maybe: Scheduler) =
+  )(implicit maybe: Scheduler[api.State]) =
     if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[_]]) {
       reactive.state match {
         case rb: LevelState[_] => {

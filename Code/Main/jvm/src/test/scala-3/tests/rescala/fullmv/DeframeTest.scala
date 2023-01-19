@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
 import rescala.fullmv.{FramingBranchResult, FullMVApi, NotificationBranchResult}
 import rescala.operator.Pulse
+import rescala.core.Derived
 
 import scala.concurrent.duration.Duration
 
@@ -13,14 +14,14 @@ class DeframeTest extends AnyFunSuite {
     import FullMVTest._
     val engine = FullMVTest.scheduler
 
-    val dummy = Signal { -1 }.resource.asInstanceOf[Derived]
+    val dummy = Signal { -1 }.resource.asInstanceOf[Derived.of[State]]
 
     val r      = Signal { 0 }
-    val right  = r.resource.asInstanceOf[Derived]
+    val right  = r.resource.asInstanceOf[Derived.of[State]]
     val m      = Signal { r() + 1 }
-    val middle = m.resource.asInstanceOf[Derived]
+    val middle = m.resource.asInstanceOf[Derived.of[State]]
     val t      = Signal { m() + 1 }
-    val top    = t.resource.asInstanceOf[Derived]
+    val top    = t.resource.asInstanceOf[Derived.of[State]]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
@@ -83,14 +84,14 @@ class DeframeTest extends AnyFunSuite {
     import FullMVTest._
     val engine = FullMVTest.scheduler
 
-    val dummy = Signal { -1 }.resource.asInstanceOf[Derived]
+    val dummy = Signal { -1 }.resource.asInstanceOf[Derived.of[State]]
 
     val r      = Signal { 0 }
-    val right  = r.resource.asInstanceOf[Derived]
+    val right  = r.resource.asInstanceOf[Derived.of[State]]
     val m      = Signal { r() + 1 }
-    val middle = m.resource.asInstanceOf[Derived]
+    val middle = m.resource.asInstanceOf[Derived.of[State]]
     val t      = Signal { m() + 1 }
-    val top    = t.resource.asInstanceOf[Derived]
+    val top    = t.resource.asInstanceOf[Derived.of[State]]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()

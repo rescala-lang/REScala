@@ -1,5 +1,6 @@
 package tests.rescala.misc
 
+import rescala.core.{AdmissionTicket, Scheduler, Transaction}
 import tests.rescala.testtools.RETests
 
 class CreationTicketTest extends RETests {
@@ -9,7 +10,7 @@ class CreationTicketTest extends RETests {
     if (engine != rescala.Schedulers.toposort) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
-      def getTurn(implicit engine: Scheduler): Transaction =
+      def getTurn(implicit engine: Scheduler[State]): Transaction =
         engine.forceNewTransaction()(_.tx)
 
       test("none Dynamic No Implicit") {
@@ -17,7 +18,7 @@ class CreationTicketTest extends RETests {
       }
 
       test("some Dynamic No Implicit") {
-        engine.transaction() { (dynamicTurn: AdmissionTicket) =>
+        engine.transaction() { (dynamicTurn: AdmissionTicket[State]) =>
           assert(implicitly[CreationTicket].scope.self === Right(engine.scheduler))
           assert(implicitly[CreationTicket].scope.embedTransaction(identity) === dynamicTurn.tx)
         }
@@ -30,7 +31,7 @@ class CreationTicketTest extends RETests {
       }
 
       test("some Dynamic Some Implicit") {
-        engine.transaction() { (_: AdmissionTicket) =>
+        engine.transaction() { (_: AdmissionTicket[State]) =>
           implicit val implicitTurn: Transaction = getTurn
           assert(implicitly[CreationTicket].scope.self === Left(implicitTurn))
           assert(implicitly[CreationTicket].scope.embedTransaction(identity) === implicitTurn)

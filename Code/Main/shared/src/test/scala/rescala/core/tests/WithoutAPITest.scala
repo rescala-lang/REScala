@@ -1,6 +1,6 @@
 package rescala.core.tests
 
-import rescala.core.ReName
+import rescala.core.{Derived, InitialChange, ReName, ReSource, ReadAs}
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
@@ -10,6 +10,8 @@ class WithoutAPITest extends RETests {
     class CustomSource[T](initState: State[T]) extends ReSource with ReadAs[T] {
       outer =>
 
+      type State[V] = engine.State[V]
+
       override type Value = T
       override protected[rescala] def state: State[T]            = initState
       override def name: ReName                                  = "I am a source name"
@@ -17,7 +19,7 @@ class WithoutAPITest extends RETests {
       override protected[rescala] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
-        new InitialChange {
+        new InitialChange[State] {
           override val source: CustomSource.this.type = outer
           override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
             if (base != newValue) {
@@ -30,10 +32,11 @@ class WithoutAPITest extends RETests {
 
     class CustomDerivedString(
         initState: State[String],
-        inputSource: ReadAs[String]
+        inputSource: ReadAs.of[State, String]
     ) extends Derived
         with ReadAs[String] {
       override type Value = String
+      override type State[V] = engine.State[V]
       override protected[rescala] def state: State[Value]        = initState
       override def name: ReName                                  = "I am a name"
       override protected[rescala] def commit(base: Value): Value = base
@@ -56,7 +59,7 @@ class WithoutAPITest extends RETests {
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: ReadAs[String] =
+      val customDerived: ReadAs.of[State, String] =
         implicitly[CreationTicket]
           .create(
             Set(customSource),
