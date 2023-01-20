@@ -37,7 +37,7 @@ lazy val root = (project in file("."))
       // "-H:+JNI",
     ),
     nativeImageJvm := "graalvm-java17",
-    nativeImageVersion := "22.0.0",
+    nativeImageVersion := "22.3.0",
     unmanagedSources / excludeFilter := "fr"
   )
   .enablePlugins(NativeImagePlugin)
