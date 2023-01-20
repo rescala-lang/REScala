@@ -1,98 +1,687 @@
-val a = NonEmptyList(
-  TTypeAl(Calendar, Type(AWSet, List(Type(Appointment, List())))),
-  TAbs(
-    work,
-    Type(Source, List(Type(Calendar, List()))),
-    TSource(TFunC(AWSet, List()))
-  ),
-  TAbs(
-    vacation,
-    Type(Source, List(Type(Calendar, List()))),
-    TSource(TFunC(AWSet, List()))
-  ),
-  TAbs(
-    all_appointments,
-    Type(Derived, List(Type(Set, List(Type(Appointment, List()))))),
-    TDerived(
-      TFCall(
-        TFCall(TVar(work), toSet, List()),
-        union,
-        List(TFCall(TVar(vacation), toSet, List()))
-      )
-    )
-  ),
-  TAbs(
-    remaining_vacation,
-    Type(Derived, List(Type(Int, List()))),
-    TDerived(
-      TSub(
-        TNum(30),
-        TFCall(
-          TFCall(
-            TFCall(TVar(vacation), toSet, List()),
-            map,
-            List(TFCall(TVar(_), days, List()))
-          ),
-          sum,
-          List()
-        )
-      )
-    )
-  ),
-  TAbs(
-    add_appointment,
-    Type(Unit, List()),
-    TEns(
-      TExec(
-        TReq(
-          TInteraction(
-            List(Type(Calendar, List())),
-            List(Type(Appointment, List())),
-            List(),
-            List(),
-            List(),
-            None
-          ),
-          TArrow(
-            TVar(cal),
-            TArrow(
-              TVar(a),
-              TLt(
-                TFunC(get_start, List(TVar(a))),
-                TFunC(get_end, List(TVar(a)))
-              )
-            )
-          )
-        ),
-        TArrow(
-          TVar(cal),
-          TArrow(TVar(a), TFCall(TVar(cal), add, List(TVar(a))))
-        )
-      ),
-      TArrow(
-        TVar(cal),
-        TArrow(TVar(a), TInSet(TVar(a), TFCall(TVar(cal), toSet, List())))
-      )
-    )
-  ),
-  TAbs(
-    add_vacation,
-    Type(Unit, List()),
-    TFCall(TVar(add_appointment), modifies, List(TVar(vacation)))
-  ),
-  TAbs(
-    add_work,
-    Type(Unit, List()),
-    TFCall(TVar(add_appointment), modifies, List(TVar(work)))
-  ),
-  TFCall(
-    TVar(UI),
-    display,
-    List(TVar(all_appointments), TVar(remaining_vacation))
-  ),
-  TFCurly(
-    TFCall(TVar(UI), vacationDialog, List()),
-    onConfirm,
-    TArrow(TVar(a), TFCall(TVar(add_vacation), apply, List(TVar(a))))
-  )
-)
+[
+  {
+    "TTypeAl" : {
+      "name" : "Calendar",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "AWSet",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Appointment",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "work",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Calendar",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "AWSet",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Calendar",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "AWSet",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "all_appointments",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Derived",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Set",
+                "inner" : [
+                  {
+                    "SimpleType" : {
+                      "name" : "Appointment",
+                      "inner" : [
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TDerived" : {
+            "body" : {
+              "TViper" : {
+                "TFCall" : {
+                  "parent" : {
+                    "TViper" : {
+                      "TFCall" : {
+                        "parent" : {
+                          "TVar" : {
+                            "name" : "work"
+                          }
+                        },
+                        "field" : "toSet",
+                        "args" : [
+                        ]
+                      }
+                    }
+                  },
+                  "field" : "union",
+                  "args" : [
+                    {
+                      "TViper" : {
+                        "TFCall" : {
+                          "parent" : {
+                            "TVar" : {
+                              "name" : "vacation"
+                            }
+                          },
+                          "field" : "toSet",
+                          "args" : [
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "remaining_vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Derived",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Int",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TDerived" : {
+            "body" : {
+              "TViper" : {
+                "TArith" : {
+                  "TSub" : {
+                    "left" : {
+                      "TViper" : {
+                        "TArith" : {
+                          "TNum" : {
+                            "value" : 30
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TFCall" : {
+                          "parent" : {
+                            "TViper" : {
+                              "TFCall" : {
+                                "parent" : {
+                                  "TViper" : {
+                                    "TFCall" : {
+                                      "parent" : {
+                                        "TVar" : {
+                                          "name" : "vacation"
+                                        }
+                                      },
+                                      "field" : "toSet",
+                                      "args" : [
+                                      ]
+                                    }
+                                  }
+                                },
+                                "field" : "map",
+                                "args" : [
+                                  {
+                                    "TViper" : {
+                                      "TFCall" : {
+                                        "parent" : {
+                                          "TVar" : {
+                                            "name" : "_"
+                                          }
+                                        },
+                                        "field" : "days",
+                                        "args" : [
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "field" : "sum",
+                          "args" : [
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_appointment",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TFAcc" : {
+          "TFCurly" : {
+            "parent" : {
+              "TFAcc" : {
+                "TFCurly" : {
+                  "parent" : {
+                    "TFAcc" : {
+                      "TFCurly" : {
+                        "parent" : {
+                          "TInteraction" : {
+                            "reactiveTypes" : [
+                              {
+                                "SimpleType" : {
+                                  "name" : "Calendar",
+                                  "inner" : [
+                                  ]
+                                }
+                              }
+                            ],
+                            "argumentTypes" : [
+                              {
+                                "SimpleType" : {
+                                  "name" : "Appointment",
+                                  "inner" : [
+                                  ]
+                                }
+                              }
+                            ],
+                            "modifies" : [
+                            ],
+                            "requires" : [
+                            ],
+                            "ensures" : [
+                            ],
+                            "executes" : null
+                          }
+                        },
+                        "field" : "requires",
+                        "body" : {
+                          "TArrow" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "cal"
+                              }
+                            },
+                            "right" : {
+                              "TArrow" : {
+                                "left" : {
+                                  "TVar" : {
+                                    "name" : "a"
+                                  }
+                                },
+                                "right" : {
+                                  "TViper" : {
+                                    "TBoolean" : {
+                                      "TLt" : {
+                                        "left" : {
+                                          "TViper" : {
+                                            "TFunC" : {
+                                              "name" : "get_start",
+                                              "args" : [
+                                                {
+                                                  "TVar" : {
+                                                    "name" : "a"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "right" : {
+                                          "TViper" : {
+                                            "TFunC" : {
+                                              "name" : "get_end",
+                                              "args" : [
+                                                {
+                                                  "TVar" : {
+                                                    "name" : "a"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "field" : "executes",
+                  "body" : {
+                    "TArrow" : {
+                      "left" : {
+                        "TVar" : {
+                          "name" : "cal"
+                        }
+                      },
+                      "right" : {
+                        "TArrow" : {
+                          "left" : {
+                            "TVar" : {
+                              "name" : "a"
+                            }
+                          },
+                          "right" : {
+                            "TViper" : {
+                              "TFCall" : {
+                                "parent" : {
+                                  "TVar" : {
+                                    "name" : "cal"
+                                  }
+                                },
+                                "field" : "add",
+                                "args" : [
+                                  {
+                                    "TVar" : {
+                                      "name" : "a"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "field" : "ensures",
+            "body" : {
+              "TArrow" : {
+                "left" : {
+                  "TVar" : {
+                    "name" : "cal"
+                  }
+                },
+                "right" : {
+                  "TArrow" : {
+                    "left" : {
+                      "TVar" : {
+                        "name" : "a"
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a"
+                              }
+                            },
+                            "right" : {
+                              "TViper" : {
+                                "TFCall" : {
+                                  "parent" : {
+                                    "TVar" : {
+                                      "name" : "cal"
+                                    }
+                                  },
+                                  "field" : "toSet",
+                                  "args" : [
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TVar" : {
+                "name" : "add_appointment"
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "vacation"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_work",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TVar" : {
+                "name" : "add_appointment"
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "work"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TViper" : {
+      "TFCall" : {
+        "parent" : {
+          "TVar" : {
+            "name" : "UI"
+          }
+        },
+        "field" : "display",
+        "args" : [
+          {
+            "TVar" : {
+              "name" : "all_appointments"
+            }
+          },
+          {
+            "TVar" : {
+              "name" : "remaining_vacation"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "TFAcc" : {
+      "TFCurly" : {
+        "parent" : {
+          "TViper" : {
+            "TFCall" : {
+              "parent" : {
+                "TVar" : {
+                  "name" : "UI"
+                }
+              },
+              "field" : "vacationDialog",
+              "args" : [
+              ]
+            }
+          }
+        },
+        "field" : "onConfirm",
+        "body" : {
+          "TArrow" : {
+            "left" : {
+              "TVar" : {
+                "name" : "a"
+              }
+            },
+            "right" : {
+              "TViper" : {
+                "TFCall" : {
+                  "parent" : {
+                    "TVar" : {
+                      "name" : "add_vacation"
+                    }
+                  },
+                  "field" : "apply",
+                  "args" : [
+                    {
+                      "TVar" : {
+                        "name" : "a"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TQuantifier" : {
+          "TForall" : {
+            "vars" : [
+              {
+                "name" : "a",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "Appointment",
+                    "inner" : [
+                    ]
+                  }
+                }
+              }
+            ],
+            "triggers" : [
+            ],
+            "body" : {
+              "TViper" : {
+                "TBoolean" : {
+                  "TImpl" : {
+                    "left" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a"
+                              }
+                            },
+                            "right" : {
+                              "TVar" : {
+                                "name" : "all_appointments"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TLt" : {
+                            "left" : {
+                              "TViper" : {
+                                "TFunC" : {
+                                  "name" : "get_start",
+                                  "args" : [
+                                    {
+                                      "TVar" : {
+                                        "name" : "a"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "right" : {
+                              "TViper" : {
+                                "TFunC" : {
+                                  "name" : "get_end",
+                                  "args" : [
+                                    {
+                                      "TVar" : {
+                                        "name" : "a"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TGeq" : {
+          "left" : {
+            "TVar" : {
+              "name" : "remaining_vacation"
+            }
+          },
+          "right" : {
+            "TViper" : {
+              "TArith" : {
+                "TNum" : {
+                  "value" : 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+]

@@ -1,3 +1,5 @@
+val circeVersion = "0.14.1"
+
 lazy val root = (project in file("."))
   .settings(
     name := "lore",
@@ -11,10 +13,14 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.8",
     // test dependencies
     libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
-    libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
+    libraryDependencies += "io.circe" %% "circe-core" % circeVersion,
+    libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
+    libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
     testFrameworks += new TestFramework("minitest.runner.Framework"),
+    // compiler options
     scalacOptions ++= List(
-      "-Xfatal-warnings"
+      "-Xfatal-warnings", // turn warnings into errors
+      "-Xmax-inlines:200"
     ),
     // native-image flag "--initialize-at-build-time" is required for Cats Effect applications
     nativeImageOptions ++= List(
@@ -32,7 +38,7 @@ lazy val root = (project in file("."))
     ),
     nativeImageJvm := "graalvm-java17",
     nativeImageVersion := "22.0.0",
-    unmanagedSources / excludeFilter := "lore/ViperBackend.scala" | "lore/BackendUtils.scala"
+    unmanagedSources / excludeFilter := "fr"
   )
   .enablePlugins(NativeImagePlugin)
   .settings(Compile / mainClass := Some("lore.Compiler"))
