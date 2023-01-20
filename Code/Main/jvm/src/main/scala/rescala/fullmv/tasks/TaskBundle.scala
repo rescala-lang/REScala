@@ -1,12 +1,12 @@
 package rescala.fullmv.tasks
 
 import rescala.core.{AccessHandler, Derived, ReSource, ReevTicket, Result}
-import rescala.fullmv.FramingBranchResult.*
+import rescala.fullmv.FramingBranchResult._
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
-import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, *}
+import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, _}
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
-import rescala.fullmv.{FullMVBundle, *}
+import rescala.fullmv.{FullMVBundle, _}
 import rescala.operator.Pulse
 
 import java.util.concurrent.RecursiveAction

@@ -2,7 +2,7 @@ package rescala.fullmv
 
 import rescala.core.{InitialChange, ReSource}
 import rescala.fullmv.mirrors.{Host, Mirror}
-import rescala.fullmv.sgt.synchronization.*
+import rescala.fullmv.sgt.synchronization._
 import rescala.fullmv.tasks.TaskBundle
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}

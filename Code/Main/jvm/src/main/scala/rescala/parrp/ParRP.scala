@@ -1,7 +1,7 @@
 package rescala.parrp
 
 import rescala.core.Scheduler
-import rescala.locking.*
+import rescala.locking._
 import rescala.scheduler.Levelbased
 
 trait ParRP extends Levelbased {
