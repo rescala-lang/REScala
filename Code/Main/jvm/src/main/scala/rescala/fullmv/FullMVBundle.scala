@@ -161,7 +161,7 @@ trait FullMVBundle {
         }
 
         // admission phase
-        val admissionTicket = new AdmissionTicket(transaction, declaredWrites)
+        val admissionTicket = new AdmissionTicket[State](transaction, declaredWrites)
         val admissionResult = Try { admissionPhase(admissionTicket) }
         if (FullMVUtil.DEBUG) admissionResult match {
           case scala.util.Failure(e) => e.printStackTrace()

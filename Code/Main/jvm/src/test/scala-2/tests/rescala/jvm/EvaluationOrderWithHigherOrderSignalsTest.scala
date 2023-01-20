@@ -30,15 +30,15 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
       }(scheduler)
 
       changeX match {
-        case DontSet => ho.set(x4)(implicitly, ScopeSearch.fromSchedulerImplicit(engine.scheduler))
+        case DontSet => ho.set(x4)(scheduler, ScopeSearch.fromSchedulerImplicit(engine.scheduler))
         case _ => transaction(x, ho) { implicit tx =>
-            x.admit(newX)
-            ho.admit(x4)
+            x.admit(newX)(tx)
+            ho.admit(x4)(tx)
           }
       }
 
       // final value should be correct
-      assert(flatten.readValueOnce == newX)
+      assert(flatten.readValueOnce(scheduler) == newX)
       // value should be determined by reevaluating twice after discovering a higher-level dependency on first run
       reevaluationRestartTracker
     }

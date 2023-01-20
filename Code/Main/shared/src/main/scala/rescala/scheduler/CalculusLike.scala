@@ -92,7 +92,7 @@ trait CalculusLike {
           val transaction = FTransaction(new SimpleCreation())
           withDynamicInitializer(transaction) {
             // admission
-            val admissionTicket = new AdmissionTicket(transaction, initialWrites)
+            val admissionTicket = new AdmissionTicket[State](transaction, initialWrites)
 
             // collect the fired values
             val admissionResult = admissionPhase(admissionTicket)
