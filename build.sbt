@@ -42,21 +42,20 @@ lazy val root = (project in file("."))
   )
   .enablePlugins(NativeImagePlugin)
   .settings(Compile / mainClass := Some("lore.Compiler"))
-  .dependsOn(parser)
 
-lazy val parser = (project in file("parser"))
-  .settings(
-    scalaVersion := "2.13.6",
-    libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.2",
-    resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
-      .withAllowInsecureProtocol(true),
-    resolvers += "jitpack" at "https://jitpack.io",
-    libraryDependencies += "com.github.rescala-lang.rescala" %% "rescala" % "0923d1786b",
-    // test dependencies
-    libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
-    libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
-    testFrameworks += new TestFramework("minitest.runner.Framework")
-  )
+// lazy val parser = (project in file("parser"))
+//   .settings(
+//     scalaVersion := "2.13.6",
+//     libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.2.2",
+//     resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/")
+//       .withAllowInsecureProtocol(true),
+//     resolvers += "jitpack" at "https://jitpack.io",
+//     libraryDependencies += "com.github.rescala-lang.rescala" %% "rescala" % "0923d1786b",
+//     // test dependencies
+//     libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
+//     libraryDependencies += "org.typelevel" %% "core" % "1.2.0" % Test,
+//     testFrameworks += new TestFramework("minitest.runner.Framework")
+//   )
 
 Global / excludeLintKeys += nativeImageVersion
 Global / excludeLintKeys += nativeImageJvm
