@@ -298,12 +298,17 @@ class ReactiveMacros(val c: blackbox.Context) {
       tree match {
         // replace any used CreationTicket in a Signal expression with the correct turn source for the current turn
         // q"$_.fromSchedulerImplicit[..$_](...$_)"
-        // TODO: this was disabled because of the bundle hack, need to figure out how to access creation ticket again
         case turnSource @ Apply(Select(ctleft, TermName("fromSchedulerImplicit")), _)
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
             && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
           val ct = new BundleAcquisiton[ResourceType].getBundledClass(weakTypeOf[CreationTicket])
           q"""new $ct(${termNames.ROOTPKG}.scala.Left($ticketIdent.tx))"""
+
+        case turnSource @ Apply(TypeApply(Select(ctleft, TermName("fromSchedulerImplicit")), types), _)
+          if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
+             && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
+          val ct = new BundleAcquisiton[ResourceType].getBundledClass(weakTypeOf[CreationTicket])
+          q"""$ctleft.fromTicketImplicit($ticketIdent)"""
 
         case tree @ Select(reactive, TermName("now")) =>
           c.warning(
