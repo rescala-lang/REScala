@@ -8,7 +8,9 @@ import rescala.operator.{Operators, cutOutOfUserComputation}
 trait SignalCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
 
-  trait SignalCompat[+T] extends ReadableMacro[T] {
+  private type ScopeSearch = rescala.core.ScopeSearch[State]
+
+  trait SignalCompat[+T] extends ReadableMacro[State, T] {
 
     /** Return a Signal with f applied to the value
       * @group operator
@@ -20,11 +22,12 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         B,
         rescala.operator.SignalMacroImpl.MapFuncImpl.type,
         Signals.type,
-        StaticTicket,
+        rescala.core.StaticTicket[State],
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
   }
@@ -42,9 +45,10 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         Dep,
         Cap,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
   }
 
@@ -63,33 +67,36 @@ trait SignalCompatBundle extends ReadableMacroBundle {
         A,
         Static,
         Signals.type,
-        StaticTicket,
+        rescala.core.StaticTicket[State],
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
     final def static[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
         A,
         Static,
         Signals.type,
-        StaticTicket,
+        rescala.core.StaticTicket[State],
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
     final def dynamic[A](expression: A)(implicit ticket: CreationTicket): Signal[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
         A,
         Dynamic,
         Signals.type,
-        StaticTicket,
+        rescala.core.StaticTicket[State],
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
   }
 

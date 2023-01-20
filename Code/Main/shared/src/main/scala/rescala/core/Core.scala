@@ -46,7 +46,8 @@ abstract class Base[S[_], V](override protected[rescala] val state: S[V], overri
   * @tparam A return type of the accessor
   * @groupname accessor Accessor and observers
   */
-trait ReadAs[+A] extends ReSource {
+trait ReadAs[S[_], +A] extends ReSource {
+  type State[V] = S[V]
 
   /** Interprets the internal type to the external type
     *
@@ -54,7 +55,7 @@ trait ReadAs[+A] extends ReSource {
     */
   def read(v: Value): A
 }
-object ReadAs { type of[S[_], A] = ReadAs[A] { type State[V] = S[V] } }
+object ReadAs { type of[S[_], A] = ReadAs[S, A] }
 
 /** Encapsulates an action changing a single source. */
 trait InitialChange[State[_]] {

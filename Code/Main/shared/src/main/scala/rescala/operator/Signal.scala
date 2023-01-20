@@ -169,7 +169,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket => T)(implicit
+    def static[T](dependencies: ReSource.of[State]*)(expr: rescala.core.StaticTicket[State] => T)(implicit
         ct: CreationTicket
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {

@@ -7,10 +7,10 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
-  ) extends Derived with ReadableMacro[T] {
+  ) extends Derived with ReadableMacro[State, T] {
 
     override type Value = ReactorState[T]
-    type State[V] = ReactorBundle.this.api.State[V]
+    override type State[V] = ReactorBundle.this.api.State[V]
 
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
@@ -102,7 +102,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       input.withValue(resState)
     }
 
-    override def resource: ReadAs[T] = this
+    override def resource: ReadAs.of[State, T] = this
 
     def now(implicit scheduler: Scheduler[State]): T = scheduler.singleReadValueOnce(this)
   }

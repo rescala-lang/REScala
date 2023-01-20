@@ -8,7 +8,7 @@ import rescala.operator.{EventsMacroImpl, Operators, cutOutOfUserComputation}
 trait EventCompatBundle extends ReadableMacroBundle {
   selfType: Operators =>
 
-  trait EventCompat[+T] extends ReadableMacro[Option[T]] {
+  trait EventCompat[+T] extends ReadableMacro[State, Option[T]] {
     selfType: Event[T] =>
 
     /** Collects the results from a partial function
@@ -24,9 +24,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -42,9 +43,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
     /** Filters the event, only propagating the value when the filter is true.
@@ -61,9 +63,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
     /** Transform the event.
@@ -79,9 +82,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
     /** Folds events with a given operation to create a Signal.
@@ -96,9 +100,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         CreationTicket,
         StaticTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
 
   }
@@ -118,9 +123,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
     final def static[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -129,9 +135,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
     final def dynamic[A](expression: Option[A])(implicit ticket: CreationTicket): Event[A] =
       macro rescala.macros.ReactiveMacros.ReactiveExpression[
@@ -140,9 +147,10 @@ trait EventCompatBundle extends ReadableMacroBundle {
         Events.type,
         StaticTicket,
         DynamicTicket,
-        ScopeSearch[State],
+        ScopeSearch,
         LowPriorityScopeImplicits,
-        ReSource.of[State]
+        ReSource,
+        State[Any]
       ]
   }
 

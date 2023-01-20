@@ -10,5 +10,6 @@ import rescala.parrp.{Backoff, ParRP}
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
 object default extends interface.RescalaInterface with ParRP {
+  override type ReSource = rescala.core.ReSource.of[State]
   override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
 }

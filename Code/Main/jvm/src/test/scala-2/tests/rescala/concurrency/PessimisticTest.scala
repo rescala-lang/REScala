@@ -1,5 +1,6 @@
 package tests.rescala.concurrency
 
+import rescala.core.{Initializer, ScopeSearch}
 import rescala.core.infiltration.JVMInfiltrator
 import rescala.parrp.Backoff
 import tests.rescala.testtools.{RETests, _}
@@ -168,7 +169,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // now, this should create some only in turn dynamic changes
-    b0.set(true)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
+    b0.set(true)(mockFac, ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 3)
@@ -176,7 +177,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // this does not
-    b0.set(false)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
+    b0.set(false)(mockFac, ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 4)
@@ -184,7 +185,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
 
     // this also does not, because the level of the dynamic signals stays on 3
-    b0.set(true)(mockFac, rescala.Schedulers.parrp.ScopeSearch.fromSchedulerImplicit(mockFac))
+    b0.set(true)(mockFac, ScopeSearch.fromSchedulerImplicit(mockFac))
 
     assert(unsafeNow(i1_3) === 42)
     assert(reeval === 5)
@@ -209,7 +210,7 @@ class PessimisticTest extends RETests {
     val il0                  = Var(11)
     val (syncI1, il1)        = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[engine.Initializer]
+    var reeval = List.empty[Initializer]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again

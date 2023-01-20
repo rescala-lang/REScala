@@ -3,6 +3,7 @@ package rescala.extra.invariant
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
+import rescala.core.{InitialChange, Observation}
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse
 import rescala.scheduler.TopoBundle
@@ -10,6 +11,7 @@ import rescala.scheduler.TopoBundle
 import scala.collection.mutable.ListBuffer
 
 object InvariantApi extends InvariantBundle with RescalaInterface {
+  override type ReSource = rescala.core.ReSource.of[State]
   def scheduler: InvariantScheduler.type = InvariantScheduler
 
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
@@ -135,7 +137,7 @@ trait InvariantBundle extends TopoBundle {
             admissionTicket =>
               changes.foreach {
                 change =>
-                  val initialChange: InitialChange = new InitialChange {
+                  val initialChange: InitialChange[State] = new InitialChange[State] {
                     override val source: ReSource = change._1
 
                     override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {

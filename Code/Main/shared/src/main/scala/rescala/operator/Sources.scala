@@ -5,7 +5,7 @@ import rescala.core.{AdmissionTicket, Base, InitialChange, Observation, ReName, 
 trait Sources {
   self: Operators =>
 
-  trait Source[T] extends ReSource {
+  trait Source[T] extends rescala.core.ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket[State]): Unit = admitPulse(Pulse.Value(value))
     def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit
   }
@@ -28,9 +28,9 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit        = fire(value)
-    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
-    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
+    def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch): Unit        = fire(value)
+    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch, ev: Unit =:= T): Unit = fire(ev(()))
+    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -60,13 +60,13 @@ trait Sources {
     */
   class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
       extends Base[State, Pulse[A]](initialState, name)
-      with Source[A] with Signal[A] with ReadAs[A] {
+      with Source[A] with Signal[A] {
     override type Value = Pulse[A]
 
     override val resource: Signal[A] = this
     override def disconnect(): Unit  = ()
 
-    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
+    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -74,7 +74,7 @@ trait Sources {
           })
       }
 
-    def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
+    def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit = {
       def newTx() = sched.forceNewTransaction(this) { t =>
         admit(f(t.tx.now(this)))(t)
       }

@@ -37,17 +37,23 @@ object Schedulers extends PlatformSchedulers {
     }
   }
 
-  object unmanaged extends Unmanaged with RescalaInterface
+  object unmanaged extends Unmanaged with RescalaInterface {
+    override type ReSource = rescala.core.ReSource.of[State]
+  }
 
-  object synchron extends Synchron with RescalaInterface
+  object synchron extends Synchron with RescalaInterface {
+    override type ReSource = rescala.core.ReSource.of[State]
+  }
 
   object toposort extends TopoBundle with RescalaInterface {
     override type State[V] = TopoState[V]
+    override type ReSource = rescala.core.ReSource.of[State]
     override def scheduler: Scheduler[State] = TopoScheduler
     override def makeDerivedStructStateBundle[V](ip: V) = new TopoState(ip)
   }
 
   object sidup extends Sidup with RescalaInterface {
+    override type ReSource = rescala.core.ReSource.of[State]
     val scheduler: Scheduler[State] = new TwoVersionScheduler[SidupTransaction] {
       override protected def makeTransaction(priorTx: Option[SidupTransaction]): SidupTransaction = new SidupTransaction
       override def schedulerName: String = "SidupSimple"

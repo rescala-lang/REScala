@@ -14,12 +14,12 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
     val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(s"Phil($i)")
 
     val forks = for (i <- 0 until tableSize) yield {
-      val nextCircularIndex     = mod(i + 1)
-      implicit val name: ReName = s"Fork($i, $nextCircularIndex)"
-      val left                  = phils(i)
-      val right                 = phils(nextCircularIndex)
+      val nextCircularIndex      = mod(i + 1)
+      implicit val name: ReName  = s"Fork($i, $nextCircularIndex)"
+      val left: Var[Philosopher] = phils(i)
+      val right                  = phils(nextCircularIndex)
       Signal {
-        left() match {
+        left.value match {
           case Hungry => Taken(i.toString)
           case Thinking =>
             right() match {

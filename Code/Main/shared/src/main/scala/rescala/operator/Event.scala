@@ -5,6 +5,7 @@ import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
+import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
 
 object EventsMacroImpl {
@@ -55,7 +56,7 @@ trait EventBundle extends EventCompatBundle {
     final override type State[V] = selfType.State[V]
 
     implicit def internalAccess(v: Value): Pulse[T]
-    def resource: ReadAs[Option[T]] = this
+    def resource: ReadAs.of[State, Option[T @uncheckedVariance]] = this
 
     /** Interprets the pulse of the event by converting to an option
       *
@@ -289,7 +290,7 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket => Option[T])(implicit
+    def static[T](dependencies: ReSource.of[State]*)(expr: rescala.core.StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] =
       staticNamed(ticket.rename.str, dependencies: _*)(st => Pulse.fromOption(expr(st)))

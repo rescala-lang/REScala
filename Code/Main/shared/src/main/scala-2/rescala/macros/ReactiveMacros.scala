@@ -26,7 +26,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
-      ResourceType: c.WeakTypeTag
+      ResourceType: c.WeakTypeTag,
+      State: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree): c.Tree = {
     ReactiveExpressionWithAPI[
       A,
@@ -36,7 +37,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket,
       ScopeSearch,
       LowPriorityImplicitObject,
-      ResourceType
+      ResourceType,
+      State
     ](expression)(ticket)(None)
   }
 
@@ -48,7 +50,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
-      ResourceType: c.WeakTypeTag
+      ResourceType: c.WeakTypeTag,
+      State: c.WeakTypeTag
   ](expression: Tree)(ticket: c.Tree)(prefixManipulation: Option[PrefixManipulation]): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -67,7 +70,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     val body = q"""$resolvedTree.${tpname.toTermName}.$creationMethod[${weakTypeOf[A]}](
          ..$dependencies
-         ){${lego.contextualizedExpression(ticketType)}}($ticket)"""
+         ){${lego.contextualizedExpression(ticketType, weakTypeOf[State], isStatic)}}($ticket)"""
 
     lego.wrapFinalize(body, prefixManipulation)
   }
@@ -79,7 +82,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
-      ResourceType: c.WeakTypeTag
+      ResourceType: c.WeakTypeTag,
+      State: c.WeakTypeTag
   ](expression: Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -93,7 +97,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val body =
       q"""new UserDefinedFunction[${weakTypeOf[T]}, ${weakTypeOf[DependencyType]}, ${ticketType}](
          _root_.scala.collection.immutable.Set[${weakTypeOf[DependencyType]}](..$dependencies),
-         ${lego.contextualizedExpression(ticketType)},
+         ${lego.contextualizedExpression(ticketType, weakTypeOf[State], isStatic)},
          ${isStatic}
          )"""
 
@@ -128,7 +132,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
-      ResourceType: c.WeakTypeTag
+      ResourceType: c.WeakTypeTag,
+      State: c.WeakTypeTag
   ](expression: c.Tree)(ticket: c.Tree): c.Tree = {
     if (c.hasErrors) return compileErrorsAst
 
@@ -144,7 +149,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       DynamicTicket,
       ScopeSearch,
       LowPriorityImplicitObject,
-      ResourceType
+      ResourceType,
+      State
     ](computation)(ticket)(Some(pm))
   }
 
@@ -157,7 +163,8 @@ class ReactiveMacros(val c: blackbox.Context) {
       StaticTicket: c.WeakTypeTag,
       ScopeSearch: c.WeakTypeTag,
       LowPriorityImplicitObject: c.WeakTypeTag,
-      ResourceType: c.WeakTypeTag
+      ResourceType: c.WeakTypeTag,
+      State: c.WeakTypeTag
   ](
       init: c.Expr[A]
   )(op: c.Expr[(A, T) => A])(ticket: c.Expr[CT]): c.Tree = {
@@ -178,7 +185,7 @@ class ReactiveMacros(val c: blackbox.Context) {
     val tq"$resolvedTree.$tpname.type" = ReTyper(c).createTypeTree(resolved, c.enclosingPosition)
 
     val body = q"""$resolvedTree.${tpname.toTermName}.fold[${weakTypeOf[A]}](Set(..$detections), $init)(
-           ${lego.contextualizedExpression(ticketType)}
+           ${lego.contextualizedExpression(ticketType, weakTypeOf[State], true)}
           )($ticket)"""
 
     lego.wrapFinalize(body, Some(pm))
@@ -216,7 +223,7 @@ class ReactiveMacros(val c: blackbox.Context) {
 
     def getBundledClass(tpe: Type) = {
 
-      def doMagic(tpe: Type) = {
+      def doMagic(tpe: Type): Type = {
         val tn = getBundle
         tpe.asSeenFrom(tn, tpe.typeSymbol.owner).dealias
       }
@@ -252,9 +259,15 @@ class ReactiveMacros(val c: blackbox.Context) {
       )
     val rewrittenTree = detections transform cutOutTree
 
-    def contextualizedExpression(contextType: Type) = {
+    val bundling = new BundleAcquisiton[ResourceType]
+    def contextualizedExpression(contextType: Type, stateType: Type, isStatic: Boolean) = {
+      // val contextualized = bundling.getBundledClass(contextType)
 
-      q"{$ticketTermName: ${new BundleAcquisiton[ResourceType].getBundledClass(contextType)} => $rewrittenTree }"
+      val constate = bundling.getBundledClass(stateType).typeConstructor
+
+      if (isStatic)
+        q"{($ticketTermName: rescala.core.StaticTicket[$constate] ) => $rewrittenTree }"
+      else q"{($ticketTermName: (rescala.core.DynamicTicket[$constate])) => $rewrittenTree }"
     }
 
     def wrapFinalize(body: Tree, prefixManipulation: Option[PrefixManipulation]): Tree = {

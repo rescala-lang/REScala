@@ -5,7 +5,7 @@ import rescala.core.ReadAs
 import scala.annotation.compileTimeOnly
 
 trait ReadableMacroBundle {
-  trait ReadableMacro[+A] extends ReadAs[A] with MacroAccess[A, ReadAs[A]]
+  trait ReadableMacro[S[_], +A] extends ReadAs[S, A] with MacroAccess[A, ReadAs[S, A]]
 }
 
 trait MacroAccess[+A, +T] {

@@ -1,5 +1,6 @@
 package tests.rescala.jvm
 
+import rescala.core.ScopeSearch
 import rescala.interface.RescalaInterface
 import tests.rescala.testtools.RETests
 
@@ -29,7 +30,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
       }(scheduler)
 
       changeX match {
-        case DontSet => ho.set(x4)(implicitly, engine.ScopeSearch.fromSchedulerImplicit(engine.scheduler))
+        case DontSet => ho.set(x4)(implicitly, ScopeSearch.fromSchedulerImplicit(engine.scheduler))
         case _ => transaction(x, ho) { implicit tx =>
             x.admit(newX)
             ho.admit(x4)

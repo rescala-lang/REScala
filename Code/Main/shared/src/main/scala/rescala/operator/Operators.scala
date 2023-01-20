@@ -17,5 +17,7 @@ trait Operators extends AnyRef // to make the below more symmetric
   type DynamicTicket  = rescala.core.DynamicTicket[State]
   type CreationTicket = rescala.core.CreationTicket[State]
   type StaticTicket   = rescala.core.StaticTicket[State]
+  type ReSource       = rescala.core.ReSource.of[State]
+  type ScopeSearch    = rescala.core.ScopeSearch[State]
 
 }

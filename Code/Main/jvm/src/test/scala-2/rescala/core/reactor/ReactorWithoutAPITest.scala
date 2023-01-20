@@ -1,6 +1,6 @@
 package rescala.core.reactor
 
-import rescala.core.ReName
+import rescala.core.{ReName, ReadAs}
 import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 
@@ -11,11 +11,12 @@ class ReactorWithoutAPITest extends RETests {
 
   class Reactor[T](
       initState: State[ReactorStage[T]]
-  ) extends Derived
-      with ReadAs[T]
-      with MacroAccess[T, ReadAs[T]] {
+  ) extends rescala.core.Derived
+    with ReadAs[State, T]
+    with MacroAccess[T, ReadAs[State, T]] {
 
     override type Value = ReactorStage[T]
+    override type State[V] = rescala.default.State[V]
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState
     override def name: ReName                                     = "Custom Reactor"
@@ -64,7 +65,7 @@ class ReactorWithoutAPITest extends RETests {
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
 
-    override def resource: ReadAs[T] = this
+    override def resource: ReadAs.of[State, T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }

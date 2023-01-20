@@ -1,7 +1,8 @@
 package tests.rescala.concurrency.philosophers
 
-import java.util.concurrent.atomic.AtomicInteger
+import rescala.core.Transaction
 
+import java.util.concurrent.atomic.AtomicInteger
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
@@ -98,7 +99,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: RescalaInterface) {
       rightFork: Signal[Fork],
       vision: Signal[Vision]
   ) {
-    def inspect(t: Transaction): String =
+    def inspect(t: Transaction.of[State]): String =
       s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 
