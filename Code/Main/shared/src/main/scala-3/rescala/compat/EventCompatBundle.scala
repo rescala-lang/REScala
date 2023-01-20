@@ -8,7 +8,7 @@ import rescala.macros.ReadableMacroBundle
 trait EventCompatBundle extends ReadableMacroBundle {
   bundle: Operators =>
 
-  trait EventCompat[+T] extends ReadableMacro[Option[T]] {
+  trait EventCompat[+T] extends ReadableMacro[State, Option[T]] {
     selfType: Event[T] =>
 
     /** Filters the event, only propagating the value when the filter is true.

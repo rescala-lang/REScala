@@ -8,7 +8,7 @@ import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
 trait SignalCompatBundle extends ReadableMacroBundle {
   bundle: Operators =>
 
-  trait SignalCompat[+T] extends ReadableMacro[T] {
+  trait SignalCompat[+T] extends ReadableMacro[State, T] {
 
     /** Return a Signal with f applied to the value
       * @group operator
