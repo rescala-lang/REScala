@@ -86,7 +86,7 @@ trait SubsumableLockHost extends Host[SubsumableLock] {
   def getCachedOrReceiveRemoteWithReference(guid: Host.GUID, remoteProxy: => SubsumableLockProxy): SubsumableLock = {
     @tailrec def retry(): SubsumableLock = {
       getCachedOrReceiveRemote(guid, new SubsumableLockReflection(this, guid, remoteProxy)) match {
-        case ins : Instantiated[_, _] =>
+        case ins: Instantiated[_, _] =>
           ins.instance
         case Found(instance) =>
           if (instance.tryLocalAddRefs(1)) {

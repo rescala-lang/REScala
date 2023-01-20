@@ -40,7 +40,7 @@ class PhilosopherCompetition {
     if (res) seating.philosopher.set(Thinking)(
       comp.stableTable.engine.scheduler,
       ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
-      )
+    )
     !res
   }
 

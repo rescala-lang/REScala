@@ -12,7 +12,7 @@ object Schedulers extends PlatformSchedulers {
       override type State[V] = LevelState[V]
       override protected def makeDerivedStructState[V](initialValue: V): State[V] = new LevelState(initialValue)
       override def releasePhase(): Unit                                           = ()
-      override def preparationPhase(initialWrites: Set[ReSource.of[State]]): Unit           = {}
+      override def preparationPhase(initialWrites: Set[ReSource.of[State]]): Unit = {}
       override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
     }
 
@@ -32,7 +32,10 @@ object Schedulers extends PlatformSchedulers {
     val scheduler: Scheduler[State] = new TwoVersionScheduler[SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
       override def schedulerName: String                                                  = "Synchron"
-      override def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R =
+      override def forceNewTransaction[R](
+          initialWrites: Set[ReSource.of[State]],
+          admissionPhase: AdmissionTicket[State] => R
+      ): R =
         synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }
   }
@@ -48,7 +51,7 @@ object Schedulers extends PlatformSchedulers {
   object toposort extends TopoBundle with RescalaInterface {
     override type State[V] = TopoState[V]
     override type ReSource = rescala.core.ReSource.of[State]
-    override def scheduler: Scheduler[State] = TopoScheduler
+    override def scheduler: Scheduler[State]            = TopoScheduler
     override def makeDerivedStructStateBundle[V](ip: V) = new TopoState(ip)
   }
 
@@ -56,9 +59,12 @@ object Schedulers extends PlatformSchedulers {
     override type ReSource = rescala.core.ReSource.of[State]
     val scheduler: Scheduler[State] = new TwoVersionScheduler[SidupTransaction] {
       override protected def makeTransaction(priorTx: Option[SidupTransaction]): SidupTransaction = new SidupTransaction
-      override def schedulerName: String = "SidupSimple"
-      override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R =
-        synchronized {super.forceNewTransaction(initialWrites, admissionPhase)}
+      override def schedulerName: String                                                          = "SidupSimple"
+      override def forceNewTransaction[R](
+          initialWrites: Set[ReSource],
+          admissionPhase: AdmissionTicket[State] => R
+      ): R =
+        synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }
   }
 

@@ -1,6 +1,8 @@
 package rescala.operator
 
-import rescala.core.{AdmissionTicket, Base, InitialChange, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch}
+import rescala.core.{
+  AdmissionTicket, Base, InitialChange, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch
+}
 
 trait Sources {
   self: Operators =>
@@ -84,7 +86,8 @@ trait Sources {
       }
     }
 
-    def setEmpty()(implicit fac: Scheduler[State]): Unit = fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
+    def setEmpty()(implicit fac: Scheduler[State]): Unit =
+      fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
 
     def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[State]): Unit = {
       ticket.recordChange(new InitialChange[State] {

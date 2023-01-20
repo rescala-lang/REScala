@@ -37,7 +37,7 @@ class JettyServer(
   }
 
   def stop(): Unit = jettyServer.stop()
-  
+
   def start(port: Int): Unit = {
 
     // connectors accept requests – in this case on a TCP socket

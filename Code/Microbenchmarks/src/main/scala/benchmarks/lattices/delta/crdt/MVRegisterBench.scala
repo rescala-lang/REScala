@@ -20,7 +20,7 @@ class MVRegisterBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var numWrites: Int = _
 
-  given Lattice[Int] = math.max _
+  given Lattice[Int]                                    = math.max _
   var reg: DeltaBufferDotted[MultiVersionRegister[Int]] = _
 
   @Setup

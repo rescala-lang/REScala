@@ -49,8 +49,8 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
       subscriber: Subscriber[_ >: T],
       name: ReName
   ) extends Base[State, Pulse[T]](bud, name)
-    with Derived
-    with Subscription {
+      with Derived
+      with Subscription {
 
     override type State[V] = ReactiveStreamsApi.this.api.State[V]
 

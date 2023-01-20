@@ -12,9 +12,9 @@ object GrowOnlySet {
 
   def empty[E]: GrowOnlySet[E] = Set.empty
 
-  given bottomInstance[E]: Bottom[GrowOnlySet[E]]             = Bottom.setBottom
-  given lattice[E]: Lattice[GrowOnlySet[E]] = Lattice.setLattice
-  given contextDecompose[E]: DottedLattice[GrowOnlySet[E]]  = DottedLattice.liftLattice
+  given bottomInstance[E]: Bottom[GrowOnlySet[E]]          = Bottom.setBottom
+  given lattice[E]: Lattice[GrowOnlySet[E]]                = Lattice.setLattice
+  given contextDecompose[E]: DottedLattice[GrowOnlySet[E]] = DottedLattice.liftLattice
 
   extension [C, E](container: C)
     def growOnlySet: syntax[C, E] = syntax(container)

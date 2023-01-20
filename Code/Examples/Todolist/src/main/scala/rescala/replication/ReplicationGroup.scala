@@ -17,17 +17,17 @@ import scala.util.{Failure, Success}
 case class DeltaFor[A](name: String, delta: Dotted[A])
 
 class ReplicationGroup[Api <: RescalaInterface, A](
-  val api: Api,
-  registry: Registry,
-  binding: Binding[DeltaFor[A] => Unit, DeltaFor[A] => Future[Unit]]
+    val api: Api,
+    registry: Registry,
+    binding: Binding[DeltaFor[A] => Unit, DeltaFor[A] => Future[Unit]]
 )(using
-  dcl: DecomposeLattice[Dotted[A]],
-  bottom: Bottom[Dotted[A]]
+    dcl: DecomposeLattice[Dotted[A]],
+    bottom: Bottom[Dotted[A]]
 ) {
   import api._
 
   private var localListeners: Map[String, Evt[Named[Dotted[A]]]] = Map.empty
-  private var unhandled: Map[String, Map[String, Dotted[A]]]  = Map.empty
+  private var unhandled: Map[String, Map[String, Dotted[A]]]     = Map.empty
 
   registry.bindSbj(binding) { (remoteRef: RemoteRef, payload: DeltaFor[A]) =>
     localListeners.get(payload.name) match {
@@ -39,9 +39,9 @@ class ReplicationGroup[Api <: RescalaInterface, A](
   }
 
   def distributeDeltaRDT(
-                          name: String,
-                          signal: Signal[DeltaBufferDotted[A]],
-                          deltaEvt: Evt[Named[Dotted[A]]],
+      name: String,
+      signal: Signal[DeltaBufferDotted[A]],
+      deltaEvt: Evt[Named[Dotted[A]]],
   ): Unit = {
     require(!localListeners.contains(name), s"already registered a RDT with name $name")
     localListeners = localListeners.updated(name, deltaEvt)

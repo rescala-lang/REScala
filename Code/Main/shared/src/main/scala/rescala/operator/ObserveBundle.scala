@@ -15,9 +15,14 @@ trait ObserveBundle {
         dependency: ReSource,
         fireImmediately: Boolean
     )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket[dependency.State]): Disconnectable = {
-      ct.create[Pulse[Nothing], Disconnectable with Derived.of[dependency.State]](Set(dependency), Pulse.NoChange, fireImmediately) {
+      ct.create[Pulse[Nothing], Disconnectable with Derived.of[dependency.State]](
+        Set(dependency),
+        Pulse.NoChange,
+        fireImmediately
+      ) {
         state =>
-          class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.rename) with Derived with DisconnectableImpl {
+          class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.rename) with Derived
+              with DisconnectableImpl {
 
             override type State[V] = dependency.State[V]
 

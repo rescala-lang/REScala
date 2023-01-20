@@ -12,10 +12,10 @@ class ReactorWithoutAPITest extends RETests {
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends rescala.core.Derived
-    with ReadAs[State, T]
-    with MacroAccess[T, ReadAs[State, T]] {
+      with ReadAs[State, T]
+      with MacroAccess[T, ReadAs[State, T]] {
 
-    override type Value = ReactorStage[T]
+    override type Value    = ReactorStage[T]
     override type State[V] = rescala.default.State[V]
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState

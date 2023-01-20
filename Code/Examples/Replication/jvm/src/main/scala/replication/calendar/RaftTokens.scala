@@ -14,10 +14,10 @@ case class Token(id: Long, owner: Id, value: String) {
 }
 
 case class RaftTokens(
-                       replicaID: Id,
-                       tokenAgreement: RaftState[Token],
-                       want: DeltaBufferDotted[AddWinsSet[Token]],
-                       tokenFreed: DeltaBufferDotted[AddWinsSet[Token]]
+    replicaID: Id,
+    tokenAgreement: RaftState[Token],
+    want: DeltaBufferDotted[AddWinsSet[Token]],
+    tokenFreed: DeltaBufferDotted[AddWinsSet[Token]]
 ) {
 
   def owned(value: String): List[Token] = {
@@ -80,5 +80,5 @@ object RaftTokens {
       RaftState(Set(replicaID)),
       DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token]),
       DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token])
-      )
+    )
 }

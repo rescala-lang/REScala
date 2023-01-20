@@ -152,7 +152,7 @@ trait Sidup extends Twoversion {
         propagationPhase()
       }
     }
-    override def releasePhase(): Unit     = ()
+    override def releasePhase(): Unit               = ()
     override def initializer: Initializer.of[State] = new SidupInitializer(this)
   }
 

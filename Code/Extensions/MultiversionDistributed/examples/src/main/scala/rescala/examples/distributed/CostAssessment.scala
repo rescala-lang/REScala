@@ -194,25 +194,26 @@ object CostAssessment {
     (result, violations)
   }
 
-  def harness(runner: (Long, Graph) => (Int, Int)) = { graph: Graph =>
-    (1 to 10).foreach { i =>
-      val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
-      val leftTime               = 1000d / left
-      val rightTime              = 1000d / right
-      println(
-        f"warmup $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
-      )
-    }
-    val iterations = (1 to 20).flatMap { i =>
-      val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
-      val leftTime               = 1000d / left
-      val rightTime              = 1000d / right
-      println(
-        f"iteration $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
-      )
-      Seq(leftTime, rightTime)
-    }
-    iterations.sum / iterations.size
+  def harness(runner: (Long, Graph) => (Int, Int)) = {
+    graph: Graph =>
+      (1 to 10).foreach { i =>
+        val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
+        val leftTime               = 1000d / left
+        val rightTime              = 1000d / right
+        println(
+          f"warmup $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
+        )
+      }
+      val iterations = (1 to 20).flatMap { i =>
+        val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
+        val leftTime               = 1000d / left
+        val rightTime              = 1000d / right
+        println(
+          f"iteration $i%3d: $counts%s iterations ($leftTime%.4f ms/op and $rightTime%.4f ms/op, avg ${(leftTime + rightTime) / 2}%.4f)"
+        )
+        Seq(leftTime, rightTime)
+      }
+      iterations.sum / iterations.size
   }
 
   def conflictFree(until: Long, graph: Graph): (Int, Int) = {

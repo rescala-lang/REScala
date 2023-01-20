@@ -38,11 +38,12 @@ class OperatorFusion(override val verbose: Boolean = false, override val protoco
               val newNode = FilteredEventNode(
                 graph,
                 innerBase,
-                { x: Any =>
-                  innerFilter.asInstanceOf[Function[Any, Boolean]](x) && outerFilter.asInstanceOf[Function[
-                    Any,
-                    Boolean
-                  ]](x)
+                {
+                  x: Any =>
+                    innerFilter.asInstanceOf[Function[Any, Boolean]](x) && outerFilter.asInstanceOf[Function[
+                      Any,
+                      Boolean
+                    ]](x)
                 }
               )
               Some(NodeTriple(nOuter, nInner, newNode))

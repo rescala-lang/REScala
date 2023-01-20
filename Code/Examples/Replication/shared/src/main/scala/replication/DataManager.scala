@@ -26,9 +26,9 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   type TransferState = Named[Dotted[State]]
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  private val localDeltas: AtomicReference[List[TransferState]] = AtomicReference(Nil)
-  private val localBuffer: AtomicReference[List[TransferState]]   = AtomicReference(Nil)
-  private val remoteDeltas: AtomicReference[List[TransferState]]  = AtomicReference(Nil)
+  private val localDeltas: AtomicReference[List[TransferState]]  = AtomicReference(Nil)
+  private val localBuffer: AtomicReference[List[TransferState]]  = AtomicReference(Nil)
+  private val remoteDeltas: AtomicReference[List[TransferState]] = AtomicReference(Nil)
 
   def applyLocalDelta(dotted: Dotted[State]): Unit =
     val named = Named(replicaId, dotted)
@@ -73,7 +73,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     }
 
   def requestMissing() =
-    registry.remotes.headOption.foreach{ rr =>
+    registry.remotes.headOption.foreach { rr =>
       val req = registry.lookup(requestMissingBinding, rr)
       req(currentValue.anon.context)
     }

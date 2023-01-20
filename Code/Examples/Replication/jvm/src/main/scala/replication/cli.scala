@@ -84,7 +84,7 @@ object cli {
     if instance.dtn.value.isDefined then dtn.run()
 
     instance.conn.value match
-      case None              =>
+      case None =>
       case Some(connections) =>
         val serv = new Commandline(connections)
         serv.start()

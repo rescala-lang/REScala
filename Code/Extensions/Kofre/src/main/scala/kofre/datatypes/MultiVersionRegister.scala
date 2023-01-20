@@ -16,7 +16,7 @@ case class MultiVersionRegister[A](repr: DotFun[A])
 object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
 
-  given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                             = Bottom.derived
+  given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                = Bottom.derived
   given dottedLattice[A: Lattice]: DottedLattice[MultiVersionRegister[A]] = DottedLattice.derived
 
   extension [C, A](container: C)

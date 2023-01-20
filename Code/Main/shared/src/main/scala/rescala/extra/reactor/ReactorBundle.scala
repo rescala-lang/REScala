@@ -9,9 +9,8 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       initState: State[ReactorState[T]]
   ) extends Derived with ReadableMacro[State, T] {
 
-    override type Value = ReactorState[T]
+    override type Value    = ReactorState[T]
     override type State[V] = ReactorBundle.this.api.State[V]
-
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
     def name: ReName                                              = "Custom Reactor"

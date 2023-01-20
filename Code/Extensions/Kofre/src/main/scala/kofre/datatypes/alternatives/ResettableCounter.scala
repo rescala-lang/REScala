@@ -24,8 +24,8 @@ object ResettableCounter {
     DottedLattice.derived
 
   private def deltaState(
-    df: Option[ResettableCounter] = None,
-    cc: Dots
+      df: Option[ResettableCounter] = None,
+      cc: Dots
   ): Dotted[ResettableCounter] = {
     Dotted(
       df.getOrElse(zero),

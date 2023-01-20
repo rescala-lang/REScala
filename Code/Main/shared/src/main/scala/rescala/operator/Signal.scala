@@ -32,7 +32,7 @@ trait SignalBundle extends SignalCompatBundle {
     override def read(v: Value): T                             = v.get
     override protected[rescala] def commit(base: Value): Value = base
 
-    def resource: ReadAs.of[State, T @uncheckedVariance /* works in scala 3*/] = this
+    def resource: ReadAs.of[State, T @uncheckedVariance /* works in scala 3*/ ] = this
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.

@@ -88,7 +88,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       assert(
         DotFun.dottedLattice[Int].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
-        )
+      )
 
       val Dotted(dfMerged, ccMerged) =
         Lattice[Dotted[DotFun[Int]]].merge(
@@ -99,11 +99,11 @@ class DotFunTest extends munit.ScalaCheckSuite {
       assert(
         DotFun.dottedLattice[Int].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
-        )
+      )
       assert(
         DotFun.dottedLattice[Int].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
-        )
+      )
     }
   }
 

@@ -21,16 +21,19 @@ trait DefaultImplementations {
     }
   }
 
-  abstract class DerivedImpl[T](initial: State[Pulse[T]], name: ReName, isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]])
-      extends Base[State, Pulse[T]](initial, name)
+  abstract class DerivedImpl[T](
+      initial: State[Pulse[T]],
+      name: ReName,
+      isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
+  ) extends Base[State, Pulse[T]](initial, name)
       with Derived
       with DisconnectableImpl {
 
     override type State[V] = self.State[V]
 
     override protected[rescala] def guardedReevaluate(rein: ReIn): Rout = {
-      val rein2    =  isDynamicWithStaticDeps match {
-        case None => rein.trackStatic()
+      val rein2 = isDynamicWithStaticDeps match {
+        case None       => rein.trackStatic()
         case Some(deps) => rein.trackDependencies(deps)
       }
       val newPulse = computePulse(rein2)

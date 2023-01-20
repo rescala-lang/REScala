@@ -17,8 +17,8 @@ object TwoPhaseSet {
 
   given bottom[E]: Bottom[TwoPhaseSet[E]] with { override def empty: TwoPhaseSet[E] = TwoPhaseSet.empty }
 
-  given lattice[E]: Lattice[TwoPhaseSet[E]] = Lattice.derived
-  given dottedLattice[E]: DottedLattice[TwoPhaseSet[E]]  = DottedLattice.liftLattice
+  given lattice[E]: Lattice[TwoPhaseSet[E]]             = Lattice.derived
+  given dottedLattice[E]: DottedLattice[TwoPhaseSet[E]] = DottedLattice.liftLattice
 
   extension [C, E](container: C)
     def twoPhaseSet: syntax[C, E] = syntax(container)

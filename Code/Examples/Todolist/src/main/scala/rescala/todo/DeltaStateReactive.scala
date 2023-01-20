@@ -12,7 +12,7 @@ class DeltaStateReactive[Delta, Combined](
     handlers: Seq[(DynamicTicket, Combined) => Delta],
     override val name: ReName,
 ) extends Derived with ReadAs[State, DeltaWithState[Delta, Combined]] {
-  override type Value = DeltaWithState[Delta, Combined]
+  override type Value    = DeltaWithState[Delta, Combined]
   override type State[V] = rescala.default.State[V]
   override protected[rescala] def state: State[Value]        = initState
   override protected[rescala] def commit(base: Value): Value = base.copy(delta = Nil)

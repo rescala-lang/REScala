@@ -2,7 +2,9 @@ package rescala.fullmv.tasks
 
 import rescala.core.{AccessHandler, Derived, ReSource, ReevTicket, Result}
 import rescala.fullmv.FramingBranchResult._
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{
+  NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
+}
 import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, _}
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
@@ -153,9 +155,10 @@ trait TaskBundle extends FullMVBundle {
     def doReevaluation(retainBranch: Boolean): Unit = {
 //    assert(Thread.currentThread() == turn.userlandThread, s"$this on different thread ${Thread.currentThread().getName}")
       assert(turn.phase == TurnPhase.Executing, s"$turn cannot reevaluate (requires executing phase")
-      var value                          = node.state.reevIn(turn)
-      val transactionHandle              = TransactionHandle(turn)
-      val ticket: ReevTicket[State, node.Value] = new ReevTicket[State, node.Value](transactionHandle, value, FullAccessHandle)
+      var value             = node.state.reevIn(turn)
+      val transactionHandle = TransactionHandle(turn)
+      val ticket: ReevTicket[State, node.Value] =
+        new ReevTicket[State, node.Value](transactionHandle, value, FullAccessHandle)
       val res: Result.of[State, node.Value] =
         try {
           turn.host.withDynamicInitializer(transactionHandle) {
@@ -223,7 +226,8 @@ trait TaskBundle extends FullMVBundle {
     def createReevaluation(succTxn: FullMVTurn): FullMVAction
     def doReevaluation(retainBranch: Boolean): Unit
 
-    def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutBranchResult[FullMVTurn, Derived.of[State]] = {
+    def processReevaluationResult(maybeChange: Option[node.Value])
+        : ReevOutBranchResult[FullMVTurn, Derived.of[State]] = {
       val reevOutResult = node.state.reevOut(turn, maybeChange, node.commit)
       if (FullMVUtil.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]) {
         // could be a framework exception that is relevant to debugging, but was eaten by reactive's

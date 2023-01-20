@@ -11,7 +11,7 @@ class DeltaSequenceCrdtTest extends munit.FunSuite {
     val ds      = DeltaBuffer.dotted("", DeltaSequence.empty[String])
     val a       = "a"
     val vertex1 = Vertex.fresh()
-    val vertex2                                          = Vertex.fresh()
+    val vertex2 = Vertex.fresh()
     val added2: DeltaBufferDotted[DeltaSequence[String]] = ds
       .addRightDelta(a, Vertex.start, vertex1, "Hello world!")
       .addRightDelta(a, Vertex.start, vertex2, "Hello world 2!")

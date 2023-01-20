@@ -136,7 +136,8 @@ object Lattice {
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
 
   /** This causes tuple lattices to be generally derivable implicitly,
-    * without making all products derivable implicitly. */
+    * without making all products derivable implicitly.
+    */
   inline given tupleLattice[T <: Tuple](using pm: Mirror.ProductOf[T]): Lattice[T] = derived
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {

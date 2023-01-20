@@ -44,9 +44,9 @@ object ObserveRemoveMap {
 
     def queryAllEntries(using PermQuery): Iterable[V] = current.inner.values
     def mutateKey(k: K, m: (Id, Dotted[V]) => Dotted[V])(using
-                                                         PermCausalMutate,
-                                                         PermId,
-                                                         Bottom[V]
+        PermCausalMutate,
+        PermId,
+        Bottom[V]
     ): C = {
       val v = current.inner.getOrElse(k, Bottom[V].empty)
 
@@ -60,9 +60,9 @@ object ObserveRemoveMap {
     }
 
     def mutateKeyNamedCtx(using
-                          PermCausalMutate,
-                          PermId,
-                          Bottom[V]
+        PermCausalMutate,
+        PermId,
+        Bottom[V]
     )(k: K)(m: Named[Dotted[V]] => Named[Dotted[V]]): C = {
       val v                           = current.inner.getOrElse(k, Bottom[V].empty)
       val Dotted(stateDelta, ccDelta) = m(Named(replicaId, Dotted(v, context))).anon

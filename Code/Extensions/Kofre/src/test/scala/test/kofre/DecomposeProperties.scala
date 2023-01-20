@@ -9,10 +9,10 @@ import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}
 
-class GrowDecomposes   extends DecomposeProperties[GrowOnlyCounter]
-class PosNegDecomposes extends DecomposeProperties[PosNegCounter]
-class TupleDecomposes  extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
-class MultiValueDecomposes  extends DecomposeProperties[MultiValueRegister[Int]]
+class GrowDecomposes       extends DecomposeProperties[GrowOnlyCounter]
+class PosNegDecomposes     extends DecomposeProperties[PosNegCounter]
+class TupleDecomposes      extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
+class MultiValueDecomposes extends DecomposeProperties[MultiValueRegister[Int]]
 
 abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
 

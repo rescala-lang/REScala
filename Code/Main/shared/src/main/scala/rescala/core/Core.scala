@@ -35,9 +35,9 @@ object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
   * @param name  the name of the reactive, useful for debugging as it often contains positional information
   */
 abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val name: ReName)
-  extends ReSource {
+    extends ReSource {
   override type State[V] = S[V]
-  override type Value = V
+  override type Value    = V
   override def toString: String = s"${name.str}($state)"
 }
 
@@ -124,7 +124,7 @@ trait Initializer {
   ): Unit
 
 }
-object Initializer {type of[S[_]] = Initializer { type State[V] = S[V]}}
+object Initializer { type of[S[_]] = Initializer { type State[V] = S[V] } }
 
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[State[_]](val tx: Transaction.of[State]) {
@@ -185,9 +185,11 @@ final class ReevTicket[S[_], V](tx: Transaction.of[S], private var _before: V, a
     * The passed initial set of dependencies may be processed as if they were static,
     * and are also returned in the resulting dependencies.
     */
-  def trackDependencies(initial: Set[ReSource.of[State]]): ReevTicket[State, V] = { collectedDependencies = initial; this }
-  def trackStatic(): ReevTicket[State, V]                             = { collectedDependencies = null; this }
-  def withPropagate(p: Boolean): ReevTicket[State, V]                 = { _propagate = p; this }
+  def trackDependencies(initial: Set[ReSource.of[State]]): ReevTicket[State, V] = {
+    collectedDependencies = initial; this
+  }
+  def trackStatic(): ReevTicket[State, V]             = { collectedDependencies = null; this }
+  def withPropagate(p: Boolean): ReevTicket[State, V] = { _propagate = p; this }
   def withValue(v: V): ReevTicket[State, V] = {
     require(v != null, "value must not be null");
     value = v;
@@ -196,10 +198,10 @@ final class ReevTicket[S[_], V](tx: Transaction.of[S], private var _before: V, a
   }
   def withEffect(v: Observation): ReevTicket[State, V] = { effect = v; this }
 
-  override def activate: Boolean                       = _propagate
-  override def forValue(f: V => Unit): Unit            = if (value != null) f(value)
-  override def forEffect(f: Observation => Unit): Unit = if (effect != null) f(effect)
-  override def inputs(): Option[Set[ReSource.of[State]]]         = Option(collectedDependencies)
+  override def activate: Boolean                         = _propagate
+  override def forValue(f: V => Unit): Unit              = if (value != null) f(value)
+  override def forEffect(f: Observation => Unit): Unit   = if (effect != null) f(effect)
+  override def inputs(): Option[Set[ReSource.of[State]]] = Option(collectedDependencies)
 
   def reset[NT](nb: NT): ReevTicket[State, NT] = {
     _propagate = false
@@ -242,7 +244,8 @@ trait Observation { def execute(): Unit }
   */
 final class AdmissionTicket[State[_]](val tx: Transaction.of[State], declaredWrites: Set[ReSource.of[State]]) {
 
-  private var _initialChanges: Map[ReSource.of[State], InitialChange[State]]         = Map[ReSource.of[State], InitialChange[State]]()
+  private var _initialChanges: Map[ReSource.of[State], InitialChange[State]] =
+    Map[ReSource.of[State], InitialChange[State]]()
   private[rescala] def initialChanges: Map[ReSource.of[State], InitialChange[State]] = _initialChanges
   def recordChange[T](ic: InitialChange[State]): Unit = {
     assert(
@@ -264,13 +267,14 @@ final class AdmissionTicket[State[_]](val tx: Transaction.of[State], declaredWri
 final class CreationTicket[State[_]](val scope: ScopeSearch[State], val rename: ReName) {
 
   private[rescala] def create[V, T <: Derived.of[State]](
-                                                incoming: Set[ReSource.of[State]],
-                                                initValue: V,
-                                                needsReevaluation: Boolean
+      incoming: Set[ReSource.of[State]],
+      initValue: V,
+      needsReevaluation: Boolean
   )(instantiateReactive: State[V] => T): T = {
-    scope.embedTransaction{tx =>
+    scope.embedTransaction { tx =>
       val init: Initializer.of[State] = tx.initializer
-      init.create(incoming, initValue, needsReevaluation)(instantiateReactive)}
+      init.create(incoming, initValue, needsReevaluation)(instantiateReactive)
+    }
   }
   private[rescala] def createSource[V, T <: ReSource.of[State]](intv: V)(instantiateReactive: State[V] => T): T = {
     scope.embedTransaction(_.initializer.createSource(intv)(instantiateReactive))
@@ -282,7 +286,7 @@ object CreationTicket {
     new CreationTicket(scope, line)
   // cases below are when one explicitly passes one of the parameters
   implicit def fromExplicitDynamicScope[S[_]](factory: DynamicScope[S])(implicit line: ReName): CreationTicket[S] =
-    new CreationTicket[S](new ScopeSearch(Right(factory)) {type State[V] = S[V]} , line)
+    new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
   implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReName): CreationTicket[S] =
     new CreationTicket(new ScopeSearch[S](Left(tx)), line)
   implicit def fromName[State[_]](str: String)(implicit scopeSearch: ScopeSearch[State]): CreationTicket[State] =
@@ -339,7 +343,7 @@ trait Transaction {
   def initializer: Initializer.of[State]
 }
 object Transaction {
-  type of[S[_]] = Transaction { type State[A] = S[A]}
+  type of[S[_]] = Transaction { type State[A] = S[A] }
 }
 
 /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling.
@@ -347,7 +351,8 @@ object Transaction {
   */
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
 trait Scheduler[State[_]] extends DynamicScope[State] {
-  final def forceNewTransaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
+  final def forceNewTransaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R)
+      : R = {
     forceNewTransaction(initialWrites.toSet, admissionPhase)
   }
   def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R

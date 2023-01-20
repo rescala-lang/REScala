@@ -35,7 +35,7 @@ class WithoutAPITest extends RETests {
         inputSource: ReadAs.of[State, String]
     ) extends Derived
         with ReadAs[State, String] {
-      override type Value = String
+      override type Value    = String
       override type State[V] = engine.State[V]
       override protected[rescala] def state: State[Value]        = initState
       override def name: ReName                                  = "I am a name"

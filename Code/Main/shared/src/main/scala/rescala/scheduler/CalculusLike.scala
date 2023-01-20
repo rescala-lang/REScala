@@ -3,7 +3,10 @@
   */
 package rescala.scheduler
 
-import rescala.core.{AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
+import rescala.core.{
+  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
+  Transaction
+}
 
 trait CalculusLike {
 
@@ -15,8 +18,8 @@ trait CalculusLike {
     * The store mapping does not exist as a single object, but instead each reactive has this state.
     */
   class StoreValue[V](var value: V) {
-    var inputs: Set[ReSource.of[State]]     = Set.empty
-    override def toString: String = s""
+    var inputs: Set[ReSource.of[State]] = Set.empty
+    override def toString: String       = s""
   }
 
   /** The main task of the initializer is to handle creation of reactives,
@@ -26,7 +29,6 @@ trait CalculusLike {
   final class SimpleCreation() extends Initializer {
 
     override type State[V] = CalculusLike.this.State[V]
-
 
     override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
       new StoreValue[V](initialValue)
@@ -63,7 +65,7 @@ trait CalculusLike {
   case class FTransaction(override val initializer: Initializer.of[CalculusLike.this.State]) extends Transaction {
     override type State[V] = CalculusLike.this.State[V]
     override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
-    override def observe(obs: Observation): Unit                             = obs.execute()
+    override def observe(obs: Observation): Unit                                       = obs.execute()
   }
 
   object FScheduler
@@ -80,7 +82,10 @@ trait CalculusLike {
       * The initial writes contains the reactives which change (only one for fire),
       * and teh admission phase updates their values to the fired values (μ(r).val ← v)
       */
-    override def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R =
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource.of[State]],
+        admissionPhase: AdmissionTicket[State] => R
+    ): R =
       synchronized {
         // some broken user code may start a new transaction during an ongoing one
         // this is not supported by this propagation algorithm,

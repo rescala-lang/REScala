@@ -11,7 +11,7 @@ class IntAsLatticeTest extends munit.ScalaCheckSuite {
       assert(
         summon[Lattice[Int]].lteq(a, a),
         s"leq should be reflexive, but $a is not leq $a"
-        )
+      )
 
       assert(
         !(summon[Lattice[Int]].lteq(a, b) && summon[Lattice[Int]].lteq(b, c)) || summon[Lattice[Int]].lteq(a, c),

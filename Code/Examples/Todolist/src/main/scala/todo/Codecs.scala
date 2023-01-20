@@ -31,7 +31,7 @@ object Codecs {
     override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
 
   @nowarn()
-  implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]]          =
+  implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   implicit val codecRGA: JsonValueCodec[DeltaBufferDotted[ReplicatedList[TaskRef]]] =
     new JsonValueCodec[DeltaBufferDotted[ReplicatedList[TaskRef]]] {

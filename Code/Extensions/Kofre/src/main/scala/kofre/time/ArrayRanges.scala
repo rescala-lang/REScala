@@ -9,13 +9,14 @@ import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[kofre.base.Time]] when most stored values are contiguous ranges. */
 class ArrayRanges(
-  /** Internally, ranges are stored as [begin, end) in a single array where begin is inclusive and end is exclusive.
-    * Note that this is accessible to enable efficient external serialization, but any direct use of this field is discouraged. */
-  val inner: Array[Time],
-  /** Operations that combine array ranges often only know an upper bound of how many result ranges there will be.
-    * To minimize copying, the inner array is created with the upper bound and stored as is.
-    */
-  val used: Int
+    /** Internally, ranges are stored as [begin, end) in a single array where begin is inclusive and end is exclusive.
+      * Note that this is accessible to enable efficient external serialization, but any direct use of this field is discouraged.
+      */
+    val inner: Array[Time],
+    /** Operations that combine array ranges often only know an upper bound of how many result ranges there will be.
+      * To minimize copying, the inner array is created with the upper bound and stored as is.
+      */
+    val used: Int
 ) {
 
   override def equals(obj: Any): Boolean = obj match {

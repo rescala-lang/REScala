@@ -23,8 +23,8 @@ import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(
-  desc: String,
-  done: Boolean = false
+    desc: String,
+    done: Boolean = false
 ) {
   def toggle(): TaskData          = copy(done = !done)
   def edit(str: String): TaskData = copy(desc = str)
@@ -34,15 +34,15 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBufferDotted[CausalLastWriterWins[TaskData]]] = cached.task
-  def tag: TypedTag[LI]                                            = cached.tag
-  def removed: Event[String]                                       = cached.removed
+  def tag: TypedTag[LI]                                               = cached.tag
+  def removed: Event[String]                                          = cached.removed
 }
 
 final class TaskRefData(
-                         val task: Signal[DeltaBufferDotted[CausalLastWriterWins[TaskData]]],
-                         val tag: TypedTag[LI],
-                         val removed: Event[String],
-                         val id: String,
+    val task: Signal[DeltaBufferDotted[CausalLastWriterWins[TaskData]]],
+    val tag: TypedTag[LI],
+    val removed: Event[String],
+    val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -73,8 +73,8 @@ object TaskReferences {
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
   def createTaskRef(
-    taskID: String,
-    task: Option[TaskData],
+      taskID: String,
+      task: Option[TaskData],
   ): TaskRefData = {
     val lwwInit = DeltaBuffer.dotted(replicaId, CausalLastWriterWins.empty[TaskData])
 

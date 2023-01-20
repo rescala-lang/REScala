@@ -36,8 +36,6 @@ trait PermId[-C]:
 class FixedId(id: Id) extends PermId[Any]:
   override def replicaId(c: Any): Id = id
 
-
-
 @implicitNotFound(
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
 )
@@ -81,7 +79,11 @@ trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
 
   import kofre.syntax as s
 
-  given inheritId[C, L](using pid: PermId, mctx: s.PermMutate[C, L], constraint: NotGiven[C =:= Named[L]]): s.PermIdMutate[C, L] with
+  given inheritId[C, L](using
+      pid: PermId,
+      mctx: s.PermMutate[C, L],
+      constraint: NotGiven[C =:= Named[L]]
+  ): s.PermIdMutate[C, L] with
     def mutate(c: C, delta: L): C = mctx.mutate(c, delta)
     def replicaId(c: C): Id       = pid.replicaId(container)
     def query(c: C): L            = mctx.query(c)

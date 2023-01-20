@@ -1,6 +1,8 @@
 package rescala.scheduler
 
-import rescala.core.{AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
+import rescala.core.{
+  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
+}
 
 import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
@@ -12,7 +14,7 @@ trait Twoversion {
 
   type State[V] <: TwoVersionState[V]
   type ReSource = rescala.core.ReSource.of[State]
-  type Derived = rescala.core.Derived.of[State]
+  type Derived  = rescala.core.Derived.of[State]
 
   /** State that implements both the buffered pulse and the buffering capabilities itself. */
   abstract class TwoVersionState[V](protected[rescala] var current: V) {
@@ -54,7 +56,7 @@ trait Twoversion {
     * @tparam Tx Transaction type used by the scheduler
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
-    extends SchedulerImpl[State, Tx] {
+      extends SchedulerImpl[State, Tx] {
     private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A =
       reactive.read(reactive.state.base(null))
 
@@ -75,7 +77,10 @@ trait Twoversion {
       *     - run the party! phase
       *   - not yet implemented
       */
-    override def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R = {
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource.of[State]],
+        admissionPhase: AdmissionTicket[State] => R
+    ): R = {
       val tx = makeTransaction(_currentTransaction.value)
 
       val result =

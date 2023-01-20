@@ -34,8 +34,8 @@ object Project {
     // We pass the re-wrapped value to a mapping function `f` that can modify it as any other thing that has a contex and name.
     // We then return only the `Dotted` (dropping the name) as a convenience – the name never changes.
     private def focus[B, C](p: Project => B)(f: Named[Dotted[B]] => Named[Dotted[C]])(using
-                                                                                      PermCausalMutate,
-                                                                                      PermId,
+        PermCausalMutate,
+        PermId,
     ): Dotted[C] = {
       f(context.wrap(p(current)).named(replicaId)).anon
     }
@@ -108,7 +108,7 @@ class ProjectRDTTest extends munit.FunSuite {
 
   test("delta filtering") {
     val init: Named[Dotted[Project]] = Named("replica id", Dotted(Project.empty))
-    val delta                     = init.set_name("some project")
+    val delta                        = init.set_name("some project")
 
     val dlat = Lattice[Dotted[Project]]
 

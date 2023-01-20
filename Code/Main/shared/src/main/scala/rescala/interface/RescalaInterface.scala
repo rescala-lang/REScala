@@ -55,7 +55,10 @@ trait RescalaInterface extends Operators {
     * @see transaction
     * @group update
     */
-  def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (I, Transaction.of[State]) => R): R = {
+  def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (
+      I,
+      Transaction.of[State]
+  ) => R): R = {
     var res: Option[R] = None
     transaction(iw: _*)(at => {
       val apr: I = ap(at)

@@ -21,7 +21,7 @@ trait FullMVBundle {
   type State[V] = FullMVState[V, FullMVTurn]
 
   type Reactive = ReSource.of[State]
-  type OutDep = Derived.of[State]
+  type OutDep   = Derived.of[State]
 
   trait FullMVState[V, T <: FullMVTurn] {
     val host: FullMVEngine
@@ -117,13 +117,13 @@ trait FullMVBundle {
     type State[V] = FullMVBundle.this.State[V]
     override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = ti.dynamicBefore(reactive)
     override def initializer: Initializer.of[State]                                    = ti
-    override def observe(obs: Observation): Unit                             = ti.observe(() => obs.execute())
+    override def observe(obs: Observation): Unit                                       = ti.observe(() => obs.execute())
   }
 
   class FullMVEngine(val timeout: Duration, val schedulerName: String)
-    extends SchedulerImpl[State, TransactionHandle]
-    with FullMVTurnHost
-    with HostImpl[FullMVTurn] {
+      extends SchedulerImpl[State, TransactionHandle]
+      with FullMVTurnHost
+      with HostImpl[FullMVTurn] {
 
     override object lockHost extends SubsumableLockHostImpl {
       override def toString: String = s"[LockHost ${hashCode()} for $schedulerName ${schedulerName.hashCode}]"
@@ -146,7 +146,10 @@ trait FullMVBundle {
     override private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]) =
       reactive.read(reactive.state.latestValue)
 
-    override def forceNewTransaction[R](declaredWrites: Set[ReSource.of[State]], admissionPhase: (AdmissionTicket[State]) => R): R = {
+    override def forceNewTransaction[R](
+        declaredWrites: Set[ReSource.of[State]],
+        admissionPhase: (AdmissionTicket[State]) => R
+    ): R = {
       val turn        = newTurn()
       val transaction = TransactionHandle(turn)
       withDynamicInitializer(transaction) {
@@ -292,8 +295,7 @@ trait FullMVBundle {
 
     // ========================================================Scheduler Interface============================================================
 
-    override def makeDerivedStructState[V](initialValue: V)
-        : NonblockingSkipListVersionHistory[V, FullMVTurn] = {
+    override def makeDerivedStructState[V](initialValue: V): NonblockingSkipListVersionHistory[V, FullMVTurn] = {
       val state = new NonblockingSkipListVersionHistory[V, FullMVTurn](
         host.dummy,
         initialValue
