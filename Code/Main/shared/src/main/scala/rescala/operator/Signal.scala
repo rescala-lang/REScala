@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler}
+import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler, ReName}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -224,7 +224,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** converts a future to a signal */
     @cutOutOfUserComputation
-    def fromFuture[A](fut: Future[A])(implicit fac: Scheduler[State], ec: ExecutionContext): Signal[A] = {
+    def fromFuture[A](fut: Future[A])(implicit fac: Scheduler[State], ec: ExecutionContext, name: ReName): Signal[A] = {
       fut.value match {
         case Some(Success(value)) => Var(value)(fac)
         case _ =>
