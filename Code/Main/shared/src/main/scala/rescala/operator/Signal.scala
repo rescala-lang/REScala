@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler, ReName, ScopeSearch}
+import rescala.core.{Disconnectable, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -224,13 +224,28 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** converts a future to a signal */
     @cutOutOfUserComputation
-    def fromFuture[A](fut: Future[A])(implicit scheduler: Scheduler[State], ec: ExecutionContext, name: ReName): Signal[A] = {
+    def fromFuture[A](fut: Future[A])(implicit
+        scheduler: Scheduler[State],
+        ec: ExecutionContext,
+        name: ReName
+    ): Signal[A] = {
+      val creationTicket = new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
       fut.value match {
-        case Some(Success(value)) => Var(value)(new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture")))
+        case Some(Success(value)) =>
+          Var(value)(creationTicket)
         case _ =>
-          val v: Var[A] = Var.empty[A](new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture")))
+          val v: Var[A] =
+            Var.empty[A](creationTicket)
           fut.onComplete { res =>
-            scheduler.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
+            def execTx() =
+              scheduler.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
+            scheduler.maybeTransaction match {
+              case None => execTx()
+              case Some(tx) =>
+                tx.observe(new Observation {
+                  override def execute(): Unit = execTx()
+                })
+            }
           }
           v
       }
