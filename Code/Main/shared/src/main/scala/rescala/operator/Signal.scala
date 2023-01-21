@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler, ReName}
+import rescala.core.{Disconnectable, ReSource, ReadAs, Scheduler, ReName, ScopeSearch}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -224,13 +224,13 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** converts a future to a signal */
     @cutOutOfUserComputation
-    def fromFuture[A](fut: Future[A])(implicit fac: Scheduler[State], ec: ExecutionContext, name: ReName): Signal[A] = {
+    def fromFuture[A](fut: Future[A])(implicit scheduler: Scheduler[State], ec: ExecutionContext, name: ReName): Signal[A] = {
       fut.value match {
-        case Some(Success(value)) => Var(value)(fac)
+        case Some(Success(value)) => Var(value)(new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture")))
         case _ =>
-          val v: Var[A] = Var.empty[A](fac)
+          val v: Var[A] = Var.empty[A](new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture")))
           fut.onComplete { res =>
-            fac.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
+            scheduler.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
           }
           v
       }
