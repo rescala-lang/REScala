@@ -39,13 +39,9 @@ We have not implemented the following things:
  *  We have not implemented routing and the related todo filters.
  *  Escaping the input shall cancel editing, restore previous value.
 
-Tested with Firefox 61 and Chrome 66.
-
 ## Running
 
-You need to install npm and sbt beforehand. Last tested using sbt 0.13.15.
-Sbt will then download the correct versions of scala, rescala, rescalatags and
-scalajs-dom, see build.sbt for required versions.
+You need sbt beforehand. Last tested using sbt 1.8.2.
 
 Run with:
 
