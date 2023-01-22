@@ -25,17 +25,21 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
 
   type TransferState = Named[Dotted[State]]
 
+
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  private val localDeltas: AtomicReference[List[TransferState]]  = AtomicReference(Nil)
-  private val localBuffer: AtomicReference[List[TransferState]]  = AtomicReference(Nil)
-  private val remoteDeltas: AtomicReference[List[TransferState]] = AtomicReference(Nil)
+  private val lock: AnyRef = new {}
+  private var localDeltas: List[TransferState]  = Nil
+  private var localBuffer: List[TransferState]  = Nil
+  private var remoteDeltas: List[TransferState] = Nil
 
-  def applyLocalDelta(dotted: Dotted[State]): Unit =
+  def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
     val named = Named(replicaId, dotted)
-    localBuffer.getAndUpdate(ld => named :: ld)
+    localBuffer = named :: localBuffer
+  }
 
-  def allDeltas: View[Named[Dotted[State]]] =
-    View(localBuffer, remoteDeltas, localDeltas).flatMap(_.get())
+  def allDeltas: View[Named[Dotted[State]]] = lock.synchronized {
+    View(localBuffer, remoteDeltas, localDeltas).flatten
+  }
 
   def currentValue: Named[Dotted[State]] =
     Named(
@@ -55,7 +59,9 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     Binding[TransferState => Unit]("pushState")
 
   registry.bind(pushStateBinding) { named =>
-    remoteDeltas.getAndUpdate(rb => named :: rb)
+    lock.synchronized {
+      remoteDeltas = named :: remoteDeltas
+    }
   }
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
@@ -63,9 +69,10 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   }
 
   def disseminate() =
-    val deltas = synchronized {
-      val deltas = localBuffer.getAndSet(Nil)
-      localDeltas.updateAndGet(all => deltas concat all)
+    val deltas = lock.synchronized {
+      val deltas = localBuffer
+      localBuffer = Nil
+      localDeltas = deltas concat localBuffer
       deltas
     }
     registry.remotes.foreach { remote =>

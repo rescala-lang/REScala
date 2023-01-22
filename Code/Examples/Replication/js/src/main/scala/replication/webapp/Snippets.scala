@@ -6,8 +6,8 @@ import org.scalajs.dom.{MouseEvent, document}
 import replication.webapp.MetaInfo
 import rescala.default.*
 import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all.{HtmlTag, Modifier, alt, bindJsAnyLike, button, onclick, stringFrag, *}
-import scalatags.JsDom.tags2.{nav, section}
+import scalatags.JsDom.all.{*, given}
+import scalatags.JsDom.tags2.{aside, nav, section}
 
 import scala.scalajs.js.URIUtils.encodeURIComponent
 object Snippets {
@@ -20,7 +20,7 @@ object Snippets {
       }
     })(m: _*)
 
-  def meta(meta: MetaInfo): Signal[TypedTag[Element]] = {
+  def meta(meta: MetaInfo): Signal[HtmlTag] = {
     val connectionStatus = Signal {
       meta.connection.value match {
         case 0     => stringFrag(s"disconnected (attempt № ${meta.reconnecting.value})")
@@ -28,11 +28,11 @@ object Snippets {
       }
     }
     Signal {
-      section(List[Frag](
+      section(aside(List[Frag](
         s"connection status: ",
         connectionStatus.value,
         br()
-      )).asInstanceOf[HtmlTag]
+      ))).asInstanceOf[HtmlTag]
     }
   }
 }

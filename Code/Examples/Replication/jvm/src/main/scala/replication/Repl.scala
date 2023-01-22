@@ -4,18 +4,18 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.datatypes.ReplicatedList
+import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import replication.JsoniterCodecs.given
+import replication.server.JettyServer
 
 import scala.annotation.nowarn
-
 import java.util.Timer
 
 class Commandline(settings: CliConnections) {
 
   val replicaId         = Id.gen()
   val registry          = new Registry
-  val connectionManager = new ConnectionManager(registry)
 
   val dataManager =
     @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -25,15 +25,18 @@ class Commandline(settings: CliConnections) {
 
   def start() =
     settings.`tcp-listen-port`.value match
-      case None       =>
-      case Some(port) => connectionManager.listenTcp(port)
+      case None =>
+      case Some(port) =>
+        registry.listen(TCP(port))
     settings.`webserver-listen-port`.value match
-      case None       =>
-      case Some(port) => connectionManager.startWebserver(port)
+      case None =>
+      case Some(port) =>
+        val server = new JettyServer(settings.`webserver-static-path`.value, "", registry, "0")
+        server.start(port)
     settings.`tcp-connect`.value.map { _.split(':') }.collect {
       case Array(ip, port) =>
         (ip.trim, Integer.parseInt(port))
-    }.foreach(connectionManager.connectTcp.tupled)
+    }.foreach((ip, port) => registry.connect(TCP(ip, port)))
 
   var count = 0
 

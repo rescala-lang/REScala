@@ -13,13 +13,14 @@ import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
-import scalatags.JsDom.tags.{body, h1, p}
+import scalatags.JsDom.tags.{body, h1, p, table}
 import replication.JsoniterCodecs.given
 
 import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 case class MetaInfo(
@@ -50,6 +51,9 @@ object WebRepMain {
 
   val replicaId: Id = Id.gen()
 
+  @JSExportTopLevel("Replication")
+  def run() = main(Array.empty)
+
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render
 
@@ -77,6 +81,9 @@ object WebRepMain {
       body(
         id := "index",
         Snippets.meta(meta).asModifier,
+        table(
+          
+        )
       )
     }
 

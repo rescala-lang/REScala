@@ -214,11 +214,23 @@ lazy val replicationExamples =
       libraryDependencies ++= Seq(
         loci.wsJetty11.value,
         jetty.value,
+        scribeSlf4j2.value,
       )
     )
     .jsSettings(
       libraryDependencies ++= Seq(
         scalatags.value,
         loci.wsWeb.value,
-      )
+      ),
+      TaskKey[File]("deploy", "generates a correct index.html") := {
+        val fastlink   = (Compile / fastLinkJS).value
+        val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+        val bp         = baseDirectory.value.toPath
+        val tp         = jspath.toPath
+        val template   = IO.read(bp.resolve("index.template.html").toFile)
+        val targetpath = tp.resolve("index.html").toFile
+        IO.write(targetpath, template.replace("JSPATH", s"main.js"))
+        IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
+        targetpath
+      }
     )

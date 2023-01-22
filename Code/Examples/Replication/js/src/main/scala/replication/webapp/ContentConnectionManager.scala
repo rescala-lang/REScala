@@ -19,7 +19,14 @@ class ContentConnectionManager(registry: Registry) {
 
   val wsUri: String = {
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-    s"$wsProtocol://${dom.document.location.host}${dom.document.location.pathname}ws"
+    val path       = dom.document.location.pathname
+    println(path)
+    val li         = path.lastIndexOf('/')
+    val parent =
+      if li < 0
+      then "/"
+      else path.substring(0, li + 1)
+    s"$wsProtocol://${dom.document.location.host}${parent}ws"
   }
 
   val joined = Events.fromCallback[RemoteRef] { cb =>
