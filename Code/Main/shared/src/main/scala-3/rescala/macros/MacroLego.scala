@@ -69,8 +69,6 @@ class MacroLego[ReSource: Type, Ticket: Type](
 
   class ReplaceInterp(replacement: Map[Term, Term], ticket: Tree) extends TreeMap {
 
-    val matpe = TypeTree.of[MacroAccess[_, _]]
-
     override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
       def accessTree(a: TypeTree)(static: Boolean, accessed: Term): Term = Apply(
         TypeApply(
@@ -89,7 +87,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
         end match
       }
 
-      val res = if (!tree.isExpr) then super.transformTerm(tree)(owner)
+      val res = if !tree.isExpr then super.transformTerm(tree)(owner)
       else
         tree.asExpr match {
           case '{ (${ xy }: MacroAccess[α, β]).value }   => replaceAccess(TypeTree.of[α], xy.asTerm)
