@@ -199,8 +199,14 @@ trait Twoversion {
       node.state.updateIncoming(updated)
     }
 
-    private[rescala] def discover(source: ReSource, sink: Derived): Unit = source.state.discoveredBy(sink)
-    private[rescala] def drop(source: ReSource, sink: Derived): Unit     = source.state.droppedBy(sink)
+    private[rescala] override def discover(source: ReSource, sink: Derived): Unit = {
+      super.discover(source, sink)
+      source.state.discoveredBy(sink)
+    }
+    private[rescala] override def drop(source: ReSource, sink: Derived): Unit = {
+      super.drop(source, sink)
+      source.state.droppedBy(sink)
+    }
 
     /** allow the propagation to handle dynamic access to reactives */
     def beforeDynamicDependencyInteraction(dependency: ReSource): Unit

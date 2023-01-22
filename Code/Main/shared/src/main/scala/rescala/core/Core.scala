@@ -86,13 +86,15 @@ trait Initializer {
   )(instantiateReactive: State[V] => T): T = {
     val state    = makeDerivedStructState[V](initValue)
     val reactive = instantiateReactive(state)
-    register(reactive)
+    register(reactive, incoming)
     initialize(reactive, incoming, needsReevaluation)
     reactive
   }
 
   /** hook for schedulers to globally collect all created resources, usually does nothing */
-  protected[this] def register(reactive: ReSource.of[State]): Unit = ()
+  protected[this] def register(reactive: ReSource.of[State], inputs: Set[ReSource.of[State]]): Unit = {
+    Tracing.observe(Tracing.Create(reactive, inputs.toSet))
+  }
 
   /** Correctly initializes [[ReSource]]s */
   final private[rescala] def createSource[V, T <: ReSource.of[State]](
@@ -100,7 +102,7 @@ trait Initializer {
   )(instantiateReactive: State[V] => T): T = {
     val state    = makeSourceStructState[V](intv)
     val reactive = instantiateReactive(state)
-    register(reactive)
+    register(reactive, Set.empty)
     reactive
   }
 
@@ -341,6 +343,13 @@ trait Transaction {
   def observe(obs: Observation): Unit
 
   def initializer: Initializer.of[State]
+
+  private[rescala] def discover(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
+    Tracing.observe(Tracing.Discover(source, sink))
+  }
+  private[rescala] def drop(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
+    Tracing.observe(Tracing.Drop(source, sink))
+  }
 }
 object Transaction {
   type of[S[_]] = Transaction { type State[A] = S[A] }

@@ -154,7 +154,6 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       loci.jsoniterScala.value,
     ),
     jsAcceptUnfairGlobalTasks,
-    scalaJSUseMainModuleInitializer := true,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value
       val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value

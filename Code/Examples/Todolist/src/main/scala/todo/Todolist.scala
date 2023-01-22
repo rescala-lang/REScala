@@ -5,12 +5,16 @@ import org.scalajs.dom.{document, window}
 import kofre.base.Id
 
 import java.util.concurrent.ThreadLocalRandom
+import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
 
   val replicaId: Id = Id.gen()
 
   val registry = new Registry
+
+  @JSExportTopLevel("Todolist")
+  def run(): Unit = main(Array.empty[String])
 
   def main(args: Array[String]): Unit = {
 
