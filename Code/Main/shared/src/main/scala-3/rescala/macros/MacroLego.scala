@@ -103,14 +103,11 @@ class MacroLego[ReSource: Type, Ticket: Type](
   class ReplaceImplicitTickets(ticket: Term) extends TreeMap {
 
     override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
-      // println(tree.toString)
-      // println(tree.show)
-      // println()
       tree match
+        // the first case is from a prior encoding of modules in REScala, we keep it just in case …
         case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
           Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket))
         case Apply(TypeApply(Ident("fromSchedulerImplicit"), ta), _) =>
-          // println("matched!")
           Apply(TypeApply(Ident(TermRef(TypeRepr.of[ScopeSearch.type], "fromTicketImplicit")), ta), List(ticket))
         case other => super.transformTerm(tree)(owner)
     }
