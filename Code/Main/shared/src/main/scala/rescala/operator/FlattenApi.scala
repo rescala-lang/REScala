@@ -8,7 +8,8 @@ import scala.reflect.ClassTag
 trait FlattenApi extends FlattenCollectionCompat {
   self: Operators =>
   @implicitNotFound(msg =
-    "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten.")
+    "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten."
+  )
   trait Flatten[-A, R] {
     def apply(sig: A): R
   }

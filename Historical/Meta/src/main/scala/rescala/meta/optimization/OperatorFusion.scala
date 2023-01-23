@@ -37,8 +37,7 @@ class OperatorFusion(override val verbose: Boolean = false, override val protoco
                 ) - nOuter).isEmpty =>
               val newNode = FilteredEventNode(
                 graph,
-                innerBase,
-                {
+                innerBase, {
                   x: Any =>
                     innerFilter.asInstanceOf[Function[Any, Boolean]](x) && outerFilter.asInstanceOf[Function[
                       Any,

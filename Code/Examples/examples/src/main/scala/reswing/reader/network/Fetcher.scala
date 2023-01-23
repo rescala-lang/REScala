@@ -17,8 +17,8 @@ import rescala.default._
 class Fetcher(val urls: Signal[Set[URL]]) {
   lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap } // #EVT //#EF
   lazy val state: Signal[String] = // #SIG
-    ((fetch.before map { (_: Any) => "Started fetching" }) ||        // #EF //#EF
-    (fetch.after map { (_: Any) => "Finished fetching" })) latest "" // #EF //#IF
+    ((fetch.before map { (_: Any) => "Started fetching" }) ||          // #EF //#EF
+      (fetch.after map { (_: Any) => "Finished fetching" })) latest "" // #EF //#IF
 
   val firstFetchInitiated = collection.mutable.Set.empty[URL]
 

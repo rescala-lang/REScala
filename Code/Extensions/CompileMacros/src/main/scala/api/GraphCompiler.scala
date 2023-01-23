@@ -482,7 +482,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
 
         val transformedBody: List[CStmt] =
           (CExprStmt(CCallExpr(startup.ref, List())) ::
-          body.init ++ releaseStmts) :+ body.last
+            body.init ++ releaseStmts) :+ body.last
 
         f.copy(body = Some(CCompoundStmt(transformedBody)))
     }

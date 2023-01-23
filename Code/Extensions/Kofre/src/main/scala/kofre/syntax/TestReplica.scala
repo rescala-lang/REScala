@@ -18,7 +18,7 @@ object TestReplica {
   def unapply[L](wnc: TestReplica[L]): Some[(Id, L)]       = Some((wnc.replicaId, wnc.anon))
 
   given permissions[L](using Lattice[L]): PermIdMutate[TestReplica[L], L]
-    with {
+  with {
     override def replicaId(c: TestReplica[L]): Id                    = c.replicaId
     override def mutate(c: TestReplica[L], delta: L): TestReplica[L] = c.apply(delta)
     override def query(c: TestReplica[L]): L                         = c.anon
