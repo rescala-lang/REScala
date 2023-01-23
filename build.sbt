@@ -11,16 +11,17 @@ lazy val root = (project in file("."))
       CrossVersion.for3Use2_13
     ),
     libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.8",
-    // test dependencies
-    libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
     libraryDependencies += "io.circe" %% "circe-core" % circeVersion,
     libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
     libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
+    // test dependencies
+    libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     // compiler options
     scalacOptions ++= List(
+      "-new-syntax", // force new syntax
       "-Xfatal-warnings", // turn warnings into errors
-      "-Xmax-inlines:200"
+      "-Xmax-inlines:200" // needed for circe generic
     ),
     // native-image flag "--initialize-at-build-time" is required for Cats Effect applications
     nativeImageOptions ++= List(
@@ -36,7 +37,7 @@ lazy val root = (project in file("."))
       // s"-H:ConfigurationFileDirectories=${target.value / "native-image-configs" }",
       // "-H:+JNI",
     ),
-    nativeImageJvm := "graalvm-java17",
+    nativeImageJvm := "graalvm-java19",
     nativeImageVersion := "22.3.0",
     unmanagedSources / excludeFilter := "fr"
   )
