@@ -21,7 +21,7 @@ case class TArgT(name: ID, _type: Type)
     extends Term // argument with type annotation
 
 // basic terms
-case class TVar(name: ID) extends Term // variable
+case class TVar(name: ID) extends Term with TViper // variable
 case class TAbs(name: ID, _type: Type, body: Term) extends Term // abstractions
 
 case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term

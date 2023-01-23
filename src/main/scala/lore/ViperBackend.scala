@@ -8,7 +8,7 @@ object ViperBackend:
 
   def toViper(ast: Seq[Term]): String =
     //// step 1: collect registry of all reactives
-    val graph: Map[String, TReactive] = allReactives(ast)
+    val graph: Map[String, (TReactive, Type)] = allReactives(ast)
 
     // step 2: analyze invariants //
     val invariants: Seq[TInvariant] = ast.collect({ case i: TInvariant => i })
@@ -19,7 +19,10 @@ object ViperBackend:
         // get reactives that this invariant mentions
         val directDeps = uses(i).filter(name => graph.keySet.contains(name))
         // collect (transitive) inputs of these reactives
-        val allDeps = directDeps.flatMap(name => getSubgraph(name, graph))
+        val allDeps =
+          directDeps.flatMap(name =>
+            getSubgraph(name, graph.view.mapValues(_._1).toMap)
+          )
         (i, allDeps)
       )
       .toMap
@@ -29,7 +32,7 @@ object ViperBackend:
     def transformer(term: Term) = term match
       case _var @ TVar(name) =>
         // check if is reference to derived reactive
-        graph.get(name) match
+        graph.get(name).map(_._1) match
           case Some(d: TDerived) =>
             val args: Seq[TVar] = uses(d)
               // find every reactive that is used in d
@@ -52,13 +55,12 @@ object ViperBackend:
     )
 
     // step 3: compile reactives
-    val sourcesCompiled: Seq[String] = List("TODO source reactives")
-    // val sourcesCompiled: Seq[String] = graph.values
-    //   .collect({ case s: TSource => s })
-    //   .map(
-    //     sourceToField(_)
-    //   )
-    //   .toSeq
+    val sourcesCompiled: Seq[String] = graph
+      .collect({ case s @ (name, (_: TSource, _type)) => (name, _type) })
+      .map(
+        sourceToField(_, _)
+      )
+      .toSeq
 
     val derivedCompiled: Seq[String] = List("TODO derived reactives")
     // val derivedCompiled: Seq[String] = graph.values
@@ -89,11 +91,17 @@ object ViperBackend:
     val id = UUID.nameUUIDFromBytes(TInvariant.toString.getBytes).toString
     s"define inv_$id($inputsString) ${expressionToViper(invariant.condition)}"
 
-  // def sourceToField(source: SourceReactive): String =
-  //     val typeAnn = source.typeAnn match
-  //         case Some(t) => t
-  //         case None => throw new Exception(s"Source reactive ${source.name.name} needs a type annotation to be compiled to Viper.")
-  //     s"field ${source.name.name}: $typeAnn"
+  def sourceToField(name: ID, _type: Type): String =
+    def printType(t: Type): String =
+      t match
+        case SimpleType(name, Nil) => name
+        case SimpleType("Source", inner) =>
+          s"${inner.map(printType).mkString(" ,")}"
+        case SimpleType(name, inner) =>
+          s"$name[${inner.map(printType).mkString(" ,")}]"
+        case TupleType(inner) =>
+          s"(${inner.toList.map(printType).mkString(" ,")})"
+    s"field $name: ${printType(_type)}"
 
   // def derivedToMacro(graph: Map[String, Reactive], d: DerivedReactive): String =
   //     val usedReactives = uses(d).filter(r => graph.keys.toSet.contains(r))
@@ -174,6 +182,7 @@ object ViperBackend:
   def expressionToViper(expression: Term): String = expression match
     case v: TViper =>
       v match
+        case TVar(id)  => id
         case TTrue     => "true"
         case TFalse    => "false"
         case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
