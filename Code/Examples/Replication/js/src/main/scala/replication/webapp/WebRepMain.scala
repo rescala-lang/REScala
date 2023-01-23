@@ -74,7 +74,7 @@ object WebRepMain {
         HTML.meta(ccm, dm),
         HTML.managedData(dm),
         article(
-          dm.changes.map(_ => dm.currentValue).latest(dm.currentValue).map { cv => span(cv.toList.toString)}.asModifier
+          dm.changes.map(_ => dm.currentValue).latest(dm.currentValue).map { cv => span(cv.toList.toString) }.asModifier
         )
       )
     }

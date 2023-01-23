@@ -38,7 +38,7 @@ class Commandline(settings: CliConnections) {
         (ip.trim, Integer.parseInt(port))
     }.foreach((ip, port) => registry.connect(TCP(ip, port)))
     settings.`random-data-time`.value match
-      case None =>
+      case None     =>
       case Some(ms) => timer.scheduleAtFixedRate(() => add(), 0, ms)
 
   var count = 0
