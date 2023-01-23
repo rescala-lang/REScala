@@ -10,6 +10,7 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
 import replication.JsoniterCodecs.given
+import rescala.default.{Evt, Event}
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.View
@@ -25,16 +26,19 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
 
   type TransferState = Named[Dotted[State]]
 
-
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  private val lock: AnyRef = new {}
+  private val lock: AnyRef                      = new {}
   private var localDeltas: List[TransferState]  = Nil
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
+  private val changeEvt             = Evt[TransferState]()
+  val changes: Event[TransferState] = changeEvt
+
   def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
     val named = Named(replicaId, dotted)
     localBuffer = named :: localBuffer
+    changeEvt.fire(named)
   }
 
   def allDeltas: View[Named[Dotted[State]]] = lock.synchronized {
@@ -62,6 +66,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     lock.synchronized {
       remoteDeltas = named :: remoteDeltas
     }
+    changeEvt.fire(named)
   }
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
@@ -80,10 +85,11 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     }
 
   def requestMissing() =
-    registry.remotes.headOption.foreach { rr =>
-      val req = registry.lookup(requestMissingBinding, rr)
-      req(currentValue.anon.context)
-    }
+    registry.remotes.headOption.foreach { requestMissingFrom }
+
+  def requestMissingFrom(rr: RemoteRef) =
+    val req = registry.lookup(requestMissingBinding, rr)
+    req(currentValue.anon.context)
 
   private def pushDeltas(deltas: View[TransferState], remote: RemoteRef): Unit = {
     val push = registry.lookup(pushStateBinding, remote)

@@ -13,8 +13,9 @@ import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
-import scalatags.JsDom.tags.{body, h1, p, table}
+import scalatags.JsDom.tags.{body, h1, p, table, form, span}
 import replication.JsoniterCodecs.given
+import scalatags.JsDom.tags2.{aside, article}
 
 import scala.annotation.nowarn
 import scala.concurrent.Future
@@ -66,28 +67,17 @@ object WebRepMain {
     dm.disseminate()
 
     val ccm = new ContentConnectionManager(registry)
-    ccm.autoreconnect()
-
-    // ccm.remoteVersion.observe{v =>
-    //  if (!(v == "unknown" || v.startsWith("error")) && v != viscel.shared.Version.str) {
-    //    ServiceWorker.unregister().andThen(_ => dom.window.location.reload(true))
-    //  }
-    // }
-
-    val meta =
-      MetaInfo(ccm.connectionStatus, ccm.reconnecting)
 
     val bodySig = Signal {
       body(
         id := "index",
-        Snippets.meta(meta).asModifier,
-        table(
-          
+        HTML.meta(ccm, dm),
+        HTML.managedData(dm),
+        article(
+          dm.changes.map(_ => dm.currentValue).latest(dm.currentValue).map { cv => span(cv.toList.toString)}.asModifier
         )
       )
     }
-
-    val metaLoading = Snippets.meta(meta)
 
     val bodyParent = dom.document.body.parentElement
     bodyParent.removeChild(dom.document.body)

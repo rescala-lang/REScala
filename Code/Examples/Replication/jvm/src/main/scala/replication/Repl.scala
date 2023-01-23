@@ -14,8 +14,8 @@ import java.util.Timer
 
 class Commandline(settings: CliConnections) {
 
-  val replicaId         = Id.gen()
-  val registry          = new Registry
+  val replicaId = Id.gen()
+  val registry  = new Registry
 
   val dataManager =
     @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -31,17 +31,20 @@ class Commandline(settings: CliConnections) {
     settings.`webserver-listen-port`.value match
       case None =>
       case Some(port) =>
-        val server = new JettyServer(settings.`webserver-static-path`.value, "", registry, "0")
+        val server = new JettyServer(settings.`webserver-static-path`.value, "/", registry, "0")
         server.start(port)
     settings.`tcp-connect`.value.map { _.split(':') }.collect {
       case Array(ip, port) =>
         (ip.trim, Integer.parseInt(port))
     }.foreach((ip, port) => registry.connect(TCP(ip, port)))
+    settings.`random-data-time`.value match
+      case None =>
+      case Some(ms) => timer.scheduleAtFixedRate(() => add(), 0, ms)
 
   var count = 0
 
   def add() =
-    dataManager.applyLocalDelta(dataManager.currentValue.append(s"${replicaId}: $count").anon)
+    dataManager.applyLocalDelta(dataManager.currentValue.append(s"${Id.unwrap(replicaId).take(4)}: $count").anon)
     dataManager.disseminate()
     count = count + 1
 

@@ -12,15 +12,13 @@ import java.util.NoSuchElementException
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.{Int8Array, TypedArrayBuffer}
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 class ContentConnectionManager(registry: Registry) {
-
-  import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   val wsUri: String = {
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
     val path       = dom.document.location.pathname
-    println(path)
     val li         = path.lastIndexOf('/')
     val parent =
       if li < 0
@@ -36,38 +34,23 @@ class ContentConnectionManager(registry: Registry) {
     registry.remoteLeft.foreach(cb)
   }.event
 
-  val connectionStatusChanged = joined || left
-
-  val connectedRemotes = connectionStatusChanged.fold[List[RemoteRef]](Nil) { (_, _) =>
-    registry.remotes.filter(_.connected)
-  }
-
-  val connectionStatus: Signal[Int] = connectedRemotes.map(_.size)
-
-  val mainRemote = connectedRemotes.map(_.headOption.getOrElse(throw EmptySignalControlThrowable))
-
-  val connectionAttempt: Evt[Unit] = Evt[Unit]()
-
-  val reconnecting: Signal[Int] = Fold(0)(
-    connectionAttempt act { _ => current + 1 },
-    joined act { _ => 0 }
+  val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])(
+    joined act { rr => current.updated(rr, true) },
+    left act { rr => current.updated(rr, false) }
   )
 
-  def connect(): Future[RemoteRef] = {
+  val connectionStatusChanged = joined || left
+
+  val _connectionAttempt = Var.empty[Signal[RemoteRef]]
+  val connectionAttempt  = _connectionAttempt.flatten
+
+
+  def connect(): Unit = {
+    _connectionAttempt.set(Signals.fromFuture(tryConnect()))
+  }
+
+  def tryConnect(): Future[RemoteRef] = {
     println(s"trying to connect to $wsUri")
-    connectionAttempt.fire()
     registry.connect(WS(wsUri))
-  }
-
-  def connectLoop(): Unit = {
-    connect().failed.foreach { err =>
-      println(s"connection failed »$err«")
-      dom.window.setTimeout(() => connectLoop(), 10000)
-    }
-  }
-
-  def autoreconnect(): Unit = {
-    left.filter(_ => connectionStatus.value == 0).observe(_ => connectLoop())
-    connectLoop()
   }
 }

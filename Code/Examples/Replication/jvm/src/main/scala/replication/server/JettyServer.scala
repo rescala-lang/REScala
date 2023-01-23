@@ -31,7 +31,7 @@ class JettyServer(
 ) {
 
   lazy val jettyServer: Server = {
-    val threadPool = new QueuedThreadPool(4)
+    val threadPool = new QueuedThreadPool(3, 0)
     threadPool.setName("http server")
     new Server(threadPool)
   }
@@ -41,7 +41,7 @@ class JettyServer(
   def start(port: Int): Unit = {
 
     // connectors accept requests – in this case on a TCP socket
-    val connector = new ServerConnector(jettyServer)
+    val connector = new ServerConnector(jettyServer, 0, 1)
     connector.setHost(interface)
     connector.setPort(port)
     jettyServer.addConnector(connector)

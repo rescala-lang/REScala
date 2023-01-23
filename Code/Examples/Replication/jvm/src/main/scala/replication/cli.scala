@@ -13,7 +13,9 @@ case class CliConnections(
     `tcp-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("tcp listen port")),
     `tcp-connect`: Argument[String, List, Style.Named] = Argument(_.text("connections").valueName("<ip:port>")),
     `webserver-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("webserver listen port")),
-    `webserver-static-path`: Argument[Path, Option, Style.Named] = Argument(_.text("webserver static path"))
+    `webserver-static-path`: Argument[Path, Option, Style.Named] = Argument(_.text("webserver static path")),
+    `random-data-time`: Argument[Long, Option, Style.Named] =
+      Argument(_.text("add random data on a time").valueName("milliseconds"))
 )
 
 case class CliArgs(
