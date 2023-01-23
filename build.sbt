@@ -19,6 +19,7 @@ lazy val root = (project in file("."))
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     // compiler options
     scalacOptions ++= List(
+      "-deprecation",
       "-new-syntax", // force new syntax
       "-Xfatal-warnings", // turn warnings into errors
       "-Xmax-inlines:200" // needed for circe generic
