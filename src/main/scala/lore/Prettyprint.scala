@@ -13,7 +13,7 @@ class Prettyprint(filename: String, input: String) {
       val strList = strs.map { x => s"'$x'" }.mkString(", ")
       s"expected one of $strList"
     case Expectation.InRange(_, lower, upper) =>
-      if (lower == upper) s"expected '$lower'"
+      if (lower == upper) then s"expected '$lower'"
       else s"expected '$lower' ~ '$upper'"
     case Expectation.StartOfString(_) =>
       "expected beginning of file"

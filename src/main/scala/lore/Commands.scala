@@ -6,6 +6,7 @@ import com.monovore.decline._
 import cats.implicits._
 
 private val langname: String = "LoRe"
+private val cmdname: String = "lore"
 
 // command line options
 case class Options(
@@ -72,7 +73,7 @@ val toViperSC = Opts
 
 // program
 val mainCommand = Command(
-  name = langname,
+  name = cmdname,
   header = s"Compiler and toolchain for the $langname programming language."
 ) {
   parseSC orElse toRescalaSC orElse toViperSC
