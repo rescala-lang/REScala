@@ -1,6 +1,6 @@
-#!/usr/bin/fish
+#!/usr/bin/sh
 
-set -l curr (pwd)
+curr=$(pwd)
 cd ../../..
 sbtn "replicationExamplesJS/deploy; replicationExamplesJVM/stageJars"
 cd $curr
