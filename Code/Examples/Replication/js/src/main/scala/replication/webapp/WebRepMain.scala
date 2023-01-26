@@ -17,6 +17,8 @@ import scalatags.JsDom.tags.{body, h1, p, table, form, span}
 import replication.JsoniterCodecs.given
 import scalatags.JsDom.tags2.{aside, article}
 
+import replication.fbdc.FbdcExampleData
+
 import scala.annotation.nowarn
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -50,32 +52,34 @@ object WebRepMain {
       .flatMap(_.arrayBuffer().toFuture)
   }
 
-  val replicaId: Id = Id.gen()
-
   @JSExportTopLevel("Replication")
   def run() = main(Array.empty)
 
   def main(args: Array[String]): Unit = {
     dom.document.body = body("loading data …").render
 
-    val registry = new Registry
-
     @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    val dm = new DataManager[ReplicatedList[String]](replicaId, registry)
+    val exData = new FbdcExampleData()
 
-    dm.disseminate()
+    exData.dataManager.disseminate()
 
-    val ccm = new ContentConnectionManager(registry)
+    val ccm = new ContentConnectionManager(exData.registry)
 
     val bodySig = Signal {
       body(
         id := "index",
-        HTML.meta(ccm, dm),
-        HTML.managedData(dm),
+        HTML.providers(exData),
+        HTML.connectionManagement(ccm, exData.dataManager),
+        HTML.debugInfo(exData.dataManager),
         article(
-          dm.changes.map(_ => dm.currentValue).latest(dm.currentValue).map { cv => span(cv.toList.toString) }.asModifier
-        )
+          h1("just stuff tostringed"),
+          exData.dataManager.changes.map(_ => exData.dataManager.currentValue).latest(
+            exData.dataManager.currentValue
+          ).map { cv =>
+            span(cv.anon.store.responses.elements.toList.map(_.toString): _*)
+          }.asModifier
+        ),
       )
     }
 

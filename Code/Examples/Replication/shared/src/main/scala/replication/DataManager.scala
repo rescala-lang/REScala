@@ -51,8 +51,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
       applyLocalDelta(withContext)
       container
 
-
-    override def context(c: State): Dots = ???
+    override def context(c: State): Dots = DataManager.this.currentValue.anon.context
   }
 
   def transform(fun: ManagedPermissions ?=> State => Unit) = lock.synchronized {
