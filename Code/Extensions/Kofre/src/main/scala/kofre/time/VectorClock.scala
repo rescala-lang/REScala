@@ -10,7 +10,7 @@ import scala.math.PartialOrdering
 case class VectorClock(timestamps: Map[Id, Time]) {
   def timeOf(replicaId: Id): Time = timestamps.getOrElse(replicaId, 0)
 
-  def clockOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
+  def dotOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
 
   def inc(id: Id): VectorClock    = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))

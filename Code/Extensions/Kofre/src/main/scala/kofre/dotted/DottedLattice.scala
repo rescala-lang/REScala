@@ -104,7 +104,7 @@ object DottedLattice {
 
   /** Enables the use of a [[kofre.base.Lattice]] as a [[DottedLattice]].
     * Beware that this works for most datastructures due to automatic derivation of the required instance,
-    * but will likely not have the inteded semantics if the datastructure does use any dots inside.
+    * but will likely not have the intended semantics if the datastructure does use any dots inside.
     */
   def liftLattice[A: Lattice]: DottedLattice[A] =
     new DottedLattice[A] {

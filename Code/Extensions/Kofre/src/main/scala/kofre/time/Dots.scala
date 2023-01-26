@@ -20,6 +20,8 @@ case class Dots(internal: Map[Id, ArrayRanges]) {
 
   def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
+  def clock: VectorClock = VectorClock(internal.view.mapValues(_.next.fold(0L)(_ - 1)).toMap)
+
   def add(dot: Dot): Dots = add(dot.replicaId, dot.time)
 
   def add(replicaId: Id, time: Time): Dots =

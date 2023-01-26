@@ -1,5 +1,6 @@
 package test.kofre
 
+import kofre.syntax.Named
 import org.scalacheck.{Arbitrary, Gen}
 import kofre.dotted.*
 import kofre.time.*
@@ -54,13 +55,13 @@ object DataGenerator {
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
     Arbitrary(map)
 
-  given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
+  given arbCausalQueue[A: Arbitrary]: Arbitrary[Dotted[CausalQueue[A]]] =
     val pairgen = for {
       id    <- arbId.arbitrary
       value <- Arbitrary.arbitrary[A]
     } yield (id, value)
-    val map = Gen.listOf(pairgen).map(_.foldLeft(CausalQueue.empty[A]) { case (acc, (id, value)) =>
-      acc.enqueue(value, id)
+    val map = Gen.listOf(pairgen).map(_.foldLeft(Dotted(CausalQueue.empty[A])) { case (acc, (id, value)) =>
+      acc merge acc.named(id).causalQueue.enqueue(value).anon
     })
     Arbitrary(map)
 
