@@ -1,8 +1,8 @@
-package kofre.datatypes.experiments
+package kofre.datatypes
 
 import kofre.base.Lattice.Operators
 import kofre.base.{Id, Lattice}
-import kofre.datatypes.experiments.CausalQueue.QueueElement
+import kofre.datatypes.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots, VectorClock}
