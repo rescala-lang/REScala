@@ -3,10 +3,14 @@ package replication.calendar
 import kofre.datatypes.AddWinsSet
 import rescala.default.*
 import kofre.datatypes.AddWinsSet.syntax
-import kofre.base.Id
+import kofre.base.{Bottom, Id}
 import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 case class Appointment(start: Int, end: Int)
+
+given intMaxBottom: Bottom[Int] with {
+  def empty = Int.MinValue
+}
 
 class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit) {
 

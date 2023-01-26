@@ -215,6 +215,7 @@ lazy val replicationExamples =
         loci.wsJetty11.value,
         jetty.value,
         scribeSlf4j2.value,
+        slips.script.value,
       )
     )
     .jsSettings(

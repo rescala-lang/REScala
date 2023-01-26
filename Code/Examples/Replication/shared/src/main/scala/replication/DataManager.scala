@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, Named}
+import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, PermId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -39,6 +39,24 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     val named = Named(replicaId, dotted)
     localBuffer = named :: localBuffer
     changeEvt.fire(named)
+  }
+
+
+  class ManagedPermissions extends PermCausalMutate[State, State] with PermId[State] {
+    override def replicaId(c: State): Id = DataManager.this.replicaId
+
+    override def query(c: State): State = c
+
+    override def mutateContext(container: State, withContext: Dotted[State]): State =
+      applyLocalDelta(withContext)
+      container
+
+
+    override def context(c: State): Dots = ???
+  }
+
+  def transform(fun: ManagedPermissions ?=> State => Unit) = lock.synchronized {
+    fun(using ManagedPermissions())(currentValue.anon.store)
   }
 
   def allDeltas: View[Named[Dotted[State]]] = lock.synchronized {

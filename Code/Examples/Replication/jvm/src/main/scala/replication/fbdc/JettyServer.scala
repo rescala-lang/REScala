@@ -1,9 +1,8 @@
-package replication.server
+package replication.fbdc
 
+import jakarta.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
 import loci.communicator.ws.jetty.*
 import loci.communicator.ws.jetty.WS.Properties
-import jakarta.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
-
 import loci.registry.Registry
 import org.eclipse.jetty.http.{HttpCookie, HttpHeader, HttpMethod}
 import org.eclipse.jetty.rewrite.handler.{RewriteHandler, RewriteRegexRule}

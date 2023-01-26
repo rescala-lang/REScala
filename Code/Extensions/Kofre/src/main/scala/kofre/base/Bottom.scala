@@ -3,6 +3,7 @@ package kofre.base
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
 import kofre.time.Dots
 
+import scala.collection.immutable.Queue
 import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
@@ -24,7 +25,11 @@ object Bottom {
   }
   given setBottom[V]: Bottom[Set[V]] = setBottomInstance.asInstanceOf
 
-  given intMaxBottom: Bottom[Int] with { override def empty: Int = Int.MinValue }
+  def intMaxBottom: Bottom[Int] = new { override def empty: Int = Int.MinValue }
+
+  given queueBottom[V]: Bottom[Queue[V]] with {
+    override def empty: Queue[V] = Queue.empty
+  }
 
   given dotMap[K, V]: Bottom[DotMap[K, V]]   = Bottom.derived
   given dotFun[V]: Bottom[DotFun[V]]         = Bottom.derived

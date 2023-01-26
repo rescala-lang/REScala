@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Id, Lattice}
+import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.OpsSyntaxHelper
@@ -15,6 +15,8 @@ object CausalQueue:
   case class QueueElement[T](value: T, dot: Dot, order: VectorClock)
 
   def empty[T]: CausalQueue[T] = CausalQueue(Queue())
+
+  given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived
 
   extension [C, T](container: C)
     def causalQueue: syntax[C, T] = syntax(container)
@@ -34,6 +36,9 @@ object CausalQueue:
     def dequeue(using PermCausalMutate, PermId)(): C =
       val QueueElement(_, dot, _) = current.values.head
       Dotted(CausalQueue.empty, Dots.single(dot)).mutator
+
+    def elements(using PermQuery): Queue[T] =
+      current.values.map(_.value)
 
   }
 

@@ -6,23 +6,16 @@ import replication.checkpointing.CheckpointingOptions
 import replication.checkpointing.central.{CentralOptions, Checkpointer}
 import replication.checkpointing.decentral.{DecentralOptions, Replica}
 import kofre.base.Id
+import replication.fbdc.FbdcCli
 
 import java.nio.file.Path
 
-case class CliConnections(
-    `tcp-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("tcp listen port")),
-    `tcp-connect`: Argument[String, List, Style.Named] = Argument(_.text("connections").valueName("<ip:port>")),
-    `webserver-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("webserver listen port")),
-    `webserver-static-path`: Argument[Path, Option, Style.Named] = Argument(_.text("webserver static path")),
-    `random-data-time`: Argument[Long, Option, Style.Named] =
-      Argument(_.text("add random data on a time").valueName("milliseconds"))
-)
 
 case class CliArgs(
     calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
     dtn: Subcommand[Unit] = Subcommand.empty(),
     checkpointing: Subcommand[CheckpointingOptions] = Subcommand(CheckpointingOptions()),
-    conn: Subcommand[CliConnections] = Subcommand(CliConnections()),
+    conn: Subcommand[fbdc.CliConnections] = Subcommand(fbdc.CliConnections()),
 )
 
 object cli {
@@ -91,7 +84,7 @@ object cli {
     instance.conn.value match
       case None =>
       case Some(connections) =>
-        val serv = new Commandline(connections)
+        val serv = new FbdcCli(connections)
         serv.start()
 
   }
