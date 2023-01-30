@@ -21,8 +21,10 @@ import scala.annotation.nowarn
 enum Req:
   def executor: Id
   case Fortune(executor: Id)
+  case Northwind(executor: Id, query: String)
 enum Res:
   case Fortune(req: Req.Fortune, result: String)
+  case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
 class FbdcExampleData {
   val replicaId = Id.gen()
@@ -32,8 +34,14 @@ class FbdcExampleData {
 
   val dataManager =
     @nowarn given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
     new DataManager[State](replicaId, registry)
+
+  def addCapability(capamility: String) =
+    dataManager.transform { current =>
+      current.modParticipants { part =>
+        part.mutateKeyNamedCtx(replicaId)(_.add(capamility))
+      }
+    }
 
   case class State(
       requests: CausalQueue[Req],
@@ -78,6 +86,10 @@ class FbdcExampleData {
   val requests   = mergedState.map(_.store.requests.elements)
   val myRequests = requests.map(_.filter(_.executor == replicaId))
   val responses  = mergedState.map(_.store.responses.elements)
+
+  def requestsOf[T] = requests.map(_.collect {
+    case req: T => req
+  })
 
   val providers = mergedState.map(_.store.providers)
 }

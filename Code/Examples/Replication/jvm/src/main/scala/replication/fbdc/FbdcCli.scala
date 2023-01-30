@@ -15,7 +15,7 @@ import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
-import java.nio.file.Path
+import java.nio.file.{Files, LinkOption, Path}
 import java.util.Timer
 import scala.annotation.nowarn
 
@@ -24,6 +24,7 @@ case class CliConnections(
     `tcp-connect`: Argument[String, List, Style.Named] = Argument(_.text("connections").valueName("<ip:port>")),
     `webserver-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("webserver listen port")),
     `webserver-static-path`: Argument[Path, Option, Style.Named] = Argument(_.text("webserver static path")),
+    `northwind-path`: Argument[Path, Option, Style.Named] = Argument(_.text("northwind sqlite database path"))
 //    `random-data-time`: Argument[Long, Option, Style.Named] =
 //      Argument(_.text("add random data on a time").valueName("milliseconds"))
 )
@@ -32,9 +33,6 @@ class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
   import exData.{State, dataManager, registry}
-
-  def processFortune(r: Req.Fortune) =
-    Res.Fortune(r, process"fortune".run())
 
   def start() =
     settings.`tcp-listen-port`.value match
@@ -50,41 +48,10 @@ class FbdcCli(settings: CliConnections) {
       case Array(ip, port) =>
         (ip.trim, Integer.parseInt(port))
     }.foreach((ip, port) => registry.connect(TCP(ip, port)))
-//    settings.`random-data-time`.value match
-//      case None     =>
-//      case Some(ms) => timer.scheduleAtFixedRate(() => add(), 0, ms)
-    if process"which fortune".runResult().isRight
-    then
-      println(s"enabling fortunes")
-      enableFortuneProcessing()
-    else
-      println(s"fortunes not installed")
+    settings.`northwind-path`.value match
+      case None    =>
+      case Some(p) => Northwind.enableConditional(exData, p)
+    Fortunes.enableConditional(exData)
   end start
-
-  def enableFortuneProcessing() =
-    dataManager.transform{ current =>
-      current.modParticipants { part =>
-        part.mutateKeyNamedCtx(exData.replicaId)(_.add("fortune"))
-      }
-    }
-    exData.myRequests.map {
-      _.collect {
-        case x: Req.Fortune => x
-      }
-    }.observe { fortunes =>
-      val resps = fortunes.map(processFortune)
-      dataManager.transform { current =>
-        current.modRes { reqq =>
-          resps.foreach(reqq.enqueue)
-        }
-      }
-    }
-
-//  def add() =
-//    dataManager.applyLocalDelta(dataManager.currentValue.append(s"${Id.unwrap(replicaId).take(4)}: $count").anon)
-//    dataManager.disseminate()
-//    count = count + 1
-
-//  def read() = dataManager.currentValue.toList
 
 }

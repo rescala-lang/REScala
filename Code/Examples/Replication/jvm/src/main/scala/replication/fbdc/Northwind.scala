@@ -1,0 +1,49 @@
+package replication.fbdc
+
+import java.nio.file.{Files, Path}
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.sql.Statement
+import java.util.Properties
+import scala.collection.mutable.ListBuffer
+import scala.util.Using
+import scala.util.chaining.scalaUtilChainingOps
+
+object Northwind {
+
+  val dbProperties = new Properties().tap(_.setProperty("immutable", "1"))
+
+  def enableConditional(exampleData: FbdcExampleData, path: Path) = {
+    if !Files.isRegularFile(path)
+    then println(s"northwind $path not found")
+    else
+      println(s"opening northwind database")
+      val connection = DriverManager.getConnection(s"jdbc:sqlite:${path.toString}", dbProperties)
+
+      def query(q: String): List[Map[String, String]] =
+        Using(connection.createStatement()) { st =>
+          val res     = st.executeQuery(q)
+          val meta    = res.getMetaData
+          val columns = (1 to meta.getColumnCount).map(meta.getColumnName)
+          val lb      = ListBuffer.empty[Map[String, String]]
+          while res.next()
+          do
+            lb.append(columns.map(c => c -> res.getString(c)).toMap)
+          lb.toList
+        }.get
+
+      import exampleData.dataManager
+      exampleData.addCapability("northwind")
+      exampleData.requestsOf[Req.Northwind].observe { queries =>
+        val resps = queries.map(q => Res.Northwind(q, query(q.query)))
+        dataManager.transform { current =>
+          current.modRes { reqq =>
+            resps.foreach(reqq.enqueue)
+          }
+        }
+      }
+
+  }
+}
