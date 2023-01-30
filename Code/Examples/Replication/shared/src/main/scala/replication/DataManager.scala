@@ -3,7 +3,7 @@ package replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
-import kofre.dotted.{Dotted, DottedLattice}
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, PermId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
@@ -21,7 +21,7 @@ import kofre.base.Lattice.optionLattice
 
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
-class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
+class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val replicaId: Id,
     val registry: Registry
 ) {
@@ -34,13 +34,13 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  private val contexts: Var[Map[RemoteRef, Dots]]                    = Var(Map.empty)
+  private val contexts: Var[Map[RemoteRef, Dots]]                            = Var(Map.empty)
   private val filteredContexts: mutable.Map[RemoteRef, Signal[Option[Dots]]] = mutable.Map.empty
 
   def contextOf(rr: RemoteRef) =
     val internal = filteredContexts.getOrElseUpdate(rr, contexts.map(_.get(rr)))
-    internal.map{
-      case None => Dots.empty
+    internal.map {
+      case None       => Dots.empty
       case Some(dots) => dots
     }
 
@@ -99,8 +99,12 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   }
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
-    pushDeltas(allDeltas.filterNot(dt => dt.anon.context <= knows), rr)
-    updateRemoteContext(rr, currentContext.now merge knows)
+    val contained = HasDots[State].dots(mergedState.now.store)
+    val cc = currentContext.now
+    // we always send all the removals in addition to any other deltas
+    val removed = cc subtract contained
+    pushDeltas(allDeltas.filterNot(dt => dt.anon.context <= knows).concat(List(Dotted(Bottom.empty,removed).named(replicaId))), rr)
+    updateRemoteContext(rr, cc merge knows)
   }
 
   def disseminateLocalBuffer() =
@@ -113,6 +117,11 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     registry.remotes.foreach { remote =>
       val ctx = contexts.now.getOrElse(remote, Dots.empty)
       pushDeltas(deltas.view, remote)
+    }
+
+  def disseminateFull() =
+    registry.remotes.foreach { remote =>
+      pushDeltas(List(Named(replicaId, mergedState.now)).view, remote)
     }
 
   def requestMissingFrom(rr: RemoteRef) =

@@ -3,18 +3,22 @@ package kofre.datatypes
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.CausalQueue.QueueElement
-import kofre.dotted.{Dotted, DottedLattice}
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
 
-case class CausalQueue[T](values: Queue[QueueElement[T]])
+case class CausalQueue[+T](values: Queue[QueueElement[T]])
 
 object CausalQueue:
-  case class QueueElement[T](value: T, dot: Dot, order: VectorClock)
+  case class QueueElement[+T](value: T, dot: Dot, order: VectorClock)
 
   def empty[T]: CausalQueue[T] = CausalQueue(Queue())
+
+  given hasDots: HasDots[CausalQueue[Any]] with {
+    override def dots(a: CausalQueue[Any]): Dots = Dots.from(a.values.view.map(_.dot))
+  }
 
   given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived
 
@@ -37,6 +41,10 @@ object CausalQueue:
       val QueueElement(_, dot, _) = current.values.head
       Dotted(CausalQueue.empty, Dots.single(dot)).mutator
 
+    def removeBy(using PermCausalMutate)(p: T => Boolean) =
+      val toRemove = current.values.filter(e => p(e.value)).map(_.dot)
+      Dotted(CausalQueue.empty, Dots.from(toRemove)).mutator
+
     def elements(using PermQuery): Queue[T] =
       current.values.map(_.value)
 
@@ -45,10 +53,13 @@ object CausalQueue:
   given lattice[A]: DottedLattice[CausalQueue[A]] with {
     override def mergePartial(left: Dotted[CausalQueue[A]], right: Dotted[CausalQueue[A]]): CausalQueue[A] =
 
-      val li = left.store.values.iterator.filter(qe => !right.context.contains(qe.dot))
-      val ri = right.store.values.iterator.filter(qe => !left.context.contains(qe.dot))
+      val leftDots  = Dots.from(left.store.values.map(_.dot))
+      val rightDots = Dots.from(right.store.values.map(_.dot))
+
+      val li = left.store.values.iterator.filter(qe => !(right.context subtract rightDots).contains(qe.dot))
+      val ri = right.store.values.iterator.filter(qe => !(left.context subtract leftDots).contains(qe.dot))
 
       val res = (li concat ri).to(Queue)
-        .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering)
+        .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
       CausalQueue(res)
   }

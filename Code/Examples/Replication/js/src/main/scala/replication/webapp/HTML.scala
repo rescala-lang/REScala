@@ -36,11 +36,19 @@ object HTML {
       h1("connection management"),
       section(table(
         tr(td("total state size"), dataManager.encodedStateSize.map(s => td(s)).asModifier),
-        tr(td("request queue"), dataManager.mergedState.map(v => td(v.store.requests.values.size)).asModifier),
-        tr(td("response queue"), dataManager.mergedState.map(v => td(v.store.responses.values.size)).asModifier),
-
+        tr(
+          td("request queue"),
+          dataManager.mergedState.map(v => td(v.store.requests.elements.size)).asModifier
+        ),
+        tr(
+          td("response queue"),
+          dataManager.mergedState.map(v => td(v.store.responses.elements.size)).asModifier
+        ),
       )),
-      section(button("disseminate", onclick := leftClickHandler(dataManager.disseminateLocalBuffer()))),
+      section(
+        button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
+        button("disseminate all", onclick := leftClickHandler(dataManager.disseminateFull()))
+      ),
       section(table(
         thead(th("remote ref"), th("connection"), th("request"), th("dots")),
         tr(

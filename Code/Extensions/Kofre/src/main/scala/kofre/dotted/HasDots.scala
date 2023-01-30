@@ -10,8 +10,12 @@ import scala.deriving.Mirror
   *
   * But here, a dot store is something that can be seen as a Dots
   */
-trait HasDots[A] {
+trait HasDots[-A] {
+  outer =>
   def dots(a: A): Dots
+
+  def map[B](f: B => A): HasDots[B] = new HasDots[B]:
+    override def dots(b: B): Dots = outer.dots(f(b))
 }
 
 object HasDots {

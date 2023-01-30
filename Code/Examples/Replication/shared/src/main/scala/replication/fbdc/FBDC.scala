@@ -48,7 +48,7 @@ class FbdcExampleData {
       requests: CausalQueue[Req],
       responses: CausalQueue[Res],
       providers: ObserveRemoveMap[Id, AddWinsSet[String]]
-  ) derives DottedLattice {
+  ) derives DottedLattice, HasDots {
 
     class Forward[T](select: State => T, wrap: T => State)(using pcm: PermCausalMutate[State, State], pi: PermId[State])
         extends PermId[T]
@@ -82,11 +82,22 @@ class FbdcExampleData {
     }
   }
 
-  val requests   = dataManager.mergedState.map(_.store.requests.elements)
-  val myRequests = requests.map(_.filter(_.executor == replicaId))
-  val responses  = dataManager.mergedState.map(_.store.responses.elements)
+  val requests = dataManager.mergedState.map(_.store.requests.elements)
+  val myRequests =
+    val r = requests.map(_.filter(_.executor == replicaId))
+    r.observe { reqs =>
+      if reqs.nonEmpty
+      then
+        dataManager.transform { state =>
+          state.modReq { aws =>
+            aws.removeBy{ (req: Req) => req.executor == replicaId}
+          }
+        }
+    }
+    r
+  val responses = dataManager.mergedState.map(_.store.responses.elements)
 
-  def requestsOf[T: ClassTag] = requests.map(_.collect {
+  def requestsOf[T: ClassTag] = myRequests.map(_.collect {
     case req: T => req
   })
 

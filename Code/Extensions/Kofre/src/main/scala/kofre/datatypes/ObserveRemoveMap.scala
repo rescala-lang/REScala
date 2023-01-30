@@ -21,6 +21,8 @@ object ObserveRemoveMap {
 
   given bottom[K, V]: Bottom[ObserveRemoveMap[K, V]] = Bottom.derived
 
+  given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = DotMap.hasDots[K, V].map(_.inner)
+
   given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[ObserveRemoveMap[K, V]] =
     import DotMap.dottedLattice
     DottedLattice.derived
