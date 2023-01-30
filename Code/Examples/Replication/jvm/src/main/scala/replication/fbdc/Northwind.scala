@@ -1,5 +1,7 @@
 package replication.fbdc
 
+import kofre.base.Bottom
+
 import java.nio.file.{Files, Path}
 import java.sql.Connection
 import java.sql.DriverManager
@@ -10,6 +12,8 @@ import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.Using
 import scala.util.chaining.scalaUtilChainingOps
+import kofre.base.Bottom
+import kofre.datatypes.LastWriterWins
 
 object Northwind {
 
@@ -41,10 +45,12 @@ object Northwind {
       import exampleData.dataManager
       exampleData.addCapability("northwind")
       exampleData.requestsOf[Req.Northwind].observe { queries =>
-        val resps = queries.map(q => Res.Northwind(q, query(q.query)))
         dataManager.transform { current =>
           current.modRes { reqq =>
-            resps.foreach(reqq.enqueue)
+            queries.foreach{ q =>
+              val resp = Res.Northwind(q.value, query(q.value.query))
+              reqq.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp, exampleData.replicaId)))
+            }
           }
         }
       }

@@ -19,6 +19,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import kofre.base.Lattice.optionLattice
 
+import java.util.Timer
+
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
@@ -27,6 +29,18 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 ) {
 
   type TransferState = Named[Dotted[State]]
+
+  val timer = new Timer()
+
+  timer.scheduleAtFixedRate(
+    { () =>
+      registry.remotes.foreach(requestMissingFrom)
+    },
+    10000,
+    10000
+  )
+
+  registry.remoteJoined.foreach(requestMissingFrom)
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
   private val lock: AnyRef                      = new {}
@@ -49,12 +63,14 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
   val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
   val currentContext                = mergedState.map(_.context)
 
+
   val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 
   def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
     val named = Named(replicaId, dotted)
     localBuffer = named :: localBuffer
     changeEvt.fire(named)
+    disseminateLocalBuffer()
   }
 
   class ManagedPermissions extends PermCausalMutate[State, State] with PermId[State] {
@@ -100,10 +116,13 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
     val contained = HasDots[State].dots(mergedState.now.store)
-    val cc = currentContext.now
+    val cc        = currentContext.now
     // we always send all the removals in addition to any other deltas
     val removed = cc subtract contained
-    pushDeltas(allDeltas.filterNot(dt => dt.anon.context <= knows).concat(List(Dotted(Bottom.empty,removed).named(replicaId))), rr)
+    pushDeltas(
+      allDeltas.filterNot(dt => dt.anon.context <= knows).concat(List(Dotted(Bottom.empty, removed).named(replicaId))),
+      rr
+    )
     updateRemoteContext(rr, cc merge knows)
   }
 

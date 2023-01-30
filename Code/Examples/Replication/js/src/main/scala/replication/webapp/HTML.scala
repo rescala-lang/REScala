@@ -40,10 +40,6 @@ object HTML {
           td("request queue"),
           dataManager.mergedState.map(v => td(v.store.requests.elements.size)).asModifier
         ),
-        tr(
-          td("response queue"),
-          dataManager.mergedState.map(v => td(v.store.responses.elements.size)).asModifier
-        ),
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
@@ -86,7 +82,7 @@ object HTML {
   }
 
   def dotsToRows(dots: kofre.time.Dots) =
-    dots.internal.map { (k, v) =>
+    dots.internal.toList.sortBy(t => Id.unwrap(t._1)).map { (k, v) =>
       tr(td(Id.unwrap(k)), td(v.toString))
     }.toSeq
 
@@ -108,16 +104,19 @@ object HTML {
 
   }
 
-  def fortuneBox(exdat: FbdcExampleData, id: Id) = aside(button(
-    "get fortune",
-    onclick := leftClickHandler {
-      exdat.dataManager.transform { curr =>
-        curr.modReq { reqs =>
-          reqs.enqueue(Req.Fortune(id))
+  def fortuneBox(exdat: FbdcExampleData, id: Id) = aside(
+    button(
+      "get fortune",
+      onclick := leftClickHandler {
+        exdat.dataManager.transform { curr =>
+          curr.modReq { reqs =>
+            reqs.enqueue(Req.Fortune(id))
+          }
         }
       }
-    }
-  ))
+    ),
+    exdat.latestFortune.map(f => p(f.map(_.result).getOrElse(""))).asModifier
+  )
 
   def northwindBox(exdat: FbdcExampleData, id: Id) =
     val ip = input().render

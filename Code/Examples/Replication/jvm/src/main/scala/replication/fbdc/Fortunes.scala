@@ -1,6 +1,7 @@
 package replication.fbdc
 
 import de.rmgk.script.extensions
+import kofre.datatypes.LastWriterWins
 
 object Fortunes {
 
@@ -18,10 +19,12 @@ object Fortunes {
     exampleData.addCapability("fortune")
 
     exampleData.requestsOf[Req.Fortune].observe { fortunes =>
-      val resps = fortunes.map(processFortune)
       dataManager.transform { current =>
         current.modRes { reqq =>
-          resps.foreach(reqq.enqueue)
+          fortunes.foreach { q =>
+            val resp = processFortune(q.value)
+            reqq.observeRemoveMap.insert("fortune", Some(LastWriterWins.now(resp, exampleData.replicaId)))
+          }
         }
       }
     }

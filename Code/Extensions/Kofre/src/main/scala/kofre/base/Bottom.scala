@@ -20,6 +20,10 @@ object Bottom {
   }
   given mapBottom[K, V]: Bottom[Map[K, V]] = mapBottomInstance.asInstanceOf
 
+  given optionBottom[V]: Bottom[Option[V]] with {
+    override def empty: Option[V] = None
+  }
+
   private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
     override val empty: Set[Nothing] = Set.empty
   }

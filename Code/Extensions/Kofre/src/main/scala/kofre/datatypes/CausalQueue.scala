@@ -14,6 +14,11 @@ case class CausalQueue[+T](values: Queue[QueueElement[T]])
 object CausalQueue:
   case class QueueElement[+T](value: T, dot: Dot, order: VectorClock)
 
+  given elementLattice[T]: Lattice[QueueElement[T]] with {
+    override def merge(left: QueueElement[T], right: QueueElement[T]): QueueElement[T] =
+      if left.order < right.order then right else left
+  }
+
   def empty[T]: CausalQueue[T] = CausalQueue(Queue())
 
   given hasDots: HasDots[CausalQueue[Any]] with {
