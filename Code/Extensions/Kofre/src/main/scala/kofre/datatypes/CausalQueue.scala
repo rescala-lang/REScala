@@ -33,7 +33,7 @@ object CausalQueue:
       val QueueElement(e, _, _) = current.values.head
       e
 
-    def dequeue(using PermCausalMutate, PermId)(): C =
+    def dequeue(using PermCausalMutate)(): C =
       val QueueElement(_, dot, _) = current.values.head
       Dotted(CausalQueue.empty, Dots.single(dot)).mutator
 

@@ -1,12 +1,13 @@
 package benchmarks.lattices
 
 import kofre.base.Lattice.Operators
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import kofre.datatypes.alternatives.rga.Sequence.RGA
 import kofre.datatypes.alternatives.rga.Sequence.RGAOps
 import kofre.base.Id.asId
 import kofre.datatypes.CausalQueue
 import kofre.datatypes.alternatives.rga.Sequence
+import kofre.dotted.Dotted
 
 import java.util.concurrent.TimeUnit
 
@@ -25,24 +26,24 @@ class CausalQueueBench {
   @Param(Array("10000"))
   var operations: Int = _
 
-  var lca: CausalQueue[Int] = _
+  var lca: Dotted[CausalQueue[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    lca = (1 to size).foldLeft(CausalQueue.empty[Int]) { (q, e) => q.enqueue(e, "lca".asId) }
+    lca = (1 to size).foldLeft(Dotted(CausalQueue.empty[Int])) { (q, e) => q.named("lca".asId).enqueue(e).anon }
   }
 
-  def make(base: CausalQueue[Int], ops: Int, prefix: String) = {
+  def make(base: Dotted[CausalQueue[Int]], ops: Int, prefix: String) = {
     val s     = ops / 2
-    val added = (1 to s).foldLeft(base) { (acc, v) => acc.enqueue(v, prefix.asId) }
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc.named(prefix.asId).enqueue(v).anon }
     (1 to s).foldLeft(added) { (acc, _) => acc.dequeue() }
   }
 
   @Benchmark
-  def create(): CausalQueue[Int] = make(lca, operations, "")
+  def create(): Dotted[CausalQueue[Int]] = make(lca, operations, "")
 
   @Benchmark
-  def createAndMerge(): CausalQueue[Int] = {
+  def createAndMerge(): Dotted[CausalQueue[Int]] = {
     val left  = make(lca, operations, "left")
     val right = make(lca, operations, "right")
 
