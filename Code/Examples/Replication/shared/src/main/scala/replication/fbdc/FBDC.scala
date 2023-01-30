@@ -13,6 +13,7 @@ import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given
+import scala.reflect.ClassTag
 
 import java.nio.file.Path
 import java.util.Timer
@@ -81,15 +82,13 @@ class FbdcExampleData {
     }
   }
 
-  val mergedState = dataManager.changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
-
-  val requests   = mergedState.map(_.store.requests.elements)
+  val requests   = dataManager.mergedState.map(_.store.requests.elements)
   val myRequests = requests.map(_.filter(_.executor == replicaId))
-  val responses  = mergedState.map(_.store.responses.elements)
+  val responses  = dataManager.mergedState.map(_.store.responses.elements)
 
-  def requestsOf[T] = requests.map(_.collect {
+  def requestsOf[T: ClassTag] = requests.map(_.collect {
     case req: T => req
   })
 
-  val providers = mergedState.map(_.store.providers)
+  val providers = dataManager.mergedState.map(_.store.providers)
 }

@@ -74,10 +74,8 @@ object WebRepMain {
         HTML.debugInfo(exData.dataManager),
         article(
           h1("just stuff tostringed"),
-          exData.dataManager.changes.map(_ => exData.dataManager.currentValue).latest(
-            exData.dataManager.currentValue
-          ).map { cv =>
-            span(cv.anon.store.responses.elements.toList.map(_.toString): _*)
+          exData.dataManager.mergedState.map { cv =>
+            span(cv.store.responses.elements.toList.map(_.toString): _*)
           }.asModifier
         ),
       )

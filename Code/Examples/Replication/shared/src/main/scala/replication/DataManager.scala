@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.collection.View
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import kofre.base.Lattice.optionLattice
 
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
@@ -32,15 +33,18 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
+  private var contexts: Map[RemoteRef, Dots] = Map.empty
+
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
+  val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
+  val currentContext                = mergedState.map(_.context)
 
   def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
     val named = Named(replicaId, dotted)
     localBuffer = named :: localBuffer
     changeEvt.fire(named)
   }
-
 
   class ManagedPermissions extends PermCausalMutate[State, State] with PermId[State] {
     override def replicaId(c: State): Id = DataManager.this.replicaId
@@ -51,24 +55,16 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
       applyLocalDelta(withContext)
       container
 
-    override def context(c: State): Dots = DataManager.this.currentValue.anon.context
+    override def context(c: State): Dots = currentContext.now
   }
 
   def transform(fun: ManagedPermissions ?=> State => Unit) = lock.synchronized {
-    fun(using ManagedPermissions())(currentValue.anon.store)
+    fun(using ManagedPermissions())(mergedState.now.store)
   }
 
   def allDeltas: View[Named[Dotted[State]]] = lock.synchronized {
     View(localBuffer, remoteDeltas, localDeltas).flatten
   }
-
-  def currentValue: Named[Dotted[State]] =
-    Named(
-      replicaId,
-      allDeltas.map(_.anon).reduceOption(
-        Lattice.merge[Dotted[State]]
-      ).getOrElse(Bottom.empty)
-    )
 
   def requestMissingBinding[PushBinding[Dots]] =
     given IdenticallyTransmittable[Dots] = IdenticallyTransmittable[Dots]()
@@ -79,8 +75,13 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
     Binding[TransferState => Unit]("pushState")
 
-  registry.bind(pushStateBinding) { named =>
+  def updateRemoteContext(rr: RemoteRef, dots: Dots) = lock.synchronized {
+    contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
+  }
+
+  registry.bindSbj(pushStateBinding) { (rr: RemoteRef, named: TransferState) =>
     lock.synchronized {
+      updateRemoteContext(rr, named.anon.context)
       remoteDeltas = named :: remoteDeltas
     }
     changeEvt.fire(named)
@@ -88,25 +89,22 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
     pushDeltas(allDeltas.filterNot(dt => dt.anon.context <= knows), rr)
+    updateRemoteContext(rr, currentContext.now merge knows)
   }
 
   def disseminate() =
     val deltas = lock.synchronized {
       val deltas = localBuffer
       localBuffer = Nil
-      localDeltas = deltas concat localBuffer
       deltas
     }
     registry.remotes.foreach { remote =>
       pushDeltas(deltas.view, remote)
     }
 
-  def requestMissing() =
-    registry.remotes.headOption.foreach { requestMissingFrom }
-
   def requestMissingFrom(rr: RemoteRef) =
     val req = registry.lookup(requestMissingBinding, rr)
-    req(currentValue.anon.context)
+    req(currentContext.now)
 
   private def pushDeltas(deltas: View[TransferState], remote: RemoteRef): Unit = {
     val push = registry.lookup(pushStateBinding, remote)
