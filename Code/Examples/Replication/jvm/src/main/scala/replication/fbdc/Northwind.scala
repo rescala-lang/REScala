@@ -27,16 +27,16 @@ object Northwind {
       val connection = DriverManager.getConnection(s"jdbc:sqlite:${path.toString}", dbProperties)
 
       def query(q: String): List[Map[String, String]] =
-        val st      = connection.createStatement()
+        val st = connection.createStatement()
         try
-          val res     = st.executeQuery(q)
+          val res = st.executeQuery(q)
           val meta    = res.getMetaData
           val columns = (1 to meta.getColumnCount).map(meta.getColumnName)
           val lb      = ListBuffer.empty[Map[String, String]]
           while res.next()
           do
             lb.append(columns.map(c => c -> res.getString(c)).toMap)
-          lb.toList
+          lb.toList.take(10) // limit result size for serialization
         catch
           case e: Exception => List(Map("error" -> e.toString))
         finally
@@ -47,7 +47,7 @@ object Northwind {
       exampleData.requestsOf[Req.Northwind].observe { queries =>
         dataManager.transform { current =>
           current.modRes { reqq =>
-            queries.foreach{ q =>
+            queries.foreach { q =>
               val resp = Res.Northwind(q.value, query(q.value.query))
               reqq.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp, exampleData.replicaId)))
             }

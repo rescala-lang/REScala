@@ -92,7 +92,7 @@ object HTML {
       exdat.providers.map { prov =>
         prov.observeRemoveMap.entries.map { (id, provided) =>
           section(
-            header(h2(Id.unwrap(id))),
+            header(h2("Executor:", Id.unwrap(id))),
             provided.elements.iterator.map {
               case "fortune" => fortuneBox(exdat, id)
               case other     => northwindBox(exdat, id)
@@ -128,11 +128,22 @@ object HTML {
         onclick := leftClickHandler {
           exdat.dataManager.transform { curr =>
             curr.modReq { reqs =>
-              reqs.enqueue(Req.Northwind(id, ip.innerText))
-              ip.innerText = ""
+              reqs.enqueue(Req.Northwind(id, ip.value))
             }
           }
         }
+      ),
+      p(
+      table(
+        exdat.latestNorthwind.map {
+          case None => Nil
+          case Some(res) =>
+            val keys = res.result.head.keys.toList.sorted
+            thead(keys.map(th(_)).toList: _*) ::
+            res.result.map { row =>
+              tr(keys.map(k => td(row(k))))
+            }
+        }.asModifierL
       )
-    )
+    ))
 }
