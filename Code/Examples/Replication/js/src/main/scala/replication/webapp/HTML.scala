@@ -9,8 +9,9 @@ import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.{*, given}
-import scalatags.JsDom.tags2.{aside, nav, section}
+import scalatags.JsDom.tags2.{article, aside, nav, section}
 import kofre.base.Id
+import loci.transmitter.RemoteRef
 import replication.fbdc.{FbdcExampleData, Req}
 
 import scala.collection.immutable.LinearSeq
@@ -24,30 +25,46 @@ object HTML {
     }
   }
 
-  def connectionManagement(ccm: ContentConnectionManager, dataManager: DataManager[_]) = {
-    val connectionStatus = Signal {
-      ccm.connectedRemotes.value.size match {
-        case 0     => stringFrag(s"disconnected (attempt № ${ccm.connectionAttempt.value})")
-        case other => stringFrag(s"$other active")
-      }
-    }
-    div(
-      header(h1("connection management")),
-      section(button("disseminate", onclick := leftClickHandler(dataManager.disseminate()))),
+  val RemoteRegex = raw"""^remote#(\d+).*""".r.anchored
+  def remotePrettyName(rr: RemoteRef) =
+    val RemoteRegex(res) = rr.toString: @unchecked
+    res
+
+  def connectionManagement(ccm: ContentConnectionManager, fbdcExampleData: FbdcExampleData) = {
+    import fbdcExampleData.dataManager
+    List(
+      h1("connection management"),
       section(table(
-        thead(th("remote ref"), th("connection"), th("request")),
+        tr(td("total state size"), dataManager.encodedStateSize.map(s => td(s)).asModifier),
+        tr(td("request queue"), dataManager.mergedState.map(v => td(v.store.requests.values.size)).asModifier),
+        tr(td("response queue"), dataManager.mergedState.map(v => td(v.store.responses.values.size)).asModifier),
+
+      )),
+      section(button("disseminate", onclick := leftClickHandler(dataManager.disseminateLocalBuffer()))),
+      section(table(
+        thead(th("remote ref"), th("connection"), th("request"), th("dots")),
+        tr(
+          td(Id.unwrap(dataManager.replicaId)),
+          td(),
+          td(),
+          table(
+            dataManager.currentContext.map(dotsToRows).asModifierL
+          )
+        ),
         ccm.connectedRemotes.map { all =>
           all.toList.sortBy(_._1.toString).map { (rr, connected) =>
             tr(
-              td(rr.toString),
+              td(remotePrettyName(rr)),
               if !connected
               then td("disconnected")
               else
                 List(
                   td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
-                  td(button("request", onclick := leftClickHandler(dataManager.requestMissingFrom(rr))))
+                  td(button("request", onclick := leftClickHandler(dataManager.requestMissingFrom(rr)))),
+                  td(table(
+                    dataManager.contextOf(rr).map(dotsToRows).asModifierL
+                  ))
                 )
-              ,
             )
           }
         }.asModifierL,
@@ -65,33 +82,10 @@ object HTML {
       tr(td(Id.unwrap(k)), td(v.toString))
     }.toSeq
 
-  def debugInfo(dm: DataManager[_]) = {
-    val lastChanges = dm.changes.last(10)
-    div(
-      header(h1("dot vector debug info")),
-      table(
-        thead(th("source"), th("dot vector")),
-        lastChanges.map {
-          _.map { delta =>
-            tr(
-              td(Id.unwrap(delta.replicaId)),
-              td(
-                table(
-                  dotsToRows(delta.anon.context): _*
-                )
-              )
-            )
-          }
-        }.asModifierL
-      ),
-    )
-
-  }
-
   def providers(exdat: FbdcExampleData) = {
     div(
       header(h1("make a request")),
-      table(
+      section(table(
         thead(th("provider"), th("tasks")),
         exdat.providers.map { prov =>
           prov.observeRemoveMap.entries.map { (id, provided) =>
@@ -115,7 +109,7 @@ object HTML {
           }.toList
 
         }.asModifierL
-      )
+      ))
     )
 
   }

@@ -24,6 +24,7 @@ object JarExport extends sbt.AutoPlugin {
     stageJars := {
       val cp         = (Compile / fullClasspathAsJars).value
       val targetpath = target.value.toPath.resolve("jars")
+      IO.delete(targetpath.toFile)
       IO.createDirectory(targetpath.toFile)
       cp.foreach { at =>
         IO.copyFile(at.data, targetpath.resolve(at.data.getName).toFile)

@@ -1,6 +1,6 @@
 package replication
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice}
@@ -10,8 +10,9 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
 import replication.JsoniterCodecs.given
-import rescala.default.{Evt, Event}
+import rescala.default.{Event, Evt, Signal, Var}
 
+import scala.collection.mutable
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.View
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -21,8 +22,8 @@ import kofre.base.Lattice.optionLattice
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
-    replicaId: Id,
-    registry: Registry
+    val replicaId: Id,
+    val registry: Registry
 ) {
 
   type TransferState = Named[Dotted[State]]
@@ -33,12 +34,22 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  private var contexts: Map[RemoteRef, Dots] = Map.empty
+  private val contexts: Var[Map[RemoteRef, Dots]]                    = Var(Map.empty)
+  private val filteredContexts: mutable.Map[RemoteRef, Signal[Option[Dots]]] = mutable.Map.empty
+
+  def contextOf(rr: RemoteRef) =
+    val internal = filteredContexts.getOrElseUpdate(rr, contexts.map(_.get(rr)))
+    internal.map{
+      case None => Dots.empty
+      case Some(dots) => dots
+    }
 
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
   val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
   val currentContext                = mergedState.map(_.context)
+
+  val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 
   def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
     val named = Named(replicaId, dotted)
@@ -75,8 +86,8 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
     Binding[TransferState => Unit]("pushState")
 
-  def updateRemoteContext(rr: RemoteRef, dots: Dots) = lock.synchronized {
-    contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
+  def updateRemoteContext(rr: RemoteRef, dots: Dots) = {
+    contexts.transform(_.updatedWith(rr)(curr => curr merge Some(dots)))
   }
 
   registry.bindSbj(pushStateBinding) { (rr: RemoteRef, named: TransferState) =>
@@ -92,13 +103,15 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom](
     updateRemoteContext(rr, currentContext.now merge knows)
   }
 
-  def disseminate() =
+  def disseminateLocalBuffer() =
     val deltas = lock.synchronized {
       val deltas = localBuffer
       localBuffer = Nil
+      localDeltas = deltas ::: localDeltas
       deltas
     }
     registry.remotes.foreach { remote =>
+      val ctx = contexts.now.getOrElse(remote, Dots.empty)
       pushDeltas(deltas.view, remote)
     }
 

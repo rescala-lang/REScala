@@ -16,6 +16,6 @@ object Id:
 
   /** Generates unique identifiers for use by CRDTs */
   def gen(): Id =
-    val randomBytes = new Array[Byte](15)
+    val randomBytes = new Array[Byte](6)
     random.nextBytes(randomBytes)
     Base64.getEncoder.encodeToString(randomBytes)

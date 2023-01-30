@@ -13,9 +13,10 @@ import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
-import scalatags.JsDom.tags.{body, h1, p, table, form, span}
+import scalatags.JsDom.tags.{body, h1, p, table, form, span, SeqFrag}
 import replication.JsoniterCodecs.given
-import scalatags.JsDom.tags2.{aside, article}
+import scalatags.JsDom.tags2.{aside, article, main}
+import scalatags.JsDom.tags2
 
 import replication.fbdc.FbdcExampleData
 
@@ -62,22 +63,15 @@ object WebRepMain {
 
     val exData = new FbdcExampleData()
 
-    exData.dataManager.disseminate()
-
     val ccm = new ContentConnectionManager(exData.registry)
 
     val bodySig = Signal {
       body(
         id := "index",
-        HTML.providers(exData),
-        HTML.connectionManagement(ccm, exData.dataManager),
-        HTML.debugInfo(exData.dataManager),
-        article(
-          h1("just stuff tostringed"),
-          exData.dataManager.mergedState.map { cv =>
-            span(cv.store.responses.elements.toList.map(_.toString): _*)
-          }.asModifier
-        ),
+        tags2.main(
+          HTML.providers(exData),
+          HTML.connectionManagement(ccm, exData),
+        )
       )
     }
 
