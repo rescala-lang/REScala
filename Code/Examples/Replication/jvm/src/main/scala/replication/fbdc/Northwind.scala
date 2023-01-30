@@ -23,7 +23,8 @@ object Northwind {
       val connection = DriverManager.getConnection(s"jdbc:sqlite:${path.toString}", dbProperties)
 
       def query(q: String): List[Map[String, String]] =
-        Using(connection.createStatement()) { st =>
+        val st      = connection.createStatement()
+        try
           val res     = st.executeQuery(q)
           val meta    = res.getMetaData
           val columns = (1 to meta.getColumnCount).map(meta.getColumnName)
@@ -32,7 +33,10 @@ object Northwind {
           do
             lb.append(columns.map(c => c -> res.getString(c)).toMap)
           lb.toList
-        }.get
+        catch
+          case e: Exception => List(Map("error" -> e.toString))
+        finally
+          st.close()
 
       import exampleData.dataManager
       exampleData.addCapability("northwind")

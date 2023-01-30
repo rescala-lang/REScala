@@ -47,7 +47,7 @@ object HTML {
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
-        button("disseminate all", onclick := leftClickHandler(dataManager.disseminateFull()))
+        button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
       ),
       section(table(
         thead(th("remote ref"), th("connection"), th("request"), th("dots")),
@@ -92,33 +92,48 @@ object HTML {
 
   def providers(exdat: FbdcExampleData) = {
     div(
-      header(h1("make a request")),
-      section(table(
-        thead(th("provider"), th("tasks")),
-        exdat.providers.map { prov =>
-          prov.observeRemoveMap.entries.map { (id, provided) =>
-            tr(
-              td(Id.unwrap(id)),
-              td(
-                provided.elements.iterator.map(name =>
-                  button(
-                    name,
-                    onclick := leftClickHandler {
-                      exdat.dataManager.transform { curr =>
-                        curr.modReq { reqs =>
-                          reqs.enqueue(Req.Fortune(id))
-                        }
-                      }
-                    }
-                  )
-                ).toList: _*
-              )
-            )
-          }.toList
-
-        }.asModifierL
-      ))
+      h1("make a request"),
+      exdat.providers.map { prov =>
+        prov.observeRemoveMap.entries.map { (id, provided) =>
+          section(
+            header(h2(Id.unwrap(id))),
+            provided.elements.iterator.map {
+              case "fortune" => fortuneBox(exdat, id)
+              case other     => northwindBox(exdat, id)
+            }.toList
+          ).asInstanceOf[TypedTag[Element]]
+        }.toList
+      }.asModifierL
     )
 
   }
+
+  def fortuneBox(exdat: FbdcExampleData, id: Id) = aside(button(
+    "get fortune",
+    onclick := leftClickHandler {
+      exdat.dataManager.transform { curr =>
+        curr.modReq { reqs =>
+          reqs.enqueue(Req.Fortune(id))
+        }
+      }
+    }
+  ))
+
+  def northwindBox(exdat: FbdcExampleData, id: Id) =
+    val ip = input().render
+
+    aside(
+      ip,
+      button(
+        "query northwind",
+        onclick := leftClickHandler {
+          exdat.dataManager.transform { curr =>
+            curr.modReq { reqs =>
+              reqs.enqueue(Req.Northwind(id, ip.innerText))
+              ip.innerText = ""
+            }
+          }
+        }
+      )
+    )
 }

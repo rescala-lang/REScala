@@ -13,7 +13,7 @@ import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
-import scalatags.JsDom.tags.{body, h1, p, table, form, span, SeqFrag}
+import scalatags.JsDom.tags.{body, h1, p, table, form, span, SeqFrag, SeqNode}
 import replication.JsoniterCodecs.given
 import scalatags.JsDom.tags2.{aside, article, main}
 import scalatags.JsDom.tags2
