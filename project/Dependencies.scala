@@ -12,7 +12,7 @@ object Dependencies {
     val directories   = "26"
     val jetty         = "11.0.13"
     val jol           = "0.16"
-    val jsoniterScala = "2.20.3"
+    val jsoniterScala = "2.20.6"
     val jsoup         = "1.15.3"
     val munit         = "1.0.0-M7"
     val okHttp        = "4.10.0"
@@ -29,7 +29,8 @@ object Dependencies {
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
     val scribe        = "3.10.6"
-    val slips         = "e96344e155"
+    val slips         = "0.4.7"
+    val sqliteJdbc    = "3.40.0.0"
     val sourcecode    = "0.3.0"
     val upickle       = "2.0.0"
   }
@@ -56,6 +57,7 @@ object Dependencies {
   val scribeSlf4j     = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
   val scribeSlf4j2    = Def.setting("com.outr" %% "scribe-slf4j2" % V.scribe)
   val sourcecode      = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
+  val sqliteJdbc      = Def.setting("org.xerial" % "sqlite-jdbc" % V.sqliteJdbc)
   val upickle         = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
   val jsoniterScalaAll = Def.setting {

@@ -217,6 +217,7 @@ lazy val replicationExamples =
         jetty.value,
         scribeSlf4j2.value,
         slips.script.value,
+        sqliteJdbc.value,
       )
     )
     .jsSettings(
