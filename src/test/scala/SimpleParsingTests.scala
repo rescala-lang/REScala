@@ -1,71 +1,71 @@
 package lore
-import minitest._
+import cats.implicits._
 import lore.AST._
-import cats.parse
+import lore.test.util.ParserSuite
 
-object SimpleParsing extends SimpleTestSuite:
-  def assertParses[A](p: parse.Parser[A], expr: String): Unit =
-    p.parseAll(expr) match {
-      case Right(_) => ()
-      case Left(x)  => fail(x.toString)
-    }
-
+class SimpleParsing extends ParserSuite:
   test("function call") {
-    assertResult(Right(TFunC("foo", List(TNum(1), TNum(2))))) {
-      Parser.functionCall.parseAll("foo(1,2)")
-    }
+    assertParsingResult(
+      Parser.functionCall,
+      "foo(1,2)",
+      TFunC("foo", List(TNum(1), TNum(2)))
+    )
   }
 
   test("id") {
-    assertResult(Right("a")) {
-      Parser.id.parseAll("a")
-    }
+    assertParsingResult(Parser.id, "a", "a")
   }
 
   test("argT") {
-    assertResult(Right(TArgT("a", SimpleType("Int", List())))) {
-      Parser.argT.parseAll("a : Int")
-    }
+    assertParsingResult(
+      Parser.argT,
+      "a : Int",
+      TArgT("a", SimpleType("Int", List()))
+    )
   }
 
   test("binding left") {
-    assertResult(Right(TArgT("a", SimpleType("Int", List())))) {
-      Parser.bindingLeftSide.parseAll("val a : Int")
-    }
+    assertParsingResult(
+      Parser.bindingLeftSide,
+      "val a : Int",
+      TArgT("a", SimpleType("Int", List()))
+    )
   }
 
   test("binding") {
-    assertResult(Right(TAbs("a", SimpleType("Int", List()), TNum(12)))) {
-      Parser.binding.parseAll("val a : Int = 12")
-    }
+    assertParsingResult(
+      Parser.binding,
+      "val a : Int = 12",
+      TAbs("a", SimpleType("Int", List()), TNum(12))
+    )
   }
 
   test("field access") {
-    assertResult(Right(TFCall(TVar("foo"), "bar", List(TNum(1), TFalse)))) {
-      Parser.fieldAcc.parseAll("foo.bar(1, false)")
-    }
+    assertParsingResult(
+      Parser.fieldAcc,
+      "foo.bar(1, false)",
+      TFCall(TVar("foo"), "bar", List(TNum(1), TFalse))
+    )
 
-    assertResult(
-      Right(
+    assertParsingResult(
+      Parser.fieldAcc,
+      "foo.bar(true == false).baz",
+      TFCall(
         TFCall(
-          TFCall(
-            TVar("foo"),
-            "bar",
-            List(TEq(TTrue, TFalse))
-          ),
-          "baz",
-          List()
-        )
+          TVar("foo"),
+          "bar",
+          List(TEq(TTrue, TFalse))
+        ),
+        "baz",
+        List()
       )
-    ) {
-      Parser.fieldAcc.parseAll("foo.bar(true == false).baz")
-    }
+    )
 
-    assertResult(
-      Right(TFCall(TFunC("size", List(TVar("d2"))), "max", List()))
-    ) {
-      Parser.fieldAcc.parseAll("size(d2).max")
-    }
+    assertParsingResult(
+      Parser.fieldAcc,
+      "size(d2).max",
+      TFCall(TFunC("size", List(TVar("d2"))), "max", List())
+    )
 
     assert(
       Parser.fieldAcc
@@ -77,23 +77,53 @@ object SimpleParsing extends SimpleTestSuite:
   test("arithmetic expression") {
     val p = Parser.arithmExpr
     val expr = "1 + 5 * 20 / (4 + 10)"
-    assertResult(
-      Right(
-        TAdd(TNum(1), TMul(TNum(5), TDiv(TNum(20), TAdd(TNum(4), TNum(10)))))
-      )
-    ) {
-      p.parseAll(expr)
-    }
+
+    assertParsingResult(
+      p,
+      expr,
+      TAdd(TNum(1), TMul(TNum(5), TDiv(TNum(20), TAdd(TNum(4), TNum(10)))))
+    )
   }
 
   test("reactive") {
     val p = Parser.reactive
-    assertResult(Right(TSource(TFunC("AWSet", List())))) {
-      p.parseAll("Source(AWSet())")
-    }
+    assertParsingResult(p, "Source(AWSet())", TSource(TFunC("AWSet", List())))
 
-    assertResult(
-      Right(
+    assertParsingResult(
+      p,
+      "Derived{ work.toSet.union(vacation.toSet) }",
+      TDerived(
+        TFCall(
+          TFCall(TVar("work"), "toSet", List()),
+          "union",
+          List(TFCall(TVar("vacation"), "toSet", List()))
+        )
+      )
+    )
+  }
+
+  test("named reactive") {
+    val p = Parser.binding
+
+    assertParsingResult(
+      p,
+      "val a: Source[Calendar] = Source(AWSet())",
+      TAbs(
+        "a",
+        SimpleType("Source", List(SimpleType("Calendar", List()))),
+        TSource(TFunC("AWSet", List()))
+      )
+    )
+
+    assertParsingResult(
+      p,
+      "val a: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }",
+      TAbs(
+        "a",
+        SimpleType(
+          "Derived",
+          List(SimpleType("Set", List(SimpleType("Appointment", List()))))
+        ),
         TDerived(
           TFCall(
             TFCall(TVar("work"), "toSet", List()),
@@ -102,47 +132,7 @@ object SimpleParsing extends SimpleTestSuite:
           )
         )
       )
-    ) {
-      p.parseAll("Derived{ work.toSet.union(vacation.toSet) }")
-    }
-  }
-
-  test("named reactive") {
-    val p = Parser.binding
-    assertResult(
-      Right(
-        TAbs(
-          "a",
-          SimpleType("Source", List(SimpleType("Calendar", List()))),
-          TSource(TFunC("AWSet", List()))
-        )
-      )
-    ) {
-      p.parseAll("val a: Source[Calendar] = Source(AWSet())")
-    }
-
-    assertResult(
-      Right(
-        TAbs(
-          "a",
-          SimpleType(
-            "Derived",
-            List(SimpleType("Set", List(SimpleType("Appointment", List()))))
-          ),
-          TDerived(
-            TFCall(
-              TFCall(TVar("work"), "toSet", List()),
-              "union",
-              List(TFCall(TVar("vacation"), "toSet", List()))
-            )
-          )
-        )
-      )
-    ) {
-      p.parseAll(
-        "val a: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }"
-      )
-    }
+    )
   }
 
   test("typename") {
@@ -166,50 +156,48 @@ object SimpleParsing extends SimpleTestSuite:
   test("type alias") {
     val expr = "type Calendar = AWSet[Appointment]"
     val p = Parser.typeAlias
-    assertResult(
-      Right(
-        TTypeAl(
-          "Calendar",
-          SimpleType("AWSet", List(SimpleType("Appointment", List.empty)))
-        )
+    assertParsingResult(
+      p,
+      expr,
+      TTypeAl(
+        "Calendar",
+        SimpleType("AWSet", List(SimpleType("Appointment", List.empty)))
       )
-    ) {
-      p.parseAll(expr)
-    }
+    )
   }
 
   test("lambda fun") {
 
-    assertResult(
-      Right(TArrow(TVar("x"), TVar("x")))
-    ) {
-      Parser.lambdaFun.parseAll("x => x")
-    }
+    assertParsingResult(
+      Parser.lambdaFun,
+      "x => x",
+      TArrow(TVar("x"), TVar("x"))
+    )
 
-    assertResult(
-      Right(TArrow(TVar("x"), TArrow(TVar("x"), TVar("x"))))
-    ) {
-      Parser.lambdaFun.parseAll("x => x => x")
-    }
+    assertParsingResult(
+      Parser.lambdaFun,
+      "x => x => x",
+      TArrow(TVar("x"), TArrow(TVar("x"), TVar("x")))
+    )
 
-    assertResult(
-      Right(TArrow(TVar("x"), TArrow(TVar("y"), TAdd(TVar("x"), TVar("y")))))
-    ) {
-      Parser.lambdaFun.parseAll("x => y => x + y")
-    }
+    assertParsingResult(
+      Parser.lambdaFun,
+      "x => y => x + y",
+      TArrow(TVar("x"), TArrow(TVar("y"), TAdd(TVar("x"), TVar("y"))))
+    )
   }
 
   test("comment") {
-    assertResult(
-      Right(())
-    ) {
-      Parser.comment.parseAll("// this is a comment")
-    }
+    assertParsingResult(Parser.comment, "// this is a comment", ())
 
-    assertResult(
-      Right(("\nlalala", ()))
-    ) {
-      Parser.comment.parse("""|// this is a comment
-                              |lalala""".stripMargin)
-    }
+    val multilineString =
+      """|// this is a comment
+         |lalala""".stripMargin
+    Parser.comment.parse(multilineString) match
+      case Left(error) => fail(error.show)
+      case Right(ast) =>
+        assertEquals(
+          ast,
+          ("\nlalala", ())
+        )
   }

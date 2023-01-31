@@ -15,8 +15,8 @@ lazy val root = (project in file("."))
     libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
     libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
     // test dependencies
-    libraryDependencies += "io.monix" %% "minitest" % "2.9.6" % Test,
-    testFrameworks += new TestFramework("minitest.runner.Framework"),
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+    testFrameworks += new TestFramework("munit.Framework"),
     // compiler options
     scalacOptions ++= List(
       "-deprecation",

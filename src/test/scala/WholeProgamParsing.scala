@@ -1,5 +1,5 @@
 package lore
-import minitest._
+import munit.FunSuite
 import lore.AST._
 import io.circe.parser.decode
 import cats.parse
@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import cats.data.NonEmptyList
 
-object WholeProgramParsing extends SimpleTestSuite:
+class WholeProgramParsing extends FunSuite:
   def readProg(path: Path): String =
     String(Files.readAllBytes(path), StandardCharsets.UTF_8)
 

@@ -1,15 +1,14 @@
 package lore
-import minitest._
 import lore.AST._
-import cats.parse.{Parser => P}
+import cats.implicits._
 import cats.parse.Parser.Expectation
 import cats.data.NonEmptyList
-import SimpleParsing.assertParses
+import lore.test.util.ParserSuite
 
 def printExp(e: NonEmptyList[Expectation]) =
   e.toString
 
-object BooleanExpressionParsing extends SimpleTestSuite {
+class BooleanExpressionParsing extends ParserSuite {
   test("disjunction") {
     val p = Parser.disjunction
 
@@ -57,7 +56,7 @@ object BooleanExpressionParsing extends SimpleTestSuite {
 
     p.parseAll("false != true") match
       case Right(TIneq(TFalse, TTrue)) => ()
-      case Left(error)                 => fail(error.expected.toString)
+      case Left(error)                 => fail(error.show)
       case x => fail(s"Failed to parse inequality: $x")
 
     p.parseAll("true != false && true") match
@@ -95,23 +94,17 @@ object BooleanExpressionParsing extends SimpleTestSuite {
       case Left(error)               => fail(printExp(error.expected))
       case x                         => fail(s"Failed to parse as equality: $x")
 
-    assertResult(Right(TEq(TTrue, TConj(TFalse, TFunC("foo", List()))))) {
-      p.parseAll("true == false && foo()")
-    }
+    assertParsingResult(
+      p,
+      "false == false && foo()",
+      TEq(TFalse, TConj(TFalse, TFunC("foo", List())))
+    )
 
-    assertResult(
-      Right(
-        TEq(
-          TConj(
-            TDisj(TFalse, TTrue),
-            TFunC("foo", List())
-          ),
-          TFalse
-        )
-      )
-    ) {
-      p.parseAll("false || true && foo() == false")
-    }
+    assertParsingResult(
+      p,
+      "false || true && foo() == false",
+      TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
+    )
 
     p.parseAll("size(d) == size(d2).max") match
       case Right(
@@ -129,75 +122,68 @@ object BooleanExpressionParsing extends SimpleTestSuite {
   test("implication") {
     val p = Parser.implication
 
-    assertResult(Right(TImpl(TTrue, TFalse))) {
-      p.parseAll("true==>false")
-    }
+    assertParsingResult(p, "true==>false", TImpl(TTrue, TFalse))
 
-    assertResult(Right(TImpl(TDisj(TFalse, TTrue), TFalse))) {
-      p.parseAll("false || true ==> false")
-    }
+    assertParsingResult(
+      p,
+      "false || true ==> false",
+      TImpl(TDisj(TFalse, TTrue), TFalse)
+    )
 
-    assertResult(
-      Right(
-        TImpl(
-          TFalse,
-          TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
-        )
+    assertParsingResult(
+      p,
+      "false ==> false || true && foo() == false",
+      TImpl(
+        TFalse,
+        TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
       )
-    ) {
-      p.parseAll("false ==> false || true && foo() == false")
-    }
+    )
 
-    assertResult(
-      Right(
-        TImpl(
-          TIneq(TFalse, TTrue),
-          TEq(
-            TConj(
-              TDisj(TFalse, TTrue),
-              TFunC("foo", List())
-            ),
-            TFalse
-          )
-        )
+    assertParsingResult(
+      p,
+      "false != true ==> false || true && foo() == false",
+      TImpl(
+        TIneq(TFalse, TTrue),
+        TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
       )
-    ) {
-      p.parseAll("false != true ==> false || true && foo() == false")
-    }
+    )
 
-    assertResult(
-      Right(
-        TImpl(
-          TEq(TVar("thisUser"), TVar("user")),
-          TFunC("is_correct", Seq(TVar("user"), TVar("pass")))
-        )
+    assertParsingResult(
+      p,
+      "(thisUser == user ==> is_correct(user,pass))",
+      TImpl(
+        TEq(TVar("thisUser"), TVar("user")),
+        TFunC("is_correct", Seq(TVar("user"), TVar("pass")))
       )
-    ) {
-      p.parseAll("(thisUser == user ==> is_correct(user,pass))")
-    }
-
+    )
   }
 
   test("parentheses") {
     val p = Parser.booleanExpr
 
-    assertResult(Right(TImpl(TDisj(TTrue, TFalse), TFalse))) {
-      p.parseAll("(true || false) ==> false")
-    }
+    assertParsingResult(
+      p,
+      "(true || false) ==> false",
+      TImpl(TDisj(TTrue, TFalse), TFalse)
+    )
 
-    assertResult(Right(TImpl(TDisj(TFalse, TTrue), TFalse))) {
-      p.parseAll("false || true ==> (false)")
-    }
+    assertParsingResult(
+      p,
+      "false || true ==> (false)",
+      TImpl(TDisj(TFalse, TTrue), TFalse)
+    )
 
-    assertResult(
-      Right(TEq(TDisj(TFalse, TConj(TTrue, TFunC("foo", List()))), TFalse))
-    ) {
-      p.parseAll("false || (true && foo()) == false")
-    }
+    assertParsingResult(
+      p,
+      "false || (true && foo()) == false",
+      TEq(TDisj(TFalse, TConj(TTrue, TFunC("foo", List()))), TFalse)
+    )
 
-    assertResult(Right(TIneq(TFalse, TImpl(TTrue, TFalse)))) {
-      p.parseAll("false != (true ==> false)")
-    }
+    assertParsingResult(
+      p,
+      "false != (true ==> false)",
+      TIneq(TFalse, TImpl(TTrue, TFalse))
+    )
 
     // this should fail
     p.parseAll("false != (true ==> false") match
@@ -208,23 +194,19 @@ object BooleanExpressionParsing extends SimpleTestSuite {
   test("number comparison") {
     val p = Parser.booleanExpr
 
-    assertResult(Right(TGeq(TVar("a"), TNum(0)))) {
-      p.parseAll("a >= 0")
-    }
+    assertParsingResult(p, "a >= 0", TGeq(TVar("a"), TNum(0)))
 
-    assertResult(
-      Right(TEq(TLt(TFunC("foo", List(TVar("bar"))), TNum(0)), TFalse))
-    ) {
-      p.parseAll("foo(bar) < 0 == false")
-    }
+    assertParsingResult(
+      p,
+      "foo(bar) < 0 == false",
+      TEq(TLt(TFunC("foo", List(TVar("bar"))), TNum(0)), TFalse)
+    )
   }
 
   test("in set") {
     val p = Parser.inSet
 
-    assertResult(Right(TInSet(TNum(12), TVar("a")))) {
-      p.parseAll("12 in a")
-    }
+    assertParsingResult(p, "12 in a", TInSet(TNum(12), TVar("a")))
 
     assertParses(p, "foo(true) in X.mySet")
   }
