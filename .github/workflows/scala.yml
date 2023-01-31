@@ -33,5 +33,5 @@ jobs:
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@v2
       with:
-        configs-ignore: scala-doc-tool
+        configs-ignore: scala-tool scala-doc-tool
       
