@@ -12,7 +12,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write # this permission is needed to submit the dependency graph
 
 jobs:
   build:
@@ -32,3 +32,4 @@ jobs:
       # Optional: This step uploads information to the GitHub dependency graph and unblocking Dependabot alerts for the repository
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@v2
+      
