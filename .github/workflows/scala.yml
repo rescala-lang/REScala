@@ -32,4 +32,6 @@ jobs:
       # Optional: This step uploads information to the GitHub dependency graph and unblocking Dependabot alerts for the repository
     - name: Upload dependency graph
       uses: scalacenter/sbt-dependency-submission@v2
+      with:
+        configs-ignore: scala-doc-tool
       
