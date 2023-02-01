@@ -26,8 +26,12 @@ lazy val root = (project in file("."))
     ),
     // native-image flag "--initialize-at-build-time" is required for Cats Effect applications
     nativeImageOptions ++= List(
-      "--initialize-at-build-time",
-      "--no-fallback"
+      // "--initialize-at-build-time",
+      "--no-fallback",
+      "--initialize-at-build-time=lore",
+      "--initialize-at-build-time=com.monovore.decline",
+      "--initialize-at-build-time=cats",
+      "--initialize-at-build-time=scala"
 
       // disable tracing and fiber dumps this is needed due to the new fiber dumps functionality. see https://typelevel.org/cats-effect/docs/core/native-image
       // "-Dcats.effect.tracing.mode=none"
