@@ -14,6 +14,9 @@ lazy val root = (project in file("."))
     libraryDependencies += "io.circe" %% "circe-core" % circeVersion,
     libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
     libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
+    libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0").cross(
+      CrossVersion.for3Use2_13 // needed because scalafmt is 2.13
+    ),
     // test dependencies
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
     testFrameworks += new TestFramework("munit.Framework"),

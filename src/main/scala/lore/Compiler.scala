@@ -87,11 +87,23 @@ object Compiler extends IOApp:
       resultWithErrors <- result.attempt
       exitCode <- resultWithErrors match
         case Left(e: NoSuchFileException) =>
-          IO.println(s"Error! No such file: ${e.getFile()}").as(ExitCode.Error)
+          IO.println(
+            fansi.Color
+              .Red(s"Error! No such file: ${e.getFile()}")
+              .overlay(fansi.Bold.On, 0, 6)
+          ).as(ExitCode.Error)
         case Left(e: ParsingException) =>
-          IO.println(s"Parsing error!\n${e.getMessage()}").as(ExitCode.Error)
+          IO.println(
+            fansi.Color
+              .Red((s"Parsing error!\n${e.getMessage()}"))
+              .overlay(fansi.Bold.On, 0, 14)
+          ).as(ExitCode.Error)
         case Left(e: Throwable) =>
-          IO.println(s"Unknown error!") >> IO(e.printStackTrace())
+          IO.println(
+            fansi.Color
+              .Red(s"Unknown error!")
+              .overlay(fansi.Bold.On)
+          ) >> IO(e.printStackTrace())
             .as(ExitCode.Error)
         case Right(io) => IO(io).as(ExitCode.Success)
     yield exitCode
