@@ -47,8 +47,8 @@ case class TInteraction(
     reactiveTypes: List[Type],
     argumentTypes: List[Type],
     modifies: List[ID] = List(),
-    requires: List[TViper] = List(),
-    ensures: List[TViper] = List(),
+    requires: List[Term] = List(),
+    ensures: List[Term] = List(),
     executes: Option[Term] = None
 ) extends Term
 

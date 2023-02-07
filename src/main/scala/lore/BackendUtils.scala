@@ -122,9 +122,14 @@ def traverseFromNode[A <: Term](
       throw new Exception("AST transformation led to invalid AST.")
 
 def allReactives(ast: Seq[Term]): Map[String, (TReactive, Type)] =
-  ast
-    .collect({ case TAbs(name, _type, r: TReactive) => (name, (r, _type)) })
-    .toMap
+  ast.collect { case TAbs(name, _type, r: TReactive) =>
+    (name, (r, _type))
+  }.toMap
+
+def allInteractions(ast: Seq[Term]): Map[String, TInteraction] =
+  ast.collect { case TAbs(name, _type, t: TInteraction) =>
+    (name, t)
+  }.toMap
 
 /** Returns all ids that are used in an expression.
   *
