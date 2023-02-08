@@ -6,7 +6,7 @@ import kofre.datatypes.LastWriterWins
 object Fortunes {
 
   def enableConditional(exampleData: FbdcExampleData) = {
-    if process"which fortune".runResult().isRight
+    if process"which fortune".scriptStart().waitFor() == 0
     then
       println(s"enabling fortunes")
       enableFortuneProcessing(exampleData)
