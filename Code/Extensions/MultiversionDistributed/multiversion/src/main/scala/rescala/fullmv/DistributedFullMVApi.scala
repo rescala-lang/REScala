@@ -1,7 +1,6 @@
 package rescala.fullmv
 
 import rescala.compat.SignalCompatBundle
-import rescala.core.Core
 import rescala.fullmv.mirrors.localcloning.{FullMVTurnLocalCloneBundle, ReactiveLocalCloneBundle}
 import rescala.fullmv.mirrors.{FullMVTurnReflectionBundle, Mirror, ReactiveMirrorBundle, ReactiveReflectionBundle}
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
@@ -16,7 +15,7 @@ import scala.util.DynamicVariable
 object DistributedFullMVApi extends FullMVBundle with FullMVTurnLocalCloneBundle with Mirror with TurnImplBundle
     with TaskBundle with FullMvStateBundle with SubsumableLockBundle with FullMVTurnReflectionBundle
     with ReactiveLocalCloneBundle with RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle
-    with Sources with DefaultImplementations with ObserveBundle with Core
+    with Sources with DefaultImplementations with ObserveBundle
     with ReactiveReflectionBundle with ReactiveMirrorBundle with ReactiveTransmittableBundle {
 
   val scopedScheduler: DynamicVariable[FullMVEngine] = new DynamicVariable(new FullMVEngine(

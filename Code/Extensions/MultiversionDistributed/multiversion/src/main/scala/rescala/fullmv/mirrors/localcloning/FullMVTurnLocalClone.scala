@@ -176,6 +176,7 @@ trait FullMVTurnLocalCloneBundle extends FullMVBundle {
               s"apparently $notReflection has a newer phase ($phase) on a remote copy than the local original?"
             )
             notReflection
+          case _ => throw IllegalStateException("should be unreachable, but compiler is unsure")
         }
       } else {
         new FullMVTurnReflection(reflectionHost, turn.guid, phase, null)

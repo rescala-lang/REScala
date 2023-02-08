@@ -37,12 +37,28 @@ object CostAssessment {
       val registry   = new Registry
       def shutdown() = registry.terminate()
 
+      import loci.serializer.jsoniterScala._
       import ReactiveTransmittable._
-      import io.circe.generic.auto._
-      import loci.serializer.circe._
-      import ReactiveTransmittable._
-      implicit val host   = this
-      def binding(i: Int) = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
+      import com.github.plokhotnyuk.jsoniter_scala.macros._
+      import com.github.plokhotnyuk.jsoniter_scala.core._
+
+      given JsonValueCodec[scala.Tuple2[
+        scala.Long,
+        scala.Tuple3[java.lang.String, scala.collection.immutable.List[scala.Tuple4[
+          scala.Long,
+          scala.Int,
+          scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
+            rescala.fullmv.mirrors.Host.GUID,
+            rescala.fullmv.TurnPhase.Type
+          ]], scala.Int]],
+          scala.Option[scala.Tuple2[
+            scala.Option[scala.collection.immutable.Map[java.lang.String, scala.collection.immutable.Set[scala.Int]]],
+            scala.Option[scala.Array[scala.Byte]]
+          ]]
+        ]], scala.Array[scala.Byte]]
+      ]] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+      implicit val host: this.type = this
+      def binding(i: Int)          = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
     }
 
     class SideHost(name: String) extends Host(name) {
@@ -195,7 +211,7 @@ object CostAssessment {
   }
 
   def harness(runner: (Long, Graph) => (Int, Int)) = {
-    graph: Graph =>
+    (graph: Graph) =>
       (1 to 10).foreach { i =>
         val counts @ (left, right) = runner(System.currentTimeMillis() + 1000L, graph)
         val leftTime               = 1000d / left

@@ -711,6 +711,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
               s"apparently $notReflection has a newer phase ($phase) on a remote copy than the local original?"
             )
             notReflection
+          case _ => throw IllegalStateException("should be unreachable, but compiler is unsure")
         }
       } else {
         new FullMVTurnReflection(host, guid, phase, null)
@@ -808,7 +809,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
     }
 
     def instantiate(
-        state: FullMVState[Pulse[P], FullMVTurn, ReSource, Derived],
+        state: FullMVState[Pulse[P], FullMVTurn],
         initTurn: FullMVTurn,
         name: String
     ): ReactiveReflectionImpl[Pulse[P]] with R[P]
@@ -1218,7 +1219,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       host: FullMVEngine
   ) extends DistributedReactive[T, Signal, I] {
     override def instantiate(
-        state: FullMVState[Pulse[T], FullMVTurn, ReSource, Derived],
+        state: FullMVState[Pulse[T], FullMVTurn],
         initTurn: FullMVTurn,
         name: String
     ): ReactiveReflectionImpl[Pulse[T]] with Signal[T] =
@@ -1236,7 +1237,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       host: FullMVEngine
   ) extends DistributedReactive[T, Event, I] {
     override def instantiate(
-        state: FullMVState[Pulse[T], FullMVTurn, ReSource, Derived],
+        state: FullMVState[Pulse[T], FullMVTurn],
         initTurn: FullMVTurn,
         name: String
     ): ReactiveReflectionImpl[Pulse[T]] with Event[T] =

@@ -9,20 +9,21 @@ import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+
 class ReactiveTransmittableTest extends AnyFunSuite {
-  import io.circe._
-  import io.circe.generic.semiauto._
-  implicit val spanningTreeNodeDecoder: Decoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
-    deriveDecoder
-  implicit val spanningTreeNodeEncoder: Encoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
-    deriveEncoder
 
   class Host(name: String) extends FullMVEngine(10.second, name) {
     val registry = new Registry
 
-    import loci.serializer.circe._
+    implicit val host: Host = this
+
+    import loci.serializer.jsoniterScala._
     import ReactiveTransmittable._
-    implicit val host = this
+    import CodecHelper.given
+
+    given JsonValueCodec[Int] = JsonCodecMaker.make
 
     val binding = Binding[Signal[Int]]("signal")
   }
@@ -80,8 +81,15 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
   test("transmission maintains glitch freedom") {
     class GFHost(name: String) extends Host(name) {
-      import loci.serializer.circe._
+
+      import loci.serializer.jsoniterScala._
       import ReactiveTransmittable._
+
+
+      import CodecHelper.given
+
+      given JsonValueCodec[(String, Int)] = JsonCodecMaker.make
+
 
       val branch1 = Binding[Signal[(String, Int)]]("branch1")
       val branch2 = Binding[Signal[(String, Int)]]("branch2")
@@ -140,8 +148,13 @@ class ReactiveTransmittableTest extends AnyFunSuite {
 
   test("events work too") {
     class GFHost(name: String) extends Host(name) {
-      import loci.serializer.circe._
       import ReactiveTransmittable._
+
+      import loci.serializer.jsoniterScala._
+      import ReactiveTransmittable._
+      import CodecHelper.given
+
+      given JsonValueCodec[(String, Int)] = JsonCodecMaker.make
 
       val branch1  = Binding[Event[(String, Int)]]("branch1")
       val branch2  = Binding[Event[(String, Int)]]("branch2")

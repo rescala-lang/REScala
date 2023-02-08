@@ -12,7 +12,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
   self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   object ReactiveMirror {
-    def apply[A](reactive: ReSource, turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReInfo)(
+    def apply[A](reactive: ReSource.of[State], turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReInfo)(
         toPulse: reactive.Value => A,
         reflectionProxy: ReactiveReflectionProxy[A]
     ): (List[(FullMVTurn, A)], Option[FullMVTurn]) = {
@@ -43,12 +43,13 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
       val timeout: Duration,
       override val name: ReInfo
   ) extends Derived
-      with FullMVState[Nothing, FullMVTurn, ReSource, Derived] {
+      with FullMVState[Nothing, FullMVTurn] {
+    type State[V] = self.State[V]
     override type Value = Nothing
     override protected[rescala] val state = this
     override def toString: String         = s"Mirror${name.str}"
     override val host: FullMVEngine       = null
-    override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived] = {
+    override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived.of[State]] = {
       FullMVUtil.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
       reflectionProxy.asyncIncrementFrame(txn)
       FramingBranchResult.FramingBranchEnd
@@ -56,7 +57,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
     override def incrementSupersedeFrame(
         txn: FullMVTurn,
         supersede: FullMVTurn
-    ): FramingBranchResult[FullMVTurn, Derived] = {
+    ): FramingBranchResult[FullMVTurn, Derived.of[State]] = {
       FullMVUtil.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
       reflectionProxy.asyncIncrementSupersedeFrame(txn, supersede)
       FramingBranchResult.FramingBranchEnd
@@ -64,7 +65,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
     override def notify(
         txn: FullMVTurn,
         changed: Boolean
-    ): (Boolean, NotificationBranchResult[FullMVTurn, Derived]) = {
+    ): (Boolean, NotificationBranchResult[FullMVTurn, Derived.of[State]]) = {
       FullMVUtil.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
       if (changed) {
         reflectionProxy.asyncNewValue(txn, getValue(txn))
@@ -77,7 +78,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
         txn: FullMVTurn,
         changed: Boolean,
         followFrame: FullMVTurn
-    ): (Boolean, NotificationBranchResult[FullMVTurn, Derived]) = {
+    ): (Boolean, NotificationBranchResult[FullMVTurn, Derived.of[State]]) = {
       FullMVUtil.myAwait(txn.addRemoteBranch(TurnPhase.Executing), timeout)
       if (changed) {
         reflectionProxy.asyncNewValueFollowFrame(txn, getValue(txn), followFrame)
@@ -92,14 +93,14 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
         turn: FullMVTurn,
         maybeValue: Option[Value],
         unchange: Value => Value
-    ): NotificationBranchResult.ReevOutBranchResult[FullMVTurn, Derived] = ???
+    ): NotificationBranchResult.ReevOutBranchResult[FullMVTurn, Derived.of[State]] = ???
 
     override def dynamicBefore(txn: FullMVTurn): Nothing                                         = ???
     override def staticBefore(txn: FullMVTurn): Nothing                                          = ???
     override def dynamicAfter(txn: FullMVTurn): Nothing                                          = ???
     override def staticAfter(txn: FullMVTurn): Nothing                                           = ???
-    override def discover(txn: FullMVTurn, add: Derived): (List[FullMVTurn], Option[FullMVTurn]) = ???
-    override def drop(txn: FullMVTurn, remove: Derived): (List[FullMVTurn], Option[FullMVTurn])  = ???
+    override def discover(txn: FullMVTurn, add: Derived.of[State]): (List[FullMVTurn], Option[FullMVTurn]) = ???
+    override def drop(txn: FullMVTurn, remove: Derived.of[State]): (List[FullMVTurn], Option[FullMVTurn])  = ???
     override def retrofitSinkFrames(
         successorWrittenVersions: Seq[FullMVTurn],
         maybeSuccessorFrame: Option[FullMVTurn],

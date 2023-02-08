@@ -86,14 +86,13 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
       scalatest.value,
       loci.communication.value,
       loci.tcp.value,
-      loci.circe.value,
+      loci.jsoniterScala.value,
       loci.upickle.value,
     ),
-    libraryDependencies ++= circe.value
   )
   .dependsOn(rescala.jvm % "compile->compile;test->test")
 

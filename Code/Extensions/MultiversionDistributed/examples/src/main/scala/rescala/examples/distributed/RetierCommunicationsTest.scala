@@ -8,8 +8,25 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 
 object Bindings {
-  import io.circe.generic.auto._
-  import loci.serializer.circe._
+
+  import loci.serializer.jsoniterScala._
+  import com.github.plokhotnyuk.jsoniter_scala.macros._
+  import com.github.plokhotnyuk.jsoniter_scala.core._
+
+  given JsonValueCodec[scala.Tuple2[
+    scala.Long,
+    scala.Tuple3[java.lang.String, scala.collection.immutable.List[scala.Tuple4[
+      scala.Long,
+      scala.Int,
+      scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
+        rescala.fullmv.mirrors.Host.GUID,
+        rescala.fullmv.TurnPhase.Type
+      ]], scala.Int]],
+      scala.Option[scala.Tuple2[scala.Option[scala.Int], scala.Option[scala.Array[scala.Byte]]]]
+    ]], scala.Array[scala.Byte]]
+  ]] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+
+  given JsonValueCodec[Int] = JsonCodecMaker.make
   import rescala.fullmv.DistributedFullMVApi.ReactiveTransmittable._
   implicit val host: FullMVEngine = scheduler
 

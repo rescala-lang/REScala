@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
 trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle with EventBundle
     with ReactiveReflectionBundle with FullMVTurnLocalCloneBundle with ReactiveMirrorBundle with RescalaInterface
-    with SignalCompatBundle with EventBundle with SignalBundle with ObserveBundle with Core =>
+    with SignalCompatBundle with EventBundle with SignalBundle with ObserveBundle =>
 
   object ReactiveLocalClone {
     def apply[A](signal: Signal[A], host: FullMVEngine)(implicit name: ReInfo): Signal[A] =
@@ -30,7 +30,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
     ): Signal[A] = {
       ticket.create(Set(), Pulse.empty: Pulse[A], needsReevaluation = true) { initialState =>
         val turn = initialState.asInstanceOf[
-          NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]
+          NonblockingSkipListVersionHistory[_, FullMVTurn]
         ].laggingLatestStable.get().get().txn
         val reflection =
           new ReactiveReflectionImpl[Pulse[A]](turn.host, None, initialState, ticket.rename.derive("SignalReflection"))
@@ -57,7 +57,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
     ): Event[P] = {
       ticket.create(Set(), Pulse.NoChange: Pulse[P], needsReevaluation = false) { initialState =>
         val turn = initialState.asInstanceOf[
-          NonblockingSkipListVersionHistory[_, FullMVTurn, _, _]
+          NonblockingSkipListVersionHistory[_, FullMVTurn]
         ].laggingLatestStable.get().get().txn
         val reflection = new ReactiveReflectionImpl[Pulse[P]](
           turn.host,

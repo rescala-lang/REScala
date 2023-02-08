@@ -7,6 +7,9 @@ import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
 import tests.rescala.testtools.Spawn
 
+import com.github.plokhotnyuk.jsoniter_scala.macros._
+import com.github.plokhotnyuk.jsoniter_scala.core._
+
 import scala.concurrent.{Await, TimeoutException}
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -18,12 +21,6 @@ class XShapeSerializabilityTest extends AnyFunSuite {
 }
 
 object XShapeSerializabilityTest {
-  import io.circe._
-  import io.circe.generic.semiauto._
-  implicit val spanningTreeNodeDecoder: Decoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
-    deriveDecoder
-  implicit val spanningTreeNodeEncoder: Encoder[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
-    deriveEncoder
 
   case class Data[+T](name: String, data: T)
   case class Merge[+T](left: T, right: T)
@@ -56,19 +53,25 @@ object XShapeSerializabilityTest {
     val registry   = new Registry
     def shutdown() = registry.terminate()
 
-    import loci.serializer.circe._
+    import loci.serializer.jsoniterScala._
     import ReactiveTransmittable._
+    import CodecHelper.given
 
-    implicit val host  = this
-    val derivedBinding = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
+    given fullData: JsonValueCodec[(String, ((String, Int), (String, Int)))] = JsonCodecMaker.make
+
+    implicit val host: Host = this
+    val derivedBinding      = Binding[Signal[Data[Merge[Data[Int]]]]]("derived")
   }
 
   class SideHost(name: String) extends Host(name) {
     val port: Int = TransmitterTestsPortManagement.getFreePort()
     registry.listen(TCP(port))
 
-    import loci.serializer.circe._
+    import loci.serializer.jsoniterScala._
     import ReactiveTransmittable._
+    import CodecHelper.given
+
+    given intData: JsonValueCodec[(String, Int)] = JsonCodecMaker.make
 
     val sourceBinding = Binding[Signal[Data[Int]]]("source")
 

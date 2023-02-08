@@ -10,6 +10,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
   self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   trait ReactiveReflection[-P] extends Derived with ReactiveReflectionProxy[P] {
+    type State[V] = self.State[V]
     val host: FullMVEngine
     def buffer(turn: FullMVTurn, value: P): Unit
     def submit(action: FullMVAction): Unit
@@ -80,9 +81,9 @@ trait ReactiveReflectionBundle extends FullMVBundle {
   class ReactiveReflectionImpl[P](
       override val host: FullMVEngine,
       var ignoreTurn: Option[FullMVTurn],
-      initialState: FullMVState[P, FullMVTurn, ReSource, Derived],
+      initialState: FullMVState[P, FullMVTurn],
       rename: ReInfo
-  ) extends Base[P](initialState, rename)
+  ) extends Base[State, P](initialState, rename)
       with ReactiveReflection[P] {
     val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()
     override def buffer(turn: FullMVTurn, value: P): Unit = { _buffer.put(turn, value); () }
@@ -92,7 +93,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
       "TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?"
     )
 
-    override protected[rescala] def reevaluate(input: ReIn): ReevTicket[P] = {
+    override protected[rescala] def reevaluate(input: ReIn): ReevTicket[State, P] = {
       val turn  = input.tx
       val value = _buffer.remove(turn)
       if (value == null) {

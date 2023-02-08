@@ -82,6 +82,6 @@ class DistributedSignalMapGrid {
 
   @Benchmark
   def run(): Unit = {
-    source.transform(_ + 1)(sourceEngine)
+    source.transform(_ + 1)(sourceEngine, implicitly)
   }
 }
