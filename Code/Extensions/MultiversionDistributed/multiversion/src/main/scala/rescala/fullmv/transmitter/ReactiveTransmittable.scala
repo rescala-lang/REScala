@@ -1,18 +1,19 @@
 package rescala.fullmv.transmitter
 
-import loci.transmitter._
+import loci.transmitter.*
 import rescala.compat.SignalCompatBundle
+import rescala.core.ReInfo
 import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv._
-import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization._
+import rescala.fullmv.*
+import rescala.fullmv.mirrors.*
+import rescala.fullmv.sgt.synchronization.*
 import rescala.fullmv.tasks.TaskBundle
 import rescala.operator.{EventBundle, Pulse, SignalBundle}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
 import scala.annotation.{nowarn, tailrec}
-import scala.concurrent._
+import scala.concurrent.*
 import scala.util.{Failure, Success}
 
 trait ReactiveTransmittableBundle extends FullMVBundle {
@@ -597,7 +598,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
                     reactive,
                     lookUpLocalTurnParameterInstance(bundle, endpoint),
                     isTransient,
-                    s"Mirror($endpoint)"
+                    ReInfo.create.derive(s"Mirror($endpoint)")
                   )(toPulse(reactive), new ReactiveReflectionProxyToEndpoint(endpoint))
                   val response = Initialize(
                     initValues.map {
@@ -1223,7 +1224,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         initTurn: FullMVTurn,
         name: String
     ): ReactiveReflectionImpl[Pulse[T]] with Signal[T] =
-      new ReactiveReflectionImpl[Pulse[T]](host, None, state, s"SignalReflection($name)")
+      new ReactiveReflectionImpl[Pulse[T]](host, None, state, ReInfo.create.derive(s"SignalReflection($name)"))
         with Signal[T] {
         override def disconnect(): Unit = ???
       }
@@ -1241,7 +1242,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
         initTurn: FullMVTurn,
         name: String
     ): ReactiveReflectionImpl[Pulse[T]] with Event[T] =
-      new ReactiveReflectionImpl[Pulse[T]](host, None, state, s"SignalReflection($name)")
+      new ReactiveReflectionImpl[Pulse[T]](host, None, state, ReInfo.create.derive(s"SignalReflection($name)"))
         with Event[T] {
         override def internalAccess(v: Pulse[T]): Pulse[T] = v
         override def disconnect(): Unit                    = ???
