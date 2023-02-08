@@ -1,16 +1,16 @@
 package rescala.todo
 
-import rescala.core.{Derived, ReName, ReadAs}
+import rescala.core.{Derived, ReInfo, ReadAs}
 import rescala.default.*
 
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
 class DeltaStateReactive[Delta, Combined](
-    initState: State[DeltaWithState[Delta, Combined]],
-    deltaInput: ReadAs.of[State, Delta],
-    applyDelta: (Combined, Delta) => Combined,
-    handlers: Seq[(DynamicTicket, Combined) => Delta],
-    override val name: ReName,
+                                           initState: State[DeltaWithState[Delta, Combined]],
+                                           deltaInput: ReadAs.of[State, Delta],
+                                           applyDelta: (Combined, Delta) => Combined,
+                                           handlers: Seq[(DynamicTicket, Combined) => Delta],
+                                           override val name: ReInfo,
 ) extends Derived with ReadAs[State, DeltaWithState[Delta, Combined]] {
   override type Value    = DeltaWithState[Delta, Combined]
   override type State[V] = rescala.default.State[V]
@@ -39,7 +39,7 @@ object DeltaStateReactive {
       deltaInput: ReadAs.of[State, Delta],
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket, DState) => Delta]
-  )(implicit name: ReName, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
+  )(implicit name: ReInfo, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
     creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )

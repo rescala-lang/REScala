@@ -10,7 +10,7 @@ trait ReSource {
   type Value
   type State[_]
   protected[rescala] def state: State[Value]
-  def name: ReName
+  def name: ReInfo
   protected[rescala] def commit(base: Value): Value
 }
 object ReSource { type of[S[_]] = ReSource { type State[V] = S[V] } }
@@ -29,12 +29,12 @@ trait Derived extends ReSource {
 object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
 
 /** Base implementation for reactives, with [[Derived]] for scheduling,
-  * together with a [[ReName]] and containing a [[State]]
+  * together with a [[ReInfo]] and containing a [[State]]
   *
   * @param state the state passed by the scheduler
   * @param name  the name of the reactive, useful for debugging as it often contains positional information
   */
-abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val name: ReName)
+abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val name: ReInfo)
     extends ReSource {
   override type State[V] = S[V]
   override type Value    = V
@@ -266,7 +266,7 @@ final class AdmissionTicket[State[_]](val tx: Transaction.of[State], declaredWri
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-final class CreationTicket[State[_]](val scope: ScopeSearch[State], val rename: ReName) {
+final class CreationTicket[State[_]](val scope: ScopeSearch[State], val rename: ReInfo) {
 
   private[rescala] def create[V, T <: Derived.of[State]](
       incoming: Set[ReSource.of[State]],
@@ -284,15 +284,15 @@ final class CreationTicket[State[_]](val scope: ScopeSearch[State], val rename: 
 }
 
 object CreationTicket {
-  implicit def fromScope[State[_]](implicit scope: ScopeSearch[State], line: ReName): CreationTicket[State] =
+  implicit def fromScope[State[_]](implicit scope: ScopeSearch[State], line: ReInfo): CreationTicket[State] =
     new CreationTicket(scope, line)
   // cases below are when one explicitly passes one of the parameters
-  implicit def fromExplicitDynamicScope[S[_]](factory: DynamicScope[S])(implicit line: ReName): CreationTicket[S] =
+  implicit def fromExplicitDynamicScope[S[_]](factory: DynamicScope[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
-  implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReName): CreationTicket[S] =
+  implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket(new ScopeSearch[S](Left(tx)), line)
   implicit def fromName[State[_]](str: String)(implicit scopeSearch: ScopeSearch[State]): CreationTicket[State] =
-    new CreationTicket(scopeSearch, ReName(str))
+    new CreationTicket(scopeSearch, ReInfo(str))
 
 }
 

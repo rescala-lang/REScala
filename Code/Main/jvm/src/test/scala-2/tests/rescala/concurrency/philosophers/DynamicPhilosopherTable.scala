@@ -1,6 +1,6 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.{ReName}
+import rescala.core.{ReInfo}
 import rescala.interface.RescalaInterface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
@@ -15,7 +15,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex      = mod(i + 1)
-      implicit val name: ReName  = s"Fork($i, $nextCircularIndex)"
+      implicit val name: ReInfo  = s"Fork($i, $nextCircularIndex)"
       val left: Var[Philosopher] = phils(i)
       val right                  = phils(nextCircularIndex)
       Signal {
@@ -34,7 +34,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
       val ownName               = i.toString
       val fork1                 = forks(i)
       val fork2                 = forks(mod(i - 1))
-      implicit val name: ReName = s"Vision($i)"
+      implicit val name: ReInfo = s"Vision($i)"
       val vision = Signal {
         fork1() match {
           case Taken(`ownName`) => Eating

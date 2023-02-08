@@ -81,7 +81,7 @@ trait ReactiveReflectionBundle extends FullMVBundle {
       override val host: FullMVEngine,
       var ignoreTurn: Option[FullMVTurn],
       initialState: FullMVState[P, FullMVTurn, ReSource, Derived],
-      rename: ReName
+      rename: ReInfo
   ) extends Base[P](initialState, rename)
       with ReactiveReflection[P] {
     val _buffer                                           = new ConcurrentHashMap[FullMVTurn, P]()

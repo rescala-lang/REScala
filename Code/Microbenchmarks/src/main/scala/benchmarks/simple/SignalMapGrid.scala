@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import benchmarks._
 import org.openjdk.jmh.annotations._
-import rescala.core.ReName
+import rescala.core.ReInfo
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -33,7 +33,7 @@ class SignalMapGrid extends BusyThreads {
     leafs = for (w <- 1 to width) yield {
       var result: Signal[Int] = source
       for (d <- 1 to depth) {
-        result = ReName.named(s"map-$w-$d") { implicit ! =>
+        result = ReInfo.named(s"map-$w-$d") { implicit ! =>
           result.map { v =>
             work.consume(); v + 1
           }

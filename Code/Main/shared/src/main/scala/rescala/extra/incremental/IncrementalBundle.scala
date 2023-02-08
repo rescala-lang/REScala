@@ -320,7 +320,7 @@ trait IncrementalBundle {
     */
   class ConcatenateDeltaSeq[T](left: ReactiveDeltaSeq[T], right: ReactiveDeltaSeq[T])(
       initialState: IncSeq.SeqState[T],
-      name: ReName
+      name: ReInfo
   ) extends Base[State, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] with DisconnectableImpl {
 
@@ -353,7 +353,7 @@ trait IncrementalBundle {
     */
   class FilterDeltaSeq[T](in: ReactiveDeltaSeq[T], expression: T => Boolean)(
       initialState: IncSeq.SeqState[T],
-      name: ReName
+      name: ReInfo
   ) extends Base[State, Delta[T]](initialState, name) with Derived
       with ReactiveDeltaSeq[T] {
 
@@ -378,7 +378,7 @@ trait IncrementalBundle {
     */
   class MapDeltaSeq[T, A](in: ReactiveDeltaSeq[T], op: T => A)(
       initialState: IncSeq.SeqState[A],
-      name: ReName
+      name: ReInfo
   ) extends Base[State, Delta[A]](initialState, name)
       with ReactiveDeltaSeq[A] {
 
@@ -426,7 +426,7 @@ trait IncrementalBundle {
     * @tparam T Type returned when the event fires
     * @tparam S Struct type used for the propagation of the event
     */
-  class IncSeq[T] private[rescala] (initialState: IncSeq.SeqState[T], name: ReName)
+  class IncSeq[T] private[rescala] (initialState: IncSeq.SeqState[T], name: ReInfo)
       extends Base[State, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] {
 

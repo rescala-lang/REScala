@@ -12,7 +12,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
   self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
 
   object ReactiveMirror {
-    def apply[A](reactive: ReSource, turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReName)(
+    def apply[A](reactive: ReSource, turn: FullMVTurn, reflectionIsTransient: Boolean, rename: ReInfo)(
         toPulse: reactive.Value => A,
         reflectionProxy: ReactiveReflectionProxy[A]
     ): (List[(FullMVTurn, A)], Option[FullMVTurn]) = {
@@ -41,7 +41,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
       val getValue: FullMVTurn => A,
       val reflectionProxy: ReactiveReflectionProxy[A],
       val timeout: Duration,
-      override val name: ReName
+      override val name: ReInfo
   ) extends Derived
       with FullMVState[Nothing, FullMVTurn, ReSource, Derived] {
     override type Value = Nothing

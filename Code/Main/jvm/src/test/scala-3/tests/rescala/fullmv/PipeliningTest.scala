@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.core.ReName
+import rescala.core.ReInfo
 import rescala.fullmv.FullMVUtil.default._
 import tests.rescala.testtools.{IgnoreOnGithubCiBecause, Spawn}
 
@@ -15,7 +15,7 @@ class PipeliningTest extends AnyFunSuite {
     val derived: Array[Signal[Int]] = new Array(pipelineLength)
     for (i <- 0 until pipelineLength) {
       val from = if (i == 0) input else derived(i - 1)
-      derived(i) = ReName.named("pipeline-" + i) { implicit ! =>
+      derived(i) = ReInfo.named("pipeline-" + i) { implicit ! =>
         from.map { v =>
           Thread.sleep(millisecondsPerNode)
           v + 1

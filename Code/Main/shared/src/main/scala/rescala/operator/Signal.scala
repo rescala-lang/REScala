@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch}
+import rescala.core.{Disconnectable, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -227,7 +227,7 @@ trait SignalBundle extends SignalCompatBundle {
     def fromFuture[A](fut: Future[A])(implicit
         scheduler: Scheduler[State],
         ec: ExecutionContext,
-        name: ReName
+        name: ReInfo
     ): Signal[A] = {
       val creationTicket = new CreationTicket(ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
       fut.value match {

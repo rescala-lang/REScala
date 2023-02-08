@@ -4,8 +4,8 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal, Var}
-import rescala.core.{ReName}
-import rescala.fullmv.mirrors.localcloning.{FakeDelayer}
+import rescala.core.ReInfo
+import rescala.fullmv.mirrors.localcloning.FakeDelayer
 
 import scala.concurrent.duration._
 

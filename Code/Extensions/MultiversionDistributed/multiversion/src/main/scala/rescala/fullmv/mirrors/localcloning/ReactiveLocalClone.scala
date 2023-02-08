@@ -17,10 +17,10 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
     with SignalCompatBundle with EventBundle with SignalBundle with ObserveBundle with Core =>
 
   object ReactiveLocalClone {
-    def apply[A](signal: Signal[A], host: FullMVEngine)(implicit name: ReName): Signal[A] =
+    def apply[A](signal: Signal[A], host: FullMVEngine)(implicit name: ReInfo): Signal[A] =
       apply(signal, host, Duration.Zero)(name)
     def apply[A](signal: Signal[A], host: FullMVEngine, fakeDelay: Duration)(implicit
-        name: ReName
+        name: ReInfo
     ): Signal[A] = apply(signal, fakeDelay)(CreationTicket.fromExplicitDynamicScope(host)(name))
     def apply[A](signal: Signal[A])(implicit
         ticket: CreationTicket
@@ -45,10 +45,10 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
       }
     }
 
-    def apply[P](event: Event[P], host: FullMVEngine)(implicit name: ReName): Event[P] =
+    def apply[P](event: Event[P], host: FullMVEngine)(implicit name: ReInfo): Event[P] =
       apply(event, host, Duration.Zero)(name)
     def apply[P](event: Event[P], host: FullMVEngine, fakeDelay: Duration)(implicit
-        name: ReName
+        name: ReInfo
     ): Event[P] = apply(event, fakeDelay)(CreationTicket.fromExplicitDynamicScope(host)(name))
     def apply[P](event: Event[P])(implicit ticket: CreationTicket): Event[P] =
       apply(event, Duration.Zero)(ticket)
@@ -81,7 +81,7 @@ trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
         reactive: ReSource,
         connectTurn: FullMVTurn,
         reflectionIsTransient: Boolean,
-        rename: ReName
+        rename: ReInfo
     )(toPulse: reactive.Value => A, reflection: ReactiveReflectionImpl[A]): Unit = {
       if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $connectTurn creating clone of $reactive")
       val mirrorHost     = reactive.state.host

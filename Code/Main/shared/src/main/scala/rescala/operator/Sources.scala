@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.core.{
-  AdmissionTicket, Base, InitialChange, Observation, ReName, ReSource, ReadAs, Scheduler, ScopeSearch
+  AdmissionTicket, Base, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch
 }
 
 trait Sources {
@@ -18,7 +18,7 @@ trait Sources {
     * @tparam T Type returned when the event fires
     * @tparam S Struct type used for the propagation of the event
     */
-  class Evt[T] private[rescala] (initialState: State[Pulse[T]], name: ReName)
+  class Evt[T] private[rescala] (initialState: State[Pulse[T]], name: ReInfo)
       extends Base[State, Pulse[T]](initialState, name)
       with Source[T]
       with Event[T] {
@@ -60,7 +60,7 @@ trait Sources {
     * @tparam A Type stored by the signal
     * @tparam S Struct type used for the propagation of the signal
     */
-  class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReName)
+  class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReInfo)
       extends Base[State, Pulse[A]](initialState, name)
       with Source[A] with Signal[A] {
     override type Value = Pulse[A]

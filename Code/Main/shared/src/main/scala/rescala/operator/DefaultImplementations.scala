@@ -10,10 +10,10 @@ trait DefaultImplementations {
     *                                Some means dynamic with the given static ones for optimization
     */
   class SignalImpl[T](
-      initial: State[Pulse[T]],
-      expr: (DynamicTicket, () => T) => T,
-      name: ReName,
-      isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
+                       initial: State[Pulse[T]],
+                       expr: (DynamicTicket, () => T) => T,
+                       name: ReInfo,
+                       isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Signal[T] {
 
     protected[this] def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] = {
@@ -22,9 +22,9 @@ trait DefaultImplementations {
   }
 
   abstract class DerivedImpl[T](
-      initial: State[Pulse[T]],
-      name: ReName,
-      isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
+                                 initial: State[Pulse[T]],
+                                 name: ReInfo,
+                                 isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
   ) extends Base[State, Pulse[T]](initial, name)
       with Derived
       with DisconnectableImpl {
@@ -44,10 +44,10 @@ trait DefaultImplementations {
 
   /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
   class EventImpl[T](
-      initial: State[Pulse[T]],
-      expr: self.DynamicTicket => Pulse[T],
-      name: ReName,
-      isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
+                      initial: State[Pulse[T]],
+                      expr: self.DynamicTicket => Pulse[T],
+                      name: ReInfo,
+                      isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)
       with Event[T] {
 
@@ -60,7 +60,7 @@ trait DefaultImplementations {
   class ChangeEventImpl[T](
       _bud: State[(Pulse[T], Pulse[Diff[T]])],
       signal: Signal[T],
-      name: ReName
+      name: ReInfo
   ) extends Base[State, (Pulse[T], Pulse[Diff[T]])](_bud, name)
       with Derived
       with Event[Diff[T]]

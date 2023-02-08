@@ -1,6 +1,6 @@
 package rescala.core.reactor
 
-import rescala.core.{ReName, ReadAs}
+import rescala.core.{ReInfo, ReadAs}
 import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 
@@ -19,7 +19,7 @@ class ReactorWithoutAPITest extends RETests {
     override type State[V] = rescala.default.State[V]
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState
-    override def name: ReName                                     = "Custom Reactor"
+    override def name: ReInfo                                     = "Custom Reactor"
 
     /** Interprets the internal type to the external type
       *
