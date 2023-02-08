@@ -72,7 +72,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket, false](expr)
-      Branch(sources, false, fun)
+      Branch(sources, isStatic, fun)
     }
 
     class Branch[S](
@@ -92,7 +92,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
       ticket.create(
         staticDeps,
         Pulse.tryCatch[T](Pulse.Value(init)),
-        needsReevaluation = false
+        needsReevaluation = !isStatic
       ) { state => new SignalImpl[T](state, operator, ticket.rename, if isStatic then None else Some(staticDeps)) }
     }
   }
