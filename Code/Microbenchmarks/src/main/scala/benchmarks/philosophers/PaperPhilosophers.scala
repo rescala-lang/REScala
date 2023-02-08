@@ -2,7 +2,7 @@ package benchmarks.philosophers
 
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
-import rescala.core.{ReInfo, ReSource}
+import rescala.core.{CreationTicket, ReInfo, ReSource}
 import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
@@ -28,8 +28,8 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
   case object Thinking extends Philosopher
 
   val phils =
-    for (idx <- 0 until size) yield ReInfo.named(s"phil(${idx + 1})") { implicit ! =>
-      Var[Philosopher](Thinking)
+    for (idx <- 0 until size) yield {
+      Var[Philosopher](Thinking)(CreationTicket.fromName(s"phil(${idx + 1})"))
     }
 
   sealed trait Fork
@@ -39,7 +39,8 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
   case class Taken(by: Int) extends Fork
 
   val forks =
-    for (idx <- 0 until size) yield ReInfo.named(s"fork(${idx + 1})") { implicit ! =>
+    for (idx <- 0 until size) yield {
+      implicit val ct: engine.CreationTicket = (CreationTicket.fromName(s"fork(${idx + 1})"))
       Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
         (phils(idx)(), phils(nextIdx)()) match {
@@ -61,8 +62,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
 
   // Dynamic Sight
   val sights =
-    for (avoidStaticOptimization <- 0 until size) yield ReInfo.named(s"sight(${avoidStaticOptimization + 1})") {
-      implicit ! =>
+    for (avoidStaticOptimization <- 0 until size) yield {
         dynamicity match {
           case Dynamicity.Dynamic => Signal.dynamic[Sight] {
               val idx     = avoidStaticOptimization
@@ -161,9 +161,7 @@ trait EventPyramidTopper {
 
   val anySuccess = successes.reduce(_ || _)
   val successCount: Signal[Int] =
-    ReInfo.named(s"successCount") { implicit ! =>
-      anySuccess.fold(0) { (acc, _) => acc + 1 }
-    }
+      anySuccess.fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"successCount"))
   override def total: Int = successCount.readValueOnce
 }
 
@@ -172,8 +170,8 @@ trait IndividualCounts {
   import engine._
 
   val individualCounts: Seq[Signal[Int]] =
-    for (idx <- 0 until size) yield ReInfo.named(s"count(${idx + 1})") { implicit ! =>
-      successes(idx).fold(0) { (acc, _) => acc + 1 }
+    for (idx <- 0 until size) yield {
+      successes(idx).fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"count(${idx + 1})"))
     }
 }
 
@@ -207,8 +205,8 @@ trait SignalPyramidTopper extends IndividualCounts {
 
   val successCount: Signal[Int] =
     individualCounts.reduce { (a, b) =>
-      ReInfo.named(s"sumUpTo($b)") { implicit ! =>
-        Signal { a() + b() }
+      {
+        Signal { a() + b() }(CreationTicket.fromName(s"sumUpTo($b)"))
       }
     }
   override def total: Int = successCount.readValueOnce

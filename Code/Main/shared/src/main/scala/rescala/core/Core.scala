@@ -10,7 +10,7 @@ trait ReSource {
   type Value
   type State[_]
   protected[rescala] def state: State[Value]
-  def name: ReInfo
+  def info: ReInfo
   protected[rescala] def commit(base: Value): Value
 }
 object ReSource { type of[S[_]] = ReSource { type State[V] = S[V] } }
@@ -32,13 +32,13 @@ object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
   * together with a [[ReInfo]] and containing a [[State]]
   *
   * @param state the state passed by the scheduler
-  * @param name  the name of the reactive, useful for debugging as it often contains positional information
+  * @param info  the name of the reactive, useful for debugging as it often contains positional information
   */
-abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val name: ReInfo)
+abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val info: ReInfo)
     extends ReSource {
   override type State[V] = S[V]
   override type Value    = V
-  override def toString: String = s"${name.str}($state)"
+  override def toString: String = s"${info.description}($state)"
 }
 
 /** Common macro accessors for [[rescala.operator.SignalBundle.Signal]] and [[rescala.operator.EventBundle.Event]]
@@ -291,8 +291,8 @@ object CreationTicket {
     new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
   implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket(new ScopeSearch[S](Left(tx)), line)
-  implicit def fromName[State[_]](str: String)(implicit scopeSearch: ScopeSearch[State]): CreationTicket[State] =
-    new CreationTicket(scopeSearch, ReInfo(str))
+  implicit def fromName[State[_]](str: String)(implicit scopeSearch: ScopeSearch[State], info: ReInfo): CreationTicket[State] =
+    new CreationTicket(scopeSearch, info.derive(str))
 
 }
 

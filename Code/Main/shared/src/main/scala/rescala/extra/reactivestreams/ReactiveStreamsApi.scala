@@ -110,7 +110,7 @@ class ReactiveStreamsApi(val api: RescalaInterface) {
         fac: Scheduler[State]
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>
-        val name: ReInfo = s"forSubscriber($subscriber)"
+        val name: ReInfo = ReInfo.create.derive(s"forSubscriber($subscriber)")
         ticket.tx.initializer.create[Pulse[T], SubscriptionReactive[T]](
           Set(dependency),
           Pulse.empty,

@@ -1,8 +1,8 @@
 package benchmarks.simple
 
-import benchmarks._
-import org.openjdk.jmh.annotations._
-import rescala.core.ReInfo
+import benchmarks.*
+import org.openjdk.jmh.annotations.*
+import rescala.core.{CreationTicket, ReInfo}
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.TimeUnit
@@ -33,10 +33,10 @@ class SignalMapGrid extends BusyThreads {
     leafs = for (w <- 1 to width) yield {
       var result: Signal[Int] = source
       for (d <- 1 to depth) {
-        result = ReInfo.named(s"map-$w-$d") { implicit ! =>
+        result = {
           result.map { v =>
             work.consume(); v + 1
-          }
+          }(CreationTicket.fromName(s"map-$w-$d"))
         }
       }
       result

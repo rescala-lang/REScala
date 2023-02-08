@@ -13,7 +13,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
     override type State[V] = ReactorBundle.this.api.State[V]
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
-    def name: ReInfo                                              = "Custom Reactor"
+    def info: ReInfo                                              = ReInfo.create.derive("Custom Reactor")
     override def read(v: ReactorState[T]): T                      = v.currentValue
     override protected[rescala] def commit(base: Value): Value    = base
 
