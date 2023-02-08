@@ -1,8 +1,6 @@
 package rescala.scheduler
 
-import rescala.core.{
-  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
-}
+import rescala.core.{AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Tracing, Transaction}
 
 import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer
@@ -234,6 +232,7 @@ trait Twoversion {
     }
     def writeState(pulsing: ReSource)(value: pulsing.Value): Unit = {
       pulsing.state.write(value, token)
+      Tracing.observe(Tracing.Value(pulsing, value.toString))
       this.schedule(pulsing)
     }
 

@@ -6,6 +6,7 @@ object Tracing {
   case class Create(resource: ReSource, inputs: Set[ReSource]) extends Data
   case class Discover(source: ReSource, sink: ReSource)        extends Data
   case class Drop(source: ReSource, sink: ReSource)            extends Data
+  case class Value(source: ReSource, value: String)            extends Data
 
   var observer: Data => Unit = null
 
