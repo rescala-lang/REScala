@@ -72,15 +72,13 @@ object Dependencies {
   }
 
   object slips {
-    val oldVersion  = "0.4.7"
-    val defvVersion = "0.4.8"
-    val category    = Def.setting("de.rmgk.slips" %%% "category" % oldVersion)
-    val chain       = Def.setting("de.rmgk.slips" %%% "chain" % oldVersion)
-    val delay       = Def.setting("de.rmgk.slips" %%% "delay" % defvVersion)
-    val logging     = Def.setting("de.rmgk.slips" %%% "logging" % oldVersion)
-    val options     = Def.setting("de.rmgk.slips" %%% "options" % oldVersion)
-    val scip        = Def.setting("de.rmgk.slips" %%% "scip" % defvVersion)
-    val script      = Def.setting("de.rmgk.slips" %%% "script" % defvVersion)
+    val category = Def.setting("de.rmgk.slips" %%% "category" % "0.4.7")
+    val chain    = Def.setting("de.rmgk.slips" %%% "chain" % "0.4.7")
+    val delay    = Def.setting("de.rmgk.slips" %%% "delay" % "0.4.9")
+    val logging  = Def.setting("de.rmgk.slips" %%% "logging" % "0.4.7")
+    val options  = Def.setting("de.rmgk.slips" %%% "options" % "0.4.7")
+    val scip     = Def.setting("de.rmgk.slips" %%% "scip" % "0.4.9")
+    val script   = Def.setting("de.rmgk.slips" %%% "script" % "0.4.9")
   }
 
   object loci {

@@ -89,7 +89,9 @@ object Settings {
     Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
   )
 
-  val jitpackResolver = resolvers += "jitpack" at "https://jitpack.io"
+  val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
+  val resolverS01 = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
+
 
   val noPublish = Seq(
     publishArtifact   := false,

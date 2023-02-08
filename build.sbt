@@ -40,7 +40,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     Test / scalacOptions ~= (old => old.filter(_ != "-Xfatal-warnings")),
     publishSonatype,
     scalaReflectProvided,
-    jitpackResolver,
+    resolverJitpack,
     libraryDependencies ++= Seq(
       sourcecode.value,
       scalatest.value,
@@ -195,11 +195,10 @@ lazy val replicationExamples =
     .dependsOn(rescala, kofre)
     .settings(
       scalaVersion_3,
-      jitpackResolver,
       noPublish,
       run / fork         := true,
       run / connectInput := true,
-      jitpackResolver,
+      resolverJitpack,
       libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
         loci.tcp.value,
         loci.jsoniterScala.value,
