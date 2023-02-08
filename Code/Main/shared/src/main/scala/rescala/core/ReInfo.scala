@@ -1,7 +1,7 @@
 package rescala.core
 
 /** Provides names for dynamic dependencies based on their definition position to allow easier debugging */
-case class ReInfo(count: Int, description: String, file: String, enclosing: String, line: Int) {
+case class ReInfo(idCounter: Int, description: String, enclosing: String, file: String, line: Int) {
   def derive(derivation: String): ReInfo = copy(description = s"»$description«'$derivation")
 }
 
@@ -13,7 +13,7 @@ object ReInfo {
       file: sourcecode.File,
       enclosing: sourcecode.Enclosing,
       line: sourcecode.Line
-  ): ReInfo = ReInfo(nextCount(), "", file.value, enclosing.value, line.value)
+  ): ReInfo = ReInfo(nextCount(), "", enclosing.value.intern(), file.value.intern(), line.value)
 
   private var counter: Int = 0
   private def nextCount() = synchronized {
