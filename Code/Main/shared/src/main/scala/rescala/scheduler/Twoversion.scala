@@ -232,7 +232,7 @@ trait Twoversion {
     }
     def writeState(pulsing: ReSource)(value: pulsing.Value): Unit = {
       pulsing.state.write(value, token)
-      Tracing.observe(Tracing.Value(pulsing, value.toString))
+      Tracing.observe(Tracing.Value(pulsing, Tracing.ValueWrapper(value)))
       this.schedule(pulsing)
     }
 
