@@ -3,7 +3,7 @@ package replication.fbdc
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.{Argument, Style}
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.{AddWinsSet, CausalQueue, LastWriterWins, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
@@ -24,16 +24,16 @@ import java.util.Timer
 import scala.annotation.nowarn
 
 enum Req:
-  def executor: Id
-  case Fortune(executor: Id)
-  case Northwind(executor: Id, query: String)
+  def executor: Uid
+  case Fortune(executor: Uid)
+  case Northwind(executor: Uid, query: String)
 enum Res:
   def req: Req
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
 class FbdcExampleData {
-  val replicaId = Id.gen()
+  val replicaId = Uid.gen()
   val registry  = new Registry
 
   given Bottom[State] = Bottom.derived
@@ -60,7 +60,7 @@ class FbdcExampleData {
   case class State(
       requests: CausalQueue[Req],
       responses: ObserveRemoveMap[String, RespValue],
-      providers: ObserveRemoveMap[Id, AddWinsSet[String]]
+      providers: ObserveRemoveMap[Uid, AddWinsSet[String]]
   ) derives DottedLattice, HasDots {
 
     type Mod[T] = PermCausalMutate[T, T] ?=> T => Unit
@@ -93,7 +93,7 @@ class FbdcExampleData {
 
     def modParticipants(using
         pcm: PermCausalMutate[State, State]
-    )(fun: Mod[ObserveRemoveMap[Id, AddWinsSet[String]]]) = {
+    )(fun: Mod[ObserveRemoveMap[Uid, AddWinsSet[String]]]) = {
       val x = new Forward(_.providers, State(Bottom.empty, Bottom.empty, _))
       fun(using x)(providers)
     }

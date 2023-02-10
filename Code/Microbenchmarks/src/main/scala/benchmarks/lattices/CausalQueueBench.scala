@@ -4,7 +4,7 @@ import kofre.base.Lattice.Operators
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.alternatives.rga.Sequence.RGA
 import kofre.datatypes.alternatives.rga.Sequence.RGAOps
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 import kofre.datatypes.CausalQueue
 import kofre.datatypes.alternatives.rga.Sequence
 import kofre.dotted.Dotted

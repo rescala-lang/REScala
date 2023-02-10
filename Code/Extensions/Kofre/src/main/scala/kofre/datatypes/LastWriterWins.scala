@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.time.WallClock
 
 import java.time.Instant
@@ -15,7 +15,7 @@ object LastWriterWins {
 
   type TimedVal[Value] = LastWriterWins[WallClock, Value]
 
-  def now[Value](payload: Value, replicaId: Id): LastWriterWins[WallClock, Value] =
+  def now[Value](payload: Value, replicaId: Uid): LastWriterWins[WallClock, Value] =
     LastWriterWins(WallClock.now(replicaId), payload)
 
   implicit def Lattice[Time: Ordering, A]: Lattice[LastWriterWins[Time, A]] =

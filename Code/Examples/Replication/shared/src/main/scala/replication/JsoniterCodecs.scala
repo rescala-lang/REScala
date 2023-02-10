@@ -2,7 +2,7 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.{Id, Time}
+import kofre.base.{Uid, Time}
 import kofre.datatypes.ReplicatedList.Node
 import kofre.datatypes.alternatives.ResettableCounter
 import kofre.datatypes.{
@@ -32,9 +32,9 @@ object JsoniterCodecs {
     x => x.inner.slice(0, x.used)
   )
 
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
-    override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
-    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+    override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
+    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
   implicit val CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
   /** AddWinsSet */
@@ -42,10 +42,10 @@ object JsoniterCodecs {
   implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  given JsonValueCodec[Id] = bimapCodec(
+  given JsonValueCodec[Uid] = bimapCodec(
     JsonCodecMaker.make[String],
-    Id.predefined,
-    Id.unwrap
+    Uid.predefined,
+    Uid.unwrap
   )
   implicit def AWSetEmbeddedCodec[E: JsonValueCodec]: JsonValueCodec[Map[E, Set[Dot]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))

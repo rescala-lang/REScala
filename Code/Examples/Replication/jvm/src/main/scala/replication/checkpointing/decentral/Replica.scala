@@ -1,6 +1,6 @@
 package replication.checkpointing.decentral
 
-import kofre.base.{DecomposeLattice, Id}
+import kofre.base.{DecomposeLattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
-class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, initSize: Int) extends Peer {
+class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, initSize: Int) extends Peer {
   val add: Regex       = """add (\d+)""".r
   val remove: Regex    = """remove (\d+)""".r
   val clear: String    = "clear"
@@ -24,7 +24,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
 
   var set: DeltaBuffer[Dotted[AddWinsSet[Int]]] = DeltaBuffer(Dotted(AddWinsSet.empty))
 
-  var checkpoints: Map[Id, Int] = Map(id -> 0)
+  var checkpoints: Map[Uid, Int] = Map(id -> 0)
 
   var checkpointMap: Map[Checkpoint, SetState] = Map()
 

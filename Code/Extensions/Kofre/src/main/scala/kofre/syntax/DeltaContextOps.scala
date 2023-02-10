@@ -1,6 +1,6 @@
 package kofre.syntax
 
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.dotted.Dotted
 import kofre.time.Dots
 
@@ -31,11 +31,11 @@ object PermMutate:
 @implicitNotFound(
   "Requires a replica ID."
 )
-opaque type ReplicaId = Id
+opaque type ReplicaId = Uid
 object ReplicaId:
-  extension (id: ReplicaId) def replicaId: Id    = id
-  def apply(id: Id): ReplicaId                   = id
-  inline given fromId: Conversion[Id, ReplicaId] = identity
+  extension (id: ReplicaId) def replicaId: Uid    = id
+  def apply(id: Uid): ReplicaId                   = id
+  inline given fromId: Conversion[Uid, ReplicaId] = identity
 
 @implicitNotFound(
   "Requires causal context permission.\nNo context in »${C}«\nMissing a container?"
@@ -64,7 +64,7 @@ trait OpsTypes[C, L] {
 }
 trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[kofre] def current(using perm: PermQuery): L          = perm.query(container)
-  final protected[kofre] def replicaId(using perm: ReplicaId): Id       = perm.replicaId
+  final protected[kofre] def replicaId(using perm: ReplicaId): Uid       = perm.replicaId
   final protected[kofre] def context(using perm: PermCausal): Dots      = perm.context(container)
   extension (l: L)(using perm: PermMutate) def mutator: C               = perm.mutate(container, l)
   extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C = perm.mutateContext(container, l)

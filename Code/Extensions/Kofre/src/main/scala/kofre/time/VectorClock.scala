@@ -1,18 +1,18 @@
 package kofre.time
 
-import kofre.base.{Id, Time}
+import kofre.base.{Uid, Time}
 import kofre.time.{Dot, VectorClock}
 import kofre.base.Lattice
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering
 
-case class VectorClock(timestamps: Map[Id, Time]) {
-  def timeOf(replicaId: Id): Time = timestamps.getOrElse(replicaId, 0)
+case class VectorClock(timestamps: Map[Uid, Time]) {
+  def timeOf(replicaId: Uid): Time = timestamps.getOrElse(replicaId, 0)
 
-  def dotOf(replicaId: Id): Dot = Dot(replicaId, timeOf(replicaId))
+  def dotOf(replicaId: Uid): Dot = Dot(replicaId, timeOf(replicaId))
 
-  def inc(id: Id): VectorClock    = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
+  def inc(id: Uid): VectorClock    = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))
   def <(o: VectorClock): Boolean  = this <= o && timestamps.exists((k, v) => v < o.timestamps.getOrElse(k, 0L))
 }
@@ -20,7 +20,7 @@ case class VectorClock(timestamps: Map[Id, Time]) {
 object VectorClock {
 
   def zero: VectorClock                      = VectorClock(Map.empty)
-  def fromMap(m: Map[Id, Time]): VectorClock = VectorClock(m)
+  def fromMap(m: Map[Uid, Time]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =
     given Lattice[Time] = _ max _
@@ -32,7 +32,7 @@ object VectorClock {
         case Some(v) => v
         case None =>
           @tailrec
-          def smaller(remaining: List[Id]): Int = remaining match {
+          def smaller(remaining: List[Uid]): Int = remaining match {
             case h :: t =>
               val l   = x.timestamps.getOrElse(h, 0L)
               val r   = y.timestamps.getOrElse(h, 0L)

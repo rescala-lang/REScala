@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.base.Id
+import kofre.base.Uid
 import kofre.syntax.ReplicaId
 import kofre.datatypes.AddWinsSet
 import org.scalacheck.Prop.*
@@ -24,7 +24,7 @@ object AWSetGenerators {
       val network = new Network(0, 0, 0)
       val ae      = new AntiEntropy[AddWinsSet[A]]("a", network, mutable.Buffer())
 
-      given ReplicaId = Id.predefined(ae.replicaID)
+      given ReplicaId = Uid.predefined(ae.replicaID)
 
       val setAdded = added.foldLeft(AntiEntropyContainer[AddWinsSet[A]](ae)) {
         case (set, e) => set.add(e)
@@ -137,7 +137,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given ReplicaId = Id.predefined(aea.replicaID)
+        given ReplicaId = Uid.predefined(aea.replicaID)
         AntiEntropyContainer[AddWinsSet[Int]](aea).add(e).add(e1).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
@@ -186,7 +186,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given ReplicaId = Id.predefined(aea.replicaID)
+        given ReplicaId = Uid.predefined(aea.replicaID)
         AntiEntropyContainer[AddWinsSet[Int]](aea).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
@@ -235,7 +235,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given ReplicaId = Id.predefined(aea.replicaID)
+        given ReplicaId = Uid.predefined(aea.replicaID)
         AntiEntropyContainer[AddWinsSet[Int]](aea).add(e1).add(e2)
       AntiEntropy.sync(aea, aeb)
       val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()

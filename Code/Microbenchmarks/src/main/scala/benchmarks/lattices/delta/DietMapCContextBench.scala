@@ -2,9 +2,9 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
 import kofre.time.{Dots, Dot}
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 import java.util.concurrent.TimeUnit
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

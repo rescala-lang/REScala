@@ -3,14 +3,14 @@ package deltaAntiEntropy.tools
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
-import kofre.base.Id.asId
-import kofre.base.{Bottom, DecomposeLattice, Id}
+import kofre.base.Uid.asId
+import kofre.base.{Bottom, DecomposeLattice, Uid}
 import kofre.dotted.{Dotted, DottedDecompose}
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
 
-case class Named[T](replicaId: Id, anon: T)
+case class Named[T](replicaId: Uid, anon: T)
 
 /** This class can be used together with Network to test Delta CRDTs locally. It is an implementation of the anti-entropy
   * algorithm proposed by Almeida et al. in "Delta State Replicated Data Types", see [[https://arxiv.org/pdf/1603.01529.pdf here]].
@@ -33,7 +33,7 @@ class AntiEntropy[A](
 
   def state: Dotted[A] = fullState
 
-  def uid: Id = Id.predefined(replicaID)
+  def uid: Uid = Uid.predefined(replicaID)
 
   private val deltaBufferOut: mutable.Map[Int, Named[Dotted[A]]] = mutable.Map()
 
@@ -74,7 +74,7 @@ class AntiEntropy[A](
     case DeltaMsg(delta, seqNum) =>
       deltaBufferIn = deltaBufferIn :+ delta
       val msg: Message = Left(AckMsg(replicaID, seqNum))
-      network.sendMessage(kofre.base.Id.unwrap(delta.replicaId), writeToArray(msg))
+      network.sendMessage(kofre.base.Uid.unwrap(delta.replicaId), writeToArray(msg))
   }
 
   private def receiveAck(msg: AckMsg): Unit = msg match {
@@ -103,7 +103,7 @@ class AntiEntropy[A](
       Some(DeltaMsg(Named(replicaID.asId, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
-        case (n, Named(origin, deltaState)) if n >= ackMap(to) && Id.unwrap(origin) != to => deltaState
+        case (n, Named(origin, deltaState)) if n >= ackMap(to) && Uid.unwrap(origin) != to => deltaState
       } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
         DecomposeLattice[Dotted[A]].merge(left, right)
       } map { deltaState => DeltaMsg(Named(replicaID.asId, deltaState), nextSeqNum) }

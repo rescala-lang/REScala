@@ -14,9 +14,9 @@ import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
-import kofre.base.Id
+import kofre.base.Uid
 
-class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
+class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 

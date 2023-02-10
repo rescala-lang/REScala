@@ -1,6 +1,6 @@
 package deltaAntiEntropy.tools
 
-import kofre.base.Id
+import kofre.base.Uid
 
 import scala.collection.mutable
 import scala.util.Random

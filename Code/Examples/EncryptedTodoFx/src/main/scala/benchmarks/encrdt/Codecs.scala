@@ -4,22 +4,22 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
-import kofre.base.{Id, Time}
-import kofre.base.Id.asId
+import kofre.base.{Uid, Time}
+import kofre.base.Uid.asId
 import kofre.time.{ArrayRanges, Dots, Dot}
 
 import java.util.UUID
 
 object Codecs {
-  implicit val idCodec: JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
-    override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
-    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
+  implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+    override def decodeKey(in: JsonReader): Uid           = Id.predefined(in.readKeyAsString())
+    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
 
   implicit val dotSetCodec: JsonValueCodec[Dots] = new JsonValueCodec[Dots] {
-    private val optimizedArrayCausalContextCodec: JsonValueCodec[Map[Id, Array[Time]]] = JsonCodecMaker.make
+    private val optimizedArrayCausalContextCodec: JsonValueCodec[Map[Uid, Array[Time]]] = JsonCodecMaker.make
 
     override def decodeValue(in: JsonReader, default: Dots): Dots =
       Dots(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {

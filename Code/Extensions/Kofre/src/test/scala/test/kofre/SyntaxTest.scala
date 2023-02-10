@@ -10,7 +10,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
 import kofre.syntax.Named
 import kofre.syntax.ReplicaId
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 class SyntaxTest extends munit.FunSuite {
 

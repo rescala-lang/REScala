@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
 import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper
@@ -50,7 +50,7 @@ object ObserveRemoveMap {
                   PermCausalMutate,
                   ReplicaId,
                   Bottom[V]
-    )(k: K, m: (Id, Dotted[V]) => Dotted[V]): C = {
+    )(k: K, m: (Uid, Dotted[V]) => Dotted[V]): C = {
       val v = current.inner.getOrElse(k, Bottom[V].empty)
 
       m(replicaId, context.wrap(v)) match {

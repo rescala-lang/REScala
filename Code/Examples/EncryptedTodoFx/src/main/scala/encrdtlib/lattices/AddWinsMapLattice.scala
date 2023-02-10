@@ -1,6 +1,6 @@
 package encrdtlib.lattices
 
-import kofre.base.{DecomposeLattice, Id, Lattice}
+import kofre.base.{DecomposeLattice, Uid, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.time.Dots
@@ -11,7 +11,7 @@ case class AddWinsMapLattice[K, V](
 ) {
   def values: Map[K, V] = mappings
 
-  def added(key: K, value: V, replicaId: Id): AddWinsMapLattice[K, V] = {
+  def added(key: K, value: V, replicaId: Uid): AddWinsMapLattice[K, V] = {
     val newKeys = keys merge keys.add(using replicaId)(key)
     val newMap  = mappings + (key -> value)
     AddWinsMapLattice(newKeys, newMap)

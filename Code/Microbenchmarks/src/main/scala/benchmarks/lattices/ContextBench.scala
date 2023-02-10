@@ -5,7 +5,7 @@ import kofre.time.{Dots, Dot}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import kofre.base.Lattice
-import kofre.base.Id
+import kofre.base.Uid
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -26,7 +26,7 @@ class ContextBench {
   val rep2id               = Id.gen()
   var rep1single: Dots     = _
 
-  private def makeRep(rep: Id, mul: Long, off: Long, len: Long): Dots = {
+  private def makeRep(rep: Uid, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))
     Dots.from(ranges.flatten.iterator.map(Dot(rep, _)).toSet)
   }

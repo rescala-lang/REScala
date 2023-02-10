@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets
 import java.util.{Base64, Objects}
 import scala.concurrent.{Await, Future}
 import kofre.base.{Bottom, DecomposeLattice, Lattice}
-import kofre.base.Id
+import kofre.base.Uid
 import kofre.syntax.*
 import kofre.datatypes.PosNegCounter
 
@@ -21,7 +21,7 @@ import java.net.http.{HttpClient, HttpRequest, WebSocket}
 import java.net.http.HttpClient.{Redirect, Version}
 import java.net.http.HttpResponse.BodyHandlers
 import java.time.Duration
-import de.rmgk.delay.{extensions, *}
+import de.rmgk.delay.*
 
 import java.net.http.WebSocket.Listener
 import java.nio.ByteBuffer
@@ -64,7 +64,7 @@ given JsonValueCodec[WsSendData] = JsonCodecMaker.make
 import replication.JsoniterCodecs.given
 given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
-class Replica[S: Lattice: JsonValueCodec](val id: Id, dtnNodeId: String, val service: String, @volatile var data: S) {
+class Replica[S: Lattice: JsonValueCodec](val id: Uid, dtnNodeId: String, val service: String, @volatile var data: S) {
 
   val connections: AtomicReference[List[WebSocket]] = {
     val ar = new AtomicReference[List[WebSocket]]
@@ -160,7 +160,7 @@ def run(): Unit =
     val nodeId = sget(URI.create(s"$api/status/nodeid")).bind
     sget(URI.create(s"$api/register?$service")).bind
 
-    val replica = Replica(Id.gen(), nodeId, service, PosNegCounter.zero)
+    val replica = Replica(Uid.gen(), nodeId, service, PosNegCounter.zero)
     given ReplicaId = replica.id
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind

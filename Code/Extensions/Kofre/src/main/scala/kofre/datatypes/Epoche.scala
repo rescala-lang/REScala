@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Lattice, Id, Time}
+import kofre.base.{Bottom, Lattice, Uid, Time}
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, OpsTypes, PermMutate, PermQuery}
 

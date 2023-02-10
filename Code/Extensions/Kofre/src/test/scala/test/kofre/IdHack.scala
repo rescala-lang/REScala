@@ -1,9 +1,9 @@
 package test.kofre
 
 import munit.Compare
-import kofre.base.Id
+import kofre.base.Uid
 
-implicit def idFromString(s: String): kofre.base.Id = kofre.base.Id.predefined(s)
+implicit def idFromString(s: String): kofre.base.Uid = kofre.base.Uid.predefined(s)
 
-given munit.Compare[kofre.base.Id, String] = new Compare[Id, String]:
-  override def isEqual(obtained: Id, expected: String): Boolean = Id.unwrap(obtained) == expected
+given munit.Compare[kofre.base.Uid, String] = new Compare[Uid, String]:
+  override def isEqual(obtained: Uid, expected: String): Boolean = Id.unwrap(obtained) == expected

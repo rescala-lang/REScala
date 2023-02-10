@@ -1,7 +1,7 @@
 package kofre.datatypes.experiments
 
 import kofre.base.Lattice.merge
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.time.VectorClock
 
 import scala.collection.immutable.HashMap
@@ -22,7 +22,7 @@ given encrdtLattice[S]: Lattice[EnCRDT[S]] with
 
 extension [S](c: EnCRDT[S])
   def version: VectorClock = c.map(_.metadata).reduceOption(Lattice.merge[VectorClock]).getOrElse(VectorClock.zero)
-  def send(data: S, key: Secret, replicaID: Id): EnCRDT[S] =
+  def send(data: S, key: Secret, replicaID: Uid): EnCRDT[S] =
     val causality = c.version.inc(replicaID)
     Set(encrypt(data, causality, key))
 

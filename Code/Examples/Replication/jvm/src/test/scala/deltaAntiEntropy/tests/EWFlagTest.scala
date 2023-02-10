@@ -22,7 +22,7 @@ object EWFlagGenerators {
 
     ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
       case (f, 0) => f.disable()
-      case (f, 1) => f.enable(using kofre.base.Id.predefined(ae.replicaID))()
+      case (f, 1) => f.enable(using kofre.base.Uid.predefined(ae.replicaID))()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
       case (f, _) => f
     }

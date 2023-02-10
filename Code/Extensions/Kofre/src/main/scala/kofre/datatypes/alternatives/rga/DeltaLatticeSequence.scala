@@ -1,9 +1,9 @@
 package kofre.datatypes.alternatives.rga
 
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 
 import scala.collection.{AbstractIterator, immutable}
@@ -53,14 +53,14 @@ object DeltaSequence {
       }
     }
 
-    def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A)(using PermCausalMutate): C = {
+    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using PermCausalMutate): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
       val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues)).mutator
     }
 
-    def prependDelta(replica: Id, value: A)(using PermCausalMutate): C =
+    def prependDelta(replica: Uid, value: A)(using PermCausalMutate): C =
       addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
 
     def removeDelta(v: Vertex)(using PermCausalMutate): C =

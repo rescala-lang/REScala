@@ -1,14 +1,14 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Lattice, Id}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
-case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
+case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Uid])
 
 object BoundedCounter {
-  def init(value: Int, replicaID: Id): BoundedCounter =
-    val countervalue = PosNegCounter.zero.add(using Id.predefined("initial-allocation"))(-value)
+  def init(value: Int, replicaID: Uid): BoundedCounter =
+    val countervalue = PosNegCounter.zero.add(using Uid.predefined("initial-allocation"))(-value)
     val initial      = PosNegCounter.zero.add(using replicaID)(value)
     BoundedCounter(countervalue merge initial, GrowOnlyCounter.zero, Set(replicaID))
 
@@ -22,13 +22,13 @@ object BoundedCounter {
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, BoundedCounter](container) {
 
-    def addParticipants(part: Set[Id])(using PermIdMutate): C = neutral.copy(participants = part).mutator
+    def addParticipants(part: Set[Uid])(using PermIdMutate): C = neutral.copy(participants = part).mutator
 
-    def allocated(using PermQuery)(id: Id): Int = current.allocations.inner.getOrElse(id, 0)
+    def allocated(using PermQuery)(id: Uid): Int = current.allocations.inner.getOrElse(id, 0)
     def reserved(using ReplicaId, PermQuery): Int  = reserved(replicaId)
-    def reserved(using PermQuery)(id: Id): Int =
+    def reserved(using PermQuery)(id: Uid): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
-    def available(using PermQuery)(id: Id): Int = reserved(id) - allocated(id)
+    def available(using PermQuery)(id: Uid): Int = reserved(id) - allocated(id)
     def available(using ReplicaId, PermQuery): Int = available(replicaId)
 
     def allocate(value: Int): IdMut[C] = {
@@ -36,7 +36,7 @@ object BoundedCounter {
       else neutral.copy(allocations = current.allocations.add(value))
     }.mutator
 
-    def transfer(amount: Int, target: Id): IdMut[C] = {
+    def transfer(amount: Int, target: Uid): IdMut[C] = {
       if amount > available(replicaId) then neutral
       else
         neutral.copy(reservations =
@@ -58,8 +58,8 @@ object BoundedCounter {
     def invariantOk(using PermQuery): Unit =
       assert(current.reservations.value == 0, s"incorrect reservations: ${current.reservations.value}")
       assert(
-        current.allocations.value <= current.reservations.neg.inner(Id.predefined("initial-allocation")),
-        s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner(Id.predefined("initial-allocation"))}"
+        current.allocations.value <= current.reservations.neg.inner(Uid.predefined("initial-allocation")),
+        s"allocation sum ${current.allocations.value} larger than initial reservations ${current.reservations.neg.inner(Uid.predefined("initial-allocation"))}"
       )
   }
 

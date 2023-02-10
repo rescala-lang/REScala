@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 import java.util.concurrent.TimeUnit
 

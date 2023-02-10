@@ -10,7 +10,7 @@ import rescala.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.{*, given}
 import scalatags.JsDom.tags2.{article, aside, nav, section}
-import kofre.base.Id
+import kofre.base.Uid
 import loci.transmitter.RemoteRef
 import replication.fbdc.{FbdcExampleData, Req}
 
@@ -48,7 +48,7 @@ object HTML {
       section(table(
         thead(th("remote ref"), th("connection"), th("request"), th("dots")),
         tr(
-          td(Id.unwrap(dataManager.replicaId)),
+          td(Uid.unwrap(dataManager.replicaId)),
           td(),
           td(),
           table(
@@ -82,8 +82,8 @@ object HTML {
   }
 
   def dotsToRows(dots: kofre.time.Dots) =
-    dots.internal.toList.sortBy(t => Id.unwrap(t._1)).map { (k, v) =>
-      tr(td(Id.unwrap(k)), td(v.toString))
+    dots.internal.toList.sortBy(t => Uid.unwrap(t._1)).map { (k, v) =>
+      tr(td(Uid.unwrap(k)), td(v.toString))
     }.toSeq
 
   def providers(exdat: FbdcExampleData) = {
@@ -92,7 +92,7 @@ object HTML {
       exdat.providers.map { prov =>
         prov.observeRemoveMap.entries.map { (id, provided) =>
           section(
-            header(h2("Executor:", Id.unwrap(id))),
+            header(h2("Executor:", Uid.unwrap(id))),
             provided.elements.iterator.map {
               case "fortune" => fortuneBox(exdat, id)
               case other     => northwindBox(exdat, id)
@@ -104,7 +104,7 @@ object HTML {
 
   }
 
-  def fortuneBox(exdat: FbdcExampleData, id: Id) = aside(
+  def fortuneBox(exdat: FbdcExampleData, id: Uid) = aside(
     button(
       "get fortune",
       onclick := leftClickHandler {
@@ -118,7 +118,7 @@ object HTML {
     exdat.latestFortune.map(f => p(f.map(_.result).getOrElse(""))).asModifier
   )
 
-  def northwindBox(exdat: FbdcExampleData, id: Id) =
+  def northwindBox(exdat: FbdcExampleData, id: Uid) =
     val ip = input().render
 
     aside(

@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.ReplicatedList
 import org.openjdk.jmh.annotations.*
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 import java.util.concurrent.TimeUnit
 

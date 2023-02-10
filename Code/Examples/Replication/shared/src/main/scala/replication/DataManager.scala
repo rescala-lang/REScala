@@ -2,7 +2,7 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.Dots
@@ -28,8 +28,8 @@ class Key[T](name: String)(using lat: DottedLattice[T], hado: HasDots[T])
 case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
-    val replicaId: Id,
-    val registry: Registry
+                                                                          val replicaId: Uid,
+                                                                          val registry: Registry
 ) {
 
   given ReplicaId = replicaId

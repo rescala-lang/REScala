@@ -2,14 +2,14 @@ package todo
 
 import loci.registry.Registry
 import org.scalajs.dom.{document, window}
-import kofre.base.Id
+import kofre.base.Uid
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
 
-  val replicaId: Id = Id.gen()
+  val replicaId: Uid = Id.gen()
 
   val registry = new Registry
 

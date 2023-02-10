@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.time.{Dot, Dots}
 
 import scala.compiletime.summonAll

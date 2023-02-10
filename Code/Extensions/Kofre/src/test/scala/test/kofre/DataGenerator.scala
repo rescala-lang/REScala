@@ -10,10 +10,10 @@ import kofre.datatypes.alternatives.ObserveRemoveSet
 
 object DataGenerator {
 
-  given arbId: Arbitrary[Id] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
+  given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
-    ids: Set[Id]      <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
+    ids: Set[Uid]      <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
@@ -25,7 +25,7 @@ object DataGenerator {
   )
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
-    Gen.mapOf[Id, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
+    Gen.mapOf[Uid, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
   )
 
   given arbPosNeg: Arbitrary[PosNegCounter] = Arbitrary(

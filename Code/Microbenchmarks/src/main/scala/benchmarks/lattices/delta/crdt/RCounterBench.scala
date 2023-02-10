@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import kofre.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
 import kofre.dotted.Dotted
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 import kofre.syntax.ReplicaId
 import java.util.concurrent.TimeUnit
 

@@ -5,7 +5,7 @@ import replication.calendar.{CalendarOptions, Peer}
 import replication.checkpointing.CheckpointingOptions
 import replication.checkpointing.central.{CentralOptions, Checkpointer}
 import replication.checkpointing.decentral.{DecentralOptions, Replica}
-import kofre.base.Id
+import kofre.base.Uid
 import replication.fbdc.FbdcCli
 
 import java.nio.file.Path
@@ -43,7 +43,7 @@ object cli {
           case ipAndPort(ip, port) => (ip, port.toInt)
         }
 
-        new Peer(Id.predefined(calArgs.id.value), calArgs.listenPort.value, ipsAndPorts).run()
+        new Peer(Uid.predefined(calArgs.id.value), calArgs.listenPort.value, ipsAndPorts).run()
 
     instance.checkpointing.value.flatMap(_.decentral.value) match
       case None =>
@@ -55,7 +55,7 @@ object cli {
         new Replica(
           decArgs.listenPort.value,
           ipsAndPorts,
-          Id.predefined(decArgs.id.value),
+          Uid.predefined(decArgs.id.value),
           decArgs.initSize.value
         ).run()
 
@@ -70,7 +70,7 @@ object cli {
             }
 
             new replication.checkpointing.central.Peer(
-              Id.predefined(centralPeerArgs.id.value),
+              Uid.predefined(centralPeerArgs.id.value),
               centralPeerArgs.listenPort.value,
               ipsAndPorts
             ).run()

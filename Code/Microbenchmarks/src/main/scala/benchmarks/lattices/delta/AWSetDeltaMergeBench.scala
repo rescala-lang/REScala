@@ -1,13 +1,13 @@
 package benchmarks.lattices.delta
 
-import kofre.base.{Lattice, Id}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.time.{Dot, Dots}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -27,7 +27,7 @@ class AWSetDeltaMergeBench {
   var plusOneState: Dotted[AddWinsSet[Long]]      = _
   var plusOneDeltaState: Dotted[AddWinsSet[Long]] = _
 
-  def makeCContext(replicaID: Id): Dots = {
+  def makeCContext(replicaID: Uid): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet
     Dots.from(dots)
   }

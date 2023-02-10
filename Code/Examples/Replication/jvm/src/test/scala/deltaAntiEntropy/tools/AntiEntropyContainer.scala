@@ -4,8 +4,8 @@ import kofre.base.DecomposeLattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{PermCausal, PermCausalMutate, PermMutate}
 import kofre.time.Dots
-import kofre.base.Id
-import kofre.base.Id.asId
+import kofre.base.Uid
+import kofre.base.Uid.asId
 
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
@@ -17,7 +17,7 @@ import kofre.base.Id.asId
 class AntiEntropyContainer[State](
     protected val antiEntropy: AntiEntropy[State]
 ) {
-  val replicaID: Id = antiEntropy.replicaID.asId
+  val replicaID: Uid = antiEntropy.replicaID.asId
 
   def state: Dotted[State] = antiEntropy.state
 

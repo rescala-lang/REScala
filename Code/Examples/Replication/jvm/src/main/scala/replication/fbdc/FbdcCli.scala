@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.{Argument, Style}
 import de.rmgk.script.extensions
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.{AddWinsSet, CausalQueue, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}

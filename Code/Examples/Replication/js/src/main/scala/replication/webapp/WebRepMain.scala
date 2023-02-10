@@ -2,7 +2,7 @@ package replication.webapp
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.DottedLattice
 import loci.registry.Registry

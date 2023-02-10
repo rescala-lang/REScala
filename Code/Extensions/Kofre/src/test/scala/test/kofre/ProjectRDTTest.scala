@@ -61,7 +61,7 @@ object Project {
 
 class ProjectRDTTest extends munit.FunSuite {
 
-  given fixedId: ReplicaId = kofre.base.Id.predefined("replica id")
+  given fixedId: ReplicaId = kofre.base.Uid.predefined("replica id")
 
   test("basic interaction") {
 

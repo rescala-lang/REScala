@@ -2,14 +2,14 @@ package todo
 
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.Dotted
-import kofre.base.Id
+import kofre.base.Uid
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import rescala.default.*
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
 
-class TaskOps(taskRefs: TaskReferences, replicaID: Id) {
+class TaskOps(taskRefs: TaskReferences, replicaID: Uid) {
 
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 

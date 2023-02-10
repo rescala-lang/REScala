@@ -1,25 +1,25 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.*
 import kofre.time.Dots
 
 type DeltaBufferDotted[State] = NamedDeltaBuffer[Dotted[State]]
 
-case class Named[T](replicaId: Id, anon: T)
+case class Named[T](replicaId: Uid, anon: T)
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
 case class NamedDeltaBuffer[State](
-    replicaID: Id,
-    state: State,
-    deltaBuffer: List[Named[State]] = Nil
+                                    replicaID: Uid,
+                                    state: State,
+                                    deltaBuffer: List[Named[State]] = Nil
 ) {
 
-  def applyDelta(source: Id, delta: State)(using Lattice[State]): NamedDeltaBuffer[State] =
+  def applyDelta(source: Uid, delta: State)(using Lattice[State]): NamedDeltaBuffer[State] =
     Lattice[State].diff(state, delta) match {
       case Some(stateDiff) =>
         val stateMerged = Lattice[State].merge(state, stateDiff)
@@ -32,7 +32,7 @@ case class NamedDeltaBuffer[State](
 
 object NamedDeltaBuffer {
 
-  def dotted[State](replicaID: Id, init: State): NamedDeltaBuffer[Dotted[State]] =
+  def dotted[State](replicaID: Uid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())
 
   given dottedPermissions[L: DottedLattice]: PermCausalMutate[NamedDeltaBuffer[Dotted[L]], L] = new {

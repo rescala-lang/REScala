@@ -3,7 +3,7 @@ package replication.calendar
 import kofre.datatypes.AddWinsSet
 import rescala.default.*
 import kofre.datatypes.AddWinsSet.syntax
-import kofre.base.{Bottom, Id}
+import kofre.base.{Bottom, Uid}
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 
@@ -13,7 +13,7 @@ given intMaxBottom: Bottom[Int] with {
   def empty = Int.MinValue
 }
 
-class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit) {
+class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit) {
 
   given ReplicaId = id
 

@@ -1,6 +1,6 @@
 package encrdtlib.lattices
 
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.time.{Dot, Dots}
 
@@ -8,9 +8,9 @@ object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = Dotted[DotFun[V]]
 
   def deltaWrite[V](
-      value: V,
-      replicaId: Id,
-      register: DeltaMultiValueRegisterLattice[V]
+                     value: V,
+                     replicaId: Uid,
+                     register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 
     val dot = register.context.clockOf(replicaId).get.advance

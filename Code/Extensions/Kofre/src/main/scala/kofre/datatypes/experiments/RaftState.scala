@@ -1,21 +1,21 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Id, Lattice}
+import kofre.base.{Uid, Lattice}
 import kofre.datatypes.experiments.RaftState.*
 
 import scala.util.Try
 
 case class RaftState[T](
-    participants: Set[Id] = Set.empty,
-    leaderVotes: Set[Vote] = Set.empty,
-    valueProposals: Set[Propose[T]] = Set.empty[Propose[T]]
+                         participants: Set[Uid] = Set.empty,
+                         leaderVotes: Set[Vote] = Set.empty,
+                         valueProposals: Set[Propose[T]] = Set.empty[Propose[T]]
 ) {
   val consensusSize: Int = (participants.size + 2) / 2
 
   val (
     currentTerm: Int,
     maxTerm: Int,
-    leader: Id
+    leader: Uid
   ) = {
     val grouped = leaderVotes.groupBy(v => (v.term, v.leader))
     val (cterm, cleader) = Try {
@@ -24,7 +24,7 @@ case class RaftState[T](
         .filter(_._2 >= consensusSize)
         .map(_._1)
         .max
-    }.getOrElse((0, Id.zero))
+    }.getOrElse((0, Uid.zero))
 
     val mterm = Try {
       grouped.iterator
@@ -38,32 +38,32 @@ case class RaftState[T](
 
   def compress: RaftState[T] = copy(leaderVotes = leaderVotes.filter(_.term >= currentTerm))
 
-  def supportProposalDelta(me: Id): RaftState[T] = {
+  def supportProposalDelta(me: Uid): RaftState[T] = {
     val voted = valueProposals
       .filter(proposal => proposal.term == currentTerm && proposal.voter == leader)
       .map(proposal => proposal.copy(voter = me))
     RaftState[T](valueProposals = voted)
   }
 
-  def supportProposal(me: Id): RaftState[T] = Lattice.merge(this, supportProposalDelta(me))
+  def supportProposal(me: Uid): RaftState[T] = Lattice.merge(this, supportProposalDelta(me))
 
-  def proposeDelta(me: Id, value: T): RaftState[T] = {
+  def proposeDelta(me: Uid, value: T): RaftState[T] = {
     if (me != leader) RaftState[T]()
     else {
       RaftState[T](valueProposals = Set(Propose(currentTerm, me, nextProposal, value)))
     }
   }
 
-  def propose(me: Id, value: T): RaftState[T] =
+  def propose(me: Uid, value: T): RaftState[T] =
     Lattice.merge(this, proposeDelta(me, value))
 
-  def becomeCandidateDelta(me: Id): RaftState[T] =
+  def becomeCandidateDelta(me: Uid): RaftState[T] =
     RaftState[T](leaderVotes = Set(Vote(maxTerm + 1, me, me)))
 
-  def becomeCandidate(me: Id): RaftState[T] =
+  def becomeCandidate(me: Uid): RaftState[T] =
     Lattice.merge(this, becomeCandidateDelta(me))
 
-  def supportLeaderDelta(me: Id): RaftState[T] = {
+  def supportLeaderDelta(me: Uid): RaftState[T] = {
     val votes = leaderVotes.filter(candidate => candidate.term == maxTerm)
     if (votes.exists(_.voter == me)) RaftState[T]()
     else {
@@ -75,7 +75,7 @@ case class RaftState[T](
     }
   }
 
-  def supportLeader(me: Id): RaftState[T] =
+  def supportLeader(me: Uid): RaftState[T] =
     Lattice.merge(this, supportLeaderDelta(me))
 
   lazy val byRound: IndexedSeq[Set[Propose[T]]] = {
@@ -118,8 +118,8 @@ object RaftState {
   private val DecisionImpossible = Some(None)
   private val Undecided          = None
 
-  case class Vote(term: Int, leader: Id, voter: Id)
-  case class Propose[T](term: Int, voter: Id, pos: Int, value: T)
+  case class Vote(term: Int, leader: Uid, voter: Uid)
+  case class Propose[T](term: Int, voter: Uid, pos: Int, value: T)
 
   implicit def raftLatticeInstance[T]: Lattice[RaftState[T]] =
     new Lattice[RaftState[T]] {

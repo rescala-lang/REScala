@@ -2,7 +2,7 @@ package replication.calendar
 
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import kofre.base.{DecomposeLattice, Id}
+import kofre.base.{DecomposeLattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.dotted.{DottedDecompose, Dotted}
@@ -16,7 +16,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
-class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
+class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 

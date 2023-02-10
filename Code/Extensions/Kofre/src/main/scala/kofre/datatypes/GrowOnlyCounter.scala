@@ -1,11 +1,11 @@
 package kofre.datatypes
 
 import kofre.base.Lattice.*
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, PermQuery}
 
-case class GrowOnlyCounter(inner: Map[Id, Int]) derives Bottom
+case class GrowOnlyCounter(inner: Map[Uid, Int]) derives Bottom
 
 /** A GCounter is a Delta CRDT modeling an increment-only counter. */
 object GrowOnlyCounter {

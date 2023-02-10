@@ -2,8 +2,8 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Id
-import kofre.base.Id.asId
+import kofre.base.Uid
+import kofre.base.Uid.asId
 import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.datatypes.{CausalLastWriterWins, ReplicatedList}
 import kofre.dotted.{DotFun, Dotted}
@@ -25,10 +25,10 @@ object Codecs {
     }
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
-  implicit val idCodec: JsonValueCodec[Id] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Id] = new JsonKeyCodec[Id]:
-    override def decodeKey(in: JsonReader): Id           = Id.predefined(in.readKeyAsString())
-    override def encodeKey(x: Id, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
+  implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
+  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+    override def decodeKey(in: JsonReader): Uid           = Id.predefined(in.readKeyAsString())
+    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
 
   @nowarn()
   implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =

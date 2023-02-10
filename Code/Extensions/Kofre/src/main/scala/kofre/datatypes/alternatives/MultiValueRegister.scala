@@ -1,7 +1,7 @@
 package kofre.datatypes.alternatives
 
 import kofre.base.Lattice.{Operators, derived}
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.time.VectorClock
 
 import scala.annotation.tailrec
@@ -15,7 +15,7 @@ case class MultiValueRegister[T](versions: Map[VectorClock, T]) {
 
   def values: Iterable[T] = versions.values
 
-  def write(replica: Id, value: T): MultiValueRegister[T] = {
+  def write(replica: Uid, value: T): MultiValueRegister[T] = {
     val timeOfUpdate = currentTime merge currentTime.inc(replica)
     MultiValueRegister(Map(timeOfUpdate -> value))
   }

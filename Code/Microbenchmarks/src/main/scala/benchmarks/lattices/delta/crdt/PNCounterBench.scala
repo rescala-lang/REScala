@@ -4,7 +4,7 @@ import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.PosNegCounter
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -26,7 +26,7 @@ class PNCounterBench {
   def setup(): Unit = {
     counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", PosNegCounter.zero).inc()(using "0".asId)) {
       case (c, n) =>
-        given rid: kofre.syntax.ReplicaId = kofre.base.Id.predefined(n.toString)
+        given rid: kofre.syntax.ReplicaId = kofre.base.Uid.predefined(n.toString)
         val delta = PosNegCounter.zero.inc()
         c.applyDelta(rid.replicaId, delta)
     }

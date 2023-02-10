@@ -3,7 +3,7 @@ package test.kofre
 import kofre.time.{Dots, Dot}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.{given, *}
-import kofre.base.Id
+import kofre.base.Uid
 
 class DotsTest extends munit.ScalaCheckSuite {
 
@@ -50,7 +50,7 @@ class DotsTest extends munit.ScalaCheckSuite {
   }
 
   property("max") {
-    forAll { (cc: Dots, randId: Id) =>
+    forAll { (cc: Dots, randId: Uid) =>
       val asSet = cc.toSet
       val ids   = asSet.map(_.replicaId) + randId
 
@@ -80,7 +80,7 @@ class DotsTest extends munit.ScalaCheckSuite {
   }
 
   property("nextDot") {
-    forAll { (cc: Dots, randId: Id) =>
+    forAll { (cc: Dots, randId: Uid) =>
       val asSet = (cc.toSet)
       val ids   = asSet.map(_.replicaId) + randId
 

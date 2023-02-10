@@ -1,6 +1,6 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
@@ -20,15 +20,15 @@ import kofre.syntax.OpsSyntaxHelper
 object RubisInterface {
   type AID = String
 
-  type State = (AddWinsSet[(User, Id)], Map[User, Id], Map[AID, AuctionInterface.AuctionData])
+  type State = (AddWinsSet[(User, Uid)], Map[User, Uid], Map[AID, AuctionInterface.AuctionData])
 
   private class DeltaStateFactory {
     val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-        userRequests: AddWinsSet[(User, Id)] = bottom._1,
-        users: Map[User, Id] = bottom._2,
-        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
+              userRequests: AddWinsSet[(User, Uid)] = bottom._1,
+              users: Map[User, Uid] = bottom._2,
+              auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 
@@ -75,7 +75,7 @@ object RubisInterface {
 
     def resolveRegisterUser()(using PermIdMutate, PermCausal): C = {
       val (req, users, _) = current
-      val newUsers = req.elements.foldLeft(Map.empty[User, Id]) {
+      val newUsers = req.elements.foldLeft(Map.empty[User, Uid]) {
         case (newlyRegistered, (uid, rid)) =>
           if ((users ++ newlyRegistered).contains(uid))
             newlyRegistered

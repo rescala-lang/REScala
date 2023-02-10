@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper

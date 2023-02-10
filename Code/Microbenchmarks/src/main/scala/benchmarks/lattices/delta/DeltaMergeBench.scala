@@ -5,7 +5,7 @@ import kofre.time.{Dots, Dot}
 import kofre.dotted.{DottedDecompose, Dotted}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
-import kofre.base.Id.asId
+import kofre.base.Uid.asId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

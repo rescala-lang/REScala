@@ -1,5 +1,5 @@
 package benchmarks.encrdt
 
-import kofre.base.Id
+import kofre.base.Uid
 
-implicit def idFromString(s: String): kofre.base.Id = kofre.base.Id.predefined(s)
+implicit def idFromString(s: String): kofre.base.Uid = kofre.base.Uid.predefined(s)

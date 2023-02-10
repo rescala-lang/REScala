@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, Id, Lattice}
+import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}

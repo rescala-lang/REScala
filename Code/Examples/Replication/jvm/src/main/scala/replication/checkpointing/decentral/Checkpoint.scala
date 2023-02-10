@@ -1,4 +1,4 @@
 package replication.checkpointing.decentral
-import kofre.base.Id
+import kofre.base.Uid
 
-case class Checkpoint(replicaID: Id, counter: Int)
+case class Checkpoint(replicaID: Uid, counter: Int)
