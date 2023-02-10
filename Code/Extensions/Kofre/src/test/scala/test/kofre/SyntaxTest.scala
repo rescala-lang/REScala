@@ -9,15 +9,18 @@ import kofre.dotted.{Dotted, HasDots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
 import kofre.syntax.Named
+import kofre.syntax.ReplicaId
+import kofre.base.Id.asId
 
 class SyntaxTest extends munit.FunSuite {
 
   test("Manual Tests") {
 
-    val flag: Named[Dotted[EnableWinsFlag]] = Named.empty("me")
+    val flag: Dotted[EnableWinsFlag] = Dotted.empty
+    given ReplicaId = "me".asId
 
     assert(!flag.read)
-    val enabled = flag.enable(using flag.replicaId)()
+    val enabled = flag.enable()
     assert(enabled.read)
     val disabled = enabled.disable()
     assert(!disabled.read)
