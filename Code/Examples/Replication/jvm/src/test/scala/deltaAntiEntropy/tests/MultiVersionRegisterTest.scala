@@ -73,7 +73,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
       val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(using aea.uid)(vA)
-      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(using aea.uid)(vB)
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(using aeb.uid)(vB)
 
       AntiEntropy.sync(aea, aeb)
 

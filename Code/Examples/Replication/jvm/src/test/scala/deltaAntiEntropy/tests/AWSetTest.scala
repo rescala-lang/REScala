@@ -112,7 +112,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       )
 
       val seta3 = seta2.add(using seta2.replicaID)(e1)
-      val setb3 = setb2.add(using seta2.replicaID)(e2)
+      val setb3 = setb2.add(using setb2.replicaID)(e2)
 
       AntiEntropy.sync(aea, aeb)
 
