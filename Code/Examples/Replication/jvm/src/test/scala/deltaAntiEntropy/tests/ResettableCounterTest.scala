@@ -20,10 +20,10 @@ object RCounterGenerators {
     val ae      = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer())
 
     ops.foldLeft(AntiEntropyContainer[ResettableCounter](ae)) {
-      case (c, 0) => c.increment()
-      case (c, 1) => c.decrement()
+      case (c, 0) => c.increment(using c.replicaID)()
+      case (c, 1) => c.decrement(using c.replicaID)()
       case (c, 2) => c.reset()
-      case (c, 3) => c.fresh()
+      case (c, 3) => c.fresh(using c.replicaID)()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
       case (c, _) => c
     }
@@ -38,7 +38,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   property("increment") {
     forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig        = counter.value
-      val incremented = counter.increment()
+      val incremented = counter.increment(using counter.replicaID)()
 
       assert(
         incremented.value == orig + 1,
@@ -50,7 +50,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   property("decrement") {
     forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig        = counter.value
-      val decremented = counter.decrement()
+      val decremented = counter.decrement(using counter.replicaID)()
 
       assert(
         decremented.value == orig - 1,
@@ -62,7 +62,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
   property("fresh") {
     forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>
       val orig  = counter.value
-      val fresh = counter.fresh()
+      val fresh = counter.fresh(using counter.replicaID)()
 
       assert(
         fresh.value == orig,
@@ -88,9 +88,9 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val aes = new AntiEntropy[ResettableCounter]("s", network, mutable.Buffer("s"))
 
       def processOpInto(op: Either[Unit, Boolean], into: AntiEntropy[ResettableCounter]) = op match {
-        case Left(_)      => AntiEntropyContainer[ResettableCounter](into).increment()
-        case Right(false) => AntiEntropyContainer[ResettableCounter](into).decrement()
-        case Right(true)  => AntiEntropyContainer[ResettableCounter](into).fresh()
+        case Left(_)      => AntiEntropyContainer[ResettableCounter](into).increment(using into.uid)()
+        case Right(false) => AntiEntropyContainer[ResettableCounter](into).decrement(using into.uid)()
+        case Right(true)  => AntiEntropyContainer[ResettableCounter](into).fresh(using into.uid)()
       }
 
       val ca0 = processOpInto(opA, aea)
@@ -122,11 +122,11 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment()
+    val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment(using aea.uid)()
     AntiEntropy.sync(aea, aeb)
     val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 
-    val ca1 = ca0.increment()
+    val ca1 = ca0.increment(using ca0.replicaID)()
     val cb1 = cb0.reset()
 
     AntiEntropy.sync(aea, aeb)
@@ -154,16 +154,18 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val aeb        = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
       val sequential = AntiEntropyContainer(new AntiEntropy[ResettableCounter]("c", network, mutable.Buffer("c")))
 
-      val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment()
+      val ca0 = AntiEntropyContainer[ResettableCounter](aea).increment(using aea.uid)()
       AntiEntropy.sync(aea, aeb)
       val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 
-      sequential.increment()
+      sequential.increment(using sequential.replicaID)()
 
       assertEquals(ca0.value, sequential.value, s"${ca0.state} ${sequential.state}")
       assertEquals(ca0.value, cb0.value, s"${ca0.state}\n${cb0.state}")
 
-      val ca1 = if (op) ca0.fresh().increment() else ca0.fresh().decrement()
+      val ca1 =
+        given kofre.syntax.ReplicaId = ca0.replicaID
+        if (op) ca0.fresh().increment() else ca0.fresh().decrement()
       val cb1 = cb0.reset()
 
       AntiEntropy.sync(aea, aeb)
@@ -172,7 +174,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val cb2 = cb1.processReceivedDeltas()
 
       sequential.reset()
-      if (op) sequential.increment() else sequential.decrement()
+      if (op) sequential.increment(using sequential.replicaID)() else sequential.decrement(using sequential.replicaID)()
 
       assertEquals(
         ca2.value,
@@ -224,10 +226,10 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
               ops: List[Int]
           ): AntiEntropyContainer[ResettableCounter] = {
             ops.foldLeft(counter) {
-              case (c, 0) => c.increment()
-              case (c, 1) => c.decrement()
+              case (c, 0) => c.increment(using c.replicaID)()
+              case (c, 1) => c.decrement(using c.replicaID)()
               case (c, 2) => c.reset()
-              case (c, 3) => c.fresh()
+              case (c, 3) => c.fresh(using c.replicaID)()
               // default case is only needed to stop the compiler from complaining about non-exhaustive match
               case (c, _) => c
             }

@@ -5,7 +5,7 @@ import rescala.default.*
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.base.{Bottom, Id}
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, FixedId, PermId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
 
 case class Appointment(start: Int, end: Int)
 
@@ -15,7 +15,7 @@ given intMaxBottom: Bottom[Int] with {
 
 class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  given PermId[Any] = FixedId(id)
+  given ReplicaId = id
 
   type Calendar = DeltaBuffer[Dotted[AddWinsSet[Appointment]]]
 

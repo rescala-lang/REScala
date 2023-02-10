@@ -24,9 +24,9 @@ object GrowOnlyCounter {
       extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
     def value(using PermQuery): Int = current.inner.valuesIterator.sum
 
-    def inc(using PermIdMutate)(): C =
+    def inc(): IdMut[C] =
       GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + 1))).mutator
-    def add(using PermIdMutate)(amount: Int): C =
+    def add(amount: Int): IdMut[C] =
       require(amount >= 0, "may not decrease counter")
       GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + amount))).mutator
   }

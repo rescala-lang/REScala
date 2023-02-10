@@ -143,7 +143,7 @@ object GrowOnlyList {
 
     def size(using PermQuery): Int = current.size
 
-    def insertGL(using PermIdMutate)(i: Int, e: E): C = {
+    def insertGL(i: Int, e: E): IdMut[C] = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaId)))

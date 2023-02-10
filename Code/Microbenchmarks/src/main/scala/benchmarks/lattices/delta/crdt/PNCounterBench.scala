@@ -5,6 +5,7 @@ import org.openjdk.jmh.annotations.*
 import kofre.datatypes.PosNegCounter
 import kofre.dotted.{Dotted, DottedDecompose}
 import kofre.syntax.Named
+import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -24,10 +25,11 @@ class PNCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", PosNegCounter.zero).inc()) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", PosNegCounter.zero).inc()(using "0".asId)) {
       case (c, n) =>
-        val delta = Named(kofre.base.Id.predefined(n.toString), PosNegCounter.zero).inc()
-        c.applyDelta(delta.replicaId, delta.anon)
+        given rid: kofre.syntax.ReplicaId = kofre.base.Id.predefined(n.toString)
+        val delta = PosNegCounter.zero.inc()
+        c.applyDelta(rid.replicaId, delta)
     }
   }
 
@@ -35,8 +37,8 @@ class PNCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): NamedDeltaBuffer[PosNegCounter] = counter.inc()
+  def inc(): NamedDeltaBuffer[PosNegCounter] = counter.inc()(using counter.replicaID)
 
   @Benchmark
-  def dec(): NamedDeltaBuffer[PosNegCounter] = counter.dec()
+  def dec(): NamedDeltaBuffer[PosNegCounter] = counter.dec()(using counter.replicaID)
 }

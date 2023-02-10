@@ -18,11 +18,11 @@ object RGAGenerators {
       ae: AntiEntropy[ReplicatedList[E]]
   ): AntiEntropyContainer[ReplicatedList[E]] = {
     val afterInsert = inserted.foldLeft(AntiEntropyContainer[ReplicatedList[E]](ae)) {
-      case (rga, (i, e)) => rga.insert(i, e)
+      case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
     }
 
     removed.foldLeft(afterInsert) {
-      case (rga, i) => rga.delete(i)
+      case (rga, i) => rga.delete(using rga.replicaID)(i)
     }
   }
 
@@ -68,7 +68,7 @@ class RGATest extends munit.ScalaCheckSuite {
   }
   property("insert") {
     forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], insertIdx: Int, insertValue: Int) =>
-      val inserted = rga.insert(insertIdx, insertValue)
+      val inserted = rga.insert(using rga.replicaID)(insertIdx, insertValue)
 
       assert(
         insertIdx < 0 || insertIdx > rga.size || inserted.read(insertIdx).contains(insertValue),
@@ -85,7 +85,7 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], deleteIdx: Int) =>
       val sizebefore = rga.size
       val listbefore = rga.toList
-      val deleted    = rga.delete(deleteIdx)
+      val deleted    = rga.delete(using rga.replicaID)(deleteIdx)
 
       assert(
         deleteIdx < 0 || deleteIdx >= sizebefore || deleted.size == sizebefore - 1,
@@ -102,7 +102,7 @@ class RGATest extends munit.ScalaCheckSuite {
     // TODO: this seems to generate random update indizes and ignore everything outside the RGA size?
     // Potentially many wasted executions ...
     forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], updateIdx: Int, updateValue: Int) =>
-      val updated = rga.update(updateIdx, updateValue)
+      val updated = rga.update(using rga.replicaID)(updateIdx, updateValue)
 
       assert(
         updated.size == rga.size,
@@ -135,8 +135,8 @@ class RGATest extends munit.ScalaCheckSuite {
         val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
         val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
 
-        val la1 = la0.insert(idx1, e1)
-        lb0.insert(idx2, e2)
+        val la1 = la0.insert(using la0.replicaID)(idx1, e1)
+        lb0.insert(using lb0.replicaID)(idx2, e2)
 
         AntiEntropy.sync(aea, aeb)
 
@@ -170,8 +170,8 @@ class RGATest extends munit.ScalaCheckSuite {
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
-      val la1 = la0.delete(idx)
-      val lb1 = lb0.delete(idx)
+      val la1 = la0.delete(using la0.replicaID)(idx)
+      val lb1 = lb0.delete(using lb0.replicaID)(idx)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -187,8 +187,8 @@ class RGATest extends munit.ScalaCheckSuite {
       val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
       val idx2 = if (size == 0) 0 else math.floorMod(n2, size)
 
-      val la3 = la2.delete(idx1)
-      lb2.delete(idx2)
+      val la3 = la2.delete(using la2.replicaID)(idx1)
+      lb2.delete(using lb2.replicaID)(idx2)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -196,9 +196,9 @@ class RGATest extends munit.ScalaCheckSuite {
 
       val sequential =
         if (idx1 > idx2) {
-          la2.delete(idx1).delete(idx2)
+          la2.delete(using la2.replicaID)(idx1).delete(using la2.replicaID)(idx2)
         } else {
-          la2.delete(idx2).delete(idx1)
+          la2.delete(using la2.replicaID)(idx2).delete(using la2.replicaID)(idx1)
         }
 
       assert(
@@ -223,14 +223,14 @@ class RGATest extends munit.ScalaCheckSuite {
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
-      val la1 = la0.insert(idx, e1)
-      lb0.update(idx, e2)
+      val la1 = la0.insert(using la0.replicaID)(idx, e1)
+      lb0.update(using lb0.replicaID)(idx, e2)
 
       AntiEntropy.sync(aea, aeb)
 
       val la2 = la1.processReceivedDeltas()
 
-      val sequential = la0.update(idx, e2).insert(idx, e1)
+      val sequential = la0.update(using la0.replicaID)(idx, e2).insert(using la0.replicaID)(idx, e1)
 
       assert(
         la2.toList == sequential.toList,
@@ -252,14 +252,14 @@ class RGATest extends munit.ScalaCheckSuite {
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
-      val la1 = la0.insert(idx + 1, e)
-      lb0.delete(idx)
+      val la1 = la0.insert(using la0.replicaID)(idx + 1, e)
+      lb0.delete(using lb0.replicaID)(idx)
 
       AntiEntropy.sync(aea, aeb)
 
       val la2 = la1.processReceivedDeltas()
 
-      val sequential = la0.insert(idx + 1, e).delete(idx)
+      val sequential = la0.insert(using la0.replicaID)(idx + 1, e).delete(using la0.replicaID)(idx)
 
       assert(
         la2.toList == sequential.toList,
@@ -281,8 +281,8 @@ class RGATest extends munit.ScalaCheckSuite {
 
       val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
 
-      val la1 = la0.delete(idx)
-      lb0.update(idx, e)
+      val la1 = la0.delete(using la0.replicaID)(idx)
+      lb0.update(using lb0.replicaID)(idx, e)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -317,29 +317,29 @@ class RGATest extends munit.ScalaCheckSuite {
 
           val la1 = {
             val inserted = insertedAB._1.foldLeft(la0) {
-              case (rga, (i, e)) => rga.insert(i, e)
+              case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
             }
 
             val deleted = removedAB._1.foldLeft(inserted) {
-              case (rga, i) => rga.delete(i)
+              case (rga, i) => rga.delete(using rga.replicaID)(i)
             }
 
             updatedAB._1.foldLeft(deleted) {
-              case (rga, (i, e)) => rga.update(i, e)
+              case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
             }
           }
 
           val lb1 = {
             val inserted = insertedAB._2.foldLeft(lb0) {
-              case (rga, (i, e)) => rga.insert(i, e)
+              case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
             }
 
             val deleted = removedAB._2.foldLeft(inserted) {
-              case (rga, i) => rga.delete(i)
+              case (rga, i) => rga.delete(using rga.replicaID)(i)
             }
 
             updatedAB._2.foldLeft(deleted) {
-              case (rga, (i, e)) => rga.update(i, e)
+              case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
             }
           }
 

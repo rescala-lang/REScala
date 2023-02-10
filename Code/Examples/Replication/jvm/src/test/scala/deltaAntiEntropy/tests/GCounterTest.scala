@@ -17,7 +17,7 @@ object GCounterGenerators {
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
     (0 until n).foldLeft(AntiEntropyContainer[GrowOnlyCounter](ae)) {
-      case (c, _) => c.inc()
+      case (c, _) => c.inc()(using ae.uid)
     }
   }
 
@@ -30,7 +30,7 @@ class GCounterTest extends munit.ScalaCheckSuite {
   property("inc") {
     forAll { (counter: AntiEntropyContainer[GrowOnlyCounter]) =>
       val before     = counter.value
-      val counterInc = counter.inc()
+      val counterInc = counter.inc()(using counter.replicaID)
 
       assertEquals(
         counterInc.value,
@@ -46,8 +46,8 @@ class GCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyContainer[GrowOnlyCounter](aea).inc()
-    val cb0 = AntiEntropyContainer[GrowOnlyCounter](aeb).inc()
+    val ca0 = AntiEntropyContainer[GrowOnlyCounter](aea).inc()(using aea.uid)
+    val cb0 = AntiEntropyContainer[GrowOnlyCounter](aeb).inc()(using aeb.uid)
 
     AntiEntropy.sync(aea, aeb)
 
@@ -72,10 +72,10 @@ class GCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
       val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aea)) {
-        case (c, _) => c.inc()
+        case (c, _) => c.inc()(using c.replicaID)
       }
       val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aeb)) {
-        case (c, _) => c.inc()
+        case (c, _) => c.inc()(using c.replicaID)
       }
 
       AntiEntropy.sync(aea, aeb)

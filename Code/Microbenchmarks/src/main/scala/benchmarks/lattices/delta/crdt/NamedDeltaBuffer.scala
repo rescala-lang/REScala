@@ -42,8 +42,7 @@ object NamedDeltaBuffer {
     override def context(c: NamedDeltaBuffer[Dotted[L]]): Dots = c.state.context
   }
 
-  given plainPermissions[L: Lattice: Bottom]: PermIdMutate[NamedDeltaBuffer[L], L] = new {
-    override def replicaId(c: NamedDeltaBuffer[L]): Id = c.replicaID
+  given plainPermissions[L: Lattice: Bottom]: PermMutate[NamedDeltaBuffer[L], L] = new {
     override def mutate(c: NamedDeltaBuffer[L], delta: L): NamedDeltaBuffer[L] =
       c.applyDelta(c.replicaID, delta)
     override def query(c: NamedDeltaBuffer[L]): L = c.state

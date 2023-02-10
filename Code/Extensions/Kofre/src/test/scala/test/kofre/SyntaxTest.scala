@@ -17,7 +17,7 @@ class SyntaxTest extends munit.FunSuite {
     val flag: Named[Dotted[EnableWinsFlag]] = Named.empty("me")
 
     assert(!flag.read)
-    val enabled = flag.enable()
+    val enabled = flag.enable(using flag.replicaId)()
     assert(enabled.read)
     val disabled = enabled.disable()
     assert(!disabled.read)

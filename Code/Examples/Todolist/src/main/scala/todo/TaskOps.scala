@@ -3,7 +3,7 @@ package todo
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.base.Id
-import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
 import rescala.default.*
 
 import java.util.concurrent.ThreadLocalRandom
@@ -13,7 +13,7 @@ class TaskOps(taskRefs: TaskReferences, replicaID: Id) {
 
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 
-  given PermId[Any] = FixedId(replicaID)
+  given ReplicaId = replicaID
 
   def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"

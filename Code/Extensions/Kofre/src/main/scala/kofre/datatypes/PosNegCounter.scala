@@ -26,11 +26,11 @@ object PosNegCounter {
       val neg = current.neg.growOnlyCounter.value
       pos - neg
 
-    def inc(using PermIdMutate)(): C =
+    def inc(): IdMut[C] =
       val pos = current.pos.growOnlyCounter.inc()
       PosNegCounter(pos, GrowOnlyCounter.zero).mutator
 
-    def dec(using PermIdMutate)(): C =
+    def dec(): IdMut[C] =
       val neg = current.neg.growOnlyCounter.inc()
       PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 

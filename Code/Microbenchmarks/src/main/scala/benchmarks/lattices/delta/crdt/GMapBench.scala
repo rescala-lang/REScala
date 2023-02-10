@@ -27,7 +27,7 @@ class GMapBench {
 
     map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted("a", GrowOnlyMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
-        rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable())
+        rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable(using rdc.replicaID)())
     }
   }
 
@@ -51,5 +51,5 @@ class GMapBench {
 
   @Benchmark
   def mutateMissing(): SUT =
-    map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable())
+    map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable(using map.replicaID)())
 }

@@ -4,7 +4,7 @@ import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -20,7 +20,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 
-  given PermId[Any] = FixedId(id)
+  given ReplicaId = id
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 

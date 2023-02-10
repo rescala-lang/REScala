@@ -43,6 +43,7 @@ object Northwind {
           st.close()
 
       import exampleData.dataManager
+      import dataManager.given
       exampleData.addCapability("northwind")
       exampleData.requestsOf[Req.Northwind].observe { queries =>
         dataManager.transform { current =>

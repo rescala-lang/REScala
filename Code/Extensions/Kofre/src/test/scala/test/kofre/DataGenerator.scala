@@ -60,7 +60,7 @@ object DataGenerator {
       value <- Arbitrary.arbitrary[A]
     } yield (id, value)
     val map = Gen.listOf(pairgen).map(_.foldLeft(Dotted(CausalQueue.empty[A])) { case (acc, (id, value)) =>
-      acc merge acc.named(id).causalQueue.enqueue(value).anon
+      acc merge acc.causalQueue.enqueue(using id)(value)
     })
     Arbitrary(map)
 

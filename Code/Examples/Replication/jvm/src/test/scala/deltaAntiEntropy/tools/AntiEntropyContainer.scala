@@ -2,7 +2,7 @@ package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermIdMutate}
+import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermMutate}
 import kofre.time.Dots
 import kofre.base.Id
 import kofre.base.Id.asId
@@ -42,9 +42,8 @@ class AntiEntropyContainer[State](
 object AntiEntropyContainer {
 
   given allPermissions[L: DottedDecompose]
-      : (PermIdMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
-    new PermIdMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
-      override def replicaId(c: AntiEntropyContainer[L]): Id = c.replicaID
+      : (PermMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
+    new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
       override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =
         c.applyDelta(Named(c.replicaID, Dotted(delta, Dots.empty)))
       override def query(c: AntiEntropyContainer[L]): L = c.state.store

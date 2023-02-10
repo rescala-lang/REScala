@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, Named, OpsSyntaxHelper, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, OpsSyntaxHelper, ReplicaId}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
@@ -62,7 +62,7 @@ object Project {
 
 class ProjectRDTTest extends munit.FunSuite {
 
-  given fixedId[T]: PermId[T] = FixedId("replica id")
+  given fixedId: ReplicaId = kofre.base.Id.predefined("replica id")
 
   test("basic interaction") {
 

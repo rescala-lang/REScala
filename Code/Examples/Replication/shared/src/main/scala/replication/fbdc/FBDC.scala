@@ -7,7 +7,7 @@ import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.{AddWinsSet, CausalQueue, LastWriterWins, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, PermId}
+import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -42,10 +42,10 @@ class FbdcExampleData {
     @nowarn given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
     new DataManager[State](replicaId, registry)
 
-  def addCapability(capamility: String) =
+  def addCapability(capability: String) =
     dataManager.transform { current =>
       current.modParticipants { part =>
-        part.mutateKeyNamedCtx(replicaId)(_.add(capamility))
+        part.observeRemoveMap.mutateKeyNamedCtx(replicaId)(_.add(using replicaId)(capability))
       }
     }
 
@@ -63,12 +63,11 @@ class FbdcExampleData {
       providers: ObserveRemoveMap[Id, AddWinsSet[String]]
   ) derives DottedLattice, HasDots {
 
-    type Mod[T] = PermCausalMutate[T, T] ?=> PermId[T] ?=> T => Unit
+    type Mod[T] = PermCausalMutate[T, T] ?=> T => Unit
 
-    class Forward[T](select: State => T, wrap: T => State)(using pcm: PermCausalMutate[State, State], pi: PermId[State])
-        extends PermId[T]
-        with PermCausalMutate[T, T] {
-      override def replicaId(c: T): Id = pi.replicaId(State.this)
+    class Forward[T](select: State => T, wrap: T => State)(using
+        pcm: PermCausalMutate[State, State],
+    ) extends PermCausalMutate[T, T] {
 
       override def mutateContext(container: T, withContext: Dotted[T]): T =
         pcm.mutateContext(State.this, withContext.map(wrap))
@@ -79,25 +78,24 @@ class FbdcExampleData {
       override def context(c: T): Dots = pcm.context(State.this)
     }
 
-    def modReq(using pcm: PermCausalMutate[State, State], pi: PermId[State])(fun: Mod[CausalQueue[Req]]) = {
+    def modReq(using pcm: PermCausalMutate[State, State])(fun: Mod[CausalQueue[Req]]) = {
       val x = new Forward(_.requests, State(_, Bottom.empty, Bottom.empty))
-      fun(using x)(using x)(requests)
+      fun(using x)(requests)
     }
 
     def modRes(using
         pcm: PermCausalMutate[State, State],
-        pi: PermId[State]
+        id: ReplicaId
     )(fun: Mod[ObserveRemoveMap[String, RespValue]]) = {
       val x = new Forward(_.responses, State(Bottom.empty, _, Bottom.empty))
-      fun(using x)(using x)(responses)
+      fun(using x)(responses)
     }
 
     def modParticipants(using
-        pcm: PermCausalMutate[State, State],
-        pi: PermId[State]
+        pcm: PermCausalMutate[State, State]
     )(fun: Mod[ObserveRemoveMap[Id, AddWinsSet[String]]]) = {
       val x = new Forward(_.providers, State(Bottom.empty, Bottom.empty, _))
-      fun(using x)(using x)(providers)
+      fun(using x)(providers)
     }
   }
 

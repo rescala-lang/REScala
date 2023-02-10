@@ -30,7 +30,7 @@ object EnableWinsFlag {
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using PermQuery): Boolean = !current.inner.repr.isEmpty
 
-    def enable(using PermCausalMutate, PermId)(): C = {
+    def enable(using PermId, PermCausalMutate)(): C = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),

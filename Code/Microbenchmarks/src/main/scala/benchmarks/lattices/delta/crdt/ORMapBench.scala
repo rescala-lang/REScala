@@ -28,7 +28,7 @@ class ORMapBench {
       "a",
       ObserveRemoveMap.empty
     )) {
-      case (m, i) => m.mutateKeyNamedCtx(i)(_.enable())
+      case (m, i) => m.mutateKeyNamedCtx(i)(_.enable(using m.replicaID)())
     }
   }
 
@@ -51,7 +51,7 @@ class ORMapBench {
   def mutateExisting(): SUT = map.mutateKeyNamedCtx(0)(_.disable())
 
   @Benchmark
-  def mutateMissing(): SUT = map.mutateKeyNamedCtx(-1)(_.enable())
+  def mutateMissing(): SUT = map.mutateKeyNamedCtx(-1)(_.enable(using map.replicaID)())
 
   @Benchmark
   def removeExisting(): SUT = map.remove(0)

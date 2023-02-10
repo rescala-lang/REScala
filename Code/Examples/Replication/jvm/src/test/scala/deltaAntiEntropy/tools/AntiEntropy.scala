@@ -32,6 +32,8 @@ class AntiEntropy[A](
 
   def state: Dotted[A] = fullState
 
+  def uid: Id = Id.predefined(replicaID)
+
   private val deltaBufferOut: mutable.Map[Int, Named[Dotted[A]]] = mutable.Map()
 
   private var deltaBufferIn: List[Named[Dotted[A]]] = List()

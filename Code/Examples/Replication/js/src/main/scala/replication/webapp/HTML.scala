@@ -110,7 +110,7 @@ object HTML {
       onclick := leftClickHandler {
         exdat.dataManager.transform { curr =>
           curr.modReq { reqs =>
-            reqs.enqueue(Req.Fortune(id))
+            reqs.enqueue(using exdat.dataManager.replicaId)(Req.Fortune(id))
           }
         }
       }
@@ -128,7 +128,7 @@ object HTML {
         onclick := leftClickHandler {
           exdat.dataManager.transform { curr =>
             curr.modReq { reqs =>
-              reqs.enqueue(Req.Northwind(id, ip.value))
+              reqs.enqueue(using exdat.dataManager.replicaId)(Req.Northwind(id, ip.value))
             }
           }
         }

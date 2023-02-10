@@ -36,10 +36,10 @@ class AWSetDeltaMergeBench {
   def setup(): Unit = {
     val baseState = Dotted(AddWinsSet.empty[Long])
 
-    val deltaState = baseState.named("".asId).addAll(0L to size).anon
+    val deltaState = baseState.addAll(using "".asId)(0L to size)
     fullState = Lattice[Dotted[AddWinsSet[Long]]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.named("".asId).add(size).anon
+    plusOneDeltaState = fullState.add(using "".asId)(size)
     plusOneState = Lattice[Dotted[AddWinsSet[Long]]].merge(fullState, plusOneDeltaState)
   }
 

@@ -2,6 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.GrowOnlyCounter
+import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -21,9 +22,9 @@ class GCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", GrowOnlyCounter.zero).inc()) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", GrowOnlyCounter.zero).inc()(using "0".asId)) {
       case (c, n) =>
-        val delta = NamedDeltaBuffer(n.toString, GrowOnlyCounter.zero).inc().deltaBuffer.head
+        val delta = NamedDeltaBuffer(n.toString, GrowOnlyCounter.zero).inc()(using n.toString.asId).deltaBuffer.head
         c.applyDelta(delta.replicaId, delta.anon)
     }
   }
@@ -32,5 +33,5 @@ class GCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def inc(): NamedDeltaBuffer[GrowOnlyCounter] = counter.inc()
+  def inc(): NamedDeltaBuffer[GrowOnlyCounter] = counter.inc()(using counter.replicaID)
 }

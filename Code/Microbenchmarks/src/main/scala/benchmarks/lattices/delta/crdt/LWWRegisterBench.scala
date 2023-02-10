@@ -3,6 +3,8 @@ package benchmarks.lattices.delta.crdt
 import kofre.datatypes.CausalLastWriterWins
 import org.openjdk.jmh.annotations.*
 
+import kofre.base.Id.asId
+
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -20,7 +22,7 @@ class LWWRegisterBench {
   @Setup
   def setup(): Unit = {
     empty = NamedDeltaBuffer.dotted("a", CausalLastWriterWins.empty[Int])
-    full = NamedDeltaBuffer.dotted("b", CausalLastWriterWins.empty[Int]).write(0)
+    full = NamedDeltaBuffer.dotted("b", CausalLastWriterWins.empty[Int]).write(using "b".asId)(0)
   }
 
   @Benchmark
@@ -30,16 +32,16 @@ class LWWRegisterBench {
   def readFull(): Option[Int] = full.read
 
   @Benchmark
-  def writeEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.write(1)
+  def writeEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.write(using empty.replicaID)(1)
 
   @Benchmark
-  def writeFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.write(1)
+  def writeFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.write(using full.replicaID)(1)
 
   @Benchmark
-  def mapEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.map(_ + 1)
+  def mapEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.map(using empty.replicaID)(_ + 1)
 
   @Benchmark
-  def mapFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.map(_ + 1)
+  def mapFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.map(using full.replicaID)(_ + 1)
 
   @Benchmark
   def clearEmpty(): DeltaBufferDotted[CausalLastWriterWins[Int]] = empty.clear()

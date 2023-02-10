@@ -11,59 +11,59 @@ class BoundedCounterTest extends munit.FunSuite {
     val r3 = TestReplica("r3", r1.anon)
 
     inline def assertInvariant() =
-      assert(r1.available + r2.available + r3.available <= 100)
+      assert(r1.available(r1.replicaId) + r2.available(r2.replicaId) + r3.available(r3.replicaId) <= 100)
       r1.invariantOk
       r2.invariantOk
       r3.invariantOk
 
     assertInvariant()
 
-    assertEquals(r1.reserved, 100)
-    assertEquals(r2.reserved, 0)
-    assertEquals(r3.reserved, 0)
+    assertEquals(r1.reserved(r1.replicaId), 100)
+    assertEquals(r2.reserved(r2.replicaId), 0)
+    assertEquals(r3.reserved(r3.replicaId), 0)
 
-    r1.rebalance.allocate(10)
+    r1.rebalance(using r1.replicaId).allocate(10)(using (r1.replicaId))
     assertInvariant()
-    assertEquals(r1.available, 40, "100 -> rebalanced to 50 -> -10 allocated")
+    assertEquals(r1.available((r1.replicaId)), 40, "100 -> rebalanced to 50 -> -10 allocated")
 
-    r2.apply(r1.anon).rebalance
+    r2.apply(r1.anon).rebalance(using r2.replicaId)
     assertInvariant()
-    assertEquals(r2.available, 25, "50 transferred from r1 -> 25 rebalanced to r3")
+    assertEquals(r2.available(r2.replicaId), 25, "50 transferred from r1 -> 25 rebalanced to r3")
 
     r3.apply(r2.anon)
     assertInvariant()
-    assertEquals(r3.available, 25, "got 25 from r2")
+    assertEquals(r3.available(r3.replicaId), 25, "got 25 from r2")
 
-    r1.apply(r2.anon).rebalance
+    r1.apply(r2.anon).rebalance(using r1.replicaId)
     assertInvariant()
 
-    assertEquals(r1.available, 33)
-    assertEquals(r2.available, 25)
-    assertEquals(r3.available, 25)
+    assertEquals(r1.available(r1.replicaId), 33)
+    assertEquals(r2.available(r2.replicaId), 25)
+    assertEquals(r3.available(r3.replicaId), 25)
 
-    r3.allocate(30) // does nothing
+    r3.allocate(30)(using r3.replicaId) // does nothing
     assertInvariant()
-    assertEquals(r3.available, 25)
-    r3.allocate(25)
+    assertEquals(r3.available(r3.replicaId), 25)
+    r3.allocate(25)(using r3.replicaId)
     assertInvariant()
-    assertEquals(r3.available, 0)
+    assertEquals(r3.available(r3.replicaId), 0)
     r1.apply(r3.anon)
     assertInvariant()
     r2.apply(r3.anon)
     assertInvariant()
 
-    assertEquals(r1.available, 33)
-    assertEquals(r2.available, 25)
-    assertEquals(r3.available, 0)
+    assertEquals(r1.available(r1.replicaId), 33)
+    assertEquals(r2.available(r2.replicaId), 25)
+    assertEquals(r3.available(r3.replicaId), 0)
 
-    r1.rebalance
+    r1.rebalance(using r1.replicaId)
     assertInvariant()
     r3.apply(r1.anon)
     assertInvariant()
 
-    assertEquals(r1.available, 17)
-    assertEquals(r2.available, 25)
-    assertEquals(r3.available, 16)
+    assertEquals(r1.available(r1.replicaId), 17)
+    assertEquals(r2.available(r2.replicaId), 25)
+    assertEquals(r3.available(r3.replicaId), 16)
 
   }
 

@@ -2,14 +2,14 @@ package kofre.datatypes.experiments
 
 import kofre.base.{Lattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
-import kofre.syntax.{Named, OpsSyntaxHelper, PermId, FixedId}
+import kofre.syntax.{Named, OpsSyntaxHelper, ReplicaId}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
 
 object BoundedCounter {
   def init(value: Int, replicaID: Id): BoundedCounter =
-    val countervalue = Named(Id.predefined("initial-allocation"), PosNegCounter.zero).add(-value).anon
-    val initial      = Named(replicaID, PosNegCounter.zero).add(value).anon
+    val countervalue = PosNegCounter.zero.add(using Id.predefined("initial-allocation"))(-value)
+    val initial      = PosNegCounter.zero.add(using replicaID)(value)
     BoundedCounter(countervalue merge initial, GrowOnlyCounter.zero, Set(replicaID))
 
   private val neutral: BoundedCounter = BoundedCounter(PosNegCounter.zero, GrowOnlyCounter.zero, Set.empty)
@@ -25,18 +25,18 @@ object BoundedCounter {
     def addParticipants(part: Set[Id])(using PermIdMutate): C = neutral.copy(participants = part).mutator
 
     def allocated(using PermQuery)(id: Id): Int = current.allocations.inner.getOrElse(id, 0)
-    def reserved(using PermQuery, PermId): Int  = reserved(replicaId)
+    def reserved(using PermId, PermQuery): Int  = reserved(replicaId)
     def reserved(using PermQuery)(id: Id): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
     def available(using PermQuery)(id: Id): Int = reserved(id) - allocated(id)
-    def available(using PermQuery, PermId): Int = available(replicaId)
+    def available(using PermId, PermQuery): Int = available(replicaId)
 
-    def allocate(value: Int)(using PermIdMutate): C = {
+    def allocate(value: Int): IdMut[C] = {
       if value < 0 || available(replicaId) < value then neutral
       else neutral.copy(allocations = current.allocations.add(value))
     }.mutator
 
-    def transfer(amount: Int, target: Id)(using PermIdMutate): C = {
+    def transfer(amount: Int, target: Id): IdMut[C] = {
       if amount > available(replicaId) then neutral
       else
         neutral.copy(reservations =
@@ -45,7 +45,7 @@ object BoundedCounter {
         )
     }.mutator
 
-    def rebalance(using PermIdMutate): C = {
+    def rebalance: IdMut[C] = {
       val availableByReplica = current.participants.iterator.map(id => available(id) -> id).toList
       val most               = availableByReplica.max
       val least              = availableByReplica.min

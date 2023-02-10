@@ -22,7 +22,7 @@ object EWFlagGenerators {
 
     ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
       case (f, 0) => f.disable()
-      case (f, 1) => f.enable()
+      case (f, 1) => f.enable(using kofre.base.Id.predefined(ae.replicaID))()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
       case (f, _) => f
     }
@@ -36,7 +36,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
 
   property("enable") {
     forAll { (flag: AntiEntropyContainer[EnableWinsFlag]) =>
-      val flagEnabled = flag.enable()
+      val flagEnabled = flag.enable(using flag.replicaID)()
 
       assert(
         flagEnabled.read,
@@ -62,8 +62,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable()
-    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).enable()
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable(using aea.uid)()
+    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).enable(using aeb.uid)()
 
     AntiEntropy.sync(aea, aeb)
 
@@ -113,7 +113,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable()
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).enable(using aea.uid)()
     val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).disable()
 
     AntiEntropy.sync(aea, aeb)
@@ -141,13 +141,13 @@ class EWFlagTest extends munit.ScalaCheckSuite {
 
       val fa0 = opsA.foldLeft(AntiEntropyContainer[EnableWinsFlag](aea)) {
         case (f, 0) => f.disable()
-        case (f, 1) => f.enable()
+        case (f, 1) => f.enable(using f.replicaID)()
         // default case is only needed to stop the compiler from complaining about non-exhaustive match
         case (f, _) => f
       }
       val fb0 = opsB.foldLeft(AntiEntropyContainer[EnableWinsFlag](aeb)) {
         case (f, 0) => f.disable()
-        case (f, 1) => f.enable()
+        case (f, 1) => f.enable(using f.replicaID)()
         // default case is only needed to stop the compiler from complaining about non-exhaustive match
         case (f, _) => f
       }

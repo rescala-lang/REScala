@@ -2,7 +2,7 @@ package todo
 
 import kofre.datatypes.{CausalLastWriterWins, LastWriterWins, MultiVersionRegister}
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
@@ -71,7 +71,7 @@ object TaskReferences {
 }
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
-  given fixedId: PermId[Any] = FixedId(replicaId)
+  given fixedId: ReplicaId = replicaId
 
   def createTaskRef(
       taskID: String,
@@ -86,13 +86,13 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //          DeltaBufferRDT.contextPermissions[CausalLastWriterWins[TaskData]]
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
-        val res = lwwInit.state.map(_.repr).write(using summon, fixedId)(LastWriterWins(
+        val res = lwwInit.state.map(_.repr).write(using fixedId)(LastWriterWins(
           WallClock(0, replicaId, 0),
           TaskData("<empty>")
         )).map(CausalLastWriterWins.apply)
         lwwInit.applyDelta(res)
       case Some(v) =>
-        lwwInit.write(using summon, fixedId)(v)
+        lwwInit.write(using fixedId)(v)
     }
 
     val edittext = Events.fromCallback[UIEvent] { inputChange =>
@@ -130,7 +130,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     //  )
     // )
 
-    given PermId[Any] = FixedId(replicaId)
+    given ReplicaId = replicaId
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Events.foldAll(init)(current =>

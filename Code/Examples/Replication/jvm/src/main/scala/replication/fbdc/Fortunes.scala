@@ -20,10 +20,10 @@ object Fortunes {
 
     exampleData.requestsOf[Req.Fortune].observe { fortunes =>
       dataManager.transform { current =>
-        current.modRes { reqq =>
+        current.modRes(using id = dataManager.replicaId) { reqq =>
           fortunes.foreach { q =>
             val resp = processFortune(q.value)
-            reqq.observeRemoveMap.insert("fortune", Some(LastWriterWins.now(resp, exampleData.replicaId)))
+            reqq.observeRemoveMap.insert(using dataManager.replicaId)("fortune", Some(LastWriterWins.now(resp, exampleData.replicaId)))
           }
         }
       }

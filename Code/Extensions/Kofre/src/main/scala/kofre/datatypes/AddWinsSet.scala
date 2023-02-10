@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.DottedLattice.*
 import kofre.dotted.{DotMap, DotSet, Dotted, DottedLattice, HasDots}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
@@ -31,7 +31,7 @@ object AddWinsSet {
 
     def contains(using PermQuery)(elem: E): Boolean = current.inner.contains(elem)
 
-    def add(e: E)(using PermCausal, PermCausalMutate, PermQuery, PermId): C = {
+    def add(using ReplicaId, PermCausal, PermCausalMutate, PermQuery)(e: E): C = {
       val dm        = current.inner
       val cc        = context
       val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
@@ -43,7 +43,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def addAll(elems: Iterable[E])(using PermId, PermCausal, PermCausalMutate, PermQuery): C = {
+    def addAll(using PermId, PermCausal, PermCausalMutate, PermQuery)(elems: Iterable[E]): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaId)

@@ -2,6 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.ReplicatedList
 import org.openjdk.jmh.annotations.*
+import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +25,7 @@ class RGABench {
 
   @Setup
   def setup(): Unit = {
-    rga = NamedDeltaBuffer.dotted("a", ReplicatedList.empty[Int]).appendAll(0 until rgaSize)
+    rga = NamedDeltaBuffer.dotted("a", ReplicatedList.empty[Int]).appendAll(using "".asId)(0 until rgaSize)
     rgaCleared = rga.clear()
   }
 
@@ -41,32 +42,32 @@ class RGABench {
   def toList: List[Int] = rga.toList
 
   @Benchmark
-  def prepend(): SUT = rga.prepend(-1)
+  def prepend(): SUT = rga.prepend(using rga.replicaID)(-1)
 
   @Benchmark
-  def append(): SUT = rga.append(rgaSize)
+  def append(): SUT = rga.append(using rga.replicaID)(rgaSize)
 
   @Benchmark
-  def prependTen(): SUT = rga.prependAll(-10 to -1)
+  def prependTen(): SUT = rga.prependAll(using rga.replicaID)(-10 to -1)
 
   @Benchmark
-  def appendTen(): SUT = rga.appendAll(rgaSize until rgaSize + 10)
+  def appendTen(): SUT = rga.appendAll(using rga.replicaID)(rgaSize until rgaSize + 10)
 
   @Benchmark
-  def updateFirst(): SUT = rga.update(0, -1)
+  def updateFirst(): SUT = rga.update(using rga.replicaID)(0, -1)
 
   @Benchmark
-  def updateLast(): SUT = rga.update(rgaSize - 1, -1)
+  def updateLast(): SUT = rga.update(using rga.replicaID)(rgaSize - 1, -1)
 
   @Benchmark
-  def deleteFirst(): SUT = rga.delete(0)
+  def deleteFirst(): SUT = rga.delete(using rga.replicaID)(0)
 
   @Benchmark
-  def deleteLast(): SUT = rga.delete(rgaSize - 1)
+  def deleteLast(): SUT = rga.delete(using rga.replicaID)(rgaSize - 1)
 
   @Benchmark
   def clear(): SUT = rga.clear()
 
   @Benchmark
-  def purgeTombstones(): SUT = rgaCleared.purgeTombstones()
+  def purgeTombstones(): SUT = rgaCleared.purgeTombstones(using rgaCleared.replicaID)()
 }

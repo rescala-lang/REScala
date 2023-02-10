@@ -28,7 +28,7 @@ object MVRegisterGenerators {
 
     ops.foldLeft(AntiEntropyContainer[MultiVersionRegister[A]](ae)) {
       case (r, -1) => r.clear()
-      case (r, n)  => r.write(values(n))
+      case (r, n)  => r.write(using r.replicaID)(values(n))
     }
   }
 
@@ -47,7 +47,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
 
   property("write") {
     forAll { (reg: AntiEntropyContainer[MultiVersionRegister[Int]], v: Int) =>
-      val written = reg.write(v)
+      val written = reg.write(using reg.replicaID)(v)
 
       assert(
         written.read == Set(v),
@@ -72,8 +72,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(vA)
-      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(vB)
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(using aea.uid)(vA)
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(using aea.uid)(vB)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -97,7 +97,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(v)
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(using aea.uid)(v)
       val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).clear()
 
       AntiEntropy.sync(aea, aeb)
@@ -126,11 +126,11 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
 
         val ra0 = opsA.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aea)) {
           case (r, -1) => r.clear()
-          case (r, n)  => r.write(valuesA(n))
+          case (r, n)  => r.write(using r.replicaID)(valuesA(n))
         }
         val rb0 = opsB.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aeb)) {
           case (r, -1) => r.clear()
-          case (r, n)  => r.write(valuesB(n))
+          case (r, n)  => r.write(using r.replicaID)(valuesB(n))
         }
 
         AntiEntropy.sync(aea, aeb)

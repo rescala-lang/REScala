@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{Named, PermCausalMutate, PermId}
+import kofre.syntax.{Named, PermCausalMutate, ReplicaId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -31,6 +31,8 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val replicaId: Id,
     val registry: Registry
 ) {
+
+  given ReplicaId = replicaId
 
   type TransferState = Named[Dotted[State]]
 
@@ -76,9 +78,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     disseminateLocalBuffer()
   }
 
-  class ManagedPermissions extends PermCausalMutate[State, State] with PermId[State] {
-    override def replicaId(c: State): Id = DataManager.this.replicaId
-
+  class ManagedPermissions extends PermCausalMutate[State, State] {
     override def query(c: State): State = c
 
     override def mutateContext(container: State, withContext: Dotted[State]): State =

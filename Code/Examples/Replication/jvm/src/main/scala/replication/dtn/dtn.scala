@@ -138,8 +138,7 @@ class ReplicaListener[S: Lattice: JsonValueCodec](replica: Replica[S]) extends L
 
 class ReplicaMutator[S](val replica: Replica[S])
 
-given fullPermission[L: DecomposeLattice: Bottom]: PermIdMutate[ReplicaMutator[L], L] = new {
-  override def replicaId(c: ReplicaMutator[L]): Id = c.replica.id
+given fullPermission[L: DecomposeLattice: Bottom]: PermMutate[ReplicaMutator[L], L] with {
   override def mutate(c: ReplicaMutator[L], delta: L): ReplicaMutator[L] =
     c.replica.applyLocalDelta(delta)
     c
@@ -162,6 +161,7 @@ def run(): Unit =
     sget(URI.create(s"$api/register?$service")).bind
 
     val replica = Replica(Id.gen(), nodeId, service, PosNegCounter.zero)
+    given ReplicaId = replica.id
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind
     val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>

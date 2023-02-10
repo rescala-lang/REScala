@@ -3,7 +3,8 @@ package benchmarks.lattices.delta.crdt
 import kofre.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
 import kofre.dotted.Dotted
-
+import kofre.base.Id.asId
+import kofre.syntax.ReplicaId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -22,10 +23,11 @@ class RCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment()) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
       case (c, n) =>
-        val delta = Dotted(ResettableCounter.zero).named(n.toString).increment()
-        c.applyDelta(delta.replicaId, delta.anon)
+        given rid: ReplicaId = n.toString.asId
+        val delta = Dotted(ResettableCounter.zero).increment()
+        c.applyDelta(rid.replicaId, delta)
     }
   }
 
@@ -33,13 +35,13 @@ class RCounterBench {
   def value(): Int = counter.value
 
   @Benchmark
-  def fresh(): DeltaBufferDotted[ResettableCounter] = counter.fresh()
+  def fresh(): DeltaBufferDotted[ResettableCounter] = counter.fresh(using counter.replicaID)()
 
   @Benchmark
-  def increment(): DeltaBufferDotted[ResettableCounter] = counter.increment()
+  def increment(): DeltaBufferDotted[ResettableCounter] = counter.increment(using counter.replicaID)()
 
   @Benchmark
-  def decrement(): DeltaBufferDotted[ResettableCounter] = counter.decrement()
+  def decrement(): DeltaBufferDotted[ResettableCounter] = counter.decrement(using counter.replicaID)()
 
   @Benchmark
   def reset(): DeltaBufferDotted[ResettableCounter] = counter.reset()

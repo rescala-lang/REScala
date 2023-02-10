@@ -5,7 +5,7 @@ import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
 
 import scala.util.Random
 
@@ -20,7 +20,7 @@ case class RaftTokens(
     tokenFreed: DeltaBuffer[Dotted[AddWinsSet[Token]]]
 ) {
 
-  given PermId[Any] = FixedId(replicaID)
+  given ReplicaId = replicaID
 
   def owned(value: String): List[Token] = {
     val freed  = tokenFreed.elements

@@ -18,11 +18,11 @@ object PosNegCounterGenerator {
     val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
 
     val inced = (0 to nInc).foldLeft(AntiEntropyContainer(ae)) {
-      case (c, _) => c.inc()
+      case (c, _) => c.inc()(using c.replicaID)
     }
 
     (0 to nDec).foldLeft(inced) {
-      case (c, _) => c.dec()
+      case (c, _) => c.dec()(using c.replicaID)
     }
   }
 
@@ -34,7 +34,7 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
   property("inc") {
     forAll { (counter: AntiEntropyContainer[PosNegCounter]) =>
       val before = counter.value
-      val inced  = counter.inc()
+      val inced  = counter.inc()(using counter.replicaID)
 
       assert(
         inced.value == before + 1,
@@ -45,7 +45,7 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
   property("dec") {
     forAll { (counter: AntiEntropyContainer[PosNegCounter]) =>
       val before = counter.value
-      val deced  = counter.dec()
+      val deced  = counter.dec()(using counter.replicaID)
 
       assert(
         deced.value == before - 1,
@@ -61,10 +61,10 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
       val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
 
-      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).inc()
-      else AntiEntropyContainer[PosNegCounter](aea).dec()
-      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).inc()
-      else AntiEntropyContainer[PosNegCounter](aeb).dec()
+      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).inc()(using aea.uid)
+      else AntiEntropyContainer[PosNegCounter](aea).dec()(using aea.uid)
+      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).inc()(using aeb.uid)
+      else AntiEntropyContainer[PosNegCounter](aeb).dec()(using aeb.uid)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -72,8 +72,8 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val cb1 = cb0.processReceivedDeltas()
 
       val sequential = AntiEntropyContainer(aec)
-      if (incOrDecA) sequential.inc() else sequential.dec()
-      if (incOrDecB) sequential.inc() else sequential.dec()
+      if (incOrDecA) sequential.inc()(using sequential.replicaID) else sequential.dec()(using sequential.replicaID)
+      if (incOrDecB) sequential.inc()(using sequential.replicaID) else sequential.dec()(using sequential.replicaID)
 
       assert(
         ca1.value == sequential.value,
@@ -92,16 +92,16 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
 
       val incedA = (0 until incA.toInt).foldLeft(AntiEntropyContainer[PosNegCounter](aea)) {
-        case (c, _) => c.inc()
+        case (c, _) => c.inc()(using c.replicaID)
       }
       val ca0 = (0 until decA.toInt).foldLeft(incedA) {
-        case (c, _) => c.dec()
+        case (c, _) => c.dec()(using c.replicaID)
       }
       val incedB = (0 until incB.toInt).foldLeft(AntiEntropyContainer[PosNegCounter](aeb)) {
-        case (c, _) => c.inc()
+        case (c, _) => c.inc()(using c.replicaID)
       }
       val cb0 = (0 until decB.toInt).foldLeft(incedB) {
-        case (c, _) => c.dec()
+        case (c, _) => c.dec()(using c.replicaID)
       }
 
       AntiEntropy.sync(aea, aeb)

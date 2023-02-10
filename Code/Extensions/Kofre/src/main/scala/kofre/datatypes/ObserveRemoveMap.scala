@@ -62,17 +62,16 @@ object ObserveRemoveMap {
       }
     }
 
-    def insert(using PermCausalMutate, PermId, Bottom[V])(k: K, v: V): C = {
+    def insert(using PermId, PermCausalMutate, Bottom[V])(k: K, v: V): C = {
       mutateKey(k, (id, dotted) => Dotted(v, Dots.single(context.nextDot(replicaId))))
     }
 
     def mutateKeyNamedCtx(using
-        PermCausalMutate,
-        PermId,
-        Bottom[V]
-    )(k: K)(m: Named[Dotted[V]] => Named[Dotted[V]]): C = {
+        pcm: PermCausalMutate,
+        bot: Bottom[V]
+    )(k: K)(m: Dotted[V] => Dotted[V]): C = {
       val v                           = current.inner.getOrElse(k, Bottom[V].empty)
-      val Dotted(stateDelta, ccDelta) = m(Named(replicaId, Dotted(v, context))).anon
+      val Dotted(stateDelta, ccDelta) = m(Dotted(v, context))
       make[K, V](
         dm = DotMap(Map(k -> stateDelta)),
         cc = ccDelta

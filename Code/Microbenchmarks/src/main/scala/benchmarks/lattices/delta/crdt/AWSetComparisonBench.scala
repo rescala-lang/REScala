@@ -4,6 +4,7 @@ import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
+import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +29,7 @@ class AWSetComparisonBench {
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(Dotted(AddWinsSet.empty[String])) { (s, i) =>
-      val delta = s.named(replicaID).add(s"${i.toString}$replicaID").anon
+      val delta = s.add(using replicaID.asId)(s"${i.toString}$replicaID")
       DecomposeLattice[State].merge(s, delta)
     }
   }
@@ -38,7 +39,7 @@ class AWSetComparisonBench {
     setAState = createSet("a")
     setBState = createSet("b")
 
-    plusOneDelta = setBState.named("b").add("hallo welt").anon
+    plusOneDelta = setBState.add(using "b".asId)("hallo welt")
     setAStatePlusOne = DecomposeLattice[State].merge(setAState, setBState)
   }
 
@@ -46,7 +47,7 @@ class AWSetComparisonBench {
   def create(): State = createSet("c")
 
   @Benchmark
-  def addOne(): State = setAState.named("a").add("Hallo Welt").anon
+  def addOne(): State = setAState.add(using "a".asId)("Hallo Welt")
 
   @Benchmark
   def merge(): State = DecomposeLattice[State].merge(setAState, setBState)

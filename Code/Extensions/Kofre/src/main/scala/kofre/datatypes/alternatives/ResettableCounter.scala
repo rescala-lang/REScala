@@ -47,7 +47,7 @@ object ResettableCounter {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh()(using PermCausalMutate, PermId): C = {
+    def fresh(using PermId, PermCausalMutate)(): C = {
       val nextDot = context.nextDot(replicaId)
 
       deltaState(
@@ -56,7 +56,7 @@ object ResettableCounter {
       ).mutator
     }
 
-    private def update(u: (Int, Int))(using PermCausalMutate, PermId): C = {
+    private def update(using PermId, PermCausalMutate)(u: (Int, Int)): C = {
       context.max(replicaId) match {
         case Some(currentDot) if current.inner.store.contains(currentDot) =>
           val newCounter = (current.inner(currentDot), u) match {
@@ -77,9 +77,9 @@ object ResettableCounter {
       }
     }
 
-    def increment()(using PermCausalMutate, PermId): C = update((1, 0))
+    def increment(using PermId, PermCausalMutate)(): C = update((1, 0))
 
-    def decrement()(using PermCausalMutate, PermId): C = update((0, 1))
+    def decrement(using PermId, PermCausalMutate)(): C = update((0, 1))
 
     def reset()(using PermCausalMutate): C = {
       deltaState(

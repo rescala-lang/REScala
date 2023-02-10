@@ -10,10 +10,7 @@ case class Named[L](replicaId: Id, anon: L) {
 
 object Named {
 
-  given permissionsDN[L](using Lattice[Dotted[L]]): PermId[Named[Dotted[L]]]
-    with PermCausalMutate[Named[Dotted[L]], L]
-    with {
-    override def replicaId(c: Named[Dotted[L]]): Id = c.replicaId
+  given permissionsDN[L](using Lattice[Dotted[L]]): PermCausalMutate[Named[Dotted[L]], L] with {
     override def mutateContext(c: Named[Dotted[L]], delta: Dotted[L]): Named[Dotted[L]] =
       Named(c.replicaId, c.anon merge delta)
     override def query(c: Named[Dotted[L]]): L      = c.anon.store
@@ -22,8 +19,7 @@ object Named {
 
   def empty[A: Bottom](replicaId: Id) = new Named(replicaId, Bottom.empty[A])
 
-  given permissions[L](using Lattice[L]): PermIdMutate[Named[L], L] with {
-    override def replicaId(c: Named[L]): Id              = c.replicaId
+  given permissions[L](using Lattice[L]): PermMutate[Named[L], L] with {
     override def query(c: Named[L]): L                   = c.anon
     override def mutate(c: Named[L], delta: L): Named[L] = Named(c.replicaId, c.anon merge delta)
   }

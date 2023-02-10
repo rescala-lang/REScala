@@ -3,7 +3,7 @@ package kofre.datatypes.alternatives.rga
 import kofre.base.{Id, Lattice}
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{OpsSyntaxHelper, PermIdMutate}
+import kofre.syntax.{OpsSyntaxHelper}
 import kofre.time.Dots
 
 import scala.collection.{AbstractIterator, immutable}
@@ -17,9 +17,9 @@ case class DeltaSequence[A](
 object DeltaSequence {
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = Dotted(AddWinsSet.empty[Vertex], Dots.empty).named(Vertex.start.id).add(
+    val addStart = Dotted(AddWinsSet.empty[Vertex]).add(using Vertex.start.id)(
       Vertex.start
-    ).anon
+    )
     DeltaSequence(
       addStart.store,
       DeltaSequenceOrder(Map()),
@@ -55,7 +55,7 @@ object DeltaSequence {
 
     def addRightDelta(replica: Id, left: Vertex, insertee: Vertex, value: A)(using PermCausalMutate): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-      val newVertices = context.wrap(current.vertices).named(replica).add(insertee).anon
+      val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues)).mutator
     }

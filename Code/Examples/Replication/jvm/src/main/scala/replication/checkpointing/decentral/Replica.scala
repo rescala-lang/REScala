@@ -3,7 +3,7 @@ package replication.checkpointing.decentral
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
+import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
 
@@ -32,7 +32,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Id, i
 
   var unboundRemoteChanges: SetState = Dotted(AddWinsSet.empty[Int])
 
-  given PermId[Any] = FixedId(id)
+  given ReplicaId = id
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],

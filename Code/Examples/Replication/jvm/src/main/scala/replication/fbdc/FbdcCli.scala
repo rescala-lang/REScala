@@ -8,7 +8,7 @@ import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.{AddWinsSet, CausalQueue, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, PermId}
+import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.Dots
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
