@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
 import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
-import kofre.syntax.{Named, OpsSyntaxHelper, PermMutate}
+import kofre.syntax.{OpsSyntaxHelper, PermMutate}
 import kofre.time.{Dot, Dots}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -151,7 +151,7 @@ object ReplicatedList {
         case Some(glistInsertIndex) =>
           val glistDelta =
             fw.map { gl =>
-              Named(replicaId, gl).insertAllGL(glistInsertIndex, nextDots).anon
+              gl.insertAllGL(glistInsertIndex, nextDots)
             }
           val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
 

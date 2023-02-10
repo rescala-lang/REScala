@@ -1,11 +1,11 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Bottom, Lattice, Id}
+import kofre.base.{Bottom, Id, Lattice}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -69,7 +69,7 @@ object RubisInterface {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
-        val merged = Dotted(req, context).named(replicaId).add(userId -> replicaId).anon
+        val merged = req.inheritContext.add(userId -> replicaId)
         Dotted(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 

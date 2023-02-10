@@ -2,7 +2,7 @@ package kofre.datatypes.experiments
 
 import kofre.base.{Lattice, Id}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
-import kofre.syntax.{Named, OpsSyntaxHelper, ReplicaId}
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Id])
 
@@ -40,7 +40,7 @@ object BoundedCounter {
       if amount > available(replicaId) then neutral
       else
         neutral.copy(reservations =
-          Named(target, current.reservations).add(amount).anon merge
+          current.reservations.add(using target)(amount) merge
           current.reservations.add(-amount)
         )
     }.mutator
