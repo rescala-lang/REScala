@@ -150,7 +150,7 @@ object GrowOnlyList {
       })
     }.mutator
 
-    def insertAllGL(using PermMutate, PermId)(i: Int, elems: Iterable[E]): C = {
+    def insertAllGL(using PermMutate, ReplicaId)(i: Int, elems: Iterable[E]): C = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else

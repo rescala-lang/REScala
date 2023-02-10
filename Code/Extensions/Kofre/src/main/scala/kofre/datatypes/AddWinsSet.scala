@@ -43,7 +43,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def addAll(using PermId, PermCausal, PermCausalMutate, PermQuery)(elems: Iterable[E]): C = {
+    def addAll(using ReplicaId, PermCausal, PermCausalMutate, PermQuery)(elems: Iterable[E]): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaId)

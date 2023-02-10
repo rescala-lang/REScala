@@ -65,7 +65,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def requestRegisterUser(userId: User)(using PermCausalMutate, PermCausal, PermQuery, PermId): C = {
+    def requestRegisterUser(userId: User)(using PermCausalMutate, PermCausal, PermQuery, ReplicaId): C = {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else

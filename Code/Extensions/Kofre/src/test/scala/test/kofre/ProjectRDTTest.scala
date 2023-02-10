@@ -39,7 +39,7 @@ object Project {
       f(context.wrap(p(current)))
     }
 
-    def set_name(using PermId, PermCausalMutate)(newName: String): C = {
+    def set_name(using ReplicaId, PermCausalMutate)(newName: String): C = {
       val updatedNameRegister: Dotted[CausalLastWriterWins[String]] = focus(_._name)(_.write(newName))
 
       val projectDelta = empty.copy(_name = updatedNameRegister.store)

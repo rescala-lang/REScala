@@ -118,7 +118,7 @@ object ReplicatedList {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(using PermId, PermCausalMutate)(i: Int, e: E): C = {
+    def insert(using ReplicaId, PermCausalMutate)(i: Int, e: E): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaId)
 
@@ -138,7 +138,7 @@ object ReplicatedList {
       }
     }.mutator
 
-    def insertAll(using PermId, PermCausalMutate)(i: Int, elems: Iterable[E]): C = {
+    def insertAll(using ReplicaId, PermCausalMutate)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaId)
 
@@ -177,10 +177,10 @@ object ReplicatedList {
       }
     }
 
-    def update(using PermId, PermCausalMutate)(i: Int, e: E): C =
+    def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
       updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaId))).mutator
 
-    def delete(using PermId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
+    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
@@ -197,13 +197,13 @@ object ReplicatedList {
       deltaState[E].make(df = DotFun(dfDelta))
     }
 
-    def updateBy(using PermId, PermCausalMutate)(cond: E => Boolean, e: E): C =
+    def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
       updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaId))).mutator
 
-    def deleteBy(using PermId, PermCausalMutate)(cond: E => Boolean): C =
+    def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator
 
-    def purgeTombstones(using PermId, PermCausalMutate)(): C = {
+    def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
       val ReplicatedList(epoche, df) = current
       val toRemove = df.collect {
         case (dot, Dead()) => dot
@@ -223,13 +223,13 @@ object ReplicatedList {
       ).mutator
     }
 
-    def prepend(using PermId, PermCausalMutate)(e: E): C = insert(0, e)
+    def prepend(using ReplicaId, PermCausalMutate)(e: E): C = insert(0, e)
 
-    def append(using PermId, PermCausalMutate)(e: E): C = insert(size, e)
+    def append(using ReplicaId, PermCausalMutate)(e: E): C = insert(size, e)
 
-    def prependAll(using PermId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(0, elems)
+    def prependAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(0, elems)
 
-    def appendAll(using PermId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(size, elems)
+    def appendAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(size, elems)
 
   }
 }

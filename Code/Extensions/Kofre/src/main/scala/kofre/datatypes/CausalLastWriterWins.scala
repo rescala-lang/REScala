@@ -27,12 +27,12 @@ object CausalLastWriterWins {
     def read(using PermQuery): Option[A] =
       current.repr.multiVersionRegister.read.reduceOption(Lattice[TimedVal[A]].merge).map(x => x.payload)
 
-    def write(using PermId, PermCausalMutate)(v: A): C =
+    def write(using ReplicaId, PermCausalMutate)(v: A): C =
       current.repr.inheritContext.multiVersionRegister.write(LastWriterWins.now(v, replicaId)).map(
         CausalLastWriterWins.apply
       ).mutator
 
-    def map(using PermId, PermCausalMutate)(f: A => A): C =
+    def map(using ReplicaId, PermCausalMutate)(f: A => A): C =
       read.map(f) match {
         case None    => Dotted(CausalLastWriterWins.empty).mutator
         case Some(v) => write(v)

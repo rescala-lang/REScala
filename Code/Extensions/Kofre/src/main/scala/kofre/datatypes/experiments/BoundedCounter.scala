@@ -25,11 +25,11 @@ object BoundedCounter {
     def addParticipants(part: Set[Id])(using PermIdMutate): C = neutral.copy(participants = part).mutator
 
     def allocated(using PermQuery)(id: Id): Int = current.allocations.inner.getOrElse(id, 0)
-    def reserved(using PermId, PermQuery): Int  = reserved(replicaId)
+    def reserved(using ReplicaId, PermQuery): Int  = reserved(replicaId)
     def reserved(using PermQuery)(id: Id): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
     def available(using PermQuery)(id: Id): Int = reserved(id) - allocated(id)
-    def available(using PermId, PermQuery): Int = available(replicaId)
+    def available(using ReplicaId, PermQuery): Int = available(replicaId)
 
     def allocate(value: Int): IdMut[C] = {
       if value < 0 || available(replicaId) < value then neutral
