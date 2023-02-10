@@ -4,7 +4,7 @@ import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
+import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -20,6 +20,8 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 
+  given PermId[Any] = FixedId(id)
+
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val add: Regex       = """add (\d+)""".r
@@ -29,7 +31,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: DeltaBufferDotted[AddWinsSet[Int]] = DeltaBuffer.dotted(id, AddWinsSet.empty)
+  var set: DeltaBuffer[Dotted[AddWinsSet[Int]]] = DeltaBuffer(Dotted(AddWinsSet.empty))
 
   var checkpoint: Int = 0
 
@@ -60,9 +62,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
     registry.remotes.filterNot(checkpointerRR.contains).foreach { rr =>
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
-      set.deltaBuffer.collect {
-        case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
+      set.deltaBuffer.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _
       ))
@@ -123,7 +123,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
             case Success(CheckpointMessage(cp, apply, keep)) =>
               if (cp > checkpoint) checkpoint = cp
-              set = apply.foldLeft(set)((s, d) => s.applyDelta(id, d)).clearDeltas()
+              set = apply.foldLeft(set)((s, d) => s.applyDelta(d)).clearDeltas()
               changesSinceCP = keep
           }
         }
@@ -134,7 +134,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def processChangesForCheckpointing(): Unit = {
     changesSinceCP = set.deltaBuffer.foldLeft(changesSinceCP) { (acc, delta) =>
-      DecomposeLattice[SetState].merge(acc, delta.anon)
+      DecomposeLattice[SetState].merge(acc, delta)
     }
 
     assessCheckpointRecursive()
@@ -150,7 +150,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
         assessCheckpointRecursive()
       }
 
-      set = set.applyDelta(Id.predefined(remoteRef.toString), deltaState)
+      set = set.applyDelta(deltaState)
 
       processChangesForCheckpointing()
 

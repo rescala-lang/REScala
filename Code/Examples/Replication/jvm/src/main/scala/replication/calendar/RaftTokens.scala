@@ -5,7 +5,7 @@ import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
+import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
 
 import scala.util.Random
 
@@ -16,9 +16,11 @@ case class Token(id: Long, owner: Id, value: String) {
 case class RaftTokens(
     replicaID: Id,
     tokenAgreement: RaftState[Token],
-    want: DeltaBufferDotted[AddWinsSet[Token]],
-    tokenFreed: DeltaBufferDotted[AddWinsSet[Token]]
+    want: DeltaBuffer[Dotted[AddWinsSet[Token]]],
+    tokenFreed: DeltaBuffer[Dotted[AddWinsSet[Token]]]
 ) {
+
+  given PermId[Any] = FixedId(replicaID)
 
   def owned(value: String): List[Token] = {
     val freed  = tokenFreed.elements
@@ -57,11 +59,11 @@ case class RaftTokens(
   }
 
   def applyWant(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(want = want.applyDelta(state.replicaId, state.anon))
+    copy(want = want.applyDelta(state.anon))
   }
 
   def applyFree(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(tokenFreed = tokenFreed.applyDelta(state.replicaId, state.anon))
+    copy(tokenFreed = tokenFreed.applyDelta(state.anon))
   }
 
   def applyRaft(state: RaftState[Token]): RaftTokens = {
@@ -78,7 +80,7 @@ object RaftTokens {
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),
-      DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token]),
-      DeltaBuffer.dotted(replicaID, AddWinsSet.empty[Token])
+      DeltaBuffer(Dotted(AddWinsSet.empty[Token])),
+      DeltaBuffer(Dotted(AddWinsSet.empty[Token]))
     )
 }

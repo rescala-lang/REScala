@@ -4,7 +4,8 @@ import kofre.datatypes.AddWinsSet
 import rescala.default.*
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.base.{Bottom, Id}
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
+import kofre.dotted.Dotted
+import kofre.syntax.{DeltaBuffer, FixedId, PermId}
 
 case class Appointment(start: Int, end: Int)
 
@@ -14,10 +15,12 @@ given intMaxBottom: Bottom[Int] with {
 
 class CalendarProgram(id: Id, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  type Calendar = DeltaBufferDotted[AddWinsSet[Appointment]]
+  given PermId[Any] = FixedId(id)
 
-  val work     = Var[Calendar](DeltaBuffer.dotted(id, AddWinsSet.empty[Appointment]))
-  val vacation = Var[Calendar](DeltaBuffer.dotted(id, AddWinsSet.empty[Appointment]))
+  type Calendar = DeltaBuffer[Dotted[AddWinsSet[Appointment]]]
+
+  val work     = Var[Calendar](DeltaBuffer(Dotted(AddWinsSet.empty[Appointment])))
+  val vacation = Var[Calendar](DeltaBuffer(Dotted(AddWinsSet.empty[Appointment])))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

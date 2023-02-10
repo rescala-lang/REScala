@@ -18,7 +18,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named}
+import kofre.syntax.{DeltaBuffer, Named}
 import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
@@ -44,12 +44,12 @@ class TodoAppUI(val storagePrefix: String) {
     }
 
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
-    val taskOps  = new TaskOps(taskrefs)
+    val taskOps  = new TaskOps(taskrefs, replicaId)
 
-    val deltaEvt = Evt[Named[Dotted[ReplicatedList[TaskRef]]]]()
+    val deltaEvt = Evt[Dotted[ReplicatedList[TaskRef]]]()
 
-    val tasksRDT: Signal[DeltaBufferDotted[ReplicatedList[TaskRef]]] =
-      Storing.storedAs(storagePrefix, DeltaBuffer.dotted(replicaId, ReplicatedList.empty[TaskRef])) { init =>
+    val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
+      Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
         Fold(init)(
           taskOps.handleCreateTodo(createTodo.event),
           taskOps.handleRemoveAll(removeAll.event),

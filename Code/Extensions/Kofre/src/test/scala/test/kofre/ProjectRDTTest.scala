@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted, Named, OpsSyntaxHelper}
+import kofre.syntax.{DeltaBuffer, Named, OpsSyntaxHelper, PermId, FixedId}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
@@ -62,6 +62,8 @@ object Project {
 
 class ProjectRDTTest extends munit.FunSuite {
 
+  given fixedId[T]: PermId[T] = FixedId("replica id")
+
   test("basic interaction") {
 
     // The thing about the name and dots is that you always want to add them at the outermost layer,
@@ -88,19 +90,19 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("pos neg delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer("replica id", PosNegCounter.zero);
-    val newDeltaBufferRdt = deltaBufferRdt.add(1)
+    val deltaBufferRdt    = DeltaBuffer(PosNegCounter.zero)
+    val newDeltaBufferRdt = deltaBufferRdt.posNegCounter.add(1)
     assertEquals(newDeltaBufferRdt.value, 1)
   }
 
   test("LWW delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer.dotted("replica id", CausalLastWriterWins.empty[String]);
+    val deltaBufferRdt    = DeltaBuffer(Dotted(CausalLastWriterWins.empty[String]))
     val newDeltaBufferRdt = deltaBufferRdt.write("test")
     assertEquals(newDeltaBufferRdt.read, Some("test"))
   }
 
   test("Project delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer.dotted("replica id", Project.empty)
+    val deltaBufferRdt    = DeltaBuffer(Dotted(Project.empty))
     val newDeltaBufferRdt = deltaBufferRdt.set_name("some project")
     // assertEquals(newDeltaBufferRdt.deltaBuffer, Nil)
     assertEquals(newDeltaBufferRdt.name, "some project")

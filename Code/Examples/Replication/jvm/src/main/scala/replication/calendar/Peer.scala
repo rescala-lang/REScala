@@ -70,24 +70,18 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       calendar.replicated.foreach { case (id, set) =>
-        set.now.deltaBuffer.collect {
-          case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
-        }.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
+        set.now.deltaBuffer.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
           id
         ))
       }
 
-      tokens.want.deltaBuffer.collect {
-        case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
-      }.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
+      tokens.want.deltaBuffer.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
-      tokens.tokenFreed.deltaBuffer.collect {
-        case Named(replicaID, deltaState) if Id.unwrap(replicaID) != rr.toString => deltaState
-      }.reduceOption(DottedDecompose[AddWinsSet[Token]].merge).foreach { state =>
+      tokens.tokenFreed.deltaBuffer.reduceOption(DottedDecompose[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -153,7 +147,7 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
         message match {
           case AppointmentMessage(deltaState, id) =>
             val set = calendar.replicated(id)
-            set.transform(_.applyDelta(Id.predefined(remoteRef.toString), deltaState))
+            set.transform(_.applyDelta(deltaState))
           case WantMessage(state) =>
             tokens = tokens.applyWant(Named(Id.predefined(remoteRef.toString), state))
           case FreeMessage(state) =>

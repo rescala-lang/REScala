@@ -3,7 +3,6 @@ package benchmarks.lattices.delta.crdt
 import kofre.base.Lattice
 import kofre.datatypes.MultiVersionRegister
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -25,7 +24,7 @@ class MVRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(DeltaBuffer.dotted("-1", MultiVersionRegister.empty[Int])) {
+    reg = (0 until numWrites).foldLeft(NamedDeltaBuffer.dotted("-1", MultiVersionRegister.empty[Int])) {
       case (r, i) =>
         val delta = Dotted(MultiVersionRegister.empty[Int]).named(i.toString).write(i)
         r.applyDelta(delta.replicaId, delta.anon)

@@ -1,7 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.TwoPhaseSet
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -18,11 +17,11 @@ class TwoPSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var size: Int = _
 
-  var set: DeltaBuffer[TwoPhaseSet[Int]] = _
+  var set: NamedDeltaBuffer[TwoPhaseSet[Int]] = _
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(DeltaBuffer("a", TwoPhaseSet.empty[Int])) {
+    set = (0 until size).foldLeft(NamedDeltaBuffer("a", TwoPhaseSet.empty[Int])) {
       case (s, e) => s.insert(e)
     }
   }
@@ -31,8 +30,8 @@ class TwoPSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def insert(): DeltaBuffer[TwoPhaseSet[Int]] = set.insert(-1)
+  def insert(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.insert(-1)
 
   @Benchmark
-  def remove(): DeltaBuffer[TwoPhaseSet[Int]] = set.remove(0)
+  def remove(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.remove(0)
 }

@@ -3,7 +3,6 @@ package benchmarks.lattices.delta.crdt
 import kofre.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +22,7 @@ class RCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(DeltaBuffer.dotted("0", ResettableCounter.zero).increment()) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment()) {
       case (c, n) =>
         val delta = Dotted(ResettableCounter.zero).named(n.toString).increment()
         c.applyDelta(delta.replicaId, delta.anon)

@@ -1,15 +1,14 @@
 package rescala.extra.replication
 
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.Lattice.Operators
+import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBufferDotted, Named}
+import kofre.syntax.{DeltaBuffer, Named}
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
+import rescala.core.Disconnectable
 import rescala.interface.RescalaInterface
 import scribe.Execution.global
-import kofre.base.Lattice.Operators
-import kofre.base.Id
-import rescala.core.Disconnectable
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -24,14 +23,14 @@ class ReplicationGroup[Api <: RescalaInterface, A](
     dcl: DecomposeLattice[Dotted[A]],
     bottom: Bottom[Dotted[A]]
 ) {
-  import api._
+  import api.*
 
-  private var localListeners: Map[String, Evt[Named[Dotted[A]]]] = Map.empty
+  private var localListeners: Map[String, Evt[Dotted[A]]] = Map.empty
   private var unhandled: Map[String, Map[String, Dotted[A]]]     = Map.empty
 
   registry.bindSbj(binding) { (remoteRef: RemoteRef, payload: DeltaFor[A]) =>
     localListeners.get(payload.name) match {
-      case Some(handler) => handler.fire(Named(Id.predefined(remoteRef.toString), payload.delta))
+      case Some(handler) => handler.fire(payload.delta)
       case None => unhandled = unhandled.updatedWith(payload.name) { current =>
           current merge Some(Map(remoteRef.toString -> payload.delta))
         }
@@ -40,8 +39,8 @@ class ReplicationGroup[Api <: RescalaInterface, A](
 
   def distributeDeltaRDT(
       name: String,
-      signal: Signal[DeltaBufferDotted[A]],
-      deltaEvt: Evt[Named[Dotted[A]]],
+      signal: Signal[DeltaBuffer[Dotted[A]]],
+      deltaEvt: Evt[Dotted[A]],
   ): Unit = {
     require(!localListeners.contains(name), s"already registered a RDT with name $name")
     localListeners = localListeners.updated(name, deltaEvt)
@@ -52,7 +51,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
     unhandled.get(name) match {
       case None =>
       case Some(changes) =>
-        changes.foreach((k, v) => deltaEvt.fire(Named(Id.predefined(k), v)))
+        changes.foreach((k, v) => deltaEvt.fire(v))
     }
 
     def registerRemote(remoteRef: RemoteRef): Unit = {
@@ -88,9 +87,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
       // Whenever the crdt is changed propagate the delta
       // Praktisch wäre etwas wie crdt.observeDelta
       val observer = signal.observe { s =>
-        val deltaStateList = s.deltaBuffer.collect {
-          case Named(replicaID, deltaState) if Id.unwrap(replicaID) != remoteRef.toString => deltaState
-        } ++ resendBuffer.get(remoteRef).toList
+        val deltaStateList = s.deltaBuffer ++ resendBuffer.get(remoteRef).toList
 
         val combinedState = deltaStateList.reduceOption(DecomposeLattice[Dotted[A]].merge)
 

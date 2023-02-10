@@ -2,16 +2,18 @@ package todo
 
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBufferDotted, Named}
+import kofre.base.Id
+import kofre.syntax.{DeltaBuffer, Named, PermId, FixedId}
 import rescala.default.*
-import rescala.default.Fold
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.nowarn
 
-class TaskOps(@nowarn taskRefs: TaskReferences) {
+class TaskOps(taskRefs: TaskReferences, replicaID: Id) {
 
-  type State = DeltaBufferDotted[ReplicatedList[TaskRef]]
+  type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
+
+  given PermId[Any] = FixedId(replicaID)
 
   def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
@@ -38,11 +40,11 @@ class TaskOps(@nowarn taskRefs: TaskReferences) {
     }
   }
 
-  def handleDelta(deltaEvent: Event[Named[Dotted[ReplicatedList[TaskRef]]]]): Fold.Branch[State] =
+  def handleDelta(deltaEvent: Event[Dotted[ReplicatedList[TaskRef]]]): Fold.Branch[State] =
     deltaEvent.act { delta =>
       val deltaBuffered = current
 
-      val newList = deltaBuffered.clearDeltas().applyDelta(delta.replicaId, delta.anon)
+      val newList = deltaBuffered.clearDeltas().applyDelta(delta)
 
       val oldIDs = deltaBuffered.toList.toSet
       val newIDs = newList.toList.toSet

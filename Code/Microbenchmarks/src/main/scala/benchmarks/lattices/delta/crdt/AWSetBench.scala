@@ -1,7 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.datatypes.AddWinsSet
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -21,7 +20,7 @@ class AWSetBench {
   var set: DeltaBufferDotted[AddWinsSet[Int]] = _
 
   def createBySize(size: Int): DeltaBufferDotted[AddWinsSet[Int]] =
-    (0 until size).foldLeft(DeltaBuffer.dotted("a", AddWinsSet.empty[Int])) {
+    (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", AddWinsSet.empty[Int])) {
       case (s, e) => s.add(e)
     }
 
@@ -37,7 +36,7 @@ class AWSetBench {
   def add(): DeltaBufferDotted[AddWinsSet[Int]] = set.add(-1)
 
   @Benchmark
-  def addAll(): DeltaBufferDotted[AddWinsSet[Int]] = DeltaBuffer.dotted("a", AddWinsSet.empty[Int]).addAll(0 until size)
+  def addAll(): DeltaBufferDotted[AddWinsSet[Int]] = NamedDeltaBuffer.dotted("a", AddWinsSet.empty[Int]).addAll(0 until size)
 
   @Benchmark
   def remove(): DeltaBufferDotted[AddWinsSet[Int]] = set.remove(0)

@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, PermId}
+import kofre.syntax.{Named, PermCausalMutate, PermId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given

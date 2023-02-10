@@ -4,14 +4,14 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Id
 import kofre.base.Id.asId
+import kofre.datatypes.LastWriterWins.TimedVal
 import kofre.datatypes.{CausalLastWriterWins, ReplicatedList}
-import kofre.time.Dot
 import kofre.dotted.{DotFun, Dotted}
+import kofre.syntax.DeltaBuffer
+import kofre.time.Dot
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 import todo.Todolist.replicaId
-import kofre.datatypes.LastWriterWins.TimedVal
-import kofre.syntax.{DeltaBuffer, DeltaBufferDotted}
 
 import scala.annotation.nowarn
 
@@ -33,19 +33,19 @@ object Codecs {
   @nowarn()
   implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-  implicit val codecRGA: JsonValueCodec[DeltaBufferDotted[ReplicatedList[TaskRef]]] =
-    new JsonValueCodec[DeltaBufferDotted[ReplicatedList[TaskRef]]] {
+  implicit val codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
+    new JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] {
       override def decodeValue(
           in: JsonReader,
-          default: DeltaBufferDotted[ReplicatedList[TaskRef]]
-      ): DeltaBufferDotted[ReplicatedList[TaskRef]] = {
+          default: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
+      ): DeltaBuffer[Dotted[ReplicatedList[TaskRef]]] = {
         val state = codecState.decodeValue(in, default.state)
-        new DeltaBufferDotted[ReplicatedList[TaskRef]](replicaId, state, List())
+        DeltaBuffer[Dotted[ReplicatedList[TaskRef]]](state)
       }
-      override def encodeValue(x: DeltaBufferDotted[ReplicatedList[TaskRef]], out: JsonWriter): Unit =
+      override def encodeValue(x: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]], out: JsonWriter): Unit =
         codecState.encodeValue(x.state, out)
-      override def nullValue: DeltaBufferDotted[ReplicatedList[TaskRef]] =
-        DeltaBuffer.dotted(replicaId, ReplicatedList.empty[TaskRef])
+      override def nullValue: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]] =
+        DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))
     }
 
   implicit val transmittableList: IdenticallyTransmittable[DeltaFor[ReplicatedList[TaskRef]]] =
@@ -59,6 +59,6 @@ object Codecs {
   implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[CausalLastWriterWins[TaskData]]] =
     IdenticallyTransmittable()
 
-  implicit val codecLww: JsonValueCodec[DeltaBufferDotted[CausalLastWriterWins[TaskData]]] = JsonCodecMaker.make
+  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]]] = JsonCodecMaker.make
 
 }
