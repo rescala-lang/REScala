@@ -3,7 +3,7 @@ package rescala.extra.replication
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, DecomposeLattice, Id, Lattice}
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named}
+import kofre.syntax.{DeltaBuffer}
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.core.Disconnectable

@@ -2,7 +2,7 @@ package todo
 
 import kofre.datatypes.{CausalLastWriterWins, LastWriterWins, MultiVersionRegister}
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, PermCausalMutate, ReplicaId}
+import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}

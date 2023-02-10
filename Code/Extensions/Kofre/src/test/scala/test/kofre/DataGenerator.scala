@@ -1,6 +1,5 @@
 package test.kofre
 
-import kofre.syntax.Named
 import org.scalacheck.{Arbitrary, Gen}
 import kofre.dotted.*
 import kofre.time.*

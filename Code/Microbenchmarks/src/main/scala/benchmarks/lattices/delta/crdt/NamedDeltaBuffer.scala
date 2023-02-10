@@ -7,6 +7,8 @@ import kofre.time.Dots
 
 type DeltaBufferDotted[State] = NamedDeltaBuffer[Dotted[State]]
 
+case class Named[T](replicaId: Id, anon: T)
+
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.

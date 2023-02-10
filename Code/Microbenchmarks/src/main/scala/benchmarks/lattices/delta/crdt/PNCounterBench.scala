@@ -4,7 +4,6 @@ import kofre.base.DecomposeLattice
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.PosNegCounter
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.Named
 import kofre.base.Id.asId
 
 import java.util.concurrent.TimeUnit

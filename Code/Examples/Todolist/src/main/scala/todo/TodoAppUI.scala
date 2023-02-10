@@ -18,7 +18,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named}
+import kofre.syntax.{DeltaBuffer}
 import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {

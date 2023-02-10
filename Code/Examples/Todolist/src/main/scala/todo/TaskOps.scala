@@ -3,7 +3,7 @@ package todo
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.base.Id
-import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
 import rescala.default.*
 
 import java.util.concurrent.ThreadLocalRandom

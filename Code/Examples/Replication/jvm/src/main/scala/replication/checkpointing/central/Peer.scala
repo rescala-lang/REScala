@@ -4,7 +4,7 @@ import Bindings.*
 import kofre.base.DecomposeLattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}

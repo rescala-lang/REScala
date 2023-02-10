@@ -3,7 +3,7 @@ package replication.checkpointing.decentral
 import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
 
