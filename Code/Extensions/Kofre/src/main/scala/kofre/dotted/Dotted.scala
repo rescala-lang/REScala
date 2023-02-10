@@ -3,12 +3,11 @@ package kofre.dotted
 import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{DotFun, DotSet}
-import kofre.syntax.{Named, PermCausal, PermCausalMutate, PermQuery}
+import kofre.syntax.{PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
 case class Dotted[A](store: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]    = Dotted(f(store), context)
-  def named(id: Id): Named[Dotted[A]] = Named(id, this)
 }
 
 /** Implicit aliases in companion object for search path */

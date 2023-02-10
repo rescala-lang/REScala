@@ -5,7 +5,7 @@ import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, Named, ReplicaId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
 
 import scala.util.Random
 
@@ -58,12 +58,12 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(want = want.applyDelta(state.anon))
+  def applyWant(state: Dotted[AddWinsSet[Token]]): RaftTokens = {
+    copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Named[Dotted[AddWinsSet[Token]]]): RaftTokens = {
-    copy(tokenFreed = tokenFreed.applyDelta(state.anon))
+  def applyFree(state: Dotted[AddWinsSet[Token]]): RaftTokens = {
+    copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 
   def applyRaft(state: RaftState[Token]): RaftTokens = {

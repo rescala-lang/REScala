@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.{Bottom, Id, Lattice}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{Named, PermCausalMutate, ReplicaId}
+import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -34,7 +34,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 
   given ReplicaId = replicaId
 
-  type TransferState = Named[Dotted[State]]
+  type TransferState = Dotted[State]
 
   val timer = new Timer()
 
@@ -66,15 +66,14 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
-  val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
+  val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts }
   val currentContext                = mergedState.map(_.context)
 
   val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 
   def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
-    val named = Named(replicaId, dotted)
-    localBuffer = named :: localBuffer
-    changeEvt.fire(named)
+    localBuffer = dotted :: localBuffer
+    changeEvt.fire(dotted)
     disseminateLocalBuffer()
   }
 
@@ -92,7 +91,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     fun(using ManagedPermissions())(mergedState.now.store)
   }
 
-  def allDeltas: View[Named[Dotted[State]]] = lock.synchronized {
+  def allDeltas: View[Dotted[State]] = lock.synchronized {
     View(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
@@ -111,7 +110,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 
   registry.bindSbj(pushStateBinding) { (rr: RemoteRef, named: TransferState) =>
     lock.synchronized {
-      updateRemoteContext(rr, named.anon.context)
+      updateRemoteContext(rr, named.context)
       remoteDeltas = named :: remoteDeltas
     }
     changeEvt.fire(named)
@@ -123,7 +122,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     // we always send all the removals in addition to any other deltas
     val removed = cc subtract contained
     pushDeltas(
-      allDeltas.filterNot(dt => dt.anon.context <= knows).concat(List(Dotted(Bottom.empty, removed).named(replicaId))),
+      allDeltas.filterNot(dt => dt.context <= knows).concat(List(Dotted(Bottom.empty, removed))),
       rr
     )
     updateRemoteContext(rr, cc merge knows)
@@ -143,7 +142,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
 
   def disseminateFull() =
     registry.remotes.foreach { remote =>
-      pushDeltas(List(Named(replicaId, mergedState.now)).view, remote)
+      pushDeltas(List(mergedState.now).view, remote)
     }
 
   def requestMissingFrom(rr: RemoteRef) =

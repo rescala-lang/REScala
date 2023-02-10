@@ -68,7 +68,5 @@ trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[kofre] def context(using perm: PermCausal): Dots          = perm.context(container)
   extension (l: L)(using perm: PermMutate) def mutator: C                   = perm.mutate(container, l)
   extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C     = perm.mutateContext(container, l)
-  extension [A](c: Dotted[A]) def inheritId(using PermId): Named[Dotted[A]] = c.named(replicaId)
-  extension [A](a: A)
-    def inheritContext(using PermCausal): Dotted[A] = Dotted(a, context)
+  extension [A](a: A) def inheritContext(using PermCausal): Dotted[A] = Dotted(a, context)
 }

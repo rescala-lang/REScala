@@ -6,7 +6,6 @@ import kofre.base.{DecomposeLattice, Id}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.dotted.{DottedDecompose, Dotted}
-import kofre.syntax.Named
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -149,9 +148,9 @@ class Peer(id: Id, listenPort: Int, connectTo: List[(String, Int)]) {
             val set = calendar.replicated(id)
             set.transform(_.applyDelta(deltaState))
           case WantMessage(state) =>
-            tokens = tokens.applyWant(Named(Id.predefined(remoteRef.toString), state))
+            tokens = tokens.applyWant(state)
           case FreeMessage(state) =>
-            tokens = tokens.applyFree(Named(Id.predefined(remoteRef.toString), state))
+            tokens = tokens.applyFree(state)
           case RaftMessage(state) => {
             tokens = tokens.applyRaft(state)
           }

@@ -6,10 +6,11 @@ import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import kofre.base.Id.asId
 import kofre.base.{Bottom, DecomposeLattice, Id}
 import kofre.dotted.{Dotted, DottedDecompose}
-import kofre.syntax.Named
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
+
+case class Named[T](replicaId: Id, anon: T)
 
 /** This class can be used together with Network to test Delta CRDTs locally. It is an implementation of the anti-entropy
   * algorithm proposed by Almeida et al. in "Delta State Replicated Data Types", see [[https://arxiv.org/pdf/1603.01529.pdf here]].
