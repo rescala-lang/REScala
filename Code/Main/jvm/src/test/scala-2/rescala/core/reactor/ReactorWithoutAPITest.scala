@@ -19,7 +19,7 @@ class ReactorWithoutAPITest extends RETests {
     override type State[V] = rescala.default.State[V]
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState
-    override def name: ReInfo                                     = "Custom Reactor"
+    override def info: ReInfo                                     = ReInfo.create.derive("Custom Reactor")
 
     /** Interprets the internal type to the external type
       *

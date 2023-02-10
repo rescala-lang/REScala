@@ -34,11 +34,11 @@ trait InvariantBundle extends TopoBundle {
       val chainErrorMessage =
         if (causalErrorChains.nonEmpty)
           "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(r =>
-            s"${r.name.str} with value: ${r.state.value}"
+            s"${r.info} with value: ${r.state.value}"
           ).mkString("\n↓\n")).mkString("\n---\n")
         else "The error was not triggered by a change."
 
-      s"${t.getMessage} in reactive ${reactive.name.str}\n$chainErrorMessage\n"
+      s"${t.getMessage} in reactive ${reactive.info}\n$chainErrorMessage\n"
     }
 
     override def fillInStackTrace(): InvariantViolationException = this
@@ -121,7 +121,7 @@ trait InvariantBundle extends TopoBundle {
 
         val gens = findGeneratorsRecursive(this.signal)
         if (gens.isEmpty) {
-          throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.name}")
+          throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.info}")
         }
         gens
       }
@@ -182,7 +182,7 @@ trait InvariantBundle extends TopoBundle {
     ): Seq[Seq[ReSource]] = {
       import scala.collection.mutable.ListBuffer
 
-      val initialNames = initialWrites.map(_.name)
+      val initialNames = initialWrites.map(_.info)
 
       def traverse(
           node: ReSource,
@@ -190,7 +190,7 @@ trait InvariantBundle extends TopoBundle {
       ): Seq[Seq[ReSource]] = {
         val paths = new ListBuffer[Seq[ReSource]]()
         for (incoming <- node.state.incoming) {
-          val incName = incoming.name
+          val incName = incoming.info
           if (initialNames.contains(incName)) {
             paths += path :+ incoming
           } else {
