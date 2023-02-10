@@ -1,17 +1,14 @@
 package benchmarks.encrdt
 
 import benchmarks.encrdt.mock.insecure.{AlternativeInsecureToDoListClient, AlternativeInsecureToDoListIntermediary}
-import benchmarks.encrdt.mock.{
-  DisseminationStats, IntermediarySizeInfo, SecureToDoListClient, ToDoListClient, ToDoListIntermediary
-}
-import benchmarks.encrdt.todolist.{
-  AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator
-}
+import benchmarks.encrdt.mock.{DisseminationStats, IntermediarySizeInfo, SecureToDoListClient, ToDoListClient, ToDoListIntermediary}
+import benchmarks.encrdt.todolist.{AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator}
 import com.google.crypto.tink.Aead
-import Codecs._
-import better.files._
+import Codecs.*
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 
+import java.io.PrintWriter
+import java.nio.file.{Files, Paths}
 import java.util.UUID
 
 object ToDoAppBenchmark extends App {
@@ -43,10 +40,10 @@ object ToDoAppBenchmark extends App {
   }
 
   val csvFileF =
-    if (USE_ENCRYPTION) File("./benchmarks/results/todoapp_benchmark.csv")
-    else File("./benchmarks/results/todoapp_benchmark trusted intermediary.csv")
-  csvFileF.parent.createDirectories()
-  val csvFile = csvFileF.newPrintWriter()
+    if (USE_ENCRYPTION) Paths.get("./benchmarks/results/todoapp_benchmark.csv")
+    else Paths.get("./benchmarks/results/todoapp_benchmark trusted intermediary.csv")
+  Files.createDirectories(csvFileF.getParent)
+  val csvFile = new PrintWriter(csvFileF.toFile)
   csvFile.println(
     "interactions,intermediarySize,encDeltaCausalitySize,encDeltaCiphertextSize,intermediaryStoredDeltas,completedToDos,uncompletedToDos,last100InteractionsNanoTime,last100InteractionsDisseminatedBytes,last100InteractionsAdditionDisseminatedBytes,last100InteractionsCompletionDisseminatedBytes,last100InteractionsRemovalBytes"
   )

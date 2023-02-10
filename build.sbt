@@ -120,7 +120,6 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     libraryDependencies ++= jsoniterScalaAll.value ++ List(
       upickle.value,
-      betterFiles.value.cross(CrossVersion.for3Use2_13)
     ),
     jolSettings,
   )
@@ -185,7 +184,6 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
         "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
         "com.google.crypto.tink"      % "tink"                   % "1.7.0",
         "org.conscrypt"               % "conscrypt-openjdk-uber" % "2.5.2",
-        betterFiles.value,
       )
     },
   )

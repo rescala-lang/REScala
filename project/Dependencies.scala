@@ -8,7 +8,6 @@ import sbt.Keys.*
 object Dependencies {
 
   object Versions {
-    val betterFiles   = "3.9.1"
     val directories   = "26"
     val jetty         = "11.0.13"
     val jol           = "0.16"
@@ -36,8 +35,6 @@ object Dependencies {
 
   import Dependencies.Versions as V
 
-  val betterFiles =
-    Def.setting(("com.github.pathikrit" %% "better-files" % V.betterFiles).cross(CrossVersion.for3Use2_13))
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
   val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
