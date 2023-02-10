@@ -51,12 +51,11 @@ class FbdcExampleData {
 
   type RespValue = Option[TimedVal[Res]]
 
-  given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
+  given Ordering[VectorClock]    = VectorClock.vectorClockTotalOrdering
   given DottedLattice[RespValue] = DottedLattice.liftLattice
   given HasDots[RespValue] with {
     override def dots(a: RespValue): Dots = Dots.empty
   }
-
 
   case class State(
       requests: CausalQueue[Req],
@@ -64,25 +63,31 @@ class FbdcExampleData {
       providers: ObserveRemoveMap[Id, AddWinsSet[String]]
   ) derives DottedLattice, HasDots {
 
+    type Mod[T] = PermCausalMutate[T, T] ?=> PermId[T] ?=> T => Unit
+
     class Forward[T](select: State => T, wrap: T => State)(using pcm: PermCausalMutate[State, State], pi: PermId[State])
         extends PermId[T]
         with PermCausalMutate[T, T] {
       override def replicaId(c: T): Id = pi.replicaId(State.this)
+
       override def mutateContext(container: T, withContext: Dotted[T]): T =
         pcm.mutateContext(State.this, withContext.map(wrap))
         container
-      override def query(c: T): T      = select(pcm.query(State.this))
+
+      override def query(c: T): T = select(pcm.query(State.this))
+
       override def context(c: T): Dots = pcm.context(State.this)
     }
-
-    type Mod[T] = PermCausalMutate[T, T] ?=> PermId[T] ?=> T => Unit
 
     def modReq(using pcm: PermCausalMutate[State, State], pi: PermId[State])(fun: Mod[CausalQueue[Req]]) = {
       val x = new Forward(_.requests, State(_, Bottom.empty, Bottom.empty))
       fun(using x)(using x)(requests)
     }
 
-    def modRes(using pcm: PermCausalMutate[State, State], pi: PermId[State])(fun: Mod[ObserveRemoveMap[String, RespValue]]) = {
+    def modRes(using
+        pcm: PermCausalMutate[State, State],
+        pi: PermId[State]
+    )(fun: Mod[ObserveRemoveMap[String, RespValue]]) = {
       val x = new Forward(_.responses, State(Bottom.empty, _, Bottom.empty))
       fun(using x)(using x)(responses)
     }
@@ -115,13 +120,12 @@ class FbdcExampleData {
     case res: Res.Fortune => res
   })
 
-
-  val latestNorthwind = responses.map(_.get("northwind").flatten.map(_.payload).collect{
+  val latestNorthwind = responses.map(_.get("northwind").flatten.map(_.payload).collect {
     case res: Res.Northwind => res
   })
 
   def requestsOf[T: ClassTag] = myRequests.map(_.collect {
-    case req@ QueueElement(x: T, _, _) => req.copy(value = x)
+    case req @ QueueElement(x: T, _, _) => req.copy(value = x)
   })
 
   val providers = dataManager.mergedState.map(_.store.providers)

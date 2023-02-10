@@ -19,9 +19,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import kofre.base.Lattice.optionLattice
 
-import java.util.Timer
+import java.util.{Objects, Timer}
 
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
+
+class Key[T](name: String)(using lat: DottedLattice[T], hado: HasDots[T])
+
+case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val replicaId: Id,
@@ -62,7 +66,6 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
   val changes: Event[TransferState] = changeEvt
   val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts.anon }
   val currentContext                = mergedState.map(_.context)
-
 
   val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 

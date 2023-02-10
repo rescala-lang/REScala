@@ -27,7 +27,7 @@ object Epoche {
     def map(using PermMutate)(f: E => E): C = write(f(current.value))
   }
 
-  given epocheAsUIJDLattice[E: Lattice]: Lattice[Epoche[E]] = new Lattice[Epoche[E]] {
+  given latticeInstance[E: Lattice]: Lattice[Epoche[E]] = new Lattice[Epoche[E]] {
 
     override def lteq(left: Epoche[E], right: Epoche[E]): Boolean = (left, right) match {
       case (Epoche(cLeft, vLeft), Epoche(cRight, vRight)) =>
