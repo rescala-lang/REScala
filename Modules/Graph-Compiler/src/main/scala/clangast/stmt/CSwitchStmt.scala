@@ -9,7 +9,7 @@ case class CSwitchStmt(cond: CExpr, cases: List[CSwitchCase]) extends CStmt {
   override def textgen: String =
     s"""
        |switch (${cond.textgen}) {
-       |${cases.map(_.textgen).mkString("\n\n").indent(2).stripTrailing()}
+       |${cases.map(_.textgen).mkString("\n\n").linesIterator.map(l => s"  $l").mkString("\n").stripTrailing()}
        |}
     """.strip().stripMargin
 

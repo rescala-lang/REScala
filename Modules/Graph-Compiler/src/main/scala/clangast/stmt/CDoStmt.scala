@@ -9,7 +9,7 @@ case class CDoStmt(cond: CExpr, body: List[CStmt]) extends CStmt {
   override def textgen: String =
     s"""
        |do {
-       |${body.map(_.textgen).mkString("\n").indent(2).stripTrailing()}
+       |${body.map(_.textgen).mkString("\n").linesIterator.map(l => s"  $l").mkString("\n").stripTrailing()}
        |} while(${cond.textgen})
     """.strip().stripMargin
 

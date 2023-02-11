@@ -9,7 +9,7 @@ case class CCaseStmt(cond: CExpr, body: List[CStmt]) extends CSwitchCase {
   override def textgen: String =
     s"""
        |case ${cond.textgen}:
-       |${body.map(_.textgen).mkString("\n").indent(2).stripTrailing()}
+       |${body.map(_.textgen).mkString("\n").linesIterator.map(l => s"  $l").mkString("\n").stripTrailing()}
     """.strip().stripMargin
 
   override def toExpr(using Quotes): Expr[CCaseStmt] = {
