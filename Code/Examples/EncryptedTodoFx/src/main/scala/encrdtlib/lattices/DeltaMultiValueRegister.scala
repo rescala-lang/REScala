@@ -8,9 +8,9 @@ object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = Dotted[DotFun[V]]
 
   def deltaWrite[V](
-                     value: V,
-                     replicaId: Uid,
-                     register: DeltaMultiValueRegisterLattice[V]
+      value: V,
+      replicaId: Uid,
+      register: DeltaMultiValueRegisterLattice[V]
   ): DeltaMultiValueRegisterLattice[V] = {
 
     val dot = register.context.clockOf(replicaId).get.advance

@@ -25,7 +25,7 @@ object Northwind {
       def query(q: String): List[Map[String, String]] =
         val st = connection.createStatement()
         try
-          val res = st.executeQuery(q)
+          val res     = st.executeQuery(q)
           val meta    = res.getMetaData
           val columns = (1 to meta.getColumnCount).map(meta.getColumnName)
           val lb      = ListBuffer.empty[Map[String, String]]

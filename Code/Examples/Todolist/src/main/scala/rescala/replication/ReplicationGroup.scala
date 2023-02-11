@@ -25,8 +25,8 @@ class ReplicationGroup[Api <: RescalaInterface, A](
 ) {
   import api.*
 
-  private var localListeners: Map[String, Evt[Dotted[A]]] = Map.empty
-  private var unhandled: Map[String, Map[String, Dotted[A]]]     = Map.empty
+  private var localListeners: Map[String, Evt[Dotted[A]]]    = Map.empty
+  private var unhandled: Map[String, Map[String, Dotted[A]]] = Map.empty
 
   registry.bindSbj(binding) { (remoteRef: RemoteRef, payload: DeltaFor[A]) =>
     localListeners.get(payload.name) match {

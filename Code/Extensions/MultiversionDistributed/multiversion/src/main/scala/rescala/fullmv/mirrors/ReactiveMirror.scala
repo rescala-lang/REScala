@@ -44,7 +44,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
       override val info: ReInfo
   ) extends Derived
       with FullMVState[Nothing, FullMVTurn] {
-    type State[V] = self.State[V]
+    type State[V]       = self.State[V]
     override type Value = Nothing
     override protected[rescala] val state = this
     override def toString: String         = s"Mirror${info.description}"
@@ -95,10 +95,10 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
         unchange: Value => Value
     ): NotificationBranchResult.ReevOutBranchResult[FullMVTurn, Derived.of[State]] = ???
 
-    override def dynamicBefore(txn: FullMVTurn): Nothing                                         = ???
-    override def staticBefore(txn: FullMVTurn): Nothing                                          = ???
-    override def dynamicAfter(txn: FullMVTurn): Nothing                                          = ???
-    override def staticAfter(txn: FullMVTurn): Nothing                                           = ???
+    override def dynamicBefore(txn: FullMVTurn): Nothing                                                   = ???
+    override def staticBefore(txn: FullMVTurn): Nothing                                                    = ???
+    override def dynamicAfter(txn: FullMVTurn): Nothing                                                    = ???
+    override def staticAfter(txn: FullMVTurn): Nothing                                                     = ???
     override def discover(txn: FullMVTurn, add: Derived.of[State]): (List[FullMVTurn], Option[FullMVTurn]) = ???
     override def drop(txn: FullMVTurn, remove: Derived.of[State]): (List[FullMVTurn], Option[FullMVTurn])  = ???
     override def retrofitSinkFrames(

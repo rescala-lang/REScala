@@ -291,7 +291,10 @@ object CreationTicket {
     new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
   implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket(new ScopeSearch[S](Left(tx)), line)
-  implicit def fromName[State[_]](str: String)(implicit scopeSearch: ScopeSearch[State], info: ReInfo): CreationTicket[State] =
+  implicit def fromName[State[_]](str: String)(implicit
+      scopeSearch: ScopeSearch[State],
+      info: ReInfo
+  ): CreationTicket[State] =
     new CreationTicket(scopeSearch, info.derive(str))
 
 }

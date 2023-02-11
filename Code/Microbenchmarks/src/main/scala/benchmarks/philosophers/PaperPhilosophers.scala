@@ -63,39 +63,39 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
   // Dynamic Sight
   val sights =
     for (avoidStaticOptimization <- 0 until size) yield {
-        dynamicity match {
-          case Dynamicity.Dynamic => Signal.dynamic[Sight] {
-              val idx     = avoidStaticOptimization
-              val prevIdx = (idx - 1 + size) % size
-              forks(prevIdx)() match {
-                case Free =>
-                  forks(idx)() match {
-                    case Taken(neighbor) => Blocked(neighbor)
-                    case Free            => Ready
-                  }
-                case Taken(by) =>
-                  if (by == idx) {
-                    assert(forks(idx)() == Taken(idx), s"sight ${idx + 1} glitched")
-                    Done
-                  } else {
-                    Blocked(by)
-                  }
-              }
+      dynamicity match {
+        case Dynamicity.Dynamic => Signal.dynamic[Sight] {
+            val idx     = avoidStaticOptimization
+            val prevIdx = (idx - 1 + size) % size
+            forks(prevIdx)() match {
+              case Free =>
+                forks(idx)() match {
+                  case Taken(neighbor) => Blocked(neighbor)
+                  case Free            => Ready
+                }
+              case Taken(by) =>
+                if (by == idx) {
+                  assert(forks(idx)() == Taken(idx), s"sight ${idx + 1} glitched")
+                  Done
+                } else {
+                  Blocked(by)
+                }
             }
-          case Dynamicity.SemiStatic => Signal.dynamic[Sight] {
-              val idx     = avoidStaticOptimization
-              val prevIdx = (idx - 1 + size) % size
-              computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
-            }
-          case Dynamicity.Static =>
-            val idx       = avoidStaticOptimization
-            val prevIdx   = (idx - 1 + size) % size
-            val leftFork  = forks(prevIdx)
-            val rightFork = forks(idx)
-            Signal[Sight] {
-              computeForkStatic(idx, (leftFork(), rightFork()))
-            }
-        }
+          }
+        case Dynamicity.SemiStatic => Signal.dynamic[Sight] {
+            val idx     = avoidStaticOptimization
+            val prevIdx = (idx - 1 + size) % size
+            computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
+          }
+        case Dynamicity.Static =>
+          val idx       = avoidStaticOptimization
+          val prevIdx   = (idx - 1 + size) % size
+          val leftFork  = forks(prevIdx)
+          val rightFork = forks(idx)
+          Signal[Sight] {
+            computeForkStatic(idx, (leftFork(), rightFork()))
+          }
+      }
 
     }
 
@@ -161,7 +161,7 @@ trait EventPyramidTopper {
 
   val anySuccess = successes.reduce(_ || _)
   val successCount: Signal[Int] =
-      anySuccess.fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"successCount"))
+    anySuccess.fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"successCount"))
   override def total: Int = successCount.readValueOnce
 }
 

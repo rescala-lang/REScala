@@ -7,7 +7,7 @@ import kofre.syntax.{PermCausal, PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
 case class Dotted[A](store: A, context: Dots) {
-  def map[B](f: A => B): Dotted[B]    = Dotted(f(store), context)
+  def map[B](f: A => B): Dotted[B] = Dotted(f(store), context)
 }
 
 /** Implicit aliases in companion object for search path */

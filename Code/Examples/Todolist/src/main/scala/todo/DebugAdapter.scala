@@ -25,7 +25,7 @@ object DebugAdapter {
     override def encodeValue(x: Tracing.ValueWrapper, out: JsonWriter): Unit =
       x.v.asInstanceOf[Pulse[_]].toOption match
         case Some(v: scalatags.generic.Modifier[_]) => out.writeVal(x.v.toString)
-        case _ => out.writeVal("<some html>")
+        case _                                      => out.writeVal("<some html>")
 
     override def nullValue: Tracing.ValueWrapper = null
   given dataCodec: JsonValueCodec[Tracing.Data] = JsonCodecMaker.make

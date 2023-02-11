@@ -32,20 +32,18 @@ enum Res:
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
-
 class Focus[Inner: DottedLattice, Outer](outer: Dotted[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
 
   type Cont[T] = DeltaBuffer[Dotted[T]]
 
   type Mod[T, C] = PermCausalMutate[C, T] ?=> C => C
 
-
   def apply(using pcm: PermCausalMutate[Dotted[Outer], Outer])(fun: Mod[Inner, Cont[Inner]]): Dotted[Outer] = {
     val resBuffer = fun(using DeltaBuffer.dottedPermissions[Inner])(
       DeltaBuffer(outer.map(extract))
     )
     resBuffer.deltaBuffer.reduceLeftOption(_ merge _) match
-      case None => outer
+      case None        => outer
       case Some(delta) => pcm.mutateContext(outer, delta.map(wrap))
   }
 }
@@ -82,10 +80,9 @@ class FbdcExampleData {
   ) derives DottedLattice, HasDots, Bottom
 
   extension (ds: Dotted[State])
-    def modReq = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
-    def modRes = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
+    def modReq          = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
+    def modRes          = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
     def modParticipants = Focus(ds)(_.providers, d => Bottom.empty.copy(providers = d))
-
 
   val requests = dataManager.mergedState.map(_.store.requests.values)
   val myRequests =

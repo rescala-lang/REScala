@@ -27,7 +27,7 @@ class PNCounterBench {
     counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", PosNegCounter.zero).inc()(using "0".asId)) {
       case (c, n) =>
         given rid: kofre.syntax.ReplicaId = kofre.base.Uid.predefined(n.toString)
-        val delta = PosNegCounter.zero.inc()
+        val delta                         = PosNegCounter.zero.inc()
         c.applyDelta(rid.replicaId, delta)
     }
   }

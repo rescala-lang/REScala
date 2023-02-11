@@ -28,8 +28,8 @@ class Key[T](name: String)(using lat: DottedLattice[T], hado: HasDots[T])
 case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
-                                                                          val replicaId: Uid,
-                                                                          val registry: Registry
+    val replicaId: Uid,
+    val registry: Registry
 ) {
 
   given ReplicaId = replicaId

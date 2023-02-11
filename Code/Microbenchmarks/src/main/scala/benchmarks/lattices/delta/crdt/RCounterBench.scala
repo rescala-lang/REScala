@@ -23,12 +23,13 @@ class RCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
-      case (c, n) =>
-        given rid: ReplicaId = n.toString.asId
-        val delta = Dotted(ResettableCounter.zero).increment()
-        c.applyDelta(rid.replicaId, delta)
-    }
+    counter =
+      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
+        case (c, n) =>
+          given rid: ReplicaId = n.toString.asId
+          val delta            = Dotted(ResettableCounter.zero).increment()
+          c.applyDelta(rid.replicaId, delta)
+      }
   }
 
   @Benchmark

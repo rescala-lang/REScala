@@ -13,7 +13,7 @@ object DataGenerator {
   given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
-    ids: Set[Uid]      <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
+    ids: Set[Uid]     <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 

@@ -14,10 +14,10 @@ case class Token(id: Long, owner: Uid, value: String) {
 }
 
 case class RaftTokens(
-                       replicaID: Uid,
-                       tokenAgreement: RaftState[Token],
-                       want: DeltaBuffer[Dotted[AddWinsSet[Token]]],
-                       tokenFreed: DeltaBuffer[Dotted[AddWinsSet[Token]]]
+    replicaID: Uid,
+    tokenAgreement: RaftState[Token],
+    want: DeltaBuffer[Dotted[AddWinsSet[Token]]],
+    tokenFreed: DeltaBuffer[Dotted[AddWinsSet[Token]]]
 ) {
 
   given ReplicaId = replicaID

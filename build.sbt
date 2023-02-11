@@ -159,7 +159,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
       val tp         = target.value.toPath
       val template   = IO.read(bp.resolve("index.template.html").toFile)
       val targetpath = tp.resolve("index.html")
-      val jsrel = targetpath.getParent.relativize(jspath.toPath)
+      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
       IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
       IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
       targetpath.toFile

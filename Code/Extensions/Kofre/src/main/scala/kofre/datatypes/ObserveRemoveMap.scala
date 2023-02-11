@@ -47,9 +47,9 @@ object ObserveRemoveMap {
     def queryAllEntries(using PermQuery): Iterable[V] = current.inner.values
     def entries(using PermQuery): Iterable[(K, V)]    = current.inner.view
     def mutateKey(using
-                  PermCausalMutate,
-                  ReplicaId,
-                  Bottom[V]
+        PermCausalMutate,
+        ReplicaId,
+        Bottom[V]
     )(k: K, m: (Uid, Dotted[V]) => Dotted[V]): C = {
       val v = current.inner.getOrElse(k, Bottom[V].empty)
 

@@ -90,8 +90,7 @@ object Settings {
   )
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
-  val resolverS01 = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
-
+  val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
 
   val noPublish = Seq(
     publishArtifact   := false,

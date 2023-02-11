@@ -26,9 +26,9 @@ object RubisInterface {
     val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
 
     def make(
-              userRequests: AddWinsSet[(User, Uid)] = bottom._1,
-              users: Map[User, Uid] = bottom._2,
-              auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
+        userRequests: AddWinsSet[(User, Uid)] = bottom._1,
+        users: Map[User, Uid] = bottom._2,
+        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)
   }
 

@@ -28,7 +28,7 @@ class MVRegisterBench {
     reg = (0 until numWrites).foldLeft(NamedDeltaBuffer.dotted("-1", MultiVersionRegister.empty[Int])) {
       case (r, i) =>
         given rid: kofre.syntax.ReplicaId = i.toString.asId
-        val delta = Dotted(MultiVersionRegister.empty[Int]).write(i)
+        val delta                         = Dotted(MultiVersionRegister.empty[Int]).write(i)
         r.applyDelta(rid.replicaId, delta)
     }
   }

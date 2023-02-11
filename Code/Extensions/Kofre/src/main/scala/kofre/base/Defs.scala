@@ -10,7 +10,7 @@ object Uid:
   def predefined(s: String): Uid = s
   def unwrap(id: Uid): String    = id
   def zero: Uid                  = ""
-  val random: Random            = scala.util.Random()
+  val random: Random             = scala.util.Random()
 
   extension (s: String) def asId: Uid = s
 

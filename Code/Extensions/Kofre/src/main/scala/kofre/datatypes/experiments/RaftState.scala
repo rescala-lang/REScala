@@ -6,9 +6,9 @@ import kofre.datatypes.experiments.RaftState.*
 import scala.util.Try
 
 case class RaftState[T](
-                         participants: Set[Uid] = Set.empty,
-                         leaderVotes: Set[Vote] = Set.empty,
-                         valueProposals: Set[Propose[T]] = Set.empty[Propose[T]]
+    participants: Set[Uid] = Set.empty,
+    leaderVotes: Set[Vote] = Set.empty,
+    valueProposals: Set[Propose[T]] = Set.empty[Propose[T]]
 ) {
   val consensusSize: Int = (participants.size + 2) / 2
 

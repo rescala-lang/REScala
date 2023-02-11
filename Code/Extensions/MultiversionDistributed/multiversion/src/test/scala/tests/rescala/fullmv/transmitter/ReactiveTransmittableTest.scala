@@ -85,11 +85,9 @@ class ReactiveTransmittableTest extends AnyFunSuite {
       import loci.serializer.jsoniterScala._
       import ReactiveTransmittable._
 
-
       import CodecHelper.given
 
       given JsonValueCodec[(String, Int)] = JsonCodecMaker.make
-
 
       val branch1 = Binding[Signal[(String, Int)]]("branch1")
       val branch2 = Binding[Signal[(String, Int)]]("branch2")

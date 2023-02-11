@@ -12,14 +12,14 @@ case class VectorClock(timestamps: Map[Uid, Time]) {
 
   def dotOf(replicaId: Uid): Dot = Dot(replicaId, timeOf(replicaId))
 
-  def inc(id: Uid): VectorClock    = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
+  def inc(id: Uid): VectorClock   = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
   def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))
   def <(o: VectorClock): Boolean  = this <= o && timestamps.exists((k, v) => v < o.timestamps.getOrElse(k, 0L))
 }
 
 object VectorClock {
 
-  def zero: VectorClock                      = VectorClock(Map.empty)
+  def zero: VectorClock                       = VectorClock(Map.empty)
   def fromMap(m: Map[Uid, Time]): VectorClock = VectorClock(m)
 
   given lattice: Lattice[VectorClock] =

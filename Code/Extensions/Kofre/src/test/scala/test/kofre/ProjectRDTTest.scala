@@ -109,7 +109,7 @@ class ProjectRDTTest extends munit.FunSuite {
 
   test("delta filtering") {
     val init: Dotted[Project] = Dotted(Project.empty)
-    val delta                        = init.set_name("some project")
+    val delta                 = init.set_name("some project")
 
     val dlat = Lattice[Dotted[Project]]
 

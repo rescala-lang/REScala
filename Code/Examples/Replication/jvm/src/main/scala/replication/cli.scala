@@ -10,7 +10,6 @@ import replication.fbdc.FbdcCli
 
 import java.nio.file.Path
 
-
 case class CliArgs(
     calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
     dtn: Subcommand[Unit] = Subcommand.empty(),

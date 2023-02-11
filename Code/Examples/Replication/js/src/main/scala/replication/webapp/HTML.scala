@@ -134,16 +134,17 @@ object HTML {
         }
       ),
       p(
-      table(
-        exdat.latestNorthwind.map {
-          case None => Nil
-          case Some(res) =>
-            val keys = res.result.head.keys.toList.sorted
-            thead(keys.map(th(_)).toList: _*) ::
-            res.result.map { row =>
-              tr(keys.map(k => td(row(k))))
-            }
-        }.asModifierL
+        table(
+          exdat.latestNorthwind.map {
+            case None => Nil
+            case Some(res) =>
+              val keys = res.result.head.keys.toList.sorted
+              thead(keys.map(th(_)).toList: _*) ::
+              res.result.map { row =>
+                tr(keys.map(k => td(row(k))))
+              }
+          }.asModifierL
+        )
       )
-    ))
+    )
 }

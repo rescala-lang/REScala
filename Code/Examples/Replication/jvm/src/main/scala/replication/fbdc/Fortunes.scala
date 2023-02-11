@@ -24,7 +24,10 @@ object Fortunes {
           val reqq = reqqI.mutable
           fortunes.foreach { q =>
             val resp = processFortune(q.value)
-            reqq.observeRemoveMap.insert(using dataManager.replicaId)("fortune", Some(LastWriterWins.now(resp, exampleData.replicaId)))
+            reqq.observeRemoveMap.insert(using dataManager.replicaId)(
+              "fortune",
+              Some(LastWriterWins.now(resp, exampleData.replicaId))
+            )
           }
           reqq.result
         }

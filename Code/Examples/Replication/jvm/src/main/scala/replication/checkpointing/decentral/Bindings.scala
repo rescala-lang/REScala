@@ -22,12 +22,12 @@ object Bindings {
   implicit val checkpointCodec: JsonValueCodec[Checkpoint] = JsonCodecMaker.make
 
   implicit val setStateMessageCodec: JsonValueCodec[SetState] = JsonCodecMaker.make
-  given JsonValueCodec[Map[Uid, Int]]                          = JsonCodecMaker.make
+  given JsonValueCodec[Map[Uid, Int]]                         = JsonCodecMaker.make
 
   implicit val checkpointMessageCodec: JsonValueCodec[CheckpointMessage] = JsonCodecMaker.make
 
   implicit val transmittableSetState: IdenticallyTransmittable[SetState] = IdenticallyTransmittable()
-  given IdenticallyTransmittable[Map[Uid, Int]]                           = IdenticallyTransmittable()
+  given IdenticallyTransmittable[Map[Uid, Int]]                          = IdenticallyTransmittable()
 
   implicit val transmittableCheckpointMessage: IdenticallyTransmittable[CheckpointMessage] = IdenticallyTransmittable()
 

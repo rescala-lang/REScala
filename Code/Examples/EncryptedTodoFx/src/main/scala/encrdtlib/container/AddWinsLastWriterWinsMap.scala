@@ -6,8 +6,8 @@ import kofre.base.{Uid, Lattice}
 import kofre.datatypes.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](
-                                      val replicaId: Uid,
-                                      initialState: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] =
+    val replicaId: Uid,
+    initialState: AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]] =
       AddWinsMapLattice[K, LastWriterWins[CausalTimeTag, V]]()
 ) {
 
