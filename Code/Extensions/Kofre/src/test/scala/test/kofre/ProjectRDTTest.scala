@@ -3,7 +3,7 @@ package test.kofre
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, Named, OpsSyntaxHelper, ReplicaId}
+import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(

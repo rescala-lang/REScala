@@ -22,8 +22,8 @@ class ContextBench {
   var rep1Set: Dots        = _
   var rep1SetPlusOne: Dots = _
   var rep2Set: Dots        = _
-  val rep1id               = Id.gen()
-  val rep2id               = Id.gen()
+  val rep1id               = Uid.gen()
+  val rep2id               = Uid.gen()
   var rep1single: Dots     = _
 
   private def makeRep(rep: Uid, mul: Long, off: Long, len: Long): Dots = {

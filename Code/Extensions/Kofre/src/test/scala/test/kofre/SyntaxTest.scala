@@ -8,7 +8,6 @@ import kofre.datatypes.EnableWinsFlag
 import kofre.dotted.{Dotted, HasDots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
-import kofre.syntax.Named
 import kofre.syntax.ReplicaId
 import kofre.base.Uid.asId
 

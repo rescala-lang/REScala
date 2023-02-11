@@ -9,7 +9,7 @@ class DeltaBufferDottedTest extends munit.FunSuite {
 
   test("basic interaction") {
 
-    given ReplicaId = Id.gen()
+    given ReplicaId = Uid.gen()
 
     val dbe = DeltaBuffer[Dotted[EnableWinsFlag]](Dotted(EnableWinsFlag.empty))
 
