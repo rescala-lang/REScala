@@ -34,7 +34,7 @@ object PosNegCounter {
       val neg = current.neg.growOnlyCounter.inc()
       PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 
-    def add(using ReplicaId)(using PermMutate)(delta: Int): C = {
+    def add(delta: Int): IdMut[C] = {
       if (delta > 0) PosNegCounter(current.pos.growOnlyCounter.add(delta), GrowOnlyCounter.zero)
       else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.growOnlyCounter.add(-delta))
       else PosNegCounter.zero
