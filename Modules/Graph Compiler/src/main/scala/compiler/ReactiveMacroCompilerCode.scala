@@ -78,7 +78,7 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
     }
 
     val gc = new GraphCompiler(ctx.reactivesList, externalSources, outputReactives, appName.valueOrAbort)
-    gc.writeIntoDir("out/" + appName.valueOrAbort, "gcc")
+    gc.writeIntoDir("target/graphCompile/" + appName.valueOrAbort, "gcc")
 
     '{ () }
   }
