@@ -21,14 +21,14 @@ object Codecs {
   implicit val dotKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
     override def decodeKey(in: JsonReader): Dot = {
       val Array(time, id) = in.readKeyAsString().split("-", 2)
-      Dot(Id.predefined(id), time.toLong)
+      Dot(Uid.predefined(id), time.toLong)
     }
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
   }
   implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
   implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
-    override def decodeKey(in: JsonReader): Uid           = Id.predefined(in.readKeyAsString())
-    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Id.unwrap(x))
+    override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
+    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
 
   @nowarn()
   implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =

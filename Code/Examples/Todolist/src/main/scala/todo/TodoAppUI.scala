@@ -4,7 +4,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.datatypes.ReplicatedList
 import loci.registry.Binding
-import loci.serializer.jsoniterScala.*
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
 import rescala.default.Events.CBResult

@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
 
-  val replicaId: Uid = Id.gen()
+  val replicaId: Uid = Uid.gen()
 
   val registry = new Registry
 
