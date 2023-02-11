@@ -1,3 +1,10 @@
+== v.next
+
+• move errant new transactions during propagation to observer phase
+• partially undo bundles to improve doc compile time efficiency
+• new Fold now correctly handles dynamic dependencies
+
+
 == v0.32.0
 date = 2022-12-31
 
