@@ -1,6 +1,0 @@
-*.class
-*.log
-.bsp
-.idea
-target
-package-lock.json
