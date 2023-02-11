@@ -3,14 +3,24 @@ import RescalaDependencies.*
 import Settings.*
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
-  examples,
-  kofre.js,
-  kofre.jvm,
-  microbench,
+  // core
   rescala.js,
   rescala.jvm,
+  rescala.native,
   rescalafx,
   reswing,
+  kofre.js,
+  kofre.jvm,
+  kofre.native,
+  aead.js,
+  aead.jvm,
+  // research & eval
+  compileMacros.js,
+  compileMacros.jvm,
+  compileMacros.native,
+  microbench,
+  // examples & case studies
+  examples,
   todolist,
   encryptedTodo,
   replicationExamples.js,
@@ -55,9 +65,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     jsEnvDom,
   )
 
-// =====================================================================================
-// Extensions
-
 lazy val reswing = project.in(file("Modules/Swing"))
   .settings(scalaVersion_3, noPublish, libraryDependencies += scalaSwing.value)
   .dependsOn(rescala.jvm)
@@ -73,27 +80,6 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
     publishSonatype,
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
   )
-
-lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
-  .in(file("Modules/Graph Compiler"))
-  .settings(
-    scalaVersion_3,
-    libraryDependencies ++= jsoniterScalaAll.value
-  )
-  .dependsOn(rescala)
-
-lazy val microbench = project.in(file("Modules/Microbenchmarks"))
-  .enablePlugins(JmhPlugin)
-  .settings(
-    scalaVersion_3,
-    noPublish,
-    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= jsoniterScalaAll.value ++ List(
-      upickle.value,
-    ),
-    jolSettings,
-  )
-  .dependsOn(rescala.jvm, kofre.jvm)
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
@@ -116,6 +102,30 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
       "@types/libsodium-wrappers" -> "0.7.10"
     )
   )
+
+// =====================================================================================
+// evaluation and experimental
+
+lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
+  .in(file("Modules/Graph Compiler"))
+  .settings(
+    scalaVersion_3,
+    libraryDependencies ++= jsoniterScalaAll.value
+  )
+  .dependsOn(rescala)
+
+lazy val microbench = project.in(file("Modules/Microbenchmarks"))
+  .enablePlugins(JmhPlugin)
+  .settings(
+    scalaVersion_3,
+    noPublish,
+    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
+    libraryDependencies ++= jsoniterScalaAll.value ++ List(
+      upickle.value,
+    ),
+    jolSettings,
+  )
+  .dependsOn(rescala.jvm, kofre.jvm)
 
 // =====================================================================================
 // Examples
