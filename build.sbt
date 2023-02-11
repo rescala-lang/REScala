@@ -18,7 +18,7 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
 )
 
 lazy val rescalaCore =
-  project.in(file("Code")).settings(
+  project.in(file("Modules")).settings(
     crossScalaVersions := Nil,
     noPublish,
     scalaVersion_3
@@ -28,7 +28,7 @@ lazy val rescalaCore =
     rescala.native,
   )
 
-lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Code/Main"))
+lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     commonCrossBuildVersions,
     scalaVersionFromEnv,
@@ -58,16 +58,16 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
 // =====================================================================================
 // Extensions
 
-lazy val reswing = project.in(file("Code/Extensions/RESwing"))
+lazy val reswing = project.in(file("Modules/Swing"))
   .settings(scalaVersion_3, noPublish, libraryDependencies += scalaSwing.value)
   .dependsOn(rescala.jvm)
 
-lazy val rescalafx = project.in(file("Code/Extensions/javafx"))
+lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(rescala.jvm)
   .settings(scalaVersion_3, noPublish, scalaFxDependencies, fork := true)
 
 lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
-  .in(file("Code/Extensions/Kofre"))
+  .in(file("Modules/RDTs"))
   .settings(
     scalaVersion_3,
     publishSonatype,
@@ -75,14 +75,14 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
   )
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
-  .in(file("Code/Extensions/CompileMacros"))
+  .in(file("Modules/Graph Compiler"))
   .settings(
     scalaVersion_3,
     libraryDependencies ++= jsoniterScalaAll.value
   )
   .dependsOn(rescala)
 
-lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistributed/multiversion"))
+lazy val distributedFullmv = project.in(file("Modules/Multiversion Distributed/multiversion"))
   .settings(
     scalaVersion_3,
     noPublish,
@@ -96,14 +96,14 @@ lazy val distributedFullmv = project.in(file("Code/Extensions/MultiversionDistri
   )
   .dependsOn(rescala.jvm % "compile->compile;test->test")
 
-lazy val distributedFullMVExamples = project.in(file("Code/Extensions/MultiversionDistributed/examples"))
+lazy val distributedFullMVExamples = project.in(file("Modules/Multiversion Distributed/examples"))
   .enablePlugins(JmhPlugin)
   .settings(scalaVersion_3, noPublish)
   .dependsOn(distributedFullmv % "test->test")
   .dependsOn(distributedFullmv % "compile->test")
   .dependsOn(rescala.jvm % "test->test")
 
-lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/MultiversionDistributed/benchmarks"))
+lazy val distributedFullMVBenchmarks = project.in(file("Modules/Multiversion Distributed/benchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     scalaVersion_3,
@@ -112,7 +112,7 @@ lazy val distributedFullMVBenchmarks = project.in(file("Code/Extensions/Multiver
   )
   .dependsOn(distributedFullmv % "compile->test")
 
-lazy val microbench = project.in(file("Code/Microbenchmarks"))
+lazy val microbench = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     scalaVersion_3,
@@ -125,7 +125,7 @@ lazy val microbench = project.in(file("Code/Microbenchmarks"))
   )
   .dependsOn(rescala.jvm, kofre.jvm)
 
-lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Code/Extensions/Aead"))
+lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scalaVersion_3,
     noPublish,
@@ -150,7 +150,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Code/Extensions/A
 // =====================================================================================
 // Examples
 
-lazy val examples = project.in(file("Code/Examples/examples"))
+lazy val examples = project.in(file("Modules/Example Misc 2015"))
   .dependsOn(rescala.jvm, reswing)
   .settings(
     scalaVersion_3,
@@ -162,7 +162,7 @@ lazy val examples = project.in(file("Code/Examples/examples"))
     )
   )
 
-lazy val todolist = project.in(file("Code/Examples/Todolist"))
+lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(kofre.js, rescala.js)
   .settings(
@@ -188,7 +188,7 @@ lazy val todolist = project.in(file("Code/Examples/Todolist"))
     }
   )
 
-lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
+lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
   .dependsOn(kofre.jvm)
   .settings(
@@ -211,7 +211,7 @@ lazy val encryptedTodo = project.in(file("Code/Examples/EncryptedTodoFx"))
   )
 
 lazy val replicationExamples =
-  crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Code/Examples/Replication"))
+  crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
     .dependsOn(rescala, kofre)
     .settings(
       scalaVersion_3,
