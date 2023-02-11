@@ -46,7 +46,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def closeAuction(auctionId: AID)(using PermIdMutate): C = {
+    def closeAuction(auctionId: AID)(using PermMutate): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
@@ -56,7 +56,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def openAuction(auctionId: AID)(using PermIdMutate): C = {
+    def openAuction(auctionId: AID)(using PermMutate): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]

@@ -22,7 +22,7 @@ object BoundedCounter {
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, BoundedCounter](container) {
 
-    def addParticipants(part: Set[Uid])(using PermIdMutate): C = neutral.copy(participants = part).mutator
+    def addParticipants(part: Set[Uid])(using PermMutate): C = neutral.copy(participants = part).mutator
 
     def allocated(using PermQuery)(id: Uid): Int  = current.allocations.inner.getOrElse(id, 0)
     def reserved(using ReplicaId, PermQuery): Int = reserved(replicaId)

@@ -51,7 +51,6 @@ trait PermCausalMutate[C, L] extends PermQuery[C, L]:
   */
 trait OpsTypes[C, L] {
   import kofre.syntax as s
-  final type PermIdMutate     = s.PermMutate[C, L]
   final type PermQuery        = s.PermQuery[C, L]
   final type PermMutate       = s.PermMutate[C, L]
   final type ReplicaId        = s.ReplicaId
