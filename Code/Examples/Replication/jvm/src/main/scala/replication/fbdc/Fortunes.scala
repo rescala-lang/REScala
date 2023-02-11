@@ -19,18 +19,16 @@ object Fortunes {
     exampleData.addCapability("fortune")
 
     exampleData.requestsOf[Req.Fortune].observe { fortunes =>
-      dataManager.transform { current =>
-        current.modRes { reqqI =>
-          val reqq = reqqI.mutable
-          fortunes.foreach { q =>
-            val resp = processFortune(q.value)
-            reqq.observeRemoveMap.insert(using dataManager.replicaId)(
-              "fortune",
-              Some(LastWriterWins.now(resp, exampleData.replicaId))
-            )
-          }
-          reqq.result
+      dataManager.modRes { reqqI =>
+        val reqq = reqqI.mutable
+        fortunes.foreach { q =>
+          val resp = processFortune(q.value)
+          reqq.observeRemoveMap.insert(using dataManager.replicaId)(
+            "fortune",
+            Some(LastWriterWins.now(resp, exampleData.replicaId))
+          )
         }
+        reqq.result
       }
     }
 

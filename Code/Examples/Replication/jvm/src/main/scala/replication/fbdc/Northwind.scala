@@ -43,15 +43,13 @@ object Northwind {
       exampleData.addCapability("northwind")
 
       exampleData.requestsOf[Req.Northwind].observe { queries =>
-        dataManager.transform { current =>
-          current.modRes { res =>
-            val ress = res.mutable
-            queries.foreach { q =>
-              val resp = Res.Northwind(q.value, query(q.value.query))
-              ress.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp, exampleData.replicaId)))
-            }
-            ress.result
+        dataManager.modRes { res =>
+          val ress = res.mutable
+          queries.foreach { q =>
+            val resp = Res.Northwind(q.value, query(q.value.query))
+            ress.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp, exampleData.replicaId)))
           }
+          ress.result
         }
       }
 

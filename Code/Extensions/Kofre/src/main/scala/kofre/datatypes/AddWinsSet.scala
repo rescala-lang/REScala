@@ -31,7 +31,7 @@ object AddWinsSet {
 
     def contains(using PermQuery)(elem: E): Boolean = current.inner.contains(elem)
 
-    def add(using ReplicaId, PermCausal, PermCausalMutate, PermQuery)(e: E): C = {
+    def add(using ReplicaId, PermCausalMutate)(e: E): C = {
       val dm        = current.inner
       val cc        = context
       val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
@@ -43,7 +43,7 @@ object AddWinsSet {
       ).mutator
     }
 
-    def addAll(using ReplicaId, PermCausal, PermCausalMutate, PermQuery)(elems: Iterable[E]): C = {
+    def addAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaId)

@@ -32,19 +32,19 @@ enum Res:
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
-class Focus[Inner: DottedLattice, Outer](outer: Dotted[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
+class Focus[Inner: DottedLattice, Outer](dm: DataManager[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
 
   type Cont[T] = DeltaBuffer[Dotted[T]]
 
   type Mod[T, C] = PermCausalMutate[C, T] ?=> C => C
 
-  def apply(using pcm: PermCausalMutate[Dotted[Outer], Outer])(fun: Mod[Inner, Cont[Inner]]): Dotted[Outer] = {
-    val resBuffer = fun(using DeltaBuffer.dottedPermissions[Inner])(
-      DeltaBuffer(outer.map(extract))
-    )
-    resBuffer.deltaBuffer.reduceLeftOption(_ merge _) match
-      case None        => outer
-      case Some(delta) => pcm.mutateContext(outer, delta.map(wrap))
+  def apply(using pcm: PermCausalMutate[Dotted[Outer], Outer])(fun: Mod[Inner, Cont[Inner]]): Unit = {
+    dm.transform { outer =>
+      val resBuffer = fun(DeltaBuffer(outer.map(extract)))
+      resBuffer.deltaBuffer.reduceLeftOption(_ merge _) match
+        case None        => outer
+        case Some(delta) => pcm.mutateContext(outer, delta.map(wrap))
+    }
   }
 }
 
@@ -64,10 +64,10 @@ case class State(
 ) derives DottedLattice, HasDots, Bottom
 
 object State:
-  extension (ds: Dotted[State])
-    def modReq          = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
-    def modRes          = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
-    def modParticipants = Focus(ds)(_.providers, d => Bottom.empty.copy(providers = d))
+  extension (dm: DataManager[State])
+    def modReq          = Focus(dm)(_.requests, d => Bottom.empty.copy(requests = d))
+    def modRes          = Focus(dm)(_.responses, d => Bottom.empty.copy(responses = d))
+    def modParticipants = Focus(dm)(_.providers, d => Bottom.empty.copy(providers = d))
 
 class FbdcExampleData {
   val replicaId = Uid.gen()
@@ -78,10 +78,8 @@ class FbdcExampleData {
     new DataManager[State](replicaId, registry)
 
   def addCapability(capability: String) =
-    dataManager.transform { current =>
-      current.modParticipants { part =>
-        part.observeRemoveMap.mutateKeyNamedCtx(replicaId)(_.add(using replicaId)(capability))
-      }
+    dataManager.modParticipants { part =>
+      part.observeRemoveMap.mutateKeyNamedCtx(replicaId)(_.add(using replicaId)(capability))
     }
 
   val requests = dataManager.mergedState.map(_.store.requests.values)
@@ -90,10 +88,8 @@ class FbdcExampleData {
     r.observe { reqs =>
       if reqs.nonEmpty
       then
-        dataManager.transform { state =>
-          state.modReq { aws =>
-            aws.removeBy { (req: Req) => req.executor == replicaId }
-          }
+        dataManager.modReq { aws =>
+          aws.removeBy { (req: Req) => req.executor == replicaId }
         }
     }
     r

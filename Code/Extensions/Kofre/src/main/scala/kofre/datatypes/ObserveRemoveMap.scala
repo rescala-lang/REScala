@@ -40,8 +40,8 @@ object ObserveRemoveMap {
 
     def contains(using PermQuery)(k: K): Boolean = current.contains(k)
 
-    def queryKey[A](using PermQuery, PermCausal, Bottom[V])(k: K): Dotted[V] = {
-      Dotted(current.inner.getOrElse(k, Bottom[V].empty), context)
+    def queryKey[A](using PermQuery, Bottom[V])(k: K): V = {
+      current.inner.getOrElse(k, Bottom[V].empty)
     }
 
     def queryAllEntries(using PermQuery): Iterable[V] = current.inner.values

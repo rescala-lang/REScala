@@ -2,7 +2,7 @@ package deltaAntiEntropy.tools
 
 import kofre.base.DecomposeLattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
-import kofre.syntax.{PermCausal, PermCausalMutate, PermMutate}
+import kofre.syntax.{PermCausalMutate, PermMutate}
 import kofre.time.Dots
 import kofre.base.Uid
 import kofre.base.Uid.asId

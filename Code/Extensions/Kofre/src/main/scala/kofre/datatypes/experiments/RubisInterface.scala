@@ -65,7 +65,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def requestRegisterUser(userId: User)(using PermCausalMutate, PermCausal, PermQuery, ReplicaId): C = {
+    def requestRegisterUser(userId: User)(using ReplicaId, PermCausalMutate): C = {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
@@ -73,7 +73,7 @@ object RubisInterface {
         Dotted(deltaState.make(userRequests = merged.store), merged.context).mutator
     }
 
-    def resolveRegisterUser()(using PermIdMutate, PermCausal): C = {
+    def resolveRegisterUser()(using PermCausalMutate): C = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, Uid]) {
         case (newlyRegistered, (uid, rid)) =>
@@ -84,10 +84,13 @@ object RubisInterface {
           }
       }
 
-      deltaState.make(
-        userRequests = Dotted(req, context).clear().store,
-        users = newUsers
-      )
+      Dotted(req, context).clear().map{ ur =>
+        deltaState.make(
+          userRequests = ur,
+          users = newUsers
+        )
+      }
+
     }.mutator
   }
 }
