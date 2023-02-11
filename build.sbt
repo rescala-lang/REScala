@@ -107,7 +107,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
 // evaluation and experimental
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
-  .in(file("Modules/Graph Compiler"))
+  .in(file("Modules/Graph-Compiler"))
   .settings(
     scalaVersion_3,
     libraryDependencies ++= jsoniterScalaAll.value
