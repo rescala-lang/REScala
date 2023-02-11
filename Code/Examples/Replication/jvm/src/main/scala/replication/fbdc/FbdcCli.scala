@@ -32,7 +32,7 @@ case class CliConnections(
 class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
-  import exData.{State, dataManager, registry}
+  import exData.{dataManager, registry}
 
   def start() =
     settings.`tcp-listen-port`.value match

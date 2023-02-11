@@ -48,11 +48,30 @@ class Focus[Inner: DottedLattice, Outer](outer: Dotted[Outer])(extract: Outer =>
   }
 }
 
+type RespValue = Option[TimedVal[Res]]
+given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
+
+given DottedLattice[RespValue] = DottedLattice.liftLattice
+
+given HasDots[RespValue] with {
+  override def dots(a: RespValue): Dots = Dots.empty
+}
+
+case class State(
+    requests: CausalQueue[Req],
+    responses: ObserveRemoveMap[String, RespValue],
+    providers: ObserveRemoveMap[Uid, AddWinsSet[String]]
+) derives DottedLattice, HasDots, Bottom
+
+object State:
+  extension (ds: Dotted[State])
+    def modReq          = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
+    def modRes          = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
+    def modParticipants = Focus(ds)(_.providers, d => Bottom.empty.copy(providers = d))
+
 class FbdcExampleData {
   val replicaId = Uid.gen()
   val registry  = new Registry
-
-  given Bottom[State] = Bottom.derived
 
   val dataManager =
     @nowarn given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -64,25 +83,6 @@ class FbdcExampleData {
         part.observeRemoveMap.mutateKeyNamedCtx(replicaId)(_.add(using replicaId)(capability))
       }
     }
-
-  type RespValue = Option[TimedVal[Res]]
-
-  given Ordering[VectorClock]    = VectorClock.vectorClockTotalOrdering
-  given DottedLattice[RespValue] = DottedLattice.liftLattice
-  given HasDots[RespValue] with {
-    override def dots(a: RespValue): Dots = Dots.empty
-  }
-
-  case class State(
-      requests: CausalQueue[Req],
-      responses: ObserveRemoveMap[String, RespValue],
-      providers: ObserveRemoveMap[Uid, AddWinsSet[String]]
-  ) derives DottedLattice, HasDots, Bottom
-
-  extension (ds: Dotted[State])
-    def modReq          = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
-    def modRes          = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
-    def modParticipants = Focus(ds)(_.providers, d => Bottom.empty.copy(providers = d))
 
   val requests = dataManager.mergedState.map(_.store.requests.values)
   val myRequests =
