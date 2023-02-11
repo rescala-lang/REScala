@@ -1,0 +1,29 @@
+lazy val distributedFullmv = project.in(file("Modules/Multiversion Distributed/multiversion"))
+	.settings(
+		scalaVersion_3,
+		noPublish,
+		libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+			scalatest.value,
+			loci.communication.value,
+			loci.tcp.value,
+			loci.jsoniterScala.value,
+			loci.upickle.value,
+		),
+	)
+	.dependsOn(rescala.jvm % "compile->compile;test->test")
+
+lazy val distributedFullMVExamples = project.in(file("Modules/Multiversion Distributed/examples"))
+	.enablePlugins(JmhPlugin)
+	.settings(scalaVersion_3, noPublish)
+	.dependsOn(distributedFullmv % "test->test")
+	.dependsOn(distributedFullmv % "compile->test")
+	.dependsOn(rescala.jvm % "test->test")
+
+lazy val distributedFullMVBenchmarks = project.in(file("Modules/Multiversion Distributed/benchmarks"))
+	.enablePlugins(JmhPlugin)
+	.settings(
+		scalaVersion_3,
+		noPublish,
+		(Compile / mainClass) := Some("org.openjdk.jmh.Main"),
+	)
+	.dependsOn(distributedFullmv % "compile->test")
