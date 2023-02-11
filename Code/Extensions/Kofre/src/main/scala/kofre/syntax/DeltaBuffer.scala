@@ -16,6 +16,8 @@ case class DeltaBuffer[State](
   def applyDelta(delta: State)(using Lattice[State]): DeltaBuffer[State] =
     DeltaBuffer(state merge delta, delta :: deltaBuffer)
   def clearDeltas() = DeltaBuffer(state)
+
+  def mutable: DeltaBufferContainer[State] = new DeltaBufferContainer(this)
 }
 
 object DeltaBuffer {
@@ -33,5 +35,34 @@ object DeltaBuffer {
   given plainPermissions[L: Lattice]: PermMutate[DeltaBuffer[L], L] = new {
     override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] = c.applyDelta(delta)
     override def query(c: DeltaBuffer[L]): L                         = c.state
+  }
+}
+
+class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {
+  def applyDelta(delta: State)(using Lattice[State]): Unit =
+    result = result.applyDelta(delta)
+}
+
+object DeltaBufferContainer {
+
+  given dottedPermissions[L](using
+      pcm: PermCausalMutate[DeltaBuffer[Dotted[L]], L]
+  ): PermCausalMutate[DeltaBufferContainer[Dotted[L]], L] = new {
+    override def query(c: DeltaBufferContainer[Dotted[L]]): L = c.result.state.store
+    override def mutateContext(
+        container: DeltaBufferContainer[Dotted[L]],
+        withContext: Dotted[L]
+    ): DeltaBufferContainer[Dotted[L]] =
+      container.result = pcm.mutateContext(container.result, withContext)
+      container
+
+    override def context(c: DeltaBufferContainer[Dotted[L]]): Dots = c.result.state.context
+  }
+
+  given plainPermissions[L](using pm: PermMutate[DeltaBuffer[L], L]): PermMutate[DeltaBufferContainer[L], L] = new {
+    override def mutate(c: DeltaBufferContainer[L], delta: L): DeltaBufferContainer[L] =
+      c.result = pm.mutate(c.result, delta)
+      c
+    override def query(c: DeltaBufferContainer[L]): L = c.result.state
   }
 }

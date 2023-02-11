@@ -3,11 +3,11 @@ package replication.fbdc
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.{Argument, Style}
-import kofre.base.{Bottom, Uid, Lattice}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.{AddWinsSet, CausalQueue, LastWriterWins, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, ReplicaId}
+import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -31,6 +31,24 @@ enum Res:
   def req: Req
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
+
+
+class Focus[Inner: DottedLattice, Outer](outer: Dotted[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
+
+  type Cont[T] = DeltaBuffer[Dotted[T]]
+
+  type Mod[T, C] = PermCausalMutate[C, T] ?=> C => C
+
+
+  def apply(using pcm: PermCausalMutate[Dotted[Outer], Outer])(fun: Mod[Inner, Cont[Inner]]): Dotted[Outer] = {
+    val resBuffer = fun(using DeltaBuffer.dottedPermissions[Inner])(
+      DeltaBuffer(outer.map(extract))
+    )
+    resBuffer.deltaBuffer.reduceLeftOption(_ merge _) match
+      case None => outer
+      case Some(delta) => pcm.mutateContext(outer, delta.map(wrap))
+  }
+}
 
 class FbdcExampleData {
   val replicaId = Uid.gen()
@@ -61,43 +79,13 @@ class FbdcExampleData {
       requests: CausalQueue[Req],
       responses: ObserveRemoveMap[String, RespValue],
       providers: ObserveRemoveMap[Uid, AddWinsSet[String]]
-  ) derives DottedLattice, HasDots {
+  ) derives DottedLattice, HasDots, Bottom
 
-    type Mod[T] = PermCausalMutate[T, T] ?=> T => Unit
+  extension (ds: Dotted[State])
+    def modReq = Focus(ds)(_.requests, d => Bottom.empty.copy(requests = d))
+    def modRes = Focus(ds)(_.responses, d => Bottom.empty.copy(responses = d))
+    def modParticipants = Focus(ds)(_.providers, d => Bottom.empty.copy(providers = d))
 
-    class Forward[T](select: State => T, wrap: T => State)(using
-        pcm: PermCausalMutate[State, State],
-    ) extends PermCausalMutate[T, T] {
-
-      override def mutateContext(container: T, withContext: Dotted[T]): T =
-        pcm.mutateContext(State.this, withContext.map(wrap))
-        container
-
-      override def query(c: T): T = select(pcm.query(State.this))
-
-      override def context(c: T): Dots = pcm.context(State.this)
-    }
-
-    def modReq(using pcm: PermCausalMutate[State, State])(fun: Mod[CausalQueue[Req]]) = {
-      val x = new Forward(_.requests, State(_, Bottom.empty, Bottom.empty))
-      fun(using x)(requests)
-    }
-
-    def modRes(using
-        pcm: PermCausalMutate[State, State],
-        id: ReplicaId
-    )(fun: Mod[ObserveRemoveMap[String, RespValue]]) = {
-      val x = new Forward(_.responses, State(Bottom.empty, _, Bottom.empty))
-      fun(using x)(responses)
-    }
-
-    def modParticipants(using
-        pcm: PermCausalMutate[State, State]
-    )(fun: Mod[ObserveRemoveMap[Uid, AddWinsSet[String]]]) = {
-      val x = new Forward(_.providers, State(Bottom.empty, Bottom.empty, _))
-      fun(using x)(providers)
-    }
-  }
 
   val requests = dataManager.mergedState.map(_.store.requests.values)
   val myRequests =

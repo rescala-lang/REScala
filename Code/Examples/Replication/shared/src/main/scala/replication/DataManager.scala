@@ -2,9 +2,9 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.base.{Bottom, Uid, Lattice}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, ReplicaId}
+import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -87,8 +87,9 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     override def context(c: State): Dots = currentContext.now
   }
 
-  def transform(fun: ManagedPermissions ?=> State => Unit) = lock.synchronized {
-    fun(using ManagedPermissions())(mergedState.now.store)
+  def transform(fun: Dotted[State] => Dotted[State]) = lock.synchronized {
+    val current = mergedState.now
+    applyLocalDelta(fun(current))
   }
 
   def allDeltas: View[Dotted[State]] = lock.synchronized {

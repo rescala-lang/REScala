@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.Lattice.Operators
+import kofre.base.Lattice.{Operators, optionLattice}
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.ReplicatedList
 import kofre.time.{Dot, Dots}
@@ -59,6 +59,18 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
 object DottedLattice {
 
   def apply[A](implicit ds: DottedLattice[A]): DottedLattice[A] = ds
+
+  given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
+
+    /** Partial merging combines the stored values, but ignores the context.
+      * Thus enabling nested merging of values, without merging context multiple times.
+      */
+    override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
+      (left.store, right.store) match
+        case (None, r)          => r
+        case (l, None)          => l
+        case (Some(l), Some(r)) => Some(left.map(_ => l) mergePartial right.map(_ => r))
+  }
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
