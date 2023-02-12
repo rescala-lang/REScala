@@ -6,18 +6,18 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   // core
   rescala.js,
   rescala.jvm,
-  rescala.native,
+  // rescala.native,
   rescalafx,
   reswing,
   kofre.js,
   kofre.jvm,
-  kofre.native,
+  // kofre.native,
   aead.js,
   aead.jvm,
   // research & eval
   compileMacros.js,
   compileMacros.jvm,
-  compileMacros.native,
+  // compileMacros.native,
   microbench,
   // examples & case studies
   examples,
