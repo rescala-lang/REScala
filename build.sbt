@@ -87,7 +87,9 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     noPublish,
     libraryDependencies ++= Seq(
       "org.scalatest"     %%% "scalatest"       % "3.2.15"   % "test",
-      "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.15.0" % "test"
+      "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.15.0" % "test",
+      munit.value,
+      munitScalacheck.value,
     )
   )
   .jvmSettings(
@@ -192,7 +194,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
 
 lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(rescala, kofre)
+    .dependsOn(rescala, kofre, aead)
     .settings(
       scalaVersion_3,
       noPublish,

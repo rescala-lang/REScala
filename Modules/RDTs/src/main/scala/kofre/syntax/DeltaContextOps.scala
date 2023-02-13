@@ -33,10 +33,9 @@ object PermMutate:
 )
 opaque type ReplicaId = Uid
 object ReplicaId:
-  extension (id: ReplicaId) def replicaId: Uid    = id
+  extension (id: ReplicaId) def uid: Uid          = id
   def apply(id: Uid): ReplicaId                   = id
   inline given fromId: Conversion[Uid, ReplicaId] = identity
-
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
@@ -44,7 +43,6 @@ object ReplicaId:
 trait PermCausalMutate[C, L] extends PermQuery[C, L]:
   def mutateContext(container: C, withContext: Dotted[L]): C
   def context(c: C): Dots
-
 
 /** Helps to define operations that update any container [[C]] containing values of type [[L]]
   * using a scheme where mutations return deltas which are systematically applied.
@@ -58,10 +56,10 @@ trait OpsTypes[C, L] {
   final type IdMut[C]         = ReplicaId ?=> PermMutate ?=> C
 }
 trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
-  final protected[kofre] def current(using perm: PermQuery): L          = perm.query(container)
-  final protected[kofre] def replicaId(using perm: ReplicaId): Uid      = perm.replicaId
-  final protected[kofre] def context(using perm: PermCausalMutate): Dots      = perm.context(container)
-  extension (l: L)(using perm: PermMutate) def mutator: C               = perm.mutate(container, l)
-  extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C = perm.mutateContext(container, l)
-  extension [A](a: A) def inheritContext(using PermCausalMutate): Dotted[A]   = Dotted(a, context)
+  final protected[kofre] def current(using perm: PermQuery): L              = perm.query(container)
+  final protected[kofre] def replicaId(using perm: ReplicaId): Uid          = perm.uid
+  final protected[kofre] def context(using perm: PermCausalMutate): Dots    = perm.context(container)
+  extension (l: L)(using perm: PermMutate) def mutator: C                   = perm.mutate(container, l)
+  extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C     = perm.mutateContext(container, l)
+  extension [A](a: A) def inheritContext(using PermCausalMutate): Dotted[A] = Dotted(a, context)
 }
