@@ -28,7 +28,7 @@ class RCounterBench {
         case (c, n) =>
           given rid: ReplicaId = n.toString.asId
           val delta            = Dotted(ResettableCounter.zero).increment()
-          c.applyDelta(rid.replicaId, delta)
+          c.applyDelta(rid.uid, delta)
       }
   }
 

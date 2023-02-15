@@ -29,7 +29,7 @@ class MVRegisterBench {
       case (r, i) =>
         given rid: kofre.syntax.ReplicaId = i.toString.asId
         val delta                         = Dotted(MultiVersionRegister.empty[Int]).write(i)
-        r.applyDelta(rid.replicaId, delta)
+        r.applyDelta(rid.uid, delta)
     }
   }
 

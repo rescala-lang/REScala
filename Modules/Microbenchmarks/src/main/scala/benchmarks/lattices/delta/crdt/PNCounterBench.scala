@@ -28,7 +28,7 @@ class PNCounterBench {
       case (c, n) =>
         given rid: kofre.syntax.ReplicaId = kofre.base.Uid.predefined(n.toString)
         val delta                         = PosNegCounter.zero.inc()
-        c.applyDelta(rid.replicaId, delta)
+        c.applyDelta(rid.uid, delta)
     }
   }
 
