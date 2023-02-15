@@ -1,7 +1,7 @@
 package benchmarks.chatserver
 
-import benchmarks.{EngineParam, Size}
-import org.openjdk.jmh.annotations._
+import benchmarks.{EngineParam, Size, Workload}
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
 import rescala.interface.RescalaInterface
@@ -51,7 +51,7 @@ class BenchState {
   var locks: Array[Lock]                = null
 
   @Setup
-  def setup(params: BenchmarkParams, engineParam: EngineParam, size: Size) = {
+  def setup(params: BenchmarkParams, engineParam: EngineParam, size: Size, work: Workload) = {
     engine = engineParam.engine
 
     val threads = params.getThreads
@@ -60,14 +60,14 @@ class BenchState {
     Range(0, size.size).foreach(cs.create)
 
     clients = Array.fill(threads)(Evt[String]())
-    // for ((client, i) <- clients.zipWithIndex) {
-    //  val room1 = i                   % size.size
-    //  val room2 = (i + size.size / 2) % size.size
-    //  cs.join(client, room1)
-    //  cs.join(client, room2)
-    //  cs.histories.get(room1).observe(v => work.consume())
-    //  cs.histories.get(room2).observe(v => work.consume())
-    // }
+     for ((client, i) <- clients.zipWithIndex) {
+      val room1 = i                   % size.size
+      val room2 = (i + size.size / 2) % size.size
+      cs.join(client, room1)
+      cs.join(client, room2)
+      cs.histories.get(room1).observe(v => work.consume())
+      cs.histories.get(room2).observe(v => work.consume())
+     }
 
     if (engine == Schedulers.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())
