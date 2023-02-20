@@ -28,11 +28,12 @@ object DotMap {
     new DottedLattice[DotMap[K, V]] {
 
       override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-        DotMap((left.store.repr.keySet union right.store.repr.keySet).flatMap { key =>
+        val empty = Bottom.empty[V]
+        DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
           val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
           val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
           val res              = leftCausalStore mergePartial rightCausalStore
-          if Bottom.empty[V] == res then None else Some(key -> res)
+          if empty == res then None else Some(key -> res)
         }.toMap)
       }
 
