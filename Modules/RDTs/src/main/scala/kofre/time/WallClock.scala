@@ -18,10 +18,9 @@ object WallClock {
 
   def now(replicaId: Uid): WallClock = WallClock(System.currentTimeMillis(), replicaId, System.nanoTime())
 
-  given ordering: Ordering[WallClock] = Ordering.comparatorToOrdering(
-    Comparator.comparingLong[WallClock](_.timestamp)
-      .thenComparing(wc => Uid.unwrap(wc.replicaID))
-      .thenComparingLong(_.nanoTime)
-  )
+  given ordering: Ordering[WallClock] =
+    Ordering.by[WallClock, Long](_.timestamp)
+      .orElseBy(wc => Uid.unwrap(wc.replicaID))
+      .orElseBy(_.nanoTime)
 
 }
