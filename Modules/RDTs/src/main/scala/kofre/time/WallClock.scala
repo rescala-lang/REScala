@@ -2,6 +2,8 @@ package kofre.time
 
 import kofre.base.{Lattice, Uid}
 
+import java.util.Comparator
+
 /** WallClock is a case class for values that allows chronological ordering of values based on their time of creation.
   * In the case that two values from two different replicas have the exact same timestamp, the lexical ordering of the
   * ids of the two replicas is used to decide the ordering of the values. If two values from the same replica have the
@@ -16,12 +18,10 @@ object WallClock {
 
   def now(replicaId: Uid): WallClock = WallClock(System.currentTimeMillis(), replicaId, System.nanoTime())
 
-  given ordering[A]: Ordering[WallClock] =
-    val tuporder = Ordering.Tuple3[Long, String, Long]
-    (left, right) =>
-      tuporder.compare(
-        (left.timestamp, Uid unwrap left.replicaID, left.nanoTime),
-        (right.timestamp, Uid unwrap right.replicaID, right.nanoTime),
-      )
+  given ordering: Ordering[WallClock] = Ordering.comparatorToOrdering(
+    Comparator.comparingLong[WallClock](_.timestamp)
+      .thenComparing(wc => Uid.unwrap(wc.replicaID))
+      .thenComparingLong(_.nanoTime)
+  )
 
 }
