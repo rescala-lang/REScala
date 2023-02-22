@@ -19,13 +19,22 @@ object DebugAdapter {
       override def nullValue: ReSource                             = null
   }
 
+  def debugPrinter(x: Any): String = x match
+    case v: String                                => s"\"$v\""
+    case v: (Boolean | Char | Short | Int | Long) => v.toString
+    case s: (Seq[Any] | Option[Any])              => s.iterator.map(debugPrinter).mkString("List(", ", ", ")")
+    case m: scalatags.generic.Modifier[_]         => "<some html>"
+    case p: Pulse[Any]                            => p.map(debugPrinter).getOrElse("")
+    case p: Product => Range(0, p.productArity).map(n =>
+        s"${p.productElementName(n)} = ${debugPrinter(p.productElement(n))}"
+      ).mkString(s"${p.getClass.getName}(", ", ", ")")
+    case other => s"<unknown: ${other.getClass}>"
+
   given JsonValueCodec[Tracing.ValueWrapper] = new JsonValueCodec[Tracing.ValueWrapper]:
     override def decodeValue(in: JsonReader, default: Tracing.ValueWrapper): Tracing.ValueWrapper =
       throw IllegalStateException("deserialization not supported")
     override def encodeValue(x: Tracing.ValueWrapper, out: JsonWriter): Unit =
-      x.v.asInstanceOf[Pulse[_]].toOption match
-        case Some(v: scalatags.generic.Modifier[_]) => out.writeVal(x.v.toString)
-        case _                                      => out.writeVal("<some html>")
+      out.writeVal(debugPrinter(x.v))
 
     override def nullValue: Tracing.ValueWrapper = null
   given dataCodec: JsonValueCodec[Tracing.Data] = JsonCodecMaker.make
