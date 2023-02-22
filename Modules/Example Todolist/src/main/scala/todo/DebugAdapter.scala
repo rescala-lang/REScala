@@ -22,7 +22,8 @@ object DebugAdapter {
   def debugPrinter(x: Any): String = x match
     case v: String                                => s"\"$v\""
     case v: (Boolean | Char | Short | Int | Long) => v.toString
-    case s: (Seq[Any] | Option[Any])              => s.iterator.map(debugPrinter).mkString("List(", ", ", ")")
+    case o: Option[Any]                           => o.map(debugPrinter).toString
+    case s: (Seq[Any])                            => s.iterator.map(debugPrinter).mkString(s"List(", ", ", ")")
     case m: scalatags.generic.Modifier[_]         => "<some html>"
     case p: Pulse[Any]                            => p.map(debugPrinter).getOrElse("")
     case p: Product => Range(0, p.productArity).map(n =>
@@ -43,8 +44,7 @@ object DebugAdapter {
   def setListener(obs: scalajs.js.Function1[Any, Unit]): Unit = {
     println(s"setting listener")
     Tracing.observer = {
-      data =>
-        obs(writeToString(data))
+      data => obs(writeToString(data))
     }
   }
 
