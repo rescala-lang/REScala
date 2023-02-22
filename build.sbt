@@ -112,7 +112,7 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).c
   .in(file("Modules/Graph-Compiler"))
   .settings(
     scalaVersion_3,
-    libraryDependencies ++= jsoniterScalaAll.value
+    libraryDependencies ++= List(jsoniterScala.value)
   )
   .dependsOn(rescala)
 
@@ -122,8 +122,9 @@ lazy val microbench = project.in(file("Modules/Microbenchmarks"))
     scalaVersion_3,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= jsoniterScalaAll.value ++ List(
+    libraryDependencies ++= List(
       upickle.value,
+      jsoniterScala.value
     ),
     jolSettings,
   )
@@ -150,10 +151,11 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+    libraryDependencies ++= Seq(
       scalatags.value,
       loci.webrtc.value,
       loci.jsoniterScala.value,
+      jsoniterScala.value
     ),
     jsAcceptUnfairGlobalTasks,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
@@ -176,7 +178,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= jsoniterScalaAll.value,
+    libraryDependencies ++= List(jsoniterScala.value),
     scalaFxDependencies,
     fork := true,
     libraryDependencies ++= {
@@ -201,7 +203,7 @@ lazy val replicationExamples =
       run / fork         := true,
       run / connectInput := true,
       resolverJitpack,
-      libraryDependencies ++= jsoniterScalaAll.value ++ Seq(
+      libraryDependencies ++= Seq(
         loci.tcp.value,
         loci.jsoniterScala.value,
         munitScalacheck.value,
@@ -209,6 +211,7 @@ lazy val replicationExamples =
         scalacheck.value,
         slips.options.value,
         slips.delay.value,
+        jsoniterScala.value
       ),
     )
     .jvmSettings(

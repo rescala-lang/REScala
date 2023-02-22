@@ -11,7 +11,7 @@ object Dependencies {
     val directories   = "26"
     val jetty         = "11.0.13"
     val jol           = "0.16"
-    val jsoniterScala = "2.20.3" // for scalajs 1.12 (Scala 2.11)
+    val jsoniterScala = "2.21.0"
     val jsoup         = "1.15.3"
     val munit         = "1.0.0-M7"
     val okHttp        = "4.10.0"
@@ -27,8 +27,8 @@ object Dependencies {
     val scalajsDom    = "2.3.0"
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
-    val scribe        = "3.10.6"
-    val sqliteJdbc    = "3.40.0.0"
+    val scribe        = "3.10.7"
+    val sqliteJdbc    = "3.40.1.0"
     val sourcecode    = "0.3.0"
     val upickle       = "2.0.0"
   }
@@ -38,6 +38,7 @@ object Dependencies {
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
   val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
+  val jsoniterScala   = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScala)
   val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
   val munit           = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
   val munitScalacheck = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
@@ -56,24 +57,12 @@ object Dependencies {
   val sqliteJdbc      = Def.setting("org.xerial" % "sqlite-jdbc" % V.sqliteJdbc)
   val upickle         = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
-  val jsoniterScalaAll = Def.setting {
-    val jsoniterVersion =
-      if (Settings.`is 2.11`(scalaVersion.value))
-        "2.13.3.2" // this is the latest version supporting Scala 2.11 (and java 8)
-      else V.jsoniterScala
-    Seq(
-      ("com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % jsoniterVersion
-      exclude ("io.github.cquiroz", s"scala-java-time-tzdb_sjs1_${scalaBinaryVersion.value}")),
-      "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % jsoniterVersion
-    )
-  }
-
   object slips {
     val category = Def.setting("de.rmgk.slips" %%% "category" % "0.4.7")
     val chain    = Def.setting("de.rmgk.slips" %%% "chain" % "0.4.7")
     val delay    = Def.setting("de.rmgk.slips" %%% "delay" % "0.4.9")
     val logging  = Def.setting("de.rmgk.slips" %%% "logging" % "0.4.7")
-    val options  = Def.setting("de.rmgk.slips" %%% "options" % "0.4.7")
+    val options  = Def.setting("de.rmgk.slips" %%% "options" % "0.4.9")
     val scip     = Def.setting("de.rmgk.slips" %%% "scip" % "0.4.9")
     val script   = Def.setting("de.rmgk.slips" %%% "script" % "0.4.9")
   }
