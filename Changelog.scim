@@ -1,8 +1,13 @@
-== v.next
+= Changelog
+
+== v0.33.0
+date = 2023-02-22
 
 • move errant new transactions during propagation to observer phase
 • partially undo bundles to improve doc compile time efficiency
 • new Fold now correctly handles dynamic dependencies
+• more structured debug info stored in reactives
+• simplify Lattices inheritance structure
 
 
 == v0.32.0
@@ -13,6 +18,7 @@ date = 2022-12-31
 • Scala 3 version now has signal macros
 • move incremental collections' thesis results into main repository
 
+
 == v0.31.0
 date = 2021-12-07
 
@@ -20,6 +26,7 @@ date = 2021-12-07
 • promote fullMV scheduler to published artifact
 • add experimental reactor syntax
 • internal refactoring for scala 3 support (-macros)
+
 
 == v0.30.0
 date = 2020-04-10
@@ -29,11 +36,11 @@ date = 2020-04-10
 • new Signal.map macro
 • more CRDT experiments
 
+
 == v0.29.0
 date = 2019-09-15
 
 * update scala-loci version to 0.3.0
-
 
 
 == v0.28.0
