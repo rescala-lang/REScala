@@ -119,7 +119,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     // type Carrier = CausalLastWriterWins.State[TaskData, DietMapCContext]
     //
-    // val merge = implicitly[DecomposeLattice[Carrier]]
+    // val merge = implicitly[Lattice[Carrier]]
     //
     // val crdtAlt = DeltaStateReactive.create[Carrier, Carrier](
     //  lww,

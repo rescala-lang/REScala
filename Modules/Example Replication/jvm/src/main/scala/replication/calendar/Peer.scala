@@ -2,7 +2,7 @@ package replication.calendar
 
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import kofre.base.{DecomposeLattice, Uid}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.dotted.{DottedDecompose, Dotted}
@@ -69,14 +69,14 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
       calendar.replicated.foreach { case (id, set) =>
-        set.now.deltaBuffer.reduceOption(DecomposeLattice[CalendarState].merge).foreach(sendRecursive(
+        set.now.deltaBuffer.reduceOption(Lattice[CalendarState].merge).foreach(sendRecursive(
           remoteReceiveSyncMessage,
           _,
           id
         ))
       }
 
-      tokens.want.deltaBuffer.reduceOption(DecomposeLattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
+      tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
@@ -95,7 +95,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
       merged: CalendarState
   ): (Iterable[CalendarState], Iterable[CalendarState]) = {
     val a =
-      if (atoms.isEmpty) DecomposeLattice[CalendarState].decompose(merged)
+      if (atoms.isEmpty) Lattice[CalendarState].decompose(merged)
       else atoms
 
     val atomsSize = a.size
@@ -114,8 +114,8 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
             case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
               val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-              attemptSend(firstHalf, firstHalf.reduce(DecomposeLattice[CalendarState].merge))
-              attemptSend(secondHalf, secondHalf.reduce(DecomposeLattice[CalendarState].merge))
+              attemptSend(firstHalf, firstHalf.reduce(Lattice[CalendarState].merge))
+              attemptSend(secondHalf, secondHalf.reduce(Lattice[CalendarState].merge))
             case _ => e.printStackTrace()
           }
 

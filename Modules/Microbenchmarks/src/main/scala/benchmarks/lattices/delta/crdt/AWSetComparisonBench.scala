@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.DecomposeLattice
+import kofre.base.Lattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
@@ -30,7 +30,7 @@ class AWSetComparisonBench {
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(Dotted(AddWinsSet.empty[String])) { (s, i) =>
       val delta = s.add(using replicaID.asId)(s"${i.toString}$replicaID")
-      DecomposeLattice[State].merge(s, delta)
+      Lattice[State].merge(s, delta)
     }
   }
 
@@ -40,7 +40,7 @@ class AWSetComparisonBench {
     setBState = createSet("b")
 
     plusOneDelta = setBState.add(using "b".asId)("hallo welt")
-    setAStatePlusOne = DecomposeLattice[State].merge(setAState, setBState)
+    setAStatePlusOne = Lattice[State].merge(setAState, setBState)
   }
 
   @Benchmark
@@ -50,14 +50,14 @@ class AWSetComparisonBench {
   def addOne(): State = setAState.add(using "a".asId)("Hallo Welt")
 
   @Benchmark
-  def merge(): State = DecomposeLattice[State].merge(setAState, setBState)
+  def merge(): State = Lattice[State].merge(setAState, setBState)
 
   @Benchmark
-  def mergeSelf(): State = DecomposeLattice[State].merge(setAState, setBState)
+  def mergeSelf(): State = Lattice[State].merge(setAState, setBState)
 
   @Benchmark
-  def mergeSelfPlusOne(): State = DecomposeLattice[State].merge(setAState, setAStatePlusOne)
+  def mergeSelfPlusOne(): State = Lattice[State].merge(setAState, setAStatePlusOne)
 
   @Benchmark
-  def mergeDelta(): State = DecomposeLattice[State].merge(setAState, plusOneDelta)
+  def mergeDelta(): State = Lattice[State].merge(setAState, plusOneDelta)
 }

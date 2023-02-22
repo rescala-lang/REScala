@@ -1,7 +1,7 @@
 package replication.checkpointing.central
 
 import Bindings._
-import kofre.base.DecomposeLattice
+import kofre.base.Lattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import loci.communicator.tcp.TCP
@@ -27,13 +27,13 @@ class Checkpointer(listenPort: Int) {
       case SyncMessage(cp, deltaState) =>
         val apply = (cp + 1 to checkpoint).map(checkpointToDelta).toList
 
-        DecomposeLattice[SetState].diff(fullState, deltaState) match {
+        Lattice[SetState].diff(fullState, deltaState) match {
           case None =>
             println(s"No new changes since checkpoint")
             CheckpointMessage(checkpoint, apply, bottom)
 
           case Some(newChanges) =>
-            val newAtoms = DecomposeLattice[SetState].decompose(newChanges)
+            val newAtoms = Lattice[SetState].decompose(newChanges)
 
             if (newAtoms.size < minCheckpointSize) {
               println(s"Only ${newAtoms.size} new atoms, no new checkpoint created")
@@ -41,7 +41,7 @@ class Checkpointer(listenPort: Int) {
             } else {
               checkpoint += 1
               checkpointToDelta = checkpointToDelta.updated(checkpoint, newChanges)
-              fullState = DecomposeLattice[SetState].merge(fullState, newChanges)
+              fullState = Lattice[SetState].merge(fullState, newChanges)
               println(s"Created checkpoint $checkpoint")
 
               CheckpointMessage(checkpoint, apply, bottom)

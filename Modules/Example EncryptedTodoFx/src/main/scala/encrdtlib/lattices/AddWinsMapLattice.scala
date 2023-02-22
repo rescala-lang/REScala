@@ -1,6 +1,6 @@
 package encrdtlib.lattices
 
-import kofre.base.{DecomposeLattice, Uid, Lattice}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.time.Dots

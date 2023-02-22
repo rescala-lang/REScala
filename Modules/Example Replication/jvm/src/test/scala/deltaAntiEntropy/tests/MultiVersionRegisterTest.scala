@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.base.{DecomposeLattice, Lattice}
+import kofre.base.{Lattice, Lattice}
 import kofre.datatypes.MultiVersionRegister
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -14,7 +14,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 object MVRegisterGenerators {
-  def genMVRegister[A: DecomposeLattice](implicit
+  def genMVRegister[A: Lattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] = for {
@@ -32,7 +32,7 @@ object MVRegisterGenerators {
     }
   }
 
-  implicit def arbMVRegister[A: DecomposeLattice](implicit
+  implicit def arbMVRegister[A: Lattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Arbitrary[AntiEntropyContainer[MultiVersionRegister[A]]] =

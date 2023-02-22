@@ -1,6 +1,6 @@
 package deltaAntiEntropy.tools
 
-import kofre.base.DecomposeLattice
+import kofre.base.Lattice
 import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
 import kofre.syntax.{PermCausalMutate, PermMutate}
 import kofre.time.Dots
@@ -21,19 +21,19 @@ class AntiEntropyContainer[State](
 
   def state: Dotted[State] = antiEntropy.state
 
-  def applyDelta(delta: Named[Dotted[State]])(using DecomposeLattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
       case Named(origin, deltaCtx) =>
-        DecomposeLattice[Dotted[State]].diff(state, deltaCtx) match {
+        Lattice[Dotted[State]].diff(state, deltaCtx) match {
           case Some(stateDiff) =>
-            val stateMerged = DecomposeLattice[Dotted[State]].merge(state, stateDiff)
+            val stateMerged = Lattice[Dotted[State]].merge(state, stateDiff)
             antiEntropy.recordChange(Named(origin, stateDiff), stateMerged)
           case None =>
         }
         this
     }
 
-  def processReceivedDeltas()(implicit u: DecomposeLattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def processReceivedDeltas()(implicit u: Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     antiEntropy.getReceivedDeltas.foldLeft(this) {
       (crdt, delta) => crdt.applyDelta(delta)
     }

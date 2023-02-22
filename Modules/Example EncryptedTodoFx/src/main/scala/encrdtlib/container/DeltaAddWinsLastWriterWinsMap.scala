@@ -1,7 +1,7 @@
 package encrdtlib.container
 
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
-import kofre.base.{Bottom, DecomposeLattice, Uid, Lattice}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}

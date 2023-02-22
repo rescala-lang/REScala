@@ -1,7 +1,7 @@
 package replication.checkpointing.central
 
 import Bindings.*
-import kofre.base.DecomposeLattice
+import kofre.base.Lattice
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
@@ -62,7 +62,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
     registry.remotes.filterNot(checkpointerRR.contains).foreach { rr =>
       val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
-      set.deltaBuffer.reduceOption(DecomposeLattice[SetState].merge).foreach(sendRecursive(
+      set.deltaBuffer.reduceOption(Lattice[SetState].merge).foreach(sendRecursive(
         remoteReceiveSyncMessage,
         _
       ))
@@ -73,7 +73,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def splitState(atoms: Iterable[SetState], merged: SetState): (Iterable[SetState], Iterable[SetState]) = {
     val a =
-      if (atoms.isEmpty) DecomposeLattice[SetState].decompose(merged)
+      if (atoms.isEmpty) Lattice[SetState].decompose(merged)
       else atoms
 
     val atomsSize = a.size
@@ -91,8 +91,8 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
             case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
               val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-              attemptSend(firstHalf, firstHalf.reduce(DecomposeLattice[SetState].merge))
-              attemptSend(secondHalf, secondHalf.reduce(DecomposeLattice[SetState].merge))
+              attemptSend(firstHalf, firstHalf.reduce(Lattice[SetState].merge))
+              attemptSend(secondHalf, secondHalf.reduce(Lattice[SetState].merge))
             case _ => e.printStackTrace()
           }
 
@@ -114,8 +114,8 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
                 case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
                   val (firstHalf, secondHalf) = splitState(atoms, merged)
 
-                  attemptAssess(firstHalf, firstHalf.reduce(DecomposeLattice[SetState].merge))
-                  attemptAssess(secondHalf, secondHalf.reduce(DecomposeLattice[SetState].merge))
+                  attemptAssess(firstHalf, firstHalf.reduce(Lattice[SetState].merge))
+                  attemptAssess(secondHalf, secondHalf.reduce(Lattice[SetState].merge))
                 case _ => e.printStackTrace()
               }
 
@@ -134,7 +134,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def processChangesForCheckpointing(): Unit = {
     changesSinceCP = set.deltaBuffer.foldLeft(changesSinceCP) { (acc, delta) =>
-      DecomposeLattice[SetState].merge(acc, delta)
+      Lattice[SetState].merge(acc, delta)
     }
 
     assessCheckpointRecursive()

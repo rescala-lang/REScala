@@ -1,6 +1,6 @@
 package replication.checkpointing.decentral
 
-import kofre.base.{DecomposeLattice, Uid}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
@@ -44,7 +44,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
           case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
             val (firstHalf, secondHalf) = {
               val a =
-                if (atoms.isEmpty) DecomposeLattice[SetState].decompose(merged)
+                if (atoms.isEmpty) Lattice[SetState].decompose(merged)
                 else atoms
 
               val atomsSize = a.size
@@ -52,8 +52,8 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
               (a.take(atomsSize / 2), a.drop(atomsSize / 2))
             }
 
-            sendDeltaRecursive(remoteReceiveDelta, firstHalf, firstHalf.reduce(DecomposeLattice[SetState].merge))
-            sendDeltaRecursive(remoteReceiveDelta, secondHalf, secondHalf.reduce(DecomposeLattice[SetState].merge))
+            sendDeltaRecursive(remoteReceiveDelta, firstHalf, firstHalf.reduce(Lattice[SetState].merge))
+            sendDeltaRecursive(remoteReceiveDelta, secondHalf, secondHalf.reduce(Lattice[SetState].merge))
           case _ => e.printStackTrace()
         }
 
@@ -66,7 +66,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
 
   def propagateDeltas(): Unit = {
     registry.remotes.foreach { rr =>
-      set.deltaBuffer.reduceOption(DecomposeLattice[SetState].merge).foreach(sendDelta(_, rr))
+      set.deltaBuffer.reduceOption(Lattice[SetState].merge).foreach(sendDelta(_, rr))
     }
 
     set = set.clearDeltas()
@@ -80,7 +80,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
     set.deltaBuffer.headOption match {
       case None =>
       case Some(deltaState) =>
-        unboundRemoteChanges = DecomposeLattice[SetState].merge(unboundRemoteChanges, deltaState)
+        unboundRemoteChanges = Lattice[SetState].merge(unboundRemoteChanges, deltaState)
 
         propagateDeltas()
 
@@ -97,7 +97,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
             set = set.applyDelta(changes).clearDeltas()
 
             unboundRemoteChanges =
-              DecomposeLattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))
+              Lattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))
 
             checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -121,7 +121,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
     checkpoints = checkpoints.updated(id, newCounter)
 
     val newCheckpoint = Checkpoint(id, newCounter)
-    val changes       = atoms.reduce(DecomposeLattice[SetState].merge)
+    val changes       = atoms.reduce(Lattice[SetState].merge)
     checkpointMap = checkpointMap.updated(newCheckpoint, changes)
 
     registry.remotes.foreach { sendCheckpoint(CheckpointMessage(newCheckpoint, changes), _) }
@@ -146,7 +146,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
     }
 
     unboundLocalChanges = set.deltaBuffer.foldLeft(unboundLocalChanges) { (list, delta) =>
-      list.prependedAll(DecomposeLattice[SetState].decompose(delta))
+      list.prependedAll(Lattice[SetState].decompose(delta))
     }
 
     if (unboundLocalChanges.size < minAtomsForCheckpoint) {
@@ -155,7 +155,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
       createCheckpoints()
 
       if (unboundLocalChanges.nonEmpty) {
-        val delta = unboundLocalChanges.reduce(DecomposeLattice[SetState].merge)
+        val delta = unboundLocalChanges.reduce(Lattice[SetState].merge)
 
         registry.remotes.foreach { sendDelta(delta, _) }
       }
@@ -179,7 +179,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
         }
       }
 
-      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { DecomposeLattice[SetState].merge }
+      val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { Lattice[SetState].merge }
 
       if (unboundChanges != Dotted(AddWinsSet.empty))
         sendDelta(unboundChanges, rr)

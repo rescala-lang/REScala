@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, DecomposeLattice, Uid, Lattice}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
 import loci.registry.{Binding, Registry}
@@ -20,7 +20,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
     registry: Registry,
     binding: Binding[DeltaFor[A] => Unit, DeltaFor[A] => Future[Unit]]
 )(using
-    dcl: DecomposeLattice[Dotted[A]],
+    dcl: Lattice[Dotted[A]],
     bottom: Bottom[Dotted[A]]
 ) {
   import api.*
@@ -89,7 +89,7 @@ class ReplicationGroup[Api <: RescalaInterface, A](
       val observer = signal.observe { s =>
         val deltaStateList = s.deltaBuffer ++ resendBuffer.get(remoteRef).toList
 
-        val combinedState = deltaStateList.reduceOption(DecomposeLattice[Dotted[A]].merge)
+        val combinedState = deltaStateList.reduceOption(Lattice[Dotted[A]].merge)
 
         combinedState foreach sendUpdate
       }

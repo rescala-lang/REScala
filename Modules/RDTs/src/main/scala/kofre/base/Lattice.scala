@@ -7,9 +7,6 @@ import scala.collection.immutable.HashMap
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
-type DecomposeLattice[A] = Lattice[A]
-val DecomposeLattice: Lattice.type = Lattice
-
 /** Well, its technically a semilattice, but that is just more to type. */
 trait Lattice[A] {
 

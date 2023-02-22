@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValu
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import kofre.base.Uid.asId
-import kofre.base.{Bottom, DecomposeLattice, Uid}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.dotted.{Dotted, DottedDecompose}
 import replication.JsoniterCodecs.given
 
@@ -105,7 +105,7 @@ class AntiEntropy[A](
       deltaBufferOut.collect {
         case (n, Named(origin, deltaState)) if n >= ackMap(to) && Uid.unwrap(origin) != to => deltaState
       } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
-        DecomposeLattice[Dotted[A]].merge(left, right)
+        Lattice[Dotted[A]].merge(left, right)
       } map { deltaState => DeltaMsg(Named(replicaID.asId, deltaState), nextSeqNum) }
     }
   }

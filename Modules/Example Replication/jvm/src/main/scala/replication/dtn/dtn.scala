@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import java.nio.charset.StandardCharsets
 import java.util.{Base64, Objects}
 import scala.concurrent.{Await, Future}
-import kofre.base.{Bottom, DecomposeLattice, Lattice}
+import kofre.base.{Bottom, Lattice}
 import kofre.base.Uid
 import kofre.syntax.*
 import kofre.datatypes.PosNegCounter
@@ -138,7 +138,7 @@ class ReplicaListener[S: Lattice: JsonValueCodec](replica: Replica[S]) extends L
 
 class ReplicaMutator[S](val replica: Replica[S])
 
-given fullPermission[L: DecomposeLattice: Bottom]: PermMutate[ReplicaMutator[L], L] with {
+given fullPermission[L: Lattice: Bottom]: PermMutate[ReplicaMutator[L], L] with {
   override def mutate(c: ReplicaMutator[L], delta: L): ReplicaMutator[L] =
     c.replica.applyLocalDelta(delta)
     c
