@@ -108,7 +108,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   }
 
   val highlightedIndex = Signal { // #SIG
-    val index = mouse.moves.moved.latestOption().value match {
+    val index = mouse.moves.moved.holdOption().value match {
       case Some(e) => coordinates() indexWhere {
           p => (p.distance((e.point.x, e.point.y))) < ClickArea
         }

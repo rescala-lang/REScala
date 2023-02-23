@@ -20,7 +20,7 @@ class DrawingSpaceState {
     } map { (_: Any) => null }) ||
       (select && { shape => // #EF
         shape == null || (shapes.value contains shape)
-      })) latest null // #IF
+      })) hold null // #IF
   // Without this indirection, the access above is made static, which causes an immediate infinite recursion
   def selectedShape = _selectedShape
   // currently drawn shapes

@@ -17,7 +17,7 @@ class VarTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matc
     "changed is correctly computed" in forAll(Gen.containerOf[List, Int](Gen.posNum[Int])) { (list: List[Int]) =>
       val v = Var(-1)
       val e = v.changed
-      val s = e.latest()
+      val s = e.hold()
 
       list.foreach { n =>
         v.set(n)

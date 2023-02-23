@@ -16,7 +16,7 @@ object FireDetection extends App {
   val rotaryEncTCPClient = new TCPClientConnector("localhost", 8000).connect(rotaryEncRemote)
 
   val Tuple1(selectionInt) = rotaryEncRemote.eventsFromListen()
-  val selectionSig         = selectionInt.latest(0)
+  val selectionSig         = selectionInt.hold(0)
 
   val buttonRemote = CompileGraph.withOutput("button") {
     val rawButton = CEvent.source[Boolean]
@@ -51,7 +51,7 @@ object FireDetection extends App {
   co2Remote.startObserving()
 
   val Tuple1(co2Bool) = co2Remote.eventsFromListen()
-  val co2Status       = co2Bool.latest(false)
+  val co2Status       = co2Bool.hold(false)
 
   val temperatureRemote = CompileGraph.withIO("temperature")(Tuple1(toggleSelection)) { case Tuple1(toggleSelection) =>
     val enabled = toggleSelection.fold(true) {
@@ -70,7 +70,7 @@ object FireDetection extends App {
   temperatureRemote.startObserving()
 
   val Tuple1(temperatureBool) = temperatureRemote.eventsFromListen()
-  val temperatureStatus       = temperatureBool.latest(false)
+  val temperatureStatus       = temperatureBool.hold(false)
 
   val photoelecRemote = CompileGraph.withIO("photoelectric")(Tuple1(toggleSelection)) { case Tuple1(toggleSelection) =>
     val enabled = toggleSelection.fold(true) {
@@ -88,7 +88,7 @@ object FireDetection extends App {
   photoelecRemote.startObserving()
 
   val Tuple1(photoelecBool) = photoelecRemote.eventsFromListen()
-  val photoelecStatus       = photoelecBool.latest(false)
+  val photoelecStatus       = photoelecBool.hold(false)
 
   val fireDetected = Signal {
     co2Status.value || temperatureStatus.value || photoelecStatus.value

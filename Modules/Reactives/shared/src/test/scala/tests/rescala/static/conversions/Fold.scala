@@ -91,14 +91,14 @@ class FoldTests extends RETests {
     /* latest */
     test("latest the Initial Value Is Set Correctly") {
       val e              = Evt[Int]()
-      val s: Signal[Int] = e.latest(10)
+      val s: Signal[Int] = e.hold(10)
 
       assert(s.readValueOnce == 10)
     }
 
     test("latest the Function is Executed Every Time The Event Fires") {
       val e              = Evt[Int]()
-      val s: Signal[Int] = e.latest(10)
+      val s: Signal[Int] = e.hold(10)
 
       e.fire(1)
       assert(s.readValueOnce == 1)
@@ -111,14 +111,14 @@ class FoldTests extends RETests {
     /* latestOption */
     test("latest Option the Initial Value Is Set Correctly") {
       val e                      = Evt[Int]()
-      val s: Signal[Option[Int]] = e.latestOption()
+      val s: Signal[Option[Int]] = e.holdOption()
 
       assert(s.readValueOnce == None)
     }
 
     test("latest Option the Function is Executed Every Time The Event Fires") {
       val e                      = Evt[Int]()
-      val s: Signal[Option[Int]] = e.latestOption()
+      val s: Signal[Option[Int]] = e.holdOption()
 
       e.fire(1)
       assert(s.readValueOnce == Option(1))

@@ -52,7 +52,7 @@ class SignalMacro extends RETests {
 
       var test           = 0
       val e              = Evt[Int]()
-      val s: Signal[Int] = Signal { 2 * e.latest(0).value }
+      val s: Signal[Int] = Signal { 2 * e.hold(0).value }
 
       s.changed += { _ => test += 1 }
       assert(s.readValueOnce === 0)
@@ -67,7 +67,7 @@ class SignalMacro extends RETests {
 
       var test                   = 0
       val e                      = Evt[Int]()
-      val s: Signal[Option[Int]] = Signal { e.latestOption().apply() }
+      val s: Signal[Option[Int]] = Signal { e.holdOption().apply() }
 
       s.changed += { _ => test += 1 }
       assert(s.readValueOnce === None)
@@ -91,7 +91,7 @@ class SignalMacro extends RETests {
         def obj(): Unit = {
           new {
             val evt              = Evt[Int]()
-            val sig: Signal[Int] = Signal { 2 * evt.latest(0).apply() }
+            val sig: Signal[Int] = Signal { 2 * evt.hold(0).apply() }
 
             e = evt
             s = sig
@@ -193,7 +193,7 @@ class SignalMacro extends RETests {
     //  val e = Evt[Int]()
     //  val o = new { val evt = e }
     //
-    //  val sig = Signal { getSignal(o).latestOption().apply() }
+    //  val sig = Signal { getSignal(o).holdOption().apply() }
     //
     //  assert(sig.readValueOnce === None)
     //  e.fire(30)
@@ -256,7 +256,7 @@ class SignalMacro extends RETests {
       val source  = Evt[String]()
       val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
-      val selected = source.map(mapping.get).flatten.latest().flatten(flattenImplicitForsignal)
+      val selected = source.map(mapping.get).flatten.hold().flatten(flattenImplicitForsignal)
 
       source.fire("Hallo")
 

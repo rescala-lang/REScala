@@ -59,7 +59,7 @@ class Elevator(val nFloors: Int) {
 
   val stoppedWaiting = waitingTime.changed.filter(_ == 0)
   val isWaiting: Signal[Boolean] =
-    (reachedFloor.map((_: Int) => true) || stoppedWaiting.map((_: Any) => false)).latest(false)
+    (reachedFloor.map((_: Int) => true) || stoppedWaiting.map((_: Any) => false)).hold(false)
 
   // Define some behavior with events
   stoppedWaiting += { _ =>

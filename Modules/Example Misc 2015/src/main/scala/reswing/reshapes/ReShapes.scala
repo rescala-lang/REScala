@@ -85,7 +85,7 @@ object ReShapes extends SimpleSwingApplication {
           }
           (item: Component, command)
         }).toSeq
-      }) latest Seq.empty // #IF
+      }) hold Seq.empty // #IF
 
     contents += new Menu("File") {
       contents += new MenuItem(Action("New tab") { addTab() })

@@ -16,7 +16,7 @@ class Mouse {
   /* Compose reactive values */
   val mouseChangePosition     = mouseMovedE || mouseDraggedE
   val mousePressedOrReleased  = mousePressedE || mouseReleasedE
-  val position: Signal[Point] = mouseChangePosition.latest(new Point(0, 0))
+  val position: Signal[Point] = mouseChangePosition.hold(new Point(0, 0))
   val pressed: Signal[Boolean] =
     mousePressedOrReleased.toggle(Signal { false }, Signal { true }) // TODO: solve this more robust
 

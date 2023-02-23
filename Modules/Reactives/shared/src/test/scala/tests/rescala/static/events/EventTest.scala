@@ -63,7 +63,7 @@ class EventTest extends RETests {
         val res = Events.fromCallback[String] { cb =>
           cb("some!")
         }
-        res.event.latest("none")
+        res.event.hold("none")
       }
 
       assert(res.readValueOnce === "some!")

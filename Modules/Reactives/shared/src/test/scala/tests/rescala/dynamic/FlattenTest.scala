@@ -113,7 +113,7 @@ class FlattenTest extends RETests {
 
     test("flatten Event") {
       val e1            = Evt[Int]()
-      val condition     = e1.latest(-1)
+      val condition     = e1.hold(-1)
       val level1Event   = e1.map(_ => "level 1")
       val level2Event   = level1Event.map(_ => "level 2")
       val dynamicSignal = Signal { if (condition() == 1) level1Event else level2Event }
@@ -131,7 +131,7 @@ class FlattenTest extends RETests {
 
     test("flatten Event Same Level") {
       val e1              = Evt[Int]()
-      val level2Condition = e1.latest(-1).map(identity)
+      val level2Condition = e1.hold(-1).map(identity)
       val level1EventA    = e1.map(_ => "A")
       val level1EventB    = e1.map(_ => "B")
       val dynamicSignal   = Signal { if (level2Condition() == 1) level1EventA else level1EventB }
@@ -336,7 +336,7 @@ class FlattenTest extends RETests {
     test("event of options") {
       val someInput = Evt[Option[String]]()
       val flat      = someInput.flatten
-      val res       = flat.latest()
+      val res       = flat.hold()
       var count     = 0
 
       res.observe { _ => count += 1 }
@@ -361,7 +361,7 @@ class FlattenTest extends RETests {
       val joined = Evt[String]()
       import scala.concurrent.ExecutionContext.Implicits.global
       val res = (joined.map(str => engine.Signal.fromFuture(Future.successful(str)))
-        .latest(Signal { "unknown" })).flatten
+        .hold(Signal { "unknown" })).flatten
 
       joined.fire("test")
 

@@ -51,7 +51,7 @@ class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
       val pressed  = Evt[Point]()
       val released = Evt[Point]()
       val clicked  = Evt[Point]()
-      val state    = (pressed.map(_ => true) || released.map(_ => false)).latest(false)
+      val state    = (pressed.map(_ => true) || released.map(_ => false)).hold(false)
     }
     val _position                    = Var[Point](Point(0, 0))
     val x                            = _position.map(_.x)

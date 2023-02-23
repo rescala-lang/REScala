@@ -83,7 +83,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
 
     "latestOption Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
       val e                      = Evt[Int]()
-      val s: Signal[Option[Int]] = e.latestOption()
+      val s: Signal[Option[Int]] = e.holdOption()
 
       var latest: Option[Int] = None
       s.observe { lo =>

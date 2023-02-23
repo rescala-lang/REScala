@@ -13,7 +13,7 @@ class MacroEventTestSuite extends RETests {
         ev1().map(i => i + v1())
       }
 
-      val res = snapshotEvent.latest(0)
+      val res = snapshotEvent.hold(0)
 
       assert(res.readValueOnce === 0)
       ev1.fire(10)
@@ -30,7 +30,7 @@ class MacroEventTestSuite extends RETests {
       val v1            = Var(8)
       val snapshotEvent = ev1.map(i => i + v1())
 
-      val res = snapshotEvent.latest(0)
+      val res = snapshotEvent.hold(0)
 
       assert(res.readValueOnce === 0)
       ev1.fire(10)
@@ -46,7 +46,7 @@ class MacroEventTestSuite extends RETests {
       val ev1           = Evt[Int]()
       val snapshotEvent = ev1.map(i => i + 1)
 
-      val res = snapshotEvent.latest(0)
+      val res = snapshotEvent.hold(0)
 
       assert(res.readValueOnce === 0)
       ev1.fire(10)
@@ -80,7 +80,7 @@ class MacroEventTestSuite extends RETests {
       val e1    = Evt[Int]()
       val e2    = Evt[Int]()
       val event = Event { Some(List(e1(), e2()).flatten) }
-      val res   = event.latest(Nil)
+      val res   = event.hold(Nil)
 
       assert(res.readValueOnce === Nil)
       e1.fire(9)
@@ -98,7 +98,7 @@ class MacroEventTestSuite extends RETests {
       val e1    = Evt[Int]()
       val event = Event { Some { e1.count().value } }
 
-      val res = event.latest()
+      val res = event.hold()
 
       e1.fire(1)
       assert(res.readValueOnce === 1)

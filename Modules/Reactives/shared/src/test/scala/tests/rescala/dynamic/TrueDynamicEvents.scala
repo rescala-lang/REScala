@@ -11,7 +11,7 @@ class TrueDynamicEvents extends RETests {
 
       val event = Event.dynamic { Some { e1.value.get.value } }
 
-      val res = event.latest()
+      val res = event.hold()
 
       e1.fire(Signal(1))
       assert(res.readValueOnce === 1)

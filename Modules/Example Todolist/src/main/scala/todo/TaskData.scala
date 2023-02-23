@@ -109,7 +109,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     }
 
     val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
-    val editingV      = changeEditing.latest(init = false)
+    val editingV      = changeEditing.hold(init = false)
 
     val doneClick = Events.fromCallback[UIEvent](onchange := _)
 

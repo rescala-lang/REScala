@@ -151,26 +151,26 @@ trait EventBundle extends FoldBundle {
       * @group conversion
       */
     final def count()(implicit ticket: CreationTicket[State]): Signal[Int] =
-      fold(0)((acc, _) => acc + 1)
+      iterate(0)(_ + 1)
 
     /** returns a signal holding the latest value of the event.
       * @param init initial value of the returned signal
       * @group conversion
       */
-    final def latest[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
+    final def hold[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
       fold(init)((_, v) => v)
 
     /** returns a signal holding the latest value of the event.
       * @group conversion
       */
-    final def latest[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
+    final def hold[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
       reduce[A]((_, v) => v)
 
     /** Holds the latest value of an event as an Option, None before the first event occured
       * @group conversion
       */
-    final def latestOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
-      fold(None: Option[A]) { (_, v) => Some(v) }
+    final def holdOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
+      fold(Option.empty[A]) { (_, v) => Some(v) }
 
     /** Returns a signal which holds the last n events in a list. At the beginning the
       * list increases in size up to when n values are available

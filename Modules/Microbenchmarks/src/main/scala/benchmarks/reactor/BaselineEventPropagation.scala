@@ -25,7 +25,7 @@ class BaselineEventPropagation {
   def setup(engineParam: EngineParam) = {
     engine = engineParam.engine
     event = Evt[Int]()
-    signal = event.latest(0)
+    signal = event.hold(0)
   }
 
   @Benchmark

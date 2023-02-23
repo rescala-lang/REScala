@@ -34,5 +34,5 @@ class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {
       (rectBtn.clicked map { (_: Any) => new Rectangle(state) }) ||                             // #EF //#EF
       (ovalBtn.clicked map { (_: Any) => new Oval(state) }) ||                                  // #EF //#EF
       (triangleBtn.clicked map { (_: Any) => new Triangle(state) }) ||                          // #EF //#EF
-      (freedrawBtn.clicked map { (_: Any) => new Freedraw(state) })) latest { new Line(state) } // #EF //#IF
+      (freedrawBtn.clicked map { (_: Any) => new Freedraw(state) })) hold { new Line(state) } // #EF //#IF
 }
