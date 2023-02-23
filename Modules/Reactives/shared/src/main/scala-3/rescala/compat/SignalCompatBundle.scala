@@ -2,10 +2,10 @@ package rescala.compat
 
 import rescala.core.{CreationTicket, ReSource}
 import rescala.interface.RescalaInterface
-import rescala.macros.ReadableMacroBundle
+import rescala.macros.{ReadableMacro}
 import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
 
-trait SignalCompatBundle extends ReadableMacroBundle {
+trait SignalCompatBundle {
   bundle: Operators =>
 
   trait SignalCompat[+T] extends ReadableMacro[T] {

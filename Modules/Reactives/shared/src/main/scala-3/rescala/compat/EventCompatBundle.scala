@@ -3,9 +3,9 @@ package rescala.compat
 import rescala.core.{CreationTicket, DynamicTicket, ReSource, StaticTicket}
 import rescala.interface.RescalaInterface
 import rescala.operator.{Operators, Pulse, cutOutOfUserComputation}
-import rescala.macros.ReadableMacroBundle
+import rescala.macros.{ReadableMacro}
 
-trait EventCompatBundle extends ReadableMacroBundle {
+trait EventCompatBundle {
   bundle: Operators =>
 
   trait EventCompat[+T] extends ReadableMacro[Option[T]] {

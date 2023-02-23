@@ -58,7 +58,6 @@ trait Sources {
   /** Source signals with imperatively updates.
     *
     * @tparam A Type stored by the signal
-    * @tparam S Struct type used for the propagation of the signal
     */
   class Var[A] private[rescala] (initialState: State[Pulse[A]], name: ReInfo)
       extends Base[State, Pulse[A]](initialState, name)

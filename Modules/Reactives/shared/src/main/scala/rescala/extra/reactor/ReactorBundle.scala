@@ -2,6 +2,7 @@ package rescala.extra.reactor
 
 import rescala.core.{CreationTicket, Derived, ReInfo, ReadAs, Scheduler}
 import rescala.interface.RescalaInterface
+import rescala.macros.ReadableMacro
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
