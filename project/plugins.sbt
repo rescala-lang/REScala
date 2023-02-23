@@ -2,7 +2,7 @@
  * and may contain unused dependencies */
 
 // scalajs 1.0
-addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "[1.12.0, 1.13.0]")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % (if (sys.env("SCALA_VERSION") == "2.11") "1.12.0" else "1.13.0"))
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
 // scalanative
