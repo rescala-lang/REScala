@@ -1,4 +1,4 @@
-package tests.rescala.property
+package tests.rescala.misc
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
@@ -8,9 +8,9 @@ import tests.rescala.testtools.RETests
 
 class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
 
-  import rescala.extra.invariant.InvariantApi._
+  import rescala.extra.invariant.InvariantApi.*
   val sched = InvariantApi.scheduler
-  import sched._
+  import sched.*
 
   "expect invalid invariants to fail" in forAll(Gen.posNum[Int]) { (n: Int) =>
     assertThrows[InvariantViolationException] {

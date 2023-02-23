@@ -11,6 +11,15 @@ import rescala.scheduler.TopoBundle
 
 import scala.collection.mutable.ListBuffer
 
+object Invariant {
+  inline def apply[T](inline inv: T => Boolean): Invariant[T] =
+    new Invariant[T](scala.compiletime.codeOf(inv), inv)
+}
+
+class Invariant[T](val description: String, val inv: T => Boolean) {
+  def validate(value: T): Boolean = inv(value)
+}
+
 object InvariantApi extends InvariantBundle with RescalaInterface {
   def scheduler: InvariantScheduler.type = InvariantScheduler
 
@@ -96,7 +105,7 @@ trait InvariantBundle extends TopoBundle {
       }
 
       private def customForAll[P](
-          signalGeneratorPairs: List[(ReSource, Gen[A] forSome { type A })],
+          signalGeneratorPairs: List[(ReSource, Gen[?])],
           f: List[(ReSource, Any)] => Boolean,
           generated: List[(ReSource, Any)] = List.empty
       ): Prop =
@@ -106,8 +115,9 @@ trait InvariantBundle extends TopoBundle {
             forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
         }
 
-      private def findGenerators(): List[(ReSource.of[State], Gen[A] forSome { type A })] = {
-        def findGeneratorsRecursive(resource: ReSource.of[State]): List[(ReSource.of[State], Gen[A] forSome { type A })] = {
+      private def findGenerators(): List[(ReSource.of[State], Gen[?])] = {
+        def findGeneratorsRecursive(resource: ReSource.of[State])
+            : List[(ReSource.of[State], Gen[?])] = {
           if (resource.state.gen != null) {
             List((resource, resource.state.gen))
           } else if (resource.state.incoming == Set.empty) {
@@ -126,7 +136,7 @@ trait InvariantBundle extends TopoBundle {
         gens
       }
 
-      private def forceValues(changes: (ReSource, A) forSome { type A }*): Set[ReSource] = {
+      private def forceValues(changes: (ReSource, ?)*): Set[ReSource] = {
         val asReSource = changes.foldLeft(Set.empty[ReSource]) {
           case (acc, (source, _)) => acc + source
         }

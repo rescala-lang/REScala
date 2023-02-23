@@ -40,8 +40,7 @@ lazy val rescalaAggregate =
 
 lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
-    commonCrossBuildVersions,
-    scalaVersionFromEnv,
+    scalaVersion_3,
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
