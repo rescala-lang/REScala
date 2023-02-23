@@ -2,11 +2,11 @@
  * and may contain unused dependencies */
 
 // scalajs 1.0
-addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.13.0")
+addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "[1.12.0, 1.13.0]")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
 // scalanative
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.10")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "[0.4.9, 0.4.10]")
 
 // crossbuilding
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.2.0")

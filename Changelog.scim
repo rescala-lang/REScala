@@ -1,10 +1,5 @@
 = Changelog
 
-== v.next
-
-• drop Scala 2.11 support (due to ScalaJS and Scala Native)
-	• likely also drop Java < 11.
-
 == v0.33.0
 date = 2023-02-22
 
