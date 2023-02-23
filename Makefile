@@ -1,5 +1,3 @@
-SHELL = /usr/bin/bash
-
 publishLocal:
 	sbtn 'rescalaAggregate / publishLocal'
 	sbtn 'kofreAggregate / publishLocal'
