@@ -1,7 +1,5 @@
 package rescala
 
-import rescala.Schedulers.Unmanaged
-import rescala.Schedulers.unmanaged.bundle
 import rescala.core.{AdmissionTicket, ReSource, Scheduler}
 import rescala.interface.RescalaInterface
 import rescala.scheduler.{Levelbased, Sidup, TopoBundle}
@@ -53,7 +51,11 @@ object Schedulers extends PlatformSchedulers {
   }
 
   object toposort extends RescalaInterface {
-    val bundle: TopoBundle = new TopoBundle {}
+    val bundle: TopoBundle = new TopoBundle {
+      override type State[V] = TopoState[V]
+
+      override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
+    }
     override type State[V] = bundle.State[V]
     override def scheduler: Scheduler[State] = bundle.TopoScheduler
   }

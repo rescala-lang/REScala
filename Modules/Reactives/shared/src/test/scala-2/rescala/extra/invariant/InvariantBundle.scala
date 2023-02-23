@@ -3,7 +3,8 @@ package rescala.extra.invariant
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
-import rescala.core.{InitialChange, Observation}
+import rescala.core.ReSource.of
+import rescala.core.{InitialChange, Observation, ReSource}
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse
 import rescala.scheduler.TopoBundle
@@ -11,7 +12,6 @@ import rescala.scheduler.TopoBundle
 import scala.collection.mutable.ListBuffer
 
 object InvariantApi extends InvariantBundle with RescalaInterface {
-  override type ReSource = rescala.core.ReSource.of[State]
   def scheduler: InvariantScheduler.type = InvariantScheduler
 
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
@@ -106,8 +106,8 @@ trait InvariantBundle extends TopoBundle {
             forAll(gen)(t => customForAll(tail, f, generated :+ ((sig, t))))
         }
 
-      private def findGenerators(): List[(ReSource, Gen[A] forSome { type A })] = {
-        def findGeneratorsRecursive(resource: ReSource): List[(ReSource, Gen[A] forSome { type A })] = {
+      private def findGenerators(): List[(ReSource.of[State], Gen[A] forSome { type A })] = {
+        def findGeneratorsRecursive(resource: ReSource.of[State]): List[(ReSource.of[State], Gen[A] forSome { type A })] = {
           if (resource.state.gen != null) {
             List((resource, resource.state.gen))
           } else if (resource.state.incoming == Set.empty) {

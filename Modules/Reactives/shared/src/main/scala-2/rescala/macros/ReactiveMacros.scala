@@ -307,7 +307,7 @@ class ReactiveMacros(val c: blackbox.Context) {
         case turnSource @ Apply(TypeApply(Select(ctleft, TermName("fromSchedulerImplicit")), types), _)
             if turnSource.tpe.typeSymbol.name == weakTypeOf[CreationTicket].typeSymbol.name
             && turnSource.symbol.owner == symbolOf[LowPriorityCreationImplicits] =>
-          val ct = new BundleAcquisiton[ResourceType].getBundledClass(weakTypeOf[CreationTicket])
+          val ct = weakTypeOf[CreationTicket]
           q"""$ctleft.fromTicketImplicit($ticketIdent)"""
 
         case tree @ Select(reactive, TermName("now")) =>

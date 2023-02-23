@@ -9,7 +9,7 @@ import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait TopoBundle {
-  final type State[V] = TopoState[V]
+  type State[V] <: TopoState[V]
 
   type Derived  = rescala.core.Derived.of[State]
   type ReSource = rescala.core.ReSource.of[State]
@@ -32,7 +32,7 @@ trait TopoBundle {
       s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
   }
 
-  def makeDerivedStructStateBundle[V](ip: V): State[V] = new TopoState[V](ip)
+  def makeDerivedStructStateBundle[V](ip: V): State[V]
 
   class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
 

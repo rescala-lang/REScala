@@ -4,8 +4,8 @@ import rescala.interface.RescalaInterface
 import rescala.parrp.ParRP
 
 /** Accesses private[rescala] values for some low level tests */
-class JVMInfiltrator[Api <: RescalaInterface with ParRP](val api: Api) {
-  import api._
+object JVMInfiltrator {
+  import rescala.Schedulers.parrp._
   def unsafeNow[T](s: Signal[T]): T = {
     s.state.current.get
   }

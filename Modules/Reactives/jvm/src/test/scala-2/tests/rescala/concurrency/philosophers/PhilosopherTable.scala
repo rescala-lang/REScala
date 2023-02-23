@@ -99,7 +99,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: RescalaInterface) {
       rightFork: Signal[Fork],
       vision: Signal[Vision]
   ) {
-    def inspect(t: Transaction.of[State]): String =
+    def inspect(t: Transaction[State]): String =
       s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 

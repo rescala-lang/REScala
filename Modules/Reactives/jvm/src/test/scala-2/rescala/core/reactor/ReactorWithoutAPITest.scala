@@ -1,6 +1,6 @@
 package rescala.core.reactor
 
-import rescala.core.{ReInfo, ReadAs}
+import rescala.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import rescala.macros.MacroAccess
 import tests.rescala.testtools.RETests
 
@@ -12,8 +12,8 @@ class ReactorWithoutAPITest extends RETests {
   class Reactor[T](
       initState: State[ReactorStage[T]]
   ) extends rescala.core.Derived
-      with ReadAs[State, T]
-      with MacroAccess[T, ReadAs[State, T]] {
+      with ReadAs[T]
+      with MacroAccess[T, ReadAs[T]] {
 
     override type Value    = ReactorStage[T]
     override type State[V] = rescala.default.State[V]
@@ -124,8 +124,8 @@ class ReactorWithoutAPITest extends RETests {
       */
     def once[T](
         initialValue: T,
-        dependencies: Set[ReSource]
-    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket): Reactor[T] = {
+        dependencies: Set[ReSource.of[State]]
+    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
       ct.create(
         dependencies,
         new ReactorStage[T](initialValue, stageBuilder),
