@@ -10,7 +10,8 @@ class LightImplicitSyntaxTest extends RETests {
     test("experiment With Implicit Syntax") {
 
       implicit def getSignalValueDynamic[T](s: Signal[T])(implicit ticket: DynamicTicket[State]): T = ticket.depend(s)
-      def Signal[T](f: DynamicTicket[State] => T)(implicit maybe: CreationTicket[State]): Signal[T] = Signals.dynamic()(f)
+      def Signal[T](f: DynamicTicket[State] => T)(implicit maybe: CreationTicket[State]): Signal[T] =
+        Signals.dynamic()(f)
 
       val price    = Var(3)
       val tax      = price.map { p => p / 3 }

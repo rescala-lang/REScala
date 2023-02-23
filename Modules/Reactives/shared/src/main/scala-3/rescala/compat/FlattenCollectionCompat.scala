@@ -33,7 +33,7 @@ trait FlattenCollectionCompat {
     }
 
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[Traversable[Option[B]\]\] where the new Event fires whenever any of the inner events fire */
-  def traversableOfAllOccuringEventValues[ B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](implicit
+  def traversableOfAllOccuringEventValues[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](implicit
       ticket: CreationTicket[State]
   ): Flatten[Signal[T[Evnt[B]]], Event[T[Option[B]]]] =
     new Flatten[Signal[T[Evnt[B]]], Event[T[Option[B]]]] {

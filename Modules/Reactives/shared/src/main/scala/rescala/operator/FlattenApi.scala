@@ -16,7 +16,7 @@ trait FlattenApi extends FlattenCollectionCompat {
   }
 
   /** Flatten a Signal[Signal[B]\] into a Signal[B] that changes whenever the outer or inner signal changes. */
-  implicit def flattenImplicitForsignal[ B](implicit
+  implicit def flattenImplicitForsignal[B](implicit
       ticket: CreationTicket[State]
   ): Flatten[Signal[Signal[B]], Signal[B]] =
     new Flatten[Signal[Signal[B]], Signal[B]] {

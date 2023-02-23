@@ -1,6 +1,8 @@
 package rescala.operator
 
-import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch}
+import rescala.core.{
+  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch
+}
 
 trait Sources {
   self: Operators =>

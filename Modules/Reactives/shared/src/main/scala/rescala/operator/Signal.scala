@@ -2,7 +2,10 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
+import rescala.core.{
+  CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch,
+  StaticTicket
+}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,7 +85,9 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
     @cutOutOfUserComputation
-    final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit ticket: CreationTicket[State]): Signal[R] =
+    final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit
+        ticket: CreationTicket[State]
+    ): Signal[R] =
       Signals.static(this.resource) { st =>
         try st.dependStatic(this.resource)
         catch {
@@ -229,7 +234,8 @@ trait SignalBundle extends SignalCompatBundle {
         ec: ExecutionContext,
         name: ReInfo
     ): Signal[A] = {
-      val creationTicket = new CreationTicket[State](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
+      val creationTicket =
+        new CreationTicket[State](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
       fut.value match {
         case Some(Success(value)) =>
           Var(value)(creationTicket)

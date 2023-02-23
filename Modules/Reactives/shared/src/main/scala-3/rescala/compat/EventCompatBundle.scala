@@ -28,7 +28,9 @@ trait EventCompatBundle extends ReadableMacroBundle {
     /** Collects the results from a partial function
       * @group operator
       */
-    final inline def collect[U](inline expression: PartialFunction[T, U])(implicit ticket: CreationTicket[State]): Event[U] =
+    final inline def collect[U](inline expression: PartialFunction[T, U])(implicit
+        ticket: CreationTicket[State]
+    ): Event[U] =
       Event.dynamic { this.value.collect(expression) }
 
     /** Transform the event.

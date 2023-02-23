@@ -135,7 +135,9 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       createReactor(initialValue, loopingStage)
     }
 
-    private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
+    private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit
+        ct: CreationTicket[State]
+    ): Reactor[T] = {
       ct.create(
         Set(),
         new ReactorState[T](initialValue, initialStage),
