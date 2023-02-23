@@ -1,6 +1,5 @@
 package rescala.extra.incremental
 
-import rescala.compat.SignalCompatBundle
 import rescala.core._
 import rescala.interface.RescalaInterface
 import rescala.operator.{EventBundle, SignalBundle, cutOutOfUserComputation}
@@ -9,7 +8,7 @@ import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
 trait IncrementalBundle {
-  self: EventBundle with SignalBundle with SignalCompatBundle with RescalaInterface =>
+  self: EventBundle with SignalBundle with RescalaInterface =>
 
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source

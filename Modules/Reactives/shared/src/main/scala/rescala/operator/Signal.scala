@@ -1,11 +1,8 @@
 package rescala.operator
 
-import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{
-  CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch,
-  StaticTicket
-}
+import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
+import rescala.macros.ReadableMacro
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,7 +13,7 @@ object SignalMacroImpl {
   object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
 }
 
-trait SignalBundle extends SignalCompatBundle {
+trait SignalBundle {
   selfType: Operators =>
 
   /** Time changing value derived from the dependencies.
@@ -29,7 +26,7 @@ trait SignalBundle extends SignalCompatBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Signal[+T] extends Disconnectable with SignalCompat[T] {
+  trait Signal[+T] extends Disconnectable with ReadableMacro[T]  {
     override type State[V] = selfType.State[V]
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
@@ -150,27 +147,41 @@ trait SignalBundle extends SignalCompatBundle {
         st.collectStatic(this).filter(_ == value)
       }.dropParam
 
+    /** Return a Signal with f applied to the value
+      *
+      * @group operator
+      */
+    @cutOutOfUserComputation
+    final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket[State]): Signal[B] =
+      Signal.dynamic(expression(this.value))(ct)
+  }
+
+  /** A signal expression can be used to create signals accessing arbitrary other signals.
+    * Use the apply method on a signal to access its value inside of a signal expression.
+    * {{{
+    * val a: Signal[Int]
+    * val b: Signal[Int]
+    * val result: Signal[String] = Signal { a().toString + b().toString}
+    * }}}
+    *
+    * @group create
+    */
+  object Signal {
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
+      val (sources, fun, isStatic) =
+        rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.StaticTicket[State], true](expr)
+      Signals.static(sources: _*)(fun)
+    }
+
+    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
+      val (sources, fun, isStatic) =
+        rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.DynamicTicket[State], false](expr)
+      Signals.dynamic(sources: _*)(fun)
+    }
   }
 
   /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
   object Signals {
-
-    private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
-
-    @cutOutOfUserComputation
-    def ofUDF[T](udf: UserDefinedFunction[T, ReSource.of[State], DynamicTicket[State]])(implicit
-        ct: CreationTicket[State]
-    ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, needsReevaluation = true) {
-        state =>
-          new SignalImpl[T](
-            state,
-            ignore2(udf.expression),
-            ct.rename,
-            if (udf.isStatic) None else Some(udf.staticDependencies)
-          )
-      }
-    }
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
@@ -178,15 +189,9 @@ trait SignalBundle extends SignalCompatBundle {
         ct: CreationTicket[State]
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
+        state => new SignalImpl[T](state, (t, _) => expr(t), ct.rename, None)
       }
     }
-
-    /** creates a new static signal depending on the dependencies, reevaluating the function */
-    @cutOutOfUserComputation
-    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => T)(implicit
-        ct: CreationTicket[State]
-    ): Signal[T] = static(dependencies: _*)(expr)
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
@@ -195,7 +200,7 @@ trait SignalBundle extends SignalCompatBundle {
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
       ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, ignore2(expr), ct.rename, Some(staticDeps))
+        state => new SignalImpl[T](state, (t, _) => expr(t), ct.rename, Some(staticDeps))
       }
     }
 
@@ -217,15 +222,10 @@ trait SignalBundle extends SignalCompatBundle {
         ct: CreationTicket[State]
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, ignore2(expr), ct.rename, None)
+        state => new SignalImpl[T](state, (t, _) => expr(t), ct.rename, None)
       }
     }
 
-    /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-    @cutOutOfUserComputation
-    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => T)(implicit
-        ct: CreationTicket[State]
-    ): Signal[T] = dynamic(dependencies: _*)(expr)
 
     /** converts a future to a signal */
     @cutOutOfUserComputation
