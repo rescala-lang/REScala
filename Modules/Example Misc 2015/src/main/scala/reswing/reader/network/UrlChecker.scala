@@ -53,10 +53,10 @@ class UrlChecker {
     { (t: Option[URL]) => t.isDefined } map { (t: Option[URL]) => t.get } // #EF
 
   /** Only fires if the checked url is valid */
-  lazy val urlIsValid: Event[Unit] = checkSuccessful.dropParam // #EVT //#EF
+  lazy val urlIsValid: Event[Any] = checkSuccessful // #EVT //#EF
 
   /** Only fires if the checked url is invalid */
-  lazy val urlIsInvalid: Event[Unit] = checkFailed.dropParam // #EVT //#EF
+  lazy val urlIsInvalid: Event[Any] = checkFailed // #EVT //#EF
 
   private def errorMessage(url: String, e: Exception): String =
     "Error while checking '" + url + "' - " + e.getMessage

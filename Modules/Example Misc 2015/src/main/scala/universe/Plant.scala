@@ -9,7 +9,7 @@ class Plant(implicit world: World) extends BoardElement {
   val age: Signal[Int]           = world.time.tick.count()
   val grows: Event[Int]          = age.changed && { _ % Plant.GrowTime == 0 }
   val size: Signal[Int]          = grows.iterate(0)(acc => math.min(Plant.MaxSize, acc + 1))
-  val expands: Event[Unit]       = size.changedTo(Plant.MaxSize)
+  val expands: Event[Any]        = size.changed.filter(_ == Plant.MaxSize)
   override def isAnimal: Boolean = false
 
   expands += { _ => // #HDL

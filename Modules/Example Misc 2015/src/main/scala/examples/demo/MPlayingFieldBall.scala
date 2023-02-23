@@ -34,9 +34,9 @@ object MPlayingFieldBall extends Main {
 
       Collisions(
         Signal { shape.centerX() < -horizontalHalfDistance() }.changed.filter(_ == true),
-        Signal { shape.centerX() > horizontalHalfDistance() }.changedTo(true),
-        Signal { shape.centerY() < -verticalHalfDistance() }.changedTo(true),
-        Signal { shape.centerY() > verticalHalfDistance() }.changedTo(true)
+        Signal { shape.centerX() > horizontalHalfDistance() }.changed.filter(_ == true),
+        Signal { shape.centerY() < -verticalHalfDistance() }.changed.filter(_ == true),
+        Signal { shape.centerY() > verticalHalfDistance() }.changed.filter(_ == true)
       )
     }
     val shape = new Rectangle(Var(0), Var(0), width, height)

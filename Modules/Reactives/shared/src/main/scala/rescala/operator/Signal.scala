@@ -134,15 +134,6 @@ trait SignalBundle {
         }
       }
 
-    /** Convenience function filtering to events which change this reactive to value
-      *
-      * @group conversion
-      */
-    final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket[State]): Event[Unit] =
-      Events.staticNamed(s"(filter $this)", this) { st =>
-        st.collectStatic(this).filter(_ == value)
-      }.dropParam
-
     /** Return a Signal with f applied to the value
       *
       * @group operator

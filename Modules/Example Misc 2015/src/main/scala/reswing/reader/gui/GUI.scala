@@ -20,7 +20,7 @@ class GUI(
     fetcherState: Signal[String] = Signal { "" }
 ) extends SimpleSwingApplication {
   val refreshButton        = new ReButton("Refresh")
-  val refresh: Event[Unit] = refreshButton.clicked.dropParam: Event[Unit] // #EVT //#EF
+  val refresh = refreshButton.clicked
 
   val requestURLAddition = Evt[String]() // #EVT
 

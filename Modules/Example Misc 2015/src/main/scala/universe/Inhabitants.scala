@@ -47,12 +47,12 @@ trait Female extends Animal {
   // counts down to 0
   private val mate: Var[Option[Animal]]   = Var(None)                  // #VAR
   final val isPregnant: Signal[Boolean]   = mate.map { _.isDefined }   // #SIG
-  private val becomePregnant: Event[Unit] = isPregnant.changedTo(true) // #EVT //#IF
+  private val becomePregnant: Event[Any] = isPregnant.changed.filter(_ == true) // #EVT //#IF
   private val pregnancyTime: Signal[Int] = Fold(Animal.PregnancyTime)(
     becomePregnant act { _ => Animal.PregnancyTime },
     world.time.hour.changed act { _ => current - (if (isPregnant.readValueOnce) 1 else 0) }
   )
-  private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    // #EVT //#IF
+  private val giveBirth: Event[Any] = pregnancyTime.changed.filter(_ == 0)                    // #EVT //#IF
   final override val isFertile       = Signal.lift(isAdult, isPregnant) { _ && !_ } // #SIG
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }

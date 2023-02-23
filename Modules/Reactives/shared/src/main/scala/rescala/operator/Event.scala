@@ -148,11 +148,6 @@ trait EventBundle extends FoldBundle {
       */
     final def flatten[R](implicit flatten: Flatten[Event[T], R]): R = flatten.apply(this)
 
-    /** Drop the event parameter; equivalent to map((_: Any) => ())
-      * @group operator
-      */
-    final def dropParam(implicit ticket: CreationTicket[State]): Event[Unit] = map(_ => Some(()))
-
     /** reduces events with a given reduce function to create a Signal
       *
       * @group conversion

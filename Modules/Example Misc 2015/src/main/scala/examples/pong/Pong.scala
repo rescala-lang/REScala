@@ -33,12 +33,12 @@ class Pong(val tick: Evt[Unit], val mouse: Mouse) {
   val rackets         = Signal { List(leftRacket, rightRacket) }
   val areas           = Signal.dynamic { rackets().map(_.area()) }
   val ballInRacket    = Signal { areas().exists(_.contains(x(), y())) }
-  val collisionRacket = ballInRacket.changedTo(true)
+  val collisionRacket = ballInRacket.changed.filter(_ == true)
 
   val leftWall  = x.changed && (x => x < 0)
   val rightWall = x.changed && (x => x + Ball.Size > Pong.Max_X)
 
-  val xBounce = leftWall.dropParam || rightWall.dropParam || collisionRacket
+  val xBounce = leftWall || rightWall || collisionRacket
   val yBounce = y.changed && (y => y < 0 || y + Ball.Size > Pong.Max_Y)
 
   val speedX = xBounce.toggle(Var(speed.x), Var(-speed.x))

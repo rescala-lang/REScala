@@ -47,21 +47,21 @@ class Change extends RETests {
 
     /* changedTo */
     test("changed To is Not Triggered On Creation") {
-      var test           = 0
-      val v1             = Var(1)
-      val s1             = v1.map { _ + 1 }
-      val e: Event[Unit] = s1.changedTo(1)
-      e += ((_: Unit) => { test += 1 })
+      var test          = 0
+      val v1            = Var(1)
+      val s1            = v1.map { _ + 1 }
+      val e: Event[Any] = s1.changed.filter(_ == 1)
+      e += ((_: Any) => { test += 1 })
 
       assert(test == 0)
     }
 
     test("changed To is Triggered When The Signal Has The Given Value") {
-      var test           = 0
-      val v1             = Var(1)
-      val s1             = v1.map { _ + 1 }
-      val e: Event[Unit] = s1.changedTo(3)
-      e += ((_: Unit) => { test += 1 })
+      var test = 0
+      val v1   = Var(1)
+      val s1   = v1.map { _ + 1 }
+      val e    = s1.changed.filter(_ == 3)
+      e += ((_) => { test += 1 })
 
       v1 set 2
       assert(test == 1)

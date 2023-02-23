@@ -57,7 +57,7 @@ class Elevator(val nFloors: Int) {
       tick act { _ => if (isWaiting.now) current - 1 else current }
   )
 
-  val stoppedWaiting = waitingTime.changedTo(0)
+  val stoppedWaiting = waitingTime.changed.filter(_ == 0)
   val isWaiting: Signal[Boolean] =
     (reachedFloor.map((_: Int) => true) || stoppedWaiting.map((_: Any) => false)).latest(false)
 

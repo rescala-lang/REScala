@@ -40,7 +40,7 @@ object ORacketMultiBall extends Main {
       }
     }
 
-    def collisionWith(collider: Shape): Event[Unit] = {
+    def collisionWith(collider: Shape): Event[Any] = {
       val collisionBoxHeight = Signal { height() + collider.hitboxHeight() }
       val collisionBoxWidth  = Signal { width() + collider.hitboxWidth() }
       val shapeInsideRacket = Signal {
@@ -49,7 +49,7 @@ object ORacketMultiBall extends Main {
         (posY() - collisionBoxHeight() / 2 < collider.centerY()) &&
         (posY() + collisionBoxHeight() / 2 > collider.centerY())
       }
-      shapeInsideRacket.changedTo(true)
+      shapeInsideRacket.changed.filter(_ == true)
     }
 
     val shape = new Rectangle(posX, posY, width, height, fill = Var(Some(if (isRight) Color.BLUE else Color.RED)))

@@ -59,7 +59,7 @@ class CatchUp {
   val upBox    = Signal { new Rectangle(delayedX(), delayedY(), SizeUp, SizeY) }
 
   val caught       = Signal { catchBox().intersects(upBox()) }
-  val hits         = caught.changedTo(true)
+  val hits         = caught.changed.filter(_ == true)
   val numberOfHits = hits.count()
 
   val scoreString = Signal { "You caught up " + numberOfHits() + " times." }
