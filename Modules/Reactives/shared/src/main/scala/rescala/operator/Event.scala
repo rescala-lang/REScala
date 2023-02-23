@@ -323,11 +323,6 @@ trait EventBundle extends FoldBundle {
     ): Event[T] =
       staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))(ticket, ticket.info)
 
-    /** Creates static events */
-    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => Option[T])(implicit
-        ticket: CreationTicket[State]
-    ): Event[T] = static(dependencies: _*)(expr)
-
     /** Creates dynamic events */
     def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
