@@ -8,29 +8,6 @@ import rescala.operator.RExceptions.ObservedException
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
 
-object EventsMacroImpl {
-  object MapFuncImpl {
-    def apply[T1, A](value: Option[T1], mapper: T1 => A): Option[A] =
-      value.map(mapper)
-  }
-  object FilterFuncImpl {
-    def apply[T1, A](value: Option[T1], filter: T1 => Boolean): Option[T1] =
-      value.filter(filter)
-  }
-  object CollectFuncImpl {
-    def apply[T1, A](value: Option[T1], filter: PartialFunction[T1, A]): Option[A] =
-      value.collect(filter)
-  }
-  object FoldFuncImpl {
-    def apply[T1, A](state: () => A, value: Option[T1], step: (A, T1) => A): A =
-      value match {
-        case None    => state()
-        case Some(v) => step(state(), v)
-      }
-  }
-
-}
-
 trait EventBundle extends FoldBundle {
   selfType: Operators =>
 
@@ -429,83 +406,6 @@ trait EventBundle extends FoldBundle {
       ) {
         state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
       }
-    }
-
-    /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.
-      *
-      * Example for a counter that can be reset:
-      *
-      * {{{
-      * val add: Event[Int]
-      * val reset: Event[Unit]
-      * Events.foldAll(0){ current => Seq(
-      *   add act2 { v => current + v },
-      *   reset act2 { _ => 0 }
-      * )}
-      * }}}
-      */
-    @cutOutOfUserComputation
-    @deprecated("use explicit Fold syntax instead", "0.34.0")
-    final def foldAll[A](init: A)(accthingy: (=> A) => Seq[FoldMatch[A]])(implicit
-        ticket: CreationTicket[State]
-    ): Signal[A] = {
-      var acc = () => init
-      val ops = accthingy(acc())
-      val staticInputs = ops.collect {
-        case fm: StaticFoldMatch[_, _]        => fm.event
-        case fm: StaticFoldMatchDynamic[_, _] => fm.event
-      }.toSet
-
-      def operator(dt: DynamicTicket[State], oldValue: () => A): A = {
-        acc = oldValue
-
-        def applyToAcc[T](f: T => A, value: Option[T]): Unit = {
-          value.foreach { v =>
-            val res = f(v)
-            acc = () => res
-          }
-        }
-
-        ops.foreach {
-          case fm: StaticFoldMatch[_, A] =>
-            applyToAcc(fm.f, dt.dependStatic(fm.event))
-          case fm: StaticFoldMatchDynamic[_, A] =>
-            applyToAcc(fm.f(dt), dt.dependStatic(fm.event))
-          case fm: DynamicFoldMatch[_, A] =>
-            fm.event().map(dt.depend).foreach { applyToAcc(fm.f, _) }
-        }
-        acc()
-      }
-
-      ticket.create(
-        staticInputs.toSet,
-        Pulse.tryCatch[A](Pulse.Value(init)),
-        needsReevaluation = true
-      ) {
-        state => new SignalImpl[A](state, operator, ticket.rename, Some(staticInputs.toSet))
-      }
-    }
-
-    sealed trait FoldMatch[+A]
-    class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                                extends FoldMatch[A]
-    class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket[State] => T => A) extends FoldMatch[A]
-    class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)                    extends FoldMatch[A]
-
-    class OnEv[T](event: Event[T]) {
-
-      /** Constructs a handling branch that handles the static `event`
-        * @param fun handler for activations of `event`
-        */
-      final def act2[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
-
-      /** Similar to act2, but provides access to a dynamic ticket in `fun` */
-      final def dyn2[A](fun: DynamicTicket[State] => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
-    }
-
-    class OnEvs[T](events: => Seq[Event[T]]) {
-
-      /** Constructs a handler for all `events`, note that `events` may dynamically compute the events from the current state */
-      final def act2[A](fun: T => A): FoldMatch[A] = new DynamicFoldMatch(() => events, fun)
     }
 
     class CBResult[T, R](val event: Event[T], val data: R)

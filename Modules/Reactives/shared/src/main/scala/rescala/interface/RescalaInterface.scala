@@ -32,10 +32,6 @@ trait RescalaInterface extends Operators {
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
-
-  implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
-  implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)
-
   /** Executes a transaction.
     *
     * @param initialWrites  All inputs that might be changed by the transaction
