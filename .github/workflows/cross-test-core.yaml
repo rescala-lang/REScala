@@ -30,9 +30,9 @@ jobs:
     - name: Run tests
       continue-on-error: true
       run: |
-        sbt "set ThisBuild / Test / parallelExecution := false" rescalaCore/compile rescalaCore/Test/compile rescalaCore/testQuick
+        sbt "set ThisBuild / Test / parallelExecution := false" rescalaAggregate/compile rescalaAggregate/Test/compile rescalaAggregate/testQuick
 
       # the idea here is, that we first do compile, Test / compile, testQuick sequentially, so if compilation fails on some sub project we abort early without half starting tests on some other sub project. However, sometimes compilation or testing fails spuriously, so we just do it again, which should fix most of the spurious compilation failures, and also may try to reexecute some of the spurious tests. As this keeps the incremental sbt cache, if the first one succeeds, the second one should be essentially for free.
     - name: Run tests again for added reliability
       run: |
-        sbt "set ThisBuild / Test / parallelExecution := false" rescalaCore/compile rescalaCore/Test/compile rescalaCore/testQuick
+        sbt "set ThisBuild / Test / parallelExecution := false" rescalaAggregate/compile rescalaAggregate/Test/compile rescalaAggregate/testQuick
