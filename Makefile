@@ -1,17 +1,17 @@
-.ONESHELL:
 SHELL = /usr/bin/bash
 
 publishLocal:
-	sbtn '+ rescalaCore / publishLocal'
-	sbtn '+ kofreJS / publishLocal'
-	sbtn '+ kofreJVM / publishLocal'
-	sbtn '+ kofreNative / publishLocal'
+	sbtn 'rescalaAggregate / publishLocal'
+	sbtn 'kofreAggregate / publishLocal'
+
+publishJitpack:
+	for sv in 2.11 2.12 2.13 3; do SCALA_VERSION=$$sv sbt -Dsbt.log.noformat=true 'rescalaAggregate / publishM2'; done
+	sbt -Dsbt.log.noformat=true 'kofreAggregate / publishM2'
+
 
 publishSigned:
-	sbtn '+ rescalaCore / publishSigned'
-	sbtn '+ kofreJS / publishSigned'
-	sbtn '+ kofreJVM / publishSigned'
-	sbtn '+ kofreNative / publishSigned'
+	sbtn 'rescalaAggregate / publishSigned'
+	sbtn 'kofreAggregate / publishSigned'
 
 runSimpleCaseStudy:
 	sbtn 'examples / run'

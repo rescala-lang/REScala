@@ -27,8 +27,8 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   replicationExamples.jvm,
 )
 
-lazy val rescalaCore =
-  project.in(file("Modules")).settings(
+lazy val rescalaAggregate =
+  project.in(file("target/PhonyBuilds/rescalaAggregate")).settings(
     crossScalaVersions := Nil,
     noPublish,
     scalaVersion_3
@@ -72,6 +72,18 @@ lazy val reswing = project.in(file("Modules/Swing"))
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(rescala.jvm)
   .settings(scalaVersion_3, noPublish, scalaFxDependencies, fork := true)
+
+
+lazy val kofreAggregate =
+  project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
+    crossScalaVersions := Nil,
+    noPublish,
+    scalaVersion_3
+  ).aggregate(
+    kofre.js,
+    kofre.jvm,
+    kofre.native,
+  )
 
 lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Modules/RDTs"))

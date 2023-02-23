@@ -1,6 +1,6 @@
 jdk:
   - openjdk11
 install:
-  - sbt -Dsbt.log.noformat=true +publishM2
+  - make publishJitpack
 env:
   SBT_OPTS: "-XX:MaxPermSize=2G"
