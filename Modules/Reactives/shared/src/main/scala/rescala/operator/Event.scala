@@ -114,35 +114,6 @@ trait EventBundle extends FoldBundle {
       }
     }
 
-    /** Merge the event with the other, if both fire simultaneously.
-      * @group operator
-      */
-    final def and[U, R](other: Event[U])(merger: (T, U) => R)(implicit ticket: CreationTicket[State]): Event[R] = {
-      Events.staticNamed(s"(and $this $other)", this, other) { st =>
-        for {
-          left  <- internalAccess(st.collectStatic(this)): Pulse[T]
-          right <- other.internalAccess(st.collectStatic(other)): Pulse[U]
-        } yield { merger(left, right) }
-      }
-    }
-
-    /** Merge the event with the other into a tuple, if both fire simultaneously.
-      * @group operator
-      * @see and
-      */
-    final def zip[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(T, U)] = and(other)(Tuple2.apply)
-
-    /** Merge the event with the other into a tuple, even if only one of them fired.
-      * @group operator
-      */
-    final def zipOuter[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(Option[T], Option[U])] = {
-      Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
-        val left: Pulse[T]  = st.collectStatic(this)
-        val right: Pulse[U] = other.internalAccess(st.collectStatic(other))
-        if (right.isChange || left.isChange) Value(left.toOption -> right.toOption) else NoChange
-      }
-    }
-
     /** Flattens the inner value.
       * @group operator
       */
