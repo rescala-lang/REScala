@@ -46,7 +46,7 @@ class GapBuffer {
   private val offsets: Signal[(Int, Int)] = (caretChanged && // #SIG //#EF
     { offset => offset >= 0 && offset <= size.value }).fold((0, 0))((s, n) => s._2 -> n)
 
-  offsets.changed += { // #HDL
+  offsets.changed observe { // #HDL
     case (prev, cur) =>
       // the caret has moved
       // which requires copying text from one segment to the other

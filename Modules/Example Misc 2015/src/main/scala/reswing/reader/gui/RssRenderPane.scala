@@ -28,7 +28,7 @@ class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
         }
   })
 
-  item.changed += { // #IF //#HDL
+  item.changed observe { // #IF //#HDL
     _ match {
       case Some(item) =>
         text = List(

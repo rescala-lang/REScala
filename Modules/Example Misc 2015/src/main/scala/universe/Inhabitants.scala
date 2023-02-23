@@ -58,7 +58,7 @@ trait Female extends Animal {
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
 
-  giveBirth += { _ => // #HDL
+  giveBirth observe { _ => // #HDL
     world.plan {
       val father = mate.readValueOnce.get
       val child  = createOffspring(father)

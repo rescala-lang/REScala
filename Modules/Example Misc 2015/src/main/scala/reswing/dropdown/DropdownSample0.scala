@@ -33,9 +33,9 @@ object DropdownSample0 extends SimpleSwingApplication {
   val outputField         = new ReTextField(text = outputString)
 
   /* Debug output */
-  // commaSeparated.changed += { a => println(a) }
-  // validSelection.changed += { a => println(a)}
-  // outputString.changed += { a => println(a)}
+  // commaSeparated.changed observe { a => println(a) }
+  // validSelection.changed observe { a => println(a)}
+  // outputString.changed observe { a => println(a)}
 
   def top =
     new MainFrame {

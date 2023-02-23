@@ -41,12 +41,6 @@ trait EventBundle extends FoldBundle {
       */
     override def read(v: Value): Option[T] = v.toOption
 
-    /** Adds an observer.
-      * @see observe
-      * @group accessor
-      */
-    final def +=(handler: T => Unit)(implicit ticket: CreationTicket[State]): Disconnectable = observe(handler)(ticket)
-
     /** Add an observer.
       *
       * @return the resulting [[rescala.operator.ObserveBundle.Observe]] can be used to remove the observer.
@@ -213,10 +207,7 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
-      Event.dynamic {
-        this.value.filter(expression)
-      }
+    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] = filter(expression)
 
     /** Collects the results from a partial function
       *

@@ -40,7 +40,7 @@ class SignalMacro extends RETests {
       val s = Signal { e }
       val r = s map { event => event map { _ + 1 } }
 
-      r.readValueOnce += { test = _ }
+      r.readValueOnce observe { test = _ }
       assert(test === 0)
       e.fire(2)
       assert(test === 3)
@@ -54,7 +54,7 @@ class SignalMacro extends RETests {
       val e              = Evt[Int]()
       val s: Signal[Int] = Signal { 2 * e.hold(0).value }
 
-      s.changed += { _ => test += 1 }
+      s.changed observe { _ => test += 1 }
       assert(s.readValueOnce === 0)
       e.fire(2)
       assert(s.readValueOnce === 4)
@@ -69,7 +69,7 @@ class SignalMacro extends RETests {
       val e                      = Evt[Int]()
       val s: Signal[Option[Int]] = Signal { e.holdOption().apply() }
 
-      s.changed += { _ => test += 1 }
+      s.changed observe { _ => test += 1 }
       assert(s.readValueOnce === None)
       e.fire(2)
       assert(s.readValueOnce === Some(2))
@@ -101,7 +101,7 @@ class SignalMacro extends RETests {
       }
 
       a.obj()
-      s.changed += { _ => test += 1 }
+      s.changed observe { _ => test += 1 }
       assert(s.readValueOnce === 0)
       e.fire(2)
       assert(s.readValueOnce === 4)

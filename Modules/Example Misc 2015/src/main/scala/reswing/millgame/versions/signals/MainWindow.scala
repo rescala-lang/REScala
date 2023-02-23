@@ -18,11 +18,11 @@ object MainWindow extends SimpleSwingApplication {
 
   def top =
     new MainFrame {
-      game.gameWon += { winner => // #HDL
+      game.gameWon observe { winner => // #HDL
         Dialog.showMessage(ui, "Game won by " + winner, "Game ended", Dialog.Message.Info)
       }
 
-      game.remainCountChanged += { count => // #HDL
+      game.remainCountChanged observe { count => // #HDL
         ui.counterBar.text =
           "White: " + count(White) + " / " +
           "Black: " + count(Black)
@@ -167,11 +167,11 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     })
   }
 
-  indexClicked += { index =>
+  indexClicked observe { index =>
     game.playerInput(index); ()
   } // #HDL
 
-  presentation.changed += { _ => this.repaint() } // #HDL
+  presentation.changed observe { _ => this.repaint() } // #HDL
 
   override def paintComponent(g: Graphics2D): Unit = {
     g.setRenderingHint(

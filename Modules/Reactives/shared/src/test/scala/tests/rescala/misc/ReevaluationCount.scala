@@ -19,7 +19,7 @@ class ReevaluationCount extends RETests {
         if (v1()) v2() else v3()
       }
 
-      s.changed += (_ => test += 1)
+      s.changed observe (_ => test += 1)
 
       assert(test == 0)
       v2.set(1)

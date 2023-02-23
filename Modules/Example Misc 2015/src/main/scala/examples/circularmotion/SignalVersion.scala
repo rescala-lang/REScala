@@ -19,11 +19,11 @@ object SignalVersion extends App {
 
   // Print all the results.
   // Note that the order in which the items are printed is not deterministic.
-  radius.changed += { x => print(f"Radius: $x%d  ") }
-  speed.changed += { x => print(f"Speed: $x%.2f  ") }
-  angle.changed += { x => print(f"Angle: $x%.2f  ") }
-  acceleration.changed += { x => print(f"Acceleration: $x%.2f  ") }
-  space.changed += { x => println(f"Space: $x%.2f  ") }
+  radius.changed observe { x => print(f"Radius: $x%d  ") }
+  speed.changed observe { x => print(f"Speed: $x%.2f  ") }
+  angle.changed observe { x => print(f"Angle: $x%.2f  ") }
+  acceleration.changed observe { x => print(f"Acceleration: $x%.2f  ") }
+  space.changed observe { x => println(f"Space: $x%.2f  ") }
 
   while (true) {
     Thread sleep 200

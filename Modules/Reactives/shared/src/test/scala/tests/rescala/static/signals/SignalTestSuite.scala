@@ -19,7 +19,7 @@ class SignalTestSuite extends RETests {
       val v2   = Var(2)
 
       val s1 = Signal.lift(v1, v2) { _ + _ }
-      s1.changed += { (_) => test += 1 }
+      s1.changed observe { (_) => test += 1 }
 
       assert(s1.readValueOnce == 3)
       assert(test == 0)
@@ -151,13 +151,13 @@ class SignalTestSuite extends RETests {
       val s2 = v.map { 3 * _ }
       val s3 = Signal.lift(s1, s2) { _ + _ }
 
-      s1.changed += { (_) =>
+      s1.changed observe { (_) =>
         test.incrementAndGet(); ()
       }
-      s2.changed += { (_) =>
+      s2.changed observe { (_) =>
         test.incrementAndGet(); ()
       }
-      s3.changed += { (_) =>
+      s3.changed observe { (_) =>
         test.incrementAndGet(); ()
       }
 

@@ -35,12 +35,12 @@ object ReactiveUtil {
     * {{{
     * lazy val o1: { val ev: Event[Unit] } = new {
     *   lazy val ev: Event[Unit] = Evt[Unit]()
-    *   o2.ev += {_ => /* react on event */ }
+    *   o2.ev observe {_ => /* react on event */ }
     * }
     *
     * lazy val o2: { val ev: Event[Unit] } = new {
     *   lazy val ev: Event[Unit] = Evt[Unit]()
-    *   o1.ev += {_ => /* react on event */ }
+    *   o1.ev observe {_ => /* react on event */ }
     * }
     *
     * (o1, o2)
@@ -58,12 +58,12 @@ object ReactiveUtil {
     * val (o1, o2) = bilateralValues{ value =>
     *   lazy val o1: { val ev: Event[Unit] } = new {
     *     lazy val ev: Event[Unit] = Evt[Unit]()
-    *     value(o2.ev) += {_ => /* react on event */ }
+    *     value(o2.ev) observe {_ => /* react on event */ }
     *   }
     *
     *   lazy val o2: { val ev: Event[Unit] } = new {
     *     lazy val ev: Event[Unit] = Evt[Unit]()
-    *     value(o1.ev) += {_ => /* react on event */ }
+    *     value(o1.ev) observe {_ => /* react on event */ }
     *   }
     *
     *   (o1, o2)

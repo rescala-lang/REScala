@@ -38,7 +38,7 @@ class SwitchVersion {
   val speedX = xBounce.toggle(Var(speed.x), Var(-speed.x))
   val speedY = yBounce.toggle(Var(speed.y), Var(-speed.y))
 
-  tick += { (_: Unit) => frame.repaint() }
+  tick observe { (_: Unit) => frame.repaint() }
 
   // drawing code
   val frame = new MainFrame {

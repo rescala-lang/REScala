@@ -15,7 +15,7 @@ class OR_EventTest extends RETests {
       val e1       = Evt[Int]()
       val e2       = Evt[Int]()
       val e1_OR_e2 = e1 || e2
-      e1_OR_e2 += { _ => test += 1 }
+      e1_OR_e2 observe { _ => test += 1 }
 
       assert(test == 0)
       e1.fire(10)
@@ -32,16 +32,16 @@ class OR_EventTest extends RETests {
       val e2       = e1 map (_ * 2)
       val e3       = e1 map (_ * 2)
       val e2_OR_e3 = e2 || e3
-      e1 += { _ =>
+      e1 observe { _ =>
         test.incrementAndGet(); ()
       }
-      e2 += { _ =>
+      e2 observe { _ =>
         test.incrementAndGet(); ()
       }
-      e3 += { _ =>
+      e3 observe { _ =>
         test.incrementAndGet(); ()
       }
-      e2_OR_e3 += { _ =>
+      e2_OR_e3 observe { _ =>
         test.incrementAndGet(); ()
       }
 

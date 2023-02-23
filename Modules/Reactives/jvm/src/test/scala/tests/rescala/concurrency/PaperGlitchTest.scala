@@ -28,7 +28,7 @@ class PaperGlitchTest extends AnyFunSuite {
 
     val glitches = new ConcurrentLinkedQueue[Int]()
 
-    total.changed += { v => if (!isPowerOf2(v)) glitches.add(v); () }
+    total.changed observe { v => if (!isPowerOf2(v)) glitches.add(v); () }
 
     // ============================================================================================================
 

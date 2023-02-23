@@ -62,19 +62,19 @@ class Elevator(val nFloors: Int) {
     (reachedFloor.map((_: Int) => true) || stoppedWaiting.map((_: Any) => false)).hold(false)
 
   // Define some behavior with events
-  stoppedWaiting += { _ =>
+  stoppedWaiting observe { _ =>
     queue.dequeue(); ()
   } // move to the next destination
-  callToFloor += { queue enqueue _ }
+  callToFloor observe { queue enqueue _ }
   // enqueue a new floor
 
   // debugging
   /*
-  tick += {_ =>
+  tick observe {_ =>
     println(position() + "; speed = " + speed() + "; waiting = " + waitingTime() + " " + isWaiting())
   }
-  stoppedWaiting += {x => println("!Stopped waiting")}
-  reachedFloor += {x => println("!Reached floor " + x)}
+  stoppedWaiting observe {x => println("!Stopped waiting")}
+  reachedFloor observe {x => println("!Reached floor " + x)}
    */
 
   def nameOfFloor(i: Int) =

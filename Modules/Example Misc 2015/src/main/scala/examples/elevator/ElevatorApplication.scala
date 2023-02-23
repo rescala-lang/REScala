@@ -41,7 +41,7 @@ class ElevatorApplication(val elevator: Elevator) {
       }
     }
   }
-  elevator.tick += { _ => frame.repaint() }
+  elevator.tick observe { _ => frame.repaint() }
 }
 
 class ElevatorPainter(e: Elevator) extends Panel {

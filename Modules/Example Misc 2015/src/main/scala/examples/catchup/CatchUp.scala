@@ -66,7 +66,7 @@ class CatchUp {
 
   // GUI redrawing code
   val stateChanged = mouse.position.changed.||[Any](tick)
-  stateChanged += { (_) => frame.repaint() }
+  stateChanged observe { (_) => frame.repaint() }
 
   // GUI
   val frame: MainFrame = new MainFrame {

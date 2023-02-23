@@ -96,7 +96,7 @@ object ReShapes extends SimpleSwingApplication {
       contents += new MenuItem(new LoadAction)
       contents += new Separator
       contents += new ReMenuItem(text = ReSwingValue("Quit")) { // #IS( // )
-        clicked += { _ => quit() } // #HDL
+        clicked observe { _ => quit() } // #HDL
       }
     }
 

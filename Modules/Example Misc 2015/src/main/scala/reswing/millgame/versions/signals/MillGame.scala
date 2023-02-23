@@ -68,11 +68,11 @@ class MillGame {
   def possibleMoves = possibleNextMoves.now
 
   /* Event based game logic: */
-  board.millClosed += { color => // #HDL
+  board.millClosed observe { color => // #HDL
     stateVar set RemoveStone(color)
   }
 
-  board.numStonesChanged += { // #HDL
+  board.numStonesChanged observe { // #HDL
     case (color, n) =>
       if (remainCount.now.apply(color) == 0 && n < 3) {
         stateVar set GameOver(color.other)

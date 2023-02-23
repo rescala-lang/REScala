@@ -162,7 +162,7 @@ class TextArea extends ReComponent {
     Position(row, col)
   }
 
-  keys.pressed += { e =>
+  keys.pressed observe { e =>
     def shift = e.modifiers == Key.Modifier.Shift
     if (e.modifiers == Key.Modifier.Control)
       e.key match {
@@ -205,7 +205,7 @@ class TextArea extends ReComponent {
       }
   }
 
-  keys.typed += { e =>
+  keys.typed observe { e =>
     if (e.modifiers != Key.Modifier.Control)
       e.char match {
         case '\u007f' => // Del key
@@ -226,17 +226,17 @@ class TextArea extends ReComponent {
       }
   }
 
-  mouse.clicks.pressed += { e =>
+  mouse.clicks.pressed observe { e =>
     this.requestFocusInWindow()
     caret.position = positionFromPoint(e.point)
   }
 
-  mouse.moves.dragged += { e =>
+  mouse.moves.dragged observe { e =>
     caret.dotPos = positionFromPoint(e.point)
   }
 
   // handle scroll and paint updates
-  caret.position.changed += { _ =>
+  caret.position.changed observe { _ =>
     val point = pointFromPosition(caret.position.readValueOnce)
     peer.peer.scrollRectToVisible(new Rectangle(point.x - 8, point.y, 16, 2 * lineHeight))
     caret.steady.restart
@@ -244,7 +244,7 @@ class TextArea extends ReComponent {
   }
 
   buffer.length.changed || caret.visible.changed ||
-  caret.dot.changed || caret.mark.changed += { _ => this.repaint() }
+  caret.dot.changed || caret.mark.changed observe { _ => this.repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
     super.paintComponent(g)

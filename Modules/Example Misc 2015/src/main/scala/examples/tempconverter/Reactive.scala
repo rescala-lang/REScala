@@ -19,7 +19,7 @@ trait ReactiveText extends Reactor {
   // in signal
   def text_=(value: Signal[String]): Unit = {
     this.text_=(value.now)
-    value.changed += { (t: String) => this.text_=(t) }
+    value.changed observe { (t: String) => this.text_=(t) }
     ()
   }
   // out signal

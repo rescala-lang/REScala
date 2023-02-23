@@ -10,7 +10,7 @@ trait ReactiveText {
   def text_=(s: String): Unit
   def text_=(value: Signal[String]): Unit = {
     this.text_=(value.now)
-    value.changed += { (t: String) => this.text_=(t) }
+    value.changed observe { (t: String) => this.text_=(t) }
     ()
   }
 }

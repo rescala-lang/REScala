@@ -39,7 +39,7 @@ class FoldVersion {
   val xSwitch = (xx.changed && (x => x < 0 || x + Size > Max_X)).fold(false) { (a, _) => !a }
   val ySwitch = (yy.changed && (y => y < 0 || y + Size > Max_Y)).fold(false) { (a, _) => !a }
 
-  tick += { (_: Unit) => frame.repaint() }
+  tick observe { (_: Unit) => frame.repaint() }
 
   // drawing code
   val frame = new MainFrame {

@@ -121,7 +121,7 @@ class NetworkSpaceState(
     }
   }).start()
 
-  drawingStateSpace.shapes.changed += { shapes => // #IF //#HDL
+  drawingStateSpace.shapes.changed observe { shapes => // #IF //#HDL
     if (!updating) {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)

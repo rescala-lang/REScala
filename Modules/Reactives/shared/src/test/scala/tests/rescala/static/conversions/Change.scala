@@ -14,7 +14,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Int] = s1.changed
-      e += ((_: Int) => { test += 1 })
+      e observe ((_: Int) => { test += 1 })
 
       assert(test == 0)
     }
@@ -24,7 +24,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Int] = s1.changed
-      e += ((_: Int) => { test += 1 })
+      e observe ((_: Int) => { test += 1 })
 
       v1 set 2
       assert(test == 1)
@@ -37,7 +37,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Int] = s1.changed
-      e += ((x: Int) => { test = x })
+      e observe ((x: Int) => { test = x })
 
       v1 set 2
       assert(test == 3)
@@ -51,7 +51,7 @@ class Change extends RETests {
       val v1            = Var(1)
       val s1            = v1.map { _ + 1 }
       val e: Event[Any] = s1.changed.filter(_ == 1)
-      e += ((_: Any) => { test += 1 })
+      e observe ((_: Any) => { test += 1 })
 
       assert(test == 0)
     }
@@ -61,7 +61,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.changed.filter(_ == 3)
-      e += ((_) => { test += 1 })
+      e observe ((_) => { test += 1 })
 
       v1 set 2
       assert(test == 1)
@@ -75,7 +75,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.change
-      e += { _ => test += 1 }
+      e observe { _ => test += 1 }
 
       assert(test == 0)
     }
@@ -85,7 +85,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.change
-      e += { _ => test += 1 }
+      e observe { _ => test += 1 }
 
       assert(test === 0)
       assert(s1.readValueOnce === 2)
@@ -102,7 +102,7 @@ class Change extends RETests {
       val v1   = Var(1)
       val s1   = v1.map { _ + 1 }
       val e    = s1.change
-      e += { x => test = x.pair }
+      e observe { x => test = x.pair }
 
       v1 set 2
       assert(test === ((2, 3)))

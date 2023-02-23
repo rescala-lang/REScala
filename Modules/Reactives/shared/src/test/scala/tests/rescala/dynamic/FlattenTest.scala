@@ -121,7 +121,7 @@ class FlattenTest extends RETests {
       val unwrapped = dynamicSignal.flatten
 
       var log = List[String]()
-      unwrapped += (log ::= _)
+      unwrapped observe (log ::= _)
 
       e1.fire(0)
       assert(log == List("level 2"))
@@ -139,7 +139,7 @@ class FlattenTest extends RETests {
       val unwrapped = dynamicSignal.flatten
 
       var log = List[String]()
-      unwrapped += (log ::= _)
+      unwrapped observe (log ::= _)
 
       e1.fire(0)
       assert(log == List("B"))
@@ -155,7 +155,7 @@ class FlattenTest extends RETests {
       val unwrapped     = selected.flatten
 
       var lastEvent = -1
-      unwrapped += { lastEvent = _ }
+      unwrapped observe { lastEvent = _ }
 
       e1.fire(1)
       assert(lastEvent == 1)
@@ -183,7 +183,7 @@ class FlattenTest extends RETests {
 
       var log = List[Int]()
 
-      combined.changed += (log ::= _)
+      combined.changed observe (log ::= _)
 
       v1.set(10)
       assert(log == List(13))
@@ -195,7 +195,7 @@ class FlattenTest extends RETests {
 
       var higherOrderLog = List[Int]()
 
-      flattened.changed += (higherOrderLog ::= _)
+      flattened.changed observe (higherOrderLog ::= _)
 
       v1.set(10)
       assert(higherOrderLog == List(13))
@@ -225,8 +225,8 @@ class FlattenTest extends RETests {
       var sDerefChanged  = false
       var sHigherChanged = false
 
-      sDeref.change += { _ => sDerefChanged = true }
-      sHigher.change += { _ => sHigherChanged = true }
+      sDeref.change observe { _ => sDerefChanged = true }
+      sHigher.change observe { _ => sHigherChanged = true }
 
       assert(!sHigherChanged && !sDerefChanged)
 
@@ -248,8 +248,8 @@ class FlattenTest extends RETests {
       var sDerefChanged  = false
       var sHigherChanged = false
 
-      sDeref.change += { _ => sDerefChanged = true }
-      sHigher.change += { _ => sHigherChanged = true }
+      sDeref.change observe { _ => sDerefChanged = true }
+      sHigher.change observe { _ => sHigherChanged = true }
 
       // 1. Unrelated value changes, no updates
       v2.set(1234)
@@ -287,10 +287,10 @@ class FlattenTest extends RETests {
       var sDeref2_aChanged = false
       var sDeref2_bChanged = false
 
-      sDeref1.change += { _ => sDeref1Changed = true }
-      sDeref2.change += { _ => sDeref2Changed = true }
-      sDeref2_a.change += { _ => sDeref2_aChanged = true }
-      sDeref2_b.change += { _ => sDeref2_bChanged = true }
+      sDeref1.change observe { _ => sDeref1Changed = true }
+      sDeref2.change observe { _ => sDeref2Changed = true }
+      sDeref2_a.change observe { _ => sDeref2_aChanged = true }
+      sDeref2_b.change observe { _ => sDeref2_bChanged = true }
 
       v.set(0)
       assert(sDeref1Changed)
@@ -312,7 +312,7 @@ class FlattenTest extends RETests {
       val dereferenced                             = selected.flatten
 
       var dereferencedChanged = false
-      dereferenced.changed += { _ => dereferencedChanged = true }
+      dereferenced.changed observe { _ => dereferencedChanged = true }
 
       tick.fire()
       assert(count.readValueOnce == 1)

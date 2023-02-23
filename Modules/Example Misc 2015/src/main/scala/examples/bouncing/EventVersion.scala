@@ -48,11 +48,11 @@ class EventVersion {
   // handle bouncing
   val xBounce = x.changed.filter(x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed.filter(y => y < 0 || y + Size > Max_Y)
-  xBounce += { _ => speed.x = -speed.x }
-  yBounce += { _ => speed.y = -speed.y }
+  xBounce observe { _ => speed.x = -speed.x }
+  yBounce observe { _ => speed.y = -speed.y }
 
   // handle repaint
-  hasTicked += { _ => frame.repaint() }
+  hasTicked observe { _ => frame.repaint() }
 
   // drawing code
   val frame = new MainFrame {

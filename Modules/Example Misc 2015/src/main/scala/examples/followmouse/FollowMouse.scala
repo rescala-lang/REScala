@@ -44,7 +44,7 @@ class FollowMouse {
 
   // redraw code
   val stateChanged = mouse.position.changed.||[Any](tick)
-  stateChanged += { _ => frame.repaint() }
+  stateChanged observe { _ => frame.repaint() }
 
   // drawing code
   def top = frame

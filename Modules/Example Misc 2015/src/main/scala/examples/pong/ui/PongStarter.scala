@@ -31,7 +31,7 @@ object PongStarter extends SimpleSwingApplication {
 class PongWindow {
 
   val tick = Evt[Unit]()
-  tick += { (_: Unit) => frame.repaint() }
+  tick observe { (_: Unit) => frame.repaint() }
 
   val mouse = new Mouse
   val ball  = new Pong(tick, mouse)

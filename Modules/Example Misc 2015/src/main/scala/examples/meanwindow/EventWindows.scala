@@ -11,7 +11,7 @@ object EventWindows extends App {
     window().sum /
     window().length
   }
-  mean.changed += { println(_) }
+  mean.changed observe { println(_) }
 
   e.fire(2)
   e.fire(1)

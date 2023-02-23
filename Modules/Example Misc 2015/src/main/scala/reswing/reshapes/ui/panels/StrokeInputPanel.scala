@@ -28,7 +28,7 @@ class StrokeInputPanel extends FlowPanel {
   )
 
   private val showColorWindow = new ReButton("Show Colorinput")
-  showColorWindow.clicked += { _ => colorWindow.visible = !colorWindow.visible }
+  showColorWindow.clicked observe { _ => colorWindow.visible = !colorWindow.visible }
 
   contents += new Label { text = "stroke width: " }
   contents += slider

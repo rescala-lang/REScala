@@ -41,7 +41,7 @@ class SignalVersion {
     if ((d / width) % 2 == 0) d % width else width - d % width
   }
 
-  tick.changed += ((_: Int) => frame.repaint())
+  tick.changed observe ((_: Int) => frame.repaint())
 
   // drawing code
   val frame = new MainFrame {

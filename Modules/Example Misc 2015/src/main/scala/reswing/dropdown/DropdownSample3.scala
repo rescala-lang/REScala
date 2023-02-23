@@ -24,7 +24,7 @@ object DropdownSample3 extends SimpleSwingApplication {
   val anyChangedWrapped = Signal { innerChanged().reduce((a, b) => a || b) }
   val anyChanged        = anyChangedWrapped.flatten
 
-  anyChanged += { x => println("some value has changed: " + x) }
+  anyChanged observe { x => println("some value has changed: " + x) }
 
   val dropdown       = new ReDynamicComboBox(options = options, selection = -1)
   val selectionIndex = Signal { dropdown.selection() }

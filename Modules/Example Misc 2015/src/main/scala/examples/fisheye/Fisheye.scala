@@ -62,7 +62,7 @@ class Fisheye {
   addBox(Color.MAGENTA)
 
   // redraw code
-  mouse.position.changed += { _ => frame.repaint() }
+  mouse.position.changed observe { _ => frame.repaint() }
 
   // drawing code
   val frame: MainFrame = new MainFrame {

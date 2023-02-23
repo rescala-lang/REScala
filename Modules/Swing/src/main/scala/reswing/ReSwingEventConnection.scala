@@ -42,7 +42,7 @@ private[reswing] trait ReSwingEventConnection {
     def using(setter: T => Unit): ReSwingEvent[T] = {
       if (value.isInstanceOf[ReSwingEventIn[_]])
         delayedInitEvents += { () =>
-          value += { v => inSyncEDT { setter(v) } }
+          value observe { v => inSyncEDT { setter(v) } }
           ()
         }
       value
@@ -50,7 +50,7 @@ private[reswing] trait ReSwingEventConnection {
     def using(setter: () => Unit): ReSwingEvent[T] = {
       if (value.isInstanceOf[ReSwingEventIn[_]])
         delayedInitEvents += { () =>
-          value += { _ => inSyncEDT { setter() } }
+          value observe { _ => inSyncEDT { setter() } }
           ()
         }
       value

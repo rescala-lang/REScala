@@ -9,7 +9,7 @@ class Seed(implicit world: World) extends BoardElement {
   // #SIG
   override def isAnimal: Boolean = false
 
-  dies += { _ => // #HDL
+  dies observe { _ => // #HDL
     world.plan {
       world.board.getPosition(this).foreach { mypos =>
         world.board.nearestFree(mypos).foreach { _ =>
