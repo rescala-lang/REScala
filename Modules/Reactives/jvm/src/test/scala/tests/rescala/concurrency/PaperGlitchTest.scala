@@ -22,7 +22,7 @@ class PaperGlitchTest extends AnyFunSuite {
     val price    = Var(3)
     val tax      = price.map { p => p / 3 }
     val quantity = Var(1)
-    val total    = Signal.static { quantity.value * (price.value + tax.value) }
+    val total    = Signal { quantity.value * (price.value + tax.value) }
 
     // ============================================================================================================
 

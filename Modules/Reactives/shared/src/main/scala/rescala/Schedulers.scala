@@ -50,14 +50,10 @@ object Schedulers extends PlatformSchedulers {
     def scheduler: Scheduler[State] = bundle.scheduler
   }
 
-  object toposort extends RescalaInterface {
-    val bundle: TopoBundle = new TopoBundle {
-      override type State[V] = TopoState[V]
-
-      override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
-    }
-    override type State[V] = bundle.State[V]
-    override def scheduler: Scheduler[State] = bundle.TopoScheduler
+  object toposort extends RescalaInterface with TopoBundle {
+    override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
+    override type State[V] = TopoState[V]
+    override def scheduler: Scheduler[State] = TopoScheduler
   }
 
   object sidup extends RescalaInterface {
