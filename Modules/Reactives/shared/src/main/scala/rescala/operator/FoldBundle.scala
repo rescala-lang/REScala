@@ -1,0 +1,52 @@
+package rescala.operator
+
+import rescala.core.{CreationTicket, DynamicTicket, ReSource, StaticTicket}
+import rescala.interface.RescalaInterface
+import rescala.macros.ReadableMacro
+import rescala.operator.{Operators, Pulse, cutOutOfUserComputation}
+
+trait FoldBundle {
+  bundle: Operators =>
+
+  object Fold {
+    inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
+      val (sources, fun, isStatic) =
+        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](expr)
+      Branch(sources, isStatic, fun)
+    }
+
+    class Branch[S](
+        val staticDependencies: List[ReSource.of[State]],
+        val isStatic: Boolean,
+        val run: DynamicTicket[State] => FoldState[S] ?=> S
+    )
+
+    def apply[T](init: T)(branches: Branch[T]*)(using ticket: CreationTicket[State]): Signal[T] = {
+
+      val staticDeps = branches.iterator.flatMap(_.staticDependencies).toSet
+      val isStatic   = branches.forall(_.isStatic)
+
+      def operator(dt: DynamicTicket[State], state: () => T): T =
+        branches.foldLeft(state()) { (curr, b) => b.run(dt)(using FoldState(curr)) }
+
+      ticket.create(
+        staticDeps,
+        Pulse.tryCatch[T](Pulse.Value(init)),
+        needsReevaluation = !isStatic
+      ) { state => new SignalImpl[T](state, operator, ticket.rename, if isStatic then None else Some(staticDeps)) }
+    }
+  }
+
+  inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
+
+  extension [T](e: Event[T]) {
+    inline def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
+  }
+
+}
+
+opaque type FoldState[T] = T
+object FoldState {
+  def unwrap[T](fs: FoldState[T]): T = fs
+  def apply[T](t: T): FoldState[T]   = t
+}

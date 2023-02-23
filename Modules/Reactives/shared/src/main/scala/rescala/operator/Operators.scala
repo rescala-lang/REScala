@@ -10,6 +10,7 @@ trait Operators extends AnyRef // to make the below more symmetric
     with DefaultImplementations
     with EventBundle
     with SignalBundle
+    with FoldBundle
     with FlattenApi
     with Sources {
   type State[_]
