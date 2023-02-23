@@ -1,6 +1,6 @@
 package rescala.compat
 
-import rescala.core.ReadAs
+import rescala.core.{CreationTicket, ReadAs}
 import rescala.interface.RescalaInterface
 import rescala.operator.Operators
 
@@ -11,7 +11,7 @@ trait FlattenCollectionCompat {
 
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitFortraversableSignals[B, T[U] <: IterableOps[U, T, T[U]], Sig[A1] <: Signal[A1]](implicit
-      ticket: CreationTicket
+      ticket: CreationTicket[State]
   ): Flatten[Signal[T[Sig[B]]], Signal[T[B]]] =
     new Flatten[Signal[T[Sig[B]]], Signal[T[B]]] {
       def apply(sig: Signal[T[Sig[B]]]): Signal[T[B]] =
@@ -22,7 +22,7 @@ trait FlattenCollectionCompat {
     * If multiple inner Events fire, the first one in iteration order is selected.
     */
   def firstFiringEvent[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: ReadAs.of[State, Option[A1]]](
-      implicit ticket: CreationTicket
+      implicit ticket: CreationTicket[State]
   ): Flatten[Signal[T[Evnt[B]]], Event[B]] =
     new Flatten[Signal[T[Evnt[B]]], Event[B]] {
       def apply(sig: Signal[T[Evnt[B]]]): Event[B] =
@@ -33,8 +33,8 @@ trait FlattenCollectionCompat {
     }
 
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[Traversable[Option[B]\]\] where the new Event fires whenever any of the inner events fire */
-  def traversableOfAllOccuringEventValues[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](implicit
-      ticket: CreationTicket
+  def traversableOfAllOccuringEventValues[ B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](implicit
+      ticket: CreationTicket[State]
   ): Flatten[Signal[T[Evnt[B]]], Event[T[Option[B]]]] =
     new Flatten[Signal[T[Evnt[B]]], Event[T[Option[B]]]] {
       def apply(sig: Signal[T[Evnt[B]]]): Event[T[Option[B]]] =

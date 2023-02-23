@@ -2,12 +2,13 @@ package tests.rescala.testtools
 
 import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
+import rescala.core.CreationTicket
 import rescala.interface.RescalaInterface
 
 class ReevaluationBundle[T <: RescalaInterface](val api: T) {
   import api._
 
-  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket) extends Matchers {
+  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[State]) extends Matchers {
 
     var results: List[A] = Nil
     /* should be private but is unused */

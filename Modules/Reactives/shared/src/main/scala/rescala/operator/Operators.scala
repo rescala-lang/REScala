@@ -14,6 +14,4 @@ trait Operators extends AnyRef // to make the below more symmetric
     with Sources
     with ObserveBundle {
   type State[_]
-  type CreationTicket = rescala.core.CreationTicket[State]
-
 }

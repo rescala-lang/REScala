@@ -1,6 +1,6 @@
 package rescala.core.tests
 
-import rescala.core.{Derived, InitialChange, ReInfo, ReSource, ReadAs}
+import rescala.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
@@ -52,7 +52,7 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        implicitly[CreationTicket]
+        implicitly[CreationTicket[State]]
           .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
@@ -60,7 +60,7 @@ class WithoutAPITest extends RETests {
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
       val customDerived: ReadAs.of[State, String] =
-        implicitly[CreationTicket]
+        implicitly[CreationTicket[State]]
           .create(
             Set(customSource),
             "Well, this is an initial value",

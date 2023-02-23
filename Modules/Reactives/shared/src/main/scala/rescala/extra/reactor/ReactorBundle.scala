@@ -1,6 +1,6 @@
 package rescala.extra.reactor
 
-import rescala.core.{Derived, ReInfo, ReadAs, Scheduler}
+import rescala.core.{CreationTicket, Derived, ReInfo, ReadAs, Scheduler}
 import rescala.interface.RescalaInterface
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
@@ -135,7 +135,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
       createReactor(initialValue, loopingStage)
     }
 
-    private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit ct: CreationTicket): Reactor[T] = {
+    private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
       ct.create(
         Set(),
         new ReactorState[T](initialValue, initialStage),

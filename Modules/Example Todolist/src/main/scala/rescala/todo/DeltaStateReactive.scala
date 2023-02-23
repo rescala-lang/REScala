@@ -1,6 +1,6 @@
 package rescala.todo
 
-import rescala.core.{Derived, DynamicTicket, ReInfo, ReadAs}
+import rescala.core.{CreationTicket, Derived, DynamicTicket, ReInfo, ReadAs}
 import rescala.default.*
 
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
@@ -39,7 +39,7 @@ object DeltaStateReactive {
       deltaInput: ReadAs.of[State, Delta],
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket[State], DState) => Delta]
-  )(implicit name: ReInfo, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
+  )(implicit name: ReInfo, creationTicket: CreationTicket[State]): DeltaStateReactive[Delta, DState] =
     creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )

@@ -1,5 +1,6 @@
 package tests.rescala.static.signals
 
+import rescala.core.CreationTicket
 import rescala.operator.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 
@@ -201,7 +202,7 @@ class SignalMacro extends RETests {
 
     test("correctly replace ticket during macro expansion") {
 
-      def wantsTicket(implicit ct: engine.CreationTicket, ct2: engine.CreationTicket): (Boolean, Boolean, Boolean) = {
+      def wantsTicket(implicit ct: CreationTicket[State], ct2: CreationTicket[State]): (Boolean, Boolean, Boolean) = {
         (ct.scope == ct2.scope, ct.scope.self.isLeft, ct2.scope.self.isLeft)
       }
 

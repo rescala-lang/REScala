@@ -1,6 +1,6 @@
 package rescala.compat
 
-import rescala.core.ReSource
+import rescala.core.{CreationTicket, ReSource}
 import rescala.interface.RescalaInterface
 import rescala.macros.ReadableMacroBundle
 import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
@@ -14,7 +14,7 @@ trait SignalCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket): Signal[B] =
+    final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket[State]): Signal[B] =
       Signal.dynamic(expression(this.value))
 
   }
@@ -35,13 +35,13 @@ trait SignalCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Signal {
-    inline def apply[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
+    inline def apply[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.StaticTicket[State], true](expr)
       bundle.Signals.static(sources: _*)(fun)
     }
 
-    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket): Signal[T] = {
+    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.DynamicTicket[State], false](expr)
       bundle.Signals.dynamic(sources: _*)(fun)

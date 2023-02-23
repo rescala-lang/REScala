@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.compat.EventCompatBundle
-import rescala.core.{Disconnectable, DynamicTicket, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
+import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -68,7 +68,7 @@ trait EventBundle extends EventCompatBundle {
       * @see observe
       * @group accessor
       */
-    final def +=(handler: T => Unit)(implicit ticket: CreationTicket): Disconnectable = observe(handler)(ticket)
+    final def +=(handler: T => Unit)(implicit ticket: CreationTicket[State]): Disconnectable = observe(handler)(ticket)
 
     /** Add an observer.
       *
@@ -76,7 +76,7 @@ trait EventBundle extends EventCompatBundle {
       * @group accessor
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
         val internalVal = internalAccess(reevalVal)
@@ -102,7 +102,7 @@ trait EventBundle extends EventCompatBundle {
       * or filters the error when returning None
       */
     final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Event[R] =
       Events.staticNamed(s"(recover $this)", this) { st =>
         st.collectStatic(this) match {
@@ -118,7 +118,7 @@ trait EventBundle extends EventCompatBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket): Event[U] = {
+    final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket[State]): Event[U] = {
       Events.staticNamed(s"(or $this $other)", this, other) { st =>
         val tp = st.collectStatic(this)
         if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
@@ -129,7 +129,7 @@ trait EventBundle extends EventCompatBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def \[U](except: Event[U])(implicit ticket: CreationTicket): Event[T] = {
+    final def \[U](except: Event[U])(implicit ticket: CreationTicket[State]): Event[T] = {
       Events.staticNamed(s"(except $this  $except)", this, except) { st =>
         (except.internalAccess(st.collectStatic(except)): Pulse[U]) match {
           case NoChange            => st.collectStatic(this)
@@ -143,7 +143,7 @@ trait EventBundle extends EventCompatBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def and[U, R](other: Event[U])(merger: (T, U) => R)(implicit ticket: CreationTicket): Event[R] = {
+    final def and[U, R](other: Event[U])(merger: (T, U) => R)(implicit ticket: CreationTicket[State]): Event[R] = {
       Events.staticNamed(s"(and $this $other)", this, other) { st =>
         for {
           left  <- internalAccess(st.collectStatic(this)): Pulse[T]
@@ -157,13 +157,13 @@ trait EventBundle extends EventCompatBundle {
       * @see and
       */
     @cutOutOfUserComputation
-    final def zip[U](other: Event[U])(implicit ticket: CreationTicket): Event[(T, U)] = and(other)(Tuple2.apply)
+    final def zip[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(T, U)] = and(other)(Tuple2.apply)
 
     /** Merge the event with the other into a tuple, even if only one of them fired.
       * @group operator
       */
     @cutOutOfUserComputation
-    final def zipOuter[U](other: Event[U])(implicit ticket: CreationTicket): Event[(Option[T], Option[U])] = {
+    final def zipOuter[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(Option[T], Option[U])] = {
       Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
         val left: Pulse[T]  = st.collectStatic(this)
         val right: Pulse[U] = other.internalAccess(st.collectStatic(other))
@@ -181,7 +181,7 @@ trait EventBundle extends EventCompatBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final def dropParam(implicit ticket: CreationTicket): Event[Unit] =
+    final def dropParam(implicit ticket: CreationTicket[State]): Event[Unit] =
       Events.static(this)(_ => Some(()))
 
     /** reduces events with a given reduce function to create a Signal
@@ -189,7 +189,7 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket): Signal[A] = {
+    final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[State]): Signal[A] = {
       ticket.create(
         Set(this),
         Pulse.empty: Pulse[A],
@@ -209,7 +209,7 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket): Signal[A] =
+    final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[State]): Signal[A] =
       Events.foldOne(this, init)((acc, _) => f(acc))
 
     /** Counts the occurrences of the event.
@@ -218,7 +218,7 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def count()(implicit ticket: CreationTicket): Signal[Int] =
+    final def count()(implicit ticket: CreationTicket[State]): Signal[Int] =
       Events.foldOne(this, 0)((acc, _) => acc + 1)
 
     /** returns a signal holding the latest value of the event.
@@ -226,21 +226,21 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def latest[A >: T](init: A)(implicit ticket: CreationTicket): Signal[A] =
+    final def latest[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
       Events.foldOne(this, init)((_, v) => v)
 
     /** returns a signal holding the latest value of the event.
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def latest[A >: T]()(implicit ticket: CreationTicket): Signal[A] =
+    final def latest[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
       reduce[A]((_, v) => v)
 
     /** Holds the latest value of an event as an Option, None before the first event occured
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def latestOption[A >: T]()(implicit ticket: CreationTicket): Signal[Option[A]] =
+    final def latestOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
       Events.foldOne(this, None: Option[A]) { (_, v) => Some(v) }
 
     /** Returns a signal which holds the last n events in a list. At the beginning the
@@ -248,7 +248,7 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def last[A >: T](n: Int)(implicit ticket: CreationTicket): Signal[LinearSeq[A]] = {
+    final def last[A >: T](n: Int)(implicit ticket: CreationTicket[State]): Signal[LinearSeq[A]] = {
       if (n < 0) throw new IllegalArgumentException(s"length must be positive")
       else if (n == 0) Var(Nil)
       else
@@ -261,14 +261,14 @@ trait EventBundle extends EventCompatBundle {
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def list[A >: T]()(implicit ticket: CreationTicket): Signal[List[A]] =
+    final def list[A >: T]()(implicit ticket: CreationTicket[State]): Signal[List[A]] =
       Events.foldOne(this, List[A]())((acc, v) => v :: acc)
 
     /** Switch back and forth between two signals on occurrence of event e
       * @group conversion
       */
     @cutOutOfUserComputation
-    final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket): Signal[A] =
+    final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket[State]): Signal[A] =
       ticket.scope.embedTransaction { ict =>
         val switched: Signal[Boolean] = iterate(false) { !_ }(ict)
         Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
@@ -281,7 +281,7 @@ trait EventBundle extends EventCompatBundle {
     /** the basic method to create static events */
     @cutOutOfUserComputation
     def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Pulse[T])(implicit
-        ticket: CreationTicket,
+        ticket: CreationTicket[State],
         info: ReInfo
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
@@ -292,20 +292,20 @@ trait EventBundle extends EventCompatBundle {
     /** Creates static events */
     @cutOutOfUserComputation
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Event[T] =
       staticNamed(ticket.rename.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates static events */
     @cutOutOfUserComputation
     def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => Option[T])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Event[T] = static(dependencies: _*)(expr)
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
     def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Event[T] = {
       val staticDeps = dependencies.toSet
       ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) { state =>
@@ -316,12 +316,12 @@ trait EventBundle extends EventCompatBundle {
     /** Creates dynamic events */
     @cutOutOfUserComputation
     def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => Option[T])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Event[T] = dynamic(dependencies: _*)(expr)
 
     /** Creates change events */
     @cutOutOfUserComputation
-    def change[T](signal: Signal[T])(implicit ticket: CreationTicket): Event[Diff[T]] =
+    def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
         val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
           Set[ReSource.of[State]](signal),
@@ -335,7 +335,7 @@ trait EventBundle extends EventCompatBundle {
 
     @cutOutOfUserComputation
     def foldOne[A, T](dependency: Event[A], init: T)(expr: (T, A) => T)(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Signal[T] = {
       fold(Set(dependency), init) { st => acc =>
         val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
@@ -349,7 +349,7 @@ trait EventBundle extends EventCompatBundle {
       */
     @cutOutOfUserComputation
     def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket[State] => (() => T) => T)(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Signal[T] = {
       ticket.create(
         dependencies,
@@ -375,7 +375,7 @@ trait EventBundle extends EventCompatBundle {
       */
     @cutOutOfUserComputation
     final def foldAll[A](init: A)(accthingy: (=> A) => Seq[FoldMatch[A]])(implicit
-        ticket: CreationTicket
+        ticket: CreationTicket[State]
     ): Signal[A] = {
       var acc = () => init
       val ops = accthingy(acc())
@@ -438,7 +438,7 @@ trait EventBundle extends EventCompatBundle {
 
     class CBResult[T, R](val event: Event[T], val data: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
-      def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket, s: Scheduler[State]): CBResult[T, R] = {
+      def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket[State], s: Scheduler[State]): CBResult[T, R] = {
         val evt: Evt[T] = Evt[T]()(ct)
         val res         = body(evt.fire(_))
         new CBResult(evt, res)

@@ -1,6 +1,6 @@
 package rescala.compat
 
-import rescala.core.{DynamicTicket, ReSource, StaticTicket}
+import rescala.core.{CreationTicket, DynamicTicket, ReSource, StaticTicket}
 import rescala.interface.RescalaInterface
 import rescala.operator.{Operators, Pulse, cutOutOfUserComputation}
 import rescala.macros.ReadableMacroBundle
@@ -15,27 +15,27 @@ trait EventCompatBundle extends ReadableMacroBundle {
       * @group operator
       */
     @cutOutOfUserComputation
-    final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+    final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
       Event.dynamic { this.value.filter(expression) }
 
     /** Filters the event, only propagating the value when the filter is true.
       * @group operator
       */
     @cutOutOfUserComputation
-    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket): Event[T] =
+    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
       Event.dynamic { this.value.filter(expression) }
 
     /** Collects the results from a partial function
       * @group operator
       */
-    final inline def collect[U](inline expression: PartialFunction[T, U])(implicit ticket: CreationTicket): Event[U] =
+    final inline def collect[U](inline expression: PartialFunction[T, U])(implicit ticket: CreationTicket[State]): Event[U] =
       Event.dynamic { this.value.collect(expression) }
 
     /** Transform the event.
       * @group operator
       */
     @cutOutOfUserComputation
-    final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket): Event[B] =
+    final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket[State]): Event[B] =
       Event.dynamic { this.value.map(expression) }
 
     /** Folds events with a given operation to create a Signal.
@@ -43,7 +43,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
       * @inheritdoc
       */
     @cutOutOfUserComputation
-    final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket): Signal[A] =
+    final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
       Events.foldOne(this, init)(op)
 
   }
@@ -56,12 +56,12 @@ trait EventCompatBundle extends ReadableMacroBundle {
     * @group create
     */
   object Event {
-    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
+    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[Option[T], ReSource.of[State], StaticTicket[State], true](expr)
       bundle.Events.static(sources: _*)(fun)
     }
-    inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
+    inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[Option[T], ReSource.of[State], DynamicTicket[State], false](expr)
       bundle.Events.dynamic(sources: _*)(fun)
@@ -81,7 +81,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
         val run: DynamicTicket[State] => FoldState[S] ?=> S
     )
 
-    def apply[T](init: T)(branches: Branch[T]*)(using ticket: CreationTicket): Signal[T] = {
+    def apply[T](init: T)(branches: Branch[T]*)(using ticket: CreationTicket[State]): Signal[T] = {
 
       val staticDeps = branches.iterator.flatMap(_.staticDependencies).toSet
       val isStatic   = branches.forall(_.isStatic)

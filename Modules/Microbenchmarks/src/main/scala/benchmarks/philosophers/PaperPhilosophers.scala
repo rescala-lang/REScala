@@ -40,7 +40,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
 
   val forks =
     for (idx <- 0 until size) yield {
-      implicit val ct: engine.CreationTicket = (CreationTicket.fromName(s"fork(${idx + 1})"))
+      implicit val ct: CreationTicket[State] = (CreationTicket.fromName(s"fork(${idx + 1})"))
       Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
         (phils(idx)(), phils(nextIdx)()) match {

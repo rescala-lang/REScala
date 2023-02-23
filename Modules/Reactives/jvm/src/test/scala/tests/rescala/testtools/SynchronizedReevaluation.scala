@@ -1,5 +1,6 @@
 package tests.rescala.testtools
 
+import rescala.core.CreationTicket
 import rescala.interface.RescalaInterface
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
@@ -38,13 +39,13 @@ class SynchronizedReevaluationApi[Api <: RescalaInterface](val api: Api) {
   import api._
 
   def SynchronizedReevaluation[A](sig: Signal[A])(implicit
-      turnSource: CreationTicket
+      turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
   def SynchronizedReevaluation[A](evt: Event[A])(implicit
-      turnSource: CreationTicket
+      turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))

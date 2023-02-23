@@ -1,8 +1,6 @@
 package rescala.operator
 
-import rescala.core.{
-  AdmissionTicket, Base, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch
-}
+import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch}
 
 trait Sources {
   self: Operators =>
@@ -51,7 +49,7 @@ trait Sources {
   }
 
   /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket): Evt[A] = {
+  final def Evt[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
     ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.rename) }: Evt[A])
   }
 
@@ -103,9 +101,9 @@ trait Sources {
     * @group create
     */
   object Var {
-    def apply[T](initval: T)(implicit ticket: CreationTicket): Var[T] = fromChange(Pulse.Value(initval))
-    def empty[T](implicit ticket: CreationTicket): Var[T]             = fromChange(Pulse.empty)
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket): Var[T] = {
+    def apply[T](initval: T)(implicit ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty)
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[State]): Var[T] = {
       ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.rename))
     }
   }
