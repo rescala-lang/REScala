@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
+import rescala.core.{Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -153,7 +153,7 @@ trait SignalBundle extends SignalCompatBundle {
     private def ignore2[Tick, Current, Res](f: Tick => Res): (Tick, Current) => Res = (ticket, _) => f(ticket)
 
     @cutOutOfUserComputation
-    def ofUDF[T](udf: UserDefinedFunction[T, ReSource.of[State], DynamicTicket])(implicit
+    def ofUDF[T](udf: UserDefinedFunction[T, ReSource.of[State], DynamicTicket[State]])(implicit
         ct: CreationTicket
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](udf.staticDependencies, Pulse.empty, needsReevaluation = true) {
@@ -185,8 +185,8 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
-    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket => T)(implicit
-        ct: CreationTicket
+    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(implicit
+                                                                                       ct: CreationTicket
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
       ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
@@ -218,7 +218,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
-    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket => T)(implicit
+    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => T)(implicit
         ct: CreationTicket
     ): Signal[T] = dynamic(dependencies: _*)(expr)
 

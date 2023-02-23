@@ -1,6 +1,6 @@
 package rescala.todo
 
-import rescala.core.{Derived, ReInfo, ReadAs}
+import rescala.core.{Derived, DynamicTicket, ReInfo, ReadAs}
 import rescala.default.*
 
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
@@ -9,7 +9,7 @@ class DeltaStateReactive[Delta, Combined](
     initState: State[DeltaWithState[Delta, Combined]],
     deltaInput: ReadAs.of[State, Delta],
     applyDelta: (Combined, Delta) => Combined,
-    handlers: Seq[(DynamicTicket, Combined) => Delta],
+    handlers: Seq[(DynamicTicket[State], Combined) => Delta],
     override val info: ReInfo,
 ) extends Derived with ReadAs[State, DeltaWithState[Delta, Combined]] {
   override type Value    = DeltaWithState[Delta, Combined]
@@ -38,7 +38,7 @@ object DeltaStateReactive {
       init: DState,
       deltaInput: ReadAs.of[State, Delta],
       applyDelta: (DState, Delta) => DState,
-      handlers: Seq[(DynamicTicket, DState) => Delta]
+      handlers: Seq[(DynamicTicket[State], DState) => Delta]
   )(implicit name: ReInfo, creationTicket: CreationTicket): DeltaStateReactive[Delta, DState] =
     creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)

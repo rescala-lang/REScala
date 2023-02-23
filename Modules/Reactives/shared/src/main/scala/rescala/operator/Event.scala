@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.compat.EventCompatBundle
-import rescala.core.{Disconnectable, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
+import rescala.core.{Disconnectable, DynamicTicket, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -304,7 +304,7 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
-    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket => Option[T])(implicit
+    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = {
       val staticDeps = dependencies.toSet
@@ -315,7 +315,7 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates dynamic events */
     @cutOutOfUserComputation
-    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket => Option[T])(implicit
+    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = dynamic(dependencies: _*)(expr)
 
@@ -348,8 +348,8 @@ trait EventBundle extends EventCompatBundle {
       * @see [[rescala.operator.EventBundle.Event.fold]]
       */
     @cutOutOfUserComputation
-    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket => (() => T) => T)(implicit
-        ticket: CreationTicket
+    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket[State] => (() => T) => T)(implicit
+                                                                                                              ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
         dependencies,
@@ -384,7 +384,7 @@ trait EventBundle extends EventCompatBundle {
         case fm: StaticFoldMatchDynamic[_, _] => fm.event
       }.toSet
 
-      def operator(dt: DynamicTicket, oldValue: () => A): A = {
+      def operator(dt: DynamicTicket[State], oldValue: () => A): A = {
         acc = oldValue
 
         def applyToAcc[T](f: T => A, value: Option[T]): Unit = {
@@ -416,7 +416,7 @@ trait EventBundle extends EventCompatBundle {
 
     sealed trait FoldMatch[+A]
     class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                         extends FoldMatch[A]
-    class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket => T => A) extends FoldMatch[A]
+    class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket[State] => T => A) extends FoldMatch[A]
     class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)             extends FoldMatch[A]
 
     class OnEv[T](event: Event[T]) {
@@ -427,7 +427,7 @@ trait EventBundle extends EventCompatBundle {
       final def act2[A](fun: T => A): FoldMatch[A] = new StaticFoldMatch(event, fun)
 
       /** Similar to act2, but provides access to a dynamic ticket in `fun` */
-      final def dyn2[A](fun: DynamicTicket => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
+      final def dyn2[A](fun: DynamicTicket[State] => T => A): FoldMatch[A] = new StaticFoldMatchDynamic(event, fun)
     }
 
     class OnEvs[T](events: => Seq[Event[T]]) {

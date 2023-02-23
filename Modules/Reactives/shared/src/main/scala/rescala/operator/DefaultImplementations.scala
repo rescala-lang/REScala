@@ -11,7 +11,7 @@ trait DefaultImplementations {
     */
   class SignalImpl[T](
       initial: State[Pulse[T]],
-      expr: (DynamicTicket, () => T) => T,
+      expr: (DynamicTicket[State], () => T) => T,
       name: ReInfo,
       isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps) with Signal[T] {
@@ -45,7 +45,7 @@ trait DefaultImplementations {
   /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
   class EventImpl[T](
       initial: State[Pulse[T]],
-      expr: self.DynamicTicket => Pulse[T],
+      expr: DynamicTicket[State] => Pulse[T],
       name: ReInfo,
       isDynamicWithStaticDeps: Option[Set[ReSource.of[State]]]
   ) extends DerivedImpl[T](initial, name, isDynamicWithStaticDeps)

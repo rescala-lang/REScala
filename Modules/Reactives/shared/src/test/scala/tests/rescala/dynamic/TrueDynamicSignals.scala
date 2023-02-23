@@ -1,5 +1,6 @@
 package tests.rescala.dynamic
 
+import rescala.core.DynamicTicket
 import tests.rescala.testtools.RETests
 import rescala.core.infiltration.Infiltrator
 import rescala.interface.RescalaInterface
@@ -137,7 +138,7 @@ class TrueDynamicSignals extends RETests {
       val macroRes = Signal {
         newSignal().value
       }
-      val normalRes = Signals.dynamic() { implicit t: DynamicTicket =>
+      val normalRes = Signals.dynamic() { implicit t: DynamicTicket[State] =>
         t.depend(newSignal())
       }
       assert(macroRes.readValueOnce === 0, "before, macro")
@@ -174,7 +175,7 @@ class TrueDynamicSignals extends RETests {
       val ifTrue        = Var(0)
       val ifFalse       = Var(10)
       var reevaluations = 0
-      val s = Signals.dynamic(condition) { (dt: DynamicTicket) =>
+      val s = Signals.dynamic(condition) { (dt: DynamicTicket[State]) =>
         reevaluations += 1
         if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
       }

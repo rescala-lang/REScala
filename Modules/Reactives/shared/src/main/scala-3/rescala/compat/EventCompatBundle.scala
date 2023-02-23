@@ -1,6 +1,6 @@
 package rescala.compat
 
-import rescala.core.{ReSource, StaticTicket}
+import rescala.core.{DynamicTicket, ReSource, StaticTicket}
 import rescala.interface.RescalaInterface
 import rescala.operator.{Operators, Pulse, cutOutOfUserComputation}
 import rescala.macros.ReadableMacroBundle
@@ -63,7 +63,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
     }
     inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket): Event[T] = {
       val (sources, fun, isStatic) =
-        rescala.macros.getDependencies[Option[T], ReSource.of[State], DynamicTicket, false](expr)
+        rescala.macros.getDependencies[Option[T], ReSource.of[State], DynamicTicket[State], false](expr)
       bundle.Events.dynamic(sources: _*)(fun)
     }
   }
@@ -71,14 +71,14 @@ trait EventCompatBundle extends ReadableMacroBundle {
   object Fold {
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
-        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket, false](expr)
+        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](expr)
       Branch(sources, isStatic, fun)
     }
 
     class Branch[S](
         val staticDependencies: List[ReSource.of[State]],
         val isStatic: Boolean,
-        val run: DynamicTicket => FoldState[S] ?=> S
+        val run: DynamicTicket[State] => FoldState[S] ?=> S
     )
 
     def apply[T](init: T)(branches: Branch[T]*)(using ticket: CreationTicket): Signal[T] = {
@@ -86,7 +86,7 @@ trait EventCompatBundle extends ReadableMacroBundle {
       val staticDeps = branches.iterator.flatMap(_.staticDependencies).toSet
       val isStatic   = branches.forall(_.isStatic)
 
-      def operator(dt: DynamicTicket, state: () => T): T =
+      def operator(dt: DynamicTicket[State], state: () => T): T =
         branches.foldLeft(state()) { (curr, b) => b.run(dt)(using FoldState(curr)) }
 
       ticket.create(
