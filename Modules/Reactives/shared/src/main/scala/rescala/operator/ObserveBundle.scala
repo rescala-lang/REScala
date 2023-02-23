@@ -19,7 +19,7 @@ object Observe {
       fireImmediately
     ) {
       state =>
-        class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.rename) with Derived
+        class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.info) with Derived
             with DisconnectableImpl {
 
           override type State[V] = dependency.State[V]

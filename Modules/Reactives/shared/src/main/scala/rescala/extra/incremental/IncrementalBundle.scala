@@ -112,7 +112,7 @@ trait IncrementalBundle {
       // FilterDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
       // Each time a change on ReactiveDeltaSeq occurs, if it passes the filterOperation, it is automatically added to FilterDeltaSeq
       ticket.create[Delta[T], FilterDeltaSeq[T]](Set(this), Delta.noChange, needsReevaluation = false) {
-        state => new FilterDeltaSeq[T](this, filterOperation)(state, ticket.rename) with DisconnectableImpl
+        state => new FilterDeltaSeq[T](this, filterOperation)(state, ticket.info) with DisconnectableImpl
       }
     }
 
@@ -131,7 +131,7 @@ trait IncrementalBundle {
       // MapDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
       // Each time a change on ReactiveDeltaSeq occurs, it is mapped and automatically added to MapDeltaSeq
       ticket.create[Delta[A], MapDeltaSeq[T, A]](Set(this), Delta.noChange, needsReevaluation = false) {
-        state => new MapDeltaSeq[T, A](this, mapOperation)(state, ticket.rename) with DisconnectableImpl
+        state => new MapDeltaSeq[T, A](this, mapOperation)(state, ticket.info) with DisconnectableImpl
       }
     }
 
@@ -153,7 +153,7 @@ trait IncrementalBundle {
         Delta.noChange,
         needsReevaluation = false
       ) {
-        state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.rename)
+        state => new ConcatenateDeltaSeq[T](this, that)(state, ticket.info)
       }
     }
 
@@ -487,7 +487,7 @@ trait IncrementalBundle {
     private[this] def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[State]): IncSeq[T] =
       ticket.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
         _,
-        ticket.rename
+        ticket.info
       ))
   }
 }

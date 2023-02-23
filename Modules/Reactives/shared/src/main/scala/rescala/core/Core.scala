@@ -264,7 +264,7 @@ final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-final class CreationTicket[State[_]](val scope: ScopeSearch[State], val rename: ReInfo) {
+final class CreationTicket[State[_]](val scope: ScopeSearch[State], val info: ReInfo) {
 
   private[rescala] def create[V, T <: Derived.of[State]](
       incoming: Set[ReSource.of[State]],

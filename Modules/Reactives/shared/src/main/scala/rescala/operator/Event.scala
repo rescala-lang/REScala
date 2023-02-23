@@ -166,7 +166,7 @@ trait EventBundle extends FoldBundle {
         new SignalImpl[A](
           initial = state,
           expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
-          name = ticket.rename,
+          name = ticket.info,
           isDynamicWithStaticDeps = None
         )
       }
@@ -321,7 +321,7 @@ trait EventBundle extends FoldBundle {
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
     ): Event[T] =
-      staticNamed(ticket.rename.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
+      staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))(ticket, ticket.info)
 
     /** Creates static events */
     def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => Option[T])(implicit
@@ -334,14 +334,9 @@ trait EventBundle extends FoldBundle {
     ): Event[T] = {
       val staticDeps = dependencies.toSet
       ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) { state =>
-        new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.rename, Some(staticDeps))
+        new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps))
       }
     }
-
-    /** Creates dynamic events */
-    def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => Option[T])(implicit
-        ticket: CreationTicket[State]
-    ): Event[T] = dynamic(dependencies: _*)(expr)
 
     /** Creates change events */
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
@@ -351,35 +346,10 @@ trait EventBundle extends FoldBundle {
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
         ) { state =>
-          new ChangeEventImpl[T](state, signal, ticket.rename)
+          new ChangeEventImpl[T](state, signal, ticket.info)
         }
         static(internal)(st => st.dependStatic(internal))(tx)
       }
-
-    def foldOne[A, T](dependency: Event[A], init: T)(expr: (T, A) => T)(implicit
-        ticket: CreationTicket[State]
-    ): Signal[T] = {
-      fold(Set(dependency), init) { st => acc =>
-        val a: A = dependency.internalAccess(st.collectStatic(dependency)).get
-        expr(acc(), a)
-      }
-    }
-
-    /** Folds events with a given operation to create a Signal.
-      *
-      * @see [[rescala.operator.EventBundle.Event.fold]]
-      */
-    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket[State] => (() => T) => T)(implicit
-        ticket: CreationTicket[State]
-    ): Signal[T] = {
-      ticket.create(
-        dependencies,
-        Pulse.tryCatch[T](Pulse.Value(init)),
-        needsReevaluation = false
-      ) {
-        state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
-      }
-    }
 
     class CBResult[T, R](val event: Event[T], val data: R)
     final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {

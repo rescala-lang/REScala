@@ -52,7 +52,7 @@ trait Sources {
 
   /** @group create */
   final def Evt[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
-    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.rename) }: Evt[A])
+    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.info) }: Evt[A])
   }
 
   /** Source signals with imperatively updates.
@@ -105,7 +105,7 @@ trait Sources {
     def apply[T](initval: T)(implicit ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
     def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty)
     private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[State]): Var[T] = {
-      ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.rename))
+      ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.info))
     }
   }
 

@@ -216,7 +216,7 @@ trait SingleFoldTopper {
   self: PaperPhilosophers =>
   import engine._
 
-  val successCount: Signal[Int] = Events.fold(successes.toSet[ReSource.of[State]], 0) { _ => before => before() + 1 }
+  val successCount: Signal[Int] = Fold(0)(successes.map(s => s act {v => current[Int] + 1} ): _* )
   override def total: Int       = successCount.readValueOnce
 }
 
