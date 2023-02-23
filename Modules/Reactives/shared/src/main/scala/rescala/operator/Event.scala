@@ -207,7 +207,8 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] = filter(expression)
+    final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
+      filter(expression)
 
     /** Collects the results from a partial function
       *
@@ -260,6 +261,21 @@ trait EventBundle extends FoldBundle {
         rescala.macros.getDependencies[Option[T], ReSource.of[State], DynamicTicket[State], false](expr)
       Events.dynamic(sources: _*)(fun)
     }
+
+    /** Allows to call some API that requires a callback.
+      * {{{
+      * val toggle = Event.fromCallback[UIEvent] {
+      *   input(`type` := "checkbox",
+      *         onchange := Event.handle)
+      * }
+      * }}}
+      */
+    def fromCallback[T]: Events.FromCallback[T] = Events.FromCallback[T]()
+
+    /** The callback available within `fromCallback` */
+    def handle[T](using cbt: Events.CallBackTrigger[T], scheduler: Scheduler[State])(v: T): Unit =
+      Events.CallBackTrigger.unwrap(cbt).fire(v)
+
   }
 
   object Events {
@@ -303,16 +319,20 @@ trait EventBundle extends FoldBundle {
         static(internal)(st => st.dependStatic(internal))(tx)
       }
 
-    class CBResult[T, R](val event: Event[T], val data: R)
-    final class FromCallbackT[T] private[Events] (val dummy: Boolean = true) {
-      def apply[R](body: (T => Unit) => R)(implicit ct: CreationTicket[State], s: Scheduler[State]): CBResult[T, R] = {
-        val evt: Evt[T] = Evt[T]()(ct)
-        val res         = body(evt.fire(_))
-        new CBResult(evt, res)
-      }
+    case class CBR[T, R](event: Event[T], data: R)
+    opaque type CallBackTrigger[T] = Evt[T]
+
+    class FromCallback[T]() {
+      def apply[R](using CreationTicket[State])(block: Events.CallBackTrigger[T] ?=> R): Events.CBR[T, R] =
+        val evt = Evt[T]()
+        val res = block(using Events.CallBackTrigger.wrap(evt))
+        Events.CBR(evt, res)
+    }
+    object CallBackTrigger {
+      def wrap[T](evt: Evt[T]): CallBackTrigger[T]               = evt
+      def unwrap[T](callBackTrigger: CallBackTrigger[T]): Evt[T] = callBackTrigger
     }
 
-    def fromCallback[T]: FromCallbackT[T] = new FromCallbackT[T]()
   }
 
 }

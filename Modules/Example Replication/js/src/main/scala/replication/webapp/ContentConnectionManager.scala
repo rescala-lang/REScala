@@ -27,11 +27,11 @@ class ContentConnectionManager(registry: Registry) {
     s"$wsProtocol://${dom.document.location.host}${parent}ws"
   }
 
-  val joined = Events.fromCallback[RemoteRef] { cb =>
-    registry.remoteJoined.foreach(cb)
+  val joined = Event.fromCallback {
+    registry.remoteJoined.foreach(Event.handle)
   }.event
-  val left = Events.fromCallback[RemoteRef] { cb =>
-    registry.remoteLeft.foreach(cb)
+  val left = Event.fromCallback {
+    registry.remoteLeft.foreach(Event.handle)
   }.event
 
   val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])(

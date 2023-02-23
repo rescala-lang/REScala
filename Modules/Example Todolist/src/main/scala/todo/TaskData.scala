@@ -95,8 +95,8 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
         lwwInit.write(using fixedId)(v)
     }
 
-    val edittext = Events.fromCallback[UIEvent] { inputChange =>
-      input(`class` := "edit", `type` := "text", onchange := inputChange, onblur := inputChange)
+    val edittext = Event.fromCallback[UIEvent] {
+      input(`class` := "edit", `type` := "text", onchange := Event.handle, onblur := Event.handle)
     }
 
     val edittextStr = edittext.event.map { (e: UIEvent) =>
@@ -104,14 +104,14 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       myinput.value.trim
     }
 
-    val editDiv = Events.fromCallback[UIEvent] { cb =>
-      div(`class` := "view", ondblclick := cb)
+    val editDiv = Event.fromCallback[UIEvent] {
+      div(`class` := "view", ondblclick := Event.handle)
     }
 
     val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
     val editingV      = changeEditing.hold(init = false)
 
-    val doneClick = Events.fromCallback[UIEvent](onchange := _)
+    val doneClick = Event.fromCallback[UIEvent](onchange := Event.handle)
 
     val doneEv = toggleAll || doneClick.event
 
@@ -146,7 +146,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       crdt.map(x => x.read.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
-      Events.fromCallback[UIEvent](cb => button(`class` := "destroy", onclick := cb))
+      Event.fromCallback[UIEvent](button(`class` := "destroy", onclick := Event.handle))
 
     val editInput = edittext.data(value := taskData.map(_.desc)).render
     editDiv.event.observe { _ =>

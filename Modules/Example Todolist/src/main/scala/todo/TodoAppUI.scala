@@ -6,7 +6,6 @@ import kofre.datatypes.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
-import rescala.default.Events.CBResult
 import rescala.default.*
 import rescala.extra.Tags.*
 import rescala.extra.replication.{DeltaFor, ReplicationGroup}
@@ -36,10 +35,10 @@ class TodoAppUI(val storagePrefix: String) {
 
     val createTodo = inputFieldHandler(todoInputTag, onchange)
 
-    val removeAll = Events.fromCallback[UIEvent](cb => button("remove all done todos", onclick := cb))
+    val removeAll = Event.fromCallback[UIEvent](button("remove all done todos", onclick := Event.handle))
 
-    val toggleAll = Events.fromCallback[UIEvent] { cb =>
-      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := cb)
+    val toggleAll = Event.fromCallback[UIEvent] {
+      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := Event.handle)
     }
 
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
@@ -105,8 +104,8 @@ class TodoAppUI(val storagePrefix: String) {
     )
   }
 
-  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): CBResult[String, Input] = {
-    val handler = Events.fromCallback[UIEvent](cb => tag(attr := cb))
+  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): Events.CBR[String, Input] = {
+    val handler = Event.fromCallback[UIEvent](tag(attr := Event.handle))
 
     val todoInputField: Input = handler.data.render
 
@@ -118,7 +117,7 @@ class TodoAppUI(val storagePrefix: String) {
         res
       }
 
-    new CBResult(handlerEvent, todoInputField)
+    Events.CBR(handlerEvent, todoInputField)
   }
 
 }
