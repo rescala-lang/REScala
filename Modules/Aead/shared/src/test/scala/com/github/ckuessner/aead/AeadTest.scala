@@ -71,16 +71,16 @@ class AeadTest extends AsyncFlatSpec with Matchers with ScalaCheckPropertyChecks
   }
 
   it should "work with encrypted messages from Tink" in {
-    val key = "+9HPAi2v5tx8m98fyg50BfQzGQLMYRS9NRy4ESCR9dg="
+    val key        = "+9HPAi2v5tx8m98fyg50BfQzGQLMYRS9NRy4ESCR9dg="
     val ciphertext = "lYA9rZjZ9U8Pwibtkt7Q4KS8ADEQ4taJHYkLrEuzQeMA0z1el6ZBC1Ui25zlDeA="
-    val aead = AeadKey.fromRawKey(key).aeadPrimitive
+    val aead       = AeadKey.fromRawKey(key).aeadPrimitive
     aead.decrypt(AeadHelper.fromBase64(ciphertext), "Associated Data") shouldBe Success("Message")
   }
 
   it should "work with encrypted messages from Libsodium" in {
-    val key = "y1tzzRGeFrTCYfy0GY/FYxsJE9NxSmAlofm2+JYWycQ="
+    val key        = "y1tzzRGeFrTCYfy0GY/FYxsJE9NxSmAlofm2+JYWycQ="
     val ciphertext = "SecoKadHFwiHFBWpCmXxq+UKyoGCsf0cXaGG2fcMgTtHDg6/uzfYP1e1ixZ9sQ0="
-    val aead = AeadKey.fromRawKey(key).aeadPrimitive
+    val aead       = AeadKey.fromRawKey(key).aeadPrimitive
     aead.decrypt(AeadHelper.fromBase64(ciphertext), "Associated Data") shouldBe Success("Message")
   }
 

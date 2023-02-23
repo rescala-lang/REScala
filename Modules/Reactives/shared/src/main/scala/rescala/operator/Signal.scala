@@ -2,7 +2,9 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
+import rescala.core.{
+  Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket
+}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -186,7 +188,7 @@ trait SignalBundle extends SignalCompatBundle {
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     @cutOutOfUserComputation
     def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(implicit
-                                                                                       ct: CreationTicket
+        ct: CreationTicket
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
       ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
@@ -195,7 +197,7 @@ trait SignalBundle extends SignalCompatBundle {
     }
 
     def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: StaticTicket[State] => (() => T) => T)(implicit
-                                                                                                             ticket: CreationTicket
+        ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
         dependencies,

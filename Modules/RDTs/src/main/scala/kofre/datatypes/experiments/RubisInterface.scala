@@ -84,7 +84,7 @@ object RubisInterface {
           }
       }
 
-      Dotted(req, context).clear().map{ ur =>
+      Dotted(req, context).clear().map { ur =>
         deltaState.make(
           userRequests = ur,
           users = newUsers

@@ -281,8 +281,8 @@ trait EventBundle extends EventCompatBundle {
     /** the basic method to create static events */
     @cutOutOfUserComputation
     def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Pulse[T])(implicit
-                                                                                                               ticket: CreationTicket,
-                                                                                                               info: ReInfo
+        ticket: CreationTicket,
+        info: ReInfo
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
         state => new EventImpl[T](state, expr, info.derive(name), None)
@@ -349,7 +349,7 @@ trait EventBundle extends EventCompatBundle {
       */
     @cutOutOfUserComputation
     def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket[State] => (() => T) => T)(implicit
-                                                                                                              ticket: CreationTicket
+        ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
         dependencies,
@@ -415,9 +415,9 @@ trait EventBundle extends EventCompatBundle {
     }
 
     sealed trait FoldMatch[+A]
-    class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                         extends FoldMatch[A]
+    class StaticFoldMatch[T, +A](val event: Event[T], val f: T => A)                                extends FoldMatch[A]
     class StaticFoldMatchDynamic[T, +A](val event: Event[T], val f: DynamicTicket[State] => T => A) extends FoldMatch[A]
-    class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)             extends FoldMatch[A]
+    class DynamicFoldMatch[T, +A](val event: () => Seq[Event[T]], val f: T => A)                    extends FoldMatch[A]
 
     class OnEv[T](event: Event[T]) {
 

@@ -60,14 +60,14 @@ class BenchState {
     Range(0, size.size).foreach(cs.create)
 
     clients = Array.fill(threads)(Evt[String]())
-     for ((client, i) <- clients.zipWithIndex) {
+    for ((client, i) <- clients.zipWithIndex) {
       val room1 = i                   % size.size
       val room2 = (i + size.size / 2) % size.size
       cs.join(client, room1)
       cs.join(client, room2)
       cs.histories.get(room1).observe(v => work.consume())
       cs.histories.get(room2).observe(v => work.consume())
-     }
+    }
 
     if (engine == Schedulers.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())

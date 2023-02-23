@@ -73,7 +73,6 @@ lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(rescala.jvm)
   .settings(scalaVersion_3, noPublish, scalaFxDependencies, fork := true)
 
-
 lazy val kofreAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
     crossScalaVersions := Nil,

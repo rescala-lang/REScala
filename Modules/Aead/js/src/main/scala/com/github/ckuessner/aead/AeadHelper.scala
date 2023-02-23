@@ -18,8 +18,7 @@ import scala.util.Try
   */
 object AeadHelper {
 
-  /** Checks that libsodium.js is loaded.
-    */
+  /** Checks that libsodium.js is loaded. */
   def ready(): Future[Unit] = {
     sodium.ready.toFuture
   }

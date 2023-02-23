@@ -25,7 +25,8 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
     AeadHelper.ready().andThen { _ =>
       key = AeadHelper.generateRawKey
       otherKey = AeadHelper.generateRawKey
-      expectedCiphertextLength = testMessage.getBytes.length
+      expectedCiphertextLength =
+        testMessage.getBytes.length
         + sodium.cryptoAeadXchacha20poly1305IetfABYTES.intValue()
         + sodium.cryptoAeadXchacha20poly1305IetfNPUBBYTES.intValue()
     }

@@ -18,7 +18,7 @@ object AeadHelper {
 
   def toBase64(bytes: Array[Byte]): String = Base64.encode(bytes)
 
-  def fromBase64(bytes: String): Array[Byte]= Base64.decode(bytes)
+  def fromBase64(bytes: String): Array[Byte] = Base64.decode(bytes)
 
   def generateKey: TinkAeadKey = TinkAeadKey(
     com.google.crypto.tink.subtle.Random.randBytes(32)
