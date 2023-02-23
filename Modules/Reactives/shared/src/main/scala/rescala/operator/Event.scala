@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.compat.EventCompatBundle
-import rescala.core.{Disconnectable, ReInfo, ReSource, ReadAs, Scheduler}
+import rescala.core.{Disconnectable, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.ObservedException
 
@@ -280,9 +280,9 @@ trait EventBundle extends EventCompatBundle {
 
     /** the basic method to create static events */
     @cutOutOfUserComputation
-    def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket => Pulse[T])(implicit
-        ticket: CreationTicket,
-        info: ReInfo
+    def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Pulse[T])(implicit
+                                                                                                               ticket: CreationTicket,
+                                                                                                               info: ReInfo
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
         state => new EventImpl[T](state, expr, info.derive(name), None)
@@ -291,14 +291,14 @@ trait EventBundle extends EventCompatBundle {
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource.of[State]*)(expr: rescala.core.StaticTicket[State] => Option[T])(implicit
+    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] =
       staticNamed(ticket.rename.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates static events */
     @cutOutOfUserComputation
-    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket => Option[T])(implicit
+    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket
     ): Event[T] = static(dependencies: _*)(expr)
 

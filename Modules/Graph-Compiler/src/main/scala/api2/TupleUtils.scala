@@ -1,5 +1,6 @@
 package api2
 
+import rescala.core.StaticTicket
 import rescala.default.*
 
 type CEventsFromEvents[T <: Tuple] <: Tuple = T match
@@ -60,19 +61,19 @@ given [T, TS <: Tuple: TupleUtils]: TupleUtils[T *: TS] with
   }
 
 trait EventTupleUtils[T <: Tuple]:
-  def staticAccesses(t: T, ticket: StaticTicket): OptionsFromEvents[T]
+  def staticAccesses(t: T, ticket: StaticTicket[State]): OptionsFromEvents[T]
 
 given EventTupleUtils[EmptyTuple] with
-  def staticAccesses(t: EmptyTuple, ticket: StaticTicket): OptionsFromEvents[EmptyTuple] = EmptyTuple
+  def staticAccesses(t: EmptyTuple, ticket: StaticTicket[State]): OptionsFromEvents[EmptyTuple] = EmptyTuple
 
 given [T, TS <: Tuple: EventTupleUtils]: EventTupleUtils[Event[T] *: TS] with
-  def staticAccesses(t: Event[T] *: TS, ticket: StaticTicket): OptionsFromEvents[Event[T] *: TS] = {
+  def staticAccesses(t: Event[T] *: TS, ticket: StaticTicket[State]): OptionsFromEvents[Event[T] *: TS] = {
     val tHead *: tTail = t
     ticket.dependStatic(tHead) *: summon[EventTupleUtils[TS]].staticAccesses(tTail, ticket)
   }
 
 given hasToBeNamed[T, TS <: Tuple: EventTupleUtils]: EventTupleUtils[Evt[T] *: TS] with
-  def staticAccesses(t: Evt[T] *: TS, ticket: StaticTicket): OptionsFromEvents[Evt[T] *: TS] = {
+  def staticAccesses(t: Evt[T] *: TS, ticket: StaticTicket[State]): OptionsFromEvents[Evt[T] *: TS] = {
     val tHead *: tTail = t
     ticket.dependStatic(tHead) *: summon[EventTupleUtils[TS]].staticAccesses(tTail, ticket)
   }

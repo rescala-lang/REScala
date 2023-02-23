@@ -2,7 +2,7 @@ package rescala.operator
 
 import rescala.compat.SignalCompatBundle
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{Disconnectable, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch}
+import rescala.core.{Disconnectable, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -169,7 +169,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
-    def static[T](dependencies: ReSource.of[State]*)(expr: rescala.core.StaticTicket[State] => T)(implicit
+    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
@@ -179,7 +179,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
-    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket => T)(implicit
+    def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket
     ): Signal[T] = static(dependencies: _*)(expr)
 
@@ -194,8 +194,8 @@ trait SignalBundle extends SignalCompatBundle {
       }
     }
 
-    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: StaticTicket => (() => T) => T)(implicit
-        ticket: CreationTicket
+    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: StaticTicket[State] => (() => T) => T)(implicit
+                                                                                                             ticket: CreationTicket
     ): Signal[T] = {
       ticket.create(
         dependencies,
@@ -208,7 +208,7 @@ trait SignalBundle extends SignalCompatBundle {
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     @cutOutOfUserComputation
-    def stateful[T](dependencies: ReSource.of[State]*)(expr: StaticTicket => T)(implicit
+    def stateful[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
