@@ -8,14 +8,16 @@ import rescala.operator.{Operators, SignalBundle, cutOutOfUserComputation}
 trait SignalCompatBundle extends ReadableMacroBundle {
   bundle: Operators =>
 
-  trait SignalCompat[+T] extends ReadableMacro[State, T] {
+  trait SignalCompat[+T] extends ReadableMacro[T] {
+
+    type State[V] = bundle.State[V]
 
     /** Return a Signal with f applied to the value
       * @group operator
       */
     @cutOutOfUserComputation
     final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket[State]): Signal[B] =
-      Signal.dynamic(expression(this.value))
+      Signal.dynamic(expression(this.value))(ct)
 
   }
 

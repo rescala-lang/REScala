@@ -7,7 +7,7 @@ class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: State[T]) extends rescala.core.ReSource with ReadAs[State, T] {
+    class CustomSource[T](initState: State[T]) extends rescala.core.ReSource with ReadAs[T] {
       outer =>
 
       override type State[V] = engine.State[V]
@@ -34,7 +34,7 @@ class WithoutAPITest extends RETests {
         initState: State[String],
         inputSource: ReadAs.of[State, String]
     ) extends Derived
-        with ReadAs[State, String] {
+        with ReadAs[String] {
       override type Value    = String
       override type State[V] = engine.State[V]
       override protected[rescala] def state: State[Value]        = initState

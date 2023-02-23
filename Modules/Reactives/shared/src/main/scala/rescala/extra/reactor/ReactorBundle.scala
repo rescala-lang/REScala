@@ -7,7 +7,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
-  ) extends Derived with ReadableMacro[State, T] {
+  ) extends Derived with ReadableMacro[T] {
 
     override type Value    = ReactorState[T]
     override type State[V] = ReactorBundle.this.api.State[V]
