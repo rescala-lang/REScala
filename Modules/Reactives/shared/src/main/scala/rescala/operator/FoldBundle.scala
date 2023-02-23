@@ -39,7 +39,12 @@ trait FoldBundle {
       val isStatic   = branches.forall(_.isStatic)
 
       def operator(dt: DynamicTicket[State], state: () => T): T =
-        branches.foldLeft(state()) { (curr, b) => b.run(dt)(using FoldState(curr)) }
+        var extracted = Option.empty[T]
+        def curr: T = extracted.getOrElse(state())
+        branches.foreach { b =>
+          extracted = Some(b.run(dt)(using FoldState(curr)))
+        }
+        curr
 
       ticket.create(
         staticDeps,
@@ -57,8 +62,8 @@ trait FoldBundle {
 
 }
 
-opaque type FoldState[T] = T
+opaque type FoldState[T] = () => T
 object FoldState {
-  def unwrap[T](fs: FoldState[T]): T = fs
-  def apply[T](t: T): FoldState[T]   = t
+  inline def unwrap[T](inline fs: FoldState[T]): T = fs()
+  inline def apply[T](inline t: => T): FoldState[T]   = () => t
 }
