@@ -124,6 +124,7 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).c
   .in(file("Modules/Graph-Compiler"))
   .settings(
     scalaVersion_3,
+    noPublish,
     libraryDependencies ++= List(jsoniterScala.value)
   )
   .dependsOn(rescala)
