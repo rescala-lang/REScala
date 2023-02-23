@@ -95,7 +95,7 @@ class MillBoard {
 
   // / NOTE: Workaround because change fires even when there is no value change
   val lineOwnersChanged    = lineOwners.change && (c => c._2 != c._1) // #EVT //#IF
-  val lineOwnersNotChanged = lineOwners.change.\(lineOwnersChanged)
+  val lineOwnersNotChanged = lineOwners.change.except(lineOwnersChanged)
   lineOwnersNotChanged += { x =>
     println("not changed: " + x)
   }

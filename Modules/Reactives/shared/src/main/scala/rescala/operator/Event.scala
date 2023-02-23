@@ -101,12 +101,12 @@ trait EventBundle extends FoldBundle {
       }
     }
 
-    /** Propagates the event only when except does not fire.
+    /** Propagates the event only when the other event `exception` does not fire.
       * @group operator
       */
-    final def \[U](except: Event[U])(implicit ticket: CreationTicket[State]): Event[T] = {
-      Events.staticNamed(s"(except $this  $except)", this, except) { st =>
-        (except.internalAccess(st.collectStatic(except)): Pulse[U]) match {
+    final def except(exception: Event[Any])(implicit ticket: CreationTicket[State]): Event[T] = {
+      Events.staticNamed(s"(except $this  $exception)", this, exception) { st =>
+        (exception.internalAccess(st.collectStatic(exception))) match {
           case NoChange            => st.collectStatic(this)
           case Value(_)            => Pulse.NoChange
           case ex @ Exceptional(_) => ex

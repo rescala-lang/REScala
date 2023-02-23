@@ -10,7 +10,7 @@ class except_EventTest extends RETests {
       var test         = 0
       val e1           = Evt[Int]()
       val e2           = Evt[Int]()
-      val e1_except_e2 = e1 \ e2
+      val e1_except_e2 = e1 except e2
       e1_except_e2 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
@@ -22,7 +22,7 @@ class except_EventTest extends RETests {
       var test         = 0
       val e1           = Evt[Int]()
       val e2           = Evt[Int]()
-      val e1_except_e2 = e1 \ e2
+      val e1_except_e2 = e1 except e2
       e1_except_e2 += ((_: Int) => { test += 1 })
 
       e2.fire(10)
@@ -38,7 +38,7 @@ class except_EventTest extends RETests {
       val e1           = Evt[Int]()
       val e2           = e1 map ((x: Int) => x * 2)
       val e3           = e1 filter (_ => cond)
-      val e2_except_e3 = e2 \ e3
+      val e2_except_e3 = e2 except e3
       e2_except_e3 += ((_: Int) => { test += 1 })
 
       e1.fire(10)
@@ -62,7 +62,7 @@ class except_EventTest extends RETests {
       val e1           = Evt[Int]()
       val e2           = e1 map ((x: Int) => x)
       val e3           = (e1 map ((x: Int) => x * 2)) filter (_ => cond)
-      val e1_except_e2 = e2 \ e3
+      val e1_except_e2 = e2 except e3
       e1_except_e2 += ((x: Int) => { value = x })
 
       e1.fire(10)
