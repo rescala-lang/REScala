@@ -7,10 +7,8 @@ import rescala.parrp.{Backoff, ParRP}
 
 trait PlatformSchedulers {
 
-  object parrp extends interface.RescalaInterface {
-    val bundle = new ParRP {}
-    override type State[V] = bundle.State[V]
-    override val scheduler: Scheduler[State] = bundle.parrpWithBackoff(() => new Backoff())
+  object parrp extends interface.RescalaInterface with ParRP {
+    override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
   }
 
   val fullmv: FullMVUtil.default.type = FullMVUtil.default

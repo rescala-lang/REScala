@@ -131,8 +131,7 @@ class PessimisticTest extends RETests {
 
   "ParRP should (not?) Add And Remove Dependency In One Turn" in {
     import rescala.Schedulers.parrp._
-    val ji = new JVMInfiltrator(rescala.Schedulers.parrp)
-    import ji._
+    import JVMInfiltrator.unsafeNow
 
     // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)
     // would be equally correct. It is implemented purely to discover accidental behavior changes, but should
