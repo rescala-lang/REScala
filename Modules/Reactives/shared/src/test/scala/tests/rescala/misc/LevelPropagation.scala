@@ -20,12 +20,12 @@ class LevelPropagation extends RETests {
       assert(l1.readValueOnce === 1)
       assert(l2.readValueOnce === 2)
       assert(level3.readValueOnce === 3)
-      val level_1_to_4 = Signals.dynamic(level0) { t =>
+      val level_1_to_4 = Signal.dynamic(level0) { t =>
         if (t.depend(level0) == 10) t.depend(level3) else 42
       }
       assert(level_1_to_4.readValueOnce === 42)
       var evaluatesOnlyOncePerTurn = 0
-      val level_2_to_5 = Signals.lift(level0, level_1_to_4) { (x, y) =>
+      val level_2_to_5 = Signal.lift(level0, level_1_to_4) { (x, y) =>
         evaluatesOnlyOncePerTurn += 1; x + y
       }
       assert(level_2_to_5.readValueOnce === 0 + 42)
@@ -59,7 +59,7 @@ class LevelPropagation extends RETests {
       val l1 = l0.map(_ + 1)
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
-      val l1t4 = Signals.dynamic(l0) { t =>
+      val l1t4 = Signal.dynamic(l0) { t =>
         if (t.depend(l0) == 10) t.depend(l3) else 3
       }
       val l2t5 = l1t4.map(_ + 1)
@@ -85,7 +85,7 @@ class LevelPropagation extends RETests {
       val l1 = l0.map(_ + 1)
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
-      val l1t4 = Signals.dynamic(l0) { t =>
+      val l1t4 = Signal.dynamic(l0) { t =>
         if (t.depend(l0) == 10) t.depend(l3) else 13
       }
       var reevals = 0
@@ -123,11 +123,11 @@ class LevelPropagation extends RETests {
       val l1 = l0.map(_ + 1)
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
-      val l1t4 = Signals.dynamic(l0) { t =>
+      val l1t4 = Signal.dynamic(l0) { t =>
         if (t.depend(l0) == 10) t.depend(l3) else 13
       }
       var reevals = 0
-      val l2t5 = Signals.lift(l1t4, l1) { (a, b) =>
+      val l2t5 = Signal.lift(l1t4, l1) { (a, b) =>
         reevals += 1; a + b
       }
       var reevals2 = 0
@@ -162,7 +162,7 @@ class LevelPropagation extends RETests {
       val l1 = l0.map(_ + 1)
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
-      val l1t4 = Signals.dynamic(l0) { t =>
+      val l1t4 = Signal.dynamic(l0) { t =>
         if (t.depend(l0) == 10) t.depend(l3) else 3
       }
       var reevals = 0

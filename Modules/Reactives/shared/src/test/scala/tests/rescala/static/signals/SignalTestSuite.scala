@@ -18,7 +18,7 @@ class SignalTestSuite extends RETests {
       val v1   = Var(1)
       val v2   = Var(2)
 
-      val s1 = Signals.lift(v1, v2) { _ + _ }
+      val s1 = Signal.lift(v1, v2) { _ + _ }
       s1.changed += { (_) => test += 1 }
 
       assert(s1.readValueOnce == 3)
@@ -114,14 +114,14 @@ class SignalTestSuite extends RETests {
 
     test("the Expression Is Note Evaluated Every Time Get Val Is Called") {
       var a              = 10
-      val s: Signal[Int] = Signals.static()(_ => 1 + 1 + a)
+      val s: Signal[Int] = Signal.static()(_ => 1 + 1 + a)
       assert(s.readValueOnce === 12)
       a = 11
       assert(s.readValueOnce === 12)
     }
 
     test("simple Signal Returns Correct Expressions") {
-      val s: Signal[Int] = Signals.static()(_ => 1 + 1 + 1)
+      val s: Signal[Int] = Signal.static()(_ => 1 + 1 + 1)
       assert(s.readValueOnce === 3)
     }
 
@@ -149,7 +149,7 @@ class SignalTestSuite extends RETests {
 
       val s1 = v.map { 2 * _ }
       val s2 = v.map { 3 * _ }
-      val s3 = Signals.lift(s1, s2) { _ + _ }
+      val s3 = Signal.lift(s1, s2) { _ + _ }
 
       s1.changed += { (_) =>
         test.incrementAndGet(); ()
@@ -173,7 +173,7 @@ class SignalTestSuite extends RETests {
 
       val s1 = v.map { 2 * _ }
       val s2 = v.map { 3 * _ }
-      val s3 = Signals.lift(s1, s2) { _ + _ }
+      val s3 = Signal.lift(s1, s2) { _ + _ }
 
       assertLevel(v, 0)
       assertLevel(s1, 1)

@@ -206,7 +206,7 @@ trait SignalPyramidTopper extends IndividualCounts {
   val successCount: Signal[Int] =
     individualCounts.reduce { (a, b) =>
       {
-        Signal { a() + b() }(CreationTicket.fromName(s"sumUpTo($b)"))
+        Signal(using (CreationTicket.fromName(s"sumUpTo($b)"))) { a() + b() }
       }
     }
   override def total: Int = successCount.readValueOnce

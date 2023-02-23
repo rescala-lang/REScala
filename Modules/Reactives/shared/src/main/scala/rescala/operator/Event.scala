@@ -94,7 +94,6 @@ trait EventBundle extends FoldBundle {
       * Only propagates the left event if both fire.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket[State]): Event[U] = {
       Events.staticNamed(s"(or $this $other)", this, other) { st =>
         val tp = st.collectStatic(this)
@@ -105,7 +104,6 @@ trait EventBundle extends FoldBundle {
     /** Propagates the event only when except does not fire.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def \[U](except: Event[U])(implicit ticket: CreationTicket[State]): Event[T] = {
       Events.staticNamed(s"(except $this  $except)", this, except) { st =>
         (except.internalAccess(st.collectStatic(except)): Pulse[U]) match {
@@ -119,7 +117,6 @@ trait EventBundle extends FoldBundle {
     /** Merge the event with the other, if both fire simultaneously.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def and[U, R](other: Event[U])(merger: (T, U) => R)(implicit ticket: CreationTicket[State]): Event[R] = {
       Events.staticNamed(s"(and $this $other)", this, other) { st =>
         for {
@@ -133,13 +130,11 @@ trait EventBundle extends FoldBundle {
       * @group operator
       * @see and
       */
-    @cutOutOfUserComputation
     final def zip[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(T, U)] = and(other)(Tuple2.apply)
 
     /** Merge the event with the other into a tuple, even if only one of them fired.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def zipOuter[U](other: Event[U])(implicit ticket: CreationTicket[State]): Event[(Option[T], Option[U])] = {
       Events.staticNamed(s"(zipOuter $this $other)", this, other) { st =>
         val left: Pulse[T]  = st.collectStatic(this)
@@ -151,21 +146,17 @@ trait EventBundle extends FoldBundle {
     /** Flattens the inner value.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def flatten[R](implicit flatten: Flatten[Event[T], R]): R = flatten.apply(this)
 
     /** Drop the event parameter; equivalent to map((_: Any) => ())
       * @group operator
       */
-    @cutOutOfUserComputation
-    final def dropParam(implicit ticket: CreationTicket[State]): Event[Unit] =
-      Events.static(this)(_ => Some(()))
+    final def dropParam(implicit ticket: CreationTicket[State]): Event[Unit] = map(_ => Some(()))
 
     /** reduces events with a given reduce function to create a Signal
       *
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[State]): Signal[A] = {
       ticket.create(
         Set(this),
@@ -185,51 +176,45 @@ trait EventBundle extends FoldBundle {
       * starting with the init value before the first event occurrence
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-      Events.foldOne(this, init)((acc, _) => f(acc))
+      fold(init)((acc, _) => f(acc))
 
     /** Counts the occurrences of the event.
       * The argument of the event is discarded.
       * Always starts from 0 when the count is created (no matter how often the event has activated in the past).
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def count()(implicit ticket: CreationTicket[State]): Signal[Int] =
-      Events.foldOne(this, 0)((acc, _) => acc + 1)
+      fold(0)((acc, _) => acc + 1)
 
     /** returns a signal holding the latest value of the event.
       * @param init initial value of the returned signal
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def latest[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
-      Events.foldOne(this, init)((_, v) => v)
+      fold(init)((_, v) => v)
 
     /** returns a signal holding the latest value of the event.
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def latest[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
       reduce[A]((_, v) => v)
 
     /** Holds the latest value of an event as an Option, None before the first event occured
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def latestOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
-      Events.foldOne(this, None: Option[A]) { (_, v) => Some(v) }
+      fold(None: Option[A]) { (_, v) => Some(v) }
 
     /** Returns a signal which holds the last n events in a list. At the beginning the
       * list increases in size up to when n values are available
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def last[A >: T](n: Int)(implicit ticket: CreationTicket[State]): Signal[LinearSeq[A]] = {
       if (n < 0) throw new IllegalArgumentException(s"length must be positive")
       else if (n == 0) Var(Nil)
       else
-        Events.foldOne(this, Queue[A]()) { (queue: Queue[A], v: T) =>
+        fold(Queue[A]()) { (queue: Queue[A], v: T) =>
           if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
         }
     }
@@ -237,25 +222,22 @@ trait EventBundle extends FoldBundle {
     /** collects events resulting in a variable holding a list of all values.
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def list[A >: T]()(implicit ticket: CreationTicket[State]): Signal[List[A]] =
-      Events.foldOne(this, List[A]())((acc, v) => v :: acc)
+      fold(List[A]())((acc, v) => v :: acc)
 
     /** Switch back and forth between two signals on occurrence of event e
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket[State]): Signal[A] =
       ticket.scope.embedTransaction { ict =>
-        val switched: Signal[Boolean] = iterate(false) { !_ }(ict)
-        Signals.dynamic(switched, a, b) { s => if (s.depend(switched)) s.depend(b) else s.depend(a) }(ict)
+        val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
+        Signal.dynamic(using ict) { if switched.value then b.value else a.value }
       }
 
     /** Filters the event, only propagating the value when the filter is true.
       *
       * @group operator
       */
-    @cutOutOfUserComputation
     final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
       Event.dynamic {
         this.value.filter(expression)
@@ -265,7 +247,6 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    @cutOutOfUserComputation
     final infix inline def &&(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
       Event.dynamic {
         this.value.filter(expression)
@@ -286,7 +267,6 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    @cutOutOfUserComputation
     final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket[State]): Event[B] =
       Event.dynamic {
         this.value.map(expression)
@@ -297,9 +277,8 @@ trait EventBundle extends FoldBundle {
       * @group conversion
       * @inheritdoc
       */
-    @cutOutOfUserComputation
     final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-      Events.foldOne(this, init)(op)
+      Fold(init)(this act { v => op(current, v) })
 
   }
 
@@ -311,7 +290,9 @@ trait EventBundle extends FoldBundle {
     * @group create
     */
   object Event {
-    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
+    inline def apply[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = static(expr)
+
+    inline def static[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[Option[T], ReSource.of[State], StaticTicket[State], true](expr)
       Events.static(sources: _*)(fun)
@@ -327,7 +308,6 @@ trait EventBundle extends FoldBundle {
   object Events {
 
     /** the basic method to create static events */
-    @cutOutOfUserComputation
     def staticNamed[T](name: String, dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Pulse[T])(implicit
         ticket: CreationTicket[State],
         info: ReInfo
@@ -338,20 +318,17 @@ trait EventBundle extends FoldBundle {
     }
 
     /** Creates static events */
-    @cutOutOfUserComputation
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
     ): Event[T] =
       staticNamed(ticket.rename.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates static events */
-    @cutOutOfUserComputation
     def staticNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: StaticTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
     ): Event[T] = static(dependencies: _*)(expr)
 
     /** Creates dynamic events */
-    @cutOutOfUserComputation
     def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
     ): Event[T] = {
@@ -362,13 +339,11 @@ trait EventBundle extends FoldBundle {
     }
 
     /** Creates dynamic events */
-    @cutOutOfUserComputation
     def dynamicNoVarargs[T](dependencies: Seq[ReSource.of[State]])(expr: DynamicTicket[State] => Option[T])(implicit
         ticket: CreationTicket[State]
     ): Event[T] = dynamic(dependencies: _*)(expr)
 
     /** Creates change events */
-    @cutOutOfUserComputation
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
         val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
@@ -381,7 +356,6 @@ trait EventBundle extends FoldBundle {
         static(internal)(st => st.dependStatic(internal))(tx)
       }
 
-    @cutOutOfUserComputation
     def foldOne[A, T](dependency: Event[A], init: T)(expr: (T, A) => T)(implicit
         ticket: CreationTicket[State]
     ): Signal[T] = {
@@ -395,7 +369,6 @@ trait EventBundle extends FoldBundle {
       *
       * @see [[rescala.operator.EventBundle.Event.fold]]
       */
-    @cutOutOfUserComputation
     def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: DynamicTicket[State] => (() => T) => T)(implicit
         ticket: CreationTicket[State]
     ): Signal[T] = {

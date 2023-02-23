@@ -31,7 +31,7 @@ class ReverseFan {
     engine = engineParam.engine
     sources = Array.fill(16)(Var(step.get()))
     val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } })
-    result = Signals.lift(intermediate.toSeq) { values =>
+    result = Signal.lift(intermediate.toSeq) { values =>
       work.consumeSecondary(); values.sum
     }
     if (engine == Schedulers.unmanaged) isManual = true

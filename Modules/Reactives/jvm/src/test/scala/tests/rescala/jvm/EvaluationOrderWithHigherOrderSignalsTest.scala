@@ -18,8 +18,8 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
 
     val results = for (_ <- 0 to 10) yield {
 
-      val x  = Var(initialX)(scheduler)
-      val x4 = x.map(identity)(scheduler).map(identity)(scheduler).map(identity)(scheduler).map(identity)(scheduler)
+      val x  = Var(initialX)
+      val x4 = x.map(identity).map(identity).map(identity).map(identity)
 
       val ho                         = Var(x: Signal[String])(scheduler)
       var reevaluationRestartTracker = List.empty[String]
@@ -27,7 +27,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
         val res = ho.value.value
         reevaluationRestartTracker ::= res
         res
-      }(scheduler)
+      }
 
       changeX match {
         case DontSet => ho.set(x4)(scheduler, ScopeSearch.fromSchedulerImplicit(engine.scheduler))

@@ -1,7 +1,10 @@
 package rescala.operator
 
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch, StaticTicket}
+import rescala.core.{
+  CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch,
+  StaticTicket
+}
 import rescala.macros.ReadableMacro
 
 import scala.annotation.unchecked.uncheckedVariance
@@ -26,7 +29,7 @@ trait SignalBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Signal[+T] extends Disconnectable with ReadableMacro[T]  {
+  trait Signal[+T] extends Disconnectable with ReadableMacro[T] {
     override type State[V] = selfType.State[V]
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
@@ -81,12 +84,11 @@ trait SignalBundle {
       }
 
     /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
-    @cutOutOfUserComputation
     final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit
         ticket: CreationTicket[State]
     ): Signal[R] =
-      Signals.static(this.resource) { st =>
-        try st.dependStatic(this.resource)
+      Signal {
+        try this.value
         catch {
           case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
         }
@@ -96,14 +98,12 @@ trait SignalBundle {
 
     // final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource): Signal[R, S = recover(PartialFunction(onFailure))
 
-    @cutOutOfUserComputation
     final def abortOnError(message: String)(implicit ticket: CreationTicket[State]): Signal[T] =
       recover { case t => throw ObservedException(this.resource, s"forced abort ($message)", t) }
 
-    @cutOutOfUserComputation
     final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[State]): Signal[R] =
-      Signals.static(this.resource) { st =>
-        try st.dependStatic(this.resource)
+      Signal {
+        try this.value
         catch {
           case EmptySignalControlThrowable => value
         }
@@ -112,7 +112,6 @@ trait SignalBundle {
     /** Flattens the inner value.
       * @group operator
       */
-    @cutOutOfUserComputation
     final def flatten[R](implicit flatten: Flatten[Signal[T], R]): R = flatten.apply(this)
 
     /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
@@ -120,7 +119,6 @@ trait SignalBundle {
       *
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def change(implicit ticket: CreationTicket[State]): Event[Diff[T]] = Events.change(this)(ticket)
 
     /** Create an event that fires every time the signal changes. The value associated
@@ -128,7 +126,6 @@ trait SignalBundle {
       *
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def changed(implicit ticket: CreationTicket[State]): Event[T] =
       Events.staticNamed(s"(changed $this)", this.resource) { st =>
         st.collectStatic(this) match {
@@ -141,7 +138,6 @@ trait SignalBundle {
       *
       * @group conversion
       */
-    @cutOutOfUserComputation
     final def changedTo[V >: T](value: V)(implicit ticket: CreationTicket[State]): Event[Unit] =
       Events.staticNamed(s"(filter $this)", this) { st =>
         st.collectStatic(this).filter(_ == value)
@@ -151,9 +147,8 @@ trait SignalBundle {
       *
       * @group operator
       */
-    @cutOutOfUserComputation
-    final inline def map[B](inline expression: T => B)(implicit ct: CreationTicket[State]): Signal[B] =
-      Signal.dynamic(expression(this.value))(ct)
+    final inline def map[B](using CreationTicket[State])(inline expression: T => B): Signal[B] =
+      Signal.dynamic(expression(this.value))
   }
 
   /** A signal expression can be used to create signals accessing arbitrary other signals.
@@ -167,24 +162,22 @@ trait SignalBundle {
     * @group create
     */
   object Signal {
-    inline def apply[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
-      val (sources, fun, isStatic) =
+
+    inline def apply[T](using CreationTicket[State])(inline expr: T): Signal[T] = static(expr)
+
+    inline def static[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
+      val (inputs, fun, isStatic) =
         rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.StaticTicket[State], true](expr)
-      Signals.static(sources: _*)(fun)
+      Signal.static(inputs: _*)(fun)
     }
 
-    inline def dynamic[T](inline expr: T)(implicit ct: CreationTicket[State]): Signal[T] = {
+    inline def dynamic[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[T, ReSource.of[State], rescala.core.DynamicTicket[State], false](expr)
-      Signals.dynamic(sources: _*)(fun)
+      Signal.dynamic(sources: _*)(fun)
     }
-  }
-
-  /** Functions to construct signals, you probably want to use signal expressions in [[rescala.interface.RescalaInterface.Signal]] for a nicer API. */
-  object Signals {
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
-    @cutOutOfUserComputation
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket[State]
     ): Signal[T] = {
@@ -194,7 +187,6 @@ trait SignalBundle {
     }
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-    @cutOutOfUserComputation
     def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(implicit
         ct: CreationTicket[State]
     ): Signal[T] = {
@@ -204,31 +196,7 @@ trait SignalBundle {
       }
     }
 
-    def fold[T](dependencies: Set[ReSource.of[State]], init: T)(expr: StaticTicket[State] => (() => T) => T)(implicit
-        ticket: CreationTicket[State]
-    ): Signal[T] = {
-      ticket.create(
-        dependencies,
-        Pulse.tryCatch[T](Pulse.Value(init)),
-        needsReevaluation = false
-      ) {
-        state => new SignalImpl[T](state, (st, v) => expr(st)(v), ticket.rename, None)
-      }
-    }
-
-    /** creates a new static signal depending on the dependencies, reevaluating the function */
-    @cutOutOfUserComputation
-    def stateful[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
-        ct: CreationTicket[State]
-    ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, (t, _) => expr(t), ct.rename, None)
-      }
-    }
-
-
     /** converts a future to a signal */
-    @cutOutOfUserComputation
     def fromFuture[A](fut: Future[A])(implicit
         scheduler: Scheduler[State],
         ec: ExecutionContext,
@@ -259,22 +227,20 @@ trait SignalBundle {
       }
     }
 
-    @cutOutOfUserComputation
     def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[State]): Signal[R] = {
-      static(los.map(_.resource): _*) { t => fun(los.map(s => t.dependStatic(s.resource))) }
+      Signal.static(los.map(_.resource): _*) { t => fun(los.map(s => t.dependStatic(s.resource))) }
     }
 
-    @cutOutOfUserComputation
     def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(implicit maybe: CreationTicket[State]): Signal[B] = {
       static(n1.resource)(t => fun(t.dependStatic(n1.resource)))
     }
 
-    @cutOutOfUserComputation
     def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(implicit
         maybe: CreationTicket[State]
     ): Signal[B] = {
       static(n1.resource, n2.resource)(t => fun(t.dependStatic(n1.resource), t.dependStatic(n2.resource)))
     }
+
   }
 
 }

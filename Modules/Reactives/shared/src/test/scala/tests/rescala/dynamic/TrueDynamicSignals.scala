@@ -138,7 +138,7 @@ class TrueDynamicSignals extends RETests {
       val macroRes = Signal {
         newSignal().value
       }
-      val normalRes = Signals.dynamic() { implicit t: DynamicTicket[State] =>
+      val normalRes = Signal.dynamic() { implicit t: DynamicTicket[State] =>
         t.depend(newSignal())
       }
       assert(macroRes.readValueOnce === 0, "before, macro")
@@ -175,7 +175,7 @@ class TrueDynamicSignals extends RETests {
       val ifTrue        = Var(0)
       val ifFalse       = Var(10)
       var reevaluations = 0
-      val s = Signals.dynamic(condition) { (dt: DynamicTicket[State]) =>
+      val s = Signal.dynamic(condition) { (dt: DynamicTicket[State]) =>
         reevaluations += 1
         if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
       }
@@ -203,7 +203,7 @@ class TrueDynamicSignals extends RETests {
     test("basic Higher Order Signal can Be Accessed") {
       val v                       = Var(42)
       val s1: Signal[Int]         = v.map(identity)
-      val s2: Signal[Signal[Int]] = Signals.dynamic() { _ => s1 }
+      val s2: Signal[Signal[Int]] = Signal.dynamic() { _ => s1 }
 
       assert(s2.readValueOnce.readValueOnce == 42)
 
@@ -214,11 +214,11 @@ class TrueDynamicSignals extends RETests {
     test("creating Signals Inside Signals") {
       val outside = Var(1)
 
-      val testsig = Signals.dynamic() { implicit to =>
+      val testsig = Signal.dynamic() { implicit to =>
         // remark 01.10.2014: without the bound the inner signal will be enqueued (it is level 0 same as its dependency)
         // this will cause testsig to reevaluate again, after the inner signal is fully updated.
         // leading to an infinite loop
-        to.depend(Signals.dynamic(outside) { ti => ti.depend(outside) })
+        to.depend(Signal.dynamic(outside) { ti => ti.depend(outside) })
       }
 
       assert(testsig.readValueOnce === 1)
@@ -231,7 +231,7 @@ class TrueDynamicSignals extends RETests {
       val v3 = v0.map(_ => "level 1").map(_ => "level 2").map(_ => "level 3")
 
       val condition = Var(false)
-      val `dynamic signal changing from level 1 to level 4` = Signals.dynamic(condition) { t =>
+      val `dynamic signal changing from level 1 to level 4` = Signal.dynamic(condition) { t =>
         if (t.depend(condition)) t.depend(v3) else t.depend(v0)
       }
       assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
@@ -246,11 +246,11 @@ class TrueDynamicSignals extends RETests {
       val v0 = Var("level 0")
       val v3 = v0.map(_ + "level 1").map(_ + "level 2").map(_ + "level 3")
 
-      val `dynamic signal changing from level 1 to level 4` = Signals.dynamic() { implicit ticket =>
+      val `dynamic signal changing from level 1 to level 4` = Signal.dynamic() { implicit ticket =>
         if (ticket.depend(v0) == "level 0") ticket.depend(v0)
         else {
           // the static bound is necessary here, otherwise we get infinite loops
-          ticket.depend(Signals.dynamic(v3) { t => t.depend(v3) + "level 4 inner" })
+          ticket.depend(Signal.dynamic(v3) { t => t.depend(v3) + "level 4 inner" })
         }
       }
       assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")

@@ -8,7 +8,19 @@ import rescala.operator.{Operators, Pulse, cutOutOfUserComputation}
 trait FoldBundle {
   bundle: Operators =>
 
+  /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.
+    *
+    * Example for a counter that can be reset:
+    * {{{
+    *   Fold(0)(
+    *     add act { x => current + v },
+    *     reset act { _ => 0 }
+    *   )
+    * }}}
+    */
   object Fold {
+
+    /** Fold branches allow to define more complex fold logic */
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](expr)

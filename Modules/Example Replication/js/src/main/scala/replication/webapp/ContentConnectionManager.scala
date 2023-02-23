@@ -45,7 +45,7 @@ class ContentConnectionManager(registry: Registry) {
   val connectionAttempt  = _connectionAttempt.flatten
 
   def connect(): Unit = {
-    _connectionAttempt.set(Signals.fromFuture(tryConnect()))
+    _connectionAttempt.set(Signal.fromFuture(tryConnect()))
   }
 
   def tryConnect(): Future[RemoteRef] = {

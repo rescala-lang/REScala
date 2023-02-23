@@ -12,7 +12,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)(engine.implicitScheduler)
+    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
@@ -25,7 +25,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
               case Thinking => Free
             }
         }
-      }(engine.implicitScheduler)
+      }
 
     }
 
@@ -60,7 +60,7 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
     for (i <- 0 until tableSize) yield {
@@ -85,7 +85,7 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     override implicit val engine: RescalaInterface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.{Signal, Signals, Var, implicitScheduler}
+  import engine.{Signal, Var, implicitScheduler}
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -108,7 +108,7 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     }
 
     for (i <- 0 until tableSize) yield {
-      val vision = Signals.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
+      val vision = Signal.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
 

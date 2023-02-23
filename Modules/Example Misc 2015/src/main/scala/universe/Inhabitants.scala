@@ -10,7 +10,7 @@ class Carnivore(implicit world: World) extends Animal {
   private val canHunt = energy map { _ > Animal.AttackThreshold }
 
   // only adult carnivores with min energy can hunt, others eat plants
-  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signals.lift(isAdult, canHunt) {
+  override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signal.lift(isAdult, canHunt) {
     (isAdult, canHunt) =>
       if (isAdult && canHunt) { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
       else { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
@@ -53,7 +53,7 @@ trait Female extends Animal {
     world.time.hour.changed act { _ => current - (if (isPregnant.readValueOnce) 1 else 0) }
   )
   private val giveBirth: Event[Unit] = pregnancyTime.changedTo(0)                    // #EVT //#IF
-  final override val isFertile       = Signals.lift(isAdult, isPregnant) { _ && !_ } // #SIG
+  final override val isFertile       = Signal.lift(isAdult, isPregnant) { _ && !_ } // #SIG
 
   // override val energyDrain = Signal { super.energyDrain() * 2 }
   // not possible
@@ -88,7 +88,7 @@ trait Female extends Animal {
 }
 
 trait Male extends Animal {
-  private val seeksMate = Signals.lift(isFertile, energy) { _ && _ > Animal.ProcreateThreshold }
+  private val seeksMate = Signal.lift(isFertile, energy) { _ && _ > Animal.ProcreateThreshold }
 
   final override def nextAction(pos: Pos): AnimalState = {
     if (seeksMate.readValueOnce) {

@@ -36,7 +36,7 @@ class MultiReverseFan {
 
     val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } }).grouped(groupSize)
     results = intermediate.map { sigs =>
-      Signals.lift(sigs.toSeq) { values =>
+      Signal.lift(sigs.toSeq) { values =>
         work.consumeSecondary(); values.sum
       }
     }.toArray

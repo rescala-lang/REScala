@@ -14,8 +14,8 @@ class ReevaluationBundle[T <: RescalaInterface](val api: T) {
     /* should be private but is unused */
     // to prevent fake observers from being prematurely gc'd
     var strongRef: AnyRef = (reactive: @unchecked) match {
-      case signal: Signal[_] => signal.map(reev)(turnSource)
-      case event: Event[_]   => event.map(reev)(turnSource)
+      case signal: Signal[_] => signal.map(reev)
+      case event: Event[_]   => event.map(reev)
     }
     def reev(v1: Any): Any = {
       results ::= v1.asInstanceOf[A]

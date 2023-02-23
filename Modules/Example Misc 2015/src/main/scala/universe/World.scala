@@ -15,7 +15,7 @@ class World(val width: Int = 100, val height: Int = 100) {
   val time       = new Time
   val randomness = new Random(1)
 
-  val statusString: Signal[String] = Signals.lift(board.animalsAlive, board.animalsBorn) { (a, b) =>
+  val statusString: Signal[String] = Signal.lift(board.animalsAlive, board.animalsBorn) { (a, b) =>
     s"Animals alive: $a Total born: $b"
   }
   var updates: List[() => Unit] = Nil

@@ -45,14 +45,14 @@ class PhilosopherTable(philosopherCount: Int)(val interface: RescalaInterface) {
 
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
-      interface.Signals.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
+      interface.Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
         s"Fork($i, $nextCircularIndex)"
       )
     }
 
     for (i <- 0 until tableSize) yield {
       val previousCircularIndex = mod(i - 1)
-      val vision = interface.Signals.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
+      val vision = interface.Signal.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(s"Vision($i)")
       Seating(i, phils(i), forks(previousCircularIndex), forks(i), vision)
     }
   }

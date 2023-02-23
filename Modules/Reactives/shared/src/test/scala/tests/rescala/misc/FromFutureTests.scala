@@ -12,7 +12,7 @@ class FromFutureTests extends RETests {
 
     test("accessing immediately available from future value") {
 
-      val res = Signals.fromFuture(Future.successful("immediate"))
+      val res = Signal.fromFuture(Future.successful("immediate"))
 
       assert(res.readValueOnce == "immediate")
 

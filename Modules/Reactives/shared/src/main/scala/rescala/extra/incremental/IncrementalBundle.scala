@@ -27,7 +27,6 @@ trait IncrementalBundle {
       * @param ticket a creation ticket as a new event will be created which has the ReactiveDeltaSeq as dependency
       * @return
       */
-    @cutOutOfUserComputation
     def asEvent(implicit ticket: CreationTicket[State]): Event[Delta[T]] = {
       Events.static(this) { staticTicket =>
         // each time a change occurs it is represented by a Delta
@@ -60,7 +59,7 @@ trait IncrementalBundle {
       // Than we fold the event by applying the fold- or unfold-function respectively
       // In case Nothing Changed we return the old value of fold
       // This will automatically create a Signal whose value is updated each time the event fires
-      Events.foldOne(event, initial)((x: A, y: Delta[T]) => {
+      event.fold(initial)((x: A, y: Delta[T]) => {
         y match {
           case Addition(_) => fold(x, y)
           case Removal(_)  => unfold(x, y)
@@ -208,7 +207,7 @@ trait IncrementalBundle {
       // count all elements fulfilling the condition of existence
       val instancesNumber = count(fulfillsCondition)
       // if more than one found
-      Signals.static(instancesNumber)(st => st.dependStatic(instancesNumber) > 0)(ticket)
+      Signal.static(instancesNumber)(st => st.dependStatic(instancesNumber) > 0)(ticket)
     }
 
     /** @param ticket used for creation of new sources
@@ -259,7 +258,7 @@ trait IncrementalBundle {
           trackingSequence.take(deletionIndex) ++ trackingSequence.drop(deletionIndex + 1)
         }
       )
-      Signals.static(minimum)(_.dependStatic(minimum).headOption.map(_._2))
+      Signal.static(minimum)(_.dependStatic(minimum).headOption.map(_._2))
     }
 
     /** @param ticket used for creation of new sources
@@ -305,7 +304,7 @@ trait IncrementalBundle {
         trackingSequence.take(deletionIndex) ++ trackingSequence.drop(deletionIndex + 1)
       })
 
-      Signals.static(seqMaximum)(_.dependStatic(seqMaximum).headOption.map(tuple => tuple._2))
+      Signal.static(seqMaximum)(_.dependStatic(seqMaximum).headOption.map(tuple => tuple._2))
     }
 
   }
