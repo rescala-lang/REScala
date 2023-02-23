@@ -14,9 +14,7 @@ trait Operators extends AnyRef // to make the below more symmetric
     with Sources
     with ObserveBundle {
   type State[_]
-  type DynamicTicket  = rescala.core.DynamicTicket[State]
   type CreationTicket = rescala.core.CreationTicket[State]
   type ReSource       = rescala.core.ReSource.of[State]
-  type ScopeSearch    = rescala.core.ScopeSearch[State]
 
 }

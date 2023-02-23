@@ -30,9 +30,9 @@ trait Sources {
 
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
-    def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch): Unit        = fire(value)
-    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch, ev: Unit =:= T): Unit = fire(ev(()))
-    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit =
+    def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit        = fire(value)
+    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
+    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -68,7 +68,7 @@ trait Sources {
     override val resource: Signal[A] = this
     override def disconnect(): Unit  = ()
 
-    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit =
+    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -76,7 +76,7 @@ trait Sources {
           })
       }
 
-    def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch): Unit = {
+    def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
       def newTx() = sched.forceNewTransaction(this) { t =>
         admit(f(t.tx.now(this)))(t)
       }
