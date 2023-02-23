@@ -65,8 +65,7 @@ trait CalculusLike {
 
   }
 
-  case class FTransaction(override val initializer: Initializer.of[CalculusLike.this.State]) extends Transaction {
-    override type State[V] = CalculusLike.this.State[V]
+  case class FTransaction(override val initializer: Initializer.of[CalculusLike.this.State]) extends Transaction[State] {
     override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                                       = obs.execute()
   }

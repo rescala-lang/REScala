@@ -27,11 +27,11 @@ trait RescalaInterface extends Operators {
 
   /** @group internal */
   def scheduler: Scheduler[State]
+  /** @group internal */
+  implicit def implicitScheduler: Scheduler[State] = scheduler
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
-  /** @group internal */
-  implicit def implicitScheduler: Scheduler[State] = scheduler
 
   implicit def OnEv[T](e: Event[T]): Events.OnEv[T]           = new Events.OnEv[T](e)
   implicit def OnEvs[T](e: => Seq[Event[T]]): Events.OnEvs[T] = new Events.OnEvs[T](e)
@@ -57,7 +57,7 @@ trait RescalaInterface extends Operators {
     */
   def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (
       I,
-      Transaction.of[State]
+      Transaction[State]
   ) => R): R = {
     var res: Option[R] = None
     transaction(iw: _*)(at => {

@@ -10,7 +10,7 @@ class CreationTicketTest extends RETests {
     if (engine != rescala.Schedulers.toposort) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
-      def getTurn(implicit engine: Scheduler[State]): Transaction.of[State] =
+      def getTurn(implicit engine: Scheduler[State]): Transaction[State] =
         engine.forceNewTransaction()(_.tx)
 
       test("none Dynamic No Implicit") {
@@ -25,23 +25,23 @@ class CreationTicketTest extends RETests {
       }
 
       test("none Dynamic Some Implicit") {
-        implicit val implicitTurn: Transaction.of[engine.State] = getTurn
+        implicit val implicitTurn: Transaction[engine.State] = getTurn
         assert(implicitly[CreationTicket[State]].scope.self === Left(implicitTurn))
         assert(implicitly[CreationTicket[State]].scope.embedTransaction(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
         engine.transaction() { (_: AdmissionTicket[State]) =>
-          implicit val implicitTurn: Transaction.of[engine.State] = getTurn
+          implicit val implicitTurn: Transaction[engine.State] = getTurn
           assert(implicitly[CreationTicket[State]].scope.self === Left(implicitTurn))
           assert(implicitly[CreationTicket[State]].scope.embedTransaction(identity) === implicitTurn)
         }
       }
 
       test("implicit In Closures") {
-        val closureDefinition: Transaction.of[State] = getTurn(engine.scheduler)
+        val closureDefinition: Transaction[State] = getTurn(engine.scheduler)
         val closure = {
-          implicit def it: Transaction.of[State] = closureDefinition
+          implicit def it: Transaction[State] = closureDefinition
           () => implicitly[CreationTicket[State]]
         }
         engine.transaction() { _ =>

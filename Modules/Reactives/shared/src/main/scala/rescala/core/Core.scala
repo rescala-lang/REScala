@@ -127,13 +127,13 @@ trait Initializer {
 object Initializer { type of[S[_]] = Initializer { type State[V] = S[V] } }
 
 /** User facing low level API to access values in a static context. */
-sealed abstract class StaticTicket[State[_]](val tx: Transaction.of[State]) {
+sealed abstract class StaticTicket[State[_]](val tx: Transaction[State]) {
   private[rescala] def collectStatic(reactive: ReSource.of[State]): reactive.Value
   final def dependStatic[A](reactive: ReadAs.of[State, A]): A = reactive.read(collectStatic(reactive))
 }
 
 /** User facing low level API to access values in a dynamic context. */
-abstract class DynamicTicket[State[_]](tx: Transaction.of[State]) extends StaticTicket[State](tx) {
+abstract class DynamicTicket[State[_]](tx: Transaction[State]) extends StaticTicket[State](tx) {
   private[rescala] def collectDynamic(reactive: ReSource.of[State]): reactive.Value
   final def depend[A](reactive: ReadAs.of[State, A]): A = reactive.read(collectDynamic(reactive))
 }
@@ -148,7 +148,7 @@ trait AccessHandler[State[_]] {
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   */
-final class ReevTicket[S[_], V](tx: Transaction.of[S], private var _before: V, accessHandler: AccessHandler[S])
+final class ReevTicket[S[_], V](tx: Transaction[S], private var _before: V, accessHandler: AccessHandler[S])
     extends DynamicTicket(tx)
     with Result[V] {
 
@@ -242,7 +242,7 @@ trait Observation { def execute(): Unit }
 /** Enables reading of the current value during admission.
   * Keeps track of written sources internally.
   */
-final class AdmissionTicket[State[_]](val tx: Transaction.of[State], declaredWrites: Set[ReSource.of[State]]) {
+final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites: Set[ReSource.of[State]]) {
 
   private var _initialChanges: Map[ReSource.of[State], InitialChange[State]] =
     Map[ReSource.of[State], InitialChange[State]]()
@@ -259,7 +259,7 @@ final class AdmissionTicket[State[_]](val tx: Transaction.of[State], declaredWri
   /** convenience method as many case studies depend on this being available directly on the AT */
   def now[A](reactive: ReadAs.of[State, A]): A = tx.now(reactive)
 
-  private[rescala] var wrapUp: Transaction.of[State] => Unit = null
+  private[rescala] var wrapUp: Transaction[State] => Unit = null
 }
 
 /** Enables the creation of other reactives */
@@ -287,7 +287,7 @@ object CreationTicket {
   // cases below are when one explicitly passes one of the parameters
   implicit def fromExplicitDynamicScope[S[_]](factory: DynamicScope[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
-  implicit def fromTransaction[S[_]](tx: Transaction.of[S])(implicit line: ReInfo): CreationTicket[S] =
+  implicit def fromTransaction[S[_]](tx: Transaction[S])(implicit line: ReInfo): CreationTicket[S] =
     new CreationTicket(new ScopeSearch[S](Left(tx)), line)
   implicit def fromName[State[_]](str: String)(implicit
       scopeSearch: ScopeSearch[State],
@@ -332,9 +332,7 @@ trait DisconnectableImpl extends Derived with Disconnectable {
   * Its a classical tradeoff, but it would be better to not make this choice by default,
   * that is, reactive creation should be limited such that we can experiment with schedulers that do not have this liability.
   */
-trait Transaction {
-
-  type State[_]
+trait Transaction[State[_]] {
 
   final def now[A](reactive: ReadAs.of[State, A]): A = {
     RExceptions.toExternalReadException(reactive, reactive.read(access(reactive)))
@@ -351,9 +349,6 @@ trait Transaction {
   private[rescala] def drop(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
     Tracing.observe(Tracing.Drop(source, sink))
   }
-}
-object Transaction {
-  type of[S[_]] = Transaction { type State[A] = S[A] }
 }
 
 /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling.
@@ -372,18 +367,18 @@ trait Scheduler[State[_]] extends DynamicScope[State] {
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
 
-  def maybeTransaction: Option[Transaction.of[State]]
+  def maybeTransaction: Option[Transaction[State]]
 }
 
 /** Provides the capability to look up transactions in the dynamic scope. */
 trait DynamicScope[State[_]] {
-  private[rescala] def dynamicTransaction[T](f: Transaction.of[State] => T): T
-  def maybeTransaction: Option[Transaction.of[State]]
+  private[rescala] def dynamicTransaction[T](f: Transaction[State] => T): T
+  def maybeTransaction: Option[Transaction[State]]
 }
 
-trait SchedulerImpl[State[_], Tx <: Transaction.of[State]] extends DynamicScope[State] with Scheduler[State] {
+trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends DynamicScope[State] with Scheduler[State] {
 
-  final private[rescala] def dynamicTransaction[T](f: Transaction.of[State] => T): T = {
+  final private[rescala] def dynamicTransaction[T](f: Transaction[State] => T): T = {
     _currentTransaction.value match {
       case Some(transaction) => f(transaction)
       case None              => forceNewTransaction(Set.empty, ticket => f(ticket.tx))
@@ -395,24 +390,24 @@ trait SchedulerImpl[State[_], Tx <: Transaction.of[State]] extends DynamicScope[
   final private[rescala] def withDynamicInitializer[R](init: Tx)(thunk: => R): R =
     _currentTransaction.withValue(Some(init))(thunk)
 
-  final override def maybeTransaction: Option[Transaction.of[State]] = {
+  final override def maybeTransaction: Option[Transaction[State]] = {
     _currentTransaction.value
   }
 }
 
-case class ScopeSearch[State[_]](self: Either[Transaction.of[State], DynamicScope[State]]) {
+case class ScopeSearch[State[_]](self: Either[Transaction[State], DynamicScope[State]]) {
 
   /** Either just use the statically found transaction,
     * or do a lookup in the dynamic scope.
     * If the lookup fails, it will start a new transaction.
     */
-  def embedTransaction[T](f: Transaction.of[State] => T): T =
+  def embedTransaction[T](f: Transaction[State] => T): T =
     self match {
       case Left(integrated) => f(integrated)
       case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
     }
 
-  def maybeTransaction: Option[Transaction.of[State]] = self match {
+  def maybeTransaction: Option[Transaction[State]] = self match {
     case Left(integrated) => Some(integrated)
     case Right(ds)        => ds.maybeTransaction
   }
@@ -426,7 +421,7 @@ object ScopeSearch extends LowPriorityScopeImplicits {
     new ScopeSearch(Left(ticket.tx))
   implicit def fromAdmissionImplicit[S[_]](implicit ticket: AdmissionTicket[S]): ScopeSearch[S] =
     new ScopeSearch(Left(ticket.tx))
-  implicit def fromTransactionImplicit[S[_]](implicit tx: Transaction.of[S]): ScopeSearch[S] =
+  implicit def fromTransactionImplicit[S[_]](implicit tx: Transaction[S]): ScopeSearch[S] =
     new ScopeSearch(Left(tx))
 }
 

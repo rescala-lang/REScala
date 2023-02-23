@@ -113,9 +113,8 @@ trait Twoversion {
   }
 
   /** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements. */
-  sealed trait TwoVersionTransaction extends Transaction {
+  sealed trait TwoVersionTransaction extends Transaction[Twoversion.this.State] {
 
-    override type State[V] = Twoversion.this.State[V]
 
     /** Schedules a temporarily written change to be committed by the turn. */
     def schedule(committable: ReSource): Unit
@@ -154,8 +153,6 @@ trait Twoversion {
     * Only compatible with spore definitions that store a pulse value and support graph operations.
     */
   trait TwoVersionTransactionImpl extends TwoVersionTransaction {
-
-    override type State[V] = Twoversion.this.State[V]
 
     val token: Token = new Token()
 

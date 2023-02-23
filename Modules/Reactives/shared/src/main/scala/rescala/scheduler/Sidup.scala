@@ -68,8 +68,6 @@ trait Sidup extends Twoversion {
 
   class SidupTransaction extends TwoVersionTransactionImpl {
 
-    override type State[V] = Sidup.this.State[V]
-
     var sources: Set[SourceId] = null
 
     override def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit = {

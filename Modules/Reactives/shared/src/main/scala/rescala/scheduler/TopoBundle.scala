@@ -9,7 +9,7 @@ import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 trait TopoBundle {
-  type State[V] <: TopoState[V]
+  final type State[V] = TopoState[V]
 
   type Derived  = rescala.core.Derived.of[State]
   type ReSource = rescala.core.ReSource.of[State]
@@ -32,7 +32,7 @@ trait TopoBundle {
       s"State(outgoing = $outgoing, discovered = $discovered, dirty = $dirty, done = $done)"
   }
 
-  def makeDerivedStructStateBundle[V](ip: V): State[V]
+  def makeDerivedStructStateBundle[V](ip: V): State[V] = new TopoState[V](ip)
 
   class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
 
@@ -79,8 +79,7 @@ trait TopoBundle {
 
   }
 
-  case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction {
-    override type State[V] = TopoBundle.this.State[V]
+  case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction[State] {
 
     override private[rescala] def access(reactive: ReSource): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                             = initializer.observe(obs)
