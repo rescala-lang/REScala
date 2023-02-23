@@ -25,7 +25,6 @@ object Schedulers extends PlatformSchedulers {
         override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
         override def schedulerName: String                                                  = "Unmanaged"
       }
-
   }
 
   trait Synchron extends NoLock {
@@ -47,7 +46,11 @@ object Schedulers extends PlatformSchedulers {
     def scheduler: Scheduler[State] = bundle.scheduler
   }
 
-  object synchron extends Synchron with RescalaInterface
+  object synchron extends RescalaInterface {
+    val bundle: Synchron = new Synchron {}
+    type State[V] = bundle.State[V]
+    def scheduler: Scheduler[State] = bundle.scheduler
+  }
 
   object toposort extends RescalaInterface {
     val bundle: TopoBundle = new TopoBundle {}
@@ -55,13 +58,15 @@ object Schedulers extends PlatformSchedulers {
     override def scheduler: Scheduler[State] = bundle.TopoScheduler
   }
 
-  object sidup extends Sidup with RescalaInterface {
-    override type ReSource = rescala.core.ReSource.of[State]
-    val scheduler: Scheduler[State] = new TwoVersionScheduler[SidupTransaction] {
-      override protected def makeTransaction(priorTx: Option[SidupTransaction]): SidupTransaction = new SidupTransaction
-      override def schedulerName: String                                                          = "SidupSimple"
+  object sidup extends RescalaInterface {
+    val bundle: Sidup = new Sidup {}
+    override type State[V] = bundle.State[V]
+    val scheduler: Scheduler[State] = new bundle.TwoVersionScheduler[bundle.SidupTransaction] {
+      override protected def makeTransaction(priorTx: Option[bundle.SidupTransaction]): bundle.SidupTransaction =
+        new bundle.SidupTransaction
+      override def schedulerName: String = "SidupSimple"
       override def forceNewTransaction[R](
-          initialWrites: Set[ReSource],
+          initialWrites: Set[ReSource.of[State]],
           admissionPhase: AdmissionTicket[State] => R
       ): R =
         synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }

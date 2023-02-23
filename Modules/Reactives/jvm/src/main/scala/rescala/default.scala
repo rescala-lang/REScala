@@ -9,7 +9,8 @@ import rescala.parrp.{Backoff, ParRP}
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
-object default extends interface.RescalaInterface with ParRP {
-  override type ReSource = rescala.core.ReSource.of[State]
-  override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
+object default extends interface.RescalaInterface {
+  val bundle = new ParRP{}
+  override type State[V] = bundle.State[V]
+  override val scheduler: Scheduler[State] = bundle.parrpWithBackoff(() => new Backoff())
 }
