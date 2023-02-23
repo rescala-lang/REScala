@@ -445,6 +445,7 @@ trait EventBundle extends FoldBundle {
       * }}}
       */
     @cutOutOfUserComputation
+    @deprecated("use explicit Fold syntax instead", "0.34.0")
     final def foldAll[A](init: A)(accthingy: (=> A) => Seq[FoldMatch[A]])(implicit
         ticket: CreationTicket[State]
     ): Signal[A] = {

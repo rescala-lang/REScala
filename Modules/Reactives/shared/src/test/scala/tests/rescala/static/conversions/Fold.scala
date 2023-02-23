@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 import scala.collection.LinearSeq
 
-class Fold extends RETests {
+class FoldTests extends RETests {
   multiEngined { engine =>
     import engine._
 
@@ -198,13 +198,11 @@ class Fold extends RETests {
       val word  = Evt[String]()
       val count = Evt[Int]()
       val reset = Evt[Unit]()
-      val res = Events.foldAll("") { acc =>
-        Seq(
-          reset act2 (_ => ""),
-          word act2 identity,
-          count act2 (acc * _)
-        )
-      }
+      val res = Fold("")(
+        reset act (_ => ""),
+        word act identity,
+        count act (current * _)
+      )
 
       assert(res.readValueOnce == "")
       count.fire(10)
@@ -229,12 +227,10 @@ class Fold extends RETests {
     test("fold expression compiles with values of a subtype") {
       val e0 = Evt[Unit]()
       val e1 = Evt[Int]()
-      val res = Events.foldAll(Option.empty[Int]) { _ =>
-        Seq(
-          e0 act2 { _ => Some(1) },
-          e1 act2 { _ => Option(2) }
-        )
-      }
+      val res = Fold(Option.empty[Int])(
+        e0 act { _ => Some(1) },
+        e1 act { _ => Option(2) }
+      )
 
       assert(res.readValueOnce == None)
       e0.fire()

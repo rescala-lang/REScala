@@ -52,11 +52,9 @@ class Elevator(val nFloors: Int) {
   val reached                  = Signal { stopped() && position() == destination() }
   val reachedFloor: Event[Int] = reached.changed && { _ == true } map { (_: Boolean) => currentFloor.value }
 
-  val waitingTime = Events.foldAll(0)(acc =>
-    Seq(
-      reachedFloor act2 { _ => WaitingTime },
-      tick act2 { _ => if (isWaiting.now) acc - 1 else acc }
-    )
+  val waitingTime = Fold(0)(
+      reachedFloor act { _ => WaitingTime },
+      tick act { _ => if (isWaiting.now) current - 1 else current }
   )
 
   val stoppedWaiting = waitingTime.changedTo(0)

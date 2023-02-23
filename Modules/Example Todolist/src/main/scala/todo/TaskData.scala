@@ -133,12 +133,10 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     given ReplicaId = replicaId
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
-      Events.foldAll(init)(current =>
-        Seq(
-          doneEv act2 { _ => current.clearDeltas().map(_.toggle()) },
-          edittextStr act2 { v => current.clearDeltas().map(_.edit(v)) },
-          deltaEvt act2 { delta => current.clearDeltas().applyDelta(delta) }
-        )
+      Fold(init)(
+        doneEv act { _ => current.clearDeltas().map(_.toggle()) },
+        edittextStr act { v => current.clearDeltas().map(_.edit(v)) },
+        deltaEvt act { delta => current.clearDeltas().applyDelta(delta) }
       )
     }(Codecs.codecLww)
 
