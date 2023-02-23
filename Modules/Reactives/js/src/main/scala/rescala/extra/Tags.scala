@@ -9,7 +9,7 @@ import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
 import scalatags.jsdom.Frag
-import rescala.operator.Pulse
+import rescala.operator.{Observe, ObserveInteract, Pulse}
 import rescala.operator.RExceptions.ObservedException
 
 import scala.scalajs.js

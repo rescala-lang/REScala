@@ -3,12 +3,12 @@ package rescala.scheduler
 import rescala.core.{
   AccessHandler, AdmissionTicket, Initializer, Observation, ReadAs, ReevTicket, SchedulerImpl, Transaction
 }
-import rescala.operator.ObserveBundle
+import rescala.operator.Observe
 
 import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-trait TopoBundle extends ObserveBundle {
+trait TopoBundle {
   type State[V] <: TopoState[V]
 
   type Derived  = rescala.core.Derived.of[State]
