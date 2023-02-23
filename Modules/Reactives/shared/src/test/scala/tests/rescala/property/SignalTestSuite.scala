@@ -23,7 +23,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
 
     "get last n signals" in forAll { (fireValues: Seq[Int], lastN: Int) =>
       val e                                          = Evt[Int]()
-      val s: Signal[scala.collection.LinearSeq[Int]] = e.last(lastN)
+      val s: Signal[scala.collection.LinearSeq[Int]] = e.list(lastN)
 
       var fireCount = 0
       val fire = (value: Int) => {

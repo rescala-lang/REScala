@@ -176,7 +176,7 @@ trait EventBundle extends FoldBundle {
       * list increases in size up to when n values are available
       * @group conversion
       */
-    final def last[A >: T](n: Int)(implicit ticket: CreationTicket[State]): Signal[LinearSeq[A]] = {
+    final def list[A >: T](n: Int)(implicit ticket: CreationTicket[State]): Signal[LinearSeq[A]] = {
       if (n < 0) throw new IllegalArgumentException(s"length must be positive")
       else if (n == 0) Var(Nil)
       else

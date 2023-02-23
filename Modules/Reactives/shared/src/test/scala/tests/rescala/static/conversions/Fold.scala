@@ -131,14 +131,14 @@ class FoldTests extends RETests {
     /* last */
     test("last the Initial Value Is Set Correctly") {
       val e                         = Evt[Int]()
-      val s: Signal[LinearSeq[Int]] = e.last(5)
+      val s: Signal[LinearSeq[Int]] = e.list(5)
 
       assert(s.readValueOnce == List())
     }
 
     test("last collects The LastN Events") {
       val e                         = Evt[Int]()
-      val s: Signal[LinearSeq[Int]] = e.last(5)
+      val s: Signal[LinearSeq[Int]] = e.list(5)
 
       assert(s.readValueOnce == LinearSeq())
       e.fire(1)

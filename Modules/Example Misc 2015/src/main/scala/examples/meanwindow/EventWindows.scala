@@ -6,7 +6,7 @@ object EventWindows extends App {
 
   val e = Evt[Double]()
   // val all = e.list()
-  val window = e.last(5)
+  val window = e.list(5)
   val mean = Signal {
     window().sum /
     window().length

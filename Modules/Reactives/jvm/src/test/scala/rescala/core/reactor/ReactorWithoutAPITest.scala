@@ -207,7 +207,7 @@ class ReactorWithoutAPITest extends RETests {
     }
 
     val tuple   = Signal { (e1.hold("Init").value, reactor.value) }
-    val history = tuple.changed.last(5)
+    val history = tuple.changed.list(5)
 
     assert(tuple.now === (("Init", "Not Reacted")))
     assert(history.now === Nil)

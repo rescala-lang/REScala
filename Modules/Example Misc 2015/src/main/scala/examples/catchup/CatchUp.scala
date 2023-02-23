@@ -47,7 +47,7 @@ class CatchUp {
 
   // Old mouse position, some time ago
   val mouseDelayed: Signal[Point] = Signal {
-    mouse.position.changed.last(20).value.headOption match {
+    mouse.position.changed.list(20).value.headOption match {
       case None    => mouse.position.value
       case Some(v) => v
     }
