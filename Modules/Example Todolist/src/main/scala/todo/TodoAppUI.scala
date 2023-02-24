@@ -38,7 +38,13 @@ class TodoAppUI(val storagePrefix: String) {
     val removeAll = Event.fromCallback[UIEvent](button("remove all done todos", onclick := Event.handle))
 
     val toggleAll = Event.fromCallback[UIEvent] {
-      input(id := "toggle-all", name := "toggle-all", `class` := "toggle-all", `type` := "checkbox", onchange := Event.handle)
+      input(
+        id       := "toggle-all",
+        name     := "toggle-all",
+        `class`  := "toggle-all",
+        `type`   := "checkbox",
+        onchange := Event.handle
+      )
     }
 
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)

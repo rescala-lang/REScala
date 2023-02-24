@@ -53,17 +53,19 @@ trait FlattenApi {
   def firstFiringEvent[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: ReadAs.of[State, Option[A1]]](
       implicit ticket: CreationTicket[State]
   ): Flatten[Signal[T[Evnt[B]]], Event[B]] =
-    sig => Events.dynamic(sig) { t =>
-      val all = t.depend(sig) map { (r: ReadAs.of[State, Option[B]]) => t.depend[Option[B]](r) }
-      all.collectFirst { case Some(e) => e }
-    }
+    sig =>
+      Events.dynamic(sig) { t =>
+        val all = t.depend(sig) map { (r: ReadAs.of[State, Option[B]]) => t.depend[Option[B]](r) }
+        all.collectFirst { case Some(e) => e }
+      }
 
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[Traversable[Option[B]\]\] where the new Event fires whenever any of the inner events fire */
   def traversableOfAllOccuringEventValues[B, T[U] <: IterableOps[U, T, T[U]], Evnt[A1] <: Event[A1]](implicit
       ticket: CreationTicket[State]
   ): Flatten[Signal[T[Evnt[B]]], Event[T[Option[B]]]] =
-    sig => Event.dynamic {
-      val all = sig.value map { (r: Event[B]) => r.value }
-      if (all.exists(_.isDefined)) Some(all) else None
-    }
+    sig =>
+      Event.dynamic {
+        val all = sig.value map { (r: Event[B]) => r.value }
+        if (all.exists(_.isDefined)) Some(all) else None
+      }
 }

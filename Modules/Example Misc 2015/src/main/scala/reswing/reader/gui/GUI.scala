@@ -19,8 +19,8 @@ class GUI(
     itemStatus: Signal[String] = Signal { "" },
     fetcherState: Signal[String] = Signal { "" }
 ) extends SimpleSwingApplication {
-  val refreshButton        = new ReButton("Refresh")
-  val refresh = refreshButton.clicked
+  val refreshButton = new ReButton("Refresh")
+  val refresh       = refreshButton.clicked
 
   val requestURLAddition = Evt[String]() // #EVT
 

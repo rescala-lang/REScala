@@ -72,8 +72,8 @@ object LFullyModularBall extends Main {
     val inc = Clock.ticks.map(tick => velocity.readValueOnce * tick.toDouble)
 
     val pos = Fold(Pos(0, 0))(
-        reset act { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
-        inc act { inc => current + inc }
+      reset act { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
+      inc act { inc => current + inc }
     )
 
     val shape = new Circle(pos, diameter)

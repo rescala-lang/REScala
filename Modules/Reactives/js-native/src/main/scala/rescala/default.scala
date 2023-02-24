@@ -9,7 +9,7 @@ import rescala.core.Scheduler
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
 object default extends RescalaInterface {
-  val bundle = new rescala.Schedulers.Unmanaged{}
+  val bundle = new rescala.Schedulers.Unmanaged {}
   override type State[V] = bundle.State[V]
   override def scheduler: Scheduler[State] = bundle.scheduler
 }

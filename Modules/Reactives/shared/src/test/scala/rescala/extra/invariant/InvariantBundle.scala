@@ -116,8 +116,7 @@ trait InvariantBundle extends TopoBundle {
         }
 
       private def findGenerators(): List[(ReSource.of[State], Gen[?])] = {
-        def findGeneratorsRecursive(resource: ReSource.of[State])
-            : List[(ReSource.of[State], Gen[?])] = {
+        def findGeneratorsRecursive(resource: ReSource.of[State]): List[(ReSource.of[State], Gen[?])] = {
           if (resource.state.gen != null) {
             List((resource, resource.state.gen))
           } else if (resource.state.incoming == Set.empty) {

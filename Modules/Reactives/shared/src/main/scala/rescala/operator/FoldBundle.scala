@@ -40,7 +40,7 @@ trait FoldBundle {
 
       def operator(dt: DynamicTicket[State], state: () => T): T =
         var extracted = Option.empty[T]
-        def curr: T = extracted.getOrElse(state())
+        def curr: T   = extracted.getOrElse(state())
         branches.foreach { b =>
           extracted = Some(b.run(dt)(using FoldState(curr)))
         }
@@ -64,6 +64,6 @@ trait FoldBundle {
 
 opaque type FoldState[T] = () => T
 object FoldState {
-  inline def unwrap[T](inline fs: FoldState[T]): T = fs()
-  inline def apply[T](inline t: => T): FoldState[T]   = () => t
+  inline def unwrap[T](inline fs: FoldState[T]): T  = fs()
+  inline def apply[T](inline t: => T): FoldState[T] = () => t
 }

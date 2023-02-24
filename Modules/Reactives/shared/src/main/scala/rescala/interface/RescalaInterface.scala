@@ -27,6 +27,7 @@ trait RescalaInterface extends Operators {
 
   /** @group internal */
   def scheduler: Scheduler[State]
+
   /** @group internal */
   implicit def implicitScheduler: Scheduler[State] = scheduler
 

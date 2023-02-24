@@ -53,8 +53,8 @@ class Elevator(val nFloors: Int) {
   val reachedFloor: Event[Int] = reached.changed && { _ == true } map { (_: Boolean) => currentFloor.value }
 
   val waitingTime = Fold(0)(
-      reachedFloor act { _ => WaitingTime },
-      tick act { _ => if (isWaiting.now) current - 1 else current }
+    reachedFloor act { _ => WaitingTime },
+    tick act { _ => if (isWaiting.now) current - 1 else current }
   )
 
   val stoppedWaiting = waitingTime.changed.filter(_ == 0)

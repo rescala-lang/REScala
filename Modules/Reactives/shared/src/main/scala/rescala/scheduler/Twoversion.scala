@@ -115,7 +115,6 @@ trait Twoversion {
   /** Abstract propagation definition that defines phases for reactive propagation through dependent reactive elements. */
   sealed trait TwoVersionTransaction extends Transaction[Twoversion.this.State] {
 
-
     /** Schedules a temporarily written change to be committed by the turn. */
     def schedule(committable: ReSource): Unit
 
