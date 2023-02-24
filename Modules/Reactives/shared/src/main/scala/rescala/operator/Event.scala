@@ -3,7 +3,7 @@ package rescala.operator
 import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
 import rescala.macros.ReadableMacro
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
-import rescala.operator.RExceptions.ObservedException
+import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
@@ -113,25 +113,6 @@ trait EventBundle extends FoldBundle {
       */
     final def flatten[R](implicit flatten: Flatten[Event[T], R]): R = flatten.apply(this)
 
-    /** reduces events with a given reduce function to create a Signal
-      *
-      * @group conversion
-      */
-    final def reduce[A](reducer: (=> A, => T) => A)(implicit ticket: CreationTicket[State]): Signal[A] = {
-      ticket.create(
-        Set(this),
-        Pulse.empty: Pulse[A],
-        needsReevaluation = false
-      ) { state =>
-        new SignalImpl[A](
-          initial = state,
-          expr = { (st, currentValue) => reducer(currentValue(), st.collectStatic(this).get) },
-          name = ticket.info,
-          isDynamicWithStaticDeps = None
-        )
-      }
-    }
-
     /** Applies a function on the current value of the signal every time the event occurs,
       * starting with the init value before the first event occurrence
       * @group conversion
@@ -158,7 +139,7 @@ trait EventBundle extends FoldBundle {
       * @group conversion
       */
     final def hold[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
-      reduce[A]((_, v) => v)
+      Fold(throw EmptySignalControlThrowable)(this act { v => v })
 
     /** Holds the latest value of an event as an Option, None before the first event occured
       * @group conversion

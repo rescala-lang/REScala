@@ -33,7 +33,7 @@ trait FoldBundle {
         val run: DynamicTicket[State] => FoldState[S] ?=> S
     )
 
-    def apply[T](init: T)(branches: Branch[T]*)(using ticket: CreationTicket[State]): Signal[T] = {
+    def apply[T](init: => T)(branches: Branch[T]*)(using ticket: CreationTicket[State]): Signal[T] = {
 
       val staticDeps = branches.iterator.flatMap(_.staticDependencies).toSet
       val isStatic   = branches.forall(_.isStatic)
