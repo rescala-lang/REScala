@@ -24,31 +24,20 @@ object ViperBackend:
       i
     })
     val interactions: Map[String, TInteraction] = allInteractions(ast)
+    val typeAliases: Map[String, Type] = ast.collect {
+      case TTypeAl(name, _type) =>
+        (name, _type)
+    }.toMap
 
   def toViper(ast: Seq[Term]): String =
     //// step 1: build context object that we pass around to subfunctions
     val ctx = CompilationContext(ast)
 
-    //// step 2: compile source reactives
-    val (ctx2, sourcesCompiled) = compileSources(ctx)
+    //// new step: Viper specific transformations/transform field calls to function calls
+    val ctxy = viperTransformations(ctx)
 
-    //// step 3: prepare macros and compile derived reactives
-    // replace references to derived reactives with macro calls
-    def derived2macro(term: Term): Term = term match
-      case _var @ TVar(name) =>
-        // check if is reference to derived reactive
-        ctx2.graph.get(name).map(_._1) match
-          case Some(d: TDerived) =>
-            val args: Seq[TVar] = uses(d)
-              // find every reactive that is used in d
-              .filter(r => ctx2.graph.keys.toSet.contains(r))
-              .toSeq
-              .sorted
-              .map(TVar(_))
-            TFunC(name, args)
-          case _ => _var
-      case _ => term
-    val ctx3 = ctx2.copy(ast = ctx.ast.map(traverseFromNode(_, derived2macro)))
+    //// step 2: compile source reactives
+    val (ctx3, sourcesCompiled) = compileSources(ctxy)
 
     // compile derived reactives
     val (ctx4, derivedCompiled) = compileDerived(ctx3)
@@ -70,9 +59,20 @@ object ViperBackend:
 					|${interactionsCompiled.mkString("\n")}
 					|""".stripMargin
 
+  private def viperTransformations(
+      ctx: CompilationContext
+  ): CompilationContext =
+    // step 1: field calls as function calls
+    def fieldCallToFunCall: Term => Term =
+      case t @ TFCall(parent, field, args) =>
+        TFunC(field, parent +: args)
+      case t => t
+
+    return ctx.copy(ast = ctx.ast.map(traverseFromNode(_, fieldCallToFunCall)))
+
   private def compileSources(ctx: CompilationContext): CompilationResult =
     def sourceToField(name: ID, _type: Type): String =
-      s"field $name: ${typeToViper(_type)}"
+      s"field $name: ${typeToViper(_type)(using ctx)}"
     return (
       ctx,
       ctx.sources.map { case (name: ID, (source: TSource, _type: Type)) =>
@@ -87,7 +87,7 @@ object ViperBackend:
     ): String =
       val (d, _) = graph(name)
       val usedReactives = uses(d).filter(r => graph.keys.toSet.contains(r))
-      val body = expressionToViper(d.body)
+      val body = expressionToViper(d.body)(using ctx)
       val argsString = usedReactives.toSeq.sorted.mkString(", ")
 
       s"define $name($argsString) $body"
@@ -120,7 +120,7 @@ object ViperBackend:
         id: String
     ): String =
       val inputsString = inputs.toSeq.sorted.mkString(", ")
-      s"define inv_$id($inputsString) ${expressionToViper(invariant.condition)}"
+      s"define inv_$id($inputsString) ${expressionToViper(invariant.condition)(using ctx)}"
 
     return (
       ctx,
@@ -196,12 +196,15 @@ object ViperBackend:
     val interactions = ctx2.interactions
       // only compile interactions that have some guarantees and modify some reactives
       .filter((_, i) => !i.ensures.isEmpty && !i.modifies.isEmpty)
-      .map(interactionToMethod)
+      .map(interactionToMethod(_, _, ctx2))
       .toList
     return (ctx2, interactions)
 
-  def typeToViper(t: Type): String =
+  private def typeToViper(t: Type)(using ctx: CompilationContext): String =
     t match
+      // replace type aliases
+      case SimpleType(name, _) if ctx.typeAliases.contains(name) =>
+        typeToViper(ctx.typeAliases(name))
       case SimpleType(name, Nil) => name
       case SimpleType("Source", inner) =>
         s"${inner.map(typeToViper).mkString(" ,")}"
@@ -210,7 +213,11 @@ object ViperBackend:
       case TupleType(inner) =>
         s"(${inner.toList.map(typeToViper).mkString(" ,")})"
 
-  def interactionToMethod(name: ID, interaction: TInteraction): String =
+  private def interactionToMethod(
+      name: ID,
+      interaction: TInteraction,
+      ctx: CompilationContext
+  ): String =
     // collect arguments and their types
     // extract names from body
     def collectArgNames(acc: List[ID], term: TArrow): List[ID] =
@@ -229,7 +236,7 @@ object ViperBackend:
       case Some(term)                => List()
     val argNames =
       allNames.drop(interaction.reactiveTypes.length)
-    val argTypes = interaction.argumentTypes.map(typeToViper)
+    val argTypes = interaction.argumentTypes.map(t => typeToViper(t)(using ctx))
 
     if argNames.length != argTypes.length then
       throw ViperCompilationException(
@@ -296,7 +303,9 @@ object ViperBackend:
         |}
         """.stripMargin
 
-  def expressionToViper(expression: Term): String = expression match
+  private def expressionToViper(expression: Term)(using
+      ctx: CompilationContext
+  ): String = expression match
     case v: TViper =>
       v match
         case TVar(id)  => id
@@ -338,12 +347,21 @@ object ViperBackend:
         case TMul(l, r) => s"${expressionToViper(l)} * ${expressionToViper(r)}"
         case TNum(i)    => s"$i"
         case TParens(inner) => s"(${expressionToViper(inner)})"
+        case TFunC(
+              "union",
+              x :: y :: Nil
+            ) => // handle set arithmetics. TODO: support more cases
+          s"${expressionToViper(x)} union ${expressionToViper(y)}"
         case TFunC(name, args) =>
           val argsString = args.map(a => expressionToViper(a)).mkString(", ")
           s"$name($argsString)"
+        case TFCall(parent, field, List()) => // field call
+          s"${expressionToViper(parent)}.$field"
         case TFCall(parent, field, args) => // field call
-          val argsString = args.map(a => expressionToViper(a)).mkString(", ")
-          s"${expressionToViper(parent)}.$field($argsString)"
+          throw new ViperCompilationException(
+            s"Viper does only allow field but not method access! $parent.$field(${args.mkString(", ")})"
+          )
+          s"${expressionToViper(parent)}.$field"
         case TInSet(l, r) =>
           s"${expressionToViper(l)} in ${expressionToViper(r)}"
     case exp =>
