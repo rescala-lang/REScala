@@ -23,9 +23,7 @@ trait Levelbased extends Twoversion {
   }
 
   /** Further implementation of level-based propagation based on the common propagation implementation. */
-  trait LevelBasedTransaction extends TwoVersionTransactionImpl with LevelQueue.Evaluator with Initializer {
-
-    override type State[V] = Levelbased.this.State[V]
+  trait LevelBasedTransaction extends TwoVersionTransactionImpl with LevelQueue.Evaluator with Initializer[State] {
 
     /** Stores all active reactives in case we create more later and need to reevaluate them. */
     private val _propagating: ListBuffer[ReSource] = ListBuffer[ReSource]()
@@ -64,7 +62,7 @@ trait Levelbased extends Twoversion {
     private def nextLevel(dependencies: Set[ReSource]): Int =
       if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
 
-    override def initializer: Initializer.of[State] = this
+    override def initializer: Initializer[State] = this
 
     override protected def initialize(
         reactive: Derived,

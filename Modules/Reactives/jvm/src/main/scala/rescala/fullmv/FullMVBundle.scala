@@ -115,7 +115,7 @@ trait FullMVBundle {
 
   case class TransactionHandle(ti: FullMVTurn) extends Transaction[State] {
     override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = ti.dynamicBefore(reactive)
-    override def initializer: Initializer.of[State]                                    = ti
+    override def initializer: Initializer[State]                                       = ti
     override def observe(obs: Observation): Unit                                       = ti.observe(() => obs.execute())
   }
 
@@ -208,7 +208,7 @@ trait FullMVBundle {
   }
 
   trait FullMVTurn
-      extends Initializer
+      extends Initializer[State]
       with FullMVTurnProxy
       with SubsumableLockEntryPoint
       with Hosted[FullMVTurn] {

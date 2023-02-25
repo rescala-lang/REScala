@@ -37,8 +37,7 @@ trait Sidup extends Twoversion {
     }
   }
 
-  class SidupInitializer(currentTx: SidupTransaction) extends Initializer {
-    override type State[V] = Sidup.this.State[V]
+  class SidupInitializer(currentTx: SidupTransaction) extends Initializer[State] {
 
     override protected[this] def makeDerivedStructState[V](initialValue: V): SidupState[V] =
       new SidupState(initialValue)
@@ -151,7 +150,7 @@ trait Sidup extends Twoversion {
       }
     }
     override def releasePhase(): Unit               = ()
-    override def initializer: Initializer.of[State] = new SidupInitializer(this)
+    override def initializer: Initializer[State] = new SidupInitializer(this)
   }
 
 }

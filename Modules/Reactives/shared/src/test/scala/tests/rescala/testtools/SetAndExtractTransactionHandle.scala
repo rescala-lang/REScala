@@ -10,7 +10,7 @@ class SetAndExtractTransactionHandle[Api <: RescalaInterface](val api: Api) {
       value: A
   )(implicit
       engine: Scheduler[State]
-  ): Initializer = {
+  ): Initializer[State] = {
     engine.forceNewTransaction(source) { implicit t =>
       source.admit(value)
       t.tx.initializer

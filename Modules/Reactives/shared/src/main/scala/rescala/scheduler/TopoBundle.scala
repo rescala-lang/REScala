@@ -34,9 +34,7 @@ trait TopoBundle {
 
   def makeDerivedStructStateBundle[V](ip: V): State[V]
 
-  class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer {
-
-    override type State[V] = TopoBundle.this.State[V]
+  class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[State] {
 
     override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] =
       makeDerivedStructStateBundle(initialValue)

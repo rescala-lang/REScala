@@ -26,9 +26,7 @@ trait CalculusLike {
     * especially during an ongoing propagation.
     * The formalization does not support this, to keep the complexity of the proofs in check.
     */
-  final class SimpleCreation() extends Initializer {
-
-    override type State[V] = CalculusLike.this.State[V]
+  final class SimpleCreation() extends Initializer[State] {
 
     override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
       new StoreValue[V](initialValue)
@@ -65,7 +63,7 @@ trait CalculusLike {
 
   }
 
-  case class FTransaction(override val initializer: Initializer.of[CalculusLike.this.State])
+  case class FTransaction(override val initializer: Initializer[CalculusLike.this.State])
       extends Transaction[State] {
     override private[rescala] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                                       = obs.execute()

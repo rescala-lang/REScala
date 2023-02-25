@@ -209,7 +209,7 @@ class PessimisticTest extends RETests {
     val il0                  = Var(11)
     val (syncI1, il1)        = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Initializer]
+    var reeval = List.empty[Initializer[State]]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again
@@ -291,7 +291,7 @@ class PessimisticTest extends RETests {
     val il0                  = Var(11)
     val (syncI1, il1)        = SynchronizedReevaluation(il0)
 
-    var reeval = List.empty[Initializer]
+    var reeval = List.empty[Initializer[State]]
     // this starts on level 2. when bl0 becomes true bl1 becomes true on level 1
     // at that point both bl1 and bl3 are true which causes il1 and il0 to be added as a dependency
     // but then bl3 becomes false at level 3, causing il1 to be removed again (but il0 is still a dependency)

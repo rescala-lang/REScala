@@ -73,9 +73,7 @@ trait InitialChange[State[_]] {
   * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
   * This is where the two are joined. After that, the new reactive may have to be initialized.
   */
-trait Initializer {
-
-  type State[_]
+trait Initializer[State[_]] {
 
   /** Creates and correctly initializes new [[Derived]]s */
   final private[rescala] def create[V, T <: Derived.of[State]](
@@ -125,7 +123,6 @@ trait Initializer {
   ): Unit
 
 }
-object Initializer { type of[S[_]] = Initializer { type State[V] = S[V] } }
 
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[State[_]](val tx: Transaction[State]) {
@@ -273,7 +270,7 @@ final class CreationTicket[State[_]](val scope: ScopeSearch[State], val info: Re
       needsReevaluation: Boolean
   )(instantiateReactive: State[V] => T): T = {
     scope.embedTransaction { tx =>
-      val init: Initializer.of[State] = tx.initializer
+      val init: Initializer[State] = tx.initializer
       init.create(incoming, initValue, needsReevaluation)(instantiateReactive)
     }
   }
@@ -342,7 +339,7 @@ trait Transaction[State[_]] {
 
   def observe(obs: Observation): Unit
 
-  def initializer: Initializer.of[State]
+  def initializer: Initializer[State]
 
   private[rescala] def discover(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
     Tracing.observe(Tracing.Discover(source, sink))
