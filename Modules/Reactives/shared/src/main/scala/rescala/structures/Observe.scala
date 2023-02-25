@@ -2,11 +2,6 @@ package rescala.structures
 
 import rescala.core.*
 
-trait ObserveInteract extends Observation {
-  // if true, the observer will remove all of its inputs, which allows eventual collection
-  def checkExceptionAndRemoval(): Boolean
-}
-
 /** observers are normale reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
 object Observe {
   def strong[T](
