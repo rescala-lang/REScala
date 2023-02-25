@@ -3,10 +3,10 @@ package rescala.structure
 import rescala.core.*
 
 class ChangeEventImpl[S[_], T](
-    _bud: S[(Pulse[T], Pulse[Diff[T]])],
+    initial: S[(Pulse[T], Pulse[Diff[T]])],
     signal: ReSource.of[S] { type Value <: Pulse[T] },
     name: ReInfo
-) extends Base[S, (Pulse[T], Pulse[Diff[T]])](_bud, name)
+) extends Base[S, (Pulse[T], Pulse[Diff[T]])](initial, name)
     with Derived
     with DisconnectableImpl {
 

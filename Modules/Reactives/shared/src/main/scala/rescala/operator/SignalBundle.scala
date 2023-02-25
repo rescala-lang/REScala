@@ -3,7 +3,7 @@ package rescala.operator
 import rescala.core.*
 import rescala.macros.MacroAccess
 import rescala.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.structure.{Diff, Observe, ObserveInteract, Pulse, RExceptions, SignalImpl}
+import rescala.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,7 +56,7 @@ trait SignalBundle {
         ticket: CreationTicket[State]
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
-        new ObserveInteract {
+        new Observe.ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {
             reevalVal match {
               case Pulse.empty => ()
