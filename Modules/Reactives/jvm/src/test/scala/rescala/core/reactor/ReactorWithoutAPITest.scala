@@ -13,7 +13,7 @@ class ReactorWithoutAPITest extends RETests {
       initState: State[ReactorStage[T]]
   ) extends rescala.core.Derived
       with ReadAs[T]
-      with MacroAccess[T, ReadAs[T]] {
+      with MacroAccess[T] {
 
     override type Value    = ReactorStage[T]
     override type State[V] = rescala.default.State[V]
@@ -65,7 +65,7 @@ class ReactorWithoutAPITest extends RETests {
       */
     override protected[rescala] def commit(base: ReactorStage[T]): ReactorStage[T] = base
 
-    override def resource: ReadAs.of[State, T] = this
+    def resource: ReadAs.of[State, T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
   }

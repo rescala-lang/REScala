@@ -73,14 +73,14 @@ trait InitialChange[State[_]] {
   * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
   * This is where the two are joined. After that, the new reactive may have to be initialized.
   */
-trait Initializer[State[_]] {
+trait Initializer[S[_]] {
 
   /** Creates and correctly initializes new [[Derived]]s */
-  final private[rescala] def create[V, T <: Derived.of[State]](
-      incoming: Set[ReSource.of[State]],
+  final private[rescala] def create[V, T <: Derived.of[S]](
+      incoming: Set[ReSource.of[S]],
       initValue: V,
       needsReevaluation: Boolean
-  )(instantiateReactive: State[V] => T): T = {
+  )(instantiateReactive: S[V] => T): T = {
     val state    = makeDerivedStructState[V](initValue)
     val reactive = instantiateReactive(state)
     register(reactive, incoming)
@@ -89,14 +89,14 @@ trait Initializer[State[_]] {
   }
 
   /** hook for schedulers to globally collect all created resources, usually does nothing */
-  protected[this] def register(reactive: ReSource.of[State], inputs: Set[ReSource.of[State]]): Unit = {
+  protected[this] def register(reactive: ReSource.of[S], inputs: Set[ReSource.of[S]]): Unit = {
     Tracing.observe(Tracing.Create(reactive, inputs.toSet))
   }
 
   /** Correctly initializes [[ReSource]]s */
-  final private[rescala] def createSource[V, T <: ReSource.of[State]](
+  final private[rescala] def createSource[V, T <: ReSource.of[S]](
       intv: V
-  )(instantiateReactive: State[V] => T): T = {
+  )(instantiateReactive: S[V] => T): T = {
     val state    = makeSourceStructState[V](intv)
     val reactive = instantiateReactive(state)
     register(reactive, Set.empty)
@@ -104,10 +104,10 @@ trait Initializer[State[_]] {
   }
 
   /** Creates the internal state of [[Derived]]s */
-  protected[this] def makeDerivedStructState[V](initialValue: V): State[V]
+  protected[this] def makeDerivedStructState[V](initialValue: V): S[V]
 
   /** Creates the internal state of [[ReSource]]s */
-  protected[this] def makeSourceStructState[V](initialValue: V): State[V] =
+  protected[this] def makeSourceStructState[V](initialValue: V): S[V] =
     makeDerivedStructState[V](initialValue)
 
   /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
@@ -117,8 +117,8 @@ trait Initializer[State[_]] {
     * @param needsReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
   protected[this] def initialize(
-      reactive: Derived.of[State],
-      incoming: Set[ReSource.of[State]],
+      reactive: Derived.of[S],
+      incoming: Set[ReSource.of[S]],
       needsReevaluation: Boolean
   ): Unit
 

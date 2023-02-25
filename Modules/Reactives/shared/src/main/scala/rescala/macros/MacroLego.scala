@@ -60,7 +60,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
       if !tree.isExpr then foldOverTree(acc, tree)(owner)
       else
         tree.asExpr match
-          case '{ (${ x }: MacroAccess[_, _]).value }   => handleFind(x.asTerm)
+          case '{ (${ x }: MacroAccess[_]).value }   => handleFind(x.asTerm)
           case _                                        => foldOverTree(acc, tree)(owner)
 
     }
@@ -89,7 +89,7 @@ class MacroLego[ReSource: Type, Ticket: Type](
       val res = if !tree.isExpr then super.transformTerm(tree)(owner)
       else
         tree.asExpr match {
-          case '{ (${ xy }: MacroAccess[α, β]).value }   => replaceAccess(TypeTree.of[α], xy.asTerm)
+          case '{ (${ xy }: MacroAccess[α]).value }   => replaceAccess(TypeTree.of[α], xy.asTerm)
           case _                                         => super.transformTerm(tree)(owner)
         }
       res
