@@ -266,8 +266,12 @@ trait EventBundle extends FoldBundle {
         ticket: CreationTicket[State],
         info: ReInfo
     ): Event[T] = {
-      ticket.create[Pulse[T], EventImpl[T]](dependencies.toSet, Pulse.NoChange, needsReevaluation = false) {
-        state => new EventImpl[T](state, expr, info.derive(name), None)
+      ticket.create[Pulse[T], EventImpl[State, T] with Event[T]](
+        dependencies.toSet,
+        Pulse.NoChange,
+        needsReevaluation = false
+      ) {
+        state => new EventImpl(state, expr, info.derive(name), None) with Event[T]
       }
     }
 
@@ -282,20 +286,23 @@ trait EventBundle extends FoldBundle {
         ticket: CreationTicket[State]
     ): Event[T] = {
       val staticDeps = dependencies.toSet
-      ticket.create[Pulse[T], EventImpl[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) { state =>
-        new EventImpl[T](state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps))
+      ticket.create[Pulse[T], EventImpl[State, T] with Event[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) {
+        state =>
+          new EventImpl(state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps)) with Event[T]
       }
     }
 
     /** Creates change events */
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
-        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]](
+        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[State, T] with Event[Diff[T]]](
           Set[ReSource.of[State]](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
         ) { state =>
-          new ChangeEventImpl[T](state, signal, ticket.info)
+          new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]] {
+            override def read(v: Value): Option[Diff[T]] = v._2.toOption
+          }
         }
         static(internal)(st => st.dependStatic(internal))(tx)
       }

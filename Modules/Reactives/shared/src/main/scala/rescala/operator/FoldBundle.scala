@@ -50,7 +50,9 @@ trait FoldBundle {
         staticDeps,
         Pulse.tryCatch[T](Pulse.Value(init)),
         needsReevaluation = !isStatic
-      ) { state => new SignalImpl[T](state, operator, ticket.info, if isStatic then None else Some(staticDeps)) }
+      ) { state =>
+        new SignalImpl(state, operator, ticket.info, if isStatic then None else Some(staticDeps)) with Signal[T]
+      }
     }
   }
 

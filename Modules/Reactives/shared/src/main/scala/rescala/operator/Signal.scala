@@ -165,8 +165,8 @@ trait SignalBundle {
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket[State]
     ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, (t, _) => expr(t), ct.info, None)
+      ct.create[Pulse[T], SignalImpl[State, T] with Signal[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
+        state => new SignalImpl(state, (t, _) => expr(t), ct.info, None) with Signal[T]
       }
     }
 
@@ -175,8 +175,8 @@ trait SignalBundle {
         ct: CreationTicket[State]
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
-      ct.create[Pulse[T], SignalImpl[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
-        state => new SignalImpl[T](state, (t, _) => expr(t), ct.info, Some(staticDeps))
+      ct.create[Pulse[T], SignalImpl[State, T] with Signal[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
+        state => new SignalImpl(state, (t, _) => expr(t), ct.info, Some(staticDeps)) with Signal[T]
       }
     }
 
