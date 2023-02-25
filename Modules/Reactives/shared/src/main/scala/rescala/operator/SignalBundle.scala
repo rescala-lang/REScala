@@ -88,13 +88,13 @@ trait SignalBundle {
         }
       }
 
-    // ================== Derivations ==================
-
-    // final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource): Signal[R, S = recover(PartialFunction(onFailure))
-
+    /** Adds another error message in case this signal is empty, also disallows handling exceptions in observers */
     final def abortOnError(message: String)(implicit ticket: CreationTicket[State]): Signal[T] =
       recover { case t => throw ObservedException(this, s"forced abort ($message)", t) }
 
+    /** Sets a default value in case this signal is empty.
+      * @group operator
+      */
     final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[State]): Signal[R] =
       Signal {
         try this.value
