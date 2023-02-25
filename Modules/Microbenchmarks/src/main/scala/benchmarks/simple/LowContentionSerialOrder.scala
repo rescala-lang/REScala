@@ -3,7 +3,7 @@ package benchmarks.simple
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.ThreadParams
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Benchmark)
 class LowContentionSerialOrder extends BusyThreads {
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
   var sources: Array[Var[Int]]        = _

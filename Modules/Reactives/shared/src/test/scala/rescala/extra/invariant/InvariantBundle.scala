@@ -5,7 +5,7 @@ import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import rescala.core.ReSource.of
 import rescala.core.{InitialChange, Observation, ReSource}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.operator.Pulse
 import rescala.scheduler.TopoBundle
 
@@ -20,14 +20,14 @@ class Invariant[T](val description: String, val inv: T => Boolean) {
   def validate(value: T): Boolean = inv(value)
 }
 
-object InvariantApi extends InvariantBundle with RescalaInterface {
+object InvariantApi extends InvariantBundle with Interface {
   def scheduler: InvariantScheduler.type = InvariantScheduler
 
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }
 
 trait InvariantBundle extends TopoBundle {
-  selfType: RescalaInterface =>
+  selfType: Interface =>
 
   override type State[V] = InvariantState[V]
 

@@ -1,7 +1,6 @@
-package rescala.interface
+package rescala.operator
 
 import rescala.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
-import rescala.operator._
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -23,7 +22,7 @@ import rescala.operator._
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait RescalaInterface extends Operators {
+trait Interface extends Operators {
 
   /** @group internal */
   def scheduler: Scheduler[State]

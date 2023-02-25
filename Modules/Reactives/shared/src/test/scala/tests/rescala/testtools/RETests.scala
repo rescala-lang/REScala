@@ -4,14 +4,14 @@ import org.scalactic.source
 import org.scalatest.Tag
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 
-  def engines(es: RescalaInterface*)(
+  def engines(es: Interface*)(
       text: String,
       tags: List[Tag] = Nil
-  )(testCase: RescalaInterface => Any)(implicit pos: source.Position): Unit = {
+  )(testCase: Interface => Any)(implicit pos: source.Position): Unit = {
     forAll(Table("engine", es: _*)) { e =>
       val testEngine = e
       s"Testing $testEngine" - (tags match {
@@ -21,11 +21,11 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
     }
   }
 
-  def allEngines(text: String)(testCase: RescalaInterface => Any)(implicit pos: source.Position): Unit = {
+  def allEngines(text: String)(testCase: Interface => Any)(implicit pos: source.Position): Unit = {
     engines(tests.rescala.testtools.TestEngines.all: _*)(text)(testCase)(pos)
   }
 
-  def multiEngined(block: RescalaInterface => Any): Unit = {
+  def multiEngined(block: Interface => Any): Unit = {
     for (engine <- tests.rescala.testtools.TestEngines.all) {
       s"Testing $engine" - { block(engine); () }
     }

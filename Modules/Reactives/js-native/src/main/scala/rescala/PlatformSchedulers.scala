@@ -1,9 +1,9 @@
 package rescala
 
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 trait PlatformSchedulers {
-  def byName(name: String): RescalaInterface =
+  def byName(name: String): Interface =
     name match {
       case other => throw new IllegalArgumentException(s"unknown engine $other")
     }

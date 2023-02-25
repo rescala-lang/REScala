@@ -6,7 +6,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.core.ScopeSearch
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -17,7 +17,7 @@ import rescala.interface.RescalaInterface
 @State(Scope.Benchmark)
 class MultiReverseFan {
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

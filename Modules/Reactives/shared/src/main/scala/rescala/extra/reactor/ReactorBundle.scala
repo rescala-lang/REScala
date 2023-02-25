@@ -1,10 +1,10 @@
 package rescala.extra.reactor
 
 import rescala.core.{CreationTicket, Derived, ReInfo, Scheduler}
-import rescala.interface.RescalaInterface
 import rescala.macros.MacroAccess
+import rescala.operator.Interface
 
-class ReactorBundle[Api <: RescalaInterface](val api: Api) {
+class ReactorBundle[Api <: Interface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]

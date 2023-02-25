@@ -4,7 +4,7 @@ import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{Lock, ReentrantLock}
@@ -42,7 +42,7 @@ class ChatBench {
 @State(Scope.Benchmark)
 class BenchState {
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

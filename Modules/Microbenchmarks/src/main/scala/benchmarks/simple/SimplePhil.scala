@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -17,7 +17,7 @@ class SimplePhil {
 
   import benchmarks.philosophers.PhilosopherTable._
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

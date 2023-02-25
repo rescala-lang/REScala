@@ -1,10 +1,9 @@
 package benchmarks.philosophers
 
-import benchmarks.philosophers.PhilosopherTable._
+import benchmarks.philosophers.PhilosopherTable.*
+import rescala.operator.Interface
 
-import rescala.interface.RescalaInterface
-
-class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: RescalaInterface)
+class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: Interface)
     extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
@@ -48,7 +47,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
 }
 
 class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
-    override val engine: RescalaInterface
+    override val engine: Interface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine._
@@ -82,7 +81,7 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 }
 
 class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
-    override implicit val engine: RescalaInterface
+    override implicit val engine: Interface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.{Signal, Var, implicitScheduler}

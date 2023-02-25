@@ -9,12 +9,12 @@ import tests.rescala.testtools.RETests
 import scala.collection.Seq
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.scheduler.Levelbased
 
 class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
   multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
+    val ie = new Infiltrator(engine.asInstanceOf[Interface with Levelbased])
     import ie.api._
     import ie.assertLevel
 

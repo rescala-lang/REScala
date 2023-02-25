@@ -3,7 +3,7 @@ package benchmarks.philosophers
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
 import rescala.core.{CreationTicket, ReInfo, ReSource}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.parrp.Backoff
 
 import scala.annotation.{nowarn, tailrec}
@@ -17,7 +17,7 @@ object Dynamicity {
   case object SemiStatic extends Dynamicity
   case object Dynamic    extends Dynamicity
 }
-abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dynamicity: Dynamicity) {
+abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicity: Dynamicity) {
 
   import engine._
 

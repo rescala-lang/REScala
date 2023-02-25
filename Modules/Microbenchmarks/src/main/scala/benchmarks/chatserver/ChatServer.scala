@@ -1,11 +1,10 @@
 package benchmarks.chatserver
 
-import rescala.interface.RescalaInterface
-
+import rescala.operator.Interface
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-class ChatServer[Api <: RescalaInterface]()(val engine: Api) {
+class ChatServer[Api <: Interface]()(val engine: Api) {
 
   import engine._
 

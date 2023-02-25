@@ -3,7 +3,7 @@ package benchmarks.reactor
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
 import rescala.extra.reactor.ReactorBundle
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class BaselineUntilBenchmark {
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   final lazy val reactorApi    = new ReactorBundle[stableEngine.type](stableEngine)
 

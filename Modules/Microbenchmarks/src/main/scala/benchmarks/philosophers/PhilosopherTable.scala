@@ -3,9 +3,10 @@ package benchmarks.philosophers
 import java.util.concurrent.atomic.AtomicInteger
 
 import benchmarks.philosophers.PhilosopherTable._
-import org.openjdk.jmh.infra.Blackhole; import rescala.interface.RescalaInterface
+import org.openjdk.jmh.infra.Blackhole;
+import rescala.operator.Interface
 
-class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: RescalaInterface) {
+class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface) {
 
   import engine._
 

@@ -7,7 +7,7 @@ import kofre.syntax.DeltaBuffer
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.core.Disconnectable
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import scribe.Execution.global
 
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
 
 case class DeltaFor[A](name: String, delta: Dotted[A])
 
-class ReplicationGroup[Api <: RescalaInterface, A](
+class ReplicationGroup[Api <: Interface, A](
     val api: Api,
     registry: Registry,
     binding: Binding[DeltaFor[A] => Unit, DeltaFor[A] => Future[Unit]]

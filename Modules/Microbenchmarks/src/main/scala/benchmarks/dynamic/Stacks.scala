@@ -4,7 +4,7 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.Schedulers
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import scala.collection.immutable.Range
@@ -15,7 +15,7 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState {
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

@@ -1,7 +1,7 @@
 package tests.rescala.jvm
 
 import rescala.core.ScopeSearch
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import tests.rescala.testtools.RETests
 
 sealed trait ChangeX
@@ -10,7 +10,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged   extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
-  def run(engine: RescalaInterface, changeX: ChangeX): Unit = {
+  def run(engine: Interface, changeX: ChangeX): Unit = {
     import engine._
 
     val initialX = "initialValue"

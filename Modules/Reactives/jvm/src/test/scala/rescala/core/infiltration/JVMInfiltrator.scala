@@ -1,6 +1,6 @@
 package rescala.core.infiltration
 
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.parrp.ParRP
 
 /** Accesses private[rescala] values for some low level tests */

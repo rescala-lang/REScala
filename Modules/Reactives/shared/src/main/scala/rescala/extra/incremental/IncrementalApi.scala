@@ -1,8 +1,8 @@
 package rescala.extra.incremental
 
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
-object IncrementalApi extends IncrementalBundle with RescalaInterface with rescala.Schedulers.Synchron {
+object IncrementalApi extends IncrementalBundle with Interface with rescala.Schedulers.Synchron {
   override type ReSource  = rescala.core.ReSource.of[State]
   final type SeqSource[A] = IncSeq[A]
 

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import rescala.core.{Scheduler, Struct}
-import rescala.interface.RescalaInterface
+import rescala.operator.RescalaInterface
 import rescala.operator.{Evt, Var}
 
 @BenchmarkMode(Array(Mode.Throughput))

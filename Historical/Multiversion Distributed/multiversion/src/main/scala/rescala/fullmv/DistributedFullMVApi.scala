@@ -6,7 +6,7 @@ import rescala.fullmv.mirrors.{FullMVTurnReflectionBundle, Mirror, ReactiveMirro
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
 import rescala.fullmv.transmitter.ReactiveTransmittableBundle
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.operator.{DefaultImplementations, EventBundle, ObserveBundle, SignalBundle, Sources}
 
 import scala.concurrent.duration.Duration
@@ -14,7 +14,7 @@ import scala.util.DynamicVariable
 
 object DistributedFullMVApi extends FullMVBundle with FullMVTurnLocalCloneBundle with Mirror with TurnImplBundle
     with TaskBundle with FullMvStateBundle with SubsumableLockBundle with FullMVTurnReflectionBundle
-    with ReactiveLocalCloneBundle with RescalaInterface with SignalCompatBundle with EventBundle with SignalBundle
+    with ReactiveLocalCloneBundle with Interface with SignalCompatBundle with EventBundle with SignalBundle
     with Sources with DefaultImplementations with ObserveBundle
     with ReactiveReflectionBundle with ReactiveMirrorBundle with ReactiveTransmittableBundle {
 

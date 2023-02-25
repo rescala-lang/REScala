@@ -2,13 +2,12 @@ package rescala.extra.reactivestreams
 
 import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import rescala.core.{Base, Derived, ReInfo, ReadAs, Scheduler, ScopeSearch}
-import rescala.interface.RescalaInterface
-import rescala.operator.Pulse
+import rescala.operator.{Pulse, Interface}
 
 import java.util.Objects
 import scala.util.{Failure, Success}
 
-class ReactiveStreamsApi(val api: RescalaInterface) {
+class ReactiveStreamsApi(val api: Interface) {
   import api._
 
   class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] {

@@ -1,11 +1,11 @@
 package universe
 
 import rescala.Schedulers
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 object Globals {
   val engineName: String = System.getProperty("engineName", "parrp")
 
-  implicit val engine: RescalaInterface = Schedulers.byName(engineName)
+  implicit val engine: Interface = Schedulers.byName(engineName)
 
 }

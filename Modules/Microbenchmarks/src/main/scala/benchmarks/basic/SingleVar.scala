@@ -4,7 +4,7 @@ import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 import rescala.Schedulers
 import rescala.core.Scheduler
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
@@ -18,7 +18,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 @State(Scope.Benchmark)
 class SingleVar {
 
-  var engine: RescalaInterface                     = _
+  var engine: Interface                     = _
   final lazy val engineT                           = engine
   implicit def scheduler: Scheduler[engineT.State] = engineT.scheduler
 

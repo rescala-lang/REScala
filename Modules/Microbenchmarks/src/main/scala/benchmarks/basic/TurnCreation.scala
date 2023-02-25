@@ -2,7 +2,7 @@ package benchmarks.basic
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class TurnCreation {
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
 
   @Setup

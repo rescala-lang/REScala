@@ -1,9 +1,9 @@
 package tests.rescala.testtools
 
 import rescala.core.{Initializer, Scheduler}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
-class SetAndExtractTransactionHandle[Api <: RescalaInterface](val api: Api) {
+class SetAndExtractTransactionHandle[Api <: Interface](val api: Api) {
   import api._
   def SetAndExtractTransactionHandle[A, N](
       source: Source[A] { type State[V] = api.State[V] },

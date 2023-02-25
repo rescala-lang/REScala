@@ -3,7 +3,7 @@ package benchmarks.simple
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import rescala.core.ScopeSearch
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class NaturalGraph {
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

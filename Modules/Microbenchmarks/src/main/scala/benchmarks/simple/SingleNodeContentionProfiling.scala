@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -15,7 +15,7 @@ import rescala.interface.RescalaInterface
 @Threads(1)
 @State(Scope.Benchmark)
 class SingleNodeContentionProfiling extends BusyThreads {
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

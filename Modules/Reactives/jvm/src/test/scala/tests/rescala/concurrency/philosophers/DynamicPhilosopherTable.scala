@@ -1,10 +1,10 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.{ReInfo}
-import rescala.interface.RescalaInterface
+import rescala.core.ReInfo
+import rescala.operator.Interface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
-class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
+class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
     extends PhilosopherTable(philosopherCount)(ri) {
   import interface.{Var, Signal, implicitScheduler}
 

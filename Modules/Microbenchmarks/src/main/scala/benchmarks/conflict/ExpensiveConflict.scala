@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
 import rescala.core.ScopeSearch
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 @AuxCounters
 @State(Scope.Thread)
@@ -32,7 +32,7 @@ class ExpensiveConflict {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

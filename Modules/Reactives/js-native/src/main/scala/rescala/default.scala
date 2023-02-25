@@ -1,5 +1,5 @@
 package rescala
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.core.Scheduler
 
 /** REScala has two main abstractions. [[rescala.default.Event]] and [[rescala.default.Signal]] commonly referred to as reactives.
@@ -8,7 +8,7 @@ import rescala.core.Scheduler
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
-object default extends RescalaInterface {
+object default extends Interface {
   val bundle = new rescala.Schedulers.Unmanaged {}
   override type State[V] = bundle.State[V]
   override def scheduler: Scheduler[State] = bundle.scheduler

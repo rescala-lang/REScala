@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
 import rescala.core.CreationTicket
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
@@ -35,7 +35,7 @@ class SynchronizedReevaluation extends ManagedBlocker {
   }
 }
 
-class SynchronizedReevaluationApi[Api <: RescalaInterface](val api: Api) {
+class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
   import api._
 
   def SynchronizedReevaluation[A](sig: Signal[A])(implicit

@@ -3,7 +3,7 @@ package benchmarks.simple
 import benchmarks.*
 import org.openjdk.jmh.annotations.*
 import rescala.core.{CreationTicket, ReInfo}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Benchmark)
 class SignalMapGrid extends BusyThreads {
-  var engine: RescalaInterface = _
+  var engine: Interface = _
   final lazy val stableEngine  = engine
   import stableEngine._
 

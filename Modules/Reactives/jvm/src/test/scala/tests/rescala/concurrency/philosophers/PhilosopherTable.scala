@@ -1,12 +1,12 @@
 package tests.rescala.concurrency.philosophers
 
 import rescala.core.Transaction
+import rescala.operator.Interface
 
 import java.util.concurrent.atomic.AtomicInteger
-import rescala.interface.RescalaInterface
 import rescala.parrp.Backoff
 
-class PhilosopherTable(philosopherCount: Int)(val interface: RescalaInterface) {
+class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
   import interface._
   import tests.rescala.concurrency.philosophers.PhilosopherTable._
 

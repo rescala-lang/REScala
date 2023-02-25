@@ -6,14 +6,14 @@ import rescala.fullmv._
 import rescala.fullmv.mirrors.{Mirror, ReactiveMirrorBundle, ReactiveReflectionBundle}
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.operator.{EventBundle, ObserveBundle, Pulse, SignalBundle}
 
 import scala.concurrent.duration.Duration
 
 trait ReactiveLocalCloneBundle extends FullMVBundle with SignalBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle with EventBundle
-    with ReactiveReflectionBundle with FullMVTurnLocalCloneBundle with ReactiveMirrorBundle with RescalaInterface
+    with ReactiveReflectionBundle with FullMVTurnLocalCloneBundle with ReactiveMirrorBundle with Interface
     with SignalCompatBundle with EventBundle with SignalBundle with ObserveBundle =>
 
   object ReactiveLocalClone {

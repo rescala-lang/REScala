@@ -3,13 +3,13 @@ package rescala.fullmv
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 
 import java.util.concurrent.ForkJoinPool
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class FullMVApi(val timeout: Duration, val schedulerName: String) extends RescalaInterface with FullMVBundle with Mirror
+class FullMVApi(val timeout: Duration, val schedulerName: String) extends Interface with FullMVBundle with Mirror
     with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
   override val scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
 }

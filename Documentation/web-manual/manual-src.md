@@ -753,7 +753,7 @@ import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import rescala.extra.invariant.SimpleScheduler.SignalWithInvariants
 import rescala.extra.invariant.{Invariant, SimpleStruct}
-import rescala.interface.RescalaInterface
+import rescala.operator.RescalaInterface
 
 class InvariantsTest extends AnyFreeSpec {
   val engine: RescalaInterface[SimpleStruct] = RescalaInterface.interfaceFor(rescala.extra.invariant.SimpleScheduler)

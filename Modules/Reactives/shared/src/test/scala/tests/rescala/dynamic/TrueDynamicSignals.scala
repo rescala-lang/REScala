@@ -3,12 +3,12 @@ package tests.rescala.dynamic
 import rescala.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
 import rescala.core.infiltration.Infiltrator
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.scheduler.Levelbased
 
 class TrueDynamicSignals extends RETests {
   multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[RescalaInterface with Levelbased])
+    val ie = new Infiltrator(engine.asInstanceOf[Interface with Levelbased])
     import ie.assertLevel
     import ie.api._
 

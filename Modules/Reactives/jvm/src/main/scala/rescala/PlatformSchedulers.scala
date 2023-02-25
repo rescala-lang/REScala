@@ -2,18 +2,18 @@ package rescala
 
 import rescala.core.Scheduler
 import rescala.fullmv.FullMVUtil
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.parrp.{Backoff, ParRP}
 
 trait PlatformSchedulers {
 
-  object parrp extends interface.RescalaInterface with ParRP {
+  object parrp extends Interface with ParRP {
     override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
   }
 
   val fullmv: FullMVUtil.default.type = FullMVUtil.default
 
-  def byName(name: String): RescalaInterface =
+  def byName(name: String): Interface =
     name match {
       case "parrp"  => parrp
       case "fullmv" => fullmv

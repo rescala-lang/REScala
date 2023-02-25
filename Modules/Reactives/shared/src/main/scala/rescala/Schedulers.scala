@@ -1,7 +1,7 @@
 package rescala
 
 import rescala.core.{AdmissionTicket, ReSource, Scheduler}
-import rescala.interface.RescalaInterface
+import rescala.operator.Interface
 import rescala.scheduler.{Levelbased, Sidup, TopoBundle}
 
 object Schedulers extends PlatformSchedulers {
@@ -37,25 +37,25 @@ object Schedulers extends PlatformSchedulers {
   }
 
   /** Basic implementations of propagation engines */
-  object unmanaged extends RescalaInterface {
+  object unmanaged extends Interface {
     val bundle: Unmanaged = new Unmanaged {}
     type State[V] = bundle.State[V]
     def scheduler: Scheduler[State] = bundle.scheduler
   }
 
-  object synchron extends RescalaInterface {
+  object synchron extends Interface {
     val bundle: Synchron = new Synchron {}
     type State[V] = bundle.State[V]
     def scheduler: Scheduler[State] = bundle.scheduler
   }
 
-  object toposort extends RescalaInterface with TopoBundle {
+  object toposort extends Interface with TopoBundle {
     override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
     override type State[V] = TopoState[V]
     override def scheduler: Scheduler[State] = TopoScheduler
   }
 
-  object sidup extends RescalaInterface {
+  object sidup extends Interface {
     val bundle: Sidup = new Sidup {}
     override type State[V] = bundle.State[V]
     val scheduler: Scheduler[State] = new bundle.TwoVersionScheduler[bundle.SidupTransaction] {
@@ -70,7 +70,7 @@ object Schedulers extends PlatformSchedulers {
     }
   }
 
-  override def byName(name: String): RescalaInterface =
+  override def byName(name: String): Interface =
     name match {
       case "synchron"  => synchron
       case "unmanaged" => unmanaged

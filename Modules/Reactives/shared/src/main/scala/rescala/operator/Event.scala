@@ -1,7 +1,7 @@
 package rescala.operator
 
-import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, ReInfo, ReSource, Scheduler, StaticTicket}
-import rescala.macros.{MacroAccess}
+import rescala.core.*
+import rescala.macros.MacroAccess
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 

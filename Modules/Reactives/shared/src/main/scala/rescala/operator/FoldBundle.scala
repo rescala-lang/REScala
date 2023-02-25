@@ -1,7 +1,6 @@
 package rescala.operator
 
 import rescala.core.{CreationTicket, DynamicTicket, ReSource, StaticTicket}
-import rescala.interface.RescalaInterface
 import rescala.operator.{Operators, Pulse}
 
 trait FoldBundle {

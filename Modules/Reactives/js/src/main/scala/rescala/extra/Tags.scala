@@ -4,19 +4,18 @@ import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, Node}
 import rescala.core.{CreationTicket, Disconnectable, DynamicScope}
-import rescala.interface.RescalaInterface
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
 import scalatags.jsdom.Frag
-import rescala.operator.{Observe, ObserveInteract, Pulse}
+import rescala.operator.{Observe, ObserveInteract, Pulse, Interface}
 import rescala.operator.RExceptions.ObservedException
 
 import scala.scalajs.js
 
 object Tags extends Tags[rescala.default.type](rescala.default)
 
-class Tags[Api <: RescalaInterface](val api: Api) {
+class Tags[Api <: Interface](val api: Api) {
   import api._
   def isInDocument(element: Element): Boolean = {
     js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
