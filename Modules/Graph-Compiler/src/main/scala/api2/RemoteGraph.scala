@@ -3,6 +3,7 @@ package api2
 import rescala.default.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
+import rescala.core.ReSource
 
 trait RemoteGraph {
   protected var connector: Option[RemoteGraphConnector] = None
@@ -15,7 +16,7 @@ trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[Op
   val events: IN
 
   def startObserving(): Unit = {
-    val dependencies = events.toList.map(_.asInstanceOf[bundle.ReSource])
+    val dependencies = events.toList.map(_.asInstanceOf[ReSource.of[State]])
     val grouped = Events.static(dependencies: _*) { t =>
       Some(summon[EventTupleUtils[IN]].staticAccesses(events, t))
     }

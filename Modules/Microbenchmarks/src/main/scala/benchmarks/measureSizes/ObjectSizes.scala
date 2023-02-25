@@ -2,7 +2,7 @@ package rescala.benchmarks.measureSizes
 
 import kofre.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
-import rescala.core.{AccessHandler, ReevTicket}
+import rescala.core.{AccessHandler, ReSource, ReevTicket}
 import rescala.scheduler.Schedulers
 import rescala.default
 
@@ -22,7 +22,7 @@ object ObjectSizes {
     measure("default empty signal x 10", List.fill(100)(rescala.default.Signal {}))
     measure("synchron empty signal", Schedulers.synchron.Signal {})
 
-    def ptx = new default.bundle.ParRPTransaction(new rescala.parrp.Backoff(), None)
+    def ptx = new Schedulers.parrp.ParRPTransaction(new rescala.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))
     measure(
       "reev ticket",
@@ -30,8 +30,8 @@ object ObjectSizes {
         ptx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: default.bundle.ReSource): reactive.Value  = ???
-          override def dynamicAccess(reactive: default.bundle.ReSource): reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[rescala.default.State]): reactive.Value  = ???
+          override def dynamicAccess(reactive: ReSource.of[rescala.default.State]): reactive.Value = ???
         }
       )
     )

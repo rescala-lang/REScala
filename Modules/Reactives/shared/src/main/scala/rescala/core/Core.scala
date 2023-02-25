@@ -353,19 +353,20 @@ trait Transaction[State[_]] {
   * Note: This should NOT extend [[DynamicScope]], but did so in the past and there are too many tests that assume so ...
   */
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
-trait Scheduler[State[_]] extends DynamicScope[State] {
-  final def forceNewTransaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R)
+trait Scheduler[S[_]] extends DynamicScope[S] {
+
+  final def forceNewTransaction[R](initialWrites: ReSource.of[S]*)(admissionPhase: AdmissionTicket[S] => R)
       : R = {
     forceNewTransaction(initialWrites.toSet, admissionPhase)
   }
-  def forceNewTransaction[R](initialWrites: Set[ReSource.of[State]], admissionPhase: AdmissionTicket[State] => R): R
-  private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A
+  def forceNewTransaction[R](initialWrites: Set[ReSource.of[S]], admissionPhase: AdmissionTicket[S] => R): R
+  private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[S, A]): A
 
   /** Name of the scheduler, used for helpful error messages. */
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
 
-  def maybeTransaction: Option[Transaction[State]]
+  def maybeTransaction: Option[Transaction[S]]
 }
 
 /** Provides the capability to look up transactions in the dynamic scope. */
