@@ -4,7 +4,6 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.operator.Interface
-import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 import scala.collection.immutable.Range
@@ -28,7 +27,7 @@ class StackState {
   def setup(params: BenchmarkParams, eParam: EngineParam, work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
     val threads = params.getThreads
-    if (scheduler == Schedulers.unmanaged.scheduler) { isManual = true }
+    if (scheduler == rescala.interfaces.unmanaged.scheduler) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int] = source

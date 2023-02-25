@@ -1,10 +1,26 @@
 package rescala.scheduler
 
-import rescala.core.{InitialChange, Initializer, ReevTicket}
+import rescala.core.{AdmissionTicket, InitialChange, Initializer, ReSource, ReevTicket, Scheduler}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 
+object SynchronizedSidup extends Sidup {
+  val scheduler: Scheduler[State] = new TwoVersionScheduler[SidupTransaction] {
+    override protected def makeTransaction(priorTx: Option[SidupTransaction]): SidupTransaction =
+      new SidupTransaction
+
+    override def schedulerName: String = "SidupSimple"
+
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource.of[State]],
+        admissionPhase: AdmissionTicket[State] => R
+    ): R =
+      synchronized {
+        super.forceNewTransaction(initialWrites, admissionPhase)
+      }
+  }
+}
 trait Sidup extends Twoversion {
 
   type State[V] = SidupState[V]
@@ -149,7 +165,7 @@ trait Sidup extends Twoversion {
         propagationPhase()
       }
     }
-    override def releasePhase(): Unit               = ()
+    override def releasePhase(): Unit            = ()
     override def initializer: Initializer[State] = new SidupInitializer(this)
   }
 

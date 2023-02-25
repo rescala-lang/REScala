@@ -1,7 +1,6 @@
 package tests.rescala.errors
 
 import rescala.scheduler
-import rescala.scheduler.Schedulers
 import rescala.structure.RExceptions.ObservedException
 import rescala.structure.{Diff, Pulse}
 import tests.rescala.testtools.RETests
@@ -140,7 +139,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
       intercept[ObservedException] { v.set(0) }
       assert(res === 100 / 42, "observers are not triggered on failure")
-      if (engine != Schedulers.toposort) {
+      if (engine != rescala.interfaces.toposort) {
         assert(v.readValueOnce === 42, "transaction is aborted on failure")
       }
     }
@@ -163,7 +162,7 @@ class ExceptionPropagationTestSuite extends RETests {
     }
 
     test("abort combinator") {
-      if (engine != rescala.scheduler.Schedulers.toposort) {
+      if (engine != rescala.interfaces.toposort) {
         val v  = Var(0)
         val ds = Signal { div(v.value) }
 

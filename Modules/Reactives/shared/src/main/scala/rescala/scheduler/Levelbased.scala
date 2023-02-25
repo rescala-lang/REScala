@@ -1,9 +1,44 @@
 package rescala.scheduler
 
-import rescala.core.{InitialChange, Initializer, ReSource, ReevTicket}
+import rescala.core.{AdmissionTicket, InitialChange, Initializer, ReSource, ReevTicket, Scheduler}
 
 import java.util.PriorityQueue
 import scala.collection.mutable.ListBuffer
+
+object LevelbasedVariants extends Levelbased {
+  type State[V] = LevelState[V]
+
+  private[rescala] class SimpleNoLock extends LevelBasedTransaction {
+    override protected def makeDerivedStructState[V](initialValue: V): State[V] = new LevelState(initialValue)
+
+    override def releasePhase(): Unit = ()
+
+    override def preparationPhase(initialWrites: Set[ReSource.of[State]]): Unit = {}
+
+    override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
+  }
+
+  val unmanaged: Scheduler[State] =
+    new TwoVersionScheduler[SimpleNoLock] {
+      override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
+
+      override def schedulerName: String = "Unmanaged"
+    }
+
+  val synchron: Scheduler[State] = new TwoVersionScheduler[SimpleNoLock] {
+    override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
+
+    override def schedulerName: String = "Synchron"
+
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource.of[State]],
+        admissionPhase: AdmissionTicket[State] => R
+    ): R =
+      synchronized {
+        super.forceNewTransaction(initialWrites, admissionPhase)
+      }
+  }
+}
 
 trait Levelbased extends Twoversion {
 

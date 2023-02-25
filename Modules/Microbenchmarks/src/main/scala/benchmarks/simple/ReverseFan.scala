@@ -5,7 +5,6 @@ import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.ThreadParams
 import rescala.core.ScopeSearch
 import rescala.operator.Interface
-import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +33,7 @@ class ReverseFan {
     result = Signal.lift(intermediate.toSeq) { values =>
       work.consumeSecondary(); values.sum
     }
-    if (engine == Schedulers.unmanaged) isManual = true
+    if (engine == rescala.interfaces.unmanaged) isManual = true
 
   }
 

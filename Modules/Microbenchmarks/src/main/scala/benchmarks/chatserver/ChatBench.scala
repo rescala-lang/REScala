@@ -4,7 +4,6 @@ import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import rescala.operator.Interface
-import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{Lock, ReentrantLock}
@@ -19,7 +18,7 @@ class ChatBench {
   @Benchmark
   def chat(benchState: BenchState, threadParams: ThreadParams) = {
     import benchState.stableEngine._
-    if (scheduler != Schedulers.unmanaged.scheduler) {
+    if (scheduler != rescala.interfaces.unmanaged.scheduler) {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
     } else {
       val ti    = threadParams.getThreadIndex
@@ -69,7 +68,7 @@ class BenchState {
       cs.histories.get(room2).observe(v => work.consume())
     }
 
-    if (engine == Schedulers.unmanaged) {
+    if (engine == rescala.interfaces.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())
     }
 

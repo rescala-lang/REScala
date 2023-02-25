@@ -1,6 +1,6 @@
 package tests.rescala.testtools
 
-import rescala.scheduler.Schedulers._
+import rescala.interfaces.*
 
 object TestEngines {
   val all = Seq(toposort, synchron, sidup)

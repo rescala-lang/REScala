@@ -1,14 +1,13 @@
 package tests.rescala.misc
 
 import rescala.core.{AdmissionTicket, CreationTicket, Scheduler, Transaction}
-import rescala.scheduler.Schedulers
 import tests.rescala.testtools.RETests
 
 class CreationTicketTest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    if (engine != Schedulers.toposort) {
+    if (engine != rescala.interfaces.toposort) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
       def getTurn(implicit engine: Scheduler[BundleState]): Transaction[BundleState] =

@@ -1,13 +1,13 @@
-package rescala.scheduler
+package rescala
 
 import rescala.core.Scheduler
 import rescala.operator.Interface
 
-trait PlatformSchedulers {
+trait PlatformInterfaces {
   def byName(name: String): Interface =
     name match {
       case other => throw new IllegalArgumentException(s"unknown engine $other")
     }
 
-  def defaultPlatformScheduler: Schedulers.unmanaged.scheduler.type = Schedulers.unmanaged.scheduler
+  def defaultPlatformScheduler: rescala.interfaces.unmanaged.scheduler.type = rescala.interfaces.unmanaged.scheduler
 }

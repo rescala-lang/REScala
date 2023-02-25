@@ -1,16 +1,12 @@
-package rescala.scheduler
+package rescala
 
-import rescala.core.Scheduler
 import rescala.fullmv.FullMVUtil
 import rescala.operator.Interface
-import rescala.parrp.{Backoff, ParRP}
+import rescala.parrp.{Backoff, ParRP, ParRPDefault}
 
-trait PlatformSchedulers {
+trait PlatformInterfaces {
 
-  object parrp extends Interface with ParRP {
-    override type BundleState[V] = State[V]
-    override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
-  }
+  val parrp: Interface = Interface.from(ParRPDefault.scheduler)
 
   val fullmv: FullMVUtil.default.type = FullMVUtil.default
 

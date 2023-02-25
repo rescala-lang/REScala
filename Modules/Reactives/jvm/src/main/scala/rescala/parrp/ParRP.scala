@@ -1,9 +1,14 @@
 package rescala.parrp
 
 import rescala.core.Scheduler
-import rescala.locking._
+import rescala.locking.*
+import rescala.operator.Interface
 import rescala.scheduler.Levelbased
 
+object ParRPDefault extends Interface with ParRP {
+  override val scheduler = parrpWithBackoff(() => new Backoff())
+  override type BundleState[V] = State[V]
+}
 trait ParRP extends Levelbased {
 
   override type State[V] = ParRPState[V]
