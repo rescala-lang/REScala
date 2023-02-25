@@ -14,14 +14,14 @@ class DeframeTest extends AnyFunSuite {
     import FullMVTest._
     val engine = FullMVTest.scheduler
 
-    val dummy = Signal { -1 }.resource.asInstanceOf[Derived.of[State]]
+    val dummy = Signal { -1 }
 
     val r      = Signal { 0 }
-    val right  = r.resource.asInstanceOf[Derived.of[State]]
+    val right  = r.asInstanceOf[Derived.of[State]]
     val m      = Signal { r.value + 1 }
-    val middle = m.resource.asInstanceOf[Derived.of[State]]
+    val middle = m.asInstanceOf[Derived.of[State]]
     val t      = Signal { m.value + 1 }
-    val top    = t.resource.asInstanceOf[Derived.of[State]]
+    val top    = t.asInstanceOf[Derived.of[State]]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
@@ -84,14 +84,14 @@ class DeframeTest extends AnyFunSuite {
     import FullMVTest._
     val engine = FullMVTest.scheduler
 
-    val dummy = Signal { -1 }.resource.asInstanceOf[Derived.of[State]]
+    val dummy = Signal { -1 }
 
     val r      = Signal { 0 }
-    val right  = r.resource.asInstanceOf[Derived.of[State]]
+    val right  = r
     val m      = Signal { r.value + 1 }
-    val middle = m.resource.asInstanceOf[Derived.of[State]]
+    val middle = m.asInstanceOf[Derived.of[State]]
     val t      = Signal { m.value + 1 }
-    val top    = t.resource.asInstanceOf[Derived.of[State]]
+    val top    = t.asInstanceOf[Derived.of[State]]
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()

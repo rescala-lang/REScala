@@ -1,7 +1,6 @@
 package rescala.operator
 
-import rescala.core.{CreationTicket, ReadAs}
-import rescala.macros.{MacroAccess, ReadableMacro}
+import rescala.core.CreationTicket
 
 import scala.annotation.implicitNotFound
 import scala.collection.IterableOps
@@ -62,13 +61,13 @@ trait FlattenApi {
   def firstFiringEvent[
       B,
       T[U] <: IterableOps[U, T, T[U]],
-      Evnt[A1] <: ReadAs.of[State, Option[A1]]
+      Evnt[A1] <: Event[A1]
   ](using CreationTicket[State]): Flatten[
     Signal[T[Evnt[B]]],
     Event[B]
   ] = sig =>
-    Events.dynamic(sig) { t =>
-      val all = t.depend(sig) map { (r: ReadAs.of[State, Option[B]]) => t.depend[Option[B]](r) }
+    Event.dynamic {
+      val all = sig.value map { _.value }
       all.collectFirst { case Some(e) => e }
     }
 

@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch
+  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
 }
 
 trait Sources {
@@ -64,7 +64,6 @@ trait Sources {
       with Source[A] with Signal[A] {
     override type Value = Pulse[A]
 
-    override val resource: Signal[A] = this
     override def disconnect(): Unit  = ()
 
     def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =

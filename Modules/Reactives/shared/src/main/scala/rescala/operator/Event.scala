@@ -1,7 +1,7 @@
 package rescala.operator
 
-import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, ReInfo, ReSource, ReadAs, Scheduler, StaticTicket}
-import rescala.macros.ReadableMacro
+import rescala.core.{CreationTicket, Disconnectable, DynamicTicket, ReInfo, ReSource, Scheduler, StaticTicket}
+import rescala.macros.{MacroAccess}
 import rescala.operator.Pulse.{Exceptional, NoChange, Value}
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
@@ -9,7 +9,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
 
 trait EventBundle extends FoldBundle {
-  selfType: Operators =>
+  bundle: Operators =>
 
   /** Events only propagate a value when they are changing,
     * when the system is at rest, events have no values.
@@ -29,11 +29,11 @@ trait EventBundle extends FoldBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Event[+T] extends ReadableMacro[Option[T]] with Disconnectable {
-    final override type State[V] = selfType.State[V]
+  trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
+
+    type State[V] = bundle.State[V]
 
     implicit def internalAccess(v: Value): Pulse[T]
-    def resource: ReadAs.of[State, Option[T @uncheckedVariance]] = this
 
     /** Interprets the pulse of the event by converting to an option
       *
@@ -50,7 +50,7 @@ trait EventBundle extends FoldBundle {
         ticket: CreationTicket[State]
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
-        val internalVal = internalAccess(reevalVal)
+        val internalVal: Pulse[T] = (reevalVal)
         new ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {
             reevalVal match {
@@ -91,7 +91,7 @@ trait EventBundle extends FoldBundle {
     final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket[State]): Event[U] = {
       Events.staticNamed(s"(or $this $other)", this, other) { st =>
         val tp = st.collectStatic(this)
-        if (tp.isChange) tp else other.internalAccess(st.collectStatic(other))
+        if (tp.isChange) tp else st.collectStatic(other)
       }
     }
 
@@ -100,7 +100,7 @@ trait EventBundle extends FoldBundle {
       */
     final def except(exception: Event[Any])(implicit ticket: CreationTicket[State]): Event[T] = {
       Events.staticNamed(s"(except $this  $exception)", this, exception) { st =>
-        (exception.internalAccess(st.collectStatic(exception))) match {
+        st.collectStatic(exception) match {
           case NoChange            => st.collectStatic(this)
           case Value(_)            => Pulse.NoChange
           case ex @ Exceptional(_) => ex
@@ -300,9 +300,7 @@ trait EventBundle extends FoldBundle {
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
         ) { state =>
-          new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]] {
-            override def read(v: Value): Option[Diff[T]] = v._2.toOption
-          }
+          new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]]
         }
         static(internal)(st => st.dependStatic(internal))(tx)
       }

@@ -1,22 +1,24 @@
 package rescala.extra.reactor
 
-import rescala.core.{CreationTicket, Derived, ReInfo, ReadAs, Scheduler}
+import rescala.core.{CreationTicket, Derived, ReInfo, Scheduler}
 import rescala.interface.RescalaInterface
-import rescala.macros.ReadableMacro
+import rescala.macros.MacroAccess
 
 class ReactorBundle[Api <: RescalaInterface](val api: Api) {
   import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
-  ) extends Derived with ReadableMacro[T] {
+  ) extends Derived with MacroAccess[T] {
 
     override type Value    = ReactorState[T]
     override type State[V] = ReactorBundle.this.api.State[V]
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
-    def info: ReInfo                                              = ReInfo.create.derive("Custom Reactor")
-    override def read(v: ReactorState[T]): T                      = v.currentValue
     override protected[rescala] def commit(base: Value): Value    = base
+
+    def info: ReInfo = ReInfo.create.derive("Custom Reactor")
+
+    override def read(v: ReactorState[T]): T = v.currentValue
 
     /** called if any of the dependencies changed in the current update turn,
       * after all (known) dependencies are updated
@@ -37,7 +39,7 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
             return currentState
           }
 
-          val eventValue = input.depend(event)
+          val eventValue: Option[E] = input.depend(event)
           eventValue match {
             case None => currentState
             case Some(value) =>
@@ -101,8 +103,6 @@ class ReactorBundle[Api <: RescalaInterface](val api: Api) {
 
       input.withValue(resState)
     }
-
-    def resource: ReadAs.of[State, T] = this
 
     def now(implicit scheduler: Scheduler[State]): T = scheduler.singleReadValueOnce(this)
   }

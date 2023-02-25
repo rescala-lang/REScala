@@ -54,14 +54,14 @@ class MacroLego[ReSource: Type, Ticket: Type](
         val before = acc._1
         val res    = foldTree((Nil, true), x)(owner)
         // we do not find things with nested things inside
-        if (res._1.nonEmpty) then (acc._1, false)
-        else (x :: acc._1, acc._2)
+        if (res._1.nonEmpty) then (before, false)
+        else (x :: before, acc._2)
 
       if !tree.isExpr then foldOverTree(acc, tree)(owner)
       else
         tree.asExpr match
-          case '{ (${ x }: MacroAccess[_]).value }   => handleFind(x.asTerm)
-          case _                                        => foldOverTree(acc, tree)(owner)
+          case '{ (${ x }: MacroAccess[_]).value } => handleFind(x.asTerm)
+          case _                                   => foldOverTree(acc, tree)(owner)
 
     }
   }
@@ -89,8 +89,8 @@ class MacroLego[ReSource: Type, Ticket: Type](
       val res = if !tree.isExpr then super.transformTerm(tree)(owner)
       else
         tree.asExpr match {
-          case '{ (${ xy }: MacroAccess[α]).value }   => replaceAccess(TypeTree.of[α], xy.asTerm)
-          case _                                         => super.transformTerm(tree)(owner)
+          case '{ (${ xy }: MacroAccess[α]).value } => replaceAccess(TypeTree.of[α], xy.asTerm)
+          case _                                    => super.transformTerm(tree)(owner)
         }
       res
     }

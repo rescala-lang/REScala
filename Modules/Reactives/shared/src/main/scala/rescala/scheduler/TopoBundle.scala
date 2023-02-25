@@ -1,7 +1,7 @@
 package rescala.scheduler
 
 import rescala.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReadAs, ReevTicket, SchedulerImpl, Transaction
+  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
 }
 import rescala.operator.Observe
 
@@ -153,8 +153,7 @@ trait TopoBundle {
       }
 
     override private[rescala] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A = {
-      val id = reactive
-      id.read(id.state.value)
+      reactive.read(reactive.state.value)
     }
   }
 

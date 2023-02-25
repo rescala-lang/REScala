@@ -1,9 +1,10 @@
 package rescala.fullmv
 
+import rescala.core
 import rescala.core.{AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, SchedulerImpl, Transaction}
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult._
-import rescala.fullmv.NotificationBranchResult._
-import rescala.fullmv.mirrors.{Host, HostImpl, _}
+import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.*
+import rescala.fullmv.NotificationBranchResult.*
+import rescala.fullmv.mirrors.{Host, HostImpl, *}
 import rescala.fullmv.sgt.synchronization.{SubsumableLockBundle, SubsumableLockEntryPoint}
 import rescala.fullmv.tasks.TaskBundle
 
@@ -12,7 +13,7 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.{ConcurrentHashMap, ForkJoinPool, ForkJoinTask}
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.util.Try
 
 trait FullMVBundle {

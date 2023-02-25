@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.core.*
-import rescala.macros.ReadableMacro
+import rescala.macros.MacroAccess
 import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.annotation.unchecked.uncheckedVariance
@@ -22,13 +22,13 @@ trait SignalBundle {
     * @groupname accessors Accessors and observers
     * @groupprio accessor 5
     */
-  trait Signal[+T] extends Disconnectable with ReadableMacro[T] {
+  trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     override type State[V] = selfType.State[V]
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
     override protected[rescala] def commit(base: Value): Value = base
 
-    def resource: ReadAs.of[State, T @uncheckedVariance /* works in scala 3*/ ] = this
+    given Conversion[Value, T] = _.get
 
     /** Returns the current value of the signal
       * However, using now is in most cases not what you want.
@@ -60,7 +60,7 @@ trait SignalBundle {
             reevalVal match {
               case Pulse.empty => ()
               case Pulse.Exceptional(f) if onError == null =>
-                throw ObservedException(Signal.this.resource, "observed", f)
+                throw ObservedException(Signal.this, "observed", f)
               case _ => ()
             }
             false
@@ -92,7 +92,7 @@ trait SignalBundle {
     // final def recover[R >: A](onFailure: Throwable => R)(implicit ticket: TurnSource): Signal[R, S = recover(PartialFunction(onFailure))
 
     final def abortOnError(message: String)(implicit ticket: CreationTicket[State]): Signal[T] =
-      recover { case t => throw ObservedException(this.resource, s"forced abort ($message)", t) }
+      recover { case t => throw ObservedException(this, s"forced abort ($message)", t) }
 
     final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[State]): Signal[R] =
       Signal {
@@ -120,7 +120,7 @@ trait SignalBundle {
       * @group conversion
       */
     final def changed(implicit ticket: CreationTicket[State]): Event[T] =
-      Events.staticNamed(s"(changed $this)", this.resource) { st =>
+      Events.staticNamed(s"(changed $this)", this) { st =>
         st.collectStatic(this) match {
           case Pulse.empty => Pulse.NoChange
           case other       => other
@@ -165,7 +165,11 @@ trait SignalBundle {
     def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
         ct: CreationTicket[State]
     ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[State, T] with Signal[T]](dependencies.toSet, Pulse.empty, needsReevaluation = true) {
+      ct.create[Pulse[T], SignalImpl[State, T] with Signal[T]](
+        dependencies.toSet,
+        Pulse.empty,
+        needsReevaluation = true
+      ) {
         state => new SignalImpl(state, (t, _) => expr(t), ct.info, None) with Signal[T]
       }
     }
@@ -212,17 +216,14 @@ trait SignalBundle {
     }
 
     def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[State]): Signal[R] = {
-      Signal.static(los.map(_.resource): _*) { t => fun(los.map(s => t.dependStatic(s.resource))) }
+      Signal.static(los: _*) { t => fun(los.map(s => t.dependStatic(s))) }
     }
 
-    def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(implicit maybe: CreationTicket[State]): Signal[B] = {
-      static(n1.resource)(t => fun(t.dependStatic(n1.resource)))
-    }
+    def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[State]): Signal[B] =
+      Signal { fun(n1.value) }
 
-    def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(implicit
-        maybe: CreationTicket[State]
-    ): Signal[B] = {
-      static(n1.resource, n2.resource)(t => fun(t.dependStatic(n1.resource), t.dependStatic(n2.resource)))
+    def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(using CreationTicket[State]): Signal[B] = {
+      Signal{ fun(n1.value, n2.value) }
     }
 
   }
