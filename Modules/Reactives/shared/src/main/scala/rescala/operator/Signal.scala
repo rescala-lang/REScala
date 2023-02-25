@@ -1,20 +1,13 @@
 package rescala.operator
 
-import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.core.{
-  CreationTicket, Disconnectable, DynamicTicket, Observation, ReInfo, ReSource, ReadAs, Scheduler, ScopeSearch,
-  StaticTicket
-}
+import rescala.core.*
 import rescala.macros.ReadableMacro
+import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
-
-object SignalMacroImpl {
-  object MapFuncImpl { def apply[T1, A](value: T1, mapper: T1 => A): A = mapper(value) }
-}
 
 trait SignalBundle {
   selfType: Operators =>
