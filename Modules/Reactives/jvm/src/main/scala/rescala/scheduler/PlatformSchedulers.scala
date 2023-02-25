@@ -8,6 +8,7 @@ import rescala.parrp.{Backoff, ParRP}
 trait PlatformSchedulers {
 
   object parrp extends Interface with ParRP {
+    override type BundleState[V] = State[V]
     override val scheduler: Scheduler[State] = parrpWithBackoff(() => new Backoff())
   }
 

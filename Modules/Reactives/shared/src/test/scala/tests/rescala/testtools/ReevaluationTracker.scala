@@ -8,7 +8,7 @@ import rescala.operator.Interface
 class ReevaluationBundle[T <: Interface](val api: T) {
   import api._
 
-  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[State]) extends Matchers {
+  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[BundleState]) extends Matchers {
 
     var results: List[A] = Nil
     /* should be private but is unused */

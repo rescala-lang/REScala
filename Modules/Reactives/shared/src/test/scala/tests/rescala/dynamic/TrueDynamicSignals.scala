@@ -62,7 +62,7 @@ class TrueDynamicSignals extends RETests {
       val outside = Var(1)
       val inside  = Var(10)
 
-      def sig()(implicit turnSource: CreationTicket[State]) = Signal { outside.value }
+      def sig()(implicit turnSource: CreationTicket[BundleState]) = Signal { outside.value }
 
       val testsig = Signal.dynamic {
         {
@@ -81,7 +81,7 @@ class TrueDynamicSignals extends RETests {
     test("outer And Inner Values") {
       val v = Var(0)
       object obj {
-        def sig(implicit ct: CreationTicket[State]) = Signal { v.value }
+        def sig(implicit ct: CreationTicket[BundleState]) = Signal { v.value }
       }
 
       val evt = Evt[Int]()
@@ -107,7 +107,7 @@ class TrueDynamicSignals extends RETests {
     //  import scala.language.reflectiveCalls
     //
     //  val v1 = Var { 20 }
-    //  val v2 = Var { new { def signal(implicit ct: CreationTicket[State]) = Signal { v1() } } }
+    //  val v2 = Var { new { def signal(implicit ct: CreationTicket[REState]) = Signal { v1() } } }
     //  val v3 = Var { new { val signal = Signal { v2() } } }
     //
     //  val s = Signal { v3() }
@@ -117,13 +117,13 @@ class TrueDynamicSignals extends RETests {
     //  assert(sig.readValueOnce === 20)
     //  v1 set 30
     //  assert(sig.readValueOnce === 30)
-    //  v2 set new { def signal(implicit ct: CreationTicket[State]) = Signal { 7 + v1() } }
+    //  v2 set new { def signal(implicit ct: CreationTicket[REState]) = Signal { 7 + v1() } }
     //  assert(sig.readValueOnce === 37)
     //  v1 set 10
     //  assert(sig.readValueOnce === 17)
-    //  v3 set new { val signal = Signal { new { def signal(implicit ct: CreationTicket[State]) = Signal { v1() } } } }
+    //  v3 set new { val signal = Signal { new { def signal(implicit ct: CreationTicket[REState]) = Signal { v1() } } } }
     //  assert(sig.readValueOnce === 10)
-    //  v2 set new { def signal(implicit ct: CreationTicket[State]) = Signal { 10 + v1() } }
+    //  v2 set new { def signal(implicit ct: CreationTicket[REState]) = Signal { 10 + v1() } }
     //  assert(sig.readValueOnce === 10)
     //  v1 set 80
     //  assert(sig.readValueOnce === 80)
@@ -131,12 +131,12 @@ class TrueDynamicSignals extends RETests {
 
     test("extracting Signal Side Effects") {
       val e1 = Evt[Int]()
-      def newSignal()(implicit ct: CreationTicket[State]): Signal[Int] = e1.count()
+      def newSignal()(implicit ct: CreationTicket[BundleState]): Signal[Int] = e1.count()
 
       val macroRes = Signal {
         newSignal().value
       }
-      val normalRes = Signal.dynamic() { implicit t: DynamicTicket[State] =>
+      val normalRes = Signal.dynamic() { implicit t: DynamicTicket[BundleState] =>
         t.depend(newSignal())
       }
       assert(macroRes.readValueOnce === 0, "before, macro")
@@ -173,7 +173,7 @@ class TrueDynamicSignals extends RETests {
       val ifTrue        = Var(0)
       val ifFalse       = Var(10)
       var reevaluations = 0
-      val s = Signal.dynamic(condition) { (dt: DynamicTicket[State]) =>
+      val s = Signal.dynamic(condition) { (dt: DynamicTicket[BundleState]) =>
         reevaluations += 1
         if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
       }

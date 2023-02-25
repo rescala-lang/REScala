@@ -22,22 +22,22 @@ trait FoldBundle {
     /** Fold branches allow to define more complex fold logic */
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
-        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](expr)
+        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[BundleState], DynamicTicket[BundleState], false](expr)
       Branch(sources, isStatic, fun)
     }
 
     class Branch[S](
-        val staticDependencies: List[ReSource.of[State]],
-        val isStatic: Boolean,
-        val run: DynamicTicket[State] => FoldState[S] ?=> S
+                     val staticDependencies: List[ReSource.of[BundleState]],
+                     val isStatic: Boolean,
+                     val run: DynamicTicket[BundleState] => FoldState[S] ?=> S
     )
 
-    def apply[T](init: => T)(branches: Branch[T]*)(using ticket: CreationTicket[State]): Signal[T] = {
+    def apply[T](init: => T)(branches: Branch[T]*)(using ticket: CreationTicket[BundleState]): Signal[T] = {
 
       val staticDeps = branches.iterator.flatMap(_.staticDependencies).toSet
       val isStatic   = branches.forall(_.isStatic)
 
-      def operator(dt: DynamicTicket[State], state: () => T): T =
+      def operator(dt: DynamicTicket[BundleState], state: () => T): T =
         var extracted = Option.empty[T]
         def curr: T   = extracted.getOrElse(state())
         branches.foreach { b =>

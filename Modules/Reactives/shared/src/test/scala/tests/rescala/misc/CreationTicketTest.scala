@@ -11,39 +11,39 @@ class CreationTicketTest extends RETests {
     if (engine != Schedulers.toposort) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
-      def getTurn(implicit engine: Scheduler[State]): Transaction[State] =
+      def getTurn(implicit engine: Scheduler[BundleState]): Transaction[BundleState] =
         engine.forceNewTransaction()(_.tx)
 
       test("none Dynamic No Implicit") {
-        assert(implicitly[CreationTicket[State]].scope.self === Right(engine.scheduler))
+        assert(implicitly[CreationTicket[BundleState]].scope.self === Right(engine.scheduler))
       }
 
       test("some Dynamic No Implicit") {
-        engine.transaction() { (dynamicTurn: AdmissionTicket[State]) =>
-          assert(implicitly[CreationTicket[State]].scope.self === Right(engine.scheduler))
-          assert(implicitly[CreationTicket[State]].scope.embedTransaction(identity) === dynamicTurn.tx)
+        engine.transaction() { (dynamicTurn: AdmissionTicket[BundleState]) =>
+          assert(implicitly[CreationTicket[BundleState]].scope.self === Right(engine.scheduler))
+          assert(implicitly[CreationTicket[BundleState]].scope.embedTransaction(identity) === dynamicTurn.tx)
         }
       }
 
       test("none Dynamic Some Implicit") {
-        implicit val implicitTurn: Transaction[engine.State] = getTurn
-        assert(implicitly[CreationTicket[State]].scope.self === Left(implicitTurn))
-        assert(implicitly[CreationTicket[State]].scope.embedTransaction(identity) === implicitTurn)
+        implicit val implicitTurn: Transaction[engine.BundleState] = getTurn
+        assert(implicitly[CreationTicket[BundleState]].scope.self === Left(implicitTurn))
+        assert(implicitly[CreationTicket[BundleState]].scope.embedTransaction(identity) === implicitTurn)
       }
 
       test("some Dynamic Some Implicit") {
-        engine.transaction() { (_: AdmissionTicket[State]) =>
-          implicit val implicitTurn: Transaction[engine.State] = getTurn
-          assert(implicitly[CreationTicket[State]].scope.self === Left(implicitTurn))
-          assert(implicitly[CreationTicket[State]].scope.embedTransaction(identity) === implicitTurn)
+        engine.transaction() { (_: AdmissionTicket[BundleState]) =>
+          implicit val implicitTurn: Transaction[engine.BundleState] = getTurn
+          assert(implicitly[CreationTicket[BundleState]].scope.self === Left(implicitTurn))
+          assert(implicitly[CreationTicket[BundleState]].scope.embedTransaction(identity) === implicitTurn)
         }
       }
 
       test("implicit In Closures") {
-        val closureDefinition: Transaction[State] = getTurn(engine.scheduler)
+        val closureDefinition: Transaction[BundleState] = getTurn(engine.scheduler)
         val closure = {
-          implicit def it: Transaction[State] = closureDefinition
-          () => implicitly[CreationTicket[State]]
+          implicit def it: Transaction[BundleState] = closureDefinition
+          () => implicitly[CreationTicket[BundleState]]
         }
         engine.transaction() { _ =>
           assert(closure().scope.self === Left(closureDefinition))
@@ -52,8 +52,8 @@ class CreationTicketTest extends RETests {
       }
 
       test("dynamic In Closures") {
-        val closure: () => CreationTicket[State] = {
-          engine.transaction() { _ => () => implicitly[CreationTicket[State]] }
+        val closure: () => CreationTicket[BundleState] = {
+          engine.transaction() { _ => () => implicitly[CreationTicket[BundleState]] }
         }
         engine.transaction() { dynamic =>
           assert(closure().scope.self === Right(engine.scheduler))

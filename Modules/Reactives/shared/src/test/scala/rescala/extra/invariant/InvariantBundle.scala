@@ -30,6 +30,8 @@ trait InvariantBundle extends TopoBundle {
   selfType: Interface =>
 
   override type State[V] = InvariantState[V]
+  override type BundleState[V] = State[V]
+
 
   sealed trait InvariantException extends RuntimeException
 

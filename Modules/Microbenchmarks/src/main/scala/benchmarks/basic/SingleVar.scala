@@ -20,7 +20,7 @@ class SingleVar {
 
   var engine: Interface                     = _
   final lazy val engineT                           = engine
-  implicit def scheduler: Scheduler[engineT.State] = engineT.scheduler
+  implicit def scheduler: Scheduler[engineT.BundleState] = engineT.scheduler
 
   var source: engineT.Var[Boolean] = _
   var current: Boolean             = _

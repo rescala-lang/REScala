@@ -7,11 +7,11 @@ import rescala.operator.Interface
 class ReactorBundle[Api <: Interface](val api: Api) {
   import api._
   class Reactor[T](
-      initState: State[ReactorState[T]]
+      initState: BundleState[ReactorState[T]]
   ) extends Derived with MacroAccess[T] {
 
     override type Value    = ReactorState[T]
-    override type State[V] = ReactorBundle.this.api.State[V]
+    override type State[V] = ReactorBundle.this.api.BundleState[V]
 
     override protected[rescala] def state: State[ReactorState[T]] = initState
     override protected[rescala] def commit(base: Value): Value    = base
@@ -137,13 +137,13 @@ class ReactorBundle[Api <: Interface](val api: Api) {
     }
 
     private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit
-        ct: CreationTicket[State]
+        ct: CreationTicket[BundleState]
     ): Reactor[T] = {
       ct.create(
         Set(),
         new ReactorState[T](initialValue, initialStage),
         needsReevaluation = true
-      ) { (createdState: State[ReactorState[T]]) =>
+      ) { (createdState: BundleState[ReactorState[T]]) =>
         new Reactor[T](createdState)
       }
     }

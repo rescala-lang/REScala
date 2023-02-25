@@ -25,10 +25,10 @@ import rescala.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
 trait Interface extends Operators {
 
   /** @group internal */
-  def scheduler: Scheduler[State]
+  def scheduler: Scheduler[BundleState]
 
   /** @group internal */
-  implicit def implicitScheduler: Scheduler[State] = scheduler
+  implicit def implicitScheduler: Scheduler[BundleState] = scheduler
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
@@ -43,7 +43,7 @@ trait Interface extends Operators {
     * @group update
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
-  def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
+  def transaction[R](initialWrites: ReSource.of[BundleState]*)(admissionPhase: AdmissionTicket[BundleState] => R): R = {
     scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
   }
 
@@ -51,9 +51,9 @@ trait Interface extends Operators {
     * @see transaction
     * @group update
     */
-  def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (
+  def transactionWithWrapup[I, R](iw: ReSource.of[BundleState]*)(ap: AdmissionTicket[BundleState] => I)(wrapUp: (
       I,
-      Transaction[State]
+      Transaction[BundleState]
   ) => R): R = {
     var res: Option[R] = None
     transaction(iw: _*)(at => {

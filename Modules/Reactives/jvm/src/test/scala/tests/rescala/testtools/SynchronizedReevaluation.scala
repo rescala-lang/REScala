@@ -39,13 +39,13 @@ class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
   import api._
 
   def SynchronizedReevaluation[A](sig: Signal[A])(implicit
-      turnSource: CreationTicket[State]
+      turnSource: CreationTicket[BundleState]
   ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
   def SynchronizedReevaluation[A](evt: Event[A])(implicit
-      turnSource: CreationTicket[State]
+      turnSource: CreationTicket[BundleState]
   ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))

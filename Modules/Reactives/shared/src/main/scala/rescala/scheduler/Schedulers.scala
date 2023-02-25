@@ -39,32 +39,33 @@ object Schedulers extends PlatformSchedulers {
   /** Basic implementations of propagation engines */
   object unmanaged extends Interface {
     val bundle: Unmanaged = new Unmanaged {}
-    type State[V] = bundle.State[V]
-    def scheduler: Scheduler[State] = bundle.scheduler
+    type BundleState[V] = bundle.State[V]
+    def scheduler: Scheduler[BundleState] = bundle.scheduler
   }
 
   object synchron extends Interface {
     val bundle: Synchron = new Synchron {}
-    type State[V] = bundle.State[V]
-    def scheduler: Scheduler[State] = bundle.scheduler
+    type BundleState[V] = bundle.State[V]
+    def scheduler: Scheduler[BundleState] = bundle.scheduler
   }
 
   object toposort extends Interface with TopoBundle {
     override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
     override type State[V] = TopoState[V]
+    override type BundleState[V] = TopoState[V]
     override def scheduler: Scheduler[State] = TopoScheduler
   }
 
   object sidup extends Interface {
     val bundle: Sidup = new Sidup {}
-    override type State[V] = bundle.State[V]
-    val scheduler: Scheduler[State] = new bundle.TwoVersionScheduler[bundle.SidupTransaction] {
+    override type BundleState[V] = bundle.State[V]
+    val scheduler: Scheduler[BundleState] = new bundle.TwoVersionScheduler[bundle.SidupTransaction] {
       override protected def makeTransaction(priorTx: Option[bundle.SidupTransaction]): bundle.SidupTransaction =
         new bundle.SidupTransaction
       override def schedulerName: String = "SidupSimple"
       override def forceNewTransaction[R](
-          initialWrites: Set[ReSource.of[State]],
-          admissionPhase: AdmissionTicket[State] => R
+                                           initialWrites: Set[ReSource.of[BundleState]],
+                                           admissionPhase: AdmissionTicket[BundleState] => R
       ): R =
         synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }

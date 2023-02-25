@@ -19,7 +19,7 @@ trait IncrementalBundle {
     /** the value of deltas send through the set */
     override type Value = Delta[T]
 
-    override type State[V] = IncrementalBundle.this.State[V]
+    override type State[V] = IncrementalBundle.this.BundleState[V]
 
     /** Returns current ReactiveDeltaSeq as an Event
       *
@@ -308,7 +308,7 @@ trait IncrementalBundle {
   class ConcatenateDeltaSeq[T](left: ReactiveDeltaSeq[T], right: ReactiveDeltaSeq[T])(
       initialState: IncSeq.SeqState[T],
       name: ReInfo
-  ) extends Base[State, Delta[T]](initialState, name)
+  ) extends Base[BundleState, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] with DisconnectableImpl {
 
     /** @param input
@@ -341,7 +341,7 @@ trait IncrementalBundle {
   class FilterDeltaSeq[T](in: ReactiveDeltaSeq[T], expression: T => Boolean)(
       initialState: IncSeq.SeqState[T],
       name: ReInfo
-  ) extends Base[State, Delta[T]](initialState, name) with Derived
+  ) extends Base[BundleState, Delta[T]](initialState, name) with Derived
       with ReactiveDeltaSeq[T] {
 
     /** @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
@@ -366,7 +366,7 @@ trait IncrementalBundle {
   class MapDeltaSeq[T, A](in: ReactiveDeltaSeq[T], op: T => A)(
       initialState: IncSeq.SeqState[A],
       name: ReInfo
-  ) extends Base[State, Delta[A]](initialState, name)
+  ) extends Base[BundleState, Delta[A]](initialState, name)
       with ReactiveDeltaSeq[A] {
 
     /** @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
@@ -414,7 +414,7 @@ trait IncrementalBundle {
     * @tparam S Struct type used for the propagation of the event
     */
   class IncSeq[T] private[rescala] (initialState: IncSeq.SeqState[T], name: ReInfo)
-      extends Base[State, Delta[T]](initialState, name)
+      extends Base[BundleState, Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] {
 
     private val elements: mutable.Map[T, Int] = mutable.HashMap()
@@ -467,13 +467,13 @@ trait IncrementalBundle {
 
   object IncSeq {
 
-    type SeqState[T] = State[Delta[T]]
+    type SeqState[T] = BundleState[Delta[T]]
 
-    def apply[T](implicit ticket: CreationTicket[State]): IncSeq[T] = empty[T]
+    def apply[T](implicit ticket: CreationTicket[BundleState]): IncSeq[T] = empty[T]
 
-    def empty[T](implicit ticket: CreationTicket[State]): IncSeq[T] = fromDelta(Delta.noChange[T])
+    def empty[T](implicit ticket: CreationTicket[BundleState]): IncSeq[T] = fromDelta(Delta.noChange[T])
 
-    private[this] def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[State]): IncSeq[T] =
+    private[this] def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[BundleState]): IncSeq[T] =
       ticket.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
         _,
         ticket.info

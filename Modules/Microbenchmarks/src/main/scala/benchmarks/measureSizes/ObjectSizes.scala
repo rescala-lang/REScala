@@ -30,8 +30,8 @@ object ObjectSizes {
         ptx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: ReSource.of[rescala.default.State]): reactive.Value  = ???
-          override def dynamicAccess(reactive: ReSource.of[rescala.default.State]): reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[rescala.default.BundleState]): reactive.Value  = ???
+          override def dynamicAccess(reactive: ReSource.of[rescala.default.BundleState]): reactive.Value = ???
         }
       )
     )

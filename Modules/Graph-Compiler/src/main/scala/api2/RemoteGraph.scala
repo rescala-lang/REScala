@@ -16,7 +16,7 @@ trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[Op
   val events: IN
 
   def startObserving(): Unit = {
-    val dependencies = events.toList.map(_.asInstanceOf[ReSource.of[State]])
+    val dependencies = events.toList.map(_.asInstanceOf[ReSource.of[BundleState]])
     val grouped = Events.static(dependencies: _*) { t =>
       Some(summon[EventTupleUtils[IN]].staticAccesses(events, t))
     }

@@ -1,6 +1,6 @@
 package rescala.core.infiltration
 
-import rescala.core.Scheduler
+import rescala.core.{Scheduler, ReSource}
 import rescala.operator.Interface
 import rescala.scheduler.Levelbased
 
@@ -9,10 +9,10 @@ class Infiltrator(val api: Interface with Levelbased) {
   import api._
   // final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
   final def assertLevel(
-      reactive: ReSource,
-      level: Int,
-      text: String = "level did not match"
-  )(implicit maybe: Scheduler[api.State]) =
+                         reactive: ReSource.of[api.BundleState],
+                         level: Int,
+                         text: String = "level did not match"
+  )(implicit maybe: Scheduler[api.BundleState]) =
     if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[_]]) {
       reactive.state match {
         case rb: LevelState[_] => {

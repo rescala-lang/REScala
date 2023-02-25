@@ -9,6 +9,6 @@ import rescala.core.Scheduler
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
 object default extends Interface {
-  override type State[V] = rescala.scheduler.Schedulers.defaultPlatformState[V]
-  override def scheduler: Scheduler[State] = rescala.scheduler.Schedulers.defaultPlatformScheduler
+  override type BundleState[V] = rescala.scheduler.Schedulers.defaultPlatformState[V]
+  override def scheduler: Scheduler[BundleState] = rescala.scheduler.Schedulers.defaultPlatformScheduler
 }

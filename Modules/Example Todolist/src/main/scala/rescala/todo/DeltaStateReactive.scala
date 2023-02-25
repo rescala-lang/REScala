@@ -6,14 +6,14 @@ import rescala.default.*
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
 class DeltaStateReactive[Delta, Combined](
-    initState: State[DeltaWithState[Delta, Combined]],
-    deltaInput: ReadAs.of[State, Delta],
-    applyDelta: (Combined, Delta) => Combined,
-    handlers: Seq[(DynamicTicket[State], Combined) => Delta],
-    override val info: ReInfo,
+                                           initState: BundleState[DeltaWithState[Delta, Combined]],
+                                           deltaInput: ReadAs.of[BundleState, Delta],
+                                           applyDelta: (Combined, Delta) => Combined,
+                                           handlers: Seq[(DynamicTicket[BundleState], Combined) => Delta],
+                                           override val info: ReInfo,
 ) extends Derived with ReadAs[DeltaWithState[Delta, Combined]] {
   override type Value    = DeltaWithState[Delta, Combined]
-  override type State[V] = rescala.default.State[V]
+  override type State[V] = rescala.default.BundleState[V]
   override protected[rescala] def state: State[Value]        = initState
   override protected[rescala] def commit(base: Value): Value = base.copy(delta = Nil)
 
@@ -35,11 +35,11 @@ class DeltaStateReactive[Delta, Combined](
 
 object DeltaStateReactive {
   def create[DState, Delta](
-      init: DState,
-      deltaInput: ReadAs.of[State, Delta],
-      applyDelta: (DState, Delta) => DState,
-      handlers: Seq[(DynamicTicket[State], DState) => Delta]
-  )(implicit name: ReInfo, creationTicket: CreationTicket[State]): DeltaStateReactive[Delta, DState] =
+                             init: DState,
+                             deltaInput: ReadAs.of[BundleState, Delta],
+                             applyDelta: (DState, Delta) => DState,
+                             handlers: Seq[(DynamicTicket[BundleState], DState) => Delta]
+  )(implicit name: ReInfo, creationTicket: CreationTicket[BundleState]): DeltaStateReactive[Delta, DState] =
     creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )

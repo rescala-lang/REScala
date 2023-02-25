@@ -12,5 +12,5 @@ trait Operators extends AnyRef // to make the below more symmetric
     with FoldBundle
     with FlattenBundle
     with SourceBundle {
-  type State[_]
+  type BundleState[_]
 }

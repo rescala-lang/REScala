@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
 class ReactiveStreamsApi(val api: Interface) {
   import api._
 
-  class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] {
+  class RESubscriber[T](evt: Evt[T], fac: Scheduler[BundleState]) extends Subscriber[T] {
 
     var subscription: Subscription = _
 
@@ -34,7 +34,7 @@ class ReactiveStreamsApi(val api: Interface) {
       }
   }
 
-  class REPublisher[T](dependency: ReadAs.of[State, Pulse[T]], fac: Scheduler[State]) extends Publisher[T] {
+  class REPublisher[T](dependency: ReadAs.of[BundleState, Pulse[T]], fac: Scheduler[BundleState]) extends Publisher[T] {
 
     override def subscribe(s: Subscriber[_ >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
@@ -44,15 +44,15 @@ class ReactiveStreamsApi(val api: Interface) {
   }
 
   class SubscriptionReactive[T](
-      bud: State[Pulse[T]],
-      dependency: ReadAs.of[State, Pulse[T]],
-      subscriber: Subscriber[_ >: T],
-      name: ReInfo
-  ) extends Base[State, Pulse[T]](bud, name)
+                                 bud: BundleState[Pulse[T]],
+                                 dependency: ReadAs.of[BundleState, Pulse[T]],
+                                 subscriber: Subscriber[_ >: T],
+                                 name: ReInfo
+  ) extends Base[BundleState, Pulse[T]](bud, name)
       with Derived
       with Subscription {
 
-    override type State[V] = ReactiveStreamsApi.this.api.State[V]
+    override type State[V] = ReactiveStreamsApi.this.api.BundleState[V]
 
     var requested: Long = 0
     var cancelled       = false
@@ -101,13 +101,13 @@ class ReactiveStreamsApi(val api: Interface) {
 
   object REPublisher {
 
-    def apply[T](dependency: ReadAs.of[State, Pulse[T]])(implicit fac: Scheduler[State]): REPublisher[T] =
+    def apply[T](dependency: ReadAs.of[BundleState, Pulse[T]])(implicit fac: Scheduler[BundleState]): REPublisher[T] =
       new REPublisher[T](dependency, fac)
 
     def subscription[T](
-        dependency: ReadAs.of[State, Pulse[T]],
-        subscriber: Subscriber[_ >: T],
-        fac: Scheduler[State]
+                         dependency: ReadAs.of[BundleState, Pulse[T]],
+                         subscriber: Subscriber[_ >: T],
+                         fac: Scheduler[BundleState]
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>
         val name: ReInfo = ReInfo.create.derive(s"forSubscriber($subscriber)")

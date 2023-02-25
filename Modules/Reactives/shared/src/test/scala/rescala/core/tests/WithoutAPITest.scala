@@ -7,10 +7,10 @@ class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: State[T]) extends rescala.core.ReSource with ReadAs[T] {
+    class CustomSource[T](initState: BundleState[T]) extends rescala.core.ReSource with ReadAs[T] {
       outer =>
 
-      override type State[V] = engine.State[V]
+      override type State[V] = engine.BundleState[V]
 
       override type Value = T
       override protected[rescala] def state: State[T]            = initState
@@ -31,12 +31,12 @@ class WithoutAPITest extends RETests {
     }
 
     class CustomDerivedString(
-        initState: State[String],
-        inputSource: ReadAs.of[State, String]
+                               initState: BundleState[String],
+                               inputSource: ReadAs.of[BundleState, String]
     ) extends Derived
         with ReadAs[String] {
       override type Value    = String
-      override type State[V] = engine.State[V]
+      override type State[V] = engine.BundleState[V]
       override protected[rescala] def state: State[Value]        = initState
       override val info: ReInfo                                  = ReInfo.create
       override protected[rescala] def commit(base: Value): Value = base
@@ -52,15 +52,15 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        implicitly[CreationTicket[State]]
+        implicitly[CreationTicket[BundleState]]
           .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: ReadAs.of[State, String] =
-        implicitly[CreationTicket[State]]
+      val customDerived: ReadAs.of[BundleState, String] =
+        implicitly[CreationTicket[BundleState]]
           .create(
             Set(customSource),
             "Well, this is an initial value",

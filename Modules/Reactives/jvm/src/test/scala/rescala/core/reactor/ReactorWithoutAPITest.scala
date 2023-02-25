@@ -10,13 +10,13 @@ class ReactorWithoutAPITest extends RETests {
   import rescala.default._
 
   class Reactor[T](
-      initState: State[ReactorStage[T]]
+      initState: BundleState[ReactorStage[T]]
   ) extends rescala.core.Derived
       with ReadAs[T]
       with MacroAccess[T] {
 
     override type Value    = ReactorStage[T]
-    override type State[V] = rescala.default.State[V]
+    override type State[V] = rescala.default.BundleState[V]
 
     override protected[rescala] def state: State[ReactorStage[T]] = initState
     override def info: ReInfo                                     = ReInfo.create.derive("Custom Reactor")
@@ -124,13 +124,13 @@ class ReactorWithoutAPITest extends RETests {
       */
     def once[T](
         initialValue: T,
-        dependencies: Set[ReSource.of[State]]
-    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
+        dependencies: Set[ReSource.of[BundleState]]
+    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[BundleState]): Reactor[T] = {
       ct.create(
         dependencies,
         new ReactorStage[T](initialValue, stageBuilder),
         needsReevaluation = true
-      ) { (createdState: State[ReactorStage[T]]) =>
+      ) { (createdState: BundleState[ReactorStage[T]]) =>
         new Reactor[T](createdState)
       }
     }
