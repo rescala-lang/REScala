@@ -33,7 +33,7 @@ class MinBenchmarkWithRemoveWorstCase {
       s diff Seq(x)
     })
     minOfSeq = Signal {
-      seq().min
+      seq.value.min
     }
 
     reactSeq = SeqSource.empty[Int]

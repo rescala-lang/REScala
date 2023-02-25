@@ -11,7 +11,7 @@ class SignalMacro extends RETests {
 
       val v                     = Var(List(1, 2, 3))
       val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
-      val s2: Signal[List[Int]] = Signal { v.apply().map(_ + 2) }
+      val s2: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
 
       assert(s1.readValueOnce === List(3, 4, 5))
       assert(s2.readValueOnce === List(3, 4, 5))
@@ -66,7 +66,7 @@ class SignalMacro extends RETests {
 
       var test                   = 0
       val e                      = Evt[Int]()
-      val s: Signal[Option[Int]] = Signal { e.holdOption().apply() }
+      val s: Signal[Option[Int]] = Signal { e.holdOption().value }
 
       s.changed observe { _ => test += 1 }
       assert(s.readValueOnce === None)
@@ -90,7 +90,7 @@ class SignalMacro extends RETests {
         def obj(): Unit = {
           new {
             val evt              = Evt[Int]()
-            val sig: Signal[Int] = Signal { 2 * evt.hold(0).apply() }
+            val sig: Signal[Int] = Signal { 2 * evt.hold(0).value }
 
             e = evt
             s = sig
@@ -117,8 +117,8 @@ class SignalMacro extends RETests {
       val v2 = Var(false)
 
       val sig = Signal {
-        lazy val v = v1()
-        if (v2()) v else 0
+        lazy val v = v1.value
+        if (v2.value) v else 0
       }
 
       assert(sig.readValueOnce == 0)
@@ -142,9 +142,9 @@ class SignalMacro extends RETests {
       val v2 = Var(100)
 
       val sig = Signal {
-        v1() match {
+        v1.value match {
           case List(_, v) => v
-          case _          => v2()
+          case _          => v2.value
         }
       }
 

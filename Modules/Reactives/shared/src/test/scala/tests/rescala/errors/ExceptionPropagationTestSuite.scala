@@ -16,7 +16,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
     test("basic Signal Exceptions") {
       val v  = Var(42)
-      val ds = Signal { div(v()) }
+      val ds = Signal { div(v.value) }
       val ss = v.map(div)
 
       assert(ds.readValueOnce == 100 / v.readValueOnce, "dynamic arithmetic error")
@@ -31,7 +31,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
     test("basic Event Exceptions") {
       val e  = Evt[Int]()
-      val de = Event { e().map(div) }
+      val de = Event { e.value.map(div) }
       val se = e.map(div)
 
       var dres: Try[Int] = null
@@ -125,7 +125,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
     test("observers can abort") {
       val v  = Var(0)
-      val ds = Signal { div(v()) }
+      val ds = Signal { div(v.value) }
 
       var res = 100
 
@@ -145,7 +145,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
     test("do not observe emptiness") {
       val v  = Var.empty[Int]
-      val ds = Signal { div(v()) }
+      val ds = Signal { div(v.value) }
 
       var res = 100
 
@@ -163,7 +163,7 @@ class ExceptionPropagationTestSuite extends RETests {
     test("abort combinator") {
       if (engine != rescala.Schedulers.toposort) {
         val v  = Var(0)
-        val ds = Signal { div(v()) }
+        val ds = Signal { div(v.value) }
 
         intercept[ObservedException] { ds.abortOnError("abort immediate") }
 
@@ -179,8 +179,8 @@ class ExceptionPropagationTestSuite extends RETests {
 
     test("partial recovery") {
       val v                = Var(2)
-      val ds               = Signal { div(v()) }
-      val ds2: Signal[Int] = Signal { if (ds() == 10) throw new IndexOutOfBoundsException else ds() }
+      val ds               = Signal { div(v.value) }
+      val ds2: Signal[Int] = Signal { if (ds.value == 10) throw new IndexOutOfBoundsException else ds.value }
       val recovered        = ds2.recover { case _: IndexOutOfBoundsException => 9000 }
 
       assert(recovered.readValueOnce === 50)

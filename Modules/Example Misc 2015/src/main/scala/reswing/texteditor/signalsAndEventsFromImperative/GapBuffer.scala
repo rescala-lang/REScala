@@ -57,14 +57,14 @@ class GapBuffer {
       Array.copy(buf, src, buf, dest, dist)
   }
 
-  val caret = Signal { offsets()._2 } // #SIG
+  val caret = Signal { offsets.value._2 } // #SIG
 
   val iterable = Signal { // #SIG
-    val (b, s) = (buf, size())
+    val (b, s) = (buf, size.value)
     new Iterable[Char] { def iterator = new CharacterIterator(b, s, caret.value) }: Iterable[Char]
   }
 
-  val length = Signal { size() } // #SIG
+  val length = size
 
   def apply(i: Int) = buf(if (i >= caret.now) i + (buf.length - size.now) else i)
 

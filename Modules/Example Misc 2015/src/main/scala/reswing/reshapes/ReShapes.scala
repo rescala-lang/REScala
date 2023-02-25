@@ -59,19 +59,19 @@ object ReShapes extends SimpleSwingApplication {
     val undo = new ReMenuItem(
       "Undo",
       enabled = Signal.dynamic { // #SIG //#IS( // )
-        drawingSpaceState() != null && drawingSpaceState().commands().nonEmpty
+        drawingSpaceState.value != null && drawingSpaceState.value.commands.value.nonEmpty
       }
     )
 
     val merge = new ReMenu(
       text = "Merge with...", // #SIG //#IS( // )
       contents = Signal {     // #SIG //#IS( // )
-        itemsEvents() map { case (btn, _) => btn }
+        itemsEvents.value map { case (btn, _) => btn }
       }
     )
 
     final lazy val merged = UnionEvent(Signal { // #SIG //#UE( //#EVT //#IF )
-      itemsEvents() map { case (_, ev) => ev }
+      itemsEvents.value map { case (_, ev) => ev }
     })
 
     lazy val update = Evt[Unit]() // #EVT
@@ -144,9 +144,9 @@ object ReShapes extends SimpleSwingApplication {
         lazy val state: DrawingSpaceState = new DrawingSpaceState {
           def isCurrentState = drawingSpaceState.now == this
 
-          override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape().copy(this) } // #SIG
-          override lazy val strokeWidth              = Signal { ui.strokeInputPanel.strokeWidth() }             // #SIG
-          override lazy val color                    = Signal { ui.strokeInputPanel.color() }                   // #SIG
+          override lazy val nextShape: Signal[Shape] = Signal { ui.shapeSelectionPanel.nextShape.value.copy(this) } // #SIG
+          override lazy val strokeWidth              = Signal { ui.strokeInputPanel.strokeWidth.value }             // #SIG
+          override lazy val color                    = Signal { ui.strokeInputPanel.color.value }                   // #SIG
 
           override lazy val executed: Event[Command] = // #EVT
             value(panel.drawn || ui.shapePanel.deleted || menu.merged) && (_ => isCurrentState) // #EF //#EF //#EF

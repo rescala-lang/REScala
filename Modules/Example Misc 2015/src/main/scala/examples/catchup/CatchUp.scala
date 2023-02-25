@@ -36,14 +36,14 @@ class CatchUp {
 
   // Mouse position
   val mouse  = new Mouse
-  val mouseX = Signal { mouse.position().getX.toInt }
-  val mouseY = Signal { mouse.position().getY.toInt }
+  val mouseX = Signal { mouse.position.value.getX.toInt }
+  val mouseY = Signal { mouse.position.value.getY.toInt }
 
-  val xOffset = Signal { math.sin(time()) * Range }
-  val yOffset = Signal { math.cos(time()) * Range }
+  val xOffset = Signal { math.sin(time.value) * Range }
+  val yOffset = Signal { math.cos(time.value) * Range }
 
-  val x = Signal { mouseX() + xOffset().toInt }
-  val y = Signal { mouseY() + yOffset().toInt }
+  val x = Signal { mouseX.value + xOffset.value.toInt }
+  val y = Signal { mouseY.value + yOffset.value.toInt }
 
   // Old mouse position, some time ago
   val mouseDelayed: Signal[Point] = Signal {
@@ -52,17 +52,17 @@ class CatchUp {
       case Some(v) => v
     }
   }
-  val delayedX = Signal { mouseDelayed().getX.toInt }
-  val delayedY = Signal { mouseDelayed().getY.toInt }
+  val delayedX = Signal { mouseDelayed.value.getX.toInt }
+  val delayedY = Signal { mouseDelayed.value.getY.toInt }
 
-  val catchBox = Signal { new Rectangle(x(), y(), SizeCatch, SizeY) }
-  val upBox    = Signal { new Rectangle(delayedX(), delayedY(), SizeUp, SizeY) }
+  val catchBox = Signal { new Rectangle(x.value, y.value, SizeCatch, SizeY) }
+  val upBox    = Signal { new Rectangle(delayedX.value, delayedY.value, SizeUp, SizeY) }
 
-  val caught       = Signal { catchBox().intersects(upBox()) }
+  val caught       = Signal { catchBox.value.intersects(upBox.value) }
   val hits         = caught.changed.filter(_ == true)
   val numberOfHits = hits.count()
 
-  val scoreString = Signal { "You caught up " + numberOfHits() + " times." }
+  val scoreString = Signal { "You caught up " + numberOfHits.value + " times." }
 
   // GUI redrawing code
   val stateChanged = mouse.position.changed.||[Any](tick)

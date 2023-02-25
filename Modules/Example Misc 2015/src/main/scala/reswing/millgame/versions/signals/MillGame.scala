@@ -56,12 +56,12 @@ class MillGame {
   val stateChanged       = stateVar.changed    // #EVT //#IF
 
   val possibleNextMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
-    stateVar() match {
+    stateVar.value match {
       case PlaceStone(_) | RemoveStone(_) | GameOver(_) => Seq.empty
       case state @ (MoveStoneSelect(_) | MoveStoneDrop(_, _)) =>
-        board.possibleMoves() filter { case (from, to) => board(from) == state.getPlayer }
+        board.possibleMoves.value filter { case (from, to) => board(from) == state.getPlayer }
       case state @ (JumpStoneSelect(_) | JumpStoneDrop(_, _)) =>
-        board.possibleJumps() filter { case (from, to) => board(from) == state.getPlayer }
+        board.possibleJumps.value filter { case (from, to) => board(from) == state.getPlayer }
     }
   }
 

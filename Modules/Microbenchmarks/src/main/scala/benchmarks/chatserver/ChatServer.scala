@@ -25,7 +25,7 @@ class ChatServer[Api <: RescalaInterface]()(val engine: Api) {
   def create(room: Room): Boolean = {
     val clients: Clients = Var(Nil)
     val newMessages: NewMessages = Event.dynamic {
-      val messages: List[String] = clients().flatMap(_.apply())
+      val messages: List[String] = clients.value.flatMap(_.value)
       if (messages.isEmpty) None else Some(messages)
     }
     val history: History = newMessages.fold(Queue[String]()) { (queue, v) =>

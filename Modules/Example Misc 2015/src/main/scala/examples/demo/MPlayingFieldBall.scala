@@ -29,14 +29,14 @@ object MPlayingFieldBall extends Main {
   class PlayingField(val width: Signal[Int], val height: Signal[Int]) {
     case class Collisions(left: Event[Any], right: Event[Any], top: Event[Any], bottom: Event[Any])
     def colliders(shape: Shape): Collisions = {
-      val horizontalHalfDistance = Signal { (width() - shape.hitboxWidth()) / 2 }
-      val verticalHalfDistance   = Signal { (height() - shape.hitboxHeight()) / 2 }
+      val horizontalHalfDistance = Signal { (width.value - shape.hitboxWidth.value) / 2 }
+      val verticalHalfDistance   = Signal { (height.value - shape.hitboxHeight.value) / 2 }
 
       Collisions(
-        Signal { shape.centerX() < -horizontalHalfDistance() }.changed.filter(_ == true),
-        Signal { shape.centerX() > horizontalHalfDistance() }.changed.filter(_ == true),
-        Signal { shape.centerY() < -verticalHalfDistance() }.changed.filter(_ == true),
-        Signal { shape.centerY() > verticalHalfDistance() }.changed.filter(_ == true)
+        Signal { shape.centerX.value < -horizontalHalfDistance.value }.changed.filter(_ == true),
+        Signal { shape.centerX.value > horizontalHalfDistance.value }.changed.filter(_ == true),
+        Signal { shape.centerY.value < -verticalHalfDistance.value }.changed.filter(_ == true),
+        Signal { shape.centerY.value > verticalHalfDistance.value }.changed.filter(_ == true)
       )
     }
     val shape = new Rectangle(Var(0), Var(0), width, height)

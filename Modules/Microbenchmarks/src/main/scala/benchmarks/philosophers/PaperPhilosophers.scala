@@ -43,7 +43,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
       implicit val ct: CreationTicket[State] = (CreationTicket.fromName(s"fork(${idx + 1})"))
       Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
-        (phils(idx)(), phils(nextIdx)()) match {
+        (phils(idx).value, phils(nextIdx).value) match {
           case (Thinking, Thinking) => Free
           case (Eating, Thinking)   => Taken(idx)
           case (Thinking, Eating)   => Taken(nextIdx)
@@ -67,15 +67,15 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
         case Dynamicity.Dynamic => Signal.dynamic[Sight] {
             val idx     = avoidStaticOptimization
             val prevIdx = (idx - 1 + size) % size
-            forks(prevIdx)() match {
+            forks(prevIdx).value match {
               case Free =>
-                forks(idx)() match {
+                forks(idx).value match {
                   case Taken(neighbor) => Blocked(neighbor)
                   case Free            => Ready
                 }
               case Taken(by) =>
                 if (by == idx) {
-                  assert(forks(idx)() == Taken(idx), s"sight ${idx + 1} glitched")
+                  assert(forks(idx).value == Taken(idx), s"sight ${idx + 1} glitched")
                   Done
                 } else {
                   Blocked(by)
@@ -85,7 +85,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
         case Dynamicity.SemiStatic => Signal.dynamic[Sight] {
             val idx     = avoidStaticOptimization
             val prevIdx = (idx - 1 + size) % size
-            computeForkStatic(idx, (forks(prevIdx)(), forks(idx)()))
+            computeForkStatic(idx, (forks(prevIdx).value, forks(idx).value))
           }
         case Dynamicity.Static =>
           val idx       = avoidStaticOptimization
@@ -93,7 +93,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: RescalaInterface, dy
           val leftFork  = forks(prevIdx)
           val rightFork = forks(idx)
           Signal[Sight] {
-            computeForkStatic(idx, (leftFork(), rightFork()))
+            computeForkStatic(idx, (leftFork.value, rightFork.value))
           }
       }
 
@@ -206,7 +206,7 @@ trait SignalPyramidTopper extends IndividualCounts {
   val successCount: Signal[Int] =
     individualCounts.reduce { (a, b) =>
       {
-        Signal(using (CreationTicket.fromName(s"sumUpTo($b)"))) { a() + b() }
+        Signal(using (CreationTicket.fromName(s"sumUpTo($b)"))) { a.value + b.value }
       }
     }
   override def total: Int = successCount.readValueOnce

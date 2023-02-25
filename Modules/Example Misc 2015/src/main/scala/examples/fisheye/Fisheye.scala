@@ -24,20 +24,20 @@ class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mous
 
   private def interpolation(d: Double) = math.max(0, math.min(1, 5 - math.log(d)))
 
-  val lowerLeft          = Signal { new java.awt.Point(xOffset() + Box.Margin, Box.YPos) }
-  val mouseDistance      = Signal { mouse.position().distance(lowerLeft()) }
-  val interpolationValue = Signal { interpolation(mouseDistance()) }
-  val effectiveSize      = Signal { (Box.NormalSize + interpolationValue() * Box.DeltaSize).toInt }
-  val rightmostPoint     = Signal { lowerLeft().getX.toInt + effectiveSize() }
+  val lowerLeft          = Signal { new java.awt.Point(xOffset.value + Box.Margin, Box.YPos) }
+  val mouseDistance      = Signal { mouse.position.value.distance(lowerLeft.value) }
+  val interpolationValue = Signal { interpolation(mouseDistance.value) }
+  val effectiveSize      = Signal { (Box.NormalSize + interpolationValue.value * Box.DeltaSize).toInt }
+  val rightmostPoint     = Signal { lowerLeft.value.getX.toInt + effectiveSize.value }
 
   // add some saturation
   val components     = color.getRGBColorComponents(null).map(_.toInt * 255)
   val hsv            = Color.RGBtoHSB(components(0), components(1), components(2), null)
-  val effectiveColor = Signal { Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue().toFloat, hsv(2)) }
+  val effectiveColor = Signal { Color.getHSBColor(hsv(0), 0.6f + 0.4f * interpolationValue.value.toFloat, hsv(2)) }
 
   // define the box
   val area = Signal {
-    new Rectangle(xOffset(), Box.YPos, effectiveSize(), effectiveSize())
+    new Rectangle(xOffset.value, Box.YPos, effectiveSize.value, effectiveSize.value)
   }
 }
 

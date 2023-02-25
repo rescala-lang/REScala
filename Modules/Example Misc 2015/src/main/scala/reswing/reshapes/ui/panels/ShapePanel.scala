@@ -19,14 +19,14 @@ import reswing.ReButton
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
 
-  val shapes = Signal.dynamic { if (state() != null) state().shapes() else List.empty } // #SIG
+  val shapes = Signal.dynamic { if (state.value != null) state.value.shapes.value else List.empty } // #SIG
 
-  val shapeViews = Signal { shapes() map { shape => new ShapeView(shape, state()) } } // #SIG
+  val shapeViews = Signal { shapes.value map { shape => new ShapeView(shape, state.value) } } // #SIG
 
   val shapesPanel = new ReBoxPanel(
     orientation = Orientation.Vertical,
     contents = Signal[Seq[Component]] { // #SIG
-      shapeViews() map { (shapeView: ShapeView) => shapeView: Component }
+      shapeViews.value map { (shapeView: ShapeView) => shapeView: Component }
     }
   )
 
@@ -34,7 +34,7 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
     contents = shapesPanel
   }
 
-  val deleted = UnionEvent(Signal { shapeViews() map { shapeView => shapeView.deleted } }) // #SIG //#UE( //#EVT //#IF )
+  val deleted = UnionEvent(Signal { shapeViews.value map { shapeView => shapeView.deleted } }) // #SIG //#UE( //#EVT //#IF )
 }
 
 class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orientation.Horizontal) {

@@ -31,7 +31,7 @@ class SingleSwitch {
     val d1 = Var("true")
     val d2 = Var("false")
     Signal.dynamic {
-      if (step.test(source())) d1() else d2()
+      if (step.test(source.value)) d1.value else d2.value
     }
 
     if (engine == Schedulers.unmanaged) isManual = true

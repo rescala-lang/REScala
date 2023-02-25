@@ -81,7 +81,7 @@ class EmptySignalTestSuite extends RETests {
     test("propagate emptiness") {
       val v      = Var[Int](6)
       val v2     = Var[Int](6)
-      val sig    = Signal { v() + v2() }
+      val sig    = Signal { v.value + v2.value }
       val e      = sig.changed
       val folded = e.fold(0)(_ - _)
 

@@ -34,16 +34,16 @@ class SmashingParticles {
   }
 
   val base       = Var(0)
-  val simpleTime = Signal { base() }
-  val time       = Signal { simpleTime() % 200 } // cyclic time :)
+  val simpleTime = Signal { base.value }
+  val time       = Signal { simpleTime.value % 200 } // cyclic time :)
 
-  val point1 = Signal { new Point(20 + time(), 20 + time()) }
+  val point1 = Signal { new Point(20 + time.value, 20 + time.value) }
   new Oval(point1, time)
-  val point2 = Signal { new Point(40 + time(), 80 + time()) }
+  val point2 = Signal { new Point(40 + time.value, 80 + time.value) }
   new Oval(point2, time)
-  val point3 = Signal { new Point(80 + time(), 40 + time()) }
+  val point3 = Signal { new Point(80 + time.value, 40 + time.value) }
   new Oval(point3, time)
-  val point4 = Signal { new Point(160 + time(), 160 + time()) }
+  val point4 = Signal { new Point(160 + time.value, 160 + time.value) }
   new Oval(point4, time)
 
   // drawing code

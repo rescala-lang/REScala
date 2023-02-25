@@ -89,7 +89,7 @@ object ReactiveUtil {
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Iterable[E]](signal: Signal[L[E[T]]]): Event[T] = {
       Event.dynamic {
-        signal().flatMap(e => e()).headOption
+        signal.value.flatMap(e => e.value).headOption
       }
     }
   }

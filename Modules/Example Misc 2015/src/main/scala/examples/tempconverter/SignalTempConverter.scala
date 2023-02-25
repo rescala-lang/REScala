@@ -20,8 +20,8 @@ object SignalTempConverter extends SimpleSwingApplication {
       val degree_c = Var(0)
 
       // content of the textfields is well-defined
-      fahrenheit.text = Signal { (degree_c() * 9 / 5 + 32).toString }
-      celsius.text = Signal { ((degree_f() - 32) * 5 / 9).toString }
+      fahrenheit.text = Signal { (degree_c.value * 9 / 5 + 32).toString }
+      celsius.text = Signal { ((degree_f.value - 32) * 5 / 9).toString }
 
       // listener only changes model, doesn't care about the 'view' (setting the text of the textfields)
       listenTo(celsius, fahrenheit)

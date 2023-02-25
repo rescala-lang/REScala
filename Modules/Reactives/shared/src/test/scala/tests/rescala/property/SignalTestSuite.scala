@@ -54,7 +54,7 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
         signals += root
         0 to i foreach { _ =>
           val randomSignal = signals(Random.nextInt(signals.length))
-          signals += Signal { 1 + randomSignal() }
+          signals += Signal { 1 + randomSignal.value }
         }
         signals.toList
       }

@@ -34,7 +34,7 @@ class MinBenchmarkWithInsertOfMin {
     })
 
     minOfSeq = Signal {
-      seq().min
+      seq.value.min
     }
 
     reactSeq = SeqSource.empty[Int]

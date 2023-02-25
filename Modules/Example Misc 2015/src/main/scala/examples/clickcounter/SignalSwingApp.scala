@@ -33,12 +33,12 @@ object SignalSwingApp extends SimpleSwingApplication {
       val nClicks = button.clicked.fold(0) { (x, _) => x + 1 }
 
       // Signal to set label text
-      label.text = Signal { (if (nClicks() == 0) "No" else nClicks()).toString + " button clicks registered" }
+      label.text = Signal { (if (nClicks.value == 0) "No" else nClicks.value).toString + " button clicks registered" }
 
       // Alternative with switch
       // label.text = Signal {"No clicks"}.switchOnce(button.clicked)( Signal{ nClicks() + " clicks registered" } )
 
-      button.text = Signal { "Click me" + (if (nClicks() == 0) "!" else " again") }
+      button.text = Signal { "Click me" + (if (nClicks.value == 0) "!" else " again") }
 
       contents = new BoxPanel(Orientation.Vertical) {
         contents += button

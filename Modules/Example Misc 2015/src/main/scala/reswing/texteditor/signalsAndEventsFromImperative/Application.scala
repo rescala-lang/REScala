@@ -11,17 +11,17 @@ object Application extends SimpleSwingApplication {
   val textArea = new TextArea("Lorem ipsum dolor sit amet\nconsectetur adipisicing elit\nsed do eiusmod")
 
   val positionLabel = new ReLabel(Signal {
-    val pos = textArea.caret.position()
-    "Ln " + (pos.row + 1) + " : " + textArea.lineCount() + "    Col " + (pos.col + 1)
+    val pos = textArea.caret.position.value
+    "Ln " + (pos.row + 1) + " : " + textArea.lineCount.value + "    Col " + (pos.col + 1)
   })
 
   val selectionLabel = new ReLabel(
-    Signal { "Sel " + textArea.selected().size }
+    Signal { "Sel " + textArea.selected.value.size }
   )
 
-  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount() })
+  val charCountLabel = new ReLabel(Signal { "Ch " + textArea.charCount.value })
 
-  val wordCountLabel = new ReLabel(Signal { "Words " + textArea.wordCount() })
+  val wordCountLabel = new ReLabel(Signal { "Words " + textArea.wordCount.value })
 
   val selectAllButton = new ReButton("Select All")
   selectAllButton.clicked observe { _ =>

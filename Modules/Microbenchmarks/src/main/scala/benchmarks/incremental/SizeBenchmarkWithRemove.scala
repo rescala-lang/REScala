@@ -33,7 +33,7 @@ class SizeBenchmarkWithRemove {
       s diff Seq(x)
     })
     sizeOfSeq = Signal {
-      seq().size
+      seq.value.size
     }
 
     reactSeq = SeqSource.empty[Int]

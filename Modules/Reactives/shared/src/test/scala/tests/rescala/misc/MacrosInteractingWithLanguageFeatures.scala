@@ -34,7 +34,7 @@ class MacrosInteractingWithLanguageFeatures extends RETests {
         import engine1.*
         type A
         lazy val v: Var[A]
-        val s = Signal { v() }
+        val s = Signal { v.value }
       }
       object o extends T {
         import engine2.*

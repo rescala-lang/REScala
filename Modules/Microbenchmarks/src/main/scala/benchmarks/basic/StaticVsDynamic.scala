@@ -41,7 +41,7 @@ class StaticVsDynamic {
     res = if (static) Signal.static(source, a, b) { st =>
       if (st.dependStatic(source)) st.dependStatic(a) else st.dependStatic(b)
     }
-    else Signal.dynamic { if (source()) a() else b() }
+    else Signal.dynamic { if (source.value) a.value else b.value }
 
   }
 

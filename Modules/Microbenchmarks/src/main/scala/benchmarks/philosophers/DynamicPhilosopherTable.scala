@@ -17,10 +17,10 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
       Signal.dynamic {
-        phils(i)() match {
+        phils(i).value match {
           case Eating => Taken(i.toString)
           case Thinking =>
-            phils(nextCircularIndex)() match {
+            phils(nextCircularIndex).value match {
               case Eating   => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
@@ -32,10 +32,10 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
       val vision = Signal.dynamic {
-        forks(i)() match {
+        forks(i).value match {
           case Taken(`ownName`) => Done
           case Taken(name)      => BlockedBy(name)
-          case Free => forks(mod(i - 1))() match {
+          case Free => forks(mod(i - 1)).value match {
               case Free        => Ready
               case Taken(name) => BlockedBy(name)
             }
@@ -66,10 +66,10 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     for (i <- 0 until tableSize) yield {
       val ownName = i.toString
       val vision = Signal.dynamic {
-        forks(i)() match {
+        forks(i).value match {
           case Taken(`ownName`) => Done
           case Taken(name)      => BlockedBy(name)
-          case Free => forks(mod(i - 1))() match {
+          case Free => forks(mod(i - 1)).value match {
               case Free        => Ready
               case Taken(name) => BlockedBy(name)
             }
@@ -95,10 +95,10 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     val forks = for (i <- 0 until tableSize) yield {
       val nextCircularIndex = mod(i + 1)
       Signal.dynamic {
-        phils(i)() match {
+        phils(i).value match {
           case Eating => Taken(i.toString)
           case Thinking =>
-            phils(nextCircularIndex)() match {
+            phils(nextCircularIndex).value match {
               case Eating   => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }

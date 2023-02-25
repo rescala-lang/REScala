@@ -33,7 +33,7 @@ class MapBenchmarkWithRemove {
       s diff Seq(x)
     })
     mappedSeq = Signal {
-      seq().map(x => {
+      seq.value.map(x => {
         x * x
       })
     }

@@ -47,8 +47,8 @@ object DScaledClockCircle extends SimpleSwingApplication {
 
   val pos = Signal {
     Pos(
-      (panel.width() / 2 - 50).toDouble * math.sin(angle()),
-      (panel.height() / 2 - 50).toDouble * math.cos(angle())
+      (panel.width.value / 2 - 50).toDouble * math.sin(angle.value),
+      (panel.height.value / 2 - 50).toDouble * math.cos(angle.value)
     )
   }
 

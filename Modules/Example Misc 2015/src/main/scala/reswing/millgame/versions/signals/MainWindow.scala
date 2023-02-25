@@ -37,7 +37,7 @@ object MainWindow extends SimpleSwingApplication {
 
   object ui extends BoxPanel(Orientation.Vertical) {
     val statusBar = new ReLabel(
-      text = Signal { game.stateVar().text }, // #SIG
+      text = Signal { game.stateVar.value.text }, // #SIG
       preferredSize = ReSwingValue(new Dimension(Integer.MAX_VALUE, 64)),
       font = ReSwingValue(new Font("Tahoma", Font.PLAIN, 32))
     )
@@ -67,21 +67,21 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   val InnerPercent  = 1f / 3
 
   val squareSize: Signal[Int] = Signal { // #SIG
-    (math.min(size().width, size().height) * SizePercent).toInt
+    (math.min(size.value.width, size.value.height) * SizePercent).toInt
   }
 
   val coordinates = Signal { // #SIG
-    val midX     = size().width / 2
-    val midY     = size().height / 2
+    val midX     = size.value.width / 2
+    val midY     = size.value.height / 2
     val xFactors = List.fill(3)(List(-1, -1, -1, 0, 1, 1, 1, 0)).flatten
     val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
 
     for (((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
       val distance: Int =
         (i / 8 match {
-          case 0 => InnerPercent * squareSize().toFloat
-          case 1 => MiddlePercent * squareSize().toFloat
-          case 2 => squareSize().toFloat
+          case 0 => InnerPercent * squareSize.value.toFloat
+          case 1 => MiddlePercent * squareSize.value.toFloat
+          case 2 => squareSize.value.toFloat
         }).toInt / 2
       Point(midX + xF * distance, midY + yF * distance)
     }
@@ -89,18 +89,18 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
 
   val board = Signal { // #SIG
     val offset = (2 * StoneRadius, 2 * StoneRadius)
-    val size   = squareSize() + 4 * StoneRadius
-    Rect(coordinates()(16) - offset, size, size)
+    val size   = squareSize.value + 4 * StoneRadius
+    Rect(coordinates.value(16) - offset, size, size)
   }
 
   val lines = Signal { // #SIG
     MillBoardRenamed.lines map { indices =>
-      Line(coordinates()(indices.head.index), coordinates()(indices.last.index))
+      Line(coordinates.value(indices.head.index), coordinates.value(indices.last.index))
     }
   }
 
   val selectedIndex = Signal { // #SIG
-    game.stateVar() match {
+    game.stateVar.value match {
       case MoveStoneDrop(_, index) => index
       case JumpStoneDrop(_, index) => index
       case _                       => SlotIndex(-1)
@@ -109,7 +109,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
 
   val highlightedIndex = Signal { // #SIG
     val index = mouse.moves.moved.holdOption().value match {
-      case Some(e) => coordinates() indexWhere {
+      case Some(e) => coordinates.value indexWhere {
           p => (p.distance((e.point.x, e.point.y))) < ClickArea
         }
       case _ => -1
@@ -119,19 +119,19 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
 
   val moveLines = Signal { // #SIG
     val possibleMoves =
-      if (selectedIndex() == SlotIndex(-1))
-        game.possibleNextMoves() filter {
-          case (from, to) => from == highlightedIndex() || to == highlightedIndex()
+      if (selectedIndex.value == SlotIndex(-1))
+        game.possibleNextMoves.value filter {
+          case (from, to) => from == highlightedIndex.value || to == highlightedIndex.value
         }
       else
-        game.possibleNextMoves() filter (_ == ((selectedIndex(), highlightedIndex()))) match {
-          case Nil => game.possibleMoves filter (_._1 == selectedIndex())
+        game.possibleNextMoves.value filter (_ == ((selectedIndex.value, highlightedIndex.value))) match {
+          case Nil => game.possibleMoves filter (_._1 == selectedIndex.value)
           case l   => l
         }
 
     possibleMoves map {
       case (from, to) =>
-        Line(coordinates()(from.index), coordinates()(to.index))
+        Line(coordinates.value(from.index), coordinates.value(to.index))
     }
   }
 
@@ -143,25 +143,25 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       SlotIndex(index)
     }) && (_ != SlotIndex(-1)) // #EF
 
-  val backgroundRect = Signal { Rect(0, 0, bounds().width, bounds().height) } // #SIG
+  val backgroundRect = Signal { Rect(0, 0, bounds.value.width, bounds.value.height) } // #SIG
 
   val presentation = Signal { // #SIG
     // background and board
     Seq(
-      Presentation(backgroundRect(), color = Color.GRAY),
-      Presentation(board(), color = new Color(239, 228, 176))
+      Presentation(backgroundRect.value, color = Color.GRAY),
+      Presentation(board.value, color = new Color(239, 228, 176))
     ) ++
     // possible moves
-    (moveLines() map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
+    (moveLines.value map { Presentation(_, color = new Color(0, 0, 0, 80), width = 5) }) ++
     // lines on the board
-    (lines() map { Presentation(_) }) ++
+    (lines.value map { Presentation(_) }) ++
     // dots on the lines
-    (coordinates() map { p => Presentation(Circle(p, DotRadius)) }) ++
+    (coordinates.value map { p => Presentation(Circle(p, DotRadius)) }) ++
     // stones
-    (game.board.stonesVar().zipWithIndex collect {
+    (game.board.stonesVar.value.zipWithIndex collect {
       case (color, i) if color != Empty =>
         Presentation(
-          Circle(coordinates()(i), StoneRadius),
+          Circle(coordinates.value(i), StoneRadius),
           color = if (color == Black) Color.BLACK else Color.WHITE
         )
     })

@@ -49,8 +49,8 @@ object INumericResettableCircle extends Main {
 
   val velocity = Signal {
     Pos(
-      x = (panel.width() / 2 - 50).toDouble * math.sin(angle()) / Clock.NanoSecond,
-      y = (panel.height() / 2 - 50).toDouble * math.cos(angle()) / Clock.NanoSecond
+      x = (panel.width.value / 2 - 50).toDouble * math.sin(angle.value) / Clock.NanoSecond,
+      y = (panel.height.value / 2 - 50).toDouble * math.cos(angle.value) / Clock.NanoSecond
     )
   }
 

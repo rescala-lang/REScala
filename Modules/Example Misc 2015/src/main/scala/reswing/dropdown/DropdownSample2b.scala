@@ -20,27 +20,27 @@ object DropdownSample2b extends SimpleSwingApplication {
       val col3 = new ReTextField(text = "London", columns = 30)
       val col4 = new ReTextField(text = "Rome", columns = 30)
 
-      val val1 = Signal { col1.text() }
-      val val2 = Signal { col2.text() }
-      val val3 = Signal { col3.text() }
-      val val4 = Signal { col4.text() }
+      val val1 = Signal { col1.text.value }
+      val val2 = Signal { col2.text.value }
+      val val3 = Signal { col3.text.value }
+      val val4 = Signal { col4.text.value }
 
       val listOfSignals = Signal { List(val1, val2, val3, val4) }
-      val options       = Signal.dynamic { listOfSignals().map(_()) }
+      val options       = listOfSignals.flatten
 
-      val innerChanged      = Signal { listOfSignals().map(_.changed) }
-      val anyChangedWrapped = Signal { innerChanged().reduce((a, b) => a || b) }
+      val innerChanged      = Signal { listOfSignals.value.map(_.changed) }
+      val anyChangedWrapped = Signal { innerChanged.value.reduce((a, b) => a || b) }
       val anyChanged        = anyChangedWrapped.flatten
 
       anyChanged observe { x => println("some value has changed: " + x) }
 
       val dropdown       = new ReDynamicComboBox(options = options, selection = -1)
-      val selectionIndex = Signal { dropdown.selection() }
-      val validSelection = Signal { if (options().indices.contains(selectionIndex())) Some(selectionIndex()) else None }
+      val selectionIndex = Signal { dropdown.selection.value }
+      val validSelection = Signal { if (options.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None }
 
       // select the currently selected item manually
-      val currentSelectedItem = Signal.dynamic { validSelection().map { i => listOfSignals()(i)() } }
-      val outputString        = Signal { currentSelectedItem().getOrElse("Nothing") }
+      val currentSelectedItem = Signal.dynamic { validSelection.value.map { i => listOfSignals.value(i).value } }
+      val outputString        = Signal { currentSelectedItem.value.getOrElse("Nothing") }
       val outputField         = new ReTextField(text = outputString)
 
       title = "Dropdown example 2b"

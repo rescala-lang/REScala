@@ -8,8 +8,8 @@ object EventWindows extends App {
   // val all = e.list()
   val window = e.list(5)
   val mean = Signal {
-    window().sum /
-    window().length
+    window.value.sum /
+    window.value.length
   }
   mean.changed observe { println(_) }
 

@@ -14,12 +14,12 @@ class MillBoard {
 
   /* slots by the 16 lines of the game */
   val lines = Signal { // #SIG
-    MillBoardRenamed.lines map { _ map { slot => stonesVar()(slot.index) } }
+    MillBoardRenamed.lines map { _ map { slot => stonesVar.value(slot.index) } }
   }
 
   /* lines mapped to owners */
   val lineOwners: Signal[Vector[Slot]] = Signal { // #SIG
-    (lines() map { line => // #EF
+    (lines.value map { line => // #EF
       if (line forall { _ == line.head }) line.head else Empty
     }).toVector
   }
@@ -40,26 +40,26 @@ class MillBoard {
     }))
 
   val color: Signal[SlotIndex => Slot] = Signal { // #SIG
-    val stones = stonesVar()
+    val stones = stonesVar.value
     slot => stones(slot.index)
   }
 
   /* several test signals*/
   val canPlace: Signal[SlotIndex => Boolean] = Signal { // #SIG
-    val col = color()
+    val col = color.value
     slot => col(slot) == Empty
   }
   val canRemove: Signal[SlotIndex => Boolean] = Signal { // #SIG
-    val col = color()
+    val col = color.value
     slot => col(slot) != Empty
   }
   val canJump: Signal[(SlotIndex, SlotIndex) => Boolean] = Signal { // #SIG
-    val removeAllowed = canRemove()
-    val placeAllowed  = canPlace()
+    val removeAllowed = canRemove.value
+    val placeAllowed  = canPlace.value
     (from, to) => removeAllowed(from) && placeAllowed(to)
   }
   val canMove: Signal[(SlotIndex, SlotIndex) => Boolean] = Signal { // #SIG
-    val jumpAllowed = canJump()
+    val jumpAllowed = canJump.value
     (from, to) => jumpAllowed(from, to) && MillBoardRenamed.isConnected(from, to)
   }
 
@@ -83,13 +83,13 @@ class MillBoard {
 
   val possibleMoves: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
     MillBoardRenamed.indices flatMap { from =>
-      MillBoardRenamed.indices collect { case to if canMove()(from, to) => from -> to }
+      MillBoardRenamed.indices collect { case to if canMove.value(from, to) => from -> to }
     }
   }
 
   val possibleJumps: Signal[Seq[(SlotIndex, SlotIndex)]] = Signal { // #SIG
     MillBoardRenamed.indices flatMap { from =>
-      MillBoardRenamed.indices collect { case to if canJump()(from, to) => from -> to }
+      MillBoardRenamed.indices collect { case to if canJump.value(from, to) => from -> to }
     }
   }
 
@@ -109,11 +109,11 @@ class MillBoard {
   val millClosed: Event[Slot] = millOpenedOrClosed && { (_: Slot) != Empty } // #EVT
 
   val numStones: Signal[Slot => Int] = Signal { // #SIG
-    val stones = stonesVar()
+    val stones = stonesVar.value
     (color: Slot) => stones.count(_ == color)
   }
-  val blackStones = Signal { numStones()(Black) } // #SIG
-  val whiteStones = Signal { numStones()(White) } // #SIG
+  val blackStones = Signal { numStones.value(Black) } // #SIG
+  val whiteStones = Signal { numStones.value(White) } // #SIG
   val numStonesChanged: Event[(Slot, Int)] = // #EVT
     blackStones.changed.map((Black, _: Int)) || whiteStones.changed.map((White, _: Int)) // #IF //#EF //#IF
 }

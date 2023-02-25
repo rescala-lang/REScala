@@ -32,7 +32,7 @@ class MapBenchmarkWithInsert {
       s :+ x
     })
     mappedSeq = Signal {
-      seq().map(x => {
+      seq.value.map(x => {
         x * x
       })
     }

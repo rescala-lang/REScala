@@ -30,8 +30,8 @@ object Main extends App {
       (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title
     }) hold "",      // #IF
     Signal.dynamic { // #SIG
-      val itemCount = (store.channels() map { case (_, items) => items().size }).sum
-      "Channels: " + store.channels().size + " Items: " + itemCount
+      val itemCount = (store.channels.value map { case (_, items) => items.value.size }).sum
+      "Channels: " + store.channels.value.size + " Items: " + itemCount
     },
     fetcher.state
   )

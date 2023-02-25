@@ -23,7 +23,7 @@ trait ReactiveText extends Reactor {
     ()
   }
   // out signal
-  lazy val text_out = Signal { userSet() }
+  lazy val text_out = Signal { userSet.value }
   reactions += { case EditDone(_) => userSet set text }
 }
 

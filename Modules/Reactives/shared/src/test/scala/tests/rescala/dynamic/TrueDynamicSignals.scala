@@ -15,7 +15,7 @@ class TrueDynamicSignals extends RETests {
     test("signals Nested In Vars") {
 
       val a = Var(3)
-      val b = Var(Signal(a()))
+      val b = Var(Signal(a.value))
       val c = Signal.dynamic(b.value.value)
 
       assert(c.readValueOnce === 3)
@@ -29,8 +29,8 @@ class TrueDynamicSignals extends RETests {
     test("nested Defined Signals") {
       val a = Var(3)
       val b = Signal.dynamic {
-        val c = Signal { a() }
-        c()
+        val c = Signal { a.value }
+        c.value
       }
 
       assert(b.readValueOnce === 3)
@@ -44,11 +44,11 @@ class TrueDynamicSignals extends RETests {
       val outside = Var(1)
       val inside  = Var(10)
 
-      def sig = Signal { outside() }
+      def sig = Signal { outside.value }
 
       val testsig = Signal.dynamic {
-        def sig = Signal { inside() }
-        sig()
+        def sig = Signal { inside.value }
+        sig.value
       }
 
       assert(testsig.readValueOnce === 10)
@@ -62,14 +62,14 @@ class TrueDynamicSignals extends RETests {
       val outside = Var(1)
       val inside  = Var(10)
 
-      def sig()(implicit turnSource: CreationTicket[State]) = Signal { outside() }
+      def sig()(implicit turnSource: CreationTicket[State]) = Signal { outside.value }
 
       val testsig = Signal.dynamic {
         {
-          def insideSig = Signal { inside() }
-          insideSig()
+          def insideSig = Signal { inside.value }
+          insideSig.value
         }
-        sig().apply()
+        sig().value
       }
 
       assert(testsig.readValueOnce === 1)
@@ -81,7 +81,7 @@ class TrueDynamicSignals extends RETests {
     test("outer And Inner Values") {
       val v = Var(0)
       object obj {
-        def sig(implicit ct: CreationTicket[State]) = Signal { v() }
+        def sig(implicit ct: CreationTicket[State]) = Signal { v.value }
       }
 
       val evt = Evt[Int]()
@@ -265,8 +265,8 @@ class TrueDynamicSignals extends RETests {
 
       def mini(x: Var[Map[Signal[Int], Int]]): Signal[Int] =
         Signal.dynamic {
-          val (node, value) = x().minBy { case (n, v) => n() + v }
-          node() + value
+          val (node, value) = x.value.minBy { case (n, v) => n.value + v }
+          node.value + value
         }
 
       val root = Signal { 0 }

@@ -22,7 +22,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
         left.value match {
           case Hungry => Taken(i.toString)
           case Thinking =>
-            right() match {
+            right.value match {
               case Hungry   => Taken(nextCircularIndex.toString)
               case Thinking => Free
             }
@@ -36,10 +36,10 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: RescalaInterface)
       val fork2                 = forks(mod(i - 1))
       implicit val info: ReInfo = ReInfo.create.derive(s"Vision($i)")
       val vision = Signal {
-        fork1() match {
+        fork1.value match {
           case Taken(`ownName`) => Eating
           case Taken(name)      => WaitingFor(name)
-          case Free => fork2() match {
+          case Free => fork2.value match {
               case Free        => Ready
               case Taken(name) => WaitingFor(name)
             }

@@ -28,13 +28,13 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   "correct invariants do not fail" in {
     val v = Var(0)
     val s1 = Signal {
-      v() * 2
+      v.value * 2
     }
     val s2 = Signal {
-      v() * 2
+      v.value * 2
     }
     val s3 = Signal {
-      s1() + s2()
+      s1.value + s2.value
     }
 
     s1.setValueGenerator(Gen.choose(0, 10))
@@ -52,15 +52,15 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
     val v2 = Var(0)
 
     val s1 = Signal {
-      v1() * 2
+      v1.value * 2
     }
     val s2 = Signal {
-      v2() * 2
+      v2.value * 2
     }
 
     // signal under test
     val sut = Signal {
-      s1() + s2()
+      s1.value + s2.value
     }
 
     v1.setValueGenerator(Arbitrary.arbitrary[Int])
@@ -74,9 +74,9 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
 
   "only closest generators are used" in {
     val top   = Var(10)
-    val left  = Signal { top() + 1 }
-    val right = Signal { top() + 2 }
-    val sut   = Signal { left() + right() }
+    val left  = Signal { top.value + 1 }
+    val right = Signal { top.value + 2 }
+    val sut   = Signal { left.value + right.value }
 
     val topChangedCount = top.changed.count()
 
@@ -92,7 +92,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   "expect invalid invariants to fail when testing node" in {
     val v = Var("Hello")
     val sut = Signal {
-      s"${v()}, World!"
+      s"${v.value}, World!"
     }
 
     v.setValueGenerator(Arbitrary.arbitrary[String])
@@ -108,7 +108,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
   "invariants can have names" in {
     val v = Var("Hello")
     val sut = Signal {
-      s"${v()}, World!"
+      s"${v.value}, World!"
     }
 
     v.setValueGenerator(Arbitrary.arbitrary[String])
@@ -126,7 +126,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
     val a = Var(10)
     val b = Var(20)
 
-    val sut = Signal { Math.pow(a().toDouble, 2) + Math.pow(b().toDouble, 2) }
+    val sut = Signal { Math.pow(a.value.toDouble, 2) + Math.pow(b.value.toDouble, 2) }
 
     sut.specify(
       Invariant { value => value >= a.now },
@@ -151,7 +151,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
       }
 
       val v   = Var(1)
-      val sut = Signal { v() }
+      val sut = Signal { v.value }
 
       v.setValueGenerator(Gen.posNum[Int])
       sut.specify(invariants: _*)

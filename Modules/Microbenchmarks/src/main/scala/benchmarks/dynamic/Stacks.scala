@@ -39,9 +39,9 @@ class StackState {
     dynamics = results.zipWithIndex.map {
       case (r, i) =>
         Signal.dynamic {
-          val v   = r()
+          val v   = r.value
           val idx = i + (if (step.test(v)) 2 else 1)
-          results(idx % threads)()
+          results(idx % threads).value
         }
     }
   }

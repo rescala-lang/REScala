@@ -31,24 +31,24 @@ class TextArea extends ReComponent {
   }
 
   override val preferredSize: ReSwingValue[Dimension] = Signal {
-    def it = LineIterator(buffer.iterable())
+    def it = LineIterator(buffer.iterable.value)
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
   preferredSize.using(() => peer.preferredSize, peer.preferredSize_= _, "preferredSize")
 
-  val charCount = Signal { buffer.length() }
+  val charCount = Signal { buffer.length.value }
 
-  val lineCount = Signal { LineIterator(buffer.iterable()).size }
+  val lineCount = Signal { LineIterator(buffer.iterable.value).size }
 
   val wordCount = Signal {
-    buffer.iterable().iterator.foldLeft((0, false)) { (c, ch) =>
+    buffer.iterable.value.iterator.foldLeft((0, false)) { (c, ch) =>
       val alphanum = Character.isLetterOrDigit(ch)
       (if (alphanum && !c._2) c._1 + 1 else c._1, alphanum)
     }._1
   }
 
   val selected = Signal {
-    val (it, dot, mark) = (buffer.iterable(), caret.dot(), caret.mark())
+    val (it, dot, mark) = (buffer.iterable.value, caret.dot.value, caret.mark.value)
     val (start, end)    = (min(dot, mark), max(dot, mark))
     new Iterable[Char] { def iterator = it.iterator.slice(start, end) }: Iterable[Char]
   }
@@ -86,19 +86,19 @@ class TextArea extends ReComponent {
     def dot_=(value: Int) = buffer.caretChanged.fire(value)
 
     // dot as position (row and column)
-    private val dotPosSignal = Signal { LineOffset.position(buffer.iterable(), dot()) }
+    private val dotPosSignal = Signal { LineOffset.position(buffer.iterable.value, dot.value) }
     def dotPos                    = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
     private val markVar = Var(0)
 
     // mark as offset
-    private val markSignal = Signal { markVar() }
+    private val markSignal = Signal { markVar.value }
     def mark               = markSignal
     def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.readValueOnce) markVar set value
 
     // mark as position (row and column)
-    private val markPosSignal = Signal { LineOffset.position(buffer.iterable(), mark()) }
+    private val markPosSignal = Signal { LineOffset.position(buffer.iterable.value, mark.value) }
     def markPos                    = markPosSignal
     def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
@@ -116,8 +116,8 @@ class TextArea extends ReComponent {
     protected[TextArea] val blink  = new Timer(500) start
     protected[TextArea] val steady = new Timer(500, false)
     protected[TextArea] val visible = blink.fired.toggle(
-      Signal { hasFocus() },
-      Signal { hasFocus() && steady.running() }
+      Signal { hasFocus.value },
+      Signal { hasFocus.value && steady.running.value }
     )
   }
 

@@ -10,7 +10,7 @@ class MacroEventTestSuite extends RETests {
       val ev1 = Evt[Int]()
       val v1  = Var(8)
       val snapshotEvent = Event {
-        ev1().map(i => i + v1())
+        ev1.value.map(i => i + v1.value)
       }
 
       val res = snapshotEvent.hold(0)
@@ -28,7 +28,7 @@ class MacroEventTestSuite extends RETests {
     test("map") {
       val ev1           = Evt[Int]()
       val v1            = Var(8)
-      val snapshotEvent = ev1.map(i => i + v1())
+      val snapshotEvent = ev1.map(i => i + v1.value)
 
       val res = snapshotEvent.hold(0)
 
@@ -61,7 +61,7 @@ class MacroEventTestSuite extends RETests {
     test("use Events In Signal Expression") {
       val e1  = Evt[Int]()
       val e2  = Evt[Int]()
-      val res = Signal { List(e1(), e2()).flatten.sum }
+      val res = Signal { List(e1.value, e2.value).flatten.sum }
 
       assert(res.readValueOnce === 0)
       e1.fire(10)
@@ -79,7 +79,7 @@ class MacroEventTestSuite extends RETests {
     test("use Event Expression") {
       val e1    = Evt[Int]()
       val e2    = Evt[Int]()
-      val event = Event { Some(List(e1(), e2()).flatten) }
+      val event = Event { Some(List(e1.value, e2.value).flatten) }
       val res   = event.hold(Nil)
 
       assert(res.readValueOnce === Nil)

@@ -18,18 +18,18 @@ object DropdownSample {
 object DropdownSample0 extends SimpleSwingApplication {
 
   val inputField     = new ReTextField(text = "Berlin, Paris, London, Rome", columns = 50)
-  val inputText      = Signal { inputField.text() }
-  val commaSeparated = Signal { if (inputText() == null) Nil else inputText().split(",\\s*").toList }
+  val inputText      = Signal { inputField.text.value }
+  val commaSeparated = Signal { if (inputText.value == null) Nil else inputText.value.split(",\\s*").toList }
 
   val dropdown       = new ReDynamicComboBox(options = commaSeparated, selection = -1)
-  val selectionIndex = Signal { dropdown.selection() }
+  val selectionIndex = Signal { dropdown.selection.value }
   val validSelection = Signal {
-    if (commaSeparated().indices.contains(selectionIndex())) Some(selectionIndex()) else None
+    if (commaSeparated.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None
   }
 
   // select the currently selected item manually
-  val currentSelectedItem = Signal { validSelection().map(i => commaSeparated()(i)) }
-  val outputString        = Signal { currentSelectedItem().getOrElse("Nothing") }
+  val currentSelectedItem = Signal { validSelection.value.map(i => commaSeparated.value(i)) }
+  val outputString        = Signal { currentSelectedItem.value.getOrElse("Nothing") }
   val outputField         = new ReTextField(text = outputString)
 
   /* Debug output */

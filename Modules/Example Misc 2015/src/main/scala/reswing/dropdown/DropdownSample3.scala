@@ -11,28 +11,28 @@ object DropdownSample3 extends SimpleSwingApplication {
   // initial values
   val col1 = new ReTextField(text = "Berlin", columns = 30)
   val col2 = new ReTextField(text = "Paris", columns = 30)
-  val val1 = Signal { col1.text() }
-  val val2 = Signal { col2.text() }
+  val val1 = Signal { col1.text.value }
+  val val2 = Signal { col2.text.value }
 
   val fields: Var[List[Signal[String]]] = Var(List(val1, val2))
-  val nFields                           = Signal { fields().size }
+  val nFields                           = Signal { fields.value.size }
 
-  val listOfSignals = Signal { fields() }
-  val options       = Signal.dynamic { listOfSignals().map(_()) }
+  val listOfSignals = Signal { fields.value }
+  val options       = listOfSignals.flatten
 
-  val innerChanged      = Signal { listOfSignals().map(_.changed) }
-  val anyChangedWrapped = Signal { innerChanged().reduce((a, b) => a || b) }
+  val innerChanged      = Signal { listOfSignals.value.map(_.changed) }
+  val anyChangedWrapped = Signal { innerChanged.value.reduce((a, b) => a || b) }
   val anyChanged        = anyChangedWrapped.flatten
 
   anyChanged observe { x => println("some value has changed: " + x) }
 
   val dropdown       = new ReDynamicComboBox(options = options, selection = -1)
-  val selectionIndex = Signal { dropdown.selection() }
-  val validSelection = Signal { if (options().indices.contains(selectionIndex())) Some(selectionIndex()) else None }
+  val selectionIndex = Signal { dropdown.selection.value }
+  val validSelection = Signal { if (options.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None }
 
   // select the currently selected item manually
-  val currentSelectedItem = Signal.dynamic { validSelection().map { i => listOfSignals()(i)() } }
-  val outputString        = Signal { currentSelectedItem().getOrElse("Nothing") }
+  val currentSelectedItem = Signal.dynamic { validSelection.value.map { i => listOfSignals.value(i).value } }
+  val outputString        = Signal { currentSelectedItem.value.getOrElse("Nothing") }
   val outputField         = new ReTextField(text = outputString)
 
   object frame extends MainFrame {
@@ -76,7 +76,7 @@ object DropdownSample3 extends SimpleSwingApplication {
       contents += new Label("Value " + n + ":")
       contents += col
     }
-    val content: Signal[String] = Signal { col.text() }
+    val content: Signal[String] = Signal { col.text.value }
     fields set content :: fields.readValueOnce
     frame.pack()
   }

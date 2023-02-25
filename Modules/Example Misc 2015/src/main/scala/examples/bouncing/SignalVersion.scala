@@ -32,12 +32,12 @@ class SignalVersion {
   // entirely functionally dependent on time (ticks)
   val x = Signal {
     val width = Max_X - Size
-    val d     = speed.x * tick() + initPosition.x
+    val d     = speed.x * tick.value + initPosition.x
     if ((d / width) % 2 == 0) d % width else width - d % width
   }
   val y = Signal {
     val width = Max_Y - Size
-    val d     = speed.y * tick() + initPosition.y
+    val d     = speed.y * tick.value + initPosition.y
     if ((d / width) % 2 == 0) d % width else width - d % width
   }
 

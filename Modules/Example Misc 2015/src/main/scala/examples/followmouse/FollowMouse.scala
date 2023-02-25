@@ -33,14 +33,14 @@ class FollowMouse {
   val time = tick.iterate(0.0) { (acc: Double) => (acc + 0.1) % (math.Pi * 2) }
 
   val mouse  = new Mouse
-  val mouseX = Signal { mouse.position().getX.toInt - Size / 2 }
-  val mouseY = Signal { mouse.position().getY.toInt - Size / 2 }
+  val mouseX = Signal { mouse.position.value.getX.toInt - Size / 2 }
+  val mouseY = Signal { mouse.position.value.getY.toInt - Size / 2 }
 
-  val xOffset = Signal { math.sin(time()) * Range }
-  val yOffset = Signal { math.cos(time()) * Range }
+  val xOffset = Signal { math.sin(time.value) * Range }
+  val yOffset = Signal { math.cos(time.value) * Range }
 
-  val x = Signal { mouseX() + xOffset().toInt }
-  val y = Signal { mouseY() + yOffset().toInt }
+  val x = Signal { mouseX.value + xOffset.value.toInt }
+  val y = Signal { mouseY.value + yOffset.value.toInt }
 
   // redraw code
   val stateChanged = mouse.position.changed.||[Any](tick)

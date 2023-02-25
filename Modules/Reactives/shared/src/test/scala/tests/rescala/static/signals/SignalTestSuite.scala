@@ -37,7 +37,7 @@ class SignalTestSuite extends RETests {
     test("signal Reevaluates The Expression When Something It Depends On Is Updated") {
       val v = Var(0)
       var i = 1
-      val s = Signal { v() + i }
+      val s = Signal { v.value + i }
       i = 2
       assert(s.readValueOnce == 1)
       v.set(2)
@@ -56,9 +56,9 @@ class SignalTestSuite extends RETests {
 
       val v = Var(1)
 
-      val s1 = Signal { 2 * v() }
-      val s2 = Signal { 3 * v() }
-      val s3 = Signal { s1() + s2() }
+      val s1 = Signal { 2 * v.value }
+      val s2 = Signal { 3 * v.value }
+      val s3 = Signal { s1.value + s2.value }
 
       assertLevel(v, 0)
       assertLevel(s1, 1)
@@ -71,7 +71,7 @@ class SignalTestSuite extends RETests {
       var changes = 0
       val v       = Var(1)
       val s = Signal {
-        changes += 1; v() + 1
+        changes += 1; v.value + 1
       }
       assert(changes === 1)
       assert(s.readValueOnce === 2)
@@ -89,7 +89,7 @@ class SignalTestSuite extends RETests {
       val `dynamic signal changing from level 1 to level 5` = Signal {
         if (v0.value == "level 0") v0.value
         else {
-          v3.map(_ + "level 4 inner").apply()
+          v3.map(_ + "level 4 inner").value
         }
       }
       assert(`dynamic signal changing from level 1 to level 5`.readValueOnce == "level 0")
@@ -184,7 +184,7 @@ class SignalTestSuite extends RETests {
     test("no Change Propagation") {
       val v  = Var(1)
       val s  = v.map(_ => 1)
-      val s2 = Signal { s() }
+      val s2 = Signal { s.value }
 
       assert(s2.readValueOnce === 1)
       assert(s.readValueOnce === 1)

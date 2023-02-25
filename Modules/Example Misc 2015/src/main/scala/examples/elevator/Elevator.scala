@@ -27,18 +27,18 @@ class Elevator(val nFloors: Int) {
   val position: Signal[Int] = integrate { speed.now * direction.now }
   // Define Signals describing state and behavior of the elevator
   val destination = Signal {
-    queue.head() match {
-      case None         => position()
+    queue.head.value match {
+      case None         => position.value
       case Some(target) => FloorPos(target)
     }
   }
-  val distance  = Signal { destination() - position() }
-  val direction = Signal { math.signum(distance()) }
+  val distance  = Signal { destination.value - position.value }
+  val direction = Signal { math.signum(distance.value) }
 
-  val stopped = Signal { speed() == 0 }
+  val stopped = Signal { speed.value == 0 }
 
   val accelaration: Signal[Int] = Signal {
-    val break = math.abs(distance()) <= BreakDist
+    val break = math.abs(distance.value) <= BreakDist
     if (break) {
       if (stopped.value) 0
       else -MaxAccel
@@ -46,10 +46,10 @@ class Elevator(val nFloors: Int) {
   }
 
   val currentFloor = Signal {
-    val p = position()
+    val p = position.value
     FloorPos.indexOf(FloorPos.minBy(f => math.abs(f - p)))
   }
-  val reached                  = Signal { stopped() && position() == destination() }
+  val reached                  = Signal { stopped.value && position.value == destination.value }
   val reachedFloor: Event[Int] = reached.changed && { _ == true } map { (_: Boolean) => currentFloor.value }
 
   val waitingTime = Fold(0)(

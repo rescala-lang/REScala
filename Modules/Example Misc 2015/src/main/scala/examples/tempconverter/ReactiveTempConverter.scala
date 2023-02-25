@@ -14,8 +14,8 @@ object ReactiveTempConverter extends SimpleSwingApplication {
       object celsius    extends ReactiveTextfield { columns = 5 }
       object fahrenheit extends ReactiveTextfield { columns = 5 }
 
-      fahrenheit.text = Signal { "" + (("0" + celsius.text_out()).toInt * 9 / 5 + 32) }
-      celsius.text = Signal { "" + (("0" + fahrenheit.text_out()).toInt - 32) * 5 / 9 }
+      fahrenheit.text = Signal { "" + (("0" + celsius.text_out.value).toInt * 9 / 5 + 32) }
+      celsius.text = Signal { "" + (("0" + fahrenheit.text_out.value).toInt - 32) * 5 / 9 }
 
       contents = new FlowPanel {
         contents += celsius

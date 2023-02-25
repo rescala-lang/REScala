@@ -56,16 +56,16 @@ class GUI(
       configure()
 
       val channelList = new ReListViewEx[RSSChannel](
-        Signal { store.channels().keys.toSeq }, // #SIG
+        Signal { store.channels.value.keys.toSeq }, // #SIG
         visibleRowCount = 3
       ) {
         peer.renderer = ListView.Renderer(_.title)
       }
 
       val selectedChannelItems = Signal.dynamic { // #SIG
-        channelList.selectedItem() match {
-          case Some(channel) => store.channels().get(channel) match {
-              case Some(items) => items().toSeq
+        channelList.selectedItem.value match {
+          case Some(channel) => store.channels.value.get(channel) match {
+              case Some(items) => items.value.toSeq
               case _           => Seq.empty
             }
           case _ => Seq.empty
