@@ -9,6 +9,6 @@ trait PlatformSchedulers {
       case other => throw new IllegalArgumentException(s"unknown engine $other")
     }
 
-  type defaultPlatformState[V] = Schedulers.unmanaged.bundle.State[V]
-  def defaultPlatformScheduler: Scheduler[defaultPlatformState] = Schedulers.unmanaged.scheduler
+  type defaultPlatformState[V] = Schedulers.unmanaged.BundleState[V]
+  def defaultPlatformScheduler: Schedulers.unmanaged.scheduler.type = Schedulers.unmanaged.scheduler
 }
