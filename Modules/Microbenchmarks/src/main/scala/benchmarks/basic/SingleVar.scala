@@ -2,9 +2,9 @@ package benchmarks.basic
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
-import rescala.Schedulers
 import rescala.core.Scheduler
 import rescala.operator.Interface
+import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}

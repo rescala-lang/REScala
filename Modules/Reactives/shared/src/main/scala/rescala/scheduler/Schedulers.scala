@@ -1,4 +1,4 @@
-package rescala
+package rescala.scheduler
 
 import rescala.core.{AdmissionTicket, ReSource, Scheduler}
 import rescala.operator.Interface

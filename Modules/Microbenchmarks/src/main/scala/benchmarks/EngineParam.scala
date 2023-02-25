@@ -1,8 +1,8 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import rescala.Schedulers
 import rescala.operator.Interface
+import rescala.scheduler.Schedulers
 
 @State(Scope.Benchmark)
 class EngineParam {

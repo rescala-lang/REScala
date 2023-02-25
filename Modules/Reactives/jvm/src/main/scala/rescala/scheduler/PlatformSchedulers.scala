@@ -1,4 +1,4 @@
-package rescala
+package rescala.scheduler
 
 import rescala.core.Scheduler
 import rescala.fullmv.FullMVUtil

@@ -1,4 +1,4 @@
-package rescala
+package rescala.scheduler
 
 import rescala.operator.Interface
 

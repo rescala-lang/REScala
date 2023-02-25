@@ -36,7 +36,7 @@ trait Interface extends Operators {
     *
     * @param initialWrites  All inputs that might be changed by the transaction
     * @param admissionPhase An admission function that may
-    *                       [[rescala.operator.Sources.Evt.admit]] / [[rescala.operator.Sources.Var.admit]] arbitrary
+    *                       [[rescala.operator.SourceBundle.Evt.admit]] / [[rescala.operator.SourceBundle.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
     * @return Result of the admission function

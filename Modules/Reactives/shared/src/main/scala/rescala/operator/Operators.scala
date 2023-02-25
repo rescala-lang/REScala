@@ -11,6 +11,6 @@ trait Operators extends AnyRef // to make the below more symmetric
     with SignalBundle
     with FoldBundle
     with FlattenBundle
-    with Sources {
+    with SourceBundle {
   type State[_]
 }

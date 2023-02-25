@@ -3,8 +3,8 @@ package benchmarks.dynamic
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.Schedulers
 import rescala.operator.Interface
+import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 import scala.collection.immutable.Range

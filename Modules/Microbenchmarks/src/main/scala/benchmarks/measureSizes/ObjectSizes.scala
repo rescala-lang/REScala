@@ -3,7 +3,8 @@ package rescala.benchmarks.measureSizes
 import kofre.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
 import rescala.core.{AccessHandler, ReevTicket}
-import rescala.{Schedulers, default}
+import rescala.scheduler.Schedulers
+import rescala.default
 
 object ObjectSizes {
 
@@ -19,7 +20,7 @@ object ObjectSizes {
     measure("var 5", rescala.default.Var(5))
     measure("default empty signal", rescala.default.Signal {})
     measure("default empty signal x 10", List.fill(100)(rescala.default.Signal {}))
-    measure("synchron empty signal", rescala.Schedulers.synchron.Signal {})
+    measure("synchron empty signal", Schedulers.synchron.Signal {})
 
     def ptx = new default.bundle.ParRPTransaction(new rescala.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))

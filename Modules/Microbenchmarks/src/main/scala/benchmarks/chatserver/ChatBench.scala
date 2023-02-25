@@ -3,8 +3,8 @@ package benchmarks.chatserver
 import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.Schedulers
 import rescala.operator.Interface
+import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{Lock, ReentrantLock}

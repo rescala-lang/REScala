@@ -3,9 +3,9 @@ package benchmarks.simple
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.ThreadParams
-import rescala.Schedulers
 import rescala.core.ScopeSearch
 import rescala.operator.Interface
+import rescala.scheduler.Schedulers
 
 import java.util.concurrent.TimeUnit
 

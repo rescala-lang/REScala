@@ -2,6 +2,8 @@ package tests.rescala.concurrency.philosophers
 
 import org.scalatest.funsuite.AnyFunSuite
 import rescala.operator.Interface
+import rescala.scheduler
+import rescala.scheduler.Schedulers
 import tests.rescala.testtools.Spawn
 
 import scala.concurrent.TimeoutException
@@ -48,7 +50,7 @@ class PhiloTest extends AnyFunSuite {
     ()
   }
 
-  test("eating Contests Spinning") { `eat!`(rescala.Schedulers.parrp, dynamic = false) }
-  test("eating Contests Spinning Dynamic") { `eat!`(rescala.Schedulers.parrp, dynamic = true) }
+  test("eating Contests Spinning") { `eat!`(Schedulers.parrp, dynamic = false) }
+  test("eating Contests Spinning Dynamic") { `eat!`(scheduler.Schedulers.parrp, dynamic = true) }
 
 }

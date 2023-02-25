@@ -1,6 +1,6 @@
 package tests.rescala.testtools
 
-import rescala.Schedulers._
+import rescala.scheduler.Schedulers._
 import rescala.fullmv.FullMVApi
 import rescala.operator.Interface
 
