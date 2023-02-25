@@ -15,8 +15,8 @@ import rescala.operator.Interface
 @State(Scope.Thread)
 class ChainSignalHalfChange {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var source: Var[Int]    = _

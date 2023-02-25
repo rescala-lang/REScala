@@ -5,6 +5,7 @@ import rescala.core.ReadAs
 import scala.annotation.compileTimeOnly
 
 trait MacroAccess[+A] extends ReadAs[A] {
+
   /** Makes the enclosing reactive expression depend on the current value of the reactive.
     * Is an alias for [[rescala.macros.MacroAccess.apply]].
     *

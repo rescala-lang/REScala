@@ -158,13 +158,15 @@ trait SignalBundle {
 
     inline def dynamic[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = {
       val (sources, fun, isStatic) =
-        rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.DynamicTicket[BundleState], false](expr)
+        rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.DynamicTicket[BundleState], false](
+          expr
+        )
       Signal.dynamic(sources: _*)(fun)
     }
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => T)(implicit
-                                                                                                 ct: CreationTicket[BundleState]
+        ct: CreationTicket[BundleState]
     ): Signal[T] = {
       ct.create[Pulse[T], SignalImpl[BundleState, T] with Signal[T]](
         dependencies.toSet,
@@ -177,19 +179,23 @@ trait SignalBundle {
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
     def dynamic[T](dependencies: ReSource.of[BundleState]*)(expr: DynamicTicket[BundleState] => T)(implicit
-                                                                                                   ct: CreationTicket[BundleState]
+        ct: CreationTicket[BundleState]
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
-      ct.create[Pulse[T], SignalImpl[BundleState, T] with Signal[T]](staticDeps, Pulse.empty, needsReevaluation = true) {
+      ct.create[Pulse[T], SignalImpl[BundleState, T] with Signal[T]](
+        staticDeps,
+        Pulse.empty,
+        needsReevaluation = true
+      ) {
         state => new SignalImpl(state, (t, _) => expr(t), ct.info, Some(staticDeps)) with Signal[T]
       }
     }
 
     /** converts a future to a signal */
     def fromFuture[A](fut: Future[A])(implicit
-                                      scheduler: Scheduler[BundleState],
-                                      ec: ExecutionContext,
-                                      name: ReInfo
+        scheduler: Scheduler[BundleState],
+        ec: ExecutionContext,
+        name: ReInfo
     ): Signal[A] = {
       val creationTicket =
         new CreationTicket[BundleState](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
@@ -223,8 +229,10 @@ trait SignalBundle {
     def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[BundleState]): Signal[B] =
       Signal { fun(n1.value) }
 
-    def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(using CreationTicket[BundleState]): Signal[B] = {
-      Signal{ fun(n1.value, n2.value) }
+    def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(using
+        CreationTicket[BundleState]
+    ): Signal[B] = {
+      Signal { fun(n1.value, n2.value) }
     }
 
   }

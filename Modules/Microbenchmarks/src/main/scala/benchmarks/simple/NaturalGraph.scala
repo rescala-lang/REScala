@@ -16,8 +16,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class NaturalGraph {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var source: Var[Int]          = _

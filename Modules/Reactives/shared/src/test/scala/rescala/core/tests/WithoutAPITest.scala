@@ -31,8 +31,8 @@ class WithoutAPITest extends RETests {
     }
 
     class CustomDerivedString(
-                               initState: BundleState[String],
-                               inputSource: ReadAs.of[BundleState, String]
+        initState: BundleState[String],
+        inputSource: ReadAs.of[BundleState, String]
     ) extends Derived
         with ReadAs[String] {
       override type Value    = String

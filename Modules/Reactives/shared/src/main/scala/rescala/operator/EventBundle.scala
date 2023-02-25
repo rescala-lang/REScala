@@ -263,9 +263,12 @@ trait EventBundle extends FoldBundle {
   object Events {
 
     /** the basic method to create static events */
-    def staticNamed[T](name: String, dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => Pulse[T])(implicit
-                                                                                                                           ticket: CreationTicket[BundleState],
-                                                                                                                           info: ReInfo
+    def staticNamed[T](
+        name: String,
+        dependencies: ReSource.of[BundleState]*
+    )(expr: StaticTicket[BundleState] => Pulse[T])(implicit
+        ticket: CreationTicket[BundleState],
+        info: ReInfo
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](
         dependencies.toSet,
@@ -278,16 +281,20 @@ trait EventBundle extends FoldBundle {
 
     /** Creates static events */
     def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => Option[T])(implicit
-                                                                                                         ticket: CreationTicket[BundleState]
+        ticket: CreationTicket[BundleState]
     ): Event[T] =
       staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))(ticket, ticket.info)
 
     /** Creates dynamic events */
     def dynamic[T](dependencies: ReSource.of[BundleState]*)(expr: DynamicTicket[BundleState] => Option[T])(implicit
-                                                                                                           ticket: CreationTicket[BundleState]
+        ticket: CreationTicket[BundleState]
     ): Event[T] = {
       val staticDeps = dependencies.toSet
-      ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](staticDeps, Pulse.NoChange, needsReevaluation = true) {
+      ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](
+        staticDeps,
+        Pulse.NoChange,
+        needsReevaluation = true
+      ) {
         state =>
           new EventImpl(state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps)) with Event[T]
       }
@@ -296,7 +303,8 @@ trait EventBundle extends FoldBundle {
     /** Creates change events */
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket[BundleState]): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
-        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[BundleState, T] with Event[Diff[T]]](
+        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[BundleState, T]
+          with Event[Diff[T]]](
           Set[ReSource.of[BundleState]](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true

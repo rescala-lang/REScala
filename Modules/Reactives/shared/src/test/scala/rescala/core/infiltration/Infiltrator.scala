@@ -9,9 +9,9 @@ class Infiltrator(val api: Interface with Levelbased) {
   import api._
   // final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
   final def assertLevel(
-                         reactive: ReSource.of[api.BundleState],
-                         level: Int,
-                         text: String = "level did not match"
+      reactive: ReSource.of[api.BundleState],
+      level: Int,
+      text: String = "level did not match"
   )(implicit maybe: Scheduler[api.BundleState]) =
     if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[_]]) {
       reactive.state match {

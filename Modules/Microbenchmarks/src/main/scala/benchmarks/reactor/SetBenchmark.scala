@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class SetBenchmark {
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
-  final lazy val reactorApi    = new ReactorBundle[stableEngine.type](stableEngine)
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
+  final lazy val reactorApi   = new ReactorBundle[stableEngine.type](stableEngine)
   import reactorApi._
   import stableEngine._
 

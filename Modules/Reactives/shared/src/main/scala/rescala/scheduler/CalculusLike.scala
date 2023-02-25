@@ -3,7 +3,10 @@
   */
 package rescala.scheduler
 
-import rescala.core.{AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
+import rescala.core.{
+  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
+  Transaction
+}
 
 trait CalculusLike {
 

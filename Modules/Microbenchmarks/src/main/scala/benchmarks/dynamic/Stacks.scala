@@ -14,8 +14,8 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var sources: Array[Var[Int]]     = _

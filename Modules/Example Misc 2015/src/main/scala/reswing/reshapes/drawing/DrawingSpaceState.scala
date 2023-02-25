@@ -24,7 +24,8 @@ class DrawingSpaceState {
   // Without this indirection, the access above is made static, which causes an immediate infinite recursion
   def selectedShape = _selectedShape
   // currently drawn shapes
-  final lazy val shapes: Signal[List[Shape]] = Signal { commandsShapes.value match { case (_, shapes) => shapes } } // #SIG
+  final lazy val shapes: Signal[List[Shape]] =
+    Signal { commandsShapes.value match { case (_, shapes) => shapes } } // #SIG
   // all executed commands
   final lazy val commands: Signal[List[Command]] =
     Signal { commandsShapes.value match { case (commands, _) => commands } } // #SIG

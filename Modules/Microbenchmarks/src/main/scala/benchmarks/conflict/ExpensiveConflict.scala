@@ -32,8 +32,8 @@ class ExpensiveConflict {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var cheapSource: Var[Int]     = _

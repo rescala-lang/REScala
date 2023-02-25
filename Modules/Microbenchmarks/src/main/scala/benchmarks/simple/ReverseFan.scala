@@ -17,8 +17,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class ReverseFan {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var sources: Array[Var[Int]] = _

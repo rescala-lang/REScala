@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class Creation {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   @Setup

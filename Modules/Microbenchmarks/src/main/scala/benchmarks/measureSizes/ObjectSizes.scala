@@ -21,7 +21,10 @@ object ObjectSizes {
     measure("var 5", rescala.default.Var(5))
     measure("default empty signal", rescala.default.Signal {})
     measure("default empty signal x 10", List.fill(100)(rescala.default.Signal {}))
-    measure("synchron empty signal", rescala.interfaces.synchron.Signal(using rescala.interfaces.synchron.implicitScheduler){})
+    measure(
+      "synchron empty signal",
+      rescala.interfaces.synchron.Signal(using rescala.interfaces.synchron.implicitScheduler) {}
+    )
 
     def ptx = new ParRPDefault.ParRPTransaction(new rescala.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))
@@ -31,10 +34,8 @@ object ObjectSizes {
         ptx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: ReSource.of[ParRPDefault.ParRPState])
-              : reactive.Value = ???
-          override def dynamicAccess(reactive: ReSource.of[ParRPDefault.ParRPState])
-              : reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[ParRPDefault.ParRPState]): reactive.Value  = ???
+          override def dynamicAccess(reactive: ReSource.of[ParRPDefault.ParRPState]): reactive.Value = ???
         }
       )
     )

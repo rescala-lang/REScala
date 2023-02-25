@@ -10,6 +10,7 @@ trait ReSource {
   type State[_]
   protected[rescala] def state: State[Value]
   def info: ReInfo
+
   /** Converts the `base` value that is used during the transaction, to the value stored outside the transaction */
   protected[rescala] def commit(base: Value): Value
 }
@@ -355,8 +356,7 @@ trait Transaction[State[_]] {
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
 trait Scheduler[S[_]] extends DynamicScope[S] {
 
-  final def forceNewTransaction[R](initialWrites: ReSource.of[S]*)(admissionPhase: AdmissionTicket[S] => R)
-      : R = {
+  final def forceNewTransaction[R](initialWrites: ReSource.of[S]*)(admissionPhase: AdmissionTicket[S] => R): R = {
     forceNewTransaction(initialWrites.toSet, admissionPhase)
   }
   def forceNewTransaction[R](initialWrites: Set[ReSource.of[S]], admissionPhase: AdmissionTicket[S] => R): R

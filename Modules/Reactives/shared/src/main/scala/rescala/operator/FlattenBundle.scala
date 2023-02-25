@@ -22,7 +22,9 @@ trait FlattenBundle {
   ] = sig => Signal.dynamic(sig.value.value)
 
   /** Flatten a Signal[Array[Signal[B]\]\] into a Signal[Array[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
-  implicit def flattenImplicitForArraySignals[B: ClassTag, Sig[U] <: Signal[U]](using CreationTicket[BundleState]): Flatten[
+  implicit def flattenImplicitForArraySignals[B: ClassTag, Sig[U] <: Signal[U]](using
+      CreationTicket[BundleState]
+  ): Flatten[
     Signal[Array[Sig[B]]],
     Signal[Array[B]]
   ] = sig => Signal.dynamic { sig.value.map(_.value) }

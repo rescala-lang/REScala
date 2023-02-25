@@ -134,8 +134,9 @@ abstract class Animal(implicit world: World) extends BoardElement {
 
   // we do not have a built in method for this kind of “fold some snapshot” but its not that hard to write one
   final protected val energy: Signal[Int] =
-    Event { world.time.tick.value.map(_ => energyGain.value - energyDrain.value) }.fold(Animal.StartEnergy)((current, change) =>
-      current + change
+    Event { world.time.tick.value.map(_ => energyGain.value - energyDrain.value) }.fold(Animal.StartEnergy)(
+      (current, change) =>
+        current + change
     )
 
   final override val isDead = Signal.lift(age, energy) { (a, e) => a > Animal.MaxAge || e < 0 }

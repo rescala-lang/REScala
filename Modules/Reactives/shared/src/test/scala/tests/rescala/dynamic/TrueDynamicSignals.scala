@@ -130,7 +130,7 @@ class TrueDynamicSignals extends RETests {
     // }
 
     test("extracting Signal Side Effects") {
-      val e1 = Evt[Int]()
+      val e1                                                                 = Evt[Int]()
       def newSignal()(implicit ct: CreationTicket[BundleState]): Signal[Int] = e1.count()
 
       val macroRes = Signal {

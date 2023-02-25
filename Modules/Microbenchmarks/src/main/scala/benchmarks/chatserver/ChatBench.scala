@@ -41,8 +41,8 @@ class ChatBench {
 @State(Scope.Benchmark)
 class BenchState {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var cs: ChatServer[stableEngine.type] = _

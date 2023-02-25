@@ -34,7 +34,8 @@ class ShapePanel extends BoxPanel(Orientation.Vertical) {
     contents = shapesPanel
   }
 
-  val deleted = UnionEvent(Signal { shapeViews.value map { shapeView => shapeView.deleted } }) // #SIG //#UE( //#EVT //#IF )
+  val deleted =
+    UnionEvent(Signal { shapeViews.value map { shapeView => shapeView.deleted } }) // #SIG //#UE( //#EVT //#IF )
 }
 
 class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orientation.Horizontal) {

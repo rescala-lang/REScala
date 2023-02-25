@@ -1,6 +1,9 @@
 package rescala.scheduler
 
-import rescala.core.{AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, Scheduler, SchedulerImpl, Transaction}
+import rescala.core.{
+  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, Scheduler, SchedulerImpl,
+  Transaction
+}
 import rescala.structure.Observe
 
 import scala.annotation.nowarn

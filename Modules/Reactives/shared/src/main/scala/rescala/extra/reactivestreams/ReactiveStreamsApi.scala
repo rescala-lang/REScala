@@ -44,10 +44,10 @@ class ReactiveStreamsApi(val api: Interface) {
   }
 
   class SubscriptionReactive[T](
-                                 bud: BundleState[Pulse[T]],
-                                 dependency: ReadAs.of[BundleState, Pulse[T]],
-                                 subscriber: Subscriber[_ >: T],
-                                 name: ReInfo
+      bud: BundleState[Pulse[T]],
+      dependency: ReadAs.of[BundleState, Pulse[T]],
+      subscriber: Subscriber[_ >: T],
+      name: ReInfo
   ) extends Base[BundleState, Pulse[T]](bud, name)
       with Derived
       with Subscription {
@@ -105,9 +105,9 @@ class ReactiveStreamsApi(val api: Interface) {
       new REPublisher[T](dependency, fac)
 
     def subscription[T](
-                         dependency: ReadAs.of[BundleState, Pulse[T]],
-                         subscriber: Subscriber[_ >: T],
-                         fac: Scheduler[BundleState]
+        dependency: ReadAs.of[BundleState, Pulse[T]],
+        subscriber: Subscriber[_ >: T],
+        fac: Scheduler[BundleState]
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>
         val name: ReInfo = ReInfo.create.derive(s"forSubscriber($subscriber)")

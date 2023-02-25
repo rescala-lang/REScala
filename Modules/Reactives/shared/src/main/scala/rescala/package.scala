@@ -15,4 +15,3 @@ package object rescala {
     */
   object default extends Interface.FromScheduler(rescala.interfaces.defaultPlatformScheduler)
 }
-

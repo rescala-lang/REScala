@@ -1,7 +1,10 @@
 package rescala.scheduler
 
 import rescala.core
-import rescala.core.{AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Tracing, Transaction}
+import rescala.core.{
+  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Tracing,
+  Transaction
+}
 
 import scala.annotation.nowarn
 import scala.collection.mutable.ListBuffer

@@ -16,8 +16,8 @@ import java.util.concurrent.locks.ReadWriteLock
 @State(Scope.Thread)
 class StaticVsDynamic {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   @Param(Array("true", "false"))

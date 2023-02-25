@@ -37,7 +37,8 @@ object DropdownSample1 extends SimpleSwingApplication {
 
       val dropdown       = new ReDynamicComboBox(options = options, selection = -1)
       val selectionIndex = Signal { dropdown.selection.value }
-      val validSelection = Signal { if (options.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None }
+      val validSelection =
+        Signal { if (options.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None }
 
       // select the currently selected item manually
       val currentSelectedItem = Signal { validSelection.value.map(i => options.value(i)) }

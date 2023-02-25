@@ -168,8 +168,8 @@ class Tags[Api <: Interface](val api: Api) {
   // : AttrValue[Signal[T]] = genericReactiveAttrValue[T, S, ({type λ[T2] = Signal[T2]})#λ]
 
   def genericReactiveStyleValue[T, Sig[T2] <: Signal[T2]](implicit
-                                                          engine: DynamicScope[BundleState],
-                                                          tstyle: StyleValue[T]
+      engine: DynamicScope[BundleState],
+      tstyle: StyleValue[T]
   ): StyleValue[Sig[T]] =
     new StyleValue[Sig[T]] {
       def apply(t: dom.Element, s: Style, signal: Sig[T]): Unit = {

@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class TurnCreation {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
 
   @Setup
   def setup(engineParam: EngineParam) = {

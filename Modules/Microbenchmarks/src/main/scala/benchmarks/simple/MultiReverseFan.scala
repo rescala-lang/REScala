@@ -17,8 +17,8 @@ import rescala.operator.Interface
 @State(Scope.Benchmark)
 class MultiReverseFan {
 
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var sources: Array[Var[Int]]    = _

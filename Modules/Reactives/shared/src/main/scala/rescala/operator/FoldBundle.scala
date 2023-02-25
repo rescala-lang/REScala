@@ -22,14 +22,16 @@ trait FoldBundle {
     /** Fold branches allow to define more complex fold logic */
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
-        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[BundleState], DynamicTicket[BundleState], false](expr)
+        rescala.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[BundleState], DynamicTicket[BundleState], false](
+          expr
+        )
       Branch(sources, isStatic, fun)
     }
 
     class Branch[S](
-                     val staticDependencies: List[ReSource.of[BundleState]],
-                     val isStatic: Boolean,
-                     val run: DynamicTicket[BundleState] => FoldState[S] ?=> S
+        val staticDependencies: List[ReSource.of[BundleState]],
+        val isStatic: Boolean,
+        val run: DynamicTicket[BundleState] => FoldState[S] ?=> S
     )
 
     def apply[T](init: => T)(branches: Branch[T]*)(using ticket: CreationTicket[BundleState]): Signal[T] = {

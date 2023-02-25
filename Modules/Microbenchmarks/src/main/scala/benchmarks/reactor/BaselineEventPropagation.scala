@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class BaselineEventPropagation {
-  var engine: Interface = _
-  final lazy val stableEngine  = engine
+  var engine: Interface       = _
+  final lazy val stableEngine = engine
   import stableEngine._
 
   var event: Evt[Int]     = _
