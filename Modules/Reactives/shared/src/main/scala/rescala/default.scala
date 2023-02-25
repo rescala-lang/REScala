@@ -8,7 +8,4 @@ import rescala.core.Scheduler
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
-object default extends Interface {
-  override type BundleState[V] = rescala.scheduler.Schedulers.defaultPlatformState[V]
-  override def scheduler: Scheduler[BundleState] = rescala.scheduler.Schedulers.defaultPlatformScheduler
-}
+object default extends Interface.FromScheduler(rescala.scheduler.Schedulers.defaultPlatformScheduler)
