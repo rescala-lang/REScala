@@ -7,7 +7,7 @@ import rescala.core.ReSource.of
 import rescala.core.{InitialChange, Observation, ReSource}
 import rescala.operator.Interface
 import rescala.scheduler.TopoBundle
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 import scala.collection.mutable.ListBuffer
 

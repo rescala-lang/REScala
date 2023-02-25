@@ -3,7 +3,7 @@ package rescala.extra.reactivestreams
 import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import rescala.core.{Base, Derived, ReInfo, ReadAs, Scheduler, ScopeSearch}
 import rescala.operator.Interface
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 import java.util.Objects
 import scala.util.{Failure, Success}

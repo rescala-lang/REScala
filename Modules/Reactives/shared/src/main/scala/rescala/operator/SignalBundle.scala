@@ -2,8 +2,8 @@ package rescala.operator
 
 import rescala.core.*
 import rescala.macros.MacroAccess
-import rescala.structures.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.structures.{Diff, Observe, ObserveInteract, Pulse, RExceptions, SignalImpl}
+import rescala.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.structure.{Diff, Observe, ObserveInteract, Pulse, RExceptions, SignalImpl}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}

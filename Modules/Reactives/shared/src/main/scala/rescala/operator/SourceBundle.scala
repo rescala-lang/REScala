@@ -3,7 +3,7 @@ package rescala.operator
 import rescala.core.{
   AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
 }
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 trait SourceBundle {
   self: Operators =>

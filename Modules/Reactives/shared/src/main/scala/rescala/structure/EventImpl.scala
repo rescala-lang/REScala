@@ -1,7 +1,7 @@
-package rescala.structures
+package rescala.structure
 
 import rescala.core.{DynamicTicket, ReInfo, ReSource, ReevTicket}
-import rescala.structures.Pulse.NoChange
+import rescala.structure.Pulse.NoChange
 
 /** @param isDynamicWithStaticDeps If this is None, the event is static. Else, it is dynamic with the set of static dependencies */
 class EventImpl[State[_], T](

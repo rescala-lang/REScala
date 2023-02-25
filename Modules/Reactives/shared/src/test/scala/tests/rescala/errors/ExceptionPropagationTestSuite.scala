@@ -2,8 +2,8 @@ package tests.rescala.errors
 
 import rescala.scheduler
 import rescala.scheduler.Schedulers
-import rescala.structures.RExceptions.ObservedException
-import rescala.structures.{Diff, Pulse}
+import rescala.structure.RExceptions.ObservedException
+import rescala.structure.{Diff, Pulse}
 import tests.rescala.testtools.RETests
 
 import scala.util.{Failure, Success, Try}

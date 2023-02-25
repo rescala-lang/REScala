@@ -4,7 +4,7 @@ import rescala.core.Derived
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.tasks.TaskBundle
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ManagedBlocker

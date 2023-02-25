@@ -1,6 +1,6 @@
 package rescala.core
 
-import rescala.structures.RExceptions
+import rescala.structure.RExceptions
 import scala.annotation.{implicitNotFound, nowarn}
 import scala.util.DynamicVariable
 

@@ -9,7 +9,7 @@ import rescala.fullmv.NotificationBranchResult.*
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
 import rescala.fullmv.*
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 import java.util.concurrent.RecursiveAction
 

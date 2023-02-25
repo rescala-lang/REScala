@@ -4,7 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
 import rescala.fullmv.{FramingBranchResult, FullMVApi, NotificationBranchResult}
 import rescala.core.Derived
-import rescala.structures.Pulse
+import rescala.structure.Pulse
 
 import scala.concurrent.duration.Duration
 

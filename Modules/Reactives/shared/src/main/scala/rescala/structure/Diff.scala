@@ -1,4 +1,4 @@
-package rescala.structures
+package rescala.structure
 
 import RExceptions.EmptySignalControlThrowable
 

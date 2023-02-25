@@ -1,7 +1,7 @@
-package rescala.structures
+package rescala.structure
 
 import rescala.core.*
-import rescala.structures.Pulse.NoChange
+import rescala.structure.Pulse.NoChange
 
 /** @param isDynamicWithStaticDeps None means static dependencies only,
   *                                Some means dynamic with the given static ones for optimization
