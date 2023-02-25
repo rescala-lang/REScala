@@ -17,9 +17,3 @@ abstract class SignalImpl[S[_], T](
     Pulse.tryCatch(Pulse.diffPulse(expr(rein, () => rein.before.get), rein.before))
   }
 }
-
-
-
-
-
-
