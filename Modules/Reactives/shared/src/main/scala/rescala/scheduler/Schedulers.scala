@@ -40,7 +40,7 @@ object Schedulers extends PlatformSchedulers {
   object unmanaged extends Interface {
     val bundle: Unmanaged = new Unmanaged {}
     type BundleState[V] = bundle.State[V]
-    def scheduler: Scheduler[BundleState] = bundle.scheduler
+    val scheduler: Scheduler[BundleState] = bundle.scheduler
   }
 
   object synchron extends Interface {

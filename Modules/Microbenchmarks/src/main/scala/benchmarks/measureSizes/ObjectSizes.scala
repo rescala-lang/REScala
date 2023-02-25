@@ -38,7 +38,7 @@ object ObjectSizes {
       )
     )
 
-    def stx = new Schedulers.LevelBasedImpl.SimpleNoLock()
+    def stx = new Schedulers.synchron.bundle.SimpleNoLock()
     measure("nolock transaction", List.fill(100)(stx))
     measure(
       "nolock reev ticket",
