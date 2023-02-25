@@ -1,7 +1,6 @@
 package reswing
 
 import rescala.default.{Event, Evt, implicitScheduler}
-import rescala.operator.cutOutOfUserComputation
 
 import scala.annotation.nowarn
 
@@ -35,6 +34,5 @@ object ReSwingEvent {
   implicit def apply[T](value: => Event[T]): ReSwingEventIn[T] = new ReSwingEventIn(Lazy { value })
 
   /** Returns the Event representing the event. */
-  @cutOutOfUserComputation
   implicit def toEvent[T](value: ReSwingEvent[T]): Event[T] = value.toEvent
 }

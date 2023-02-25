@@ -4,7 +4,6 @@ import rescala.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
 import rescala.core.infiltration.Infiltrator
 import rescala.interface.RescalaInterface
-import rescala.operator.cutOutOfUserComputation
 import rescala.scheduler.Levelbased
 
 class TrueDynamicSignals extends RETests {
@@ -132,7 +131,6 @@ class TrueDynamicSignals extends RETests {
 
     test("extracting Signal Side Effects") {
       val e1 = Evt[Int]()
-      @cutOutOfUserComputation
       def newSignal()(implicit ct: CreationTicket[State]): Signal[Int] = e1.count()
 
       val macroRes = Signal {

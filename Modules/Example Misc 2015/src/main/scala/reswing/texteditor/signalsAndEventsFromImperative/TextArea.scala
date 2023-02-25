@@ -3,7 +3,6 @@ package reswing.texteditor.signalsAndEventsFromImperative
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 import java.awt.datatransfer.{DataFlavor, StringSelection}
 import rescala.default._
-import rescala.operator.cutOutOfUserComputation
 import reswing.{ReComponent, ReSwingValue}
 import reswing.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
@@ -83,13 +82,11 @@ class TextArea extends ReComponent {
   // If there is no selection the dot and mark will be equal.
   // [same semantics as for: javax.swing.text.Caret]
   object caret {
-    @cutOutOfUserComputation
     def dot               = buffer.caret
     def dot_=(value: Int) = buffer.caretChanged.fire(value)
 
     // dot as position (row and column)
     private val dotPosSignal = Signal { LineOffset.position(buffer.iterable(), dot()) }
-    @cutOutOfUserComputation
     def dotPos                    = dotPosSignal
     def dotPos_=(value: Position) = dot = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
@@ -97,18 +94,15 @@ class TextArea extends ReComponent {
 
     // mark as offset
     private val markSignal = Signal { markVar() }
-    @cutOutOfUserComputation
     def mark               = markSignal
     def mark_=(value: Int) = if (value >= 0 && value <= buffer.length.readValueOnce) markVar set value
 
     // mark as position (row and column)
     private val markPosSignal = Signal { LineOffset.position(buffer.iterable(), mark()) }
-    @cutOutOfUserComputation
     def markPos                    = markPosSignal
     def markPos_=(value: Position) = mark = LineOffset.offset(buffer.iterable.readValueOnce, value)
 
     // caret location as offset
-    @cutOutOfUserComputation
     def offset = dot
     def offset_=(value: Int): Unit = {
       dot = value
@@ -116,7 +110,6 @@ class TextArea extends ReComponent {
     }
 
     // caret location as position (row and column)
-    @cutOutOfUserComputation
     def position                    = dotPos
     def position_=(value: Position) = offset = LineOffset.offset(buffer.iterable.readValueOnce, value)
 

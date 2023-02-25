@@ -7,7 +7,6 @@ import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
 import rescala.default._
-import rescala.operator.cutOutOfUserComputation
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.DeleteShape
 import reswing.reshapes.drawing.DrawingSpaceState
@@ -18,7 +17,6 @@ import reswing.ReButton
 
 /** Lists all drawn shapes */
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
-  @cutOutOfUserComputation
   def state = ReShapes.drawingSpaceState
 
   val shapes = Signal.dynamic { if (state() != null) state().shapes() else List.empty } // #SIG

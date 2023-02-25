@@ -1,7 +1,6 @@
 package reswing
 
 import rescala.default._
-import rescala.operator.cutOutOfUserComputation
 
 import scala.annotation.nowarn
 
@@ -79,6 +78,5 @@ object ReSwingValue {
   implicit def apply[T](value: => Signal[T]): ReSwingSignalValue[T] = ReSwingSignalValue(Lazy { value })
 
   /** Returns the Signal representing the value. */
-  @cutOutOfUserComputation
   implicit def toSignal[T](value: ReSwingValue[T]): Signal[T] = value.toSignal
 }

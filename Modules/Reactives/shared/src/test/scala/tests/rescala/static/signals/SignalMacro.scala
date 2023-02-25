@@ -1,7 +1,6 @@
 package tests.rescala.static.signals
 
 import rescala.core.CreationTicket
-import rescala.operator.cutOutOfUserComputation
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests {
@@ -216,7 +215,6 @@ class SignalMacro extends RETests {
 
       val source = Var("Hallo")
       object myMap {
-        @cutOutOfUserComputation
         var ms: engine.Var[String] = source
       }
 
@@ -236,7 +234,6 @@ class SignalMacro extends RETests {
       val source         = Var("Hallo")
       var indirectSource = source
       object myMap {
-        @cutOutOfUserComputation
         def ms: engine.Var[String] = indirectSource
       }
 

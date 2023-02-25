@@ -2,7 +2,7 @@ package rescala.extra.incremental
 
 import rescala.core._
 import rescala.interface.RescalaInterface
-import rescala.operator.{EventBundle, SignalBundle, cutOutOfUserComputation}
+import rescala.operator.{EventBundle, SignalBundle}
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
@@ -49,7 +49,6 @@ trait IncrementalBundle {
       * @tparam A the value returned by applying fold or unfold on the value T of Deltas
       * @return
       */
-    @cutOutOfUserComputation
     def foldUndo[A](initial: A)(fold: (A, Delta[T]) => A)(unfold: (A, Delta[T]) => A)(implicit
         ticket: CreationTicket[State]
     ): Signal[A] = {
@@ -104,7 +103,6 @@ trait IncrementalBundle {
       * @param ticket          for creating the new source
       * @return the filtered ReactiveDeltaSeq
       */
-    @cutOutOfUserComputation
     def filter(filterOperation: T => Boolean)(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
 
       // as a new reactive sequence will be returned after filtering we use the creation ticket to create the new source
@@ -123,7 +121,6 @@ trait IncrementalBundle {
       * @tparam A new Value type for deltas in the mapped ReactiveDeltaSeq
       * @return the mapped ReactiveDeltaSeq
       */
-    @cutOutOfUserComputation
     def map[A](mapOperation: T => A)(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[A] = {
 
       // as a new reactive sequence will be returned after mapping we use the creation ticket to create the new source
@@ -141,7 +138,6 @@ trait IncrementalBundle {
       * @param ticket used for the creation of the concatenated ReactiveDeltaSeq
       * @return ConcatenateDeltaSeq
       */
-    @cutOutOfUserComputation
     def ++(that: ReactiveDeltaSeq[T])(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
 
       // as a new reactive sequence will be returned after concatenating we use the creation ticket to create the new source
@@ -163,7 +159,6 @@ trait IncrementalBundle {
       * @param resInt needed by REScala API for Signal/Event holding Ints //TODO check
       * @return
       */
-    @cutOutOfUserComputation
     def size(implicit ticket: CreationTicket[State]): Signal[Int] =
       foldUndo(0)((counted: Int, _) => counted + 1)((counted: Int, _) => counted - 1)
 
@@ -174,7 +169,6 @@ trait IncrementalBundle {
       * @param resInt            needed by REScala API for Signal/Event holding Ints
       * @return
       */
-    @cutOutOfUserComputation
     def count(fulfillsCondition: T => Boolean)(implicit
         ticket: CreationTicket[State]
     ): Signal[Int] =
@@ -189,7 +183,6 @@ trait IncrementalBundle {
       * @param resInt  needed by REScala API for Signal/Event holding Ints
       * @return
       */
-    @cutOutOfUserComputation
     def contains(element: T)(implicit
         ticket: CreationTicket[State],
         ord: Ordering[T]
@@ -202,7 +195,6 @@ trait IncrementalBundle {
       * @param resInt            needed by REScala API for Signal/Event holding Ints
       * @return
       */
-    @cutOutOfUserComputation
     def exists(fulfillsCondition: T => Boolean)(implicit ticket: CreationTicket[State]): Signal[Boolean] = {
       // count all elements fulfilling the condition of existence
       val instancesNumber = count(fulfillsCondition)
@@ -215,7 +207,6 @@ trait IncrementalBundle {
       * @param res    ...
       * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
       */
-    @cutOutOfUserComputation
     def min(implicit ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
       val minimum = foldUndo(mutable.IndexedSeq.empty[(T, T)])(
         // fold operation
@@ -266,7 +257,6 @@ trait IncrementalBundle {
       * @param res    ...
       * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
       */
-    @cutOutOfUserComputation
     def max(implicit ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
       val seqMaximum = foldUndo(mutable.IndexedSeq.empty[(T, T)])(
         (seq: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
