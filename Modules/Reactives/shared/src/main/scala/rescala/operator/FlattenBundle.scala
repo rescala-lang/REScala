@@ -6,7 +6,7 @@ import scala.annotation.implicitNotFound
 import scala.collection.IterableOps
 import scala.reflect.ClassTag
 
-trait FlattenApi {
+trait FlattenBundle {
   self: Operators =>
   @implicitNotFound(msg =
     "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten."
