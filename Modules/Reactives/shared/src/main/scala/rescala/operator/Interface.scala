@@ -63,3 +63,11 @@ trait Interface extends Operators {
     res.get
   }
 }
+
+object Interface {
+  class FromScheduler[S[_], Sched <: Scheduler[S] with Singleton](override val scheduler: Sched) extends Interface {
+    override type BundleState[V] = S[V]
+  }
+  def from[S[_], Sched <: Scheduler[S] with Singleton](sched: Sched): FromScheduler[S, Sched] =
+    FromScheduler(sched)
+}
