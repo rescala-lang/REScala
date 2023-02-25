@@ -1,12 +1,15 @@
 package rescala.scheduler
 
-import rescala.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
-}
+import rescala.core.{AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, Scheduler, SchedulerImpl, Transaction}
 import rescala.structure.Observe
 
 import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+
+object TopbundleImpl extends TopoBundle {
+  override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
+  override type State[V] = TopoState[V]
+}
 
 trait TopoBundle {
   type State[V] <: TopoState[V]
