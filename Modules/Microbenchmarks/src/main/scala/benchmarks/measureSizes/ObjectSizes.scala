@@ -38,7 +38,7 @@ object ObjectSizes {
       )
     )
 
-    def stx = new Schedulers.synchron.bundle.SimpleNoLock()
+    def stx = new Schedulers.NoLock.SimpleNoLock()
     measure("nolock transaction", List.fill(100)(stx))
     measure(
       "nolock reev ticket",
@@ -46,8 +46,8 @@ object ObjectSizes {
         stx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: ReSource.of[Schedulers.synchron.BundleState]): reactive.Value  = ???
-          override def dynamicAccess(reactive: ReSource.of[Schedulers.synchron.BundleState]): reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[Schedulers.NoLock.LevelState]): reactive.Value  = ???
+          override def dynamicAccess(reactive: ReSource.of[Schedulers.NoLock.LevelState]): reactive.Value = ???
         }
       )
     )

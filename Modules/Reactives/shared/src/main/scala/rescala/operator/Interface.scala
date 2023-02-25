@@ -25,7 +25,7 @@ import rescala.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
 trait Interface extends Operators {
 
   /** @group internal */
-  def scheduler: Scheduler[BundleState]
+  val scheduler: Scheduler[BundleState]
 
   /** @group internal */
   implicit def implicitScheduler: Scheduler[BundleState] = scheduler
@@ -65,9 +65,9 @@ trait Interface extends Operators {
 }
 
 object Interface {
-  class FromScheduler[S[_], Sched <: Scheduler[S] with Singleton](override val scheduler: Sched) extends Interface {
+  class FromScheduler[S[_]](override val scheduler: Scheduler[S]) extends Interface {
     override type BundleState[V] = S[V]
   }
-  def from[S[_], Sched <: Scheduler[S] with Singleton](sched: Sched): FromScheduler[S, Sched] =
+  def from[S[_]](sched: Scheduler[S]): FromScheduler[S] =
     FromScheduler(sched)
 }

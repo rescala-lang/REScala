@@ -21,7 +21,5 @@ trait PlatformSchedulers {
       case other    => throw new IllegalArgumentException(s"unknown engine $other")
     }
 
-
-  type defaultPlatformState[V] = parrp.State[V]
   def defaultPlatformScheduler: parrp.scheduler.type = parrp.scheduler
 }

@@ -21,7 +21,7 @@ class Invariant[T](val description: String, val inv: T => Boolean) {
 }
 
 object InvariantApi extends InvariantBundle with Interface {
-  def scheduler: InvariantScheduler.type = InvariantScheduler
+  val scheduler: InvariantScheduler.type = InvariantScheduler
 
   override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }

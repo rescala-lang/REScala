@@ -3,7 +3,7 @@ package rescala.extra.incremental
 import rescala.operator.Interface
 import rescala.scheduler.Schedulers
 
-object IncrementalApi extends Interface.FromScheduler(Schedulers.synchron.bundle.scheduler) with IncrementalBundle {
+object IncrementalApi extends Interface.FromScheduler(Schedulers.synchron.scheduler) with IncrementalBundle {
   final type SeqSource[A] = IncSeq[A]
 
   object SeqSource {

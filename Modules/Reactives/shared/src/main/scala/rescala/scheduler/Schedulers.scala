@@ -6,7 +6,7 @@ import rescala.scheduler.{Levelbased, Sidup, TopoBundle}
 
 object Schedulers extends PlatformSchedulers {
 
-  trait NoLock extends Levelbased {
+  object NoLock extends Levelbased {
     type State[V] = LevelState[V]
     private[rescala] class SimpleNoLock extends LevelBasedTransaction {
       override protected def makeDerivedStructState[V](initialValue: V): State[V] = new LevelState(initialValue)
@@ -14,46 +14,38 @@ object Schedulers extends PlatformSchedulers {
       override def preparationPhase(initialWrites: Set[ReSource.of[State]]): Unit = {}
       override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
     }
-  }
 
-  trait Unmanaged extends NoLock {
-    val scheduler: Scheduler[State] =
+    val unmanaged: Scheduler[State] =
       new TwoVersionScheduler[SimpleNoLock] {
         override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
-        override def schedulerName: String                                                  = "Unmanaged"
-      }
-  }
 
-  trait Synchron extends NoLock {
-    val scheduler: Scheduler[State] = new TwoVersionScheduler[SimpleNoLock] {
+        override def schedulerName: String = "Unmanaged"
+      }
+
+    val synchron: Scheduler[State] = new TwoVersionScheduler[SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
-      override def schedulerName: String                                                  = "Synchron"
+
+      override def schedulerName: String = "Synchron"
+
       override def forceNewTransaction[R](
           initialWrites: Set[ReSource.of[State]],
           admissionPhase: AdmissionTicket[State] => R
       ): R =
-        synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
+        synchronized {
+          super.forceNewTransaction(initialWrites, admissionPhase)
+        }
     }
   }
 
-  /** Basic implementations of propagation engines */
-  object unmanaged extends Interface {
-    val bundle: Unmanaged = new Unmanaged {}
-    type BundleState[V] = bundle.State[V]
-    val scheduler: Scheduler[BundleState] = bundle.scheduler
-  }
+  val unmanaged: Interface = Interface.from(NoLock.unmanaged)
 
-  object synchron extends Interface {
-    val bundle: Synchron = new Synchron {}
-    type BundleState[V] = bundle.State[V]
-    def scheduler: Scheduler[BundleState] = bundle.scheduler
-  }
+  val synchron: Interface = Interface.from(NoLock.synchron)
 
   object toposort extends Interface with TopoBundle {
     override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
-    override type State[V] = TopoState[V]
+    override type State[V]       = TopoState[V]
     override type BundleState[V] = TopoState[V]
-    override def scheduler: Scheduler[State] = TopoScheduler
+    override val scheduler: Scheduler[State] = TopoScheduler
   }
 
   object sidup extends Interface {
@@ -64,8 +56,8 @@ object Schedulers extends PlatformSchedulers {
         new bundle.SidupTransaction
       override def schedulerName: String = "SidupSimple"
       override def forceNewTransaction[R](
-                                           initialWrites: Set[ReSource.of[BundleState]],
-                                           admissionPhase: AdmissionTicket[BundleState] => R
+          initialWrites: Set[ReSource.of[BundleState]],
+          admissionPhase: AdmissionTicket[BundleState] => R
       ): R =
         synchronized { super.forceNewTransaction(initialWrites, admissionPhase) }
     }
