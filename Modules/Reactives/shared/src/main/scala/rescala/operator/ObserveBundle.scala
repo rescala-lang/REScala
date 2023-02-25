@@ -22,8 +22,6 @@ object Observe {
         class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.info) with Derived
             with DisconnectableImpl {
 
-          override type State[V] = dependency.State[V]
-
           override protected[rescala] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
           override protected[rescala] def guardedReevaluate(dt: ReIn): Rout = {
