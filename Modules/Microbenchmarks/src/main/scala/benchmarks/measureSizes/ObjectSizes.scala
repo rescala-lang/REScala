@@ -20,7 +20,7 @@ object ObjectSizes {
     measure("var 5", rescala.default.Var(5))
     measure("default empty signal", rescala.default.Signal {})
     measure("default empty signal x 10", List.fill(100)(rescala.default.Signal {}))
-    measure("synchron empty signal", Schedulers.synchron.Signal {})
+    measure("synchron empty signal", Schedulers.synchron.Signal(using Schedulers.synchron.implicitScheduler){})
 
     def ptx = new Schedulers.parrp.ParRPTransaction(new rescala.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))
@@ -30,13 +30,15 @@ object ObjectSizes {
         ptx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: ReSource.of[rescala.default.BundleState]): reactive.Value  = ???
-          override def dynamicAccess(reactive: ReSource.of[rescala.default.BundleState]): reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[rescala.scheduler.Schedulers.parrp.ParRPState])
+              : reactive.Value = ???
+          override def dynamicAccess(reactive: ReSource.of[rescala.scheduler.Schedulers.parrp.ParRPState])
+              : reactive.Value = ???
         }
       )
     )
 
-    def stx = new Schedulers.synchron.bundle.SimpleNoLock()
+    def stx = new Schedulers.LevelBasedImpl.SimpleNoLock()
     measure("nolock transaction", List.fill(100)(stx))
     measure(
       "nolock reev ticket",
@@ -44,8 +46,8 @@ object ObjectSizes {
         stx,
         (),
         new AccessHandler {
-          override def staticAccess(reactive: Schedulers.synchron.bundle.ReSource): reactive.Value  = ???
-          override def dynamicAccess(reactive: Schedulers.synchron.bundle.ReSource): reactive.Value = ???
+          override def staticAccess(reactive: ReSource.of[Schedulers.synchron.BundleState]): reactive.Value  = ???
+          override def dynamicAccess(reactive: ReSource.of[Schedulers.synchron.BundleState]): reactive.Value = ???
         }
       )
     )
