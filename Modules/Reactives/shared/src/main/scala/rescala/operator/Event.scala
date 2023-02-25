@@ -2,8 +2,9 @@ package rescala.operator
 
 import rescala.core.*
 import rescala.macros.MacroAccess
-import rescala.operator.Pulse.{Exceptional, NoChange, Value}
-import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.structures.Pulse.{Exceptional, NoChange, Value}
+import rescala.structures.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.structures.{ChangeEventImpl, Diff, EventImpl, Observe, ObserveInteract, Pulse}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}

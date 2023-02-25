@@ -3,7 +3,7 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rescala.core.{ReInfo, ReSource, Tracing}
-import rescala.operator.Pulse
+import rescala.structures.Pulse
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 

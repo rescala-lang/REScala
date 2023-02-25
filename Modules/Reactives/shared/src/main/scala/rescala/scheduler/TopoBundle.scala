@@ -3,7 +3,7 @@ package rescala.scheduler
 import rescala.core.{
   AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
 }
-import rescala.operator.Observe
+import rescala.structures.Observe
 
 import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}

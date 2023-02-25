@@ -1,9 +1,8 @@
 package tests.rescala.static.events
 
 import java.util.concurrent.atomic.AtomicInteger
-
-import rescala.operator.Pulse
-import rescala.operator.RExceptions.ObservedException
+import rescala.structures.RExceptions.ObservedException
+import rescala.structures.Pulse
 import tests.rescala.testtools.RETests
 
 class OR_EventTest extends RETests {

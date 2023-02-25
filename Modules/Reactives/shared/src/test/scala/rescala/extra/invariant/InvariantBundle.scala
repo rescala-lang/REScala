@@ -6,8 +6,8 @@ import org.scalacheck.{Gen, Prop, Test}
 import rescala.core.ReSource.of
 import rescala.core.{InitialChange, Observation, ReSource}
 import rescala.operator.Interface
-import rescala.operator.Pulse
 import rescala.scheduler.TopoBundle
+import rescala.structures.Pulse
 
 import scala.collection.mutable.ListBuffer
 

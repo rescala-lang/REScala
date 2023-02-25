@@ -8,8 +8,9 @@ import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
 import scalatags.jsdom.Frag
-import rescala.operator.{Observe, ObserveInteract, Pulse, Interface}
-import rescala.operator.RExceptions.ObservedException
+import rescala.operator.Interface
+import rescala.structures.RExceptions.ObservedException
+import rescala.structures.{Observe, ObserveInteract, Pulse}
 
 import scala.scalajs.js
 

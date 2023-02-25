@@ -6,7 +6,7 @@ import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default.*
-import rescala.operator.RExceptions.EmptySignalControlThrowable
+import rescala.structures.RExceptions.EmptySignalControlThrowable
 
 import java.util.NoSuchElementException
 import scala.concurrent.Future

@@ -5,11 +5,11 @@ import rescala.fullmv.FramingBranchResult._
 import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{
   NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
 }
-import rescala.fullmv.NotificationBranchResult.{ReevOutBranchResult, _}
+import rescala.fullmv.NotificationBranchResult.*
 import rescala.fullmv.mirrors.Mirror
 import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
-import rescala.fullmv.{FullMVBundle, _}
-import rescala.operator.Pulse
+import rescala.fullmv.*
+import rescala.structures.Pulse
 
 import java.util.concurrent.RecursiveAction
 

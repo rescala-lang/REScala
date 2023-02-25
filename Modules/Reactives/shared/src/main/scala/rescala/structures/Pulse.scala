@@ -1,7 +1,7 @@
-package rescala.operator
+package rescala.structures
 
-import rescala.operator.Pulse.{Exceptional, NoChange, Value}
-import rescala.operator.RExceptions.{EmptySignalControlThrowable, ObservedException}
+import RExceptions.{EmptySignalControlThrowable, ObservedException}
+import rescala.structures.Pulse.{Exceptional, NoChange, Value}
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}

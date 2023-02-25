@@ -1,6 +1,6 @@
-package rescala.operator
+package rescala.structures
 
-import rescala.core.{Base, CreationTicket, Derived, Disconnectable, DisconnectableImpl, Observation, ReSource}
+import rescala.core.*
 
 trait ObserveInteract extends Observation {
   // if true, the observer will remove all of its inputs, which allows eventual collection

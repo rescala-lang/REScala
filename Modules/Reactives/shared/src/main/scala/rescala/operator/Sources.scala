@@ -1,8 +1,7 @@
 package rescala.operator
 
-import rescala.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
-}
+import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
+import rescala.structures.Pulse
 
 trait Sources {
   self: Operators =>
