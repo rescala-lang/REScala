@@ -4,7 +4,7 @@ import rescala.core.*
 import rescala.macros.MacroAccess
 import rescala.structure.Pulse.{Exceptional, NoChange, Value}
 import rescala.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import rescala.structure.{ChangeEventImpl, Diff, EventImpl, Observe, ObserveInteract, Pulse}
+import rescala.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
@@ -52,7 +52,7 @@ trait EventBundle extends FoldBundle {
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
         val internalVal: Pulse[T] = (reevalVal)
-        new ObserveInteract {
+        new Observe.ObserveInteract {
           override def checkExceptionAndRemoval(): Boolean = {
             reevalVal match {
               case Pulse.Exceptional(f) if onError == null =>

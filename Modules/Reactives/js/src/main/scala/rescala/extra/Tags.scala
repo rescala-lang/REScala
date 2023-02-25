@@ -10,7 +10,7 @@ import scalatags.generic
 import scalatags.jsdom.Frag
 import rescala.operator.Interface
 import rescala.structure.RExceptions.ObservedException
-import rescala.structure.{Observe, ObserveInteract, Pulse}
+import rescala.structure.{Observe, Pulse}
 
 import scala.scalajs.js
 
@@ -90,8 +90,8 @@ class Tags[Api <: Interface](val api: Api) {
   def tagObserver[A](
       parent: dom.Element,
       rendered: Signal[A]
-  )(fun: A => Unit)(reevalVal: Pulse[A]): ObserveInteract =
-    new ObserveInteract {
+  )(fun: A => Unit)(reevalVal: Pulse[A]): Observe.ObserveInteract =
+    new Observe.ObserveInteract {
       override def checkExceptionAndRemoval(): Boolean = {
         reevalVal match {
           case Pulse.empty | Pulse.NoChange => false
