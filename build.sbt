@@ -54,7 +54,6 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
       sourcecode.value,
       scalatest.value,
       scalatestpluscheck.value,
-      reactivestreams,
     ),
     libraryDependencies ++= retypecheck.value
   )

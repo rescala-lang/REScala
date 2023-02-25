@@ -15,7 +15,6 @@ object RescalaDependencies {
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
     else "org.scalatestplus" %%% "scalacheck-1-16" % "3.2.14.0"   % "test")
-  val reactivestreams = "org.reactivestreams" % "reactive-streams" % "1.0.4"
   val retypecheck = Def.setting(
     if (`is 3`(scalaVersion.value)) None
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")

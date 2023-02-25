@@ -1,6 +1,6 @@
 package rescala.extra.reactivestreams
 
-import org.reactivestreams.{Publisher, Subscriber, Subscription}
+import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import rescala.core.{Base, Derived, ReInfo, ReadAs, Scheduler, ScopeSearch}
 import rescala.interface.RescalaInterface
 import rescala.operator.Pulse
