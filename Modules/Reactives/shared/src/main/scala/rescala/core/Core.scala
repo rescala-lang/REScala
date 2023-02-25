@@ -11,6 +11,7 @@ trait ReSource {
   type State[_]
   protected[rescala] def state: State[Value]
   def info: ReInfo
+  /** Converts the `base` value that is used during the transaction, to the value stored outside the transaction */
   protected[rescala] def commit(base: Value): Value
 }
 object ReSource { type of[S[_]] = ReSource { type State[V] = S[V] } }
