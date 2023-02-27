@@ -62,13 +62,69 @@ object ViperBackend:
   private def viperTransformations(
       ctx: CompilationContext
   ): CompilationContext =
-    // step 1: field calls as function calls
+    // step 1: flatten interactions
+    def flattenInteractions(t: Term, ctx: CompilationContext): Term =
+      val interactionKeywords =
+        List("requires", "ensures", "executes")
+      t match
+        // is requires/ensures/executes call
+        case TFCurly(parent, field, body)
+            if interactionKeywords.contains(field) =>
+          flattenInteractions(parent, ctx) match
+            // parent is an interaction
+            case i: TInteraction =>
+              field match
+                case "requires" => i.copy(requires = i.requires :+ body)
+                case "ensures"  => i.copy(ensures = i.ensures :+ body)
+                case "executes" => i.copy(executes = Some(body))
+                case wrongField =>
+                  throw Exception(s"Invalid call on Interaction: $wrongField")
+            // parent is variable that refers to an interaction
+            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
+              flattenInteractions(
+                TFCurly(ctx.interactions(name), field, body),
+                ctx
+              )
+            // else -> leave term untouched
+            case _ => t
+        // is modifies call
+        case TFCall(parent, "modifies", args) =>
+          flattenInteractions(parent, ctx) match
+            // parent is an interaction
+            case i: TInteraction =>
+              args.foldLeft(i) {
+                case (i, TVar(id)) => i.copy(modifies = i.modifies :+ id)
+                case e =>
+                  throw ViperCompilationException(
+                    s"Invalid argument for modifies statement: $e"
+                  )
+              }
+            // parent is variable that refers to an interaction
+            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
+              flattenInteractions(
+                TFCall(ctx.interactions(name), "modifies", args),
+                ctx
+              )
+            case _ => t
+        case _ => t
+    // flattenInteractions until the result does not change anymore
+    def flattenRecursively(ctx: CompilationContext): CompilationContext =
+      val res = ctx.copy(ast =
+        ctx.ast.map(traverseFromNode(_, flattenInteractions(_, ctx)))
+      )
+      if res == ctx then return res
+      else return flattenRecursively(res)
+    val ctx2 = flattenRecursively(ctx)
+
+    // step 2: field calls as function calls
     def fieldCallToFunCall: Term => Term =
-      case t @ TFCall(parent, field, args) =>
+      case TFCall(parent, field, args) =>
         TFunC(field, parent +: args)
       case t => t
 
-    return ctx.copy(ast = ctx.ast.map(traverseFromNode(_, fieldCallToFunCall)))
+    return ctx2.copy(ast =
+      ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall))
+    )
 
   private def compileSources(ctx: CompilationContext): CompilationResult =
     def sourceToField(name: ID, _type: Type): String =
@@ -139,79 +195,12 @@ object ViperBackend:
     )
 
   private def compileInteractions(ctx: CompilationContext): CompilationResult =
-    // flatten interactions
-    def flattenInteractions(t: Term, ctx: CompilationContext): Term =
-      val interactionKeywords =
-        List("requires", "ensures", "executes")
-      t match
-        // is requires/ensures/executes call
-        case TFCurly(parent, field, body)
-            if interactionKeywords.contains(field) =>
-          flattenInteractions(parent, ctx) match
-            // parent is an interaction
-            case i: TInteraction =>
-              field match
-                case "requires" => i.copy(requires = i.requires :+ body)
-                case "ensures"  => i.copy(ensures = i.ensures :+ body)
-                case "executes" => i.copy(executes = Some(body))
-                case wrongField =>
-                  throw Exception(s"Invalid call on Interaction: $wrongField")
-            // parent is variable that refers to an interaction
-            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
-              flattenInteractions(
-                TFCurly(ctx.interactions(name), field, body),
-                ctx
-              )
-            // else -> leave term untouched
-            case _ => t
-        // is modifies call
-        case TFCall(parent, "modifies", args) =>
-          flattenInteractions(parent, ctx) match
-            // parent is an interaction
-            case i: TInteraction =>
-              args.foldLeft(i) {
-                case (i, TVar(id)) => i.copy(modifies = i.modifies :+ id)
-                case e =>
-                  throw ViperCompilationException(
-                    s"Invalid argument for modifies statement: $e"
-                  )
-              }
-            // parent is variable that refers to an interaction
-            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
-              flattenInteractions(
-                TFCall(ctx.interactions(name), "modifies", args),
-                ctx
-              )
-            case _ => t
-        case _ => t
-
-    // flattenInteractions until the result does not change anymore
-    def flattenRecursively(ctx: CompilationContext): CompilationContext =
-      val res = ctx.copy(ast =
-        ctx.ast.map(traverseFromNode(_, flattenInteractions(_, ctx)))
-      )
-      if res == ctx then return res
-      else return flattenRecursively(res)
-    val ctx2 = flattenRecursively(ctx)
-    val interactions = ctx2.interactions
+    val interactions = ctx.interactions
       // only compile interactions that have some guarantees and modify some reactives
       .filter((_, i) => !i.ensures.isEmpty && !i.modifies.isEmpty)
-      .map(interactionToMethod(_, _, ctx2))
+      .map(interactionToMethod(_, _, ctx))
       .toList
-    return (ctx2, interactions)
-
-  private def typeToViper(t: Type)(using ctx: CompilationContext): String =
-    t match
-      // replace type aliases
-      case SimpleType(name, _) if ctx.typeAliases.contains(name) =>
-        typeToViper(ctx.typeAliases(name))
-      case SimpleType(name, Nil) => name
-      case SimpleType("Source", inner) =>
-        s"${inner.map(typeToViper).mkString(" ,")}"
-      case SimpleType(name, inner) =>
-        s"$name[${inner.map(typeToViper).mkString(" ,")}]"
-      case TupleType(inner) =>
-        s"(${inner.toList.map(typeToViper).mkString(" ,")})"
+    return (ctx, interactions)
 
   private def interactionToMethod(
       name: ID,
@@ -302,6 +291,19 @@ object ViperBackend:
         |{
         |}
         """.stripMargin
+
+  private def typeToViper(t: Type)(using ctx: CompilationContext): String =
+    t match
+      // replace type aliases
+      case SimpleType(name, _) if ctx.typeAliases.contains(name) =>
+        typeToViper(ctx.typeAliases(name))
+      case SimpleType(name, Nil) => name
+      case SimpleType("Source", inner) =>
+        s"${inner.map(typeToViper).mkString(" ,")}"
+      case SimpleType(name, inner) =>
+        s"$name[${inner.map(typeToViper).mkString(" ,")}]"
+      case TupleType(inner) =>
+        s"(${inner.toList.map(typeToViper).mkString(" ,")})"
 
   private def expressionToViper(expression: Term)(using
       ctx: CompilationContext
