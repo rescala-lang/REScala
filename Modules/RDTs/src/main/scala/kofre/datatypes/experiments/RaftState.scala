@@ -121,15 +121,5 @@ object RaftState {
   case class Vote(term: Int, leader: Uid, voter: Uid)
   case class Propose[T](term: Int, voter: Uid, pos: Int, value: T)
 
-  implicit def raftLatticeInstance[T]: Lattice[RaftState[T]] =
-    new Lattice[RaftState[T]] {
-      override def merge(left: RaftState[T], right: RaftState[T]): RaftState[T] = {
-        RaftState(
-          Lattice.merge(left.participants, right.participants),
-          Lattice.merge(left.leaderVotes, right.leaderVotes),
-          Lattice.merge(left.valueProposals, right.valueProposals)
-        )
-      }
-    }
-
+  given raftLatticeInstance[T]: Lattice[RaftState[T]] = Lattice.derived
 }
