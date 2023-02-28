@@ -80,6 +80,7 @@ sealed trait TBoolean extends Term with TViper
 
 case object TTrue extends TBoolean
 case object TFalse extends TBoolean
+case class TNeg(body: Term) extends TBoolean
 case class TLt(left: Term, right: Term) extends TBoolean
 case class TGt(left: Term, right: Term) extends TBoolean
 case class TLeq(left: Term, right: Term) extends TBoolean

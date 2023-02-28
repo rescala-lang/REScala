@@ -79,11 +79,13 @@ object Parser:
   // primitives
   val tru: P[TBoolean] = P.string("true").as(TTrue)
   val fls: P[TBoolean] = P.string("false").as(TFalse)
+  val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(implication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
     (P.char('(') ~ ws).with1 *> P
       .defer(implication) <* ws ~ P.char(')')
   val boolFactor: P[Term] =
     boolParens
+      | neg
       | tru.backtrack
       | fls.backtrack
       | P.defer(inSet)
