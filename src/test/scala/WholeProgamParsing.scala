@@ -2,6 +2,7 @@ package lore
 import munit.FunSuite
 import lore.AST._
 import io.circe.parser.decode
+import io.circe.syntax._
 import cats.parse
 import cats.implicits._
 import java.nio.charset.StandardCharsets
@@ -33,9 +34,15 @@ class WholeProgramParsing extends FunSuite:
     val astStr = readProg(Path.of("examples/calendar_new.ast"))
     Parser.prog.parseAll(prog) match
       case Left(e) => fail(e.show) // parsing failure
-      case Right(e) =>
+      case Right(parsed) =>
         decode[NonEmptyList[Term]](astStr) match
           // check if AST matches expectation
-          case Right(ast) => assertEquals(e, ast)
-          case Left(err)  => fail(err.show)
+          case Right(ast) =>
+            // Files.write(
+            //   Path.of("examples/calendar_new.ast"),
+            //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
+            // )
+            assertEquals(parsed, ast);
+
+          case Left(err) => fail(err.show)
   }

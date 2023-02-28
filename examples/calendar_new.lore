@@ -7,9 +7,11 @@ val remaining_vacation: Derived[Int] = Derived{ 30 - vacation.toSet.map(_.days).
 
 val add_appointment : Unit = Interaction[Calendar][Appointment] 
   .requires{ cal => a => get_start(a) < get_end(a) } 
+  .requires{ cal => a => !(a in cal.toSet)}
   .executes{ cal => a => cal.add(a) } 
   .ensures { cal => a => a in cal.toSet } 
-val add_vacation : Unit = add_appointment.modifies(vacation) 
+val add_vacation : Unit = add_appointment.modifies(vacation)
+  .requires{ cal => a => remaining_vacation - a.days >= 0}
 val add_work     : Unit = add_appointment.modifies(work) 
 
 UI.display(all_appointments, remaining_vacation) 
