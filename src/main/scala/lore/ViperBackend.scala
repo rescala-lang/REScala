@@ -102,7 +102,7 @@ object ViperBackend:
     val ctx3 =
       ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
-    // step 3: TODO turn references to derived reactives to macro calls
+    // step 3: turn references to derived reactives to macro calls
     def transformer: Term => Term =
       case TVar(name) if ctx2.derived.contains(name) =>
         val (derived, _) = ctx2.graph(name)
@@ -297,21 +297,21 @@ object ViperBackend:
         case TNeg(inner) => s"!${expressionToViper(inner)}"
         case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
         case TIneq(l, r) =>
-          s"${expressionToViper(l)}) != (${expressionToViper(r)}"
+          s"${expressionToViper(l)} != ${expressionToViper(r)}"
         case TDisj(l, r) =>
-          s"${expressionToViper(l)}) || (${expressionToViper(r)}"
+          s"${expressionToViper(l)} || ${expressionToViper(r)}"
         case TConj(l, r) =>
-          s"${expressionToViper(l)}) && (${expressionToViper(r)}"
+          s"${expressionToViper(l)} && ${expressionToViper(r)}"
         case TImpl(l, r) =>
-          s"${expressionToViper(l)}) ==> (${expressionToViper(r)}"
+          s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
         case TLt(l, r) =>
-          s"${expressionToViper(l)}) < (${expressionToViper(r)}"
+          s"${expressionToViper(l)} < ${expressionToViper(r)}"
         case TGt(l, r) =>
-          s"${expressionToViper(l)}) > (${expressionToViper(r)}"
+          s"${expressionToViper(l)} > ${expressionToViper(r)}"
         case TLeq(l, r) =>
-          s"${expressionToViper(l)}) <=(${expressionToViper(r)}"
+          s"${expressionToViper(l)} <=${expressionToViper(r)}"
         case TGeq(l, r) =>
-          s"${expressionToViper(l)}) >= (${expressionToViper(r)}"
+          s"${expressionToViper(l)} >= ${expressionToViper(r)}"
         case TForall(vars, triggers, body) =>
           val varString =
             vars
