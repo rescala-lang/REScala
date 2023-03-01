@@ -151,9 +151,11 @@ class BooleanExpressionParsing extends ParserSuite {
     assertParsingResult(
       p,
       "(thisUser == user ==> is_correct(user,pass))",
-      TImpl(
-        TEq(TVar("thisUser"), TVar("user")),
-        TFunC("is_correct", Seq(TVar("user"), TVar("pass")))
+      TParens(
+        TImpl(
+          TEq(TVar("thisUser"), TVar("user")),
+          TFunC("is_correct", Seq(TVar("user"), TVar("pass")))
+        )
       )
     )
   }
@@ -164,25 +166,25 @@ class BooleanExpressionParsing extends ParserSuite {
     assertParsingResult(
       p,
       "(true || false) ==> false",
-      TImpl(TDisj(TTrue, TFalse), TFalse)
+      TImpl(TParens(TDisj(TTrue, TFalse)), TFalse)
     )
 
     assertParsingResult(
       p,
       "false || true ==> (false)",
-      TImpl(TDisj(TFalse, TTrue), TFalse)
+      TImpl(TDisj(TFalse, TTrue), TParens(TFalse))
     )
 
     assertParsingResult(
       p,
       "false || (true && foo()) == false",
-      TEq(TDisj(TFalse, TConj(TTrue, TFunC("foo", List()))), TFalse)
+      TEq(TDisj(TFalse, TParens(TConj(TTrue, TFunC("foo", List())))), TFalse)
     )
 
     assertParsingResult(
       p,
       "false != (true ==> false)",
-      TIneq(TFalse, TImpl(TTrue, TFalse))
+      TIneq(TFalse, TParens(TImpl(TTrue, TFalse)))
     )
 
     // this should fail

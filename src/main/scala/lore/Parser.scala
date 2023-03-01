@@ -59,7 +59,7 @@ object Parser:
   val divMul: P[Term] =
     P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
   val parens: P[Term] =
-    (P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
+    ((P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')).map(TParens(_))
   val arithFactor: P[Term] =
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
@@ -81,8 +81,8 @@ object Parser:
   val fls: P[TBoolean] = P.string("false").as(TFalse)
   val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(implication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
-    (P.char('(') ~ ws).with1 *> P
-      .defer(implication) <* ws ~ P.char(')')
+    ((P.char('(') ~ ws).with1 *> P
+      .defer(implication) <* ws ~ P.char(')')).map(TParens(_))
   val boolFactor: P[Term] =
     boolParens
       | neg

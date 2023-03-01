@@ -373,24 +373,30 @@
                                       "TNeg" : {
                                         "body" : {
                                           "TViper" : {
-                                            "TBoolean" : {
-                                              "TInSet" : {
-                                                "left" : {
-                                                  "TVar" : {
-                                                    "name" : "a"
-                                                  }
-                                                },
-                                                "right" : {
-                                                  "TViper" : {
-                                                    "TFCall" : {
-                                                      "parent" : {
+                                            "TParens" : {
+                                              "inner" : {
+                                                "TViper" : {
+                                                  "TBoolean" : {
+                                                    "TInSet" : {
+                                                      "left" : {
                                                         "TVar" : {
-                                                          "name" : "cal"
+                                                          "name" : "a"
                                                         }
                                                       },
-                                                      "field" : "toSet",
-                                                      "args" : [
-                                                      ]
+                                                      "right" : {
+                                                        "TViper" : {
+                                                          "TFCall" : {
+                                                            "parent" : {
+                                                              "TVar" : {
+                                                                "name" : "cal"
+                                                              }
+                                                            },
+                                                            "field" : "toSet",
+                                                            "args" : [
+                                                            ]
+                                                          }
+                                                        }
+                                                      }
                                                     }
                                                   }
                                                 }

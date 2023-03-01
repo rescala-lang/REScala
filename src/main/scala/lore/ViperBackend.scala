@@ -323,28 +323,27 @@ object ViperBackend:
   ): String = expression match
     case v: TViper =>
       v match
-        case TVar(id)         => id
-        case TTrue            => "true"
-        case TFalse           => "false"
-        case TNeg(TVar(name)) => s"!$name"
-        case TNeg(inner)      => s"!(${expressionToViper(inner)})"
+        case TVar(id)    => id
+        case TTrue       => "true"
+        case TFalse      => "false"
+        case TNeg(inner) => s"!${expressionToViper(inner)}"
         case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
         case TIneq(l, r) =>
-          s"(${expressionToViper(l)}) != (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) != (${expressionToViper(r)}"
         case TDisj(l, r) =>
-          s"(${expressionToViper(l)}) || (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) || (${expressionToViper(r)}"
         case TConj(l, r) =>
-          s"(${expressionToViper(l)}) && (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) && (${expressionToViper(r)}"
         case TImpl(l, r) =>
-          s"(${expressionToViper(l)}) ==> (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) ==> (${expressionToViper(r)}"
         case TLt(l, r) =>
-          s"(${expressionToViper(l)}) < (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) < (${expressionToViper(r)}"
         case TGt(l, r) =>
-          s"(${expressionToViper(l)}) > (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) > (${expressionToViper(r)}"
         case TLeq(l, r) =>
-          s"(${expressionToViper(l)}) <=(${expressionToViper(r)})"
+          s"${expressionToViper(l)}) <=(${expressionToViper(r)}"
         case TGeq(l, r) =>
-          s"(${expressionToViper(l)}) >= (${expressionToViper(r)})"
+          s"${expressionToViper(l)}) >= (${expressionToViper(r)}"
         case TForall(vars, triggers, body) =>
           val varString =
             vars

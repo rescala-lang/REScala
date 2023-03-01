@@ -81,7 +81,10 @@ class SimpleParsing extends ParserSuite:
     assertParsingResult(
       p,
       expr,
-      TAdd(TNum(1), TMul(TNum(5), TDiv(TNum(20), TAdd(TNum(4), TNum(10)))))
+      TAdd(
+        TNum(1),
+        TMul(TNum(5), TDiv(TNum(20), TParens(TAdd(TNum(4), TNum(10)))))
+      )
     )
   }
 
