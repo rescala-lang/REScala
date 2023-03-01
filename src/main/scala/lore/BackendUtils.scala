@@ -6,6 +6,28 @@ import AST._
 //     transformer: ParsedExpression => ParsedExpression
 // ) = ???
 
+// type definitions
+private type Graph[R] = Map[String, (R, Type)]
+private type CompilationResult = (CompilationContext, Seq[String])
+private case class CompilationContext(
+    ast: Seq[Term]
+):
+  val graph: Graph[TReactive] = allReactives(ast)
+  val sources: Graph[TSource] = graph.collect {
+    case (name: String, (s: TSource, t: Type)) => (name, (s, t))
+  }
+  val derived: Graph[TDerived] = graph.collect {
+    case (name: String, (d: TDerived, t: Type)) => (name, (d, t))
+  }
+  val invariants: Seq[TInvariant] = ast.collect({ case i: TInvariant =>
+    i
+  })
+  val interactions: Map[String, TInteraction] = allInteractions(ast)
+  val typeAliases: Map[String, Type] = ast.collect {
+    case TTypeAl(name, _type) =>
+      (name, _type)
+  }.toMap
+
 def traverseFromNode[A <: Term](
     node: A,
     transformer: Term => Term
@@ -53,6 +75,7 @@ def traverseFromNode[A <: Term](
         TAdd(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
       case TSub(l, r) =>
         TSub(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
+      case TNeg(body) => TNeg(traverseFromNode(body, transformer))
       case TLt(l, r) =>
         TLt(traverseFromNode(l, transformer), traverseFromNode(r, transformer))
       case TGt(l, r) =>
@@ -121,6 +144,27 @@ def traverseFromNode[A <: Term](
     case c: ClassCastException =>
       throw new Exception("AST transformation led to invalid AST.")
 
+/** Replaces all occurences of the ID `from` with the ID `to` in the given term.
+  * This function currently does not consider scoping.
+  * @param from
+  *   the id to be renamed
+  * @param to
+  *   the new name
+  * @param term
+  *   the term to be modifier
+  * @return
+  *   a version of the term where the ID is renamed
+  */
+def rename(from: ID, to: ID, term: Term): Term =
+  val transformer: Term => Term =
+    case t @ TArgT(name, _type) => if name == from then TArgT(to, _type) else t
+    case t @ TVar(name)         => if name == from then TVar(to) else t
+    case TAbs(name, _type, body) =>
+      val newName = if name == from then to else name
+      TAbs(newName, _type, rename(from, to, body))
+    case t => t
+  traverseFromNode(term, transformer)
+
 def allReactives(ast: Seq[Term]): Map[String, (TReactive, Type)] =
   ast.collect { case TAbs(name, _type, r: TReactive) =>
     (name, (r, _type))
@@ -158,6 +202,7 @@ def uses(e: Term): Set[ID] = e match
   case TSub(l, r)                   => uses(l) ++ uses(r)
   case TTrue                        => Set()
   case TFalse                       => Set()
+  case TNeg(inner)                  => uses(inner)
   case TLt(l, r)                    => uses(l) ++ uses(r)
   case TGt(l, r)                    => uses(l) ++ uses(r)
   case TLeq(l, r)                   => uses(l) ++ uses(r)

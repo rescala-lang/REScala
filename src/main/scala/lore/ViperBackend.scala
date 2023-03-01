@@ -7,33 +7,11 @@ object ViperBackend:
   case class ViperCompilationException(message: String)
       extends Exception(message)
 
-  // type definitions
-  private type Graph[R] = Map[String, (R, Type)]
-  private type CompilationResult = (CompilationContext, Seq[String])
-  private case class CompilationContext(
-      ast: Seq[Term]
-  ):
-    val graph: Graph[TReactive] = allReactives(ast)
-    val sources: Graph[TSource] = graph.collect {
-      case (name: String, (s: TSource, t: Type)) => (name, (s, t))
-    }
-    val derived: Graph[TDerived] = graph.collect {
-      case (name: String, (d: TDerived, t: Type)) => (name, (d, t))
-    }
-    val invariants: Seq[TInvariant] = ast.collect({ case i: TInvariant =>
-      i
-    })
-    val interactions: Map[String, TInteraction] = allInteractions(ast)
-    val typeAliases: Map[String, Type] = ast.collect {
-      case TTypeAl(name, _type) =>
-        (name, _type)
-    }.toMap
-
   def toViper(ast: Seq[Term]): String =
     //// step 1: build context object that we pass around to subfunctions
     val ctx = CompilationContext(ast)
 
-    //// new step: Viper specific transformations/transform field calls to function calls
+    //// new step: Viper specific AST transformations
     val ctxy = viperTransformations(ctx)
 
     //// step 2: compile source reactives
@@ -121,10 +99,20 @@ object ViperBackend:
       case TFCall(parent, field, args) =>
         TFunC(field, parent +: args)
       case t => t
+    val ctx3 =
+      ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
-    return ctx2.copy(ast =
-      ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall))
-    )
+    // step 3: TODO turn references to source reactives into field accesses, and to derived reactives to macro calls
+    def transformer: Term => Term =
+      case TVar(name) if ctx2.derived.contains(name) =>
+        val (derived, _) = ctx2.graph(name)
+        val usedReactives =
+          uses(derived).filter(r => ctx2.graph.keys.toSet.contains(r))
+        TFunC(name, usedReactives.toList.sorted.map(TVar(_)))
+      case t => t
+
+    // return ???
+    return ctx3.copy(ast = ctx3.ast.map(traverseFromNode(_, transformer)))
 
   private def compileSources(ctx: CompilationContext): CompilationResult =
     def sourceToField(name: ID, _type: Type): String =
@@ -183,7 +171,7 @@ object ViperBackend:
       ctx.invariants
         .zip(1 to ctx.invariants.length + 1)
         .map((inv: TInvariant, id: Int) =>
-          // replace references to reactives with macro calls
+          // replace references to derived reactives with macro calls
           invariantToMacro(
             invariant = inv,
             inputs = reactivesPerInvariant(inv)
@@ -194,19 +182,73 @@ object ViperBackend:
         )
     )
 
+  private def curlyToViper(
+      modifies: List[ID],
+      methodArgs: List[ID],
+      curlyBody: Term
+  )(using ctx: CompilationContext): String =
+    // 0. collect requires/ensures/exec bodies
+    // 1. collect reactive names in requires/ensures/exec
+    // 2. replace reactive names with field accesses
+    // 2. collect argument names in requires/ensures/exec
+    // 3. replace args with names from method params
+    // extract names from body
+
+    // extract argument names
+    def collectArgNames(acc: List[ID], term: TArrow): List[ID] =
+      term match
+        case TArrow(TVar(name), t @ TArrow(_, _)) =>
+          collectArgNames(acc :+ name, t)
+        case TArrow(TVar(name), _) =>
+          acc :+ name
+        case _ =>
+          throw ViperCompilationException(
+            s"Tried to compile interaction to Viper but received invalid function in body: $term"
+          )
+
+    // check if curlyBody is a function, if yes, insert reactives and method arguments
+    val body = curlyBody match
+      case t @ TArrow(_, _) =>
+        // extract argument names
+        val allNames = collectArgNames(List(), t)
+        val (reactiveNames, argumentNames) = allNames.splitAt(modifies.length)
+        // insert reactives names
+        val reactivesInserted = (reactiveNames zip modifies).foldLeft(t.body) {
+          case (b: Term, (from: ID, to: ID)) => rename(from, to, b)
+        }
+        // insert method args
+        if argumentNames.length != methodArgs.length then
+          throw ViperCompilationException(
+            s"Interaction body $curlyBody has wrong arity. It should accept the same number of arguments as the executes part of the interaction: $methodArgs"
+          )
+        (argumentNames zip methodArgs).foldLeft(reactivesInserted) {
+          case (body, (from, to)) => rename(from, to, body)
+        }
+      case t => // no function, use body as is
+        t
+
+    // replace reactive names with field accesses on the graph object
+    def transformer: Term => Term =
+      case TVar(name) if ctx.sources.contains(name) =>
+        TFCall(TVar("graph"), name, List())
+      case t => t
+
+    return expressionToViper(traverseFromNode(body, transformer))
+
   private def compileInteractions(ctx: CompilationContext): CompilationResult =
     val interactions = ctx.interactions
       // only compile interactions that have some guarantees and modify some reactives
       .filter((_, i) => !i.ensures.isEmpty && !i.modifies.isEmpty)
-      .map(interactionToMethod(_, _, ctx))
+      .map(interactionToMethod(_, _)(using ctx))
       .toList
     return (ctx, interactions)
 
   private def interactionToMethod(
       name: ID,
-      interaction: TInteraction,
-      ctx: CompilationContext
-  ): String =
+      interaction: TInteraction
+  )(using ctx: CompilationContext): String =
+    val numReactives = interaction.reactiveTypes.length
+    val numArguments = interaction.argumentTypes.length
     // collect arguments and their types
     // extract names from body
     def collectArgNames(acc: List[ID], term: TArrow): List[ID] =
@@ -226,7 +268,6 @@ object ViperBackend:
     val argNames =
       allNames.drop(interaction.reactiveTypes.length)
     val argTypes = interaction.argumentTypes.map(t => typeToViper(t)(using ctx))
-
     if argNames.length != argTypes.length then
       throw ViperCompilationException(
         s"Tried to compile interaction but number of arguments does not match interaction body. argnames: $argNames, argTypes: $argTypes"
@@ -235,61 +276,33 @@ object ViperBackend:
       (argNames zip argTypes)
         .map((name, `type`) => s"$name: ${`type`}")
 
-    // val argsString = transaction.args.map{
-    // 		case (name, Some(typeName)) => s"${name.name}: ${typeName.name}"
-    // 		case (name, None) => throw new Exception(s"Transaction $transaction needs type annotations to be compiled to Viper.")
-    // }
-
-    // val graph = allReactives(ast)
-
-    // // divide transaction into subtransactions
-    // val subtransactions: Seq[String] = transaction.reactives.map(names =>
-    // 		val reactives: Seq[Reactive] = names.map(n => graph.get(n.name) match
-    // 				case Some(r) => r
-    // 				case None => throw Exception(s"Reactive ${n.name} not found in graph."))
-    // 		val subGraph: Set[Reactive] = reactives.map(r => getDependants(r, ast))
-    // 				.toSet.flatten
-    // 		val subGraphNames: Set[String] = subGraph.map(r => r.name.name)
-
-    // 		val sourceReactives: Seq[SourceReactive] =
-    // 				reactives.collect({case s: SourceReactive => s})
-    // 		val derivedReactives: Seq[DerivedReactive] =
-    // 				subGraph.collect({case d: DerivedReactive => d}).toSeq
-
-    // 		val invariants: Set[Invariant] = ast.collect({
-    // 				case i: Invariant if !uses(i).intersect(subGraphNames).isEmpty => i}).toSet
-    // 		val invariantsStrings: Set[String] = invariants.map(i => expressionToViper(i.body))
-    // 		val invariantsAfter: Set[String] =
-    // 				invariantsStrings.map(s =>
-    // 						derivedReactives.foldl(s){case (acc, derivedReactive) =>
-    // 								acc.replaceAll(derivedReactive.name.name, s"${derivedReactive.name.name}_")}
-    // 				)
-
-    // 		val graphString = sourceReactives.map{
-    // 				case (SourceReactive(_, id, body, Some(typeAnn))) => s"${id.name}: $typeAnn"
-    // 				case (r @ SourceReactive(_, name, body, None)) => throw new Exception(s"Reactive $r needs type annotation to be compiled to Viper.")
-    // 		}
-    // 		val graphStringAfter = sourceReactives.map{
-    // 				case (SourceReactive(_, id, body, Some(typeAnn))) => s"${id.name}_: $typeAnn"
-    // 				case (r @ SourceReactive(_, name, body, None)) => throw new Exception(s"Reactive $r needs type annotation to be compiled to Viper.")
-    // 		}
-
-    // 		val preconditions = transaction.preconditions.map(p =>
-    // 				"requires " + expressionToViper(p.body))
-    // 		val postconditions = transaction.postconditions.map(p =>
-    // 				"ensures " + expressionToViper(p.body))
+    val preconditions =
+      interaction.requires.map(p =>
+        s"requires ${curlyToViper(interaction.modifies, argNames, p)}"
+      )
+    val postconditions =
+      interaction.ensures.map(p =>
+        s"ensures ${curlyToViper(interaction.modifies, argNames, p)}"
+      )
+    val body =
+      interaction.executes.map(b =>
+        s"${curlyToViper(interaction.modifies, argNames, b)}"
+      )
 
     s"""|method $name (
+        |  // graph
+        |  graph: Ref,
         |  // arguments
         |${argsString.mkString(",\n").indent(2)})
-        |returns (
-        |)
+        |returns ()
         |// preconditions
-        |// relevant invariants
+        |${preconditions.mkString("\n")}
+        |// TODO relevant invariants
         |// postconditions
-        |// relevant invariants
+        |${postconditions.mkString("\n")}
+        |// TODO relevant invariants
         |{
-        |}
+        |${body.getOrElse("").indent(2)}}
         """.stripMargin
 
   private def typeToViper(t: Type)(using ctx: CompilationContext): String =
@@ -310,22 +323,28 @@ object ViperBackend:
   ): String = expression match
     case v: TViper =>
       v match
-        case TVar(id)  => id
-        case TTrue     => "true"
-        case TFalse    => "false"
+        case TVar(id)         => id
+        case TTrue            => "true"
+        case TFalse           => "false"
+        case TNeg(TVar(name)) => s"!$name"
+        case TNeg(inner)      => s"!(${expressionToViper(inner)})"
         case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
         case TIneq(l, r) =>
-          s"${expressionToViper(l)} != ${expressionToViper(r)}"
+          s"(${expressionToViper(l)}) != (${expressionToViper(r)})"
         case TDisj(l, r) =>
-          s"${expressionToViper(l)} || ${expressionToViper(r)}"
+          s"(${expressionToViper(l)}) || (${expressionToViper(r)})"
         case TConj(l, r) =>
-          s"${expressionToViper(l)} && ${expressionToViper(r)}"
+          s"(${expressionToViper(l)}) && (${expressionToViper(r)})"
         case TImpl(l, r) =>
-          s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
-        case TLt(l, r)  => s"${expressionToViper(l)} < ${expressionToViper(r)}"
-        case TGt(l, r)  => s"${expressionToViper(l)} > ${expressionToViper(r)}"
-        case TLeq(l, r) => s"${expressionToViper(l)} <= ${expressionToViper(r)}"
-        case TGeq(l, r) => s"${expressionToViper(l)} >= ${expressionToViper(r)}"
+          s"(${expressionToViper(l)}) ==> (${expressionToViper(r)})"
+        case TLt(l, r) =>
+          s"(${expressionToViper(l)}) < (${expressionToViper(r)})"
+        case TGt(l, r) =>
+          s"(${expressionToViper(l)}) > (${expressionToViper(r)})"
+        case TLeq(l, r) =>
+          s"(${expressionToViper(l)}) <=(${expressionToViper(r)})"
+        case TGeq(l, r) =>
+          s"(${expressionToViper(l)}) >= (${expressionToViper(r)})"
         case TForall(vars, triggers, body) =>
           val varString =
             vars

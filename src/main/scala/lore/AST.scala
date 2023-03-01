@@ -30,7 +30,11 @@ case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term
 
 // derived forms
 // case class TSeq(left: Term, right: Term) extends Term // sequence
-case class TArrow(left: Term, right: Term) extends Term // anonymous functions
+case class TArrow(left: Term, right: Term) extends Term: // anonymous functions
+  private def findBody: Term => Term =
+    case TArrow(left, right) => findBody(right)
+    case t                   => t
+  def body: Term = findBody(right)
 case class TTypeAl(name: ID, _type: Type) extends Term // type aliases
 
 // Viper terms
