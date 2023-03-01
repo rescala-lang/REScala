@@ -102,7 +102,7 @@ object ViperBackend:
     val ctx3 =
       ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
-    // step 3: TODO turn references to source reactives into field accesses, and to derived reactives to macro calls
+    // step 3: TODO turn references to derived reactives to macro calls
     def transformer: Term => Term =
       case TVar(name) if ctx2.derived.contains(name) =>
         val (derived, _) = ctx2.graph(name)
@@ -171,7 +171,6 @@ object ViperBackend:
       ctx.invariants
         .zip(1 to ctx.invariants.length + 1)
         .map((inv: TInvariant, id: Int) =>
-          // replace references to derived reactives with macro calls
           invariantToMacro(
             invariant = inv,
             inputs = reactivesPerInvariant(inv)
@@ -181,59 +180,6 @@ object ViperBackend:
           )
         )
     )
-
-  private def curlyToViper(
-      modifies: List[ID],
-      methodArgs: List[ID],
-      curlyBody: Term
-  )(using ctx: CompilationContext): String =
-    // 0. collect requires/ensures/exec bodies
-    // 1. collect reactive names in requires/ensures/exec
-    // 2. replace reactive names with field accesses
-    // 2. collect argument names in requires/ensures/exec
-    // 3. replace args with names from method params
-    // extract names from body
-
-    // extract argument names
-    def collectArgNames(acc: List[ID], term: TArrow): List[ID] =
-      term match
-        case TArrow(TVar(name), t @ TArrow(_, _)) =>
-          collectArgNames(acc :+ name, t)
-        case TArrow(TVar(name), _) =>
-          acc :+ name
-        case _ =>
-          throw ViperCompilationException(
-            s"Tried to compile interaction to Viper but received invalid function in body: $term"
-          )
-
-    // check if curlyBody is a function, if yes, insert reactives and method arguments
-    val body = curlyBody match
-      case t @ TArrow(_, _) =>
-        // extract argument names
-        val allNames = collectArgNames(List(), t)
-        val (reactiveNames, argumentNames) = allNames.splitAt(modifies.length)
-        // insert reactives names
-        val reactivesInserted = (reactiveNames zip modifies).foldLeft(t.body) {
-          case (b: Term, (from: ID, to: ID)) => rename(from, to, b)
-        }
-        // insert method args
-        if argumentNames.length != methodArgs.length then
-          throw ViperCompilationException(
-            s"Interaction body $curlyBody has wrong arity. It should accept the same number of arguments as the executes part of the interaction: $methodArgs"
-          )
-        (argumentNames zip methodArgs).foldLeft(reactivesInserted) {
-          case (body, (from, to)) => rename(from, to, body)
-        }
-      case t => // no function, use body as is
-        t
-
-    // replace reactive names with field accesses on the graph object
-    def transformer: Term => Term =
-      case TVar(name) if ctx.sources.contains(name) =>
-        TFCall(TVar("graph"), name, List())
-      case t => t
-
-    return expressionToViper(traverseFromNode(body, transformer))
 
   private def compileInteractions(ctx: CompilationContext): CompilationResult =
     val interactions = ctx.interactions
@@ -247,23 +193,11 @@ object ViperBackend:
       name: ID,
       interaction: TInteraction
   )(using ctx: CompilationContext): String =
-    val numReactives = interaction.reactiveTypes.length
-    val numArguments = interaction.argumentTypes.length
     // collect arguments and their types
     // extract names from body
-    def collectArgNames(acc: List[ID], term: TArrow): List[ID] =
-      term match
-        case TArrow(TVar(name), t @ TArrow(_, _)) =>
-          collectArgNames(acc :+ name, t)
-        case TArrow(TVar(name), _) =>
-          acc :+ name
-        case _ =>
-          throw ViperCompilationException(
-            s"Tried to compile interaction $interaction to Viper but received invalid function in body: $term"
-          )
     val allNames = interaction.executes match
       case None                      => List()
-      case Some(term @ TArrow(_, _)) => collectArgNames(List(), term)
+      case Some(term @ TArrow(_, _)) => term.args
       case Some(term)                => List()
     val argNames =
       allNames.drop(interaction.reactiveTypes.length)
@@ -305,6 +239,40 @@ object ViperBackend:
         |${body.getOrElse("").indent(2)}}
         """.stripMargin
 
+  private def curlyToViper(
+      modifies: List[ID],
+      methodArgs: List[ID],
+      body: Term
+  )(using ctx: CompilationContext): String =
+    // check if curlyBody is a function, if yes, insert reactives and method arguments
+    val transformedBody = body match
+      case tarrow @ TArrow(_, _) =>
+        // extract argument names
+        val allNames = tarrow.args
+        val (reactiveNames, argumentNames) = allNames.splitAt(modifies.length)
+        // insert reactives names
+        val reactivesInserted =
+          (reactiveNames zip modifies).foldLeft(tarrow.body) {
+            case (body: Term, (from: ID, to: ID)) => rename(from, to, body)
+          }
+        // insert method args
+        if argumentNames.length != methodArgs.length then
+          throw ViperCompilationException(
+            s"Interaction body $body has wrong arity. It should accept the same number of arguments as the executes part of the interaction: $methodArgs"
+          )
+        (argumentNames zip methodArgs).foldLeft(reactivesInserted) {
+          case (body, (from, to)) => rename(from, to, body)
+        }
+      case _ => // no function, use body as is
+        body
+
+    // replace reactive names with field accesses on the graph object
+    def transformer: Term => Term =
+      case TVar(name) if ctx.sources.contains(name) =>
+        TFCall(TVar("graph"), name, List())
+      case t => t
+
+    return expressionToViper(traverseFromNode(transformedBody, transformer))
   private def typeToViper(t: Type)(using ctx: CompilationContext): String =
     t match
       // replace type aliases

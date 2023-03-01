@@ -35,6 +35,14 @@ case class TArrow(left: Term, right: Term) extends Term: // anonymous functions
     case TArrow(left, right) => findBody(right)
     case t                   => t
   def body: Term = findBody(right)
+  private def collectArgNames: (acc: List[ID], term: Term) => List[ID] =
+    case (acc, TArrow(TVar(name), t @ TArrow(_, _))) =>
+      collectArgNames(acc :+ name, t)
+    case (acc, TArrow(TVar(name), _)) =>
+      acc :+ name
+    case (acc, t) => acc
+  def args: List[ID] = collectArgNames(List(), this)
+
 case class TTypeAl(name: ID, _type: Type) extends Term // type aliases
 
 // Viper terms
