@@ -47,11 +47,11 @@ object DotFun {
       }
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
-        val firstCondition = left.context.forall(right.context.contains)
-        val secondCondition = right.store.store.keySet.forall { k =>
+        def firstCondition = left.context.forall(right.context.contains)
+        def secondCondition = right.store.store.keySet.forall { k =>
           left.store.store.get(k).forall { l => Lattice[A].lteq(l, right.store.store(k)) }
         }
-        val thirdCondition = {
+        def thirdCondition = {
           val diff = left.context.diff(left.store.dots)
           right.store.dots.intersect(diff).isEmpty
         }
