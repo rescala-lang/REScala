@@ -35,11 +35,8 @@ object DotSet {
       }
 
       override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
-        val added =
-          for (d <- state.store.dots.iterator) yield
-            val dots = Dots.single(d)
-            Dotted(DotSet(dots), dots)
-        val removed = state.context.subtract(state.store.dots).decomposed.map(Dotted(DotSet.empty, _))
+        val added   = state.store.dots.decomposed.map(d => Dotted(DotSet(d), d))
+        val removed = state.context.subtract(state.store.dots).decomposed.map(d => Dotted(DotSet.empty, d))
         removed ++ added
       }
     }

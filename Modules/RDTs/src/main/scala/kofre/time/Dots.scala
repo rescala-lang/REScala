@@ -89,7 +89,7 @@ object Dots {
 
   def single(dot: Dot): Dots = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: Lattice[Dots] = Lattice.derived
+  given contextLattice: Lattice[Dots] = Lattice.derived
 
   def from(dots: IterableOnce[Dot]): Dots = Dots(dots.iterator.to(Iterable).groupBy(_.replicaId).map {
     (key, times) =>
