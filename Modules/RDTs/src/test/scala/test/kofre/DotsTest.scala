@@ -107,4 +107,14 @@ class DotsTest extends munit.ScalaCheckSuite {
       }
     }
   }
+
+  property("<=") {
+    forAll { (left: Dots, right: Dots) =>
+      val leftSet  = left.toSet
+      val rightSet = right.toSet
+      if left <= right then
+        assertEquals(leftSet.intersect(rightSet), leftSet, s"left: $left\nright: $right")
+        assertEquals(leftSet.union(rightSet), rightSet)
+    }
+  }
 }
