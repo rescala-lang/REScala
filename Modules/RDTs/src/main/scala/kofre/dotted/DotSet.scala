@@ -11,7 +11,7 @@ object DotSet {
 
   val empty: DotSet = DotSet(Dots.empty)
 
-  def from(it: IterableOnce[Dot]): DotSet = DotSet(Dots.from(it))
+  def from(it: Iterable[Dot]): DotSet = DotSet(Dots.from(it))
 
   given hasDots: HasDots[DotSet] with {
     override def getDots(a: DotSet): Dots = a.repr

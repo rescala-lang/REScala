@@ -17,7 +17,7 @@ object DotFun {
   def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def getDots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keysIterator)
+    override def getDots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keys)
   }
 
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] =
@@ -57,10 +57,10 @@ object DotFun {
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
         val added =
-          for
-            case (k, v) <- state.store.repr
-            d <- v.decomposed
-          yield Dotted(DotFun(Map(k -> d)), Dots.single(k))
+          Lattice[Map[Dot, A]].decompose(state.store.repr).map { m =>
+            val df = DotFun(m)
+            Dotted(df, df.dots)
+          }
 
         added ++ DottedDecompose.decomposedDeletions(state)
       }
