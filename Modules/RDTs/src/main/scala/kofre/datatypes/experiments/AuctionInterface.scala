@@ -2,7 +2,6 @@ package kofre.datatypes.experiments
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlySet
-import kofre.datatypes.GrowOnlySet.{syntax, given}
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.syntax.OpsSyntaxHelper
 
@@ -12,19 +11,12 @@ object AuctionInterface {
   case object Closed extends Status
 
   object Status {
-    implicit val StatusAsUIJDLattice: Lattice[Status] = new Lattice[Status] {
-      override def lteq(left: Status, right: Status): Boolean = (left, right) match {
-        case (Closed, Open) => false
-        case _              => true
-      }
 
-      override def decompose(state: Status): Iterable[Status] = List(state)
-
-      override def merge(left: Status, right: Status): Status = (left, right) match {
-        case (Open, Open) => Open
-        case _            => Closed
-      }
+    given ordering: Ordering[Status] with {
+      override def compare(x: Status, y: Status): Int = if x == y then 0 else if x == Closed then 1 else -1
     }
+
+    given lattice: Lattice[Status] = Lattice.fromOrdering
   }
 
   case class Bid(userId: User, bid: Int)
