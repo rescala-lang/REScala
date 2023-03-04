@@ -28,7 +28,6 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * This implementation was modeled after the RGA proposed by Roh et al. in "Replicated abstract data types: Building blocks
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   */
-
 case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[ReplicatedList.Node[E]])
 object ReplicatedList {
 
