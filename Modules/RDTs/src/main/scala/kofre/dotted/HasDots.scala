@@ -6,9 +6,11 @@ import kofre.time.{Dot, Dots}
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 
-/** See: Dot stores in delta state replicated data types
+/** HasDots implies that the container stores values that are somehow associated to individual [[Dot]]s.
+  * This is different from a dot context, which could also contain dots for deleted values or other metadata.
+  * HasDots is explicitly for dots that are present/existing in some datastructure right now.
   *
-  * But here, a dot store is something that can be seen as a Dots
+  * See also: Dot stores in delta state replicated data types
   */
 trait HasDots[-A] {
   def getDots(a: A): Dots

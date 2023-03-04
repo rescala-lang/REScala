@@ -17,32 +17,28 @@ object DotSet {
     override def getDots(a: DotSet): Dots = a.dots
   }
 
-  given contextDecompose: DottedLattice[DotSet] =
+  given dottedLattice: DottedLattice[DotSet] =
     new DottedLattice[DotSet] {
 
       override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
+        // the first `right.context` semantically should be `right.deletions`,
+        // but the non-deleted values are added in the next line anyway
         val fromLeft  = left.store.dots subtract right.context
-        val fromRight = right.store.dots.subtract(left.context subtract left.store.dots)
+        val fromRight = right.store.dots subtract left.deletions
 
         DotSet(fromLeft union fromRight)
       }
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
-        val firstCondition = left.context.forall(right.context.contains)
-
-        val secondCondition = {
-          val diff = left.context.diff(left.store.dots)
-          right.store.dots.intersect(diff).isEmpty
-        }
-
-        firstCondition && secondCondition
+        (right.context contains left.context) &&
+        (right.store.dots disjunct left.deletions)
       }
 
       override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
         val added =
           for (d <- state.store.dots.iterator) yield
-            val single = DotSet(Dots.single(d))
-            Dotted(single, single.dots)
+            val dots = Dots.single(d)
+            Dotted(DotSet(dots), dots)
         val removed = state.context.subtract(state.store.dots).decomposed.map(Dotted(DotSet.empty, _))
         removed ++ added
       }

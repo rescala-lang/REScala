@@ -1,8 +1,9 @@
 package kofre.time
 
-import kofre.base.{Uid, Lattice, Time}
+import kofre.base.{Lattice, Time, Uid}
 import kofre.dotted.Dotted
 import kofre.time.Dot
+
 
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
@@ -34,7 +35,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def nextDot(replicaId: Uid): Dot = Dot(replicaId, nextTime(replicaId))
 
-  def diff(extern: Dots): Dots = subtract(extern)
+  def diff(other: Dots): Dots = subtract(other)
 
   def subtract(other: Dots): Dots = {
     Dots(
@@ -60,9 +61,13 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
       }
     }
 
+  def disjunct(other: Dots): Boolean = !other.iterator.exists(contains)
+
   def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
+
+  def contains(other: Dots): Boolean = other.iterator.forall(contains)
 
   def iterator: Iterator[Dot] = internal.iterator.flatMap((k, v) => v.iterator.map(t => Dot(k, t)))
 
@@ -71,10 +76,6 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def max(replicaID: Uid): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
-
-  def forall(cond: Dot => Boolean): Boolean = internal.forall { (id, tree) =>
-    tree.iterator.forall(time => cond(Dot(id, time)))
-  }
 
   def <=(other: Dots): Boolean = internal.forall {
     case (id, leftRange) => leftRange <= other.rangeAt(id)
