@@ -9,7 +9,7 @@ case class DotSet(dots: Dots) {
 
 object DotSet {
 
-  def empty: DotSet = DotSet(Dots.empty)
+  val empty: DotSet = DotSet(Dots.empty)
 
   def from(it: IterableOnce[Dot]): DotSet = DotSet(Dots.from(it))
 
@@ -36,7 +36,7 @@ object DotSet {
 
       override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
         val added   = state.store.dots.decomposed.map(d => Dotted(DotSet(d), d))
-        val removed = state.context.subtract(state.store.dots).decomposed.map(d => Dotted(DotSet.empty, d))
+        val removed = state.deletions.decomposed.map(d => Dotted(DotSet.empty, d))
         removed ++ added
       }
     }
