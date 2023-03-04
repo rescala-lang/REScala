@@ -10,7 +10,6 @@ import kofre.time.{Dot, Dots}
   * In the absence of concurrent writes, the MultiVersionRegister is either empty or holds one value.
   * When multiple values are written concurrently, reading the MultiVersionRegister returns a set holding all these values.
   */
-
 case class MultiVersionRegister[A](repr: DotFun[A])
 
 object MultiVersionRegister {
@@ -38,7 +37,7 @@ object MultiVersionRegister {
     def clear(using PermCausalMutate)(): C =
       Dotted(
         MultiVersionRegister.empty,
-        Dots.from(current.repr.keySet)
+        Dots.from(current.repr.store.keySet)
       ).mutator
   }
 }
