@@ -75,7 +75,7 @@ object Lattice {
   }
 
   def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
-    override def merge(left: A, right: A): A = if left <= right then right else left
+    override def merge(left: A, right: A): A      = if left <= right then right else left
     override def lteq(left: A, right: A): Boolean = left <= right
   }
 
@@ -111,6 +111,7 @@ object Lattice {
   given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = new Lattice[Map[K, V]] {
     override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
       val (small, large) =
+        // compare unsigned treats the “unknown” value -1 as larger than any known size
         if 0 <= Integer.compareUnsigned(left.knownSize, right.knownSize)
         then (right, left)
         else (left, right)
@@ -123,16 +124,15 @@ object Lattice {
       }
 
     override def lteq(left: Map[K, V], right: Map[K, V]): Boolean =
-      left.keySet.forall { k =>
-        left.get(k) <= right.get(k)
+      left.forall { (k, l) =>
+        right.get(k).exists(r => l <= r)
       }
 
-    override def decompose(state: Map[K, V]): Iterable[Map[K, V]] = state.keys.flatMap { k =>
-      Lattice[V].decompose(state(k)).map(v => Map(k -> v)) match {
-        case s if s.isEmpty => List(Map(k -> state(k)))
-        case s              => s
-      }
-    }
+    override def decompose(state: Map[K, V]): Iterable[Map[K, V]] =
+      for
+        case (k, v) <- state
+        d <- v.decomposed
+      yield Map(k -> d)
   }
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
