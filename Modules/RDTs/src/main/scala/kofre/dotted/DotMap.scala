@@ -3,9 +3,7 @@ package kofre.dotted
 import kofre.base.Bottom
 import kofre.time.Dots
 
-case class DotMap[K, V](repr: Map[K, V]) {
-  export repr.{repr as _, *}
-}
+case class DotMap[K, V](repr: Map[K, V])
 
 /** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
   * [[kofre.datatypes.ObserveRemoveMap]] for a usage example.
@@ -28,28 +26,28 @@ object DotMap {
       override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
         val empty = Bottom.empty[V]
         DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
-          val leftCausalStore  = left.map(_.getOrElse(key, Bottom.empty[V]))
-          val rightCausalStore = right.map(_.getOrElse(key, Bottom.empty[V]))
+          val leftCausalStore  = left.map(_.repr.getOrElse(key, Bottom.empty[V]))
+          val rightCausalStore = right.map(_.repr.getOrElse(key, Bottom.empty[V]))
           val res              = leftCausalStore mergePartial rightCausalStore
           if empty == res then None else Some(key -> res)
         }.toMap)
       }
 
       override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
-        def firstCondition = (left.context subtract right.context).isEmpty
+        def firstCondition = right.context contains left.context
 
         def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
-          left.map(_.getOrElse(k, Bottom.empty[V])) <= right.map(_.getOrElse(k, Bottom.empty[V]))
+          left.map(_.repr.getOrElse(k, Bottom.empty[V])) <= right.map(_.repr.getOrElse(k, Bottom.empty[V]))
         }
 
-        def secondCondition = secondConditionHelper(left.store.keys) && secondConditionHelper(right.store.keys)
+        def secondCondition = secondConditionHelper(left.store.repr.keys) && secondConditionHelper(right.store.repr.keys)
 
         firstCondition && secondCondition
       }
 
       override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
         val added = for {
-          (k, v)                    <- state.store
+          (k, v)                    <- state.store.repr
           Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

@@ -27,7 +27,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     _deltas.toVector // TODO: Maybe change this to another type
 
   def get(key: K): Option[V] =
-    _state.store.get(key)
+    _state.store.repr.get(key)
       .map(_.repr.values)
       .getOrElse(Nil)
       .maxByOption(_._2.timestamp)
@@ -78,7 +78,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   }
 
   def values: Map[K, V] =
-    _state.store.map { case (k, mvReg) =>
+    _state.store.repr.map { case (k, mvReg) =>
       k -> mvReg.repr.values.maxBy(_._2.timestamp)._1
     }
 

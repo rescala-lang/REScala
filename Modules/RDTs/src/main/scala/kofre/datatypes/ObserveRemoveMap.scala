@@ -41,17 +41,17 @@ object ObserveRemoveMap {
     def contains(using PermQuery)(k: K): Boolean = current.contains(k)
 
     def queryKey[A](using PermQuery, Bottom[V])(k: K): V = {
-      current.inner.getOrElse(k, Bottom[V].empty)
+      current.inner.repr.getOrElse(k, Bottom[V].empty)
     }
 
-    def queryAllEntries(using PermQuery): Iterable[V] = current.inner.values
-    def entries(using PermQuery): Iterable[(K, V)]    = current.inner.view
+    def queryAllEntries(using PermQuery): Iterable[V] = current.inner.repr.values
+    def entries(using PermQuery): Iterable[(K, V)]    = current.inner.repr.view
     def mutateKey(using
         PermCausalMutate,
         ReplicaId,
         Bottom[V]
     )(k: K, m: (Uid, Dotted[V]) => Dotted[V]): C = {
-      val v = current.inner.getOrElse(k, Bottom[V].empty)
+      val v = current.inner.repr.getOrElse(k, Bottom[V].empty)
 
       m(replicaId, context.wrap(v)) match {
         case Dotted(stateDelta, ccDelta) =>
@@ -70,7 +70,7 @@ object ObserveRemoveMap {
         pcm: PermCausalMutate,
         bot: Bottom[V]
     )(k: K)(m: Dotted[V] => Dotted[V]): C = {
-      val v                           = current.inner.getOrElse(k, Bottom[V].empty)
+      val v                           = current.inner.repr.getOrElse(k, Bottom[V].empty)
       val Dotted(stateDelta, ccDelta) = m(Dotted(v, context))
       make[K, V](
         dm = DotMap(Map(k -> stateDelta)),
@@ -79,7 +79,7 @@ object ObserveRemoveMap {
     }
 
     def remove(using PermCausalMutate, Bottom[V], HasDots[V])(k: K): C = {
-      val v = current.inner.getOrElse(k, Bottom[V].empty)
+      val v = current.inner.repr.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
         cc = HasDots[V].getDots(v)
@@ -87,7 +87,7 @@ object ObserveRemoveMap {
     }
 
     def removeAll(using PermCausalMutate, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {
-      val values = keys.map(k => current.inner.getOrElse(k, Bottom[V].empty))
+      val values = keys.map(k => current.inner.repr.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
         case (set, v) => set union HasDots[V].getDots(v)
       }
@@ -98,7 +98,7 @@ object ObserveRemoveMap {
     }
 
     def removeByValue(using PermCausalMutate, DottedLattice[V], HasDots[V])(cond: Dotted[V] => Boolean): C = {
-      val toRemove = current.inner.values.collect {
+      val toRemove = current.inner.repr.values.collect {
         case v if cond(Dotted(v, context)) => HasDots[V].getDots(v)
       }.fold(Dots.empty)(_ union _)
 

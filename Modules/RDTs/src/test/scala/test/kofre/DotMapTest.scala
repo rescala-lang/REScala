@@ -18,7 +18,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
     forAll { (dm: TestedMap) =>
       assertEquals(
         dm.dots.toSet,
-        clue(dm).values.flatMap(
+        clue(dm).repr.values.flatMap(
           _.dots.iterator
         ).toSet,
         s"DotMap.dots should return the keys of the DotMap itself,"
@@ -71,14 +71,14 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
         // ignore cases where the dots intersect, as this check does not seem to handle such cases correcly
         if (dotsA.intersect(dotsB).isEmpty) {
-          (dmA.keySet union dmB.keySet).foreach { k =>
+          (dmA.repr.keySet union dmB.repr.keySet).foreach { k =>
             val vMerged =
-              Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)) mergePartial
-              Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
+              Dotted(dmA.repr.getOrElse(k, DotSet.empty), (ccA)) mergePartial
+              Dotted(dmB.repr.getOrElse(k, DotSet.empty), (ccB))
 
             assert(
-              vMerged.isEmpty || dmMerged(k) == vMerged,
-              s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
+              vMerged.isEmpty || dmMerged.repr(k) == vMerged,
+              s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.repr.get(k)} does not equal $vMerged"
             )
           }
         }
@@ -127,12 +127,12 @@ class DotMapTest extends munit.ScalaCheckSuite {
   ): TestedMap =
     start match
       case Nil         => acc
-      case (i, c) :: t => removeDuplicates(t, DotMap(acc + (i -> DotSet(c.subtract(con)))), con union c.dots)
+      case (i, c) :: t => removeDuplicates(t, DotMap(acc.repr + (i -> DotSet(c.subtract(con)))), con union c.dots)
 
   property("decompose") {
     forAll { (dmdup: TestedMap, deleted: Dots) =>
 
-      val dm: TestedMap = removeDuplicates(dmdup.toList, DotMap.empty, Dots.empty)
+      val dm: TestedMap = removeDuplicates(dmdup.repr.toList, DotMap.empty, Dots.empty)
 
       val cc = dm.dots union deleted
 
@@ -152,10 +152,10 @@ class DotMapTest extends munit.ScalaCheckSuite {
         cc,
         s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
       )
-      dm.keys.foreach { k =>
+      dm.repr.keys.foreach { k =>
         assertEquals(
-          dm(k),
-          dmMerged.getOrElse(k, DotSet.empty),
+          dm.repr(k),
+          dmMerged.repr.getOrElse(k, DotSet.empty),
           s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
         )
       }
