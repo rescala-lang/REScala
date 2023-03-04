@@ -56,13 +56,8 @@ object DotMap {
           }
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 
-        val removed =
-          state.context.subtract(state.store.dots).decomposed.map(Dotted(
-            DotMap.empty[K, V],
-            _
-          ))
 
-        added ++ removed
+        added ++ DottedDecompose.decomposedDeletions(state)
       }
     }
 }

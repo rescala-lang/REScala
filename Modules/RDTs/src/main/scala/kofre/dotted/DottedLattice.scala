@@ -58,7 +58,10 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
 
 object DottedLattice {
 
-  def apply[A](implicit ds: DottedLattice[A]): DottedLattice[A] = ds
+  def apply[A: DottedLattice]: DottedLattice[A] = summon
+
+  def decomposedDeletions[A: HasDots: Bottom](dotted: Dotted[A]) =
+    dotted.deletions.decomposed.map(d => Dotted(Bottom.empty, d))
 
   given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
 

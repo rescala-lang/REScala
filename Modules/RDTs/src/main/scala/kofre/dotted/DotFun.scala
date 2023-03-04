@@ -61,13 +61,7 @@ object DotFun {
           v <- Lattice[A].decompose(state.store.store(d))
         } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
 
-        val removed =
-          state.context.subtract(state.store.dots).decomposed.map(Dotted(
-            DotFun.empty[A],
-            _
-          ))
-
-        removed ++ added
+        DottedDecompose.decomposedDeletions(state) ++ added
       }
     }
 }
