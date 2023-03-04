@@ -16,7 +16,7 @@ object EnableWinsFlag {
 
   given contextDecompose: DottedLattice[EnableWinsFlag] = DottedLattice.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] with {
-    override def dots(a: EnableWinsFlag): Dots = a.inner.repr
+    override def dots(a: EnableWinsFlag): Dots = a.inner.dots
   }
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
@@ -28,19 +28,19 @@ object EnableWinsFlag {
     * It relies on the external context to track removals.
     */
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
-    def read(using PermQuery): Boolean = !current.inner.repr.isEmpty
+    def read(using PermQuery): Boolean = !current.inner.dots.isEmpty
 
     def enable(using ReplicaId, PermCausalMutate)(): C = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),
-        current.inner.repr add nextDot
+        current.inner.dots add nextDot
       ).mutator
     }
     def disable(using PermCausalMutate)(): C = {
       Dotted(
         EnableWinsFlag(DotSet(Dots.empty)),
-        current.inner.repr
+        current.inner.dots
       ).mutator
     }
   }

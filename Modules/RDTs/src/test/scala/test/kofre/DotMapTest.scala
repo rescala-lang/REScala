@@ -127,7 +127,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
   ): TestedMap =
     start match
       case Nil         => acc
-      case (i, c) :: t => removeDuplicates(t, DotMap(acc + (i -> DotSet(c.subtract(con)))), con union c.repr)
+      case (i, c) :: t => removeDuplicates(t, DotMap(acc + (i -> DotSet(c.subtract(con)))), con union c.dots)
 
   property("decompose") {
     forAll { (dmdup: TestedMap, deleted: Dots) =>

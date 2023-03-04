@@ -39,7 +39,7 @@ object AddWinsSet {
 
       deltaState[E].make(
         dm = DotMap(Map(e -> DotSet(Dots.single(nextDot)))),
-        cc = v.repr add nextDot
+        cc = v.dots add nextDot
       ).mutator
     }
 
@@ -51,7 +51,7 @@ object AddWinsSet {
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds.repr
+            case Some(ds) => dots union ds.dots
             case None     => dots
           }
       }
@@ -67,7 +67,7 @@ object AddWinsSet {
       val v  = dm.getOrElse(e, DotSet.empty)
 
       deltaState[E].make(
-        cc = v.repr
+        cc = v.dots
       ).mutator
     }
 
@@ -75,7 +75,7 @@ object AddWinsSet {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(Dots.empty) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds.repr
+            case Some(ds) => dots union ds.dots
             case None     => dots
           }
       }
@@ -89,7 +89,7 @@ object AddWinsSet {
       val dm = current.inner
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
-      }.foldLeft(Dots.empty)(_ union _.repr)
+      }.foldLeft(Dots.empty)(_ union _.dots)
 
       deltaState[E].make(
         cc = removedDots
