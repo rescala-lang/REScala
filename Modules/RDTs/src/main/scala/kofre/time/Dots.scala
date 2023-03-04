@@ -91,9 +91,8 @@ object Dots {
 
   given contextLattice: Lattice[Dots] = Lattice.derived
 
-  def from(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.replicaId).map {
-    (key, times) =>
-      key -> ArrayRanges.from(times.view.map(_.time))
-  })
+  def from(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.replicaId).view.mapValues {
+    times => ArrayRanges.from(times.view.map(_.time))
+  }.toMap)
 
 }
