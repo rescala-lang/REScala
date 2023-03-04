@@ -46,16 +46,14 @@ object DotFun {
         })
       }
 
-      private def dots(a: DotFun[A]): Dots = dotStore.dots(a)
-
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         val firstCondition = left.context.forall(right.context.contains)
         val secondCondition = right.store.store.keySet.forall { k =>
           left.store.store.get(k).forall { l => Lattice[A].lteq(l, right.store.store(k)) }
         }
         val thirdCondition = {
-          val diff = left.context.diff(dots(left.store))
-          dots(right.store).intersect(diff).isEmpty
+          val diff = left.context.diff(left.store.dots)
+          right.store.dots.intersect(diff).isEmpty
         }
 
         firstCondition && secondCondition && thirdCondition
@@ -63,12 +61,12 @@ object DotFun {
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
         val added: Iterator[Dotted[DotFun[A]]] = for {
-          d <- dots(state.store).iterator
+          d <- state.store.dots.iterator
           v <- Lattice[A].decompose(state.store.store(d))
         } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
 
         val removed =
-          state.context.subtract(dots(state.store)).decomposed.map(Dotted(
+          state.context.subtract(state.store.dots).decomposed.map(Dotted(
             DotFun.empty[A],
             _
           ))
