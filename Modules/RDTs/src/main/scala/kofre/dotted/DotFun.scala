@@ -56,12 +56,13 @@ object DotFun {
       }
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
-        val added: Iterator[Dotted[DotFun[A]]] = for {
-          d <- state.store.dots.iterator
-          v <- Lattice[A].decompose(state.store.store(d))
-        } yield Dotted(DotFun(Map(d -> v)), Dots.single(d))
+        val added=
+          for
+            case (k, v) <- state.store.store
+            d <- v.decomposed
+          yield Dotted(DotFun(Map(k -> d)), Dots.single(k))
 
-        DottedDecompose.decomposedDeletions(state) ++ added
+        added ++ DottedDecompose.decomposedDeletions(state)
       }
     }
 }
