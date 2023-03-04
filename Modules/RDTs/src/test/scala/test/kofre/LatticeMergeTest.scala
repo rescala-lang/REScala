@@ -11,7 +11,9 @@ import test.kofre.DataGenerator.{*, given}
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[LastWriterWins[Time, Int]]
 class OrSetLatice        extends LatticeMergeTest[ObserveRemoveSet[Int]]
-class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
+
+// This may fail in cases where we generate colliding dots with different values.
+class MVRLattice extends LatticeMergeTest[MultiValueRegister[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice] extends munit.ScalaCheckSuite {
 
