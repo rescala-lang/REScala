@@ -39,7 +39,7 @@ object ResettableCounter {
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, ResettableCounter](container) {
 
     def value(using PermQuery): Int = {
-      current.inner.store.values.foldLeft(0) {
+      current.inner.repr.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
     }
@@ -58,13 +58,13 @@ object ResettableCounter {
 
     private def update(using ReplicaId, PermCausalMutate)(u: (Int, Int)): C = {
       context.max(replicaId) match {
-        case Some(currentDot) if current.inner.store.contains(currentDot) =>
-          val newCounter = (current.inner.store(currentDot), u) match {
+        case Some(currentDot) if current.inner.repr.contains(currentDot) =>
+          val newCounter = (current.inner.repr(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
           deltaState(
-            df = Some(ResettableCounter(DotFun(current.inner.store + (currentDot -> newCounter)))),
+            df = Some(ResettableCounter(DotFun(current.inner.repr + (currentDot -> newCounter)))),
             cc = Dots.single(currentDot)
           ).mutator
         case _ =>
@@ -83,7 +83,7 @@ object ResettableCounter {
 
     def reset()(using PermCausalMutate): C = {
       deltaState(
-        cc = Dots.from(current.inner.store.keySet)
+        cc = Dots.from(current.inner.repr.keySet)
       ).mutator
     }
   }

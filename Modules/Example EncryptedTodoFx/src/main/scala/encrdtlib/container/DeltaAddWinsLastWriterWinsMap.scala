@@ -28,7 +28,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def get(key: K): Option[V] =
     _state.store.get(key)
-      .map(_.store.values)
+      .map(_.repr.values)
       .getOrElse(Nil)
       .maxByOption(_._2.timestamp)
       .map(_._1)
@@ -79,7 +79,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def values: Map[K, V] =
     _state.store.map { case (k, mvReg) =>
-      k -> mvReg.store.values.maxBy(_._2.timestamp)._1
+      k -> mvReg.repr.values.maxBy(_._2.timestamp)._1
     }
 
   def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {

@@ -8,7 +8,7 @@ import scala.annotation.targetName
 /** Associates from [[Dot]]s to `A`.
   * Can be considered a very bare bones multi value register
   */
-case class DotFun[A](store: Map[Dot, A])
+case class DotFun[A](repr: Map[Dot, A])
 
 object DotFun {
 
@@ -17,7 +17,7 @@ object DotFun {
   def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def getDots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keysIterator)
+    override def getDots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keysIterator)
   }
 
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] =
@@ -27,10 +27,10 @@ object DotFun {
         * Thus enabling nested merging of values, without merging context multiple times.
         */
       override def mergePartial(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): DotFun[A] = {
-        val fromLeft = left.store.store.filter { case (dot, _) => !right.context.contains(dot) }
-        DotFun(right.store.store.foldLeft(fromLeft) {
+        val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
+        DotFun(right.store.repr.foldLeft(fromLeft) {
           case (m, (dot, r)) =>
-            left.store.store.get(dot) match {
+            left.store.repr.get(dot) match {
               case None =>
                 if (left.context.contains(dot)) m
                 else m.updated(dot, r)
@@ -43,8 +43,8 @@ object DotFun {
         def `left is contained in right` = right.context.contains(left.context)
 
         def `left values are <= than right values` =
-          right.store.store.forall { (k, r) =>
-            left.store.store.get(k).forall { l => l <= r }
+          right.store.repr.forall { (k, r) =>
+            left.store.repr.get(k).forall { l => l <= r }
           }
         def `right has no values deleted in left` = {
           right.store.dots disjunct left.deletions
@@ -56,9 +56,9 @@ object DotFun {
       }
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
-        val added=
+        val added =
           for
-            case (k, v) <- state.store.store
+            case (k, v) <- state.store.repr
             d <- v.decomposed
           yield Dotted(DotFun(Map(k -> d)), Dots.single(k))
 

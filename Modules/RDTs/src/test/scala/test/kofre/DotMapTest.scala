@@ -27,7 +27,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
   }
   test("empty") {
     assert(
-      DotFun.empty.store.isEmpty,
+      DotFun.empty.repr.isEmpty,
       s"DotMap.empty should be empty, but ${DotFun.empty} is not empty"
     )
 

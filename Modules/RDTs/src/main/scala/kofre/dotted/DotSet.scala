@@ -3,8 +3,8 @@ package kofre.dotted
 import kofre.datatypes.EnableWinsFlag
 import kofre.time.{Dot, Dots}
 
-case class DotSet(dots: Dots) {
-  export dots.*
+case class DotSet(repr: Dots) {
+  export repr.*
 }
 
 object DotSet {
@@ -14,7 +14,7 @@ object DotSet {
   def from(it: IterableOnce[Dot]): DotSet = DotSet(Dots.from(it))
 
   given hasDots: HasDots[DotSet] with {
-    override def getDots(a: DotSet): Dots = a.dots
+    override def getDots(a: DotSet): Dots = a.repr
   }
 
   given dottedLattice: DottedLattice[DotSet] =

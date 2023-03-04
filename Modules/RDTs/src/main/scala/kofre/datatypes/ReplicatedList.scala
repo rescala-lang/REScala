@@ -82,14 +82,14 @@ object ReplicatedList {
 
     def read(using PermQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.toLazyList.map(df.store).collect {
+      fw.value.toLazyList.map(df.repr).collect {
         case Alive(tv) => tv.payload
       }.lift(i)
     }
 
     def size(using PermQuery): Int = {
       val ReplicatedList(_, df) = current
-      df.store.values.count {
+      df.repr.values.count {
         case Dead()   => false
         case Alive(_) => true
       }
@@ -97,7 +97,7 @@ object ReplicatedList {
 
     def toList(using PermQuery): List[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.growOnlyList.toList.map(df.store).collect {
+      fw.value.growOnlyList.toList.map(df.repr).collect {
         case Alive(tv) => tv.payload
       }
     }
@@ -110,7 +110,7 @@ object ReplicatedList {
     private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
       case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
-          case (dot, _) => df.store(dot) match {
+          case (dot, _) => df.repr(dot) match {
               case Alive(_) => true
               case Dead()   => false
             }
@@ -152,7 +152,7 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[Node[E]].store ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
+          val dfDelta = DotFun.empty[Node[E]].repr ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -165,7 +165,7 @@ object ReplicatedList {
     private def updateRGANode(state: ReplicatedList[E], i: Int, newNode: Node[E]): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(fw, df) = state
       fw.value.toLazyList.filter { dot =>
-        df.store(dot) match {
+        df.repr(dot) match {
           case Alive(_) => true
           case Dead()   => false
         }
@@ -187,7 +187,7 @@ object ReplicatedList {
         newNode: Node[E]
     ): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(_, df) = state
-      val toUpdate = df.store.toList.collect {
+      val toUpdate = df.repr.toList.collect {
         case (d, Alive(tv)) if cond(tv.payload) => d
       }
 
@@ -202,7 +202,7 @@ object ReplicatedList {
 
     def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
       val ReplicatedList(epoche, df) = current
-      val toRemove = df.store.collect {
+      val toRemove = df.repr.collect {
         case (dot, Dead()) => dot
       }.toSet
 
