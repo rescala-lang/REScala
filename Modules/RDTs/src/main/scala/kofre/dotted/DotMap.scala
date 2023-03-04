@@ -49,13 +49,9 @@ object DotMap {
 
       override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
         val added = for {
-          k <- state.store.keys
-          Dotted(atomicV, atomicCC) <- {
-            val v = state.store.getOrElse(k, Bottom.empty[V])
-            DottedLattice[V].decompose(Dotted(v, HasDots[V].getDots(v)))
-          }
+          (k, v)                    <- state.store
+          Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
-
 
         added ++ DottedDecompose.decomposedDeletions(state)
       }
