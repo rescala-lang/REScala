@@ -74,6 +74,11 @@ object Lattice {
     override def lteq(x: A, y: A): Boolean = x <= y
   }
 
+  def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
+    override def merge(left: A, right: A): A = if left <= right then right else left
+    override def lteq(left: A, right: A): Boolean = left <= right
+  }
+
   // /////////////// common instances below ///////////////
 
   given setLattice[A]: Lattice[Set[A]] = new Lattice[Set[A]] {
