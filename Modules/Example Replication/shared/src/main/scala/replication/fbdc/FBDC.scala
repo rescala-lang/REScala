@@ -54,7 +54,7 @@ given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
 given DottedLattice[RespValue] = DottedLattice.liftLattice
 
 given HasDots[RespValue] with {
-  override def dots(a: RespValue): Dots = Dots.empty
+  override def getDots(a: RespValue): Dots = Dots.empty
 }
 
 case class State(

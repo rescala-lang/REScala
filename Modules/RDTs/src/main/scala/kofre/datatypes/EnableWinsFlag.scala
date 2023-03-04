@@ -16,7 +16,7 @@ object EnableWinsFlag {
 
   given contextDecompose: DottedLattice[EnableWinsFlag] = DottedLattice.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] with {
-    override def dots(a: EnableWinsFlag): Dots = a.inner.dots
+    override def getDots(a: EnableWinsFlag): Dots = a.inner.dots
   }
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)

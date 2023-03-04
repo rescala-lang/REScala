@@ -4,8 +4,6 @@ import kofre.base.Bottom
 import kofre.time.Dots
 
 case class DotMap[K, V](repr: Map[K, V]) {
-  def dots(using ccv: HasDots[V]): Dots =
-    repr.valuesIterator.foldLeft(Dots.empty)((acc, v) => acc.union(ccv.dots(v)))
   export repr.{repr as _, *}
 }
 
@@ -17,8 +15,8 @@ object DotMap {
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
 
   given hasDots[K, V: HasDots]: HasDots[DotMap[K, V]] with {
-    override def dots(a: DotMap[K, V]): Dots = a.dots
-
+    override def getDots(a: DotMap[K, V]): Dots =
+      a.repr.valuesIterator.foldLeft(Dots.empty)((acc, v) => acc.union(v.dots))
   }
 
   /** This essentially lifts the [[DottedLattice]] to a [[DotMap]].
@@ -54,7 +52,7 @@ object DotMap {
           k <- state.store.keys
           Dotted(atomicV, atomicCC) <- {
             val v = state.store.getOrElse(k, Bottom.empty[V])
-            DottedLattice[V].decompose(Dotted(v, HasDots[V].dots(v)))
+            DottedLattice[V].decompose(Dotted(v, HasDots[V].getDots(v)))
           }
         } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

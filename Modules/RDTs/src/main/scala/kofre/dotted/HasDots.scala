@@ -11,9 +11,12 @@ import scala.deriving.Mirror
   * But here, a dot store is something that can be seen as a Dots
   */
 trait HasDots[-A] {
-  def dots(a: A): Dots
+  def getDots(a: A): Dots
 
-  def map[B](f: B => A): HasDots[B] = (b: B) => dots(f(b))
+  def map[B](f: B => A): HasDots[B] = (b: B) => getDots(f(b))
+
+  extension [A: HasDots](a: A) def dots: Dots = summon.getDots(a)
+
 }
 
 object HasDots {
@@ -27,8 +30,8 @@ object HasDots {
 
   class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]])
       extends HasDots[T] {
-    override def dots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
-      c.union(children(i).dots(a.productElement(i)))
+    override def getDots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
+      c.union(children(i).getDots(a.productElement(i)))
     }
 
   }

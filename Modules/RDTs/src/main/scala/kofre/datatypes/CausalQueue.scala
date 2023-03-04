@@ -22,7 +22,7 @@ object CausalQueue:
   def empty[T]: CausalQueue[T] = CausalQueue(Queue())
 
   given hasDots: HasDots[CausalQueue[Any]] with {
-    override def dots(a: CausalQueue[Any]): Dots = Dots.from(a.values.view.map(_.dot))
+    override def getDots(a: CausalQueue[Any]): Dots = Dots.from(a.values.view.map(_.dot))
   }
 
   given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived

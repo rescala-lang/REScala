@@ -82,14 +82,14 @@ object ObserveRemoveMap {
       val v = current.inner.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
-        cc = HasDots[V].dots(v)
+        cc = HasDots[V].getDots(v)
       ).mutator
     }
 
     def removeAll(using PermCausalMutate, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {
       val values = keys.map(k => current.inner.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
-        case (set, v) => set union HasDots[V].dots(v)
+        case (set, v) => set union HasDots[V].getDots(v)
       }
 
       make(
@@ -99,7 +99,7 @@ object ObserveRemoveMap {
 
     def removeByValue(using PermCausalMutate, DottedLattice[V], HasDots[V])(cond: Dotted[V] => Boolean): C = {
       val toRemove = current.inner.values.collect {
-        case v if cond(Dotted(v, context)) => HasDots[V].dots(v)
+        case v if cond(Dotted(v, context)) => HasDots[V].getDots(v)
       }.fold(Dots.empty)(_ union _)
 
       make(
