@@ -127,7 +127,7 @@ object ReplicatedList {
           val glistDelta = fw.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.empty[Node[E]] + (nextDot -> Alive(LastWriterWins.now(e, replicaId)))
+          val dfDelta = DotFun.single(nextDot, Alive(LastWriterWins.now(e, replicaId)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -172,7 +172,7 @@ object ReplicatedList {
       }.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
         case Some(d) =>
-          deltaState[E].make(df = DotFun.empty[Node[E]] + (d -> newNode))
+          deltaState[E].make(df = DotFun.single(d, newNode))
       }
     }
 

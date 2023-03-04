@@ -9,13 +9,13 @@ import scala.annotation.targetName
   * Can be considered a very bare bones multi value register */
 case class DotFun[A](store: Map[Dot, A]) {
   def dots: Dots = DotFun.dotStore.dots(this)
-  @targetName("add")
-  def +(tup: (Dot, A)): DotFun[A] = DotFun(store + tup)
 }
 
 object DotFun {
 
   def empty[A]: DotFun[A] = DotFun(Map.empty)
+
+  def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
   given dotStore[V]: HasDots[DotFun[V]] with {
     override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)

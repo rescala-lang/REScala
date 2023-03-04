@@ -64,7 +64,7 @@ object ResettableCounter {
           }
 
           deltaState(
-            df = Some(ResettableCounter(current.inner + (currentDot -> newCounter))),
+            df = Some(ResettableCounter(DotFun(current.inner.store + (currentDot -> newCounter)))),
             cc = Dots.single(currentDot)
           ).mutator
         case _ =>
