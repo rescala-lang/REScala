@@ -9,7 +9,7 @@ object ViperBackend:
 
   def toViper(ast: Seq[Term]): String =
     //// step 1: build context object that we pass around to subfunctions
-    val ctx = CompilationContext(ast)
+    val ctx = flattenInteractions(CompilationContext(ast))
 
     //// new step: Viper specific AST transformations
     val ctxy = viperTransformations(ctx)
@@ -40,69 +40,15 @@ object ViperBackend:
   private def viperTransformations(
       ctx: CompilationContext
   ): CompilationContext =
-    // step 1: flatten interactions
-    def flattenInteractions(t: Term, ctx: CompilationContext): Term =
-      val interactionKeywords =
-        List("requires", "ensures", "executes")
-      t match
-        // is requires/ensures/executes call
-        case TFCurly(parent, field, body)
-            if interactionKeywords.contains(field) =>
-          flattenInteractions(parent, ctx) match
-            // parent is an interaction
-            case i: TInteraction =>
-              field match
-                case "requires" => i.copy(requires = i.requires :+ body)
-                case "ensures"  => i.copy(ensures = i.ensures :+ body)
-                case "executes" => i.copy(executes = Some(body))
-                case wrongField =>
-                  throw Exception(s"Invalid call on Interaction: $wrongField")
-            // parent is variable that refers to an interaction
-            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
-              flattenInteractions(
-                TFCurly(ctx.interactions(name), field, body),
-                ctx
-              )
-            // else -> leave term untouched
-            case _ => t
-        // is modifies call
-        case TFCall(parent, "modifies", args) =>
-          flattenInteractions(parent, ctx) match
-            // parent is an interaction
-            case i: TInteraction =>
-              args.foldLeft(i) {
-                case (i, TVar(id)) => i.copy(modifies = i.modifies :+ id)
-                case e =>
-                  throw ViperCompilationException(
-                    s"Invalid argument for modifies statement: $e"
-                  )
-              }
-            // parent is variable that refers to an interaction
-            case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
-              flattenInteractions(
-                TFCall(ctx.interactions(name), "modifies", args),
-                ctx
-              )
-            case _ => t
-        case _ => t
-    // flattenInteractions until the result does not change anymore
-    def flattenRecursively(ctx: CompilationContext): CompilationContext =
-      val res = ctx.copy(ast =
-        ctx.ast.map(traverseFromNode(_, flattenInteractions(_, ctx)))
-      )
-      if res == ctx then return res
-      else return flattenRecursively(res)
-    val ctx2 = flattenRecursively(ctx)
-
-    // step 2: field calls as function calls
+    // step 1: field calls as function calls
     def fieldCallToFunCall: Term => Term =
       case TFCall(parent, field, args) =>
         TFunC(field, parent +: args)
       case t => t
-    val ctx3 =
-      ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, fieldCallToFunCall)))
+    val ctx2 =
+      ctx.copy(ast = ctx.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
-    // step 3: turn references to derived reactives to macro calls
+    // step 2: turn references to derived reactives to macro calls
     def transformer: Term => Term =
       case TVar(name) if ctx2.derived.contains(name) =>
         val (derived, _) = ctx2.graph(name)
@@ -111,8 +57,7 @@ object ViperBackend:
         TFunC(name, usedReactives.toList.sorted.map(TVar(_)))
       case t => t
 
-    // return ???
-    return ctx3.copy(ast = ctx3.ast.map(traverseFromNode(_, transformer)))
+    return ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, transformer)))
 
   private def compileSources(ctx: CompilationContext): CompilationResult =
     def sourceToField(name: ID, _type: Type): String =

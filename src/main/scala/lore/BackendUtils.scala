@@ -1,11 +1,6 @@
 package lore
 import AST._
 
-// def traverseAST(
-//     ast: Seq[Term],
-//     transformer: ParsedExpression => ParsedExpression
-// ) = ???
-
 // type definitions
 private type Graph[R] = Map[String, (R, Type)]
 private type CompilationResult = (CompilationContext, Seq[String])
@@ -27,6 +22,57 @@ private case class CompilationContext(
     case TTypeAl(name, _type) =>
       (name, _type)
   }.toMap
+
+// flattenInteractions until the result does not change anymore
+def flattenInteractions(ctx: CompilationContext): CompilationContext =
+  def flatten(t: Term, ctx: CompilationContext): Term =
+    val interactionKeywords =
+      List("requires", "ensures", "executes")
+    t match
+      // is requires/ensures/executes call
+      case TFCurly(parent, field, body)
+          if interactionKeywords.contains(field) =>
+        flatten(parent, ctx) match
+          // parent is an interaction
+          case i: TInteraction =>
+            field match
+              case "requires" => i.copy(requires = i.requires :+ body)
+              case "ensures"  => i.copy(ensures = i.ensures :+ body)
+              case "executes" => i.copy(executes = Some(body))
+              case wrongField =>
+                throw Exception(s"Invalid call on Interaction: $wrongField")
+          // parent is variable that refers to an interaction
+          case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
+            flatten(
+              TFCurly(ctx.interactions(name), field, body),
+              ctx
+            )
+          // else -> leave term untouched
+          case _ => t
+      // is modifies call
+      case TFCall(parent, "modifies", args) =>
+        flatten(parent, ctx) match
+          // parent is an interaction
+          case i: TInteraction =>
+            args.foldLeft(i) {
+              case (i, TVar(id)) => i.copy(modifies = i.modifies :+ id)
+              case e =>
+                throw Exception(
+                  s"Invalid argumeViperCompilationExceptionnt for modifies statement: $e"
+                )
+            }
+          // parent is variable that refers to an interaction
+          case TVar(name) if ctx.interactions.keys.toList.contains(name) =>
+            flatten(
+              TFCall(ctx.interactions(name), "modifies", args),
+              ctx
+            )
+          case _ => t
+      case _ => t
+
+  val res = ctx.copy(ast = ctx.ast.map(traverseFromNode(_, flatten(_, ctx))))
+  if res == ctx then return res
+  else return flattenInteractions(res)
 
 def traverseFromNode[A <: Term](
     node: A,
