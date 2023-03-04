@@ -12,6 +12,7 @@ class BackendUtilsTests extends FunSuite {
                   |val b: Source[Int] = Source(2)
                   |val c: Derived[Int] = Derived{a + b}
                   |val d: Derived[Int] = Derived{a}
+                  |val e: Derived[Int] = Derived{d}
                   |
                   |val i: Unit = Interaction[Int][Int]
                   |  .executes{0}
@@ -25,7 +26,7 @@ class BackendUtilsTests extends FunSuite {
     val ctx: CompilationContext =
       flattenInteractions(CompilationContext(ast.toList))
 
-    assertEquals(reaches(ctx.interactions("i"), ctx), Set("a", "c", "d"))
+    assertEquals(reaches(ctx.interactions("i"), ctx), Set("a", "c", "d", "e"))
     assertEquals(reaches(ctx.interactions("j"), ctx), Set("b", "c"))
   }
 }
