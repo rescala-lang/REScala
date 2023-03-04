@@ -26,15 +26,15 @@ object PosNegCounter {
       val neg = current.neg.growOnlyCounter.value
       pos - neg
 
-    def inc(): IdMut[C] =
+    def inc(): IdMutate[C] =
       val pos = current.pos.growOnlyCounter.inc()
       PosNegCounter(pos, GrowOnlyCounter.zero).mutator
 
-    def dec(): IdMut[C] =
+    def dec(): IdMutate[C] =
       val neg = current.neg.growOnlyCounter.inc()
       PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 
-    def add(delta: Int): IdMut[C] = {
+    def add(delta: Int): IdMutate[C] = {
       if (delta > 0) PosNegCounter(current.pos.growOnlyCounter.add(delta), GrowOnlyCounter.zero)
       else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.growOnlyCounter.add(-delta))
       else PosNegCounter.zero
