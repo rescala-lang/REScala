@@ -8,7 +8,7 @@ import scala.annotation.targetName
 /** Associates from [[Dot]]s to `A`.
   * Can be considered a very bare bones multi value register */
 case class DotFun[A](store: Map[Dot, A]) {
-  def dots: Dots = DotFun.dotStore.dots(this)
+  def dots: Dots = Dots.from(store.keysIterator)
 }
 
 object DotFun {
@@ -18,7 +18,7 @@ object DotFun {
   def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def dots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.store.keySet)
+    override def dots(dotStore: DotFun[V]): Dots = dotStore.dots
   }
 
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] =
