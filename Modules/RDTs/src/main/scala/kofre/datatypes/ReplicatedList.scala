@@ -89,7 +89,7 @@ object ReplicatedList {
 
     def size(using PermQuery): Int = {
       val ReplicatedList(_, df) = current
-      df.values.count {
+      df.store.values.count {
         case Dead()   => false
         case Alive(_) => true
       }
@@ -110,7 +110,7 @@ object ReplicatedList {
     private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
       case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
-          case (dot, _) => df(dot) match {
+          case (dot, _) => df.store(dot) match {
               case Alive(_) => true
               case Dead()   => false
             }
@@ -152,7 +152,7 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[Node[E]] ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
+          val dfDelta = DotFun.empty[Node[E]].store ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -165,7 +165,7 @@ object ReplicatedList {
     private def updateRGANode(state: ReplicatedList[E], i: Int, newNode: Node[E]): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(fw, df) = state
       fw.value.toLazyList.filter { dot =>
-        df(dot) match {
+        df.store(dot) match {
           case Alive(_) => true
           case Dead()   => false
         }
@@ -187,13 +187,11 @@ object ReplicatedList {
         newNode: Node[E]
     ): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(_, df) = state
-      val toUpdate = df.toList.collect {
+      val toUpdate = df.store.toList.collect {
         case (d, Alive(tv)) if cond(tv.payload) => d
       }
 
-      val dfDelta = DotFun.empty[Node[E]] ++ toUpdate.map(_ -> newNode)
-
-      deltaState[E].make(df = DotFun(dfDelta))
+      deltaState[E].make(df = DotFun(toUpdate.iterator.map(_ -> newNode).toMap))
     }
 
     def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
@@ -204,7 +202,7 @@ object ReplicatedList {
 
     def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
       val ReplicatedList(epoche, df) = current
-      val toRemove = df.collect {
+      val toRemove = df.store.collect {
         case (dot, Dead()) => dot
       }.toSet
 

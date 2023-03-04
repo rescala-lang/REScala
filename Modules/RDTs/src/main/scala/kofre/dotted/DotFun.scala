@@ -5,18 +5,12 @@ import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 
-/** The context describes dots that have been seen.
-  * The store describes which value is associated for a given dot.
-  * Dots that are removed from the store are considered deleted.
-  * All others are merged as for normal maps.
-  *
-  * The delta CRDT paper calls this a DotFun
-  */
+/** Associates from [[Dot]]s to `A`.
+  * Can be considered a very bare bones multi value register */
 case class DotFun[A](store: Map[Dot, A]) {
   def dots: Dots = DotFun.dotStore.dots(this)
   @targetName("add")
   def +(tup: (Dot, A)): DotFun[A] = DotFun(store + tup)
-  export store.{+ as _, repr as _, *}
 }
 
 object DotFun {
@@ -47,7 +41,7 @@ object DotFun {
       }
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
-        def firstCondition = left.context.forall(right.context.contains)
+        def rightKnowLeft = left.context.forall(right.context.contains)
         def secondCondition = right.store.store.keySet.forall { k =>
           left.store.store.get(k).forall { l => Lattice[A].lteq(l, right.store.store(k)) }
         }
@@ -56,7 +50,7 @@ object DotFun {
           right.store.dots.intersect(diff).isEmpty
         }
 
-        firstCondition && secondCondition && thirdCondition
+        rightKnowLeft && secondCondition && thirdCondition
       }
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {

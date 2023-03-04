@@ -11,7 +11,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
   property("dots") {
     forAll { (df: DotFun[Int]) =>
       assert(
-        df.dots.toSet == df.keySet,
+        df.dots.toSet == df.store.keySet,
         s"DotFun.dots should return the keys of the DotFun itself, but ${df.dots} does not equal $df"
       )
     }
@@ -19,7 +19,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   test("empty") {
     assert(
-      DotFun.empty[Int].isEmpty,
+      DotFun.empty[Int].store.isEmpty,
       s"DotFun.empty should be empty, but ${DotFun.empty[Int]} is not empty"
     )
   }
@@ -57,24 +57,24 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       (dotsA intersect dotsB).iterator.foreach { d =>
         assert(
-          dfMerged(d) == Lattice[Int].merge(dfA(d), dfB(d)),
-          s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
+          dfMerged.store(d) == Lattice[Int].merge(dfA.store(d), dfB.store(d)),
+          s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged.store(
               d
-            )} does not equal ${Lattice[Int].merge(dfA(d), dfB(d))}"
+            )} does not equal ${Lattice[Int].merge(dfA.store(d), dfB.store(d))}"
         )
       }
 
       (dotsA diff ccB).iterator.foreach { d =>
         assert(
-          dfMerged(d) == dfA(d),
-          s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged(d)} does not equal ${dfA(d)}"
+          dfMerged.store(d) == dfA.store(d),
+          s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged.store(d)} does not equal ${dfA.store(d)}"
         )
       }
 
       (dotsB diff ccA).iterator.foreach { d =>
         assert(
-          dfMerged(d) == dfB(d),
-          s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged(d)} does not equal ${dfB(d)}"
+          dfMerged.store(d) == dfB.store(d),
+          s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged.store(d)} does not equal ${dfB.store(d)}"
         )
       }
     }

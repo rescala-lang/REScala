@@ -79,7 +79,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def values: Map[K, V] =
     _state.store.map { case (k, mvReg) =>
-      k -> mvReg.values.maxBy(_._2.timestamp)._1
+      k -> mvReg.store.values.maxBy(_._2.timestamp)._1
     }
 
   def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {

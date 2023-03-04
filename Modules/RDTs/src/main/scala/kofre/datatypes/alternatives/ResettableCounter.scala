@@ -59,7 +59,7 @@ object ResettableCounter {
     private def update(using ReplicaId, PermCausalMutate)(u: (Int, Int)): C = {
       context.max(replicaId) match {
         case Some(currentDot) if current.inner.store.contains(currentDot) =>
-          val newCounter = (current.inner(currentDot), u) match {
+          val newCounter = (current.inner.store(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
@@ -83,7 +83,7 @@ object ResettableCounter {
 
     def reset()(using PermCausalMutate): C = {
       deltaState(
-        cc = Dots.from(current.inner.keySet)
+        cc = Dots.from(current.inner.store.keySet)
       ).mutator
     }
   }
