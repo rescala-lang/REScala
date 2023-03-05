@@ -24,7 +24,6 @@ object ObserveRemoveMap {
   given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = DotMap.hasDots[K, V].map(_.inner)
 
   given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[ObserveRemoveMap[K, V]] =
-    import DotMap.dottedLattice
     DottedLattice.derived
 
   private def make[K, V](
@@ -46,27 +45,12 @@ object ObserveRemoveMap {
 
     def queryAllEntries(using PermQuery): Iterable[V] = current.inner.repr.values
     def entries(using PermQuery): Iterable[(K, V)]    = current.inner.repr.view
-    def mutateKey(using
-        PermCausalMutate,
-        ReplicaId,
-        Bottom[V]
-    )(k: K, m: (Uid, Dotted[V]) => Dotted[V]): C = {
-      val v = current.inner.repr.getOrElse(k, Bottom[V].empty)
-
-      m(replicaId, context.wrap(v)) match {
-        case Dotted(stateDelta, ccDelta) =>
-          make[K, V](
-            dm = DotMap(Map(k -> stateDelta)),
-            cc = ccDelta
-          ).mutator
-      }
-    }
 
     def insert(using ReplicaId, PermCausalMutate, Bottom[V])(k: K, v: V): C = {
-      mutateKey(k, (id, dotted) => Dotted(v, Dots.single(context.nextDot(replicaId))))
+      mutateKey(k)(dotted => Dotted(v, Dots.single(context.nextDot(replicaId))))
     }
 
-    def mutateKeyNamedCtx(using
+    def mutateKey(using
         pcm: PermCausalMutate,
         bot: Bottom[V]
     )(k: K)(m: Dotted[V] => Dotted[V]): C = {
@@ -107,7 +91,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def clear(using PermCausalMutate, DottedLattice[V], HasDots[V])(): C = {
+    def clear(using PermCausalMutate, HasDots[V])(): C = {
       make(
         cc = current.inner.dots
       ).mutator
