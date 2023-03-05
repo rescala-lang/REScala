@@ -31,12 +31,12 @@ object BoundedCounter {
     def available(using PermQuery)(id: Uid): Int   = reserved(id) - allocated(id)
     def available(using ReplicaId, PermQuery): Int = available(replicaId)
 
-    def allocate(value: Int): IdMutate[C] = {
+    def allocate(value: Int): IdMutate = {
       if value < 0 || available(replicaId) < value then neutral
       else neutral.copy(allocations = current.allocations.add(value))
     }.mutator
 
-    def transfer(amount: Int, target: Uid): IdMutate[C] = {
+    def transfer(amount: Int, target: Uid): IdMutate = {
       if amount > available(replicaId) then neutral
       else
         neutral.copy(reservations =
@@ -45,7 +45,7 @@ object BoundedCounter {
         )
     }.mutator
 
-    def rebalance: IdMutate[C] = {
+    def rebalance: IdMutate = {
       val availableByReplica = current.participants.iterator.map(id => available(id) -> id).toList
       val most               = availableByReplica.max
       val least              = availableByReplica.min

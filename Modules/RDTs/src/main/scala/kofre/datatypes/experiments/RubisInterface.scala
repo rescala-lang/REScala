@@ -36,7 +36,7 @@ object RubisInterface {
 
   implicit class RubisSyntax[C](container: C) extends OpsSyntaxHelper[C, State](container) {
 
-    def placeBid(auctionId: AID, userId: User, price: Int): IdMutate[C] = {
+    def placeBid(auctionId: AID, userId: User, price: Int): IdMutate = {
       val (_, users, m) = current
       val newMap =
         if (users.get(userId).contains(replicaId) && m.contains(auctionId)) {
