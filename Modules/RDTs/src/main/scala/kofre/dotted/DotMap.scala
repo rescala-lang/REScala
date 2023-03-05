@@ -26,9 +26,9 @@ object DotMap {
       override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
         val empty = Bottom.empty[V]
         DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
-          val leftCausalStore  = left.map(_.repr.getOrElse(key, Bottom.empty[V]))
-          val rightCausalStore = right.map(_.repr.getOrElse(key, Bottom.empty[V]))
-          val res              = leftCausalStore mergePartial rightCausalStore
+          val leftDottedValue  = left.map(_.repr.getOrElse(key, Bottom.empty[V]))
+          val rightDottedValue = right.map(_.repr.getOrElse(key, Bottom.empty[V]))
+          val res              = leftDottedValue mergePartial rightDottedValue
           if empty == res then None else Some(key -> res)
         }.toMap)
       }
