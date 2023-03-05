@@ -36,8 +36,10 @@ object DotMap {
       override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
         if !(right.context <= left.context) then return false
 
+        val empty = Bottom.empty[V]
+
         (left.store.repr.keySet union right.store.repr.keySet).forall { k =>
-          left.map(_.repr.getOrElse(k, Bottom.empty[V])) <= right.map(_.repr.getOrElse(k, Bottom.empty[V]))
+          left.map(_.repr.getOrElse(k, empty)) <= right.map(_.repr.getOrElse(k, empty))
         }
       }
 

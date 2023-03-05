@@ -40,7 +40,7 @@ object DotFun {
       }
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
-        def `left is contained in right` = right.context.contains(left.context)
+        if !(left.context <= right.context) then return false
 
         def `left values are <= than right values` =
           right.store.repr.forall { (k, r) =>
@@ -50,7 +50,6 @@ object DotFun {
           right.store.dots disjunct left.deletions
         }
 
-        `left is contained in right` &&
         `left values are <= than right values` &&
         `right has no values deleted in left`
       }

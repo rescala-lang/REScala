@@ -30,7 +30,7 @@ object DotSet {
       }
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
-        (right.context contains left.context) &&
+        (left.context <= right.context) &&
         (right.store.dots disjunct left.deletions)
       }
 
