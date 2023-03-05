@@ -1,4 +1,4 @@
-package kofre.datatypes
+package kofre.datatypes.alternatives.lww
 
 import kofre.base.{Lattice, Uid}
 
