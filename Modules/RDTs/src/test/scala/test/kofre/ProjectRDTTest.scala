@@ -1,20 +1,20 @@
 package test.kofre
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.{CausalLastWriterWins, EnableWinsFlag, PosNegCounter}
+import kofre.datatypes.{LastWriterWins, EnableWinsFlag, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
-    _name: CausalLastWriterWins[String],
-    _max_hours: PosNegCounter,
-    _account_name: CausalLastWriterWins[String],
+                    _name: LastWriterWins[String],
+                    _max_hours: PosNegCounter,
+                    _account_name: LastWriterWins[String],
 ) derives DottedLattice,
       Bottom
 
 object Project {
-  val empty: Project = Project(CausalLastWriterWins.empty, PosNegCounter.zero, CausalLastWriterWins.empty)
+  val empty: Project = Project(LastWriterWins.empty, PosNegCounter.zero, LastWriterWins.empty)
 
   implicit class ProjectSyntax[C](container: C)
       extends OpsSyntaxHelper[C, Project](container) {
@@ -40,7 +40,7 @@ object Project {
     }
 
     def set_name(using ReplicaId, PermCausalMutate)(newName: String): C = {
-      val updatedNameRegister: Dotted[CausalLastWriterWins[String]] = focus(_._name)(_.write(newName))
+      val updatedNameRegister: Dotted[LastWriterWins[String]] = focus(_._name)(_.write(newName))
 
       val projectDelta = empty.copy(_name = updatedNameRegister.store)
       // Every syntax function that uses a CausalMutationP always returns both an updated context and an updated value.
@@ -95,7 +95,7 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("LWW delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer(Dotted(CausalLastWriterWins.empty[String]))
+    val deltaBufferRdt    = DeltaBuffer(Dotted(LastWriterWins.empty[String]))
     val newDeltaBufferRdt = deltaBufferRdt.write("test")
     assertEquals(newDeltaBufferRdt.read, Some("test"))
   }

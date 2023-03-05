@@ -10,22 +10,22 @@ import math.Ordering.Implicits.infixOrderingOps
   *
   * If two concurrent write operations occur, the resulting LWW takes on the value of the write operation with the later timestamp.
   */
-case class CausalLastWriterWins[A](repr: MultiVersionRegister[CausalLastWriterWins.WallTimed[A]])
+case class LastWriterWins[A](repr: MultiVersionRegister[LastWriterWins.WallTimed[A]])
 
-object CausalLastWriterWins {
+object LastWriterWins {
 
   case class WallTimed[A](time: Time, payload: A)
 
-  def empty[A]: CausalLastWriterWins[A] = CausalLastWriterWins(MultiVersionRegister.empty)
+  def empty[A]: LastWriterWins[A] = LastWriterWins(MultiVersionRegister.empty)
 
-  given bottomInstance[A]: Bottom[CausalLastWriterWins[A]]       = Bottom.derived
-  given dottedLattice[A]: DottedLattice[CausalLastWriterWins[A]] = DottedLattice.derived
+  given bottomInstance[A]: Bottom[LastWriterWins[A]]       = Bottom.derived
+  given dottedLattice[A]: DottedLattice[LastWriterWins[A]] = DottedLattice.derived
 
   extension [C, A](container: C)
     def causalLastWriterWins: syntax[C, A] = syntax(container)
 
   implicit class syntax[C, A](container: C)
-      extends OpsSyntaxHelper[C, CausalLastWriterWins[A]](container) {
+      extends OpsSyntaxHelper[C, LastWriterWins[A]](container) {
 
     def read(using PermQuery): Option[A] =
       current.repr.repr.repr.reduceOption{ case (l@(ld, lt), r@(rd, rt)) =>
@@ -41,18 +41,18 @@ object CausalLastWriterWins {
       val mvr = MultiVersionRegister.syntax[Dotted[MultiVersionRegister[WallTimed[A]]], WallTimed[A]](current.repr.inheritContext)
 
       mvr.write(WallTimed(Time.current(), v)).map(
-        CausalLastWriterWins.apply
+        LastWriterWins.apply
       ).mutator
 
     def map(using ReplicaId, PermCausalMutate)(f: A => A): C =
       read.map(f) match {
-        case None    => Dotted(CausalLastWriterWins.empty).mutator
+        case None    => Dotted(LastWriterWins.empty).mutator
         case Some(v) => write(v)
       }
 
     def clear(using PermCausalMutate)(): C =
       current.repr.inheritContext.multiVersionRegister.clear().map(
-        CausalLastWriterWins.apply
+        LastWriterWins.apply
       ).mutator
   }
 }

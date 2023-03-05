@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.{CausalLastWriterWins, MultiVersionRegister, alternatives}
+import kofre.datatypes.{LastWriterWins, MultiVersionRegister, alternatives}
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
@@ -32,16 +32,16 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]]] = cached.task
+  def task: Signal[DeltaBuffer[Dotted[LastWriterWins[TaskData]]]] = cached.task
   def tag: TypedTag[LI]                                                 = cached.tag
   def removed: Event[String]                                            = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]]],
-    val tag: TypedTag[LI],
-    val removed: Event[String],
-    val id: String,
+                         val task: Signal[DeltaBuffer[Dotted[LastWriterWins[TaskData]]]],
+                         val tag: TypedTag[LI],
+                         val removed: Event[String],
+                         val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -65,7 +65,7 @@ object TaskReferences {
     taskrefs
   }
 
-  val taskBinding    = Binding[DeltaFor[CausalLastWriterWins[TaskData]] => Unit]("todo task")
+  val taskBinding    = Binding[DeltaFor[LastWriterWins[TaskData]] => Unit]("todo task")
   val taskReplicator = ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
@@ -76,8 +76,8 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lww: DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]] =
-      val empty = DeltaBuffer(Dotted(CausalLastWriterWins.empty[TaskData]))
+    val lww: DeltaBuffer[Dotted[LastWriterWins[TaskData]]] =
+      val empty = DeltaBuffer(Dotted(LastWriterWins.empty[TaskData]))
       task match
         case None    => empty
         case Some(v) => empty.write(v)
@@ -102,7 +102,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Dotted[CausalLastWriterWins[TaskData]]]()
+    val deltaEvt = Evt[Dotted[LastWriterWins[TaskData]]]()
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Fold(init)(
