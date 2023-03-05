@@ -22,16 +22,20 @@ object DotFun {
     new DottedLattice[DotFun[A]] {
 
       override def mergePartial(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): DotFun[A] = {
-        val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
-        DotFun(right.store.repr.foldLeft(fromLeft) {
-          case (m, (dot, r)) =>
-            left.store.repr.get(dot) match {
-              case None =>
-                if (left.context.contains(dot)) m
-                else m.updated(dot, r)
-              case Some(l) => m.updated(dot, Lattice[A].merge(l, r))
-            }
-        })
+        val fromLeft = left.store.repr.filter { case (dot, _) => !right.knows(dot) }
+        val fromCombined =
+          right.store.repr.iterator.flatMap {
+            case (dot, r) =>
+              left.store.repr.get(dot) match {
+                case None =>
+                  // was it deleted in left, or not yet inserted?
+                  if left.knows(dot)
+                  then None
+                  else Some(dot -> r)
+                case Some(l) => Some(dot -> Lattice[A].merge(l, r))
+              }
+          }
+        DotFun(fromLeft ++ fromCombined)
       }
 
       /** Insertion is larger. Removals are larger. Otherwise compare the value for each dot. */
