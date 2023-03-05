@@ -4,7 +4,6 @@ import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
-import kofre.datatypes.AddWinsSet.syntax
 import kofre.dotted.{DottedDecompose, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

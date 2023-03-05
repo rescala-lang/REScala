@@ -2,7 +2,6 @@ package replication.calendar
 
 import kofre.datatypes.AddWinsSet
 import rescala.default.*
-import kofre.datatypes.AddWinsSet.syntax
 import kofre.base.{Bottom, Uid}
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}

@@ -56,7 +56,7 @@ trait OpsTypes[C, L] {
   final type Mutate           = PermMutate ?=> C
   final type IdMutate         = ReplicaId ?=> Mutate
 }
-trait OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
+class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[kofre] def current(using perm: PermQuery): L              = perm.query(container)
   final protected[kofre] def replicaId(using perm: ReplicaId): Uid          = perm.uid
   final protected[kofre] def context(using perm: PermCausalMutate): Dots    = perm.context(container)
