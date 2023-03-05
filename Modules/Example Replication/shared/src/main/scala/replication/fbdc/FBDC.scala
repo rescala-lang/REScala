@@ -3,9 +3,11 @@ package replication.fbdc
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.{Argument, Style}
+import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
+import kofre.datatypes.CausalQueue.QueueElement
 import kofre.datatypes.alternatives.ObserveRemoveSet
-import kofre.datatypes.{AddWinsSet, CausalQueue, LastWriterWins, ObserveRemoveMap, ReplicatedList}
+import kofre.datatypes.*
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}
@@ -14,14 +16,10 @@ import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
-import scala.reflect.ClassTag
-import kofre.base.Lattice.optionLattice
-import kofre.datatypes.CausalQueue.QueueElement
-import kofre.datatypes.LastWriterWins.TimedVal
-
 import java.nio.file.Path
 import java.util.Timer
 import scala.annotation.nowarn
+import scala.reflect.ClassTag
 
 enum Req:
   def executor: Uid

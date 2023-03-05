@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.TimedVal
 import kofre.datatypes.MultiVersionRegister
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper}
@@ -28,7 +28,7 @@ object CausalLastWriterWins {
       current.repr.multiVersionRegister.read.reduceOption(Lattice[TimedVal[A]].merge).map(x => x.payload)
 
     def write(using ReplicaId, PermCausalMutate)(v: A): C =
-      current.repr.inheritContext.multiVersionRegister.write(LastWriterWins.now(v, replicaId)).map(
+      current.repr.inheritContext.multiVersionRegister.write(TimedVal.now(v, replicaId)).map(
         CausalLastWriterWins.apply
       ).mutator
 

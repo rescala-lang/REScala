@@ -5,7 +5,7 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.{Epoche}
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper}
-import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.TimedVal
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -146,7 +146,7 @@ object GrowOnlyList {
     def insertGL(i: Int, e: E): IdMutate[C] = {
       GrowOnlyList(findNth(current, Head(), i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e, replicaId)))
+        case Some(pred) => Map(pred -> Elem(TimedVal.now(e, replicaId)))
       })
     }.mutator
 
@@ -157,7 +157,7 @@ object GrowOnlyList {
         GrowOnlyList(findNth(current, Head(), i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => Elem(LastWriterWins.now(e, replicaId)): Elem[TimedVal[E]])
+            val order = elems.map(e => Elem(TimedVal.now(e, replicaId)): Elem[TimedVal[E]])
             Map((List(after) ++ order.init) zip order: _*)
         })
     }.mutator

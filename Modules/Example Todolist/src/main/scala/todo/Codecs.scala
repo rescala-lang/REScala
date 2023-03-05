@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Uid
 import kofre.base.Uid.asId
-import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.TimedVal
 import kofre.datatypes.{CausalLastWriterWins, ReplicatedList}
 import kofre.dotted.{DotFun, Dotted}
 import kofre.syntax.DeltaBuffer

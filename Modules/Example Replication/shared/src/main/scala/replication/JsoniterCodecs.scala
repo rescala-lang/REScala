@@ -12,7 +12,7 @@ import kofre.datatypes.{
 import kofre.dotted.Dotted
 import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
-import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.TimedVal
 
 import scala.annotation.nowarn
 

@@ -2,7 +2,7 @@ package encrdtlib.container
 
 import encrdtlib.container.AddWinsLastWriterWinsMap.LatticeType
 import encrdtlib.lattices.{AddWinsMapLattice, CausalTimeTag}
-import kofre.base.{Uid, Lattice}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.LastWriterWins
 
 class AddWinsLastWriterWinsMap[K, V](

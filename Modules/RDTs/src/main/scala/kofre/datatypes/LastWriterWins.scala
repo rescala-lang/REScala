@@ -1,33 +1,40 @@
 package kofre.datatypes
 
-import kofre.base.{Uid, Lattice}
+import kofre.base.{Lattice, Uid}
 import kofre.time.WallClock
 
 import java.time.Instant
 import scala.math.Ordering.Implicits.infixOrderingOps
 
+case class TimedVal[A](timestamp: WallClock, payload: A) extends GenericLastWriterWins[WallClock, A]
+
 /** Lattice with the least-upper-bound defined by the timeStamp.
   * Timestamps must be unique, totally ordered, consistent with causal order.
   */
-case class LastWriterWins[Time, Value](timestamp: Time, payload: Value)
+case class LastWriterWins[Time, Value](timestamp: Time, payload: Value) extends GenericLastWriterWins[Time, Value]
 
-object LastWriterWins {
 
-  type TimedVal[Value] = LastWriterWins[WallClock, Value]
+object TimedVal:
+  def now[Value](payload: Value, replicaId: Uid): TimedVal[Value] =
+    TimedVal(WallClock.now(replicaId), payload)
 
-  def now[Value](payload: Value, replicaId: Uid): LastWriterWins[WallClock, Value] =
-    LastWriterWins(WallClock.now(replicaId), payload)
+trait GenericLastWriterWins[Time, Value] {
+  def timestamp: Time
+  def payload: Value
+}
 
-  implicit def Lattice[Time: Ordering, A]: Lattice[LastWriterWins[Time, A]] =
-    new Lattice[LastWriterWins[Time, A]] {
-      override def lteq(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): Boolean =
+object GenericLastWriterWins {
+
+  given lattice[Time: Ordering, A, LWW <: GenericLastWriterWins[Time, A]]: Lattice[LWW] =
+    new Lattice[LWW] {
+      override def lteq(left: LWW, right: LWW): Boolean =
         left.timestamp <= right.timestamp
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: LastWriterWins[Time, A]): Iterable[LastWriterWins[Time, A]] = List(state)
+      override def decompose(state: LWW): Iterable[LWW] = List(state)
 
       /** By assumption: associative, commutative, idempotent. */
-      override def merge(left: LastWriterWins[Time, A], right: LastWriterWins[Time, A]): LastWriterWins[Time, A] =
+      override def merge(left: LWW, right: LWW): LWW =
         Ordering[Time].compare(left.timestamp, right.timestamp) match
           case 0 => if (left.payload == right.payload) then left
             else throw IllegalStateException(s"LWW same timestamp, different value: »$left«, »$right«")

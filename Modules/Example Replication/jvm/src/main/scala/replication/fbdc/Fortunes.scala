@@ -1,7 +1,7 @@
 package replication.fbdc
 
 import de.rmgk.script.extensions
-import kofre.datatypes.LastWriterWins
+import kofre.datatypes.{TimedVal}
 
 object Fortunes {
 
@@ -25,7 +25,7 @@ object Fortunes {
           val resp = processFortune(q.value)
           reqq.observeRemoveMap.insert(using dataManager.replicaId)(
             "fortune",
-            Some(LastWriterWins.now(resp, exampleData.replicaId))
+            Some(TimedVal.now(resp, exampleData.replicaId))
           )
         }
         reqq.result

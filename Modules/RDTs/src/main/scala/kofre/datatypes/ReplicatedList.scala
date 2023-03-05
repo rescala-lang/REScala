@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
-import kofre.datatypes.LastWriterWins.TimedVal
+import kofre.datatypes.TimedVal
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, PermMutate}
 import kofre.time.{Dot, Dots}
@@ -127,7 +127,7 @@ object ReplicatedList {
           val glistDelta = fw.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.single(nextDot, Alive(LastWriterWins.now(e, replicaId)))
+          val dfDelta = DotFun.single(nextDot, Alive(TimedVal.now(e, replicaId)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -152,7 +152,7 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[Node[E]].repr ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e, replicaId))))
+          val dfDelta = DotFun.empty[Node[E]].repr ++ (nextDots zip elems.map(e => Alive(TimedVal.now(e, replicaId))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -177,7 +177,7 @@ object ReplicatedList {
     }
 
     def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
-      updateRGANode(current, i, Alive(LastWriterWins.now(e, replicaId))).mutator
+      updateRGANode(current, i, Alive(TimedVal.now(e, replicaId))).mutator
 
     def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
@@ -195,7 +195,7 @@ object ReplicatedList {
     }
 
     def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
-      updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e, replicaId))).mutator
+      updateRGANodeBy(current, cond, Alive(TimedVal.now(e, replicaId))).mutator
 
     def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator
