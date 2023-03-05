@@ -1,7 +1,7 @@
 package replication.fbdc
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.{TimedVal}
+import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.DottedLattice
 
 import java.nio.file.{Files, Path}

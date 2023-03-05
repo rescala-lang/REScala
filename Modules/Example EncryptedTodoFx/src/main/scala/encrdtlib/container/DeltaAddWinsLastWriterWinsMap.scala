@@ -6,7 +6,7 @@ import kofre.dotted.{DotFun, DotMap, Dotted, DottedDecompose, DottedLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
 import encrdtlib.lattices.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
-import kofre.datatypes.LastWriterWins
+import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.time.Dot
 
 import java.time.Instant
@@ -37,12 +37,12 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
     mutate(
       DeltaAddWinsMap.deltaMutate[K, DotFun[(
           V,
-          LastWriterWins[java.time.Instant, Uid]
+          GenericLastWriterWins[java.time.Instant, Uid]
       )]](
         key,
         DotFun.empty,
         delta =>
-          DeltaMultiValueRegister.deltaWrite((value, LastWriterWins(Instant.now(), replicaId)), replicaId, delta),
+          DeltaMultiValueRegister.deltaWrite((value, GenericLastWriterWins(Instant.now(), replicaId)), replicaId, delta),
         _state
       )
     )
@@ -52,7 +52,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
       DeltaAddWinsMap.deltaMutate(
         key,
         DotFun.empty,
-        m => DeltaMultiValueRegister.deltaWrite((value, LastWriterWins(Instant.now(), replicaId)), replicaId, m),
+        m => DeltaMultiValueRegister.deltaWrite((value, GenericLastWriterWins(Instant.now(), replicaId)), replicaId, m),
         _state
       )
     mutate(delta)
@@ -94,7 +94,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
 object DeltaAddWinsLastWriterWinsMap {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMapLattice[K, DotFun[(V, LastWriterWins[Instant, Uid])]]
+    DeltaAddWinsMapLattice[K, DotFun[(V, GenericLastWriterWins[Instant, Uid])]]
 
   def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMap.empty
@@ -102,14 +102,14 @@ object DeltaAddWinsLastWriterWinsMap {
   type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
 
   given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
-    val timestampedValueLattice: Lattice[(V, LastWriterWins[Instant, Uid])] =
+    val timestampedValueLattice: Lattice[(V, GenericLastWriterWins[Instant, Uid])] =
       (left, right) =>
         // note, this is incorrect when both are equal
         if left._2.timestamp <= right._2.timestamp then right
         else left
-    given DottedLattice[DotFun[(V, LastWriterWins[Instant, Uid])]] =
-      DotFun.dottedLattice[(V, LastWriterWins[Instant, Uid])](using timestampedValueLattice)
-    DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Instant, Uid])]]
+    given DottedLattice[DotFun[(V, GenericLastWriterWins[Instant, Uid])]] =
+      DotFun.dottedLattice[(V, GenericLastWriterWins[Instant, Uid])](using timestampedValueLattice)
+    DotMap.dottedLattice[K, DotFun[(V, GenericLastWriterWins[Instant, Uid])]]
   }
 
 }

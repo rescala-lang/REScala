@@ -8,6 +8,7 @@ import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.CausalQueue.QueueElement
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.*
+import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}

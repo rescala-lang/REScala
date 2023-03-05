@@ -5,8 +5,8 @@ import kofre.dotted.*
 import kofre.time.*
 import kofre.base.*
 import kofre.datatypes.*
-import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.alternatives.ObserveRemoveSet
+import kofre.datatypes.alternatives.lww.GenericLastWriterWins
+import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 
 object DataGenerator {
 
@@ -17,11 +17,11 @@ object DataGenerator {
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
-  given arbLww: Arbitrary[LastWriterWins[Time, Int]] = Arbitrary(
+  given arbLww: Arbitrary[GenericLastWriterWins[Time, Int]] = Arbitrary(
     for {
       time  <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield LastWriterWins(time, value)
+    } yield GenericLastWriterWins(time, value)
   )
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(

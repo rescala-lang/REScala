@@ -1,7 +1,8 @@
 package test.kofre
 
 import kofre.base.{Lattice, Time}
-import kofre.datatypes.{CausalQueue, LastWriterWins}
+import kofre.datatypes.CausalQueue
+import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
@@ -9,7 +10,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}
 
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
-class LWWLatice          extends LatticeMergeTest[LastWriterWins[Time, Int]]
+class LWWLatice          extends LatticeMergeTest[GenericLastWriterWins[Time, Int]]
 class OrSetLatice        extends LatticeMergeTest[ObserveRemoveSet[Int]]
 
 // This may fail in cases where we generate colliding dots with different values.

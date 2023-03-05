@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.{CausalLastWriterWins, MultiVersionRegister}
+import kofre.datatypes.{MultiVersionRegister, alternatives}
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
@@ -14,8 +14,8 @@ import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
+import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, TimedVal}
 import loci.serializer.jsoniterScala.given
-import kofre.datatypes.TimedVal
 import kofre.time.WallClock
 
 import scala.Function.const
@@ -86,7 +86,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 //          DeltaBufferRDT.contextPermissions[CausalLastWriterWins[TaskData]]
 //        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
 
-        val res = lwwInit.state.map(_.repr).write(using fixedId)(TimedVal(
+        val res = lwwInit.state.map(_.repr).write(using fixedId)(alternatives.lww.TimedVal(
           WallClock(0, replicaId, 0),
           TaskData("<empty>")
         )).map(CausalLastWriterWins.apply)
