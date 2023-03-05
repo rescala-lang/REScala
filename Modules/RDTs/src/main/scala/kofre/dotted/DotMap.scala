@@ -34,7 +34,7 @@ object DotMap {
       }
 
       override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
-        def firstCondition = right.context contains left.context
+        if !(right.context <= left.context) then return false
 
         def secondConditionHelper(keys: Iterable[K]): Boolean = keys.forall { k =>
           left.map(_.repr.getOrElse(k, Bottom.empty[V])) <= right.map(_.repr.getOrElse(k, Bottom.empty[V]))
@@ -42,7 +42,7 @@ object DotMap {
 
         def secondCondition = secondConditionHelper(left.store.repr.keys) && secondConditionHelper(right.store.repr.keys)
 
-        firstCondition && secondCondition
+        secondCondition
       }
 
       override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
