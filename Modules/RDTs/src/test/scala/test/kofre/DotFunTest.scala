@@ -1,8 +1,8 @@
 package test.kofre
 
-import kofre.base.Lattice
-import kofre.time.{Dots, Dot}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.base.{Lattice, Uid}
+import kofre.time.{Dot, Dots}
+import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 
@@ -91,7 +91,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       )
 
       val Dotted(dfMerged, ccMerged) =
-        Lattice[Dotted[DotFun[Int]]].merge(
+        DottedLattice[DotFun[Int]].merge(
           Dotted(dfA, (ccA)),
           Dotted(dfB, (ccB))
         )
@@ -105,6 +105,17 @@ class DotFunTest extends munit.ScalaCheckSuite {
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
       )
     }
+  }
+
+  test("deletions are larger") {
+    val ia = Uid.gen()
+    val ib = Uid.gen()
+    val someDot = Dot(ia, 1)
+    val left = Dotted(DotFun(Map(someDot -> 10)), Dots.single(someDot))
+    val right = Dotted(DotFun.empty[Int], Dots.single(someDot))
+
+    assert(left <= right)
+
   }
 
   test("decompose") {

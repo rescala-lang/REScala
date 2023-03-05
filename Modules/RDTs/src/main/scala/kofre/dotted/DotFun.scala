@@ -5,9 +5,7 @@ import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 
-/** Associates from [[Dot]]s to `A`.
-  * Can be considered a very bare bones multi value register
-  */
+/** Associates from [[Dot]]s to `A`. */
 case class DotFun[A](repr: Map[Dot, A])
 
 object DotFun {
@@ -23,9 +21,6 @@ object DotFun {
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] =
     new DottedLattice[DotFun[A]] {
 
-      /** Partial merging combines the stored values, but ignores the context.
-        * Thus enabling nested merging of values, without merging context multiple times.
-        */
       override def mergePartial(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): DotFun[A] = {
         val fromLeft = left.store.repr.filter { case (dot, _) => !right.context.contains(dot) }
         DotFun(right.store.repr.foldLeft(fromLeft) {
@@ -39,16 +34,19 @@ object DotFun {
         })
       }
 
+      /** Insertion is larger. Removals are larger. Otherwise compare the value for each dot. */
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
         if !(
+            // invariant on lteq
             (left.context <= right.context) &&
+            // deletions are larger
             (right.store.dots disjunct left.deletions)
           )
         then return false
 
-        // for some reason, if left contains something not in right,
-        // then right is still considered as larger.
-        // This is strangely inconsistent with the other two
+        // everything not in the right store will be deleted from left on merge
+        // things that are still in left must be smaller
+        // things that are not in left are not there yet (otherwise the deletion clause above would hold)
         right.store.repr.forall { (k, r) =>
           left.store.repr.get(k).forall { l => l <= r }
         }
