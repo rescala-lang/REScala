@@ -3,6 +3,9 @@ package kofre.dotted
 import kofre.datatypes.EnableWinsFlag
 import kofre.time.{Dot, Dots}
 
+
+/** DotsSets track causality of events without values.
+  * They are the prototype of an [[EnableWinsFlag]]   */
 case class DotSet(repr: Dots) {
   export repr.*
 }

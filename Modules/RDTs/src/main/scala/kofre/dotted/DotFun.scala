@@ -5,7 +5,9 @@ import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 
-/** A dot fun  */
+/** A dot fun tracks a set of values associated to a certain point in time.
+  * This makes them useful as both [[kofre.datatypes.MultiVersionRegister]] and siple observe remove sets/maps.
+  */
 case class DotFun[A](repr: Map[Dot, A])
 
 object DotFun {
@@ -42,7 +44,7 @@ object DotFun {
       // invariant on lteq
       (left.context <= right.context) &&
       // deletions are larger
-      (right.store.dots disjunct left.deletions) &&
+      (right.contained disjunct left.deletions) &&
       // everything not in the right store will be deleted from left on merge
       // things that are still in left must be smaller
       // things that are not in left are not there yet (otherwise the deletion clause above would hold)

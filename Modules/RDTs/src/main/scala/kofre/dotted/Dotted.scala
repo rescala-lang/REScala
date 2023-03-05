@@ -7,9 +7,10 @@ import kofre.syntax.{PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
 case class Dotted[A](store: A, context: Dots) {
-  def map[B](f: A => B): Dotted[B] = Dotted(f(store), context)
-  def deletions(using HasDots[A]): Dots = context diff store.dots
-  def knows(dot: Dot): Boolean = context.contains(dot)
+  def map[B](f: A => B): Dotted[B]      = Dotted(f(store), context)
+  def knows(dot: Dot): Boolean          = context.contains(dot)
+  def deletions(using HasDots[A]): Dots = context diff contained
+  def contained(using HasDots[A]): Dots = store.dots
 }
 
 /** Implicit aliases in companion object for search path */
