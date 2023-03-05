@@ -3,11 +3,17 @@ package kofre.dotted
 import kofre.base.Bottom
 import kofre.time.Dots
 
+/** DotMap is just a container to use maps in a dotted context.
+  * Merge/<= are done per entry, with missing entries replaced by `Bottom.empty`.
+  * Decompose decomposes all components.
+  *
+  * It would be perfectly reasonable to skip the case class and define the instance on maps directly,
+  * but that might cause issues with implicit resolution
+  *
+  * See [[kofre.datatypes.ObserveRemoveMap]] for a usage example.
+  */
 case class DotMap[K, V](repr: Map[K, V])
 
-/** DotMap is a dot store implementation that maps keys of an arbitrary type K to values of a dot store type V. See
-  * [[kofre.datatypes.ObserveRemoveMap]] for a usage example.
-  */
 object DotMap {
 
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
@@ -17,9 +23,6 @@ object DotMap {
       a.repr.valuesIterator.map(v => v.dots).reduceOption(_ union _).getOrElse(Dots.empty)
   }
 
-  /** DotMap is a straightforward extension of dictionary lattices to the dotted case.
-    * Operations are done per entry, with missing entries replaced by `Bottom.empty`.
-    */
   given dottedLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] with {
     lazy val empty: V = Bottom.empty[V]
 
