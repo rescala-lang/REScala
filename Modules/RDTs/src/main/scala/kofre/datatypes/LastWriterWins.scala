@@ -8,10 +8,8 @@ import kofre.time.{Dot, Dots}
 
 import math.Ordering.Implicits.infixOrderingOps
 
-/** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
-  *
-  * If two concurrent write operations occur, the resulting LWW takes on the value of the write operation with the later timestamp.
-  */
+/** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
+  *  */
 case class LastWriterWins[A](dot: Dot, wallTime: Time, payload: A)
 
 object LastWriterWins {

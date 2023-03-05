@@ -17,11 +17,19 @@ object DataGenerator {
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
-  given arbLww: Arbitrary[GenericLastWriterWins[Time, Int]] = Arbitrary(
+  given arbGenericLww: Arbitrary[GenericLastWriterWins[Time, Int]] = Arbitrary(
     for {
       time  <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)
     } yield GenericLastWriterWins(time, value)
+  )
+
+  given arbLww: Arbitrary[Dotted[LastWriterWins[Int]]] = Arbitrary(
+    for {
+      time  <- Gen.long
+      dot   <- arbDot.arbitrary
+      value <- Gen.choose(Int.MinValue, Int.MaxValue)
+    } yield Dotted(LastWriterWins(dot, time, value), Dots.single(dot))
   )
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
