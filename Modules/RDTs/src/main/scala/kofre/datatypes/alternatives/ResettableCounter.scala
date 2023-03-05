@@ -2,7 +2,7 @@ package kofre.datatypes.alternatives
 
 import kofre.base.{Bottom, Lattice}
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
 /** An ResettableCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
@@ -47,7 +47,7 @@ object ResettableCounter {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh(using ReplicaId, PermCausalMutate)(): C = {
+    def fresh(using ReplicaId)(): CausalMutate = {
       val nextDot = context.nextDot(replicaId)
 
       deltaState(

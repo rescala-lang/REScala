@@ -5,7 +5,7 @@ import kofre.datatypes.AddWinsSet
 import kofre.datatypes.AddWinsSet.syntax
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -65,7 +65,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def requestRegisterUser(userId: User)(using ReplicaId, PermCausalMutate): C = {
+    def requestRegisterUser(using ReplicaId)(userId: User): CausalMutate = {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else

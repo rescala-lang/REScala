@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.MultiVersionRegister
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 /** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
   *
@@ -27,7 +27,7 @@ object CausalLastWriterWins {
     def read(using PermQuery): Option[A] =
       current.repr.multiVersionRegister.read.reduceOption(Lattice[TimedVal[A]].merge).map(x => x.payload)
 
-    def write(using ReplicaId, PermCausalMutate)(v: A): C =
+    def write(using ReplicaId)(v: A): CausalMutate =
       current.repr.inheritContext.multiVersionRegister.write(TimedVal.now(v, replicaId)).map(
         CausalLastWriterWins.apply
       ).mutator

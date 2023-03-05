@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
 import kofre.dotted.{DotSet, Dotted, DottedLattice, HasDots}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.Dots
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
@@ -30,7 +30,7 @@ object EnableWinsFlag {
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using PermQuery): Boolean = !current.inner.dots.isEmpty
 
-    def enable(using ReplicaId, PermCausalMutate)(): C = {
+    def enable(using ReplicaId)(): CausalMutate = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),

@@ -4,7 +4,7 @@ import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue

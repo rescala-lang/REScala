@@ -5,7 +5,7 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.Epoche
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.DottedLattice
-import kofre.syntax.OpsSyntaxHelper
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -150,7 +150,7 @@ object GrowOnlyList {
       })
     }.mutator
 
-    def insertAllGL(using PermMutate, ReplicaId)(i: Int, elems: Iterable[E]): C = {
+    def insertAllGL(using ReplicaId)(i: Int, elems: Iterable[E]): Mutate = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else

@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.Epoche
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
-import kofre.syntax.{OpsSyntaxHelper, PermMutate}
+import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
