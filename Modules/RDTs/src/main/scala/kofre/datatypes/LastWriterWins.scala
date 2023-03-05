@@ -4,22 +4,39 @@ import kofre.base.{Bottom, Lattice, Time, Uid}
 import kofre.datatypes.MultiVersionRegister
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
+import kofre.time.{Dot, Dots}
+
 import math.Ordering.Implicits.infixOrderingOps
 
 /** An LWW (Last Writer Wins) is a Delta CRDT modeling a register.
   *
   * If two concurrent write operations occur, the resulting LWW takes on the value of the write operation with the later timestamp.
   */
-case class LastWriterWins[A](repr: MultiVersionRegister[LastWriterWins.WallTimed[A]])
+case class LastWriterWins[A](dot: Dot, wallTime: Time, payload: A)
 
 object LastWriterWins {
 
-  case class WallTimed[A](time: Time, payload: A)
+  def empty[A: Bottom](dot: Dot): LastWriterWins[A] = now(dot, Bottom.empty)
 
-  def empty[A]: LastWriterWins[A] = LastWriterWins(MultiVersionRegister.empty)
+  def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
-  given bottomInstance[A]: Bottom[LastWriterWins[A]]       = Bottom.derived
-  given dottedLattice[A]: DottedLattice[LastWriterWins[A]] = DottedLattice.derived
+  given dottedLattice[A]: DottedLattice[LastWriterWins[A]] with {
+    override def mergePartial(left: Dotted[LastWriterWins[A]], right: Dotted[LastWriterWins[A]]): LastWriterWins[A] = {
+      if left.context.contains(right.store.dot)
+      then left.store
+      else if right.context.contains(left.store.dot)
+      then right.store
+      else
+        java.lang.Long.compare(left.store.wallTime, right.store.wallTime) match
+          case -1 => right.store
+          case 1  => left.store
+          case 0 =>
+            if left.store.dot.replicaId <= right.store.dot.replicaId
+            then right.store
+            else left.store
+    }
+
+  }
 
   extension [C, A](container: C)
     def causalLastWriterWins: syntax[C, A] = syntax(container)
@@ -27,32 +44,19 @@ object LastWriterWins {
   implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, LastWriterWins[A]](container) {
 
-    def read(using PermQuery): Option[A] =
-      current.repr.repr.repr.reduceOption{ case (l@(ld, lt), r@(rd, rt)) =>
-        java.lang.Long.compareUnsigned(lt.time, rt.time) match
-          case -1 => r
-          case 1 => l
-          case 0 => if ld.replicaId <= rd.replicaId
-          then r else l
-      }.map(_._2.payload)
+    def read(using PermQuery): A = current.payload
 
     def write(using ReplicaId)(v: A): CausalMutate =
-
-      val mvr = MultiVersionRegister.syntax[Dotted[MultiVersionRegister[WallTimed[A]]], WallTimed[A]](current.repr.inheritContext)
-
-      mvr.write(WallTimed(Time.current(), v)).map(
-        LastWriterWins.apply
+      val nextDot = context.nextDot(replicaId)
+      Dotted(
+        LastWriterWins.now(nextDot, v),
+        Dots.single(current.dot).add(nextDot)
       ).mutator
 
-    def map(using ReplicaId, PermCausalMutate)(f: A => A): C =
+    def map[B](using ReplicaId, PermCausalMutate)(using ev: A =:= Option[B])(f: B => B): C =
       read.map(f) match {
-        case None    => Dotted(LastWriterWins.empty).mutator
-        case Some(v) => write(v)
+        case None => container
+        case res  => write(ev.flip(res))
       }
-
-    def clear(using PermCausalMutate)(): C =
-      current.repr.inheritContext.multiVersionRegister.clear().map(
-        LastWriterWins.apply
-      ).mutator
   }
 }

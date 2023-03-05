@@ -16,36 +16,20 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var empty: DeltaBufferDotted[LastWriterWins[Int]] = _
   var full: DeltaBufferDotted[LastWriterWins[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    empty = NamedDeltaBuffer.dotted("a", LastWriterWins.empty[Int])
-    full = NamedDeltaBuffer.dotted("b", LastWriterWins.empty[Int]).write(using "b".asId)(0)
+    full = NamedDeltaBuffer.dottedInit("b", LastWriterWins.now(_, 0))
   }
 
   @Benchmark
-  def readEmpty(): Option[Int] = empty.read
-
-  @Benchmark
-  def readFull(): Option[Int] = full.read
-
-  @Benchmark
-  def writeEmpty(): DeltaBufferDotted[LastWriterWins[Int]] = empty.write(using empty.replicaID)(1)
+  def readFull(): Int = full.read
 
   @Benchmark
   def writeFull(): DeltaBufferDotted[LastWriterWins[Int]] = full.write(using full.replicaID)(1)
 
   @Benchmark
-  def mapEmpty(): DeltaBufferDotted[LastWriterWins[Int]] = empty.map(using empty.replicaID)(_ + 1)
+  def mapFull(): DeltaBufferDotted[LastWriterWins[Int]] = full.write(using full.replicaID)(full.read + 1)
 
-  @Benchmark
-  def mapFull(): DeltaBufferDotted[LastWriterWins[Int]] = full.map(using full.replicaID)(_ + 1)
-
-  @Benchmark
-  def clearEmpty(): DeltaBufferDotted[LastWriterWins[Int]] = empty.clear()
-
-  @Benchmark
-  def clearFull(): DeltaBufferDotted[LastWriterWins[Int]] = full.clear()
 }

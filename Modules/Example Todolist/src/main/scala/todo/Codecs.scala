@@ -52,13 +52,11 @@ object Codecs {
     IdenticallyTransmittable()
   implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[ReplicatedList[TaskRef]]] = JsonCodecMaker.make
 
-  implicit val codecLwwState: JsonValueCodec[Dotted[DotFun[TimedVal[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LastWriterWins[TaskData]]] = JsonCodecMaker.make
-
-  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LastWriterWins[TaskData]]] =
+  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LastWriterWins[Option[TaskData]]]] =
     IdenticallyTransmittable()
 
-  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
 
 }

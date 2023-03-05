@@ -1,20 +1,30 @@
 package test.kofre
 
-import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.{LastWriterWins, EnableWinsFlag, PosNegCounter}
+import kofre.base.{Bottom, Lattice, Uid}
+import kofre.datatypes.{EnableWinsFlag, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
+import kofre.time.{Dot, Dots}
 import test.kofre.Project.ProjectSyntax
 
 case class Project(
-                    _name: LastWriterWins[String],
-                    _max_hours: PosNegCounter,
-                    _account_name: LastWriterWins[String],
-) derives DottedLattice,
-      Bottom
+    _name: LastWriterWins[Option[String]],
+    _max_hours: PosNegCounter,
+    _account_name: LastWriterWins[Option[String]],
+) derives DottedLattice
 
 object Project {
-  val empty: Project = Project(LastWriterWins.empty, PosNegCounter.zero, LastWriterWins.empty)
+  val empty: Dotted[Project] =
+    val dot = Dot(Uid.predefined(""), 0)
+
+    Dotted(
+      Project(
+        LastWriterWins.empty(dot),
+        PosNegCounter.zero,
+        LastWriterWins.empty(dot.advance)
+      ),
+      Dots.single(dot).add(dot.advance)
+    )
 
   implicit class ProjectSyntax[C](container: C)
       extends OpsSyntaxHelper[C, Project](container) {
@@ -40,9 +50,9 @@ object Project {
     }
 
     def set_name(using ReplicaId, PermCausalMutate)(newName: String): C = {
-      val updatedNameRegister: Dotted[LastWriterWins[String]] = focus(_._name)(_.write(newName))
+      val updatedNameRegister: Dotted[LastWriterWins[Option[String]]] = focus(_._name)(_.write(Option(newName)))
 
-      val projectDelta = empty.copy(_name = updatedNameRegister.store)
+      val projectDelta = empty.map(_.copy(_name = updatedNameRegister.store))
       // Every syntax function that uses a CausalMutationP always returns both an updated context and an updated value.
       // The updated context was produces by the `write` of the CausalLastWriterWins, while the value is the full project.
       // Note, if there are multiple different things written within the same mutation,
@@ -50,7 +60,7 @@ object Project {
       // – this is currently not handled by the focus method above
       // (the `context` inside there always just returns the initial context).
       Dotted(
-        projectDelta,
+        projectDelta.store,
         updatedNameRegister.context,
       ).mutator
       // the above is the same as
@@ -68,7 +78,7 @@ class ProjectRDTTest extends munit.FunSuite {
     // The thing about the name and dots is that you always want to add them at the outermost layer,
     // such that the state is shared for everything inside your datatype.
     // specifically, the two CausalLastWriterWinsRegisters inside of project will now use the same context.
-    val p = Dotted(Project.empty)
+    val p = Project.empty
 
     // The whole point of the OpsSyntax above (and all its current unfortunate complications)
     // is to enable you to call the operations on different wrapper classes, such as this DottedName wrapper.
@@ -95,20 +105,20 @@ class ProjectRDTTest extends munit.FunSuite {
   }
 
   test("LWW delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer(Dotted(LastWriterWins.empty[String]))
+    val deltaBufferRdt    = DeltaBuffer(Dotted(LastWriterWins.now[String](Dot(Uid.predefined(""), 0), "")))
     val newDeltaBufferRdt = deltaBufferRdt.write("test")
-    assertEquals(newDeltaBufferRdt.read, Some("test"))
+    assertEquals(newDeltaBufferRdt.read, "test")
   }
 
   test("Project delta buffer") {
-    val deltaBufferRdt    = DeltaBuffer(Dotted(Project.empty))
+    val deltaBufferRdt    = DeltaBuffer(Project.empty)
     val newDeltaBufferRdt = deltaBufferRdt.set_name("some project")
     // assertEquals(newDeltaBufferRdt.deltaBuffer, Nil)
     assertEquals(newDeltaBufferRdt.name, "some project")
   }
 
   test("delta filtering") {
-    val init: Dotted[Project] = Dotted(Project.empty)
+    val init: Dotted[Project] = Project.empty
     val delta                 = init.set_name("some project")
 
     val dlat = Lattice[Dotted[Project]]

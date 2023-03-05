@@ -13,8 +13,10 @@ import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
+import kofre.base.Bottom
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.datatypes.alternatives.lww.{TimedVal, WallClock}
+import kofre.time.Dots
 import loci.serializer.jsoniterScala.given
 
 import scala.Function.const
@@ -32,16 +34,16 @@ case class TaskData(
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBuffer[Dotted[LastWriterWins[TaskData]]]] = cached.task
-  def tag: TypedTag[LI]                                                 = cached.tag
-  def removed: Event[String]                                            = cached.removed
+  def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
+  def tag: TypedTag[LI]                                           = cached.tag
+  def removed: Event[String]                                      = cached.removed
 }
 
 final class TaskRefData(
-                         val task: Signal[DeltaBuffer[Dotted[LastWriterWins[TaskData]]]],
-                         val tag: TypedTag[LI],
-                         val removed: Event[String],
-                         val id: String,
+    val task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]],
+    val tag: TypedTag[LI],
+    val removed: Event[String],
+    val id: String,
 ) {
   override def hashCode(): Int = id.hashCode
   override def equals(obj: Any): Boolean = obj match {
@@ -65,8 +67,12 @@ object TaskReferences {
     taskrefs
   }
 
-  val taskBinding    = Binding[DeltaFor[LastWriterWins[TaskData]] => Unit]("todo task")
-  val taskReplicator = ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
+  val taskBinding = Binding[DeltaFor[LastWriterWins[Option[TaskData]]] => Unit]("todo task")
+  val taskReplicator =
+    given Bottom[LastWriterWins[Option[TaskData]]] with {
+      override def empty: LastWriterWins[Option[TaskData]] = null
+    }
+    ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
@@ -76,11 +82,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lww: DeltaBuffer[Dotted[LastWriterWins[TaskData]]] =
-      val empty = DeltaBuffer(Dotted(LastWriterWins.empty[TaskData]))
-      task match
-        case None    => empty
-        case Some(v) => empty.write(v)
+    val lww: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
+      val dot = Dots.empty.nextDot(fixedId.uid)
+      DeltaBuffer(Dotted(LastWriterWins.now(dot, task)))
 
     val edittext = Event.fromCallback[UIEvent] {
       input(`class` := "edit", `type` := "text", onchange := Event.handle, onblur := Event.handle)
@@ -102,7 +106,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Dotted[LastWriterWins[TaskData]]]()
+    val deltaEvt = Evt[Dotted[LastWriterWins[Option[TaskData]]]]()
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Fold(init)(
