@@ -19,8 +19,6 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  def latticeLift[L: Lattice: Bottom]: Lattice[Dotted[L]] = Lattice.derived
-
   given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L] with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merge delta
     override def query(c: Dotted[L]): L                                   = c.store
