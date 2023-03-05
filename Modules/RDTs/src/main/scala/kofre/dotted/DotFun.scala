@@ -40,18 +40,18 @@ object DotFun {
       }
 
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
-        if !(left.context <= right.context) then return false
+        if !(
+            (left.context <= right.context) &&
+            (right.store.dots disjunct left.deletions)
+          )
+        then return false
 
-        def `left values are <= than right values` =
-          right.store.repr.forall { (k, r) =>
-            left.store.repr.get(k).forall { l => l <= r }
-          }
-        def `right has no values deleted in left` = {
-          right.store.dots disjunct left.deletions
+        // for some reason, if left contains something not in right,
+        // then right is still considered as larger.
+        // This is strangely inconsistent with the other two
+        right.store.repr.forall { (k, r) =>
+          left.store.repr.get(k).forall { l => l <= r }
         }
-
-        `left values are <= than right values` &&
-        `right has no values deleted in left`
       }
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
