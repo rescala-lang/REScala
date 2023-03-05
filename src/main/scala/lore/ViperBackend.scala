@@ -89,20 +89,6 @@ object ViperBackend:
     )
 
   private def compileInvariants(ctx: CompilationContext): CompilationResult =
-    // collect relevant reactives per invariant
-    val reactivesPerInvariant: Map[TInvariant, Set[ID]] = ctx.invariants
-      .map(i =>
-        // get reactives that this invariant mentions
-        val directDeps = uses(i).filter(name => ctx.graph.keySet.contains(name))
-        // collect (transitive) inputs of these reactives
-        val allDeps =
-          directDeps.flatMap(name =>
-            getSubgraph(name, ctx.graph.view.mapValues(_._1).toMap)
-          )
-        (i, allDeps)
-      )
-      .toMap
-
     def invariantToMacro(
         invariant: TInvariant,
         inputs: Set[ID],
@@ -118,7 +104,8 @@ object ViperBackend:
         .map((inv: TInvariant, id: Int) =>
           invariantToMacro(
             invariant = inv,
-            inputs = reactivesPerInvariant(inv)
+            inputs = ctx
+              .reactivesPerInvariant(inv)
               .map(name => (name, ctx.graph(name)))
               .collect({ case (name: ID, (_: TSource, _: Type)) => name }),
             id = id.toString
@@ -163,6 +150,17 @@ object ViperBackend:
       interaction.ensures.map(p =>
         s"ensures ${curlyToViper(interaction.modifies, argNames, p)}"
       )
+
+    val invariantsNumbered = ctx.invariants.zip(1 to ctx.invariants.length + 1)
+    val relevantInvariants: Seq[String] =
+      invariantsNumbered
+        .filter((inv, num) =>
+          OverlapAnalysis.overlappingInvariants(interaction).contains(inv)
+        )
+        .map((inv, num) =>
+          s"inv_$num(${ctx.reactivesPerInvariant(inv).toList.sorted.map("graph." + _).mkString(", ")})"
+        )
+
     val body =
       interaction.executes.map(b =>
         s"${curlyToViper(interaction.modifies, argNames, b)}"
@@ -176,10 +174,12 @@ object ViperBackend:
         |returns ()
         |// preconditions
         |${preconditions.mkString("\n")}
-        |// TODO relevant invariants
+        |// relevant invariants
+        |${relevantInvariants.map("requires " + _).mkString("\n")}
         |// postconditions
         |${postconditions.mkString("\n")}
-        |// TODO relevant invariants
+        |// relevant invariants
+        |${relevantInvariants.map("ensures " + _).mkString("\n")}
         |{
         |${body.getOrElse("").indent(2)}}
         """.stripMargin

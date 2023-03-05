@@ -5,7 +5,7 @@ import OverlapAnalysis._
 import cats.implicits._
 import cats.data.NonEmptyList
 
-class BackendUtilsTests extends FunSuite {
+class OverlapAnalysisTests extends FunSuite {
   // simple reaches test
   test("reaches") {
     val prog = """|val a: Source[Int] = Source(0)
@@ -26,7 +26,10 @@ class BackendUtilsTests extends FunSuite {
     val ctx: CompilationContext =
       flattenInteractions(CompilationContext(ast.toList))
 
-    assertEquals(reaches(ctx.interactions("i"), ctx), Set("a", "c", "d", "e"))
-    assertEquals(reaches(ctx.interactions("j"), ctx), Set("b", "c"))
+    assertEquals(
+      reaches(ctx.interactions("i"))(using ctx),
+      Set("a", "c", "d", "e")
+    )
+    assertEquals(reaches(ctx.interactions("j"))(using ctx), Set("b", "c"))
   }
 }

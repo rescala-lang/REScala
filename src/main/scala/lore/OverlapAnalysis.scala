@@ -3,13 +3,28 @@ import AST._
 
 object OverlapAnalysis:
 
+  def overlappingInvariants(interaction: TInteraction)(using
+      ctx: CompilationContext
+  ): Set[TInvariant] =
+    val subgraph = reaches(interaction)
+
+    return ctx.invariants
+      .map(i => (i, uses(i)))
+      .filter((interaction, reactives) =>
+        !(subgraph intersect reactives).isEmpty
+      )
+      .map((interaction, reactives) => interaction)
+      .toSet
+
   /** Consumes an interaction and a compilation context and returns all
     * reactives that are affected by this interaction.
     * @param interaction
     * @param ctx
     * @return
     */
-  def reaches(interaction: TInteraction, ctx: CompilationContext): Set[ID] =
+  def reaches(interaction: TInteraction)(using
+      ctx: CompilationContext
+  ): Set[ID] =
     val graph = ctx.graph.view.mapValues((r, t) => r).toMap
     val sources = ctx.sources.filter { case (name, (source, _type)) =>
       interaction.modifies.contains(name)

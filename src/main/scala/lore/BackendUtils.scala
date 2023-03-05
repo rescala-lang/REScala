@@ -23,6 +23,19 @@ private case class CompilationContext(
       (name, _type)
   }.toMap
 
+  def reactivesPerInvariant: Map[TInvariant, Set[ID]] = invariants
+    .map(i =>
+      // get reactives that this invariant mentions
+      val directDeps = uses(i).filter(name => graph.keySet.contains(name))
+      // collect (transitive) inputs of these reactives
+      val allDeps =
+        directDeps.flatMap(name =>
+          getSubgraph(name, graph.view.mapValues(_._1).toMap)
+        )
+      (i, allDeps)
+    )
+    .toMap
+
 // flattenInteractions until the result does not change anymore
 def flattenInteractions(ctx: CompilationContext): CompilationContext =
   def flatten(t: Term, ctx: CompilationContext): Term =
