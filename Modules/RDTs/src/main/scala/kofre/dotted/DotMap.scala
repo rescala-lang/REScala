@@ -14,42 +14,42 @@ object DotMap {
 
   given hasDots[K, V: HasDots]: HasDots[DotMap[K, V]] with {
     override def getDots(a: DotMap[K, V]): Dots =
-      a.repr.valuesIterator.foldLeft(Dots.empty)((acc, v) => acc.union(v.dots))
+      a.repr.valuesIterator.map(v => v.dots).reduceOption(_ union _).getOrElse(Dots.empty)
   }
 
-  /** This essentially lifts the [[DottedLattice]] to a [[DotMap]].
-    * Recursively merging values present in both maps with the given context.
+  /** DotMap is a straightforward extension of dictionary lattices to the dotted case.
+    * Operations are done per entry, with missing entries replaced by `Bottom.empty`.
     */
-  given dottedLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] =
-    new DottedLattice[DotMap[K, V]] {
+  given dottedLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] with {
+    lazy val empty: V = Bottom.empty[V]
 
-      override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-        val empty = Bottom.empty[V]
-        DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
-          val leftDottedValue  = left.map(_.repr.getOrElse(key, empty))
-          val rightDottedValue = right.map(_.repr.getOrElse(key, empty))
-          val res              = leftDottedValue mergePartial rightDottedValue
-          if empty == res then None else Some(key -> res)
-        }.toMap)
-      }
+    def access(key: K)(m: DotMap[K, V]): V = m.repr.getOrElse(key, empty)
 
-      override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
-        if !(right.context <= left.context) then return false
+    override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
+      val keys = left.store.repr.keySet union right.store.repr.keySet
+      val inner =
+        for
+          key <- keys.iterator
+          merged = left.map(access(key)) mergePartial right.map(access(key))
+          if empty != merged
+        yield key -> merged
+      DotMap(inner.toMap)
+    }
 
-        val empty = Bottom.empty[V]
-
-        (left.store.repr.keySet union right.store.repr.keySet).forall { k =>
-          left.map(_.repr.getOrElse(k, empty)) <= right.map(_.repr.getOrElse(k, empty))
-        }
-      }
-
-      override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
-        val added = for {
-          (k, v)                    <- state.store.repr
-          Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
-        } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
-
-        added ++ DottedDecompose.decomposedDeletions(state)
+    override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
+      (right.context <= left.context) &&
+      (left.store.repr.keySet union right.store.repr.keySet).forall { k =>
+        left.map(access(k)) <= right.map(access(k))
       }
     }
+
+    override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
+      val added = for {
+        (k, v)                    <- state.store.repr
+        Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
+      } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
+
+      added ++ DottedDecompose.decomposedDeletions(state)
+    }
+  }
 }

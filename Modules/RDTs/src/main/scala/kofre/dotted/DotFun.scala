@@ -40,14 +40,10 @@ object DotFun {
 
       /** Insertion is larger. Removals are larger. Otherwise compare the value for each dot. */
       override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {
-        if !(
-            // invariant on lteq
-            (left.context <= right.context) &&
-            // deletions are larger
-            (right.store.dots disjunct left.deletions)
-          )
-        then return false
-
+        // invariant on lteq
+        (left.context <= right.context) &&
+        // deletions are larger
+        (right.store.dots disjunct left.deletions) &&
         // everything not in the right store will be deleted from left on merge
         // things that are still in left must be smaller
         // things that are not in left are not there yet (otherwise the deletion clause above would hold)
@@ -57,12 +53,10 @@ object DotFun {
       }
 
       override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
-        val added =
-          Lattice[Map[Dot, A]].decompose(state.store.repr).map { m =>
-            val df = DotFun(m)
-            Dotted(df, df.dots)
-          }
-
+        val added = Lattice[Map[Dot, A]].decompose(state.store.repr).map { m =>
+          val df = DotFun(m)
+          Dotted(df, df.dots)
+        }
         added ++ DottedDecompose.decomposedDeletions(state)
       }
     }
