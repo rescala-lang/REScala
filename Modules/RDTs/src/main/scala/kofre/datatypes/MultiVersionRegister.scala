@@ -15,15 +15,19 @@ case class MultiVersionRegister[A](repr: DotFun[A])
 object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
 
-  given bottomInstance[A]: Bottom[MultiVersionRegister[A]]                = Bottom.derived
-  given dottedLattice[A: Lattice]: DottedLattice[MultiVersionRegister[A]] = DottedLattice.derived
+  given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
+  given dottedLattice[A]: DottedLattice[MultiVersionRegister[A]] =
+    given Lattice[A] = (l, r) =>
+      if l == r then l
+      else throw IllegalStateException(s"multi version register assumes no conflicts")
+    DottedLattice.derived
 
   extension [C, A](container: C)
     def multiVersionRegister: syntax[C, A] = syntax(container)
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
-    def read(using PermQuery): Set[A] = current.repr.repr.values.toSet
+    def read(using PermQuery): Set[A]        = current.repr.repr.values.toSet
 
     def write(using ReplicaId)(v: A): CausalMutate = {
       val nextDot = context.nextDot(replicaId)

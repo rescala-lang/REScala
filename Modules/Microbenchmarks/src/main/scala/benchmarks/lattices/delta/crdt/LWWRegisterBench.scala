@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import org.openjdk.jmh.annotations.*
 
 import kofre.base.Uid.asId
-import kofre.datatypes.alternatives.lww.CausalLastWriterWins
+import kofre.datatypes.CausalLastWriterWins
 
 import java.util.concurrent.TimeUnit
 

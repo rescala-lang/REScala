@@ -63,4 +63,5 @@ class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   extension (l: L) def mutator: Mutate                                      = summon.mutate(container, l)
   extension (l: Dotted[L])(using perm: PermCausalMutate) def mutator: C     = perm.mutateContext(container, l)
   extension [A](a: A) def inheritContext(using PermCausalMutate): Dotted[A] = Dotted(a, context)
+
 }

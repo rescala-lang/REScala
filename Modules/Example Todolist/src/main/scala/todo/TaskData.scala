@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.{MultiVersionRegister, alternatives}
+import kofre.datatypes.{CausalLastWriterWins, MultiVersionRegister, alternatives}
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
@@ -14,7 +14,7 @@ import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, TimedVal, WallClock}
+import kofre.datatypes.alternatives.lww.{TimedVal, WallClock}
 import loci.serializer.jsoniterScala.given
 
 import scala.Function.const
@@ -76,23 +76,11 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lwwInit = DeltaBuffer(Dotted(CausalLastWriterWins.empty[TaskData]))
-
-    val lww: DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]] = task match {
-      case None =>
-//        type L = CausalLastWriterWins[TaskData]
-//        given perm1: PermCausalMutate[DeltaBufferRDT[L], L] =
-//          DeltaBufferRDT.contextPermissions[CausalLastWriterWins[TaskData]]
-//        given perm2: PermId[DeltaBufferRDT[L]] = DeltaBufferRDT.contextPermissions
-
-        val res = lwwInit.state.map(_.repr).write(using fixedId)(alternatives.lww.TimedVal(
-          WallClock(0, replicaId, 0),
-          TaskData("<empty>")
-        )).map(CausalLastWriterWins.apply)
-        lwwInit.applyDelta(res)
-      case Some(v) =>
-        lwwInit.write(using fixedId)(v)
-    }
+    val lww: DeltaBuffer[Dotted[CausalLastWriterWins[TaskData]]] =
+      val empty = DeltaBuffer(Dotted(CausalLastWriterWins.empty[TaskData]))
+      task match
+        case None    => empty
+        case Some(v) => empty.write(v)
 
     val edittext = Event.fromCallback[UIEvent] {
       input(`class` := "edit", `type` := "text", onchange := Event.handle, onblur := Event.handle)
@@ -115,21 +103,6 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
     val doneEv = toggleAll || doneClick.event
 
     val deltaEvt = Evt[Dotted[CausalLastWriterWins[TaskData]]]()
-
-    // type Carrier = CausalLastWriterWins.State[TaskData, DietMapCContext]
-    //
-    // val merge = implicitly[Lattice[Carrier]]
-    //
-    // val crdtAlt = DeltaStateReactive.create[Carrier, Carrier](
-    //  lww,
-    //  deltaEvt,
-    //  (s, d) => merge.merge(s, d),
-    //  Seq(
-    //    { (dt: DynamicTicket, current: Carrier) => dt.depend(doneEv); current },
-    //  )
-    // )
-
-    given ReplicaId = replicaId
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Fold(init)(
