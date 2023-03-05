@@ -67,7 +67,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
-  def contains(other: Dots): Boolean = other.iterator.forall(contains)
+  def contains(other: Dots): Boolean = other <= this
 
   def iterator: Iterator[Dot] = internal.iterator.flatMap((k, v) => v.iterator.map(t => Dot(k, t)))
 

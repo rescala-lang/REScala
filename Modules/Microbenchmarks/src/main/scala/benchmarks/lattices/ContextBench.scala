@@ -63,4 +63,10 @@ class ContextBench {
   @Benchmark
   def intersectOther() = rep1Set.intersect(rep2Set)
 
+  @Benchmark
+  def containsOther() = rep1Set.contains(rep2Set)
+
+  @Benchmark
+  def containsSelf() = rep1Set.contains(rep1Set)
+
 }
