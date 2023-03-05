@@ -17,7 +17,7 @@ trait HasDots[-A] {
 
   def map[B](f: B => A): HasDots[B] = (b: B) => getDots(f(b))
 
-  extension [A: HasDots](a: A) def dots: Dots = summon.getDots(a)
+  extension (a: A) def dots: Dots = getDots(a)
 
 }
 
