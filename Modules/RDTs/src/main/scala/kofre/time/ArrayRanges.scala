@@ -39,6 +39,28 @@ class ArrayRanges(
       if s == einc then s"$s" else s"$s:$einc"
   }.mkString("[", ", ", "]")
 
+  def disjunct(right: ArrayRanges): Boolean = {
+    if (isEmpty) return true
+    if (right.isEmpty) return true
+
+    var leftIndex = 0
+    var rightIndex = 0
+
+    while (leftIndex < used && rightIndex < right.used) {
+      val leftLower = inner(leftIndex)
+      val leftUpper = inner(leftIndex + 1)
+      val rightLower = right.inner(rightIndex)
+      val rightUpper = right.inner(rightIndex + 1)
+
+      if (leftLower >= rightUpper) rightIndex += 2
+      else if rightLower >= leftUpper then leftIndex += 2
+      else return false
+    }
+
+    return true
+  }
+
+
   @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
     if (isEmpty) return true
@@ -61,6 +83,7 @@ class ArrayRanges(
 
     return true
   }
+
 
   def contains(x: Time): Boolean = {
     val res = java.util.Arrays.binarySearch(inner.asInstanceOf[Array[Time]], 0, used, x)

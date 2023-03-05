@@ -69,4 +69,10 @@ class ContextBench {
   @Benchmark
   def containsSelf() = rep1Set.contains(rep1Set)
 
+  @Benchmark
+  def disjunctOther() = rep1Set.disjunct(rep2Set)
+
+  @Benchmark
+  def disjunctSelf() = rep1Set.disjunct(rep1Set)
+
 }

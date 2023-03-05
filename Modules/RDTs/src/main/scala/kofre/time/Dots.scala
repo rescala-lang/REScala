@@ -4,7 +4,6 @@ import kofre.base.{Lattice, Time, Uid}
 import kofre.dotted.Dotted
 import kofre.time.Dot
 
-
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
   *
@@ -61,7 +60,11 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
       }
     }
 
-  def disjunct(other: Dots): Boolean = !other.iterator.exists(contains)
+  def disjunct(other: Dots): Boolean =
+    val keys = internal.keySet intersect other.internal.keySet
+    keys.forall { k =>
+      rangeAt(k) disjunct other.rangeAt(k)
+    }
 
   def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 

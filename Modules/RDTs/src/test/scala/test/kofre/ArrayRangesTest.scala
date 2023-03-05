@@ -257,6 +257,12 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
 
       assertEquals(lr union rr, ArrayRanges.from((leftSet union rightSet)))
       assertEquals(lr subtract rr, ArrayRanges.from((leftSet diff rightSet)))
+
+      if lr <= rr then
+        assertEquals(leftSet.intersect(rightSet), leftSet, s"left: $left\nright: $right")
+        assertEquals(leftSet.union(rightSet), rightSet)
+
+      assertEquals(lr.disjunct(rr), leftSet.intersect(rightSet).isEmpty )
     }
   }
 
