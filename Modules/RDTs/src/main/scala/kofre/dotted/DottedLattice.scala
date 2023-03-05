@@ -64,10 +64,6 @@ object DottedLattice {
     dotted.deletions.decomposed.map(d => Dotted(Bottom.empty, d))
 
   given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
-
-    /** Partial merging combines the stored values, but ignores the context.
-      * Thus enabling nested merging of values, without merging context multiple times.
-      */
     override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
       (left.store, right.store) match
         case (None, r)          => r
