@@ -1,9 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Lattice, Uid}
-import kofre.time.WallClock
 
-import java.time.Instant
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 trait ILastWriterWins[Time, Value] {
