@@ -30,7 +30,7 @@ object MultiVersionRegister {
 
       Dotted(
         MultiVersionRegister(DotFun(Map(nextDot -> v))),
-        Dots.from(current.repr.repr.keySet + nextDot)
+        Dots.from(current.repr.repr.keySet).add(nextDot)
       ).mutator
     }
 

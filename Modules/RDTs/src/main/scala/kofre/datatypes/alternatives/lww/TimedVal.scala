@@ -1,7 +1,6 @@
 package kofre.datatypes.alternatives.lww
 
 import kofre.datatypes.ILastWriterWins
-import kofre.time.WallClock
 import kofre.base.Uid
 
 case class TimedVal[A](timestamp: WallClock, payload: A) extends ILastWriterWins[WallClock, A]

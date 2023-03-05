@@ -14,9 +14,8 @@ import scalatags.JsDom.all.*
 import todo.Todolist.replicaId
 import Codecs.given
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, TimedVal}
+import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, TimedVal, WallClock}
 import loci.serializer.jsoniterScala.given
-import kofre.time.WallClock
 
 import scala.Function.const
 import scala.collection.mutable
