@@ -24,11 +24,12 @@ class GrowMapTest extends munit.ScalaCheckSuite {
         case (s, e) => s.add(using s.replicaID)(e)
       }
 
-      val map = add.foldLeft(AntiEntropyContainer[GrowOnlyMap[Int, AddWinsSet[Int]]](aea)) {
-        case (m, e) => m.mutateKeyNamedCtx(k, AddWinsSet.empty[Int])((st) => st.add(using m.replicaID)(e))
-      }
+      val map: AntiEntropyContainer[GrowOnlyMap[Int, AddWinsSet[Int]]] =
+        add.foldLeft(AntiEntropyContainer[GrowOnlyMap[Int, AddWinsSet[Int]]](aea)) {
+          case (m, e) => m.mutateKeyNamedCtx(k, AddWinsSet.empty[Int])((st) => st.add(using m.replicaID)(e))
+        }
 
-      val mapElements = map.queryKey(k).map(_.elements).getOrElse(AddWinsSet.empty[Int])
+      val mapElements: Set[Int] = map.queryKey(k).map(o => o.elements).getOrElse(Set.empty[Int])
 
       assert(
         mapElements == set.elements,
