@@ -1,0 +1,70 @@
+import "calendar_header.vpr"
+// sources
+field work: AWSet[Appointment]
+field vacation: AWSet[Appointment]
+// derived
+define all_appointments(vacation, work) toSet(work) union toSet(vacation)
+define remaining_vacation(vacation) 30 - sumDays(toSet(vacation))
+// invariants
+define inv_1(vacation, work) forall a: Appointment :: a in all_appointments(vacation, work) ==> get_start(a) < get_end(a)
+define inv_2(vacation) remaining_vacation(vacation) >= 0
+
+// interactions
+method add_vacation (
+  // graph
+  graph: Ref,
+  // arguments
+  a: Appointment
+)
+returns ()
+// TODO 2: permissions
+requires acc(graph.vacation)
+requires acc(graph.work, 1/2)
+// preconditions
+requires get_start(a) < get_end(a)
+requires !(a in toSet(graph.vacation))
+requires 30 - sumDays(toSet(graph.vacation)) - days(a) >= 0
+requires remaining_vacation(graph.vacation) - days(a) >= 0
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+requires inv_2(graph.vacation)
+// permissions
+ensures acc(graph.vacation)
+ensures acc(graph.work, 1/2)
+// postconditions
+ensures a in toSet(graph.vacation)
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+ensures inv_2(graph.vacation)
+{
+  // TODO 1: transform to field transformation
+  graph.vacation := add(graph.vacation, a, 0)
+  // TODO 3: add to add_new on AWSets
+}
+        
+method add_work (
+  // graph
+  graph: Ref,
+  // arguments
+  a: Appointment
+)
+returns ()
+// permissions
+requires acc(graph.vacation, 1/2)
+requires acc(graph.work)
+// preconditions
+requires get_start(a) < get_end(a)
+requires !(a in toSet(graph.work))
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+// permissions
+ensures acc(graph.vacation, 1/2)
+ensures acc(graph.work)
+// postconditions
+ensures a in toSet(graph.work)
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+{
+  graph.work := add(graph.work, a, 0)
+}
+        

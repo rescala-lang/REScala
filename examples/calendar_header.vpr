@@ -1,0 +1,40 @@
+import "crdts/aw_set.vpr"
+import "basic_types.vpr"
+
+// custom types
+domain Appointment {
+  function get_start(a: Appointment): Int
+  function get_end(a: Appointment): Int
+  function days(a: Appointment) : Int
+}
+
+function sumDays(appointments: Set[Appointment]): Int
+ensures |appointments| == 0 ==> result == 0
+ensures |appointments| == 1 ==> result == days(get1s(appointments))
+ensures forall s1: Set[Appointment], s2: Set[Appointment] :: {s1 union s2}{sumDays(s1), sumDays(s2)} appointments == s1 union s2 ==> result == sumDays(s1) + sumDays(s2)
+
+// method tests() returns (){
+//   var a1: Appointment
+//   var a2: Appointment
+//   var a3: Appointment
+//   var a4: Appointment
+//   assume days(a1) == 1
+//   assume days(a2) == 2
+//   assume days(a3) == 3
+//   assume days(a4) == 4
+//   assert sumDays(Set(a1)) == 1
+//   assert sumDays(Set(a1,a2)) == 3
+//   assert sumDays(Set(a1,a2,a3,a4)) == 10
+// }
+// // GRAPH //
+// // sources
+// field work: AWSet[Appointment]
+// field vacation: AWSet[Appointment]
+// // derived
+// define all_appointments(g) toSet(g.work) union toSet(g.vacation)
+// define remaining_vacation(g) 30 - |toSet(g.vacation)|
+
+// // INVARIANTS //
+// define allValid(g)forall a: Appointment :: a in all_appointments(g) ==> get_start(a) < get_end(a)
+// define vacGtZero(g) remaining_vacation(g) >= 0
+// define noOverlaps(g) forall a1: Appointment, a2: Appointment :: a1 != a2 && a1 in all_appointments(g) && a2 in all_appointments(g) ==> get_start(a1) >= get_end(a2) || get_start(a2) >= get_end(a1)

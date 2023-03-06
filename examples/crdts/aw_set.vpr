@@ -1,0 +1,150 @@
+domain Option[A] {
+    function Some(a: A): Option[A]
+
+    function None(): Option[A]
+
+    function isSome(opt: Option[A]): Bool
+}
+// implementation of an add wins set
+domain AWSet[A] {
+    function get_observed_ids(set: AWSet[A], el: A): Set[Int]
+
+    function get_removed_ids(set: AWSet[A], el: A): Set[Int]
+
+    function empty(A): AWSet[A]
+
+    function add(set: AWSet[A], el: A, id: Int): AWSet[A] // element ids have to be supplied by an external utility
+
+    // function addAll(set: AWSet[A], elements: Seq[A], ids: Seq[Int]): AWSet[A] // adds all elements in the sequence using the supplied ids
+
+    function remove(set: AWSet[A], el: A): AWSet[A]
+
+    function contains(set: AWSet[A], el: A): Bool
+    
+    function merge(l: AWSet[A], r: AWSet[A]): AWSet[A]
+
+    // returns the number of elements in the set
+    function size(set: AWSet[A]): Int
+
+    // used to find entries in the AWSet.
+    // function find(set: AWSet[A]): Option[A]
+    // function get(set: AWSet[A]): A
+
+    // returns a Viper set representation of the awset
+    function toSet(set:AWSet[A]): Set[A]
+    
+    // empty sets do not contain any element ids
+    axiom empty_ax {
+        forall el: A :: {get_observed_ids(empty(el), el)}{get_removed_ids(empty(el),el)}
+            (get_observed_ids(empty(el), el) == Set()) && 
+            (get_removed_ids(empty(el), el) == Set())
+    }
+    // size of empty sets is 0
+    axiom empty_ax2 {
+        forall a: A :: size(empty(a)) == 0
+    }
+
+// In general, a forall quantifier can have any number of sets of trigger expressions; these are written one after the other,
+// each enclosed within braces. Multiple such sets prescribe alternative triggering conditions; multiple expressions within a single
+// trigger set prescribe that expressions matching each of the trigger expressions must be encountered before an instantiation may
+// be made.
+
+    axiom add_ax {
+        forall s: AWSet[A], t: AWSet[A], el: A, id: Int, el2: A ::
+        {add(s,el,id), get_observed_ids(t,el2)}
+        {add(s,el,id), get_removed_ids(t,el2)}
+            t == add(s,el,id) ==> (
+            get_observed_ids(t,el) == get_observed_ids(s,el) union Set(id) &&
+            // get_observed_ids(s,el) subset get_observed_ids(t,el) &&     // adding an element to a set adds its element id to the observed ids
+            // |get_observed_ids(t,el)| == |get_observed_ids(s,el)| + 1 && // adding does actually generate a new id
+            get_removed_ids(s,el) == get_removed_ids(t,el) // adding does not change removed ids
+            // do not change sets for any other element
+            && (el != el2 ==> ((get_observed_ids(s,el2) == get_observed_ids(t,el2)) && (get_removed_ids(s,el2) == get_removed_ids(t,el2))))
+            // && (!(id in get_observed_ids(s, el)) && !(contains(s, el)) ==> |toSet(t)| == |toSet(s)| + 1) // adding a new element increases the size by one
+            && (contains(s,el) ==> toSet(t) == toSet(s)) // adding an element that is already in the set does not change the set
+            && (!contains(s,el) ==> toSet(t) == toSet(s) union Set(el))
+            // && contains(s,el2) ==> contains(t,el2) // old elements are still contained in the set
+        )
+    }
+
+    // axiom add_all_ax {
+    //     forall s: AWSet[A], t: AWSet[A], els: Seq[A], ids: Seq[Int], el: A, el2: A ::
+    //     {addAll(s,els,ids), get_observed_ids(t,el2), get_observed_ids(t, el)}
+    //         t == addAll(s,els,ids) ==> forall i: Int :: i >= 0 && i < |els| && i < |ids| && el == els[i] ==> (
+    //             get_observed_ids(t,el) == get_observed_ids(s,el) union Set(ids[i]) &&
+    //             get_removed_ids(s,el) == get_removed_ids(t,el) &&
+    //             // do not change sets for any other element
+    //             (el != el2 ==> ((get_observed_ids(s,el2) == get_observed_ids(t,el2)) && (get_removed_ids(s,el2) == get_removed_ids(t,el2))))
+    //         )
+    // }
+    // axiom add_all_ax {
+    //     forall s: AWSet[A], t: AWSet[A], els: Seq[A], ids: Seq[Int], el: A, el2: A ::
+    //     {addAll(s,els,ids), get_observed_ids(t,el2), get_observed_ids(t, el)}
+    //         t == addAll(s,els,ids) ==> forall i: Int :: i >= 0 && i < |els| && i < |ids| && el == els[i] ==> (
+    //             get_observed_ids(t,el) == get_observed_ids(s,el) union Set(ids[i]) &&
+    //             get_removed_ids(s,el) == get_removed_ids(t,el) &&
+    //             // do not change sets for any other element
+    //             (el != el2 ==> ((get_observed_ids(s,el2) == get_observed_ids(t,el2)) && (get_removed_ids(s,el2) == get_removed_ids(t,el2))))
+    //         )
+    // }
+
+    // axiom add_all_ax2 {
+    //     forall s: AWSet[A], t: AWSet[A], els: Seq[A], ids: Seq[Int], el:A ::
+    //     {addAll(s,els,ids), contains(t,el)}
+    //         t == addAll(s,els,ids) && el in els ==> contains(t,el)
+    // }
+
+    axiom remove_ax {
+        forall s: AWSet[A], t: AWSet[A], el: A, el2: A ::
+        {remove(s,el), get_removed_ids(t,el2)}
+            t == remove(s,el) ==> (
+            get_removed_ids(t,el) == get_removed_ids(s,el) union get_observed_ids(s,el) && // add all observed ids to removed
+            get_observed_ids(t,el) == get_observed_ids(s,el) // do not change observed
+            // do not change sets for any other element
+            && (el != el2 ==> ((get_observed_ids(s,el2) == get_observed_ids(t,el2)) && (get_removed_ids(s,el2) == get_removed_ids(t,el2))))
+        )
+    }
+
+    // an add-wins set contains elements that are in observed but not in removed
+    axiom contains_ax {
+        forall set: AWSet[A], el: A :: {contains(set,el)}
+           contains(set, el) == (
+                  (exists id: Int :: id in get_observed_ids(set,el) && !(id in get_removed_ids(set,el))) ||
+                  (get_observed_ids(set, el) setminus get_removed_ids(set, el) != Set())
+           )
+        //    contains(set, el) <==> (exists id: Int :: id in get_observed_ids(set,el) && !(id in get_removed_ids(set,el)))
+    }
+
+    // after adding an element, all other elements are still contained
+
+    axiom merge_ax {
+        forall l: AWSet[A], r: AWSet[A], m: AWSet[A], el: A ::
+        {merge(l,r), get_observed_ids(m,el)}{merge(l,r), get_removed_ids(m,el)}
+            m == merge(l,r) ==> (
+            get_observed_ids(m,el) == get_observed_ids(l,el) union get_observed_ids(r,el) && // merging takes the union of the observed ids
+            get_removed_ids(m,el) == get_removed_ids(l,el) union get_removed_ids(r,el)
+        )
+    }
+
+    // axiom find_ax {
+    //     // find must only return items that are actually in the set
+    //     forall set: AWSet[A], el: A :: {find(set), Some(el)}
+    //         find(set) == Some(el) ==> contains(set,el)
+    // }
+
+    // axiom get_ax {
+    //     // like find, get does only return items that are in the set
+    //     forall set: AWSet[A], el: A :: {get(set), contains(set,el)}
+    //         get(set) == el ==> contains(set,el)
+    // }
+
+    axiom to_set_ax {
+        forall awset: AWSet[A], set: Set[A], elem: A ::
+            {toSet(awset), elem in set}
+            toSet(awset) == set ==> (contains(awset, elem) == elem in set)
+    }
+
+    axiom empty_to_set_ax {
+        forall a: A :: toSet(empty(a)) == Set[A]()
+    }
+}
