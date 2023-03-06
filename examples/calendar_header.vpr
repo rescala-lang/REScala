@@ -8,24 +8,39 @@ domain Appointment {
   function days(a: Appointment) : Int
 }
 
+// function sumDayInternal(appointments: Set[Appointment], accu: Int): Int
+// ensures |appointments| == 0 ==> result == accu
+// ensures |appointments| >= 1 && a in appointments ==> sumDayInternal()
+
 function sumDays(appointments: Set[Appointment]): Int
 ensures |appointments| == 0 ==> result == 0
-ensures |appointments| == 1 ==> result == days(get1s(appointments))
-ensures forall s1: Set[Appointment], s2: Set[Appointment] :: {s1 union s2}{sumDays(s1), sumDays(s2)} appointments == s1 union s2 ==> result == sumDays(s1) + sumDays(s2)
+ensures forall a: Appointment :: |appointments| == 1 && a in appointments ==> result == days(a)
+ensures appointments == Set() ==> result == 0
+ensures forall a: Appointment, s: Set[Appointment] :: {sumDays(Set(a)), sumDays(s)} |appointments| > 1 && a in appointments ==> result == days(a) + sumDays(appointments setminus Set(a))
+ensures forall s1: Set[Appointment], s2: Set[Appointment] ::{sumDays(s1 union s2)} s1 intersection s2 == Set() ==> sumDays(s1 union s2) == sumDays(s1) + sumDays(s2)
+// ensures false
+// ensures forall a: Appointment, b: Appointment :: {sumDays(Set(a,b))} appointments == Set(a,b) ==> result == days(a) + days(b)
+// ensures forall s: Set[Appointment], t: Set[Appointment] :: {sumDays(s), sumDays(t)} s intersection t == Set() ==> result == sumDays(s) + sumDays(t)
 
-// method tests() returns (){
-//   var a1: Appointment
-//   var a2: Appointment
-//   var a3: Appointment
-//   var a4: Appointment
-//   assume days(a1) == 1
-//   assume days(a2) == 2
-//   assume days(a3) == 3
-//   assume days(a4) == 4
-//   assert sumDays(Set(a1)) == 1
-//   assert sumDays(Set(a1,a2)) == 3
-//   assert sumDays(Set(a1,a2,a3,a4)) == 10
-// }
+
+method tests() returns (){
+  var a1: Appointment
+  var a2: Appointment
+  var a3: Appointment
+  var a4: Appointment
+  assume days(a1) == 1
+  assume days(a2) == 2
+  assume days(a3) == 3
+  assume days(a4) == 4
+  assert sumDays(Set(a1)) == 1
+  assert sumDays(Set(a2)) == 2
+  assert sumDays(Set(a1,a2)) == 3
+  assert days(a3) == 3
+  assert days(a2) == 2
+  assert sumDays(Set(a2,a3)) == 5
+  assert sumDays(Set(a1,a2,a3)) == 6
+  // assert sumDays(Set(a1,a2,a3,a4)) == 10
+}
 // // GRAPH //
 // // sources
 // field work: AWSet[Appointment]

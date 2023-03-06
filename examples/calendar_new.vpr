@@ -23,7 +23,6 @@ requires acc(graph.work, 1/2)
 // preconditions
 requires get_start(a) < get_end(a)
 requires !(a in toSet(graph.vacation))
-requires 30 - sumDays(toSet(graph.vacation)) - days(a) >= 0
 requires remaining_vacation(graph.vacation) - days(a) >= 0
 // relevant invariants
 requires inv_1(graph.vacation, graph.work)
