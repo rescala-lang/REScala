@@ -3,8 +3,8 @@ publishLocal:
 	sbtn 'kofreAggregate / publishLocal'
 
 publishJitpack:
-	sbt -Dsbt.log.noformat=true 'rescalaAggregate / publishM2'
-	sbt -Dsbt.log.noformat=true 'kofreAggregate / publishM2'
+	RESCALA_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'rescalaAggregate / publishM2'
+	RESCALA_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'kofreAggregate / publishM2'
 
 publishSigned:
 	sbtn 'rescalaAggregate / publishSigned'

@@ -61,6 +61,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     libraryDependencies += scalatags.value % "provided,test",
     jsAcceptUnfairGlobalTasks,
     jsEnvDom,
+    sourcemapFromEnv(),
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
@@ -88,6 +89,9 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
     scalaVersion_3,
     publishSonatype,
     libraryDependencies ++= List(munit.value, munitScalacheck.value),
+  )
+  .jsSettings(
+    sourcemapFromEnv()
   )
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
