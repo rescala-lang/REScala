@@ -13,9 +13,9 @@ domain AWSet[A] {
 
     function empty(A): AWSet[A]
 
-    function add(set: AWSet[A], el: A, id: Int): AWSet[A] // element ids have to be supplied by an external utility
+    function add_with_id(set: AWSet[A], el: A, id: Int): AWSet[A] // element ids have to be supplied by an external utility
 
-    function add_new(set: AWSet[A], el: A): AWSet[A]
+    function add(set: AWSet[A], el: A): AWSet[A]
 
     // function addAll(set: AWSet[A], elements: Seq[A], ids: Seq[Int]): AWSet[A] // adds all elements in the sequence using the supplied ids
 
@@ -51,11 +51,11 @@ domain AWSet[A] {
 // trigger set prescribe that expressions matching each of the trigger expressions must be encountered before an instantiation may
 // be made.
 
-    axiom add_ax {
+    axiom add_id_ax {
         forall s: AWSet[A], t: AWSet[A], el: A, id: Int, el2: A ::
-        {add(s,el,id), get_observed_ids(t,el2)}
-        {add(s,el,id), get_removed_ids(t,el2)}
-            t == add(s,el,id) ==> (
+        {add_with_id(s,el,id), get_observed_ids(t,el2)}
+        {add_with_id(s,el,id), get_removed_ids(t,el2)}
+            t == add_with_id(s,el,id) ==> (
             get_observed_ids(t,el) == get_observed_ids(s,el) union Set(id) &&
             // get_observed_ids(s,el) subset get_observed_ids(t,el) &&     // adding an element to a set adds its element id to the observed ids
             // |get_observed_ids(t,el)| == |get_observed_ids(s,el)| + 1 && // adding does actually generate a new id
@@ -69,10 +69,10 @@ domain AWSet[A] {
         )
     }
     
-    axiom add_new_ax {
+    axiom add_ax {
         forall s: AWSet[A], el: A ::
-        {add_new(s,el)}
-            exists id: Int :: !(id in get_observed_ids(s, el)) && !(id in get_removed_ids(s,el)) && add_new(s,el) == add(s,el,id)
+        {add(s,el)}
+            exists id: Int :: !(id in get_observed_ids(s, el)) && !(id in get_removed_ids(s,el)) && add(s,el) == add_with_id(s,el,id)
     }
 
     // axiom add_all_ax {
