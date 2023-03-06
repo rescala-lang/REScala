@@ -21,6 +21,7 @@ object OverlapAnalysis:
     * @param interaction
     * @param ctx
     * @return
+    *   set of ids of the affected reactives
     */
   def reaches(interaction: TInteraction)(using
       ctx: CompilationContext

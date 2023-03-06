@@ -144,27 +144,40 @@ object ViperBackend:
 
     val preconditions =
       interaction.requires.map(p =>
-        s"requires ${curlyToViper(interaction.modifies, argNames, p)}"
+        s"requires ${expressionToViper(insertArgs(interaction.modifies, argNames, p))}"
       )
     val postconditions =
       interaction.ensures.map(p =>
-        s"ensures ${curlyToViper(interaction.modifies, argNames, p)}"
+        s"ensures ${expressionToViper(insertArgs(interaction.modifies, argNames, p))}"
       )
 
     val invariantsNumbered = ctx.invariants.zip(1 to ctx.invariants.length + 1)
+    val overlappingInvariants =
+      OverlapAnalysis.overlappingInvariants(interaction)
     val relevantInvariants: Seq[String] =
       invariantsNumbered
-        .filter((inv, num) =>
-          OverlapAnalysis.overlappingInvariants(interaction).contains(inv)
-        )
+        .filter((inv, num) => overlappingInvariants.contains(inv))
         .map((inv, num) =>
           s"inv_$num(${ctx.reactivesPerInvariant(inv).toList.sorted.map("graph." + _).mkString(", ")})"
         )
 
     val body =
-      interaction.executes.map(b =>
-        s"${curlyToViper(interaction.modifies, argNames, b)}"
+      interaction.executes.map(insertArgs(interaction.modifies, argNames, _))
+
+    // FIXME: support tuple types
+    val bodyAsAssignments =
+      body.map(b =>
+        s"graph.${interaction.modifies.head} := ${expressionToViper(b)}"
       )
+
+    val overlapppingSources =
+      OverlapAnalysis
+        .reaches(interaction)
+        .filter(ctx.sources.keySet.contains(_))
+
+    val writes = interaction.modifies
+    val reads =
+      overlappingInvariants.flatMap(ctx.reactivesPerInvariant(_)) -- writes
 
     s"""|method $name (
         |  // graph
@@ -172,25 +185,39 @@ object ViperBackend:
         |  // arguments
         |${argsString.mkString(",\n").indent(2)})
         |returns ()
+        |// permissions
+        |${writes.toList.sorted
+         .map(id => s"requires acc(graph.$id)")
+         .mkString("\n")}
+        |${reads.toList.sorted
+         .map(id => s"requires acc(graph.$id, 1/2)")
+         .mkString("\n")}
         |// preconditions
         |${preconditions.mkString("\n")}
         |// relevant invariants
         |${relevantInvariants.map("requires " + _).mkString("\n")}
+        |// permissions
+        |${writes.toList.sorted
+         .map(id => s"ensures acc(graph.$id)")
+         .mkString("\n")}
+        |${reads.toList.sorted
+         .map(id => s"ensures acc(graph.$id, 1/2)")
+         .mkString("\n")}
         |// postconditions
         |${postconditions.mkString("\n")}
         |// relevant invariants
         |${relevantInvariants.map("ensures " + _).mkString("\n")}
         |{
-        |${body.getOrElse("").indent(2)}}
+        |${bodyAsAssignments.getOrElse("").indent(2)}}
         """.stripMargin
 
-  private def curlyToViper(
+  private def insertArgs(
       modifies: List[ID],
       methodArgs: List[ID],
-      body: Term
-  )(using ctx: CompilationContext): String =
-    // check if curlyBody is a function, if yes, insert reactives and method arguments
-    val transformedBody = body match
+      term: Term
+  )(using ctx: CompilationContext): Term =
+    // check if term is a function, if yes, insert reactives and method arguments
+    val transformed = term match
       case tarrow @ TArrow(_, _) =>
         // extract argument names
         val allNames = tarrow.args
@@ -203,13 +230,13 @@ object ViperBackend:
         // insert method args
         if argumentNames.length != methodArgs.length then
           throw ViperCompilationException(
-            s"Interaction body $body has wrong arity. It should accept the same number of arguments as the executes part of the interaction: $methodArgs"
+            s"Interaction body $term has wrong arity. It should accept the same number of arguments as the executes part of the interaction: $methodArgs"
           )
         (argumentNames zip methodArgs).foldLeft(reactivesInserted) {
           case (body, (from, to)) => rename(from, to, body)
         }
       case _ => // no function, use body as is
-        body
+        term
 
     // replace reactive names with field accesses on the graph object
     def transformer: Term => Term =
@@ -217,7 +244,8 @@ object ViperBackend:
         TFCall(TVar("graph"), name, List())
       case t => t
 
-    return expressionToViper(traverseFromNode(transformedBody, transformer))
+    return traverseFromNode(transformed, transformer)
+
   private def typeToViper(t: Type)(using ctx: CompilationContext): String =
     t match
       // replace type aliases
