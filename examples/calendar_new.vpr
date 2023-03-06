@@ -17,7 +17,7 @@ method add_vacation (
   a: Appointment
 )
 returns ()
-// TODO 2: permissions
+// permissions
 requires acc(graph.vacation)
 requires acc(graph.work, 1/2)
 // preconditions
@@ -36,9 +36,7 @@ ensures a in toSet(graph.vacation)
 ensures inv_1(graph.vacation, graph.work)
 ensures inv_2(graph.vacation)
 {
-  // TODO 1: transform to field transformation
-  graph.vacation := add(graph.vacation, a, 0)
-  // TODO 3: add to add_new on AWSets
+  graph.vacation := add(graph.vacation, a)
 }
         
 method add_work (
@@ -49,21 +47,21 @@ method add_work (
 )
 returns ()
 // permissions
-requires acc(graph.vacation, 1/2)
 requires acc(graph.work)
+requires acc(graph.vacation, 1/2)
 // preconditions
 requires get_start(a) < get_end(a)
 requires !(a in toSet(graph.work))
 // relevant invariants
 requires inv_1(graph.vacation, graph.work)
 // permissions
-ensures acc(graph.vacation, 1/2)
 ensures acc(graph.work)
+ensures acc(graph.vacation, 1/2)
 // postconditions
 ensures a in toSet(graph.work)
 // relevant invariants
 ensures inv_1(graph.vacation, graph.work)
 {
-  graph.work := add(graph.work, a, 0)
+  graph.work := add(graph.work, a)
 }
         
