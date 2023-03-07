@@ -744,7 +744,7 @@ c.test()
 ```
 
 The following code instead establishes only a dependency between
-```b``` and ```s```.
+`b` and `s`.
 
 ```scala mdoc:silent:nest
 val s = Signal{ a.now + b() }
