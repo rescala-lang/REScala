@@ -27,8 +27,7 @@ libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.33.0"
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,
 this should allow you to follow along the following examples.
 
-
-The code examples in the manual serve as a self contained Scala REPL session.
+The code examples in the manual serve as a self-contained Scala REPL session.
 Most code blocks can be executed on their own when adding this import,
 but some require definitions from the prior blocks.
 To use all features of _REScala_ the only required import is:
@@ -38,18 +37,38 @@ import rescala.default._
 ```
 
 
-Note: Starting May 1. 2021 Bintray shut down their repository hosting, thus making older versions of REScala unavailable. We host a mirror of those versions (see resolver below), but please contact us in case you encounter issues.
-
-```scala
-resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.de/maven/").withAllowInsecureProtocol(true)
-libraryDependencies += "de.tuda.stg" %% "rescala" % "0.30.0"
-```
-
 # The Basics
 
-This chapter is about using Var and Evt, the imperative subtypes of Signal and Event.
+Reactives provide a way to work with time-changing values.
+Such values normally originate from outside your program – examples are users that interact with a UI, network messages, or sensors of your device.
 
-## Var, set, now
+## Signals
+
+Reactives are represented in Scala as additional data types that wrap or contain time-changing values.
+We call reactives that always have a value `Signal[A]`.
+A typical example could be a temperature sensor: The temperature changes over time, but there always is a current temperature.
+
+```scala mdoc
+val temperature: Signal[Double] = ???
+```
+
+The `???` operator is a Scala built-in that allows us to omit the definition for now, ideally we would use a library that provides signals, but we will see how to interact with typical imperative and callback based libraries shortly.
+
+We can check if the temperature exceeds some limit:
+
+```scala mdoc
+
+val limit: Int = 10
+
+val exceepdsLimit: Signal[Boolean] = Signal {
+	temperature.value > limit
+}
+```
+
+Because the temperature changes over time, so does the result of an expression that uses the value of a signal.
+We use the syntax `Signal { ... }` to provide a scope to such a *signal expression*.
+
+
 
 A `Var[T]` holds a value of type `T`.
 `Var[T]` is a subtype of `Signal[T]`. See also the chapter about Signals.
@@ -174,48 +193,6 @@ e.fire(10)
 handler1.remove()
 ```
 
-## Signal Expressions
-
-Signals are defined by the syntax `Signal{sigexpr}`, where _sigexpr_ is a side effect-free expression.
-A signal that carries integer values has the type `Signal[Int]`.
-
-Inside a signal expression other signals should be accessed with the `()` operator.
-In the following code, the signal `c` is defined to be `a + b`.
-When `a` or `b` are updated, the value of `c` is updated as well.
-
-```scala mdoc:silent
-val a = Var(2)
-val b = Var(3)
-val c = Signal { a() + b() }
-```
-
-```scala mdoc
-println((a.now, b.now, c.now))
-a set 4; println((a.now, b.now, c.now))
-b set 5; println((a.now, b.now, c.now))
-```
-
-The signal `c` is a dependent / derivative of the vars `a` and `b`, meaning that the values of `c` depends on both `a` and `b`.
-
-Here are some more examples of using signal expressions:
-
-```scala mdoc:silent:nest
-val a = Var(0)
-val b = Var(2)
-val c = Var(true)
-val s = Signal{ if (c()) a() else b() }
-
-def factorial(n: Int) = Range.inclusive(1,n).fold(1)(_ * _)
-```
-
-```scala mdoc:silent:nest
-val a = Var(0)
-val s: Signal[Int] = Signal {
-  val tmp = a() * 2
-  val k = factorial(tmp)
-  k + 2
-}
-```
 
 ## Example
 
