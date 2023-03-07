@@ -21,7 +21,7 @@ Create a `build.sbt` file in an empty folder with the following contents:
 // should also work on any recent version of the Scala 2.11 - 3 branches
 // including ScalaJS 1.0 and ScalaNative 0.4
 scalaVersion := "2.13.10"
-libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.32.0"
+libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.33.0"
 ```
 
 Install [sbt](http://www.scala-sbt.org/) and run `sbt console` inside the folder,
@@ -45,72 +45,7 @@ resolvers += ("STG old bintray repo" at "http://www.st.informatik.tu-darmstadt.d
 libraryDependencies += "de.tuda.stg" %% "rescala" % "0.30.0"
 ```
 
-
-<!--# Declarative Events-->
-
-<!--*REScala* supports declarative events, which are defined as a-->
-<!--composition of other events. For this purpose it offers operators like-->
-<!--`e_1 || e_2` , `e_1 && p` , `e_1.map(f)`. Event composition allows to-->
-<!--express the application logic in a clear and declarative way. Also,-->
-<!--the update logic is better localized because a single expression-->
-<!--models all the sources and the transformations that define an event-->
-<!--occurrence.-->
-
-<!--Declarative events are defined by composing other events. The-->
-<!--following code snippet shows some examples of valid definitions for-->
-<!--declarative events.-->
-
-<!--```scala-->
-<!--val e1 = Evt[Int]()-->
-<!--// e1: rescala.default.Evt[Int] = rescala.interface.RescalaInterfaceRequireSerializer#Evt:51-->
-
-<!--val e2 = Evt[Int]()-->
-<!--// e2: rescala.default.Evt[Int] = rescala.interface.RescalaInterfaceRequireSerializer#Evt:51-->
-
-<!--val e3 = e1 || e2-->
-<!--// e3: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (or rescala.interface.RescalaInterfaceRequireSerializer#Evt:51 rescala.interface.RescalaInterfaceRequireSerializer#Evt:51)-->
-
-<!--val e4 = e1 && ((x: Int)=> x>10)-->
-<!--// e4: rescala.reactives.Event[Int,rescala.parrp.ParRP] = (filter rescala.interface.RescalaInterfaceRequireSerializer#Evt:51)-->
-
-<!--val e5 = e1 map ((x: Int)=> x.toString)-->
-<!--// e5: rescala.reactives.Event[String,rescala.parrp.ParRP] = e5:17-->
-<!--```-->
-
-<!--This section presents in details the operators that allow one to-->
-<!--compose events into declarative events.-->
-
-<!--# Imperative Events-->
-
-<!--*REScala* supports different kind of events. Imperative events are-->
-<!--directly triggered from the user. Declarative events trigger when the-->
-<!--events they depend on trigger. In reactive applications, events are-->
-<!--typically used to model changes that happen at discrete points in-->
-<!--time. For example a mouse click from the user or the arrival of a new-->
-<!--network packet. Some features of *REScala* events are valid for all-->
-<!--event types.-->
-
-<!--* Events carry a value. The value is associated to the event when-->
-<!--  the event is fired and received by all the registered handlers when-->
-<!--  each handler is executed.-->
-
-<!--* Events are generic types parametrized with the type of value-->
-<!--  they carry, like `Event[T]` and `Evt[T]` where-->
-<!--  `T` is the value carried by the event.-->
-
-<!--* Both imperative events and declarative events are subtypes of-->
-<!--  `Event[T]` and can referred to generically.-->
-
-<!--*REScala* imperative events are triggered imperatively by the-->
-<!--programmer. One can think to imperative events as a generalization of-->
-<!--a method call which supports (multiple) bodies that are registered and-->
-<!--unregistered dynamically.-->
-
 # The Basics
-
-<!--Because most code is imperative,-->
-<!--you need to know the following imperative parts of *REScala* for starters,-->
-<!--before making use of the functional features.-->
 
 This chapter is about using Var and Evt, the imperative subtypes of Signal and Event.
 
@@ -135,10 +70,6 @@ a.set(10)
 a.transform( value => value + 1 )
 c.transform( list => 0 :: list )
 ```
-
-<!--Vars are used by the framework to track changes to inputs,-->
-<!--the value of a var must not be mutated indirectly,-->
-<!--as such changes are hidden to the framework.-->
 
 ## Evt, fire
 
@@ -185,6 +116,7 @@ val o1 = e.observe({ x =>
   println(string)
 })
 ```
+
 ```scala mdoc
 e.fire("annette")
 e.fire("tom")
@@ -192,9 +124,6 @@ e.fire("tom")
 
 If multiple handlers are registered, all of them are executed when the event is fired.
 Applications should not rely on the order of handler execution.
-
-e5.fire(10)
-```
 
 Note that unit-type events still need an argument in the handler.
 
@@ -225,6 +154,7 @@ def m1(x: Int) = {
 val e6 = Evt[Int]()
 val o4 = e6.observe(m1)
 ```
+
 ```scala mdoc
 e6.fire(10)
 ```
@@ -258,6 +188,7 @@ val a = Var(2)
 val b = Var(3)
 val c = Signal { a() + b() }
 ```
+
 ```scala mdoc
 println((a.now, b.now, c.now))
 a set 4; println((a.now, b.now, c.now))
@@ -315,8 +246,6 @@ Finally, the current value of the `space` signal is printed every time the value
 Note that using `println(space.now)` would also print the value of the signal, but only at the point in time in which the print statement is executed.
 Instead, the approach described so far prints _all_ values of the signal.
 
-<!--More details about converting signals into events and back are provided in [Conversion Functions](#conversion-functions).-->
-
 # Common Combinators
 
 Combinators express functional dependencies among values.
@@ -340,7 +269,7 @@ The `changed` conversion function creates an event from a signal.
 The function fires a new event every time a signal changes its value.
 
 <figure markdown="1">
-![Event-Signal](./event-signal.png)
+![Event-Signal](../assets/images/content/event-signal.png)
 <figcaption>Figure 1: Basic conversion functions.
 </figcaption>
 </figure>
@@ -402,11 +331,13 @@ val s = Var[Int](0)
 val s_MAP: Signal[String] = s map ((x: Int) => x.toString)
 val o1 = s_MAP observe ((x: String) => println(s"Here: $x"))
 ```
+
 ```scala mdoc:silent:nest
 val e = Evt[Int]()
 val e_MAP: Event[String] = e map ((x: Int) => x.toString)
 val o1 = e_MAP observe ((x: String) => println(s"Here: $x"))
 ```
+
 ```scala mdoc
 s set 5
 s set 15
@@ -452,6 +383,7 @@ val e1_OR_e2 = e1 || e2
 val o1 = e1_OR_e2 observe ((x: Int) => println(x))
 
 ```
+
 ```scala mdoc
 e1.fire(1)
 // 1
@@ -469,6 +401,7 @@ val e = Evt[Int]()
 val e_AND: Event[Int] = e filter ((x: Int) => x>10)
 val o1 = e_AND observe ((x: Int) => println(x))
 ```
+
 ```scala mdoc
 e fire 5
 e fire 3
@@ -511,6 +444,7 @@ val e = Evt[Int]()
 val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
 val o1 = s observe println
 ```
+
 ```scala mdoc
 e.fire(1)
 e.fire(2)
@@ -572,6 +506,7 @@ val result = Events.foldAll(""){ acc => Seq(
 )}
 val o1 = result.observe(r => println(r))
 ```
+
 ```scala mdoc
 count.fire(10)
 reset.fire()
@@ -669,6 +604,7 @@ val innerChanges = Signal {collection.map(_.changed).reduce((a, b) => a || b)}
 val anyChanged = innerChanges.flatten
 val o1 = anyChanged observe println
 ```
+
 ```scala mdoc
 v1.set(10)
 v2.set("Changed")
@@ -889,6 +825,7 @@ println(s.now)
 foo.x = 2
 println(s.now)
 ```
+
 One may expect that after increasing the value of `foo.x` in
 Line 9, the signal expression is evaluated again and updated
 to 12. The reason why the application behaves differently is that
