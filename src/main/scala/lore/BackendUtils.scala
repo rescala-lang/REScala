@@ -23,6 +23,10 @@ private case class CompilationContext(
       (name, _type)
   }.toMap
 
+  def viperImports: List[TViperImport] = ast.collect {
+    case i @ TViperImport(_) => i
+  }.toList
+
   def reactivesPerInvariant: Map[TInvariant, Set[ID]] = invariants
     .map(i =>
       // get reactives that this invariant mentions
@@ -196,7 +200,7 @@ def traverseFromNode[A <: Term](
           _else.map(traverseFromNode(_, transformer))
         )
       case TArgT(_, _) | TVar(_) | TTypeAl(_, _) | TNum(_) | TTrue | TFalse |
-          TString(_) =>
+          TString(_) | TViperImport(_) =>
         transformed // don't traverse in cases without children
   try result.asInstanceOf[A]
   catch
@@ -281,6 +285,7 @@ def uses(e: Term): Set[ID] = e match
   case TString(_)          => Set.empty
   case TIf(cond, _then, _else) =>
     uses(cond) ++ uses(_then) ++ _else.map(uses).getOrElse(Set())
+  case TViperImport(_) => Set.empty
 //   case e: StringExpr                 => Set()
 
 // def getDependants(

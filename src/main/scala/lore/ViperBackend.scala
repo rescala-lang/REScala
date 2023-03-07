@@ -26,16 +26,20 @@ object ViperBackend:
 //     // step 4: compile interactions
     val (ctx6, interactionsCompiled) = compileInteractions(ctx5)
 
-    s"""|// sources
-					|${sourcesCompiled.mkString("\n")}
-					|// derived
-					|${derivedCompiled.mkString("\n")}
-					|// invariants
-					|${invariantsCompiled.mkString("\n")}
-					|
-					|// interactions
-					|${interactionsCompiled.mkString("\n")}
-					|""".stripMargin
+    s"""|// imports
+        |${ctx6.viperImports
+         .map(i => s"import \"${i.path.toString}\"")
+         .mkString("\n")}
+        |// sources
+				|${sourcesCompiled.mkString("\n")}
+				|// derived
+				|${derivedCompiled.mkString("\n")}
+				|// invariants
+				|${invariantsCompiled.mkString("\n")}
+				|
+				|// interactions
+				|${interactionsCompiled.mkString("\n")}
+				|""".stripMargin
 
   private def viperTransformations(
       ctx: CompilationContext

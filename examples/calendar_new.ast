@@ -1,5 +1,10 @@
 [
   {
+    "TViperImport" : {
+      "path" : "calendar_header.vpr"
+    }
+  },
+  {
     "TTypeAl" : {
       "name" : "Calendar",
       "_type" : {
@@ -190,46 +195,23 @@
                     },
                     "right" : {
                       "TViper" : {
-                        "TFCall" : {
-                          "parent" : {
-                            "TViper" : {
-                              "TFCall" : {
-                                "parent" : {
-                                  "TViper" : {
-                                    "TFCall" : {
-                                      "parent" : {
-                                        "TVar" : {
-                                          "name" : "vacation"
-                                        }
-                                      },
-                                      "field" : "toSet",
-                                      "args" : [
-                                      ]
+                        "TFunC" : {
+                          "name" : "sumDays",
+                          "args" : [
+                            {
+                              "TViper" : {
+                                "TFCall" : {
+                                  "parent" : {
+                                    "TVar" : {
+                                      "name" : "vacation"
                                     }
-                                  }
-                                },
-                                "field" : "map",
-                                "args" : [
-                                  {
-                                    "TViper" : {
-                                      "TFCall" : {
-                                        "parent" : {
-                                          "TVar" : {
-                                            "name" : "_"
-                                          }
-                                        },
-                                        "field" : "days",
-                                        "args" : [
-                                        ]
-                                      }
-                                    }
-                                  }
-                                ]
+                                  },
+                                  "field" : "toSet",
+                                  "args" : [
+                                  ]
+                                }
                               }
                             }
-                          },
-                          "field" : "sum",
-                          "args" : [
                           ]
                         }
                       }

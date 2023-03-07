@@ -2,6 +2,7 @@ package lore
 import cats.implicits._
 import lore.AST._
 import lore.test.util.ParserSuite
+import java.nio.file.Path
 
 class SimpleParsing extends ParserSuite:
   test("function call") {
@@ -203,4 +204,13 @@ class SimpleParsing extends ParserSuite:
           ast,
           ("\nlalala", ())
         )
+  }
+
+  test("Viper import") {
+    val path = "export/test.vpr"
+    assertParsingResult(
+      Parser.viperImport,
+      s"//> viperimport $path",
+      TViperImport(Path.of(path))
+    )
   }

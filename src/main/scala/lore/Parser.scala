@@ -6,6 +6,7 @@ import cats.parse.Rfc5234.{alpha, char, digit, lf, wsp}
 import cats.implicits._
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
+import java.nio.file.Path
 
 object Parser:
   final case class ParsingException(message: String) extends Exception(message)
@@ -288,7 +289,7 @@ object Parser:
 
   // comments
   val comment: P[Unit] =
-    (P.string("//") ~ P.anyChar.repUntil(lf)).void
+    (P.string("//").soft ~ P.not(P.char('>')) ~ P.anyChar.repUntil(lf)).void
 
   // if then else expressions
   val ifThenElse: P[TIf] =
@@ -299,10 +300,20 @@ object Parser:
         TIf(cond, _then, _else)
       }
 
+  val filePath: P[Path] =
+    (P.char('/').?.with1 ~ id ~ (P.char('/') ~ id).rep0 ~ P.char(
+      '.'
+    ) ~ id).string.map(Path.of(_))
+
+  val viperImport: P[TViperImport] =
+    ((P.string("//>") ~ ws ~ P.string("viper").? ~ P.string(
+      "import"
+    )) ~ ws *> filePath).map(TViperImport(_))
+
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

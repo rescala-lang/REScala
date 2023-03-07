@@ -6,10 +6,21 @@ import cats.syntax.functor._
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import io.circe.generic.auto._, io.circe.syntax._
+import java.nio.file.Path
+import scala.util.Try
 
 /** The abstract syntax of the LoRe language.
   */
 sealed trait Term derives Codec.AsObject
+
+// imports
+case class TViperImport(path: Path) extends Term
+implicit val pathEncoder: Encoder[Path] =
+  Encoder.encodeString.contramap[Path](_.toString)
+implicit val pathDecoder: Decoder[Path] =
+  Decoder.decodeString.emapTry { str =>
+    Try(Path.of(str))
+  }
 
 // helper types
 type ID = String
