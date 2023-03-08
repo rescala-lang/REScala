@@ -10,8 +10,11 @@ import java.nio.file.{Files, Path}
 import cats.data.NonEmptyList
 
 class WholeProgramParsing extends FunSuite:
-  def readProg(path: Path): String =
-    String(Files.readAllBytes(path), StandardCharsets.UTF_8)
+  def readResource(name: String): String =
+    String(
+      getClass.getClassLoader.getResourceAsStream(name).readAllBytes,
+      StandardCharsets.UTF_8
+    )
 
   // test("calendar old") {
   //     val prog = readProg(Path.of("examples/calendar.fr"))
@@ -30,8 +33,8 @@ class WholeProgramParsing extends FunSuite:
   }
 
   test("calendar new") {
-    val prog = readProg(Path.of("examples/calendar_new.lore"))
-    val astStr = readProg(Path.of("examples/calendar_new.ast"))
+    val prog = readResource("calendar_new.lore")
+    val astStr = readResource("calendar_new.ast")
     Parser.prog.parseAll(prog) match
       case Left(e) => fail(e.show) // parsing failure
       case Right(parsed) =>

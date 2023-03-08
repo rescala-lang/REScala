@@ -33,8 +33,6 @@ val add_appointment : Unit = Interaction[Calendar][Appointment] // first is modi
 val add_vacation : Unit = add_appointment.modifies(vacation) 
 val add_work     : Unit = add_appointment.modifies(work) 
 
-val edit_appointment: Unit = ???
-
 val invite : Unit = Interaction[Invites][(Appointment, User)]
   .requires{ invites => (a,u) => get_creator(a) == thisUser} // can only invite for personal events
   .executes{ invites => (a,u) =>
