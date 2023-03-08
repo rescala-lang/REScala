@@ -8,7 +8,7 @@ import cats.data.NonEmptyList
 class SimpleParsing extends ParserSuite:
   test("function call") {
     assertParsingResult(
-      Parser.functionCall,
+      Parser.term,
       "foo(1,2)",
       TFunC("foo", List(TNum(1), TNum(2)))
     )
@@ -44,13 +44,13 @@ class SimpleParsing extends ParserSuite:
 
   test("field access") {
     assertParsingResult(
-      Parser.fieldAcc,
+      Parser.term,
       "foo.bar(1, false)",
       TFCall(TVar("foo"), "bar", List(TNum(1), TFalse))
     )
 
     assertParsingResult(
-      Parser.fieldAcc,
+      Parser.term,
       "foo.bar(true == false).baz",
       TFCall(
         TFCall(
@@ -64,13 +64,13 @@ class SimpleParsing extends ParserSuite:
     )
 
     assertParsingResult(
-      Parser.fieldAcc,
+      Parser.term,
       "size(d2).max",
       TFCall(TFunC("size", List(TVar("d2"))), "max", List())
     )
 
     assert(
-      Parser.fieldAcc
+      Parser.term
         .parse("UI.vacationDialog.onConfirm{a => add_vacation.apply(a)}")
         .isRight
     )
@@ -171,6 +171,14 @@ class SimpleParsing extends ParserSuite:
     )
   }
 
+  test("subtraction") {
+    assertParsingResult(
+      Parser.term,
+      "customerYTD.get(c) - s",
+      TSub(TFCall(TVar("customerYTD"), "get", List(TVar("c"))), TVar("s"))
+    )
+  }
+
   test("lambda fun") {
 
     assertParsingResult(
@@ -190,6 +198,49 @@ class SimpleParsing extends ParserSuite:
       "x => y => x + y",
       TArrow(TVar("x"), TArrow(TVar("y"), TAdd(TVar("x"), TVar("y"))))
     )
+
+    assertParsingResult(
+      Parser.lambdaFun,
+      "(c, s) => c",
+      TArrow(
+        TVar("c"),
+        TArrow(
+          TVar("s"),
+          TVar("c")
+        )
+      )
+    )
+
+    assertParsingResult(
+      Parser.lambdaFun,
+      "(c, s) => c - s",
+      TArrow(
+        TVar("c"),
+        TArrow(
+          TVar("s"),
+          TSub(
+            TVar("c"),
+            TVar("s")
+          )
+        )
+      )
+    )
+
+    assertParsingResult(
+      Parser.lambdaFun,
+      "(c, s) => customerYTD.get(c) - s",
+      TArrow(
+        TVar("c"),
+        TArrow(
+          TVar("s"),
+          TSub(
+            TFCall(TVar("customerYTD"), "get", List(TVar("c"))),
+            TVar("s")
+          )
+        )
+      )
+    )
+
   }
 
   test("tuple") {

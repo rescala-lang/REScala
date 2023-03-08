@@ -12,6 +12,7 @@ object Parser:
   final case class ParsingException(message: String) extends Exception(message)
 
   // helpers
+  private val infixOperators = Set("-", "+", "*", "/", ".")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
   val wsOrNl = (wsp | P.defer(comment) | lf).rep0
@@ -99,8 +100,8 @@ object Parser:
       | P.defer(numComp)
       | tru.backtrack
       | fls.backtrack
-      | P.defer(fieldAcc)
       | P.defer(arithmExpr)
+      | P.defer(fieldAcc)
       | P.defer(functionCall)
       | _var
 
@@ -187,13 +188,14 @@ object Parser:
   // reactives
   val reactive: P[TReactive] = P.defer(source | derived)
   val source: P[TSource] =
-    (P.string("Source(") ~ ws *> P.defer(term) <* ws ~ P.char(')')).map(
-      (body) => TSource(body)
-    )
+    (P.string("Source") ~ ws ~ P.char('(') ~ wsOrNl *> P.defer(
+      term
+    ) <* wsOrNl ~ P.char(')')).map((body) => TSource(body))
   val derived: P[TDerived] =
-    (P.string("Derived{") ~ ws *> P.defer(term) <* ws ~ P.char('}')).map(
-      (body) => TDerived(body)
-    )
+    (P.string("Derived") ~ ws ~ P.char('{') ~ wsOrNl *> P.defer(
+      term
+    ) <* wsOrNl ~ P.char('}'))
+      .map((body) => TDerived(body))
 
   // interactions
   val typeParam: P[List[Type]] =
@@ -322,7 +324,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      viperImport | typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | tuple | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | tuple | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
