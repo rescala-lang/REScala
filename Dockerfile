@@ -1,4 +1,5 @@
-FROM alpine:3.17.2
+FROM scratch
 ENV TIME="Time: %E"
 COPY target/native-image/lore . 
-ENTRYPOINT ["time", "/lore"]
+#ENTRYPOINT ["time", "/lore"]
+ENTRYPOINT ["/lore"]
