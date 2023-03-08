@@ -18,7 +18,7 @@ object Parser:
   // val wsOrNl =
   //   ((wsp.rep).? ~ comment.? ~ lf.?).rep0 // any amount of whitespace or newlines
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
-  val underscore: P[ID] = P.char('_').as("_")
+  // val underscore: P[ID] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
   val argT: P[TArgT] = // args with type
     ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName)).map((id, typ) =>
@@ -47,20 +47,28 @@ object Parser:
   // helper definition for parsing sequences of expressions
   val parseSeq = (factor: P[Term], separator: P[String]) =>
     (factor ~
-      (((ws.with1.soft *> separator <* ws))
+      (((wsOrNl.with1.soft *> separator <* wsOrNl))
         ~ factor).rep0)
 
-  // basic terms
-  val _var: P[TVar] = (id | underscore).map(TVar(_)) // variables
+  //// basic terms
+  val _var: P[TVar] = (id).map(TVar(_)) // variables
 
-  // arithmetic expressions
+  // tuples
+  val tuple: P[TTuple] =
+    (P.char('(')
+      .soft ~ wsOrNl *> P.defer(term).repSep(2, ws ~ P.char(',') ~ wsOrNl) <* P
+      .char(')'))
+      .map(TTuple(_))
+
+  //// arithmetic expressions
   val arithmExpr: P[Term] = P.defer(addSub)
   val addSub: P[Term] =
     P.defer(parseSeq(divMul, P.stringIn(List("+", "-")))).map(evalArithm)
   val divMul: P[Term] =
     P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
   val parens: P[Term] =
-    ((P.char('(') ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')).map(TParens(_))
+    ((P.char('(').soft ~ ws).with1 *> arithmExpr <* ws ~ P.char(')'))
+      .map(TParens(_))
   val arithFactor: P[Term] =
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
@@ -82,28 +90,33 @@ object Parser:
   val fls: P[TBoolean] = P.string("false").as(TFalse)
   val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(implication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
-    ((P.char('(') ~ ws).with1 *> P
-      .defer(implication) <* ws ~ P.char(')')).map(TParens(_))
+    ((P.char('(').soft ~ wsOrNl).with1 *> P
+      .defer(implication) <* wsOrNl ~ P.char(')')).map(TParens(_))
   val boolFactor: P[Term] =
-    boolParens
+    boolParens.backtrack
       | neg
-      | tru.backtrack
-      | fls.backtrack
       | P.defer(inSet)
       | P.defer(numComp)
-      | P.defer(arithmExpr)
+      | tru.backtrack
+      | fls.backtrack
       | P.defer(fieldAcc)
+      | P.defer(arithmExpr)
       | P.defer(functionCall)
       | _var
 
   // helper for boolean expressions with two sides
   val boolTpl = (factor: P[Term], separator: P[Unit]) =>
-    factor ~ ((ws.soft ~ separator.backtrack ~ ws) *> factor).?
+    factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
+
   val implication: P[Term] =
-    P.defer(boolTpl(equality, P.string("==>"))).map {
+    P.defer(boolTpl(disjunction, P.string("==>"))).map {
       case (left, None)        => left
       case (left, Some(right)) => TImpl(left = left, right = right)
     }
+  val disjunction: P[Term] =
+    P.defer(boolSeq(conjunction, "||"))
+  val conjunction: P[Term] =
+    P.defer(boolSeq(equality, "&&"))
   val equality: P[Term] =
     P.defer(boolTpl(inequality, P.string("==") <* P.char('>').unary_!))
       .map {
@@ -111,18 +124,13 @@ object Parser:
         case (left, Some(right)) => TEq(left = left, right = right)
       }
   val inequality: P[Term] =
-    P.defer(boolTpl(conjunction, P.string("!="))).map {
+    P.defer(boolTpl(boolFactor, P.string("!="))).map {
       case (left, None)        => left
       case (left, Some(right)) => TIneq(left = left, right = right)
     }
-
   // helper for boolean expressions with arbitrarily long sequences like && and ||
   val boolSeq = (factor: P[Term], separator: String) =>
     parseSeq(factor, P.string(separator).as(separator)).map(evalBoolSeq)
-  val conjunction: P[Term] =
-    P.defer(boolSeq(disjunction, "&&"))
-  val disjunction: P[Term] =
-    P.defer(boolSeq(boolFactor, "||"))
   def evalBoolSeq(seq: (Term, Seq[(String, Term)])): Term =
     seq match
       case (root, Nil) => root
@@ -135,7 +143,7 @@ object Parser:
 
   // set expressions
   val inSetFactor: P[Term] =
-    P.defer(fieldAcc | functionCall | number.backtrack | _var)
+    P.defer(fieldAcc | functionCall.backtrack | tuple | number.backtrack | _var)
   val inSet: P[TBoolean] = P
     .defer(
       ((inSetFactor <* ws).soft <* P
@@ -291,15 +299,7 @@ object Parser:
   val comment: P[Unit] =
     (P.string("//").soft ~ P.not(P.char('>')) ~ P.anyChar.repUntil(lf)).void
 
-  // if then else expressions
-  val ifThenElse: P[TIf] =
-    ((P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
-      (P.string("then") ~ wsOrNl *> P.defer(term)) ~
-      (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?)
-      .map { case ((cond, _then), _else) =>
-        TIf(cond, _then, _else)
-      }
-
+  // imports
   val filePath: P[Path] =
     (P.char('/').?.with1 ~ id ~ (P.char('/') ~ id).rep0 ~ P.char(
       '.'
@@ -310,10 +310,19 @@ object Parser:
       "import"
     )) ~ ws *> filePath).map(TViperImport(_))
 
+  // if then else expressions
+  val ifThenElse: P[TIf] =
+    ((P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
+      (P.string("then") ~ wsOrNl *> P.defer(term)) ~
+      (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?)
+      .map { case ((cond, _then), _else) =>
+        TIf(cond, _then, _else)
+      }
+
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      viperImport | typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | fieldAcc | interaction | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | tuple | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

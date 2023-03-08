@@ -1,0 +1,61 @@
+type Calendar = AWSet[Appointment]
+type Invites = AWSet[(Appointment, User)]
+
+// calendars
+val work: Source[Calendar] = Source(AWSet())     
+val vacation: Source[Calendar] = Source(AWSet()) 
+
+val all_appointments: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }    
+val remaining_vacation: Derived[Int] = Derived{ 30 - vacation.toSet.map(a => a.days).sum } 
+
+// users
+val users: Source[AWSet[User]] = Source(AWSet())
+val thisUser: Source[Option[User]] = Source(None) // local reactive?
+val invited: Source[Invites] = Source(Map())
+
+// user management
+val login: Unit = Interaction[Option[User]][User, Password]
+  .requires{ thisUser => (user, pass) => thisUser == None}
+  .executes{ thisUser => (user, pass) =>
+      if is_correct(user,pass) then
+        thisUser.set(Some(user))
+  }
+  .ensures{thisUser => (user, pass) =>
+      (thisUser == user ==> is_correct(user,pass))}
+  .modifies(thisUser)
+
+// calendar interface
+val add_appointment : Unit = Interaction[Calendar][Appointment] // first is modified reactives, second is parameters
+  .requires{ cal => a => get_start(a) < get_end(a) } 
+  .requires{ cal => a => get_creator(a) == thisUser} // cannot add appointments for other users
+  .executes{ cal => a => cal.add(a) } 
+  .ensures { cal => a => a in cal.toSet } 
+val add_vacation : Unit = add_appointment.modifies(vacation) 
+val add_work     : Unit = add_appointment.modifies(work) 
+
+val invite : Unit = Interaction[Invites][(Appointment, User)]
+  .requires{ invites => (a,u) => get_creator(a) == thisUser} // can only invite for personal events
+  .executes{ invites => (a,u) =>
+    invites.add((a,u))
+  }
+  .modifies(invited)
+
+UI.display(all_appointments, remaining_vacation) 
+UI.vacationDialog.onConfirm{a => add_vacation.apply(a)} 
+
+// appointments do not overlap
+invariant forall a: Appointment ::
+  a in all_appointments ==> get_start(a) < get_end(a)
+
+// vacation days must not exceed remaining vacation
+invariant remaining_vacation >= 0
+
+// an invited event does not change without also changing the invitation
+invariant forall a: Appointment, u: User ::
+  (a, u) in invitations ==> a in all_appointments
+
+// there is a 30min timeframe between bookings in the same room (COVID regulations)
+invariant forall a1: Appointment, a2: Appointment ::
+  a1 in all_appointments && a2 in all_appointments &&
+  get_start(a2) < get_end(a1) + 30 && get_room(a1) == get_room(a2) ==>
+  a1 == a2

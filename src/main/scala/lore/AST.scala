@@ -34,6 +34,7 @@ case class TArgT(name: ID, _type: Type)
 // basic terms
 case class TVar(name: ID) extends Term with TViper // variable
 case class TAbs(name: ID, _type: Type, body: Term) extends Term // abstractions
+case class TTuple(factors: NonEmptyList[Term]) extends Term
 
 case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term
 // case class TApp(left: Term, right: Term) extends Term // application

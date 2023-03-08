@@ -40,15 +40,31 @@ class BooleanExpressionParsing extends ParserSuite {
       case Left(error) => fail(error.expected.head.toString)
       case x           => fail(s"Failed to parse as conjunction: $x")
 
-    p.parseAll("x || true && false") match
-      case Right(TConj(TDisj(TVar("x"), TTrue), TFalse)) => ()
+    Parser.disjunction.parseAll("x || true && false") match
+      case Right(TDisj(TVar("x"), TConj(TTrue, TFalse))) => ()
       case Left(error) => fail(error.expected.head.toString)
       case x           => fail(s"Failed to parse as conjunction: $x")
 
-    p.parseAll("false || true && foo") match
-      case Right(TConj(TDisj(TFalse, TTrue), TVar("foo"))) => ()
+    Parser.disjunction.parseAll("false || true && foo") match
+      case Right(TDisj(TFalse, TConj(TTrue, TVar("foo")))) => ()
       case Left(error) => fail(error.expected.head.toString)
       case x           => fail(s"Failed to parse as conjunction: $x")
+
+    assertParsingResult(
+      Parser.conjunction,
+      "a1 in all_appointments && a2 in all_appointments && get_start(a2) < get_end(a1)",
+      TConj(
+        TInSet(TVar("a1"), TVar("all_appointments")),
+        TConj(
+          TInSet(TVar("a2"), TVar("all_appointments")),
+          TLt(
+            TFunC("get_start", List(TVar("a2"))),
+            TFunC("get_end", List(TVar("a1")))
+          )
+        )
+      )
+    )
+
   }
 
   test("inequality") {
@@ -59,25 +75,16 @@ class BooleanExpressionParsing extends ParserSuite {
       case Left(error)                 => fail(error.show)
       case x => fail(s"Failed to parse inequality: $x")
 
-    p.parseAll("true != false && true") match
-      case Right(TIneq(TTrue, TConj(TFalse, TTrue))) => ()
+    Parser.conjunction.parseAll("true != false && true") match
+      case Right(TConj(TIneq(TTrue, TFalse), TTrue)) => ()
       case Left(error) => fail(error.expected.toString)
       case x           => fail(s"Failed to parse inequality: $x")
 
-    p.parseAll("true != false && true || x && y") match
+    Parser.disjunction.parseAll("true != false && true || x && y") match
       case Right(
-            TIneq(
-              TTrue,
-              TConj(
-                TFalse,
-                TConj(
-                  TDisj(
-                    TTrue,
-                    TVar("x")
-                  ),
-                  TVar("y")
-                )
-              )
+            TDisj(
+              TConj(TIneq(TTrue, TFalse), TTrue),
+              TConj(TVar("x"), TVar("y"))
             )
           ) =>
         ()
@@ -95,15 +102,21 @@ class BooleanExpressionParsing extends ParserSuite {
       case x                         => fail(s"Failed to parse as equality: $x")
 
     assertParsingResult(
-      p,
+      Parser.conjunction,
       "false == false && foo()",
-      TEq(TFalse, TConj(TFalse, TFunC("foo", List())))
+      TConj(TEq(TFalse, TFalse), TFunC("foo", List()))
     )
 
     assertParsingResult(
-      p,
+      Parser.disjunction,
       "false || true && foo() == false",
-      TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
+      TDisj(
+        TFalse,
+        TConj(
+          TTrue,
+          TEq(TFunC("foo", List()), TFalse)
+        )
+      )
     )
 
     p.parseAll("size(d) == size(d2).max") match
@@ -135,7 +148,10 @@ class BooleanExpressionParsing extends ParserSuite {
       "false ==> false || true && foo() == false",
       TImpl(
         TFalse,
-        TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
+        TDisj(
+          TFalse,
+          TConj(TTrue, TEq(TFunC("foo", List()), TFalse))
+        )
       )
     )
 
@@ -144,7 +160,16 @@ class BooleanExpressionParsing extends ParserSuite {
       "false != true ==> false || true && foo() == false",
       TImpl(
         TIneq(TFalse, TTrue),
-        TEq(TConj(TDisj(TFalse, TTrue), TFunC("foo", List())), TFalse)
+        TDisj(
+          TFalse,
+          TConj(
+            TTrue,
+            TEq(
+              TFunC("foo", List()),
+              TFalse
+            )
+          )
+        )
       )
     )
 
@@ -178,7 +203,13 @@ class BooleanExpressionParsing extends ParserSuite {
     assertParsingResult(
       p,
       "false || (true && foo()) == false",
-      TEq(TDisj(TFalse, TParens(TConj(TTrue, TFunC("foo", List())))), TFalse)
+      TDisj(
+        TFalse,
+        TEq(
+          TParens(TConj(TTrue, TFunC("foo", List()))),
+          TFalse
+        )
+      )
     )
 
     assertParsingResult(
@@ -211,5 +242,91 @@ class BooleanExpressionParsing extends ParserSuite {
     assertParsingResult(p, "12 in a", TInSet(TNum(12), TVar("a")))
 
     assertParses(p, "foo(true) in X.mySet")
+
+    assertParsingResult(
+      Parser.booleanExpr,
+      "(a, u) in invitations",
+      TInSet(
+        TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("u")))),
+        TVar("invitations")
+      )
+    )
+
+  }
+
+  test("forall") {
+    assertParsingResult(
+      Parser.booleanExpr,
+      "forall a: Appointment, u: User :: (a, u) in invitations ==> a in all_appointments",
+      TForall(
+        vars = NonEmptyList.fromListUnsafe(
+          List(
+            TArgT("a", SimpleType("Appointment", List.empty)),
+            TArgT("u", SimpleType("User", List.empty))
+          )
+        ),
+        triggers = List.empty,
+        body = TImpl(
+          TInSet(
+            TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("u")))),
+            TVar("invitations")
+          ),
+          TInSet(TVar("a"), TVar("all_appointments"))
+        )
+      )
+    )
+
+    val body = TForall(
+      NonEmptyList.fromListUnsafe(
+        List(
+          TArgT("a1", SimpleType("Appointment", List.empty)),
+          TArgT("a2", SimpleType("Appointment", List.empty))
+        )
+      ),
+      triggers = List.empty,
+      body = TImpl(
+        TConj(
+          TInSet(TVar("a1"), TVar("all_appointments")),
+          TConj(
+            TInSet(TVar("a2"), TVar("all_appointments")),
+            TConj(
+              TLt(
+                TFunC("get_start", List(TVar("a2"))),
+                TAdd(
+                  TFunC("get_end", List(TVar("a1"))),
+                  TNum(30)
+                )
+              ),
+              TEq(
+                TFunC("get_room", List(TVar("a1"))),
+                TFunC("get_room", List(TVar("a2")))
+              )
+            )
+          )
+        ),
+        TEq(TVar("a1"), TVar("a2"))
+      )
+    )
+
+    assertParsingResult(
+      Parser.forall,
+      "forall a1: Appointment, a2: Appointment ::  a1 in all_appointments && a2 in all_appointments && get_start(a2) < get_end(a1) + 30 && get_room(a1) == get_room(a2) ==> a1 == a2",
+      body
+    )
+
+    assertParsingResult(
+      Parser.forall,
+      """|forall a1: Appointment, a2: Appointment ::  a1 in all_appointments &&
+         |a2 in all_appointments && get_start(a2) < get_end(a1) + 30 &&
+         |   get_room(a1) == get_room(a2) ==> a1 == a2""".stripMargin,
+      body
+    )
+
+    assertParsingResult(
+      Parser.invariant,
+      "invariant forall a1: Appointment, a2: Appointment ::  a1 in all_appointments && a2 in all_appointments && get_start(a2) < get_end(a1) + 30 && get_room(a1) == get_room(a2) ==> a1 == a2",
+      TInvariant(body)
+    )
+
   }
 }

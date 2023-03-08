@@ -199,6 +199,8 @@ def traverseFromNode[A <: Term](
           traverseFromNode(_then, transformer),
           _else.map(traverseFromNode(_, transformer))
         )
+      case TTuple(factors) =>
+        TTuple(factors.map(traverseFromNode(_, transformer)))
       case TArgT(_, _) | TVar(_) | TTypeAl(_, _) | TNum(_) | TTrue | TFalse |
           TString(_) | TViperImport(_) =>
         transformed // don't traverse in cases without children
@@ -253,6 +255,7 @@ def uses(e: Term): Set[ID] = e match
   case t: TAbs                      => uses(t.body)
   case TVar("_")                    => Set.empty
   case TVar(name)                   => Set(name)
+  case TTuple(factors)              => factors.toList.flatMap(uses).toSet
   case t: TReactive                 => uses(t.body)
   case TFunC(name, args)            => args.flatMap(uses).toSet
   case TFCall(parent, field, args)  => uses(parent) ++ args.flatMap(uses)

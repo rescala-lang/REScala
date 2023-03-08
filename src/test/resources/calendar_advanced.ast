@@ -1,0 +1,1675 @@
+[
+  {
+    "TTypeAl" : {
+      "name" : "Calendar",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "AWSet",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Appointment",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "TTypeAl" : {
+      "name" : "Invites",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "AWSet",
+          "inner" : [
+            {
+              "TupleType" : {
+                "inner" : [
+                  {
+                    "SimpleType" : {
+                      "name" : "Appointment",
+                      "inner" : [
+                      ]
+                    }
+                  },
+                  {
+                    "SimpleType" : {
+                      "name" : "User",
+                      "inner" : [
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "work",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Calendar",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "AWSet",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Calendar",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "AWSet",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "all_appointments",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Derived",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Set",
+                "inner" : [
+                  {
+                    "SimpleType" : {
+                      "name" : "Appointment",
+                      "inner" : [
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TDerived" : {
+            "body" : {
+              "TViper" : {
+                "TFCall" : {
+                  "parent" : {
+                    "TViper" : {
+                      "TFCall" : {
+                        "parent" : {
+                          "TVar" : {
+                            "name" : "work"
+                          }
+                        },
+                        "field" : "toSet",
+                        "args" : [
+                        ]
+                      }
+                    }
+                  },
+                  "field" : "union",
+                  "args" : [
+                    {
+                      "TViper" : {
+                        "TFCall" : {
+                          "parent" : {
+                            "TVar" : {
+                              "name" : "vacation"
+                            }
+                          },
+                          "field" : "toSet",
+                          "args" : [
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "remaining_vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Derived",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Int",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TDerived" : {
+            "body" : {
+              "TViper" : {
+                "TArith" : {
+                  "TSub" : {
+                    "left" : {
+                      "TViper" : {
+                        "TArith" : {
+                          "TNum" : {
+                            "value" : 30
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TFCall" : {
+                          "parent" : {
+                            "TViper" : {
+                              "TFCall" : {
+                                "parent" : {
+                                  "TViper" : {
+                                    "TFCall" : {
+                                      "parent" : {
+                                        "TVar" : {
+                                          "name" : "vacation"
+                                        }
+                                      },
+                                      "field" : "toSet",
+                                      "args" : [
+                                      ]
+                                    }
+                                  }
+                                },
+                                "field" : "map",
+                                "args" : [
+                                  {
+                                    "TArrow" : {
+                                      "left" : {
+                                        "TVar" : {
+                                          "name" : "a"
+                                        }
+                                      },
+                                      "right" : {
+                                        "TViper" : {
+                                          "TFCall" : {
+                                            "parent" : {
+                                              "TVar" : {
+                                                "name" : "a"
+                                              }
+                                            },
+                                            "field" : "days",
+                                            "args" : [
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "field" : "sum",
+                          "args" : [
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "users",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "AWSet",
+                "inner" : [
+                  {
+                    "SimpleType" : {
+                      "name" : "User",
+                      "inner" : [
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "AWSet",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "thisUser",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Option",
+                "inner" : [
+                  {
+                    "SimpleType" : {
+                      "name" : "User",
+                      "inner" : [
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TVar" : {
+                "name" : "None"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "invited",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Source",
+          "inner" : [
+            {
+              "SimpleType" : {
+                "name" : "Invites",
+                "inner" : [
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body" : {
+        "TReactive" : {
+          "TSource" : {
+            "body" : {
+              "TViper" : {
+                "TFunC" : {
+                  "name" : "Map",
+                  "args" : [
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "login",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TFAcc" : {
+                "TFCurly" : {
+                  "parent" : {
+                    "TFAcc" : {
+                      "TFCurly" : {
+                        "parent" : {
+                          "TFAcc" : {
+                            "TFCurly" : {
+                              "parent" : {
+                                "TInteraction" : {
+                                  "reactiveTypes" : [
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "Option",
+                                        "inner" : [
+                                          {
+                                            "SimpleType" : {
+                                              "name" : "User",
+                                              "inner" : [
+                                              ]
+                                            }
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "argumentTypes" : [
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "User",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "Password",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "modifies" : [
+                                  ],
+                                  "requires" : [
+                                  ],
+                                  "ensures" : [
+                                  ],
+                                  "executes" : null
+                                }
+                              },
+                              "field" : "requires",
+                              "body" : {
+                                "TArrow" : {
+                                  "left" : {
+                                    "TVar" : {
+                                      "name" : "thisUser"
+                                    }
+                                  },
+                                  "right" : {
+                                    "TArrow" : {
+                                      "left" : {
+                                        "TVar" : {
+                                          "name" : "user"
+                                        }
+                                      },
+                                      "right" : {
+                                        "TArrow" : {
+                                          "left" : {
+                                            "TVar" : {
+                                              "name" : "pass"
+                                            }
+                                          },
+                                          "right" : {
+                                            "TViper" : {
+                                              "TBoolean" : {
+                                                "TEq" : {
+                                                  "left" : {
+                                                    "TVar" : {
+                                                      "name" : "thisUser"
+                                                    }
+                                                  },
+                                                  "right" : {
+                                                    "TVar" : {
+                                                      "name" : "None"
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "field" : "executes",
+                        "body" : {
+                          "TArrow" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "thisUser"
+                              }
+                            },
+                            "right" : {
+                              "TArrow" : {
+                                "left" : {
+                                  "TVar" : {
+                                    "name" : "user"
+                                  }
+                                },
+                                "right" : {
+                                  "TArrow" : {
+                                    "left" : {
+                                      "TVar" : {
+                                        "name" : "pass"
+                                      }
+                                    },
+                                    "right" : {
+                                      "TIf" : {
+                                        "cond" : {
+                                          "TViper" : {
+                                            "TFunC" : {
+                                              "name" : "is_correct",
+                                              "args" : [
+                                                {
+                                                  "TVar" : {
+                                                    "name" : "user"
+                                                  }
+                                                },
+                                                {
+                                                  "TVar" : {
+                                                    "name" : "pass"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "_then" : {
+                                          "TViper" : {
+                                            "TFCall" : {
+                                              "parent" : {
+                                                "TVar" : {
+                                                  "name" : "thisUser"
+                                                }
+                                              },
+                                              "field" : "set",
+                                              "args" : [
+                                                {
+                                                  "TViper" : {
+                                                    "TFunC" : {
+                                                      "name" : "Some",
+                                                      "args" : [
+                                                        {
+                                                          "TVar" : {
+                                                            "name" : "user"
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "_else" : null
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "field" : "ensures",
+                  "body" : {
+                    "TArrow" : {
+                      "left" : {
+                        "TVar" : {
+                          "name" : "thisUser"
+                        }
+                      },
+                      "right" : {
+                        "TArrow" : {
+                          "left" : {
+                            "TVar" : {
+                              "name" : "user"
+                            }
+                          },
+                          "right" : {
+                            "TArrow" : {
+                              "left" : {
+                                "TVar" : {
+                                  "name" : "pass"
+                                }
+                              },
+                              "right" : {
+                                "TViper" : {
+                                  "TParens" : {
+                                    "inner" : {
+                                      "TViper" : {
+                                        "TBoolean" : {
+                                          "TImpl" : {
+                                            "left" : {
+                                              "TViper" : {
+                                                "TBoolean" : {
+                                                  "TEq" : {
+                                                    "left" : {
+                                                      "TVar" : {
+                                                        "name" : "thisUser"
+                                                      }
+                                                    },
+                                                    "right" : {
+                                                      "TVar" : {
+                                                        "name" : "user"
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "right" : {
+                                              "TViper" : {
+                                                "TFunC" : {
+                                                  "name" : "is_correct",
+                                                  "args" : [
+                                                    {
+                                                      "TVar" : {
+                                                        "name" : "user"
+                                                      }
+                                                    },
+                                                    {
+                                                      "TVar" : {
+                                                        "name" : "pass"
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "thisUser"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_appointment",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TFAcc" : {
+          "TFCurly" : {
+            "parent" : {
+              "TFAcc" : {
+                "TFCurly" : {
+                  "parent" : {
+                    "TFAcc" : {
+                      "TFCurly" : {
+                        "parent" : {
+                          "TFAcc" : {
+                            "TFCurly" : {
+                              "parent" : {
+                                "TInteraction" : {
+                                  "reactiveTypes" : [
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "Calendar",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "argumentTypes" : [
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "Appointment",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    }
+                                  ],
+                                  "modifies" : [
+                                  ],
+                                  "requires" : [
+                                  ],
+                                  "ensures" : [
+                                  ],
+                                  "executes" : null
+                                }
+                              },
+                              "field" : "requires",
+                              "body" : {
+                                "TArrow" : {
+                                  "left" : {
+                                    "TVar" : {
+                                      "name" : "cal"
+                                    }
+                                  },
+                                  "right" : {
+                                    "TArrow" : {
+                                      "left" : {
+                                        "TVar" : {
+                                          "name" : "a"
+                                        }
+                                      },
+                                      "right" : {
+                                        "TViper" : {
+                                          "TBoolean" : {
+                                            "TLt" : {
+                                              "left" : {
+                                                "TViper" : {
+                                                  "TFunC" : {
+                                                    "name" : "get_start",
+                                                    "args" : [
+                                                      {
+                                                        "TVar" : {
+                                                          "name" : "a"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              },
+                                              "right" : {
+                                                "TViper" : {
+                                                  "TFunC" : {
+                                                    "name" : "get_end",
+                                                    "args" : [
+                                                      {
+                                                        "TVar" : {
+                                                          "name" : "a"
+                                                        }
+                                                      }
+                                                    ]
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "field" : "requires",
+                        "body" : {
+                          "TArrow" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "cal"
+                              }
+                            },
+                            "right" : {
+                              "TArrow" : {
+                                "left" : {
+                                  "TVar" : {
+                                    "name" : "a"
+                                  }
+                                },
+                                "right" : {
+                                  "TViper" : {
+                                    "TBoolean" : {
+                                      "TEq" : {
+                                        "left" : {
+                                          "TViper" : {
+                                            "TFunC" : {
+                                              "name" : "get_creator",
+                                              "args" : [
+                                                {
+                                                  "TVar" : {
+                                                    "name" : "a"
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          }
+                                        },
+                                        "right" : {
+                                          "TVar" : {
+                                            "name" : "thisUser"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "field" : "executes",
+                  "body" : {
+                    "TArrow" : {
+                      "left" : {
+                        "TVar" : {
+                          "name" : "cal"
+                        }
+                      },
+                      "right" : {
+                        "TArrow" : {
+                          "left" : {
+                            "TVar" : {
+                              "name" : "a"
+                            }
+                          },
+                          "right" : {
+                            "TViper" : {
+                              "TFCall" : {
+                                "parent" : {
+                                  "TVar" : {
+                                    "name" : "cal"
+                                  }
+                                },
+                                "field" : "add",
+                                "args" : [
+                                  {
+                                    "TVar" : {
+                                      "name" : "a"
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "field" : "ensures",
+            "body" : {
+              "TArrow" : {
+                "left" : {
+                  "TVar" : {
+                    "name" : "cal"
+                  }
+                },
+                "right" : {
+                  "TArrow" : {
+                    "left" : {
+                      "TVar" : {
+                        "name" : "a"
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a"
+                              }
+                            },
+                            "right" : {
+                              "TViper" : {
+                                "TFCall" : {
+                                  "parent" : {
+                                    "TVar" : {
+                                      "name" : "cal"
+                                    }
+                                  },
+                                  "field" : "toSet",
+                                  "args" : [
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_vacation",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TVar" : {
+                "name" : "add_appointment"
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "vacation"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "add_work",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TVar" : {
+                "name" : "add_appointment"
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "work"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TAbs" : {
+      "name" : "invite",
+      "_type" : {
+        "SimpleType" : {
+          "name" : "Unit",
+          "inner" : [
+          ]
+        }
+      },
+      "body" : {
+        "TViper" : {
+          "TFCall" : {
+            "parent" : {
+              "TFAcc" : {
+                "TFCurly" : {
+                  "parent" : {
+                    "TFAcc" : {
+                      "TFCurly" : {
+                        "parent" : {
+                          "TInteraction" : {
+                            "reactiveTypes" : [
+                              {
+                                "SimpleType" : {
+                                  "name" : "Invites",
+                                  "inner" : [
+                                  ]
+                                }
+                              }
+                            ],
+                            "argumentTypes" : [
+                              {
+                                "TupleType" : {
+                                  "inner" : [
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "Appointment",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    },
+                                    {
+                                      "SimpleType" : {
+                                        "name" : "User",
+                                        "inner" : [
+                                        ]
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "modifies" : [
+                            ],
+                            "requires" : [
+                            ],
+                            "ensures" : [
+                            ],
+                            "executes" : null
+                          }
+                        },
+                        "field" : "requires",
+                        "body" : {
+                          "TArrow" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "invites"
+                              }
+                            },
+                            "right" : {
+                              "TArrow" : {
+                                "left" : {
+                                  "TVar" : {
+                                    "name" : "a"
+                                  }
+                                },
+                                "right" : {
+                                  "TArrow" : {
+                                    "left" : {
+                                      "TVar" : {
+                                        "name" : "u"
+                                      }
+                                    },
+                                    "right" : {
+                                      "TViper" : {
+                                        "TBoolean" : {
+                                          "TEq" : {
+                                            "left" : {
+                                              "TViper" : {
+                                                "TFunC" : {
+                                                  "name" : "get_creator",
+                                                  "args" : [
+                                                    {
+                                                      "TVar" : {
+                                                        "name" : "a"
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              }
+                                            },
+                                            "right" : {
+                                              "TVar" : {
+                                                "name" : "thisUser"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "field" : "executes",
+                  "body" : {
+                    "TArrow" : {
+                      "left" : {
+                        "TVar" : {
+                          "name" : "invites"
+                        }
+                      },
+                      "right" : {
+                        "TArrow" : {
+                          "left" : {
+                            "TVar" : {
+                              "name" : "a"
+                            }
+                          },
+                          "right" : {
+                            "TArrow" : {
+                              "left" : {
+                                "TVar" : {
+                                  "name" : "u"
+                                }
+                              },
+                              "right" : {
+                                "TViper" : {
+                                  "TFCall" : {
+                                    "parent" : {
+                                      "TVar" : {
+                                        "name" : "invites"
+                                      }
+                                    },
+                                    "field" : "add",
+                                    "args" : [
+                                      {
+                                        "TTuple" : {
+                                          "factors" : [
+                                            {
+                                              "TVar" : {
+                                                "name" : "a"
+                                              }
+                                            },
+                                            {
+                                              "TVar" : {
+                                                "name" : "u"
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "field" : "modifies",
+            "args" : [
+              {
+                "TVar" : {
+                  "name" : "invited"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "TViper" : {
+      "TFCall" : {
+        "parent" : {
+          "TVar" : {
+            "name" : "UI"
+          }
+        },
+        "field" : "display",
+        "args" : [
+          {
+            "TVar" : {
+              "name" : "all_appointments"
+            }
+          },
+          {
+            "TVar" : {
+              "name" : "remaining_vacation"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "TFAcc" : {
+      "TFCurly" : {
+        "parent" : {
+          "TViper" : {
+            "TFCall" : {
+              "parent" : {
+                "TVar" : {
+                  "name" : "UI"
+                }
+              },
+              "field" : "vacationDialog",
+              "args" : [
+              ]
+            }
+          }
+        },
+        "field" : "onConfirm",
+        "body" : {
+          "TArrow" : {
+            "left" : {
+              "TVar" : {
+                "name" : "a"
+              }
+            },
+            "right" : {
+              "TViper" : {
+                "TFCall" : {
+                  "parent" : {
+                    "TVar" : {
+                      "name" : "add_vacation"
+                    }
+                  },
+                  "field" : "apply",
+                  "args" : [
+                    {
+                      "TVar" : {
+                        "name" : "a"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TQuantifier" : {
+          "TForall" : {
+            "vars" : [
+              {
+                "name" : "a",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "Appointment",
+                    "inner" : [
+                    ]
+                  }
+                }
+              }
+            ],
+            "triggers" : [
+            ],
+            "body" : {
+              "TViper" : {
+                "TBoolean" : {
+                  "TImpl" : {
+                    "left" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a"
+                              }
+                            },
+                            "right" : {
+                              "TVar" : {
+                                "name" : "all_appointments"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TLt" : {
+                            "left" : {
+                              "TViper" : {
+                                "TFunC" : {
+                                  "name" : "get_start",
+                                  "args" : [
+                                    {
+                                      "TVar" : {
+                                        "name" : "a"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "right" : {
+                              "TViper" : {
+                                "TFunC" : {
+                                  "name" : "get_end",
+                                  "args" : [
+                                    {
+                                      "TVar" : {
+                                        "name" : "a"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TGeq" : {
+          "left" : {
+            "TVar" : {
+              "name" : "remaining_vacation"
+            }
+          },
+          "right" : {
+            "TViper" : {
+              "TArith" : {
+                "TNum" : {
+                  "value" : 0
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TQuantifier" : {
+          "TForall" : {
+            "vars" : [
+              {
+                "name" : "a",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "Appointment",
+                    "inner" : [
+                    ]
+                  }
+                }
+              },
+              {
+                "name" : "u",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "User",
+                    "inner" : [
+                    ]
+                  }
+                }
+              }
+            ],
+            "triggers" : [
+            ],
+            "body" : {
+              "TViper" : {
+                "TBoolean" : {
+                  "TImpl" : {
+                    "left" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TTuple" : {
+                                "factors" : [
+                                  {
+                                    "TVar" : {
+                                      "name" : "a"
+                                    }
+                                  },
+                                  {
+                                    "TVar" : {
+                                      "name" : "u"
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            "right" : {
+                              "TVar" : {
+                                "name" : "invitations"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TInSet" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a"
+                              }
+                            },
+                            "right" : {
+                              "TVar" : {
+                                "name" : "all_appointments"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "TInvariant" : {
+      "condition" : {
+        "TQuantifier" : {
+          "TForall" : {
+            "vars" : [
+              {
+                "name" : "a1",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "Appointment",
+                    "inner" : [
+                    ]
+                  }
+                }
+              },
+              {
+                "name" : "a2",
+                "_type" : {
+                  "SimpleType" : {
+                    "name" : "Appointment",
+                    "inner" : [
+                    ]
+                  }
+                }
+              }
+            ],
+            "triggers" : [
+            ],
+            "body" : {
+              "TViper" : {
+                "TBoolean" : {
+                  "TImpl" : {
+                    "left" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TConj" : {
+                            "left" : {
+                              "TViper" : {
+                                "TBoolean" : {
+                                  "TInSet" : {
+                                    "left" : {
+                                      "TVar" : {
+                                        "name" : "a1"
+                                      }
+                                    },
+                                    "right" : {
+                                      "TVar" : {
+                                        "name" : "all_appointments"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "right" : {
+                              "TViper" : {
+                                "TBoolean" : {
+                                  "TConj" : {
+                                    "left" : {
+                                      "TViper" : {
+                                        "TBoolean" : {
+                                          "TInSet" : {
+                                            "left" : {
+                                              "TVar" : {
+                                                "name" : "a2"
+                                              }
+                                            },
+                                            "right" : {
+                                              "TVar" : {
+                                                "name" : "all_appointments"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "right" : {
+                                      "TViper" : {
+                                        "TBoolean" : {
+                                          "TConj" : {
+                                            "left" : {
+                                              "TViper" : {
+                                                "TBoolean" : {
+                                                  "TLt" : {
+                                                    "left" : {
+                                                      "TViper" : {
+                                                        "TFunC" : {
+                                                          "name" : "get_start",
+                                                          "args" : [
+                                                            {
+                                                              "TVar" : {
+                                                                "name" : "a2"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      }
+                                                    },
+                                                    "right" : {
+                                                      "TViper" : {
+                                                        "TArith" : {
+                                                          "TAdd" : {
+                                                            "left" : {
+                                                              "TViper" : {
+                                                                "TFunC" : {
+                                                                  "name" : "get_end",
+                                                                  "args" : [
+                                                                    {
+                                                                      "TVar" : {
+                                                                        "name" : "a1"
+                                                                      }
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              }
+                                                            },
+                                                            "right" : {
+                                                              "TViper" : {
+                                                                "TArith" : {
+                                                                  "TNum" : {
+                                                                    "value" : 30
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            },
+                                            "right" : {
+                                              "TViper" : {
+                                                "TBoolean" : {
+                                                  "TEq" : {
+                                                    "left" : {
+                                                      "TViper" : {
+                                                        "TFunC" : {
+                                                          "name" : "get_room",
+                                                          "args" : [
+                                                            {
+                                                              "TVar" : {
+                                                                "name" : "a1"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      }
+                                                    },
+                                                    "right" : {
+                                                      "TViper" : {
+                                                        "TFunC" : {
+                                                          "name" : "get_room",
+                                                          "args" : [
+                                                            {
+                                                              "TVar" : {
+                                                                "name" : "a2"
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "right" : {
+                      "TViper" : {
+                        "TBoolean" : {
+                          "TEq" : {
+                            "left" : {
+                              "TVar" : {
+                                "name" : "a1"
+                              }
+                            },
+                            "right" : {
+                              "TVar" : {
+                                "name" : "a2"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+]

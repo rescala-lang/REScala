@@ -3,6 +3,7 @@ import cats.implicits._
 import lore.AST._
 import lore.test.util.ParserSuite
 import java.nio.file.Path
+import cats.data.NonEmptyList
 
 class SimpleParsing extends ParserSuite:
   test("function call") {
@@ -188,6 +189,21 @@ class SimpleParsing extends ParserSuite:
       Parser.lambdaFun,
       "x => y => x + y",
       TArrow(TVar("x"), TArrow(TVar("y"), TAdd(TVar("x"), TVar("y"))))
+    )
+  }
+
+  test("tuple") {
+    assertParsingResult(
+      Parser.tuple,
+      "(a, b)",
+      TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))
+    )
+
+    assertParsingResult(
+      Parser.tuple,
+      """|(a ,
+         |  b)""".stripMargin,
+      TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))
     )
   }
 

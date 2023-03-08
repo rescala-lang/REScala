@@ -49,3 +49,21 @@ class WholeProgramParsing extends FunSuite:
 
           case Left(err) => fail(err.show)
   }
+
+  test("calendar advanced") {
+    val prog = readResource("calendar_advanced.lore")
+    val astStr = readResource("calendar_advanced.ast")
+    Parser.prog.parseAll(prog) match
+      case Left(e) => fail(e.show) // parsing failure
+      case Right(parsed) =>
+        decode[NonEmptyList[Term]](astStr) match
+          // check if AST matches expectation
+          case Right(ast) =>
+            // Files.write(
+            //   Path.of("examples/calendar_advanced.ast"),
+            //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
+            // )
+            assertEquals(parsed, ast);
+
+          case Left(err) => fail(err.show)
+  }
