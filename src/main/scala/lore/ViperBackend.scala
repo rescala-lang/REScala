@@ -120,8 +120,13 @@ object ViperBackend:
 
   private def compileInteractions(ctx: CompilationContext): CompilationResult =
     val interactions = ctx.interactions
-      // only compile interactions that have some guarantees and modify some reactives
-      .filter((_, i) => !i.ensures.isEmpty && !i.modifies.isEmpty)
+      // only compile interactions that modify some reactives and have some guarantees or affect an invariant
+      .filter((_, i) =>
+        !i.modifies.isEmpty &&
+          (!i.ensures.isEmpty || !OverlapAnalysis
+            .overlappingInvariants(i)(using ctx)
+            .isEmpty)
+      )
       .map(interactionToMethod(_, _)(using ctx))
       .toList
     return (ctx, interactions)
