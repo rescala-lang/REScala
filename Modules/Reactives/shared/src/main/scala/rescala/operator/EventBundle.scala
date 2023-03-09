@@ -93,7 +93,7 @@ trait EventBundle extends FoldBundle {
       Events.staticNamed(s"(or $this $other)", this, other) { st =>
         val tp = st.collectStatic(this)
         if (tp.isChange) tp else st.collectStatic(other)
-      }(ticket, ticket.info)
+      }
     }
 
     /** Propagates the event only when the other event `exception` does not fire.
@@ -267,15 +267,14 @@ trait EventBundle extends FoldBundle {
         name: String,
         dependencies: ReSource.of[BundleState]*
     )(expr: StaticTicket[BundleState] => Pulse[T])(implicit
-        ticket: CreationTicket[BundleState],
-        info: ReInfo
+        ticket: CreationTicket[BundleState]
     ): Event[T] = {
       ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](
         dependencies.toSet,
         Pulse.NoChange,
         needsReevaluation = false
       ) {
-        state => new EventImpl(state, expr, info.derive(name), None) with Event[T]
+        state => new EventImpl(state, expr, ticket.info.derive(name), None) with Event[T]
       }
     }
 
@@ -283,7 +282,7 @@ trait EventBundle extends FoldBundle {
     def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => Option[T])(implicit
         ticket: CreationTicket[BundleState]
     ): Event[T] =
-      staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))(ticket, ticket.info)
+      staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates dynamic events */
     def dynamic[T](dependencies: ReSource.of[BundleState]*)(expr: DynamicTicket[BundleState] => Option[T])(implicit
