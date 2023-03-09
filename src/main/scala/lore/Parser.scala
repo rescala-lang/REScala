@@ -207,7 +207,9 @@ object Parser:
 
   // interactions
   val typeParam: P[List[Type]] =
-    P.char('[') *> P.defer0(typeName.repSep0(P.char(',').surroundedBy(ws))) <* P
+    P.char('[') ~ ws ~ P.char('(').? *> P.defer0(
+      typeName.repSep0(P.char(',').surroundedBy(ws))
+    ) <* P.char(')').? ~ P
       .char(']')
 
   val interaction: P[TInteraction] =

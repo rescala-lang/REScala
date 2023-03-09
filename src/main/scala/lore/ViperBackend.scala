@@ -141,7 +141,7 @@ object ViperBackend:
     val argTypes = interaction.argumentTypes.map(t => typeToViper(t)(using ctx))
     if argNames.length != argTypes.length then
       throw ViperCompilationException(
-        s"Tried to compile interaction but number of arguments does not match interaction body. argnames: $argNames, argTypes: $argTypes"
+        s"Tried to compile interaction but number of arguments does not match interaction body. reactiveTypes: ${interaction.reactiveTypes}, argnames: $argNames, argTypes: $argTypes"
       )
     val argsString =
       (argNames zip argTypes)
