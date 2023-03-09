@@ -132,6 +132,14 @@ class BooleanExpressionParsing extends ParserSuite {
 
   }
 
+  test("bi-implication") {
+    assertParsingResult(
+      Parser.term,
+      "a ==> c <==> b",
+      TBImpl(TImpl(TVar("a"), TVar("c")), TVar("b"))
+    )
+  }
+
   test("implication") {
     val p = Parser.implication
 

@@ -116,6 +116,7 @@ case class TIneq(left: Term, right: Term) extends TBoolean // inequality
 case class TDisj(left: Term, right: Term) extends TBoolean // disjunction
 case class TConj(left: Term, right: Term) extends TBoolean // conjunction
 case class TImpl(left: Term, right: Term) extends TBoolean // implication
+case class TBImpl(left: Term, right: Term) extends TBoolean // bi-implication
 case class TInSet(left: Term, right: Term) extends TBoolean // in set
 
 sealed trait TQuantifier extends TBoolean

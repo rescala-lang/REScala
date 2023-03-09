@@ -164,6 +164,11 @@ def traverseFromNode[A <: Term](
           traverseFromNode(l, transformer),
           traverseFromNode(r, transformer)
         )
+      case TBImpl(l, r) =>
+        TBImpl(
+          traverseFromNode(l, transformer),
+          traverseFromNode(r, transformer)
+        )
       case TImpl(l, r) =>
         TImpl(
           traverseFromNode(l, transformer),
@@ -279,6 +284,7 @@ def uses(e: Term): Set[ID] = e match
   case TDisj(l, r)                  => uses(l) ++ uses(r)
   case TConj(l, r)                  => uses(l) ++ uses(r)
   case TImpl(l, r)                  => uses(l) ++ uses(r)
+  case TBImpl(l, r)                 => uses(l) ++ uses(r)
   case TForall(vars, triggers, body) =>
     triggers.flatMap(uses).toSet ++ uses(body)
   case TExists(vars, body) => uses(body)

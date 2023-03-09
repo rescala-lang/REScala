@@ -280,6 +280,8 @@ object ViperBackend:
           s"${expressionToViper(l)} || ${expressionToViper(r)}"
         case TConj(l, r) =>
           s"${expressionToViper(l)} && ${expressionToViper(r)}"
+        case TBImpl(l, r) =>
+          s"${expressionToViper(l)} <==> ${expressionToViper(r)}"
         case TImpl(l, r) =>
           s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
         case TLt(l, r) =>

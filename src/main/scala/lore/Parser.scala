@@ -84,15 +84,15 @@ object Parser:
       throw new ParsingException(s"Not an arithmetic expression: $sth")
 
   // boolean expressions
-  val booleanExpr: P[Term] = P.defer(quantifier | implication)
+  val booleanExpr: P[Term] = P.defer(quantifier | biImplication)
 
   // primitives
   val tru: P[TBoolean] = P.string("true").as(TTrue)
   val fls: P[TBoolean] = P.string("false").as(TFalse)
-  val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(implication).map(TNeg(_))
+  val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(biImplication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
     ((P.char('(').soft ~ wsOrNl).with1 *> P
-      .defer(implication) <* wsOrNl ~ P.char(')')).map(TParens(_))
+      .defer(biImplication) <* wsOrNl ~ P.char(')')).map(TParens(_))
   val boolFactor: P[Term] =
     boolParens.backtrack
       | neg
@@ -108,6 +108,12 @@ object Parser:
   // helper for boolean expressions with two sides
   val boolTpl = (factor: P[Term], separator: P[Unit]) =>
     factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
+
+  val biImplication: P[Term] =
+    P.defer(boolTpl(implication, P.string("<==>"))).map {
+      case (left, None)        => left
+      case (left, Some(right)) => TBImpl(left = left, right = right)
+    }
 
   val implication: P[Term] =
     P.defer(boolTpl(disjunction, P.string("==>"))).map {
@@ -156,8 +162,10 @@ object Parser:
 
   // number comparisons
   val numComp: P[TBoolean] = (
-    arithmExpr.soft ~ (ws.soft.with1 *> P
-      .stringIn(List("<=", ">=", "<", ">")) <* ws) ~ arithmExpr
+    arithmExpr.soft ~ (ws.soft.with1 *> (P
+      .stringIn(List("<=", ">=", "<", ">")) <* P.not(
+      P.char('=')
+    )).backtrack <* ws) ~ arithmExpr
   )
     .map { case ((l, op), r) =>
       op match
