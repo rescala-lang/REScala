@@ -1,0 +1,59 @@
+// imports
+import "viper/tpc-c-header-new.vpr"
+// sources
+field districts: AWSet[District]
+field stocks: AWSet[Stock]
+field orderLines: AWSet[OrderLine]
+field items: AWSet[Item]
+field newOrders: AWSet[NewOrder]
+field warehouses: AWSet[Warehouse]
+field orders: AWSet[Order]
+field paymentHistory: AWSet[History]
+field customers: AWSet[Customer]
+// derived
+define orderLineCount(orderLines, orders) toMap(map(orderLinesPerOrder(orders, orderLines), length))
+define customerYTD(customers, paymentHistory) toMap(map(paymentsPerCustomer(customers, paymentHistory), sum))
+define districtYTD(districts, paymentHistory) toMap(map(paymentsPerDistrict(districts, paymentHistory), sum))
+// invariants
+define inv_1(districts, newOrders) forall d: District :: contains(districts, d) ==> (maxNOrderNum(toSet(newOrders), get_d_id(d)) - minNOrderNum(toSet(newOrders), get_d_id(d)) + 1 == countNewOrders(toSet(newOrders), get_d_id(d)))
+define inv_2(newOrders, orders) forall o: Order :: contains(orders, o) ==> (get_o_c_id(o) == 0 <==> is_new_order(toSet(newOrders), o))
+define inv_3(orderLines, orders) forall ol: OrderLine, o: Order :: contains(orders, o) && contains(orderLines, ol) && get_ol_o_num(ol) == get_o_num(o) ==> (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
+
+// interactions
+method delivery (
+  // graph
+  graph: Ref,
+  // arguments
+  w_id: Id
+)
+returns ()
+// permissions
+requires acc(graph.newOrders)
+requires acc(graph.orderLines)
+requires acc(graph.orders)
+requires acc(graph.districts, 1/2)
+// preconditions
+
+// relevant invariants
+requires inv_1(graph.districts, graph.newOrders)
+requires inv_2(graph.newOrders, graph.orders)
+requires inv_3(graph.orderLines, graph.orders)
+// permissions
+ensures acc(graph.newOrders)
+ensures acc(graph.orderLines)
+ensures acc(graph.orders)
+ensures acc(graph.districts, 1/2)
+// postconditions
+
+// relevant invariants
+ensures inv_1(graph.districts, graph.newOrders)
+ensures inv_2(graph.newOrders, graph.orders)
+ensures inv_3(graph.orderLines, graph.orders)
+{
+  var whDistricts: Set[District]
+  whDistricts := getDistrictsByWID(toSet(graph.districts), w_id)
+  graph.newOrders := shipNewOrders(whDistricts, graph.orders, graph.newOrders)
+  graph.orders := setCarrierIds(graph.orders, graph.newOrders)
+  graph.orderLines := setDeliveryDates(graph.orderLines, graph.orders)
+}
+        

@@ -56,8 +56,9 @@ object Parser:
 
   // tuples
   val tuple: P[TTuple] =
-    (P.char('(')
-      .soft ~ wsOrNl *> P.defer(term).repSep(2, ws ~ P.char(',') ~ wsOrNl) <* P
+    (P.char('(').soft ~ wsOrNl *> P
+      .defer(term)
+      .repSep(2, ws ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
       .char(')'))
       .map(TTuple(_))
 
