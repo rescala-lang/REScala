@@ -93,7 +93,7 @@ trait EventBundle extends FoldBundle {
       Events.staticNamed(s"(or $this $other)", this, other) { st =>
         val tp = st.collectStatic(this)
         if (tp.isChange) tp else st.collectStatic(other)
-      }
+      }(ticket, ticket.info)
     }
 
     /** Propagates the event only when the other event `exception` does not fire.
