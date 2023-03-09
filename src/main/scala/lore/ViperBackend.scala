@@ -174,10 +174,40 @@ object ViperBackend:
     val body =
       interaction.executes.map(insertArgs(interaction.modifies, argNames, _))
 
-    // FIXME: support tuple types
-    val bodyAsAssignments =
+    val bodyInner: Option[String] = body match
+      case Some(TSeq(sequence)) =>
+        Some(
+          sequence
+            .take(sequence.length - 1)
+            .map(expressionToViper)
+            .mkString("\n")
+        )
+      case _ => None
+
+    val bodyAssignments =
       body.map(b =>
-        s"graph.${interaction.modifies.head} := ${expressionToViper(b)}"
+        // TODO: if body is a sequence: compile everything
+        val lastExpression: Term = b match
+          case TSeq(sequence) => sequence.last
+          case t              => t
+
+        lastExpression match
+          case tuple @ TTuple(factors) =>
+            if (factors.length != interaction.modifies.length) then
+              throw ViperCompilationException(
+                s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${factors.length} were given: $tuple"
+              )
+            (interaction.modifies zip factors.toList)
+              .map((reactive, assignment) =>
+                s"graph.$reactive := ${expressionToViper(assignment)}"
+              )
+              .mkString("\n")
+          case t =>
+            if interaction.modifies.length != 1 then
+              throw ViperCompilationException(
+                s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only a simple value was given: $t"
+              )
+            s"graph.${interaction.modifies.head} := ${expressionToViper(t)}"
       )
 
     val overlapppingSources =
@@ -218,7 +248,9 @@ object ViperBackend:
         |// relevant invariants
         |${relevantInvariants.map("ensures " + _).mkString("\n")}
         |{
-        |${bodyAsAssignments.getOrElse("").indent(2)}}
+        |${bodyInner.getOrElse("").indent(2)}${bodyAssignments
+         .getOrElse("")
+         .indent(2)}}
         """.stripMargin
 
   private def insertArgs(

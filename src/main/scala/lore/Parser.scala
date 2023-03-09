@@ -313,7 +313,7 @@ object Parser:
 
   // imports
   val filePath: P[Path] =
-    (P.char('/').?.with1 ~ id ~ (P.char('/') ~ id).rep0 ~ P.char(
+    (P.char('/').?.with1 ~ id ~ (P.charIn(List('/', '-')) ~ id).rep0 ~ P.char(
       '.'
     ) ~ id).string.map(Path.of(_))
 
