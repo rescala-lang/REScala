@@ -1,0 +1,58 @@
+import "crdts/aw_set.vpr"
+import "types.vpr"
+import "basic_types.vpr"
+import "helper_functions.vpr"
+
+method addAll(orderLines: AWSet[OrderLine], ols: Seq[OrderLine]) returns (orderLines_: AWSet[OrderLine], numNew: Int)
+// requires forall ol1: OrderLine, ol2: OrderLine, i: Int, j: Int :: i >= 0 && i < |ols| && j >= 0 && j < |ols| && 
+//     ol1 == ols[i] && ol2 == ols[j] && ol1 == ol2 ==> i == j
+ensures forall ol: OrderLine :: {get_removed_ids(orderLines, ol)} get_removed_ids(orderLines, ol) == get_removed_ids(orderLines_, ol)
+ensures |toSet(orderLines_)| == |toSet(orderLines)| + numNew
+ensures forall ol: OrderLine :: {contains(orderLines_, ol)} ol in ols ==> contains(orderLines_, ol)
+ensures forall ol: OrderLine :: {ol in ols} ol in ols ==> ol in toSet(orderLines_)
+ensures forall ol: OrderLine :: {contains(orderLines, ol)} contains(orderLines, ol) ==> contains(orderLines_, ol)
+ensures forall ol: OrderLine :: {ol in toSet(orderLines)} ol in toSet(orderLines) ==> ol in toSet(orderLines_)
+ensures toSet(orderLines_) == toSet(orderLines) union seqToSet(ols)
+// if all orderLines in ols are new, then numNew == |ols|
+{
+    var i: Int := 0
+    orderLines_ := orderLines
+
+    numNew := 0
+
+    while (i < |ols|)
+        invariant i >= 0 && i <= |ols|
+        invariant forall ol: OrderLine :: {get_removed_ids(orderLines, ol)} get_removed_ids(orderLines, ol) == get_removed_ids(orderLines_, ol)
+        invariant forall ol: OrderLine :: contains(orderLines, ol) ==> contains(orderLines_, ol)
+        invariant forall j: Int :: {ols[j] in toSet(orderLines_)} j >= 0 && j < i ==> 
+            ols[j] in toSet(orderLines_)
+        invariant toSet(orderLines_) == toSet(orderLines) union seqToSet(ols[..i])
+        invariant forall ol: OrderLine :: ol in toSet(orderLines_) ==> contains(orderLines_, ol)
+        invariant |toSet(orderLines_)| == |toSet(orderLines)| + numNew
+    {
+        // gen new id
+        var id: Int
+        assume !(exists el: OrderLine :: (id in (get_observed_ids(orderLines_, el)) || id in (get_removed_ids(orderLines_, el))))
+
+        // assert !(ols[i] in toSet(orderLines)) ==> !(ols[i] in toSet(orderLines_))
+
+        if (!(ols[i] in toSet(orderLines_))){
+            numNew := numNew + 1
+            // assert !(ols[i] in toSet(orderLines_))
+            assert |toSet(add(orderLines_, ols[i], id))| == |toSet(orderLines_)| + 1
+        }
+        else {
+            // assert |toSet(add(orderLines_, ols[i], id))| == |toSet(orderLines_)|
+        }
+        assert toSet(add(orderLines_, ols[i], id)) == toSet(orderLines_) union Set(ols[i])
+        orderLines_ := add(orderLines_, ols[i], id)
+        i := i + 1
+    }
+
+    assert forall el: OrderLine :: !(el in toSet(orderLines_)) ==> !(el in toSet(orderLines))
+    assert forall el: OrderLine :: el in ols ==> el in toSet(orderLines_)
+    assert forall el: OrderLine :: el in toSet(orderLines) ==> el in toSet(orderLines_)
+    assert toSet(orderLines_) == toSet(orderLines) union seqToSet(ols)
+// if all orderLines in ols are new, then numNew == |ols|
+    assert i == |ols|
+}

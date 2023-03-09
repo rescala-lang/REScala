@@ -1,0 +1,72 @@
+domain String {
+}
+
+domain Float {
+    function add_f(l: Float, r: Float): Float
+
+    function isZero_f(f: Float): Bool
+
+    axiom add_ax_f {
+        forall f1: Float, f2: Float, f3: Float ::
+            (f3 == add_f(f1,f2)) && (!isZero_f(f2)) ==> 
+                f3 != f1
+    }
+
+    axiom add_commutativity {
+        forall f1: Float, f2: Float, f3: Float ::
+            (f3 == add_f(f1,f2)) <==> 
+            (f3 == add_f(f2,f1))
+    }
+}
+
+// function toMultiset(l: Seq[Int]): Multiset[Int]
+// ensures |result| == |l|
+// ensures |l| == 0 ==> result == Multiset()
+// ensures |l| == 1 ==> result == Multiset(l[0])
+// ensures |l| >= 2 ==> result == Multiset(l[0]) union toMultiset(l[1..])
+// // ensures forall i: Int :: (i in l) ==> i in result
+
+// function sum(l: Seq[Int]): Int
+// ensures |l| == 0 ==> result == 0
+// ensures |l| == 1 ==> result == l[0]
+// ensures |l| >= 2 ==> result == l[0] + sum(l[1..])
+// ensures forall l1: Seq[Int], l2: Seq[Int] :: {sum(l1), sum(l2)} toMultiset(l1) == toMultiset(l2) ==> sum(l1) == sum(l2)
+
+
+// function sum(s: Multiset[Int]): Int
+// ensures s == Multiset() ==> result == 0
+// ensures |s| > 0 ==> result == get1(s) + sum(s setminus Multiset(get1(s)))
+
+// function get1(s: Multiset[Int]): Int
+// requires |s| > 0
+// ensures (result in s) > 0
+
+domain SetHelpers[A] {
+    function get1s(s: Set[A]): A
+
+    axiom get1sAx {
+        forall s: Set[A] :: {get1s(s)} |s| > 0 ==> get1s(s) in s
+    }
+
+    function seqToSet(s: Seq[A]): Set[A]
+
+    axiom seqToSetAx {
+        forall el: A, s: Seq[A] :: el in s <==> el in seqToSet(s)
+    }
+}
+
+// method bla() {
+//     assert sum(Seq(1)) == 1
+//     assert sum(Seq(1,2)) == 3
+//     assert sum(Seq(1,2,3,4,5,6)) == 21
+
+//     assert sum(Seq(1,2,3)) == sum(Seq(3,2,1))
+// }
+
+// method bla2(){
+//     assert sum(Multiset(1,2,3,3)) == 9
+//     assert sum(Multiset(2,3,1)) == 6
+
+//     assert forall s: Multiset[Int], t: Multiset[Int] :: s union t == t union s
+//     assert forall s: Multiset[Int], t:Multiset[Int] :: sum(s union t) == sum(t union s)
+// }

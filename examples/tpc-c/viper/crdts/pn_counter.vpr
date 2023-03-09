@@ -1,0 +1,272 @@
+domain PNCounter_payload {
+    function get_p(payload: PNCounter_payload, replica_id: Int): Int
+    function get_ps(payload: PNCounter_payload): Seq[Int]
+    function get_n(payload: PNCounter_payload, replica_id: Int): Int
+    function get_ns(payload: PNCounter_payload): Seq[Int]
+
+    function construct_payload(ps: Seq[Int], ns: Seq[Int]): PNCounter_payload
+
+    axiom get_p_ax {
+        forall ps: Seq[Int], ns: Seq[Int], i: Int :: i < |ps| ==> (get_p(construct_payload(ps,ns), i) == ps[i])
+    }
+
+    axiom get_ps_ax {
+        forall ps: Seq[Int], ns: Seq[Int] :: get_ps(construct_payload(ps,ns)) == ps
+    }
+
+    axiom get_n_ax {
+        forall ps: Seq[Int], ns: Seq[Int], i: Int :: i < |ns| ==> (get_n(construct_payload(ps,ns), i) == ns[i])
+    }
+
+    axiom get_ns_ax {
+        forall ps: Seq[Int], ns: Seq[Int] :: get_ns(construct_payload(ps,ns)) == ns
+    }
+
+    axiom ps_and_ns_length {
+        forall payload: PNCounter_payload :: |get_ps(payload)| == |get_ns(payload)|
+    }
+
+    axiom equivalence {
+        forall id: Int, payload: PNCounter_payload ::
+            (id < |get_ps(payload)| && id >= 0) ==> 
+            ((get_ps(payload)[id] == get_p(payload, id)) && 
+            (get_ns(payload)[id] == get_n(payload, id)))
+    }
+}
+
+domain PNCounter {
+    function get_payload(counter: PNCounter): PNCounter_payload
+
+    function get_id(counter: PNCounter): Int
+
+    function new_pn_counter(id: Int, payload: PNCounter_payload): PNCounter
+
+    axiom get_payload_ax {
+        forall id: Int, payload: PNCounter_payload :: (id >= 0) ==> get_payload(new_pn_counter(id, payload)) == payload
+    }
+
+    axiom get_id_ax {
+        forall id: Int, payload: PNCounter_payload :: ((id >= 0) && id < |get_ps(payload)|) ==> get_id(new_pn_counter(id, payload)) == id
+    }
+
+    axiom get_id_ax2 {
+        forall counter:PNCounter :: get_id(counter) >= 0 && get_id(counter) < |get_ps(get_payload(counter))|
+    }
+}
+
+function max(a: Int, b: Int): Int
+    ensures forall x: Int :: max(x,x) == x
+    ensures forall x: Int, y: Int :: (max(x,y) == x) || (max(x,y) == y)
+    ensures forall x: Int, y: Int :: max(x,y) >= x && max(x,y) >= y
+
+function sum(l: Seq[Int]): Int
+    ensures (|l| == 1) ==> (result == l[0])
+    ensures (|l| >= 2) ==> (result == l[0] + sum(l[1..]))
+
+function get_val(counter: PNCounter): Int
+    ensures result == sum(get_ps(get_payload(counter))) - sum(get_ns(get_payload(counter)))
+
+function increase(counter: PNCounter, amount: Int): PNCounter
+    ensures get_ns(get_payload(counter)) == get_ns(get_payload(result))
+    ensures get_id(result) == get_id(counter)
+    ensures forall i: Int :: (0 <= i && i < |get_ps(get_payload(counter))| && i != get_id(counter)) ==>
+            (get_ps(get_payload(result))[i] == get_ps(get_payload(counter))[i])
+    ensures get_ps(get_payload(result))[get_id(result)] == get_ps(get_payload(counter))[get_id(counter)] + amount
+    ensures pnCounterGeq(result, counter)
+    ensures get_val(result) == get_val(counter) + amount
+
+function decrease(counter: PNCounter, amount: Int): PNCounter
+    ensures get_ps(get_payload(counter)) == get_ps(get_payload(result))
+    ensures get_id(result) == get_id(counter)
+    ensures forall i: Int :: (0 <= i && i < |get_ns(get_payload(counter))| && i != get_id(counter)) ==>
+            (get_ns(get_payload(result))[i] == get_ns(get_payload(counter))[i])
+    ensures get_ns(get_payload(result))[get_id(result)] == get_ns(get_payload(counter))[get_id(counter)] + amount
+    ensures pnCounterGeq(result, counter)
+    ensures get_val(result) == get_val(counter) - amount
+
+function new_seq(length: Int): Seq[Int]
+    ensures forall l: Int:: |new_seq(l)| == l
+
+function new_pn_counter_from_value(id: Int, num_replicas: Int, value: Int): PNCounter
+    requires id >= 0 && id < num_replicas
+    ensures (value >= 0) ==> ((get_p(get_payload(result), id) == value) && (get_n(get_payload(result), id) == 0))
+    ensures (value < 0) ==> ((get_p(get_payload(result), id) == 0) && (get_n(get_payload(result), id) == (value * -1)))
+    ensures forall i: Int :: (0 <= i && i < num_replicas && i != id) ==>
+                (get_p(get_payload(result), i) == 0 &&
+                get_n(get_payload(result), i) == 0)
+    ensures |get_ps(get_payload(result))| == num_replicas
+    ensures |get_ns(get_payload(result))| == num_replicas
+    // ensures get_ps(get_payload(result))[id] == value
+    // ensures get_ns(get_payload(result))[id] == 0
+    ensures get_id(result) == id
+    ensures forall i: Int :: (0 <= i && i < num_replicas && i != id) ==> 
+                (get_ps(get_payload(result))[i] == 0 &&
+                get_ns(get_payload(result))[i] == 0)
+
+method bla() {
+    assert max(5,5) == 5
+    assert max(4,5) == 5
+    assert max(5,4) == 5
+
+    var counter1: PNCounter
+    counter1 := new_pn_counter_from_value(0, 2, 1)
+    assert get_p(get_payload(counter1), 0) == 1
+    assert get_p(get_payload(counter1), 1) == 0
+    assert get_n(get_payload(counter1), 0) == 0
+    assert get_n(get_payload(counter1), 1) == 0
+
+    assert |get_ps(get_payload(counter1))| == 2
+    assert |get_ns(get_payload(counter1))| == 2
+    assert get_ns(get_payload(counter1)) == Seq(0,0)
+    assert get_val(counter1) == 1
+
+    var counter2: PNCounter
+    counter2 := new_pn_counter_from_value(1, 2, 0)
+
+    assert get_val(counter2) == 0
+
+    counter2 := merge_pncounter(counter2, counter1)
+    assert get_val(counter2) == 1
+
+    counter2 := new_pn_counter_from_value(1,2,4)
+    counter2 := merge_pncounter(counter2, counter1)
+    assert get_val(counter2) == 5
+    assert get_val(counter1) == 1
+    counter2 := merge_pncounter(counter2, counter2)
+    assert get_val(counter2) == 5
+
+    counter2 := increase(counter2, 10)
+    assert get_val(counter2) == 15
+    counter2 := merge_pncounter(counter2, new_pn_counter_from_value(1,2,4))
+    assert get_val(counter2) == 15
+
+    assert forall a: Int, b: Int, c: Int, d: Int:: sum(Seq(a,b,c,d)) == (a+b+c+d)
+
+    var counterX: PNCounter
+    var merged: PNCounter
+    assume get_id(counterX) >= 0
+    merged := merge_pncounter(counterX, counterX)
+    assert get_val(counterX) == get_val(merged)
+
+    // decrease test
+    counter1 := new_pn_counter_from_value(0, 2, 8)
+    counter2 := new_pn_counter_from_value(1, 2, 0)
+    assert get_val(counter1) == 8
+
+    var counter1_ : PNCounter
+    counter1_ := decrease(counter1, 2)
+   
+    var counter2_ : PNCounter
+    counter2_ := decrease(counter2, 2)
+
+    counter1 := merge_pncounter(counter1_, counter2_)
+    assert get_val(counter1) == 8 - (2 + 2) 
+}
+
+function pnCounterGeq(c1: PNCounter, c2: PNCounter): Bool
+    requires |get_ps(get_payload(c1))| == |get_ps(get_payload(c2))|
+    ensures result == (forall id: Int :: (id >= 0 && id < |get_ps(get_payload(c1))|) ==> 
+                ((get_p(get_payload(c1), id) >= get_p(get_payload(c2), id)) &&
+                (get_n(get_payload(c1), id) >= get_n(get_payload(c2), id))))
+    ensures (result == true) ==> sum(get_ps(get_payload(c1))) >= sum(get_ps(get_payload(c2)))
+    ensures (result == true) ==> sum(get_ns(get_payload(c1))) >= sum(get_ns(get_payload(c2)))
+
+method test_pnCounterGeq(c1: PNCounter, c2: PNCounter)
+    requires |get_ps(get_payload(c1))| == |get_ps(get_payload(c2))|
+    requires get_id(c1) >= 0 && get_id(c2) >= 0
+{
+    assert pnCounterGeq(c1, c1)
+    var merge: PNCounter
+    merge := merge_pncounter(c1,c2)
+    assert pnCounterGeq(merge, c1)
+}
+
+method merge_pncounter(c1: PNCounter, c2: PNCounter) returns (res: PNCounter)
+    // requires |get_ps(get_payload(c1))| == num_replicas
+    requires |get_ps(get_payload(c1))| == |get_ps(get_payload(c2))|
+    ensures let payload1 == (get_payload(c1)) in
+            let payload2 == (get_payload(c2)) in
+            let payload3 == (get_payload(res)) in 
+            forall id: Int :: (id < |get_ps(get_payload(c1))| && id >= 0) ==>
+                ((get_p(payload3, id) == max(get_p(payload1, id), get_p(payload2, id))) &&
+                (get_n(payload3, id) == max(get_n(payload1, id), get_n(payload2, id))))
+    ensures (|get_ps(get_payload(res))| == |get_ps(get_payload(c1))|)
+    ensures (c1 == c2) ==> res == c1
+    ensures pnCounterGeq(res, c1) && pnCounterGeq(res, c2)
+    ensures (pnCounterGeq(c1,c2)) ==> res == c1
+    ensures pnCounterGeq(c2,c1) && !pnCounterGeq(c1,c2) ==> get_payload(res) == get_payload(c2)
+    // ensures !(pnCounterGeq(c1,c2)) && (pnCounterGeq(c2,c1)) ==> res == c2
+    ensures get_val(res) == sum(get_ps(get_payload(res))) - sum(get_ns(get_payload(res)))
+    ensures get_id(res) == get_id(c1)
+    ensures (get_ns(get_payload(c1)) == get_ns(get_payload(c2))) ==> get_ns(get_payload(res)) == get_ns(get_payload(c1))
+    ensures sum(get_ps(get_payload(res))) >= sum(get_ps(get_payload(c1)))
+    ensures sum(get_ps(get_payload(res))) >= sum(get_ps(get_payload(c2)))
+    ensures sum(get_ns(get_payload(res))) >= sum(get_ns(get_payload(c1)))
+    ensures sum(get_ns(get_payload(res))) >= sum(get_ns(get_payload(c2)))
+    ensures (get_ns(get_payload(c1)) == get_ns(get_payload(c2))) ==> get_val(res) >= get_val(c1)
+    {
+    var num_replicas: Int := |get_ps(get_payload(c1))|
+    var i: Int := 0
+    var p_seq: Seq[Int]
+    var n_seq: Seq[Int]
+    p_seq := new_seq(num_replicas)
+    n_seq := new_seq(num_replicas)
+
+    var payload1: PNCounter_payload
+    var payload2: PNCounter_payload
+    payload1 := get_payload(c1)
+    payload2 := get_payload(c2)
+    while (i < num_replicas)
+        invariant 0 <= i && i <= num_replicas
+        invariant |p_seq| == num_replicas
+        invariant |n_seq| == num_replicas
+        invariant forall id: Int :: (0 <= id && id < i) ==> (p_seq[id] == max(get_p(payload1, id),
+                get_p(payload2, id)))
+        invariant forall id: Int :: (0 <= id && id < i) ==> (n_seq[id] == max(get_n(payload1, id),
+                get_n(payload2, id)))
+        invariant forall id: Int :: (0 <= id && id < i) ==> (p_seq[id] >= get_p(payload1, id) && p_seq[id] >= get_p(payload2, id))
+    {
+        var p: Int
+        var n: Int
+
+        p := max(get_p(payload1, i),
+                get_p(payload2, i))
+
+        n := max(get_n(payload1, i),
+                get_n(payload2, i))
+
+        p_seq := p_seq[i := p]
+        n_seq := n_seq[i := n]
+        i := i + 1
+    }
+    assert forall id: Int :: (id >= 0 && id < i) ==> (p_seq[id] == max(get_p(payload1, id),
+                get_p(payload2, id)))
+    assert i == num_replicas
+    assert num_replicas == |get_ps(payload1)|
+    assert forall id: Int :: (id >= 0 && id < num_replicas) ==> get_ps(payload1)[id] == get_p(payload1,id)
+    assert forall id: Int :: (id >= 0 && id < num_replicas) ==> (p_seq[id] == max(get_ps(payload1)[id],
+            get_ps(payload2)[id]))
+
+
+    var new_payload: PNCounter_payload
+    new_payload := construct_payload(p_seq, n_seq)
+
+
+    res := new_pn_counter(get_id(c1), construct_payload(p_seq, n_seq))
+    assert get_payload(res) == new_payload
+    assert get_ps(get_payload(res)) == p_seq
+    assert get_ns(get_payload(res)) == n_seq
+    assert forall id: Int :: (id >= 0 && id < i) ==> (p_seq[id] == max(get_p(payload1, id),
+            get_p(payload2, id)))
+    assert forall x: Int, y: Int :: max(x,y) >= x && max(x,y) >= y
+
+    if (c1 == c2) {
+        res := c1
+    }
+    if (pnCounterGeq(c1,c2)){
+        res := c1
+    }
+    elseif (pnCounterGeq(c2,c1)){
+        res := new_pn_counter(get_id(c1), get_payload(c2))
+    }
+}

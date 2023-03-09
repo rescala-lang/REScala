@@ -1,0 +1,65 @@
+import "../aw_set.vpr"
+
+method testSet(id1: Int, id2: Int)
+    requires id1 != id2 {
+    assert |get_removed_ids(empty(), 5)| == 0
+    assert |get_observed_ids(empty(), 5)| == 0
+    assert |get_observed_ids(add(empty(),5,0), 5)| == 1
+    assert |get_removed_ids(add(empty(),5,0), 5)| == 0
+    assert |get_observed_ids(add(add(empty(),7,0),7,0), 7)| == 1
+    assert |get_observed_ids(add(add(empty(),5,0),5,1), 5)| == 2
+    assert |get_observed_ids(add(add(empty(),7,id1),5,id2), 5)| == 1
+    assert |get_observed_ids(add(empty(), 7,id1),7)| == 1
+    assert |get_observed_ids(add(empty(),5,id1),5)| == |get_observed_ids(add(add(empty(),5,id1),7,id2), 5)| 
+    assert |get_observed_ids(add(add(empty(),5,id1),7,id2), 5)| == 1
+    assert |get_removed_ids(add(empty(),5,id1),5)| == |get_removed_ids(add(add(empty(),5,id1),7,id2), 5)| 
+
+    assert get_removed_ids(empty(), 5) == Set()
+    assert get_removed_ids(add(empty(),5,id1), 5) == Set()
+    assert |get_removed_ids(remove(add(empty(),5,id1), 5), 5)| == 1
+    assert |get_removed_ids(remove(add(add(empty(),5,id1), 5,id2),5), 5)| == 2
+
+    assert contains(empty(), 5) == false
+    assert contains(add(empty(),5,id1), 5) == true
+    assert contains(add(empty(),5,id1), 7) == false
+    assert contains(remove(add(empty(),5,id1),5), 5) == false
+    // assert id1 in get_observed_ids(add(remove(add(empty(),5,id1),5),5,id2), 5)
+    assert contains(add(remove(add(empty(),5,id1),5),5,id2), 5) == true
+    assert contains(remove(add(add(empty(),5,id1),5,id2),5), 5) == false
+
+    // // test two replicas
+    assert contains(merge(empty(), add(empty(), 5,id1)), 5)
+    assert contains(merge(add(empty(), 5,id1), empty()), 5)
+    assert !contains(merge(add(empty(), 5,id1), empty()), 7)
+    assert |get_observed_ids(merge(add(empty(), 5,id1), empty()), 5)| == 1
+    assert |get_observed_ids(merge(add(empty(), 5,id1), empty()), 7)| == 0
+    assert |get_removed_ids(merge(add(empty(), 5,id1), empty()), 5)| == 0
+    assert !contains(merge(empty(), empty()),5)
+    assert contains(merge(add(empty(),5,id1), remove(add(empty(),5,id2),5)),5)
+    assert !contains(merge(remove(add(empty(),5,id1),5), remove(add(empty(),5,id2),5)),5)
+    assert !contains(merge(empty(), remove(add(empty(),5,id2),5)),5)
+    // assert false
+}
+
+method testToSet(id1: Int, id2: Int)
+    requires id1 != id2 {
+    assert Set() == toSet(empty())
+    assert !(5 in toSet(empty()))
+    assert 5 in toSet(add(empty(), 5, id1))
+    // assert false
+}
+
+// method testAddAll(ids: Seq[Int])
+//     // ids are unique
+//     requires forall i: Int, j: Int :: i != j && i >= 0 && j >= 0 && i < |ids| && j < |ids| ==>
+//         ids[i] != ids[j]
+// {
+//     assume ids == Seq(0,1)
+//     var els: Seq[Int] := Seq(1,5)
+//     assert 1 in els
+//     assert get_observed_ids(addAll(empty(), els, ids), 1) == Set(0)
+//     assert 5 in els
+//     assert contains(addAll(empty(), Seq(1,5), ids), 5)
+//     assert contains(add(addAll(empty(), els, ids), 6, 2), 6)
+//     assert contains(add(addAll(empty(), els, ids), 6, 2), 1)
+// }

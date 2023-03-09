@@ -1,0 +1,75 @@
+import "crdts/aw_set.vpr"
+import "types.vpr"
+import "basic_types.vpr"
+
+// helper functions needed to formulate the consistency criteria
+// returns all districts with a specific warehouse_id
+function getDistrictsByWID(districts: Set[District], warehouse_id: Id): Set[District]
+    ensures forall d: District :: d in result ==> get_d_w_id(d) == warehouse_id
+    ensures result subset districts
+    ensures forall d: District :: d in districts && get_d_w_id(d) == warehouse_id ==> d in result
+
+function sumOfYtds(districts: Set[District]): Int
+    ensures |districts| == 0 ==> result == 0
+    ensures |districts| > 0 ==> result == get_d_ytd(get1s(districts)) + sumOfYtds(districts setminus Set(get1s(districts)))
+    ensures forall s1: Set[District], s2: Set[District] :: {s1 union s2} districts == s1 union s2 ==> result == sumOfYtds(s1) + sumOfYtds(s2)
+
+function sumOfOlCnts(orders: Set[Order]): Int
+    ensures |orders| == 0 ==> result == 0
+    ensures |orders| > 0 ==> result == get_o_ol_cnt(get1s(orders)) + sumOfOlCnts(orders setminus Set(get1s(orders)))
+    ensures forall s1: Set[Order], s2: Set[Order] :: {s1 union s2} orders == s1 union s2 ==> result == sumOfOlCnts(s1) + sumOfOlCnts(s2)
+
+function getWarehouse(warehouses: AWSet[Warehouse], w_id: Id): Warehouse
+    ensures contains(warehouses, result)
+    ensures get_w_id(result) == w_id
+
+function getWarehouseIds(warehouses: AWSet[Warehouse]): Set[Id]
+    requires forall w1: Warehouse, w2: Warehouse :: contains(warehouses, w1) && contains(warehouses, w2) && get_w_id(w1) == get_w_id(w2) ==> w1 == w2
+    ensures |result| == |toSet(warehouses)|
+    ensures forall w: Warehouse :: contains(warehouses,w) ==> get_w_id(w) in result
+
+function getDistrict(districts: AWSet[District], d_id: Id): District
+    ensures contains(districts, result)
+    ensures get_d_id(result) == d_id
+
+function getCustomer(customers: AWSet[Customer], c_id: Id): Customer
+    ensures contains(customers, result)
+    ensures get_c_id(result) == c_id
+
+function maxOrderNum(orders: Set[Order], d_id: Id): Int
+    // result is maximum order number for district
+    ensures forall o: Order :: o in orders && get_o_d_id(o) == d_id ==>
+            result  >= get_o_num(o)
+    // result is a valid existing order number
+    ensures exists o: Order :: o in orders && get_o_d_id(o) == d_id && result == get_o_num(o)
+
+function maxNOrderNum(newOrders: Set[NewOrder], d_id: Id): Int
+    // result is maximum order number for district
+    ensures forall n: NewOrder :: n in newOrders && get_no_d_id(n) == d_id ==>
+            result  >= get_no_o_num(n)
+    // result is a valid existing order number
+    ensures exists n: NewOrder :: n in newOrders && get_no_d_id(n) == d_id && result == get_no_o_num(n)
+
+function minNOrderNum(newOrders: Set[NewOrder], d_id: Id): Int
+    ensures forall n: NewOrder :: n in newOrders && get_no_d_id(n) == d_id ==>
+            result <= get_no_o_num(n)
+    ensures exists n: NewOrder :: n in newOrders && get_no_d_id(n) == d_id && result == get_no_o_num(n)
+
+function countNewOrders(newOrders: Set[NewOrder], d_id: Id): Int
+    ensures result == |filterNewOrdersByDistrict(newOrders, d_id)|
+
+function countOrderLines(orderLines: Set[OrderLine], d_id: Id): Int
+    ensures result == |filterOrderLinesByDistrict(orderLines, d_id)|
+    ensures forall s: Set[OrderLine], d: Id :: (forall el: OrderLine :: el in s ==> get_ol_d_id(el) == d) ==> countOrderLines(s,d) == |s|
+
+function filterNewOrdersByDistrict(newOrders: Set[NewOrder], d_id: Id): Set[NewOrder]
+    ensures forall n: NewOrder :: n in newOrders && get_no_d_id(n) == d_id <==> n in result
+
+function filterOrderLinesByDistrict(orderLines: Set[OrderLine], d_id: Id): Set[OrderLine]
+    ensures forall ol: OrderLine :: ol in orderLines && get_ol_d_id(ol) == d_id <==> ol in result
+
+function filterOrdersByDistrict(orders: Set[Order], d_id: Id): Set[Order]
+    ensures forall o: Order :: o in orders && get_o_d_id(o) == d_id <==> o in result
+
+function is_new_order(newOrders: Set[NewOrder], o: Order): Bool
+    ensures (exists no: NewOrder :: no in newOrders && get_no_o_num(no) == get_o_num(o)) <==> result

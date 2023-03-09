@@ -1,0 +1,110 @@
+import "../tpc-c-header.vpr"
+
+method payment (
+    // state of the db/graph:
+    g: Ref,
+    // transaction parameters:
+    w_id: Id,
+    d_id: Id,
+    c_w_id: Id,
+    c_d_id: Id,
+    c_id: Id, // todo: this can actually be null
+    c_last: Option[String],
+    h_amount: Int,
+    h_date: Timestamp
+) returns (
+)    
+requires readAll(g)
+requires acc(g._warehouses, 1/2) && acc(g._histories, 1/2) && acc(g._districts, 1/2)
+requires h_amount != 0
+requires forall w1: Warehouse, w2: Warehouse :: // warehouse ids are unique
+    contains(g._warehouses, w1) && contains(g._warehouses, w2) && get_w_id(w1) == get_w_id(w2) ==> w1 == w2
+// consistency criterion 1: year to date per warehouse is always equal to the sum of the year to dates of all related districts
+requires forall w: Warehouse:: 
+    contains(g._warehouses, w) ==> (
+        get_w_ytd(w) == sumOfYtds(getDistrictsByWID(toSet(g._districts),get_w_id(w)))
+    ) 
+// second consistency criterion: next order number per district always represents the maximum of order numbers for this district + 1
+requires forall d: District :: contains(g._districts,d) ==> (
+    get_d_next_order_num(d) - 1 == maxOrderNum(toSet(g._orders), get_d_id(d)) &&
+    get_d_next_order_num(d) - 1 == maxNOrderNum(toSet(g._newOrders), get_d_id(d))
+)
+// third criterion: the ids of new orders per district are continuous.
+requires cc3(g)
+// fourth criterion: for each district, the sum of order line counts matches the number of order lines for this district
+requires forall d: District :: contains(g._districts, d) ==> (
+    countOrderLines(toSet(g._orderLines), get_d_id(d)) == sumOfOlCnts(filterOrdersByDistrict(toSet(g._orders), get_d_id(d)))
+)
+ensures readAll(g)
+// ensures forall w: Warehouse :: // old warehouses are still there
+//     get_w_id(w) != w_id && contains(g._warehouses, w) ==>
+//         contains(g._warehouses,w)
+// ensures forall d: District :: // old districts are still there
+//     get_d_id(d) != d_id && contains(g._districts, d) ==>
+//         contains(g._g._districts,d)
+// ensures forall w1: Warehouse, w2: Warehouse :: // warehouse ids remain unique
+//     contains(warehouses_, w1) && contains(warehouses_, w2) && get_w_id(w1) == get_w_id(w2) ==> w1 == w2
+// ensures forall w1: Warehouse, w2: Warehouse :: // only one warehouse is added/altered
+//     contains(warehouses_, w1) && contains(warehouses_, w2) && !contains(warehouses, w1) && !contains(warehouses, w2) ==> w1 == w2
+// consistency criterion 1
+ensures forall w: Warehouse ::
+    contains(g._warehouses, w) ==> (
+        get_w_ytd(w) == sumOfYtds(getDistrictsByWID(toSet(g._districts),get_w_id(w)))
+    )
+// second criterion
+ensures forall d: District :: contains(g._districts,d) ==> (
+    get_d_next_order_num(d) - 1 == maxOrderNum(toSet(g._orders), get_d_id(d)) &&
+    get_d_next_order_num(d) - 1 == maxNOrderNum(toSet(g._newOrders), get_d_id(d))
+)
+// third criterion
+ensures cc3(g)
+// fourth criterion
+ensures forall d: District :: contains(g._districts, d) ==> (
+    countOrderLines(toSet(g._orderLines), get_d_id(d)) == sumOfOlCnts(filterOrdersByDistrict(toSet(g._orders), get_d_id(d)))
+)
+ensures cc5(g)
+ensures cc7(g)
+{
+    var warehouse: Warehouse := getWarehouse(g._warehouses,w_id)
+    var district: District := getDistrict(g._districts, d_id)
+
+    g._warehouses := remove(g._warehouses, warehouse)
+
+    var newwarehouse : Warehouse := new_warehouse(
+        get_w_id(warehouse),
+        get_w_tax_rate(warehouse),
+        get_w_ytd(warehouse) + h_amount
+    )
+
+    var id: Int
+    assume !(exists el: Warehouse :: (id in (get_observed_ids(g._warehouses, el)) || id in (get_removed_ids(g._warehouses, el))))
+    g._warehouses := add(g._warehouses, newwarehouse, id)
+
+    // old warehouses are still there.
+    assert forall w: Warehouse :: w != warehouse && contains(old(g._warehouses), w) ==> contains(g._warehouses, w)
+    
+    // update district
+    var newdistrict : District := new_district(
+        get_d_id(district),
+        get_d_w_id(district),
+        get_d_next_order_num(district),
+        get_d_tax_rate(district),
+        get_d_ytd(district) + h_amount
+    )
+    assert get_d_ytd(newdistrict) == get_d_ytd(district) + h_amount
+
+    g._districts := remove(g._districts, district)
+
+    var id2: Int // obtain new id
+    assume !(exists el: District :: (id2 in (get_observed_ids(g._districts, el)) || id2 in (get_removed_ids(g._districts, el))))
+    g._districts := add(g._districts, newdistrict,id2)
+
+    // add history entry
+    var id3: Int // obtain new id
+    assume !(exists el: History :: (id3 in (get_observed_ids(g._histories, el)) || id3 in (get_removed_ids(g._histories, el))))
+    g._histories := add(g._histories, new_history(c_id, c_d_id, c_w_id, d_id, w_id, h_date, h_amount), id3)
+
+    // helper assertions
+    assert sumOfYtds(Set(newdistrict)) == sumOfYtds(Set(district)) + h_amount        
+    assert sumOfYtds(getDistrictsByWID(toSet(g._districts),w_id)) == sumOfYtds(getDistrictsByWID(toSet(old(g._districts)), w_id)) + h_amount
+}
