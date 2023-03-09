@@ -13,11 +13,10 @@ object Parser:
 
   // helpers
   private val infixOperators = Set("-", "+", "*", "/", ".")
+  private val keywords = Set("Interaction")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
-  // val wsOrNl = (wsp | lf).rep0 // any amount of whitespace or newlines
+  // any amount of whitespace, newlines or comments
   val wsOrNl = (wsp | P.defer(comment) | lf).rep0
-  // val wsOrNl =
-  //   ((wsp.rep).? ~ comment.? ~ lf.?).rep0 // any amount of whitespace or newlines
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
   // val underscore: P[ID] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
@@ -52,7 +51,8 @@ object Parser:
         ~ factor).rep0)
 
   //// basic terms
-  val _var: P[TVar] = (id).map(TVar(_)) // variables
+  val _var: P[TVar] =
+    (P.not(P.stringIn(keywords)).with1 *> id).map(TVar(_)) // variables
 
   // tuples
   val tuple: P[TTuple] =
@@ -228,14 +228,10 @@ object Parser:
     }
 
   // bindings
-  val bindable =
-    P.defer(
-      fieldAcc | functionCall | typeAlias | reactive | booleanExpr | number.backtrack | _var
-    )
   val bindingLeftSide: P[TArgT] =
     (P.string("val") ~ ws *> P.defer(argT))
   val binding: P[TAbs] =
-    P.defer((bindingLeftSide <* P.char('=').surroundedBy(ws)) ~ term)
+    P.defer((bindingLeftSide <* ws ~ P.char('=') ~ wsOrNl) ~ term)
       .map { case (TArgT(name, _type), term) =>
         TAbs(name = name, _type = _type, body = term)
       }
@@ -341,7 +337,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | block | tuple | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | interaction | block | tuple | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

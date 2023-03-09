@@ -42,6 +42,30 @@ class SimpleParsing extends ParserSuite:
     )
   }
 
+  test("interaction") {
+    assertParsingResult(
+      Parser.term,
+      "Interaction[AWSet[History]][PaymentArgs]",
+      TInteraction(
+        List(SimpleType("AWSet", List(SimpleType("History", List())))),
+        List(SimpleType("PaymentArgs", List()))
+      )
+    )
+
+    assertParsingResult(
+      Parser.term,
+      "val payment: Unit = Interaction[AWSet[History]][PaymentArgs]",
+      TAbs(
+        "payment",
+        SimpleType("Unit", List()),
+        TInteraction(
+          List(SimpleType("AWSet", List(SimpleType("History", List())))),
+          List(SimpleType("PaymentArgs", List()))
+        )
+      )
+    )
+  }
+
   test("field access") {
     assertParsingResult(
       Parser.term,
