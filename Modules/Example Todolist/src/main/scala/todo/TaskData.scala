@@ -84,7 +84,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
   ): TaskRefData = {
     val lww: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
       val dot = Dots.empty.nextDot(fixedId.uid)
-      DeltaBuffer(Dotted(LastWriterWins.now(dot, task)))
+      if task.isEmpty
+      then DeltaBuffer(Dotted(LastWriterWins.fallback(dot, task)))
+      else DeltaBuffer(Dotted(LastWriterWins.now(dot, task)))
 
     val edittext: Event.CBR[UIEvent, HtmlTag] = Event.fromCallback {
       input(`class` := "edit", `type` := "text", onchange := Event.handle[UIEvent])

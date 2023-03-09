@@ -8,13 +8,14 @@ import kofre.time.{Dot, Dots}
 
 import math.Ordering.Implicits.infixOrderingOps
 
-/** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
-  *  */
+/** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics. */
 case class LastWriterWins[A](dot: Dot, wallTime: Time, payload: A)
 
 object LastWriterWins {
 
   def empty[A: Bottom](dot: Dot): LastWriterWins[A] = now(dot, Bottom.empty)
+
+  def fallback[A: Bottom](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, 0, v)
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
