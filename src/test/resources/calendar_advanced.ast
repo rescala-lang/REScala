@@ -1032,22 +1032,16 @@
                             ],
                             "argumentTypes" : [
                               {
-                                "TupleType" : {
+                                "SimpleType" : {
+                                  "name" : "Appointment",
                                   "inner" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Appointment",
-                                        "inner" : [
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "User",
-                                        "inner" : [
-                                        ]
-                                      }
-                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "SimpleType" : {
+                                  "name" : "User",
+                                  "inner" : [
                                   ]
                                 }
                               }
