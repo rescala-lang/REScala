@@ -252,11 +252,18 @@ trait EventBundle extends FoldBundle {
       * }
       * }}}
       */
-    def fromCallback[T]: Events.FromCallback[T] = Events.FromCallback[T]()
+    def fromCallback[R, T](using CreationTicket[BundleState])(block: Accepts[T] ?=> R): CBR[T, R] =
+      val evt = Evt[T]()
+      val res = block(using evt)
+      CBR(evt, res)
+
+
+    case class CBR[T, R](event: Event[T], data: R)
+    opaque type Accepts[T] = Evt[T]
+
 
     /** The callback available within `fromCallback` */
-    def handle[T](using cbt: Events.CallBackTrigger[T], scheduler: Scheduler[BundleState])(v: T): Unit =
-      Events.CallBackTrigger.unwrap(cbt).fire(v)
+    def handle[T](using cbt: Accepts[T], scheduler: Scheduler[BundleState])(v: T): Unit = cbt.fire(v)
 
   }
 
@@ -312,20 +319,6 @@ trait EventBundle extends FoldBundle {
         }
         static(internal)(st => st.dependStatic(internal))(tx)
       }
-
-    case class CBR[T, R](event: Event[T], data: R)
-    opaque type CallBackTrigger[T] = Evt[T]
-
-    class FromCallback[T]() {
-      def apply[R](using CreationTicket[BundleState])(block: Events.CallBackTrigger[T] ?=> R): Events.CBR[T, R] =
-        val evt = Evt[T]()
-        val res = block(using Events.CallBackTrigger.wrap(evt))
-        Events.CBR(evt, res)
-    }
-    object CallBackTrigger {
-      def wrap[T](evt: Evt[T]): CallBackTrigger[T]               = evt
-      def unwrap[T](callBackTrigger: CallBackTrigger[T]): Evt[T] = callBackTrigger
-    }
 
   }
 

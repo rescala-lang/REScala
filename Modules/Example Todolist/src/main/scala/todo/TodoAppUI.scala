@@ -35,15 +35,15 @@ class TodoAppUI(val storagePrefix: String) {
 
     val createTodo = inputFieldHandler(todoInputTag, onchange)
 
-    val removeAll = Event.fromCallback[UIEvent](button("remove all done todos", onclick := Event.handle))
+    val removeAll = Event.fromCallback(button("remove all done todos", onclick := Event.handle))
 
-    val toggleAll = Event.fromCallback[UIEvent] {
+    val toggleAll = Event.fromCallback {
       input(
         id       := "toggle-all",
         name     := "toggle-all",
         `class`  := "toggle-all",
         `type`   := "checkbox",
-        onchange := Event.handle
+        onchange := Event.handle[UIEvent]
       )
     }
 
@@ -110,8 +110,8 @@ class TodoAppUI(val storagePrefix: String) {
     )
   }
 
-  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): Events.CBR[String, Input] = {
-    val handler = Event.fromCallback[UIEvent](tag(attr := Event.handle))
+  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): Event.CBR[String, Input] = {
+    val handler = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
 
     val todoInputField: Input = handler.data.render
 
@@ -123,7 +123,7 @@ class TodoAppUI(val storagePrefix: String) {
         res
       }
 
-    Events.CBR(handlerEvent, todoInputField)
+    Event.CBR(handlerEvent, todoInputField)
   }
 
 }
