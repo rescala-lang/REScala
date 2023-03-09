@@ -80,28 +80,27 @@ trait Initializer[S[_]] {
   /** Creates and correctly initializes new [[Derived]]s */
   final private[rescala] def create[V, T <: Derived.of[S]](
       incoming: Set[ReSource.of[S]],
-      initValue: V,
+      initialValue: V,
       needsReevaluation: Boolean
   )(instantiateReactive: S[V] => T): T = {
-    val state    = makeDerivedStructState[V](initValue)
+    val state    = makeDerivedStructState[V](initialValue)
     val reactive = instantiateReactive(state)
-    register(reactive, incoming)
+    register(reactive, incoming, initialValue)
     initialize(reactive, incoming, needsReevaluation)
     reactive
   }
 
   /** hook for schedulers to globally collect all created resources, usually does nothing */
-  protected[this] def register(reactive: ReSource.of[S], inputs: Set[ReSource.of[S]]): Unit = {
-    Tracing.observe(Tracing.Create(reactive, inputs.toSet))
+  protected[this] def register[V](reactive: ReSource.of[S], inputs: Set[ReSource.of[S]], initValue: V): Unit = {
+    Tracing.observe(Tracing.Create(reactive, inputs.toSet, Tracing.ValueWrapper(initValue)))
   }
 
   /** Correctly initializes [[ReSource]]s */
-  final private[rescala] def createSource[V, T <: ReSource.of[S]](
-      intv: V
-  )(instantiateReactive: S[V] => T): T = {
-    val state    = makeSourceStructState[V](intv)
+  final private[rescala] def createSource[V, T <: ReSource.of[S]](initialValue: V)(instantiateReactive: S[V] => T)
+      : T = {
+    val state    = makeSourceStructState[V](initialValue)
     val reactive = instantiateReactive(state)
-    register(reactive, Set.empty)
+    register(reactive, Set.empty, initialValue)
     reactive
   }
 

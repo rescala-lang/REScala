@@ -31,8 +31,12 @@ trait CalculusLike {
     override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
       new StoreValue[V](initialValue)
 
-    override protected[this] def register(reactive: ReSource.of[State], inputs: Set[ReSource.of[State]]): Unit = {
-      super.register(reactive, inputs)
+    override protected[this] def register[V](
+        reactive: ReSource.of[State],
+        inputs: Set[ReSource.of[State]],
+        initialValue: V
+    ): Unit = {
+      super.register(reactive, inputs, initialValue)
       FScheduler.allReactives += reactive
     }
 
