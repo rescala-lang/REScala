@@ -74,6 +74,29 @@ class SimpleParsing extends ParserSuite:
         .parse("UI.vacationDialog.onConfirm{a => add_vacation.apply(a)}")
         .isRight
     )
+
+    assertParsingResult(
+      Parser.term,
+      """x.executes{
+             (no, o, ol) => w_id => o}""",
+      TFCurly(
+        TVar("x"),
+        "executes",
+        TArrow(
+          TVar("no"),
+          TArrow(
+            TVar("o"),
+            TArrow(
+              TVar("ol"),
+              TArrow(
+                TVar("w_id"),
+                TVar("o")
+              )
+            )
+          )
+        )
+      )
+    )
   }
 
   test("arithmetic expression") {
@@ -210,6 +233,25 @@ class SimpleParsing extends ParserSuite:
         )
       )
     )
+    // "(no, o, ol) => w_id => 0"
+
+    assertParsingResult(
+      Parser.term,
+      "(no, o, ol) => w_id => 0",
+      TArrow(
+        TVar("no"),
+        TArrow(
+          TVar("o"),
+          TArrow(
+            TVar("ol"),
+            TArrow(
+              TVar("w_id"),
+              TNum(0)
+            )
+          )
+        )
+      )
+    )
 
     assertParsingResult(
       Parser.lambdaFun,
@@ -245,13 +287,21 @@ class SimpleParsing extends ParserSuite:
 
   test("tuple") {
     assertParsingResult(
-      Parser.tuple,
+      Parser.term,
       "(a, b)",
       TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))
     )
 
     assertParsingResult(
-      Parser.tuple,
+      Parser.term,
+      "(a, b,co)",
+      TTuple(
+        NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"), TVar("co")))
+      )
+    )
+
+    assertParsingResult(
+      Parser.term,
       """|(a ,
          |  b)""".stripMargin,
       TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))

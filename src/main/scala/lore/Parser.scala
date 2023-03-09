@@ -321,10 +321,16 @@ object Parser:
         TIf(cond, _then, _else)
       }
 
+  // a block is a sequence of terms surrounded by curly braces
+  val block: P[TSeq] =
+    (P.char('{') ~ wsOrNl *> P.defer(term.repSep(wsOrNl)) <* wsOrNl ~ P.char(
+      '}'
+    )).map(TSeq(_))
+
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | tuple | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | block | tuple | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

@@ -44,6 +44,7 @@ object ViperBackend:
   private def viperTransformations(
       ctx: CompilationContext
   ): CompilationContext =
+    // TODO: step 0: find field calls and function calls that use anonymous functions as arguments and transform them to synthetic functions
     // step 1: field calls as function calls
     def fieldCallToFunCall: Term => Term =
       case TFCall(parent, field, args) =>
@@ -329,6 +330,10 @@ object ViperBackend:
           s"${expressionToViper(parent)}.$field"
         case TInSet(l, r) =>
           s"${expressionToViper(l)} in ${expressionToViper(r)}"
+        case TAbs(name, _type, body) =>
+          s"""|var $name: ${typeToViper(_type)}
+              |$name := ${expressionToViper(body)}""".stripMargin
+        case TSeq(body) => body.map(expressionToViper).toList.mkString("\n")
     case exp =>
       throw new IllegalArgumentException(
         s"Expression $exp not allowed in Viper expressions!"

@@ -33,7 +33,9 @@ case class TArgT(name: ID, _type: Type)
 
 // basic terms
 case class TVar(name: ID) extends Term with TViper // variable
-case class TAbs(name: ID, _type: Type, body: Term) extends Term // abstractions
+case class TAbs(name: ID, _type: Type, body: Term)
+    extends Term
+    with TViper // abstractions
 case class TTuple(factors: NonEmptyList[Term]) extends Term
 
 case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term
@@ -41,7 +43,7 @@ case class TIf(cond: Term, _then: Term, _else: Option[Term]) extends Term
 // case class TUnit() extends Term // unit
 
 // derived forms
-// case class TSeq(left: Term, right: Term) extends Term // sequence
+case class TSeq(body: NonEmptyList[Term]) extends Term with TViper // sequence
 case class TArrow(left: Term, right: Term) extends Term: // anonymous functions
   private def findBody: Term => Term =
     case TArrow(left, right) => findBody(right)
