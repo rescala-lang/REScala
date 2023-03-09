@@ -32,7 +32,7 @@ class TaskOps(taskRefs: TaskReferences, replicaID: Uid) {
   }
 
   def handleRemove(state: State)(id: String): State = {
-    state.clearDeltas().deleteBy { taskref =>
+    state.clearDeltas().deleteBy { (taskref: TaskRef) =>
       val delete = taskref.id == id
       // todo, move to observer, disconnect during transaction does not respect rollbacks
       if (delete) taskref.task.disconnect()

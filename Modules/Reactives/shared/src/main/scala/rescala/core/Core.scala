@@ -37,6 +37,7 @@ object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
   */
 abstract class Base[S[_], V](override protected[rescala] val state: S[V], override val info: ReInfo)
     extends ReSource {
+
   override type State[V] = S[V]
   override type Value    = V
   override def toString: String = s"${info.description}($state)"

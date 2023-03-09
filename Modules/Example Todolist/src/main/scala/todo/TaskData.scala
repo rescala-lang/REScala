@@ -35,8 +35,8 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
-  def tag: TypedTag[LI]                                           = cached.tag
-  def removed: Event[String]                                      = cached.removed
+  def tag: TypedTag[LI]                                                   = cached.tag
+  def removed: Event[String]                                              = cached.removed
 }
 
 final class TaskRefData(

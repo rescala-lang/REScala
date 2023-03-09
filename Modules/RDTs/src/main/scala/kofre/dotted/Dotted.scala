@@ -13,7 +13,6 @@ case class Dotted[A](store: A, context: Dots) {
   def contained(using HasDots[A]): Dots = store.dots
 }
 
-/** Implicit aliases in companion object for search path */
 object Dotted {
 
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
