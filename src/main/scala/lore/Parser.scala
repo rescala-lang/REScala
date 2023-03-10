@@ -13,7 +13,7 @@ object Parser:
 
   // helpers
   private val infixOperators = Set("-", "+", "*", "/", ".")
-  private val keywords = Set("Interaction")
+  private val keywords = Set("Interaction", "assert", "assume")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // any amount of whitespace, newlines or comments
   val wsOrNl = (wsp | P.defer(comment) | lf).rep0
@@ -278,10 +278,21 @@ object Parser:
         throw new ParsingException(s"Not a valid field access: $s")
 
   // functions
-  val functionCall: P[TFunC] = (id.soft ~ (P.char('(') *> args) <* P.char(')'))
-    .map { (id, arg) =>
-      TFunC(name = id, args = arg)
-    }
+  val functionCall: P[TFunC] =
+    P.not(P.stringIn(keywords)).with1
+      *> (id.soft ~ (P.char('(') *> args) <* P.char(')')).map { (id, arg) =>
+        TFunC(name = id, args = arg)
+      }
+
+  val assertAssume: P[Term] =
+    (((P.string("assert").string | P.string("assume").string)
+      <* P.char('(') ~ wsOrNl) ~ P.defer(booleanExpr) <* (wsOrNl ~ P.char(')')))
+      .map {
+        case ("assert", t) => TAssert(t)
+        case ("assume", t) => TAssume(t)
+        case sth =>
+          throw ParsingException(s"not a valid assertion/assumption: $sth")
+      }
 
   private val lambdaVars: P[NonEmptyList[TVar]] =
     (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(
@@ -336,7 +347,7 @@ object Parser:
   // programs are sequences of terms
   val term: P[Term] =
     P.defer(
-      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | booleanExpr.backtrack | fieldAcc | interaction | block | tuple | number.backtrack | _var
+      viperImport | typeAlias | binding | reactive | invariant | ifThenElse | lambdaFun | assertAssume | booleanExpr.backtrack | fieldAcc | interaction | block | tuple | number.backtrack | _var
     )
   val prog: P[NonEmptyList[Term]] =
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end

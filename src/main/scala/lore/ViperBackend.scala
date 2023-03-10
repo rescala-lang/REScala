@@ -392,7 +392,9 @@ object ViperBackend:
         case TAbs(name, _type, body) =>
           s"""|var $name: ${typeToViper(_type)}
               |$name := ${expressionToViper(body)}""".stripMargin
-        case TSeq(body) => body.map(expressionToViper).toList.mkString("\n")
+        case TSeq(body)    => body.map(expressionToViper).toList.mkString("\n")
+        case TAssert(body) => s"assert ${expressionToViper(body)}"
+        case TAssume(body) => s"assume ${expressionToViper(body)}"
     case exp =>
       throw new IllegalArgumentException(
         s"Expression $exp not allowed in Viper expressions!"

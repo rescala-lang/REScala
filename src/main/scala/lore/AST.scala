@@ -62,6 +62,9 @@ case class TTypeAl(name: ID, _type: Type) extends Term // type aliases
 // Viper terms
 sealed trait TViper() extends Term derives Codec.AsObject
 
+case class TAssert(body: Term) extends Term with TViper
+case class TAssume(body: Term) extends Term with TViper
+
 // reactives
 sealed trait TReactive extends Term:
   val body: Term
