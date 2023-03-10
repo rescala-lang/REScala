@@ -14,7 +14,7 @@ val thisUser: Source[Option[User]] = Source(None) // local reactive?
 val invited: Source[Invites] = Source(Map())
 
 // user management
-val login: Unit = Interaction[Option[User]][User, Password]
+val login: Unit = Interaction[Option[User]][(User, Password)]
   .requires{ thisUser => (user, pass) => thisUser == None}
   .executes{ thisUser => (user, pass) =>
       if is_correct(user,pass) then

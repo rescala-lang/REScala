@@ -70,8 +70,8 @@ case class TDerived(body: Term) extends TReactive
 
 // interactions
 case class TInteraction(
-    reactiveTypes: List[Type],
-    argumentTypes: List[Type],
+    reactiveType: Type,
+    argumentType: Type,
     modifies: List[ID] = List(),
     requires: List[Term] = List(),
     ensures: List[Term] = List(),

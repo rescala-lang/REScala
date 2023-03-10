@@ -44,6 +44,21 @@ object ViperBackend:
   private def viperTransformations(
       ctx: CompilationContext
   ): CompilationContext =
+    // step 0: insert type aliases
+    def replaceType: Type => Type =
+      case SimpleType(name, List()) if ctx.typeAliases.contains(name) =>
+        ctx.typeAliases(name)
+      case SimpleType(name, inner) => SimpleType(name, inner.map(replaceType))
+      case TupleType(inner)        => TupleType(inner.map(replaceType))
+    def insertTypes: Term => Term =
+      case TArgT(name, _type) => TArgT(name, replaceType(_type))
+      case TAbs(name, _type, body) =>
+        TAbs(name, replaceType(_type), body)
+      case TInteraction(rt, at, m, r, en, ex) =>
+        TInteraction(replaceType(rt), replaceType(at), m, r, en, ex)
+      case t => t
+    val ctx1 =
+      ctx.copy(ast = ctx.ast.map(traverseFromNode(_, insertTypes)))
     // TODO: step 0: find field calls and function calls that use anonymous functions as arguments and transform them to synthetic functions
     // step 1: field calls as function calls
     def fieldCallToFunCall: Term => Term =
@@ -51,7 +66,7 @@ object ViperBackend:
         TFunC(field, parent +: args)
       case t => t
     val ctx2 =
-      ctx.copy(ast = ctx.ast.map(traverseFromNode(_, fieldCallToFunCall)))
+      ctx1.copy(ast = ctx1.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
     // step 2: turn references to derived reactives to macro calls
     def transformer: Term => Term =
@@ -136,17 +151,24 @@ object ViperBackend:
       interaction: TInteraction
   )(using ctx: CompilationContext): String =
     // collect arguments and their types
+    def countTypes: Type => Int =
+      case SimpleType(_, _) => 1
+      case TupleType(inner) => inner.length
+    val numReactiveTypes = countTypes(interaction.reactiveType)
     // extract names from body
     val allNames = interaction.executes match
       case None                      => List()
       case Some(term @ TArrow(_, _)) => term.args
       case Some(term)                => List()
     val argNames =
-      allNames.drop(interaction.reactiveTypes.length)
-    val argTypes = interaction.argumentTypes.map(t => typeToViper(t)(using ctx))
+      allNames.drop(numReactiveTypes)
+    val argTypes: List[String] =
+      interaction.argumentType match
+        case s @ SimpleType(_, _) => List(typeToViper(s)(using ctx))
+        case TupleType(inner)     => inner.toList.map(typeToViper(_)(using ctx))
     if argNames.length != argTypes.length then
       throw ViperCompilationException(
-        s"Tried to compile interaction but number of arguments does not match interaction body. reactiveTypes: ${interaction.reactiveTypes}, argnames: $argNames, argTypes: $argTypes"
+        s"Tried to compile interaction but number of arguments does not match interaction body (expected ${argTypes.length} based on type signature but got ${argNames.length}). argTypes: $argTypes, argnames: $argNames"
       )
     val argsString =
       (argNames zip argTypes)
@@ -291,15 +313,13 @@ object ViperBackend:
   private def typeToViper(t: Type)(using ctx: CompilationContext): String =
     t match
       // replace type aliases
-      case SimpleType(name, _) if ctx.typeAliases.contains(name) =>
-        typeToViper(ctx.typeAliases(name))
       case SimpleType(name, Nil) => name
       case SimpleType("Source", inner) =>
-        s"${inner.map(typeToViper).mkString(" ,")}"
+        s"${inner.map(typeToViper).mkString(", ")}"
       case SimpleType(name, inner) =>
-        s"$name[${inner.map(typeToViper).mkString(" ,")}]"
+        s"$name[${inner.map(typeToViper).mkString(", ")}]"
       case TupleType(inner) =>
-        s"(${inner.toList.map(typeToViper).mkString(" ,")})"
+        s"(${inner.toList.map(typeToViper).mkString(", ")})"
 
   private def expressionToViper(expression: Term)(using
       ctx: CompilationContext

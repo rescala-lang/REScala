@@ -249,24 +249,20 @@
                             "TFCurly" : {
                               "parent" : {
                                 "TInteraction" : {
-                                  "reactiveTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Calendar",
-                                        "inner" : [
-                                        ]
-                                      }
+                                  "reactiveType" : {
+                                    "SimpleType" : {
+                                      "name" : "Calendar",
+                                      "inner" : [
+                                      ]
                                     }
-                                  ],
-                                  "argumentTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Appointment",
-                                        "inner" : [
-                                        ]
-                                      }
+                                  },
+                                  "argumentType" : {
+                                    "SimpleType" : {
+                                      "name" : "Appointment",
+                                      "inner" : [
+                                      ]
                                     }
-                                  ],
+                                  },
                                   "modifies" : [
                                   ],
                                   "requires" : [

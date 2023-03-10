@@ -112,8 +112,8 @@ def traverseFromNode[A <: Term](
             executes
           ) =>
         TInteraction(
-          reactiveTypes = reactiveTypes,
-          argumentTypes = argumentTypes,
+          reactiveType = reactiveTypes,
+          argumentType = argumentTypes,
           modifies = modifies,
           requires = requires.map(traverseFromNode(_, transformer)),
           ensures = ensures.map(traverseFromNode(_, transformer)),

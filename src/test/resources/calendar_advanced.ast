@@ -420,38 +420,40 @@
                             "TFCurly" : {
                               "parent" : {
                                 "TInteraction" : {
-                                  "reactiveTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Option",
-                                        "inner" : [
-                                          {
-                                            "SimpleType" : {
-                                              "name" : "User",
-                                              "inner" : [
-                                              ]
-                                            }
+                                  "reactiveType" : {
+                                    "SimpleType" : {
+                                      "name" : "Option",
+                                      "inner" : [
+                                        {
+                                          "SimpleType" : {
+                                            "name" : "User",
+                                            "inner" : [
+                                            ]
                                           }
-                                        ]
-                                      }
+                                        }
+                                      ]
                                     }
-                                  ],
-                                  "argumentTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "User",
-                                        "inner" : [
-                                        ]
-                                      }
-                                    },
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Password",
-                                        "inner" : [
-                                        ]
-                                      }
+                                  },
+                                  "argumentType" : {
+                                    "TupleType" : {
+                                      "inner" : [
+                                        {
+                                          "SimpleType" : {
+                                            "name" : "User",
+                                            "inner" : [
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "SimpleType" : {
+                                            "name" : "Password",
+                                            "inner" : [
+                                            ]
+                                          }
+                                        }
+                                      ]
                                     }
-                                  ],
+                                  },
                                   "modifies" : [
                                   ],
                                   "requires" : [
@@ -712,24 +714,20 @@
                             "TFCurly" : {
                               "parent" : {
                                 "TInteraction" : {
-                                  "reactiveTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Calendar",
-                                        "inner" : [
-                                        ]
-                                      }
+                                  "reactiveType" : {
+                                    "SimpleType" : {
+                                      "name" : "Calendar",
+                                      "inner" : [
+                                      ]
                                     }
-                                  ],
-                                  "argumentTypes" : [
-                                    {
-                                      "SimpleType" : {
-                                        "name" : "Appointment",
-                                        "inner" : [
-                                        ]
-                                      }
+                                  },
+                                  "argumentType" : {
+                                    "SimpleType" : {
+                                      "name" : "Appointment",
+                                      "inner" : [
+                                      ]
                                     }
-                                  ],
+                                  },
                                   "modifies" : [
                                   ],
                                   "requires" : [
@@ -1021,31 +1019,33 @@
                       "TFCurly" : {
                         "parent" : {
                           "TInteraction" : {
-                            "reactiveTypes" : [
-                              {
-                                "SimpleType" : {
-                                  "name" : "Invites",
-                                  "inner" : [
-                                  ]
-                                }
+                            "reactiveType" : {
+                              "SimpleType" : {
+                                "name" : "Invites",
+                                "inner" : [
+                                ]
                               }
-                            ],
-                            "argumentTypes" : [
-                              {
-                                "SimpleType" : {
-                                  "name" : "Appointment",
-                                  "inner" : [
-                                  ]
-                                }
-                              },
-                              {
-                                "SimpleType" : {
-                                  "name" : "User",
-                                  "inner" : [
-                                  ]
-                                }
+                            },
+                            "argumentType" : {
+                              "TupleType" : {
+                                "inner" : [
+                                  {
+                                    "SimpleType" : {
+                                      "name" : "Appointment",
+                                      "inner" : [
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "SimpleType" : {
+                                      "name" : "User",
+                                      "inner" : [
+                                      ]
+                                    }
+                                  }
+                                ]
                               }
-                            ],
+                            },
                             "modifies" : [
                             ],
                             "requires" : [

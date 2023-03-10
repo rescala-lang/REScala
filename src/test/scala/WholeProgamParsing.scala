@@ -36,15 +36,16 @@ class WholeProgramParsing extends FunSuite:
     val prog = readResource("calendar_new.lore")
     val astStr = readResource("calendar_new.ast")
     Parser.prog.parseAll(prog) match
-      case Left(e) => fail(e.show) // parsing failure
+      case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
+        // uncomment when AST format changes
+        // Files.write(
+        //   Path.of("examples/calendar_new.ast"),
+        //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
+        // )
         decode[NonEmptyList[Term]](astStr) match
           // check if AST matches expectation
           case Right(ast) =>
-            // Files.write(
-            //   Path.of("examples/calendar_new.ast"),
-            //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
-            // )
             assertEquals(parsed, ast);
 
           case Left(err) => fail(err.show)
@@ -54,15 +55,16 @@ class WholeProgramParsing extends FunSuite:
     val prog = readResource("calendar_advanced.lore")
     val astStr = readResource("calendar_advanced.ast")
     Parser.prog.parseAll(prog) match
-      case Left(e) => fail(e.show) // parsing failure
+      case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
+        // uncomment when AST format changes
+        // Files.write(
+        //   Path.of("examples/calendar_advanced.ast"),
+        //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
+        // )
         decode[NonEmptyList[Term]](astStr) match
           // check if AST matches expectation
           case Right(ast) =>
-            // Files.write(
-            //   Path.of("examples/calendar_advanced.ast"),
-            //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
-            // )
             assertEquals(parsed, ast);
 
           case Left(err) => fail(err.show)

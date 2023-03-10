@@ -207,15 +207,14 @@ object Parser:
       .map((body) => TDerived(body))
 
   // interactions
-  val typeParam: P[List[Type]] =
-    P.char('[') ~ ws ~ P.char('(').? *> P.defer0(
-      typeName.repSep0(P.char(',').surroundedBy(ws))
-    ) <* P.char(')').? ~ P
-      .char(']')
+  val typeParam: P[Type] =
+    P.char('[') ~ ws *> P.defer0(typeName.surroundedBy(ws))
+      <* P
+        .char(']')
 
   val interaction: P[TInteraction] =
     (P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
-      .map((r, a) => TInteraction(reactiveTypes = r, argumentTypes = a))
+      .map((r, a) => TInteraction(reactiveType = r, argumentType = a))
 
   // invariants
   val invariant: P[TInvariant] =

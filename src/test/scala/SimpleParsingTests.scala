@@ -47,8 +47,8 @@ class SimpleParsing extends ParserSuite:
       Parser.term,
       "Interaction[AWSet[History]][PaymentArgs]",
       TInteraction(
-        List(SimpleType("AWSet", List(SimpleType("History", List())))),
-        List(SimpleType("PaymentArgs", List()))
+        SimpleType("AWSet", List(SimpleType("History", List()))),
+        SimpleType("PaymentArgs", List())
       )
     )
 
@@ -59,8 +59,8 @@ class SimpleParsing extends ParserSuite:
         "payment",
         SimpleType("Unit", List()),
         TInteraction(
-          List(SimpleType("AWSet", List(SimpleType("History", List())))),
-          List(SimpleType("PaymentArgs", List()))
+          SimpleType("AWSet", List(SimpleType("History", List()))),
+          SimpleType("PaymentArgs", List())
         )
       )
     )
