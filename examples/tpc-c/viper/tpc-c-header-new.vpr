@@ -1,6 +1,6 @@
 import "helper_functions.vpr"
 
-// derived
+// delivery
 function setCarrierIds(orders_: AWSet[Order], newOrders_: AWSet[NewOrder]): AWSet[Order]
     // carrier ids are updated accordingly
     ensures forall o: Order :: contains(result, o) ==>
@@ -18,3 +18,22 @@ function shipNewOrders(districts_: Set[District], orders_: AWSet[Order], newOrde
         maxNOrderNum(toSet(result), d_id) == maxNOrderNum(toSet(newOrders_), d_id) &&
         minNOrderNum(toSet(result), d_id) == minNOrderNum(toSet(newOrders_), d_id) + 1 &&
         countNewOrders(toSet(result), d_id) == countNewOrders(toSet(newOrders_), d_id) - 1
+
+// new order
+method processOrderLines(o_id: Int)
+returns (newOrderLines: Seq[OrderLine])
+ensures forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0 && get_ol_o_num(ol) == o_id
+
+function addOrderLines(oldOrderLines: AWSet[OrderLine], newOrderLines: Seq[OrderLine]): AWSet[OrderLine]
+ensures toSet(result) == toSet(oldOrderLines) union seqToSet(newOrderLines)
+
+function genOrder(orderNum: Int, d_id: Id, c_id: Int, oldOrders: AWSet[Order]): Order
+requires forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != orderNum
+ensures get_o_num(result) == orderNum
+ensures get_o_d_id(result) == d_id
+ensures get_o_c_id(result) == 0
+ensures forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != get_o_num(result)
+
+function genNewOrder(orderNum: Int, d_id: Id): NewOrder
+ensures get_no_o_num(result) == orderNum
+ensures get_no_d_id(result) == d_id

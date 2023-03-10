@@ -102,29 +102,8 @@ ensures cc7(g)
         var order_: Order
         assert forall o: Order :: contains(g._orders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != nextOrderNum
         order_ := genOrder(nextOrderNum, d_id, 0, g._orders)
-        // find new id and add order
-        g._orders := add(g._orders, order_)
-        assert toSet(g._orders) == toSet(old(g._orders)) union Set(order_)
-        assert forall o: Order :: old(o in toSet(g._orders) && is_new_order(toSet(g._newOrders), o)) ==> o in toSet(g._orders) && is_new_order(toSet(g._newOrders), o)
-        assert forall o: Order :: contains(g._orders, o) && contains(old(g._orders),o) ==>
-            (is_new_order(toSet(g._newOrders), o) == old(is_new_order(toSet(g._newOrders), o)))
 
         // add orderlines
-        addOrderLines(g,newOrderLines)
-        assert forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0
-        assert get_o_c_id(order_) == 0
-        assume forall ol: OrderLine :: ol in newOrderLines ==> !(exists o: Order :: contains(g._orders, o) && get_o_num(o) == get_ol_o_num(ol))
-        assume forall ol: OrderLine :: ol in toSet(old(g._orderLines)) ==> get_ol_o_num(ol) != get_o_num(order_)
-        assert toSet(g._orderLines) == toSet(old(g._orderLines)) union seqToSet(newOrderLines)
-        assume forall ol: OrderLine :: contains(g._orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==> ol in newOrderLines && !(ol in toSet(old(g._orderLines)))
-        assert forall ol: OrderLine :: contains(g._orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==>
-            get_ol_del_date(ol) == 0 <==> get_o_c_id(order_) == 0
-        assert forall o: Order :: contains(g._orders, o) && contains(old(g._orders), o) ==> get_o_c_id(o) == old(get_o_c_id(o))
-
-        assert forall ol: OrderLine, o: Order :: contains(old(g._orders), o) && contains(old(g._orderLines), ol) && get_ol_o_num(ol) == get_o_num(o) ==> (
-            get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
-        assert forall ol: OrderLine, o: Order :: ol in (toSet(g._orderLines) setminus seqToSet(newOrderLines)) && contains(old(g._orders), o) && get_ol_o_num(ol) == get_o_num(o) && o != order_ ==>
-            (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
         
         // gen newOrder
         var neworder : NewOrder
@@ -136,23 +115,43 @@ ensures cc7(g)
         g._newOrders := add(g._newOrders, neworder)
         assume forall o: Order :: contains(old(g._orders), o) ==> get_o_num(o) != get_no_o_num(neworder)
 
+        
+        var districts_temp: AWSet[District]
+        districts_temp := remove(g._districts, district)
 
-        assert get_o_c_id(order_) == 0 <==> is_new_order(toSet(g._newOrders), order_)
-        assert contains(g._newOrders, neworder)
-        assert forall n: NewOrder :: contains(old(g._newOrders), n) ==> contains(g._newOrders, n)
-        // assume !contains(old(g._newOrders), neworder)
-        assert toSet(g._newOrders) == toSet(old(g._newOrders)) union Set(neworder)
-        assert get_no_d_id(neworder) == d_id
-        assert neworder in filterNewOrdersByDistrict(toSet(g._newOrders), d_id)
-        assert !(neworder in filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id))
-        assert filterNewOrdersByDistrict(toSet(g._newOrders), d_id) == filterNewOrdersByDistrict(toSet(old(g._newOrders)),d_id) union Set(neworder)
-        assert |filterNewOrdersByDistrict(toSet(g._newOrders), d_id)| == |filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id)| + 1
-        assert get_no_o_num(neworder) == nextOrderNum
-        assert forall no: NewOrder :: no in filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id) ==> nextOrderNum > get_no_o_num(no)
-        assert minNOrderNum(toSet(g._newOrders), d_id) == minNOrderNum(toSet(old(g._newOrders)), d_id)
-        assert countNewOrders(toSet(g._newOrders), d_id) == countNewOrders(toSet(old(g._newOrders)), d_id) + 1
+        // gen new district
+        var district_: District := new_district(
+            get_d_id(district),
+            get_d_w_id(district),
+            get_d_next_order_num(district) + 1,
+            get_d_tax_rate(district),
+            get_d_ytd(district)
+        )
+        // find new id and add modified district
+        var id3: Int
+        // assume !(exists el: District :: (id3 in (get_observed_ids(g._districts, el)) || id3 in (get_removed_ids(g._districts, el))))
+        g._newOrders := add(g._newOrders, neworder)
+        g._districts := add(districts_temp, district_)
+        // find new id and add order
+        g._orders := add(g._orders, order_)
+        g._orderLines := addOrderLines(g._orderLines, newOrderLines)
 
+        // begin assertblock 1
+        assert(get_o_c_id(order_) == 0 <==> is_new_order(toSet(g._newOrders), order_))
+        assert(contains(g._newOrders, neworder))
+        assert(forall n: NewOrder :: contains(old(g._newOrders), n) ==> contains(g._newOrders, n))
+        assert(toSet(g._newOrders) == toSet(old(g._newOrders)) union Set(neworder))
+        assert(get_no_d_id(neworder) == d_id)
+        assert(neworder in filterNewOrdersByDistrict(toSet(g._newOrders), d_id))
+        assert(!(neworder in filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id)))
+        assert(filterNewOrdersByDistrict(toSet(g._newOrders), d_id) == filterNewOrdersByDistrict(toSet(old(g._newOrders)),d_id) union Set(neworder))
+        assert(|filterNewOrdersByDistrict(toSet(g._newOrders), d_id)| == |filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id)| + 1)
+        assert(get_no_o_num(neworder) == nextOrderNum)
+        assert(forall no: NewOrder :: no in filterNewOrdersByDistrict(toSet(old(g._newOrders)), d_id) ==> nextOrderNum > get_no_o_num(no))
+        assert(minNOrderNum(toSet(g._newOrders), d_id) == minNOrderNum(toSet(old(g._newOrders)), d_id))
+        assert(countNewOrders(toSet(g._newOrders), d_id) == countNewOrders(toSet(old(g._newOrders)), d_id) + 1)
 
+        // begin assertblock 2
         assert is_new_order(toSet(g._newOrders), order_)
         assert get_o_c_id(order_) == 0 <==> is_new_order(toSet(g._newOrders), order_)
         assert forall o: Order :: contains(old(g._orders), o) ==> contains((g._orders), o)
@@ -165,21 +164,7 @@ ensures cc7(g)
         assert forall o: Order :: o != order_ && contains(g._orders, o) ==>
             (get_o_c_id(o) == 0 <==> is_new_order(toSet(g._newOrders),o))
 
-        g._districts := remove(g._districts, district) 
-        // gen new district
-        var district_: District := new_district(
-            get_d_id(district),
-            get_d_w_id(district),
-            get_d_next_order_num(district) + 1,
-            get_d_tax_rate(district),
-            get_d_ytd(district)
-        )
-        // find new id and add modified district
-        var id3: Int
-        // assume !(exists el: District :: (id3 in (get_observed_ids(g._districts, el)) || id3 in (get_removed_ids(g._districts, el))))
-        g._districts := add(g._districts, district_)
-
-        // Helper Assertions
+        // Helper Assertions block 3
         assert toSet(g._districts) == old(toSet(g._districts)) setminus Set(district) union Set(district_)
         assert toSet(g._newOrders) == old(toSet(g._newOrders)) union Set(neworder)
         assert filterNewOrdersByDistrict(toSet(g._newOrders), d_id) == old(filterNewOrdersByDistrict(toSet(g._newOrders), d_id)) union Set(neworder)
@@ -187,18 +172,38 @@ ensures cc7(g)
         assert minNOrderNum(toSet(g._newOrders), d_id) == minNOrderNum(toSet(old(g._newOrders)), d_id)
         assert maxNOrderNum(toSet(g._newOrders), d_id) == old(maxNOrderNum(toSet(g._newOrders), d_id)) + 1
         assert forall s1: Set[NewOrder], s2: Set[NewOrder], d: Id :: filterNewOrdersByDistrict(s1, d) == filterNewOrdersByDistrict(s2, d) ==> countNewOrders(s1,d) == countNewOrders(s2,d)
+
     // save to assume since we don't update any ytds
     assume forall id: Id :: sumOfYtds(getDistrictsByWID(toSet(g._districts),id)) == sumOfYtds(getDistrictsByWID(old(toSet(g._districts)),id))
+
+
+    // final assertion block
+    assert toSet(g._orders) == toSet(old(g._orders)) union Set(order_)
+    assert forall o: Order :: old(o in toSet(g._orders) && is_new_order(toSet(g._newOrders), o)) ==> o in toSet(g._orders) && is_new_order(toSet(g._newOrders), o)
+    assert forall o: Order :: contains(g._orders, o) && contains(old(g._orders),o) ==>
+        (is_new_order(toSet(g._newOrders), o) == old(is_new_order(toSet(g._newOrders), o)))
+    assert forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0
+    assert get_o_c_id(order_) == 0
+    assume forall ol: OrderLine :: ol in newOrderLines ==> !(exists o: Order :: contains(g._orders, o) && get_o_num(o) == get_ol_o_num(ol))
+    assume forall ol: OrderLine :: ol in toSet(old(g._orderLines)) ==> get_ol_o_num(ol) != get_o_num(order_)
+    assert toSet(g._orderLines) == toSet(old(g._orderLines)) union seqToSet(newOrderLines)
+    assume forall ol: OrderLine :: contains(g._orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==> ol in newOrderLines && !(ol in toSet(old(g._orderLines)))
+    assert forall ol: OrderLine :: contains(g._orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==>
+        get_ol_del_date(ol) == 0 <==> get_o_c_id(order_) == 0
+    assert forall o: Order :: contains(g._orders, o) && contains(old(g._orders), o) ==> get_o_c_id(o) == old(get_o_c_id(o))
+
+    assert forall ol: OrderLine, o: Order :: contains(old(g._orders), o) && contains(old(g._orderLines), ol) && get_ol_o_num(ol) == get_o_num(o) ==> (
+        get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
+    assert forall ol: OrderLine, o: Order :: ol in (toSet(g._orderLines) setminus seqToSet(newOrderLines)) && contains(old(g._orders), o) && get_ol_o_num(ol) == get_o_num(o) && o != order_ ==>
+        (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
 }
 
 method processOrderLines(o_id: Int)
 returns (newOrderLines: Seq[OrderLine])
 ensures forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0 && get_ol_o_num(ol) == o_id
 
-method addOrderLines(g: Ref, newOrderLines: Seq[OrderLine])
-requires acc(g._orderLines)
-ensures acc(g._orderLines, 1/2)
-ensures toSet(g._orderLines) == old(toSet(g._orderLines)) union seqToSet(newOrderLines)
+function addOrderLines(oldOrderLines: AWSet[OrderLine], newOrderLines: Seq[OrderLine]): AWSet[OrderLine]
+ensures toSet(result) == toSet(oldOrderLines) union seqToSet(newOrderLines)
 
 function genOrder(orderNum: Int, d_id: Id, c_id: Int, oldOrders: AWSet[Order]): Order
 requires forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != orderNum

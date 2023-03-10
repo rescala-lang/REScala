@@ -196,50 +196,58 @@ object ViperBackend:
     val body =
       interaction.executes.map(insertArgs(interaction.modifies, argNames, _))
 
-    val bodyInner: Option[String] = body match
-      case Some(TSeq(sequence)) =>
-        Some(
-          sequence
-            .take(sequence.length - 1)
-            .map(expressionToViper)
+    def isAssertAssume: Term => Boolean =
+      case TAssert(_) => true
+      case TAssume(_) => true
+      case _          => false
+
+    def bodyAssignment(lastExpression: Term): String =
+      lastExpression match
+        case tuple @ TTuple(factors) =>
+          if (factors.length != interaction.modifies.length) then
+            throw ViperCompilationException(
+              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${factors.length} were given: $tuple"
+            )
+          (interaction.modifies zip factors.toList)
+            .map((reactive, assignment) =>
+              s"graph.$reactive := ${expressionToViper(assignment)}"
+            )
             .mkString("\n")
-        )
-      case _ => None
+        case t =>
+          if interaction.modifies.length != 1 then
+            throw ViperCompilationException(
+              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only a simple value was given: $t"
+            )
+          s"graph.${interaction.modifies.head} := ${expressionToViper(t)}"
 
-    val bodyAssignments =
-      body.map(b =>
-        // TODO: if body is a sequence: compile everything
-        val lastExpression: Term = b match
-          case TSeq(sequence) => sequence.last
-          case t              => t
+    val bodyCompiled: Option[String] =
+      body.map {
+        case TSeq(sequence) =>
+          // ignore assertions and assumptions when looking for last expression
+          val inner: List[Term] =
+            sequence.reverse.dropWhile_(isAssertAssume).reverse
+          val end: List[Term] =
+            sequence.reverse.takeWhile_(isAssertAssume).reverse
 
-        lastExpression match
-          case tuple @ TTuple(factors) =>
-            if (factors.length != interaction.modifies.length) then
-              throw ViperCompilationException(
-                s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${factors.length} were given: $tuple"
-              )
-            (interaction.modifies zip factors.toList)
-              .map((reactive, assignment) =>
-                s"graph.$reactive := ${expressionToViper(assignment)}"
-              )
-              .mkString("\n")
-          case t =>
-            if interaction.modifies.length != 1 then
-              throw ViperCompilationException(
-                s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only a simple value was given: $t"
-              )
-            s"graph.${interaction.modifies.head} := ${expressionToViper(t)}"
-      )
+          val assignment = inner.last
 
-    val overlapppingSources =
-      OverlapAnalysis
-        .reaches(interaction)
-        .filter(ctx.sources.keySet.contains(_))
+          ((inner
+            .take(inner.length - 1)
+            .map(expressionToViper) :+
+            bodyAssignment(assignment)) ++
+            end.map(expressionToViper)).mkString("\n")
+        case t => bodyAssignment(t)
+        // case t => (List(), t)
+      }
 
+    // collect read/write permissions
+    // collect explicitly mentioned source reactives
+    val mentioned = uses(interaction).filter(ctx.sources.keySet.contains)
     val writes = interaction.modifies
     val reads =
-      overlappingInvariants.flatMap(ctx.reactivesPerInvariant(_)) -- writes
+      (overlappingInvariants.flatMap(
+        ctx.reactivesPerInvariant(_)
+      ) ++ mentioned) -- writes
 
     s"""|method $name (
         |  // graph
@@ -270,10 +278,8 @@ object ViperBackend:
         |// relevant invariants
         |${relevantInvariants.map("ensures " + _).mkString("\n")}
         |{
-        |${bodyInner.getOrElse("").indent(2)}${bodyAssignments
-         .getOrElse("")
-         .indent(2)}}
-        """.stripMargin
+        |${bodyCompiled.getOrElse("").indent(2)}} 
+        |""".stripMargin
 
   private def insertArgs(
       modifies: List[ID],
@@ -377,6 +383,17 @@ object ViperBackend:
               x :: y :: Nil
             ) => // handle set arithmetics. TODO: support more cases
           s"${expressionToViper(x)} union ${expressionToViper(y)}"
+        case TFunC(
+              "setminus",
+              x :: y :: Nil
+            ) => // handle set arithmetics. TODO: support more cases
+          s"${expressionToViper(x)} setminus ${expressionToViper(y)}"
+        case TFunC(
+              name,
+              x :: Nil
+            )
+            if name == "size" || name == "length" => // handle set arithmetics. TODO: support more cases
+          s"|${expressionToViper(x)}|"
         case TFunC(name, args) =>
           val argsString = args.map(a => expressionToViper(a)).mkString(", ")
           s"$name($argsString)"

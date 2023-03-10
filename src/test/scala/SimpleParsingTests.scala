@@ -317,6 +317,26 @@ class SimpleParsing extends ParserSuite:
     )
 
     assertParsingResult(
+      Parser.tuple,
+      """(				
+        	add(districts_temp, districtUpdated), // add updated district
+
+					addOrderLines(orderLines, newOrderLines) // add all new orderline
+				)""",
+      TTuple(
+        NonEmptyList.fromListUnsafe(
+          List(
+            TFunC("add", List(TVar("districts_temp"), TVar("districtUpdated"))),
+            TFunC(
+              "addOrderLines",
+              List(TVar("orderLines"), TVar("newOrderLines"))
+            )
+          )
+        )
+      )
+    )
+
+    assertParsingResult(
       Parser.term,
       "(a, b,co)",
       TTuple(

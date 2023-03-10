@@ -1,6 +1,6 @@
-import "crdts/aw_set.vpr"
+import "../../lib/crdts/aw_set.vpr"
 import "types.vpr"
-import "basic_types.vpr"
+import "../../lib/basic_types.vpr"
 import "helper_functions.vpr"
 
 // GRAPH //
@@ -39,3 +39,7 @@ define cc7(g) forall ol: OrderLine, o: Order ::
     contains(g._orders, o) && contains(g._orderLines, ol) && get_ol_o_num(ol) == get_o_num(o) ==> (
     get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0
 ) 
+
+method test(a: Bool, b: Bool, c: Bool, d: Bool)returns(){
+   assert (a ==> b <==> c ==> d) <==> ((a ==> b) <==> (c ==> d))
+}

@@ -264,6 +264,56 @@ class BooleanExpressionParsing extends ParserSuite {
 
   test("forall") {
     assertParsingResult(
+      Parser.boolParens,
+      "(exists o: Order :: contains(orders, o) && get_o_num(o) == get_ol_o_num(ol))",
+      TParens(
+        TExists(
+          NonEmptyList.one(TArgT("o", SimpleType("Order", List()))),
+          TConj(
+            TFunC("contains", List(TVar("orders"), TVar("o"))),
+            TEq(
+              TFunC("get_o_num", List(TVar("o"))),
+              TFunC("get_ol_o_num", List(TVar("ol")))
+            )
+          )
+        )
+      )
+    )
+
+    assert(
+      Parser.term
+        .parseAll(
+          """ol in (setminus(toSet(orderLines), seqToSet(newOrderLines)))"""
+        )
+        .isRight
+    )
+    assert(
+      Parser.term
+        .parseAll("""forall ol: OrderLine, o: Order :: ol in (setminus(toSet(orderLines), seqToSet(newOrderLines))) && contains(old(orders), o) && get_ol_o_num(ol) == get_o_num(o) && o != order_ ==>
+         (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)""")
+        .isRight
+    )
+
+    assertParsingResult(
+      Parser.neg,
+      "!(exists o: Order :: contains(orders, o) && get_o_num(o) == get_ol_o_num(ol))",
+      TNeg(
+        TParens(
+          TExists(
+            NonEmptyList.one(TArgT("o", SimpleType("Order", List()))),
+            TConj(
+              TFunC("contains", List(TVar("orders"), TVar("o"))),
+              TEq(
+                TFunC("get_o_num", List(TVar("o"))),
+                TFunC("get_ol_o_num", List(TVar("ol")))
+              )
+            )
+          )
+        )
+      )
+    )
+
+    assertParsingResult(
       Parser.booleanExpr,
       "forall a: Appointment, u: User :: (a, u) in invitations ==> a in all_appointments",
       TForall(

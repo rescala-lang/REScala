@@ -13,7 +13,8 @@ object Parser:
 
   // helpers
   private val infixOperators = Set("-", "+", "*", "/", ".")
-  private val keywords = Set("Interaction", "assert", "assume")
+  private val keywords =
+    Set("Interaction", "assert", "assume", "true", "false", "forall", "exists")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // any amount of whitespace, newlines or comments
   val wsOrNl = (wsp | P.defer(comment) | lf).rep0
@@ -58,7 +59,7 @@ object Parser:
   val tuple: P[TTuple] =
     (P.char('(').soft ~ wsOrNl *> P
       .defer(term)
-      .repSep(2, ws ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
+      .repSep(2, ws.soft ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
       .char(')'))
       .map(TTuple(_))
 
@@ -93,7 +94,7 @@ object Parser:
   val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(biImplication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
     ((P.char('(').soft ~ wsOrNl).with1 *> P
-      .defer(biImplication) <* wsOrNl ~ P.char(')')).map(TParens(_))
+      .defer(booleanExpr) <* wsOrNl ~ P.char(')')).map(TParens(_))
   val boolFactor: P[Term] =
     boolParens.backtrack
       | neg
@@ -151,7 +152,9 @@ object Parser:
 
   // set expressions
   val inSetFactor: P[Term] =
-    P.defer(fieldAcc | functionCall.backtrack | tuple | number.backtrack | _var)
+    P.defer(
+      boolParens.backtrack | fieldAcc | functionCall.backtrack | tuple | number.backtrack | _var
+    )
   val inSet: P[TBoolean] = P
     .defer(
       ((inSetFactor <* ws).soft <* P
@@ -236,7 +239,7 @@ object Parser:
       }
 
   // object orientation (e.g. dot syntax)
-  val args = P.defer0(term.repSep0(P.char(',') ~ ws))
+  val args = P.defer0(term.repSep0(P.char(',') ~ wsOrNl))
   val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
     P.defer(
@@ -280,9 +283,10 @@ object Parser:
   // functions
   val functionCall: P[TFunC] =
     P.not(P.stringIn(keywords)).with1
-      *> (id.soft ~ (P.char('(') *> args) <* P.char(')')).map { (id, arg) =>
-        TFunC(name = id, args = arg)
-      }
+      *> (id.soft ~ (P.char('(') ~ wsOrNl *> args) <* wsOrNl ~ P.char(')'))
+        .map { (id, arg) =>
+          TFunC(name = id, args = arg)
+        }
 
   val assertAssume: P[Term] =
     (((P.string("assert").string | P.string("assume").string)
