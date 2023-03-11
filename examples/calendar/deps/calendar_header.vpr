@@ -1,5 +1,5 @@
-import "../lib/crdts/aw_set.vpr"
-import "../lib/basic_types.vpr"
+import "../../lib/crdts/aw_set.vpr"
+import "../../lib/basic_types.vpr"
 
 // custom types
 domain Appointment {

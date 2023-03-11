@@ -1,5 +1,5 @@
 // imports
-import "calendar_header.vpr"
+import "deps/calendar_header.vpr"
 // sources
 field work: AWSet[Appointment]
 field vacation: AWSet[Appointment]
@@ -38,8 +38,8 @@ ensures inv_1(graph.vacation, graph.work)
 ensures inv_2(graph.vacation)
 {
   graph.vacation := add(graph.vacation, a)
-}
-        
+} 
+
 method add_work (
   // graph
   graph: Ref,
@@ -64,5 +64,5 @@ ensures a in toSet(graph.work)
 ensures inv_1(graph.vacation, graph.work)
 {
   graph.work := add(graph.work, a)
-}
-        
+} 
+

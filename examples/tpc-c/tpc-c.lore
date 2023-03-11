@@ -1,4 +1,4 @@
-//> viperimport viper/tpc-c-header-new.vpr
+//> viperimport deps/tpc-c-header.vpr
 
 // graph definition
 val warehouses: Source[AWSet[Warehouse]]  = Source(AWSet()) 

@@ -1,4 +1,5 @@
-//> viperimport calendar_header.vpr
+//> viperimport deps/calendar_header.vpr
+
 type Calendar = AWSet[Appointment]
 val work: Source[Calendar] = Source(AWSet())     
 val vacation: Source[Calendar] = Source(AWSet()) 

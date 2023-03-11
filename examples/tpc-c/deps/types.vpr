@@ -1,0 +1,105 @@
+
+domain Warehouse {
+    function get_w_id(w: Warehouse): Id
+
+    function get_w_tax_rate(w: Warehouse): Int
+
+    function get_w_ytd(w: Warehouse): Int
+
+    function new_warehouse(id: Id, tax_rate: Int, ytd: Int): Warehouse
+
+    axiom new_warehouse_ax {
+        forall w: Warehouse, w_id: Id, w_tax_rate: Int, w_ytd: Int ::
+            w == new_warehouse(w_id, w_tax_rate, w_ytd) ==> (
+                (get_w_id(w) == w_id) &&
+                (get_w_tax_rate(w) == w_tax_rate) &&
+                (get_w_ytd(w) == w_ytd)
+            ) 
+    }
+
+    axiom w_equality {
+        forall w1: Warehouse, w2: Warehouse ::
+            w1 == w2 <==> (
+                get_w_id(w1) == get_w_id(w2) &&
+                get_w_tax_rate(w1) == get_w_tax_rate(w2) &&
+                get_w_ytd(w1) == get_w_ytd(w2)
+            )
+    }
+}
+
+domain District{
+    function get_d_id(d: District): Id
+
+    function get_d_w_id(d: District): Id
+
+    function get_d_next_order_num(d: District): Int
+
+    function get_d_tax_rate(d: District): Int
+
+    function get_d_ytd(d: District): Int
+
+    function new_district(id: Id, w_id: Id, next_order_num: Int, tax_rate: Int, ytd: Int): District
+    
+    axiom new_district_ax {
+        forall d: District, d_id: Id, w_id: Id, next_order_num: Int, tax_rate: Int, ytd: Int ::
+            d == new_district(d_id, w_id, next_order_num, tax_rate, ytd) ==> (
+                get_d_id(d) == d_id &&
+                get_d_w_id(d) == w_id &&
+                get_d_next_order_num(d) == next_order_num &&
+                get_d_tax_rate(d) == tax_rate &&
+                get_d_ytd(d) == ytd
+            ) 
+    }
+    // function next_order_num(s: Set[District]): Id
+
+    // axiom next_order_num_ax {
+    //     forall s: Set[District], num: Id ::
+    //         next_order_num(s) == num ==> 
+    // }
+}
+
+domain Customer{
+    function get_c_id(c: Customer): Id
+    function get_c_w_id(c: Customer): Id
+    function get_c_d_id(c: Customer): Id
+}
+
+domain Order {
+    function get_o_num(o: Order): Int
+    function get_o_d_id(o: Order): Id
+    function get_o_w_id(o: Order): Id
+    function get_o_c_id(o: Order): Int
+    function get_o_ol_cnt(o: Order): Int
+}
+
+domain NewOrder{
+    function get_no_o_num(no: NewOrder): Int
+    function get_no_d_id(no: NewOrder): Id
+    function get_no_w_id(no: NewOrder): Id
+}
+
+domain OrderLine {
+    function get_ol_d_id(ol: OrderLine): Id
+    function get_ol_o_num(ol: OrderLine): Int
+    function get_ol_del_date(ol: OrderLine): Int
+}
+
+domain Item {
+}
+
+domain Stock {
+}
+
+domain History {
+    function new_history(h_c_id: Id, c_d_id: Id,
+    c_w_id: Id, d_id: Id, w_id: Id, date: Timestamp,
+    amount: Int): History
+}
+
+domain Id {
+
+}
+
+domain Timestamp {
+
+}

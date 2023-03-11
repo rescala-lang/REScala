@@ -1,24 +1,6 @@
 domain String {
 }
 
-domain Float {
-    function add_f(l: Float, r: Float): Float
-
-    function isZero_f(f: Float): Bool
-
-    axiom add_ax_f {
-        forall f1: Float, f2: Float, f3: Float ::
-            (f3 == add_f(f1,f2)) && (!isZero_f(f2)) ==> 
-                f3 != f1
-    }
-
-    axiom add_commutativity {
-        forall f1: Float, f2: Float, f3: Float ::
-            (f3 == add_f(f1,f2)) <==> 
-            (f3 == add_f(f2,f1))
-    }
-}
-
 // function toMultiset(l: Seq[Int]): Multiset[Int]
 // ensures |result| == |l|
 // ensures |l| == 0 ==> result == Multiset()
