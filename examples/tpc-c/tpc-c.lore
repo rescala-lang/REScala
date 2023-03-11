@@ -12,23 +12,21 @@ val stocks: Source[AWSet[Stock]]          = Source(AWSet())
 val paymentHistory: Source[AWSet[History]]     = Source(AWSet())
 
 
-// FIXME: before compiling to Viper, check which derived reactives are used in interactions and invariants
-// val warehouseYTD: Derived[Map[Warehouse, YTD]] = Derived {
-// 	districtsPerWarehouse(warehouses,districts)
-// 	.map(d => districtYTD.get(d)).toMap()
-// }
+val warehouseYTD: Derived[Map[Warehouse, YTD]] = Derived {
+	mapDistrictYTD(districtsPerWarehouse(warehouses,districts)).toMap()
+}
 val districtYTD: Derived[Map[District, YTD]] = Derived{
     paymentsPerDistrict(districts,paymentHistory).map(sum).toMap()
 }
 val customerYTD: Derived[Map[Customer, YTD]] = Derived{
     paymentsPerCustomer(customers, paymentHistory).map(sum).toMap()
 }
-// val customerBalance: Derived[Map[Customer, Balance]] = Derived {
-// 	sumOfOrdersPerCustomer(customers, oderLines).map((c, s) => customerYTD.get(c) - s).toMap()
-// }
-// val nextOrderId: Derived[Map[District, OrderID]] = Derived{
-// 	highestOrderIDperDistrict(districts, oders).map(id => id + 1).toMap()
-// }
+val customerBalance: Derived[Map[Customer, Balance]] = Derived {
+ 	YTDMinusSum(customerYTD, sumOfOrdersPerCustomer(customers, oderLines)).toMap()
+}
+val nextOrderId: Derived[Map[District, OrderID]] = Derived{
+	mapPlusOne(highestOrderIDperDistrict(districts, oders)).toMap()
+}
 val orderLineCount: Derived[Map[Order, Int]] = Derived{
     orderLinesPerOrder(orders, orderLines).map(length).toMap()
 }

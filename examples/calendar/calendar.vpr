@@ -11,6 +11,126 @@ define inv_1(vacation, work) forall a: Appointment :: a in all_appointments(vaca
 define inv_2(vacation) remaining_vacation(vacation) >= 0
 
 // interactions
+method remove_work (
+  // graph
+  graph: Ref,
+  // arguments
+  a: Appointment
+)
+returns ()
+// permissions
+requires acc(graph.work)
+requires acc(graph.vacation, 1/2)
+// preconditions
+requires a in toSet(graph.work)
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+// permissions
+ensures acc(graph.work)
+ensures acc(graph.vacation, 1/2)
+// postconditions
+ensures !(a in toSet(graph.work))
+ensures toSet(graph.work) == old(toSet(graph.work)) setminus Set(a)
+ensures sumDays(toSet(graph.work)) == old(sumDays(toSet(graph.work))) - sumDays(Set(a))
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+{
+  graph.work := remove(graph.work, a)
+} 
+
+method change_vacation (
+  // graph
+  graph: Ref,
+  // arguments
+  oldApp: Appointment,
+  newApp: Appointment
+)
+returns ()
+// permissions
+requires acc(graph.vacation)
+requires acc(graph.work, 1/2)
+// preconditions
+requires get_start(newApp) < get_end(newApp)
+requires oldApp in toSet(graph.vacation)
+requires !(newApp in toSet(graph.vacation))
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+requires inv_2(graph.vacation)
+// permissions
+ensures acc(graph.vacation)
+ensures acc(graph.work, 1/2)
+// postconditions
+ensures newApp in toSet(graph.vacation)
+ensures toSet(graph.vacation) == old(toSet(graph.vacation) setminus Set(oldApp) union Set(newApp))
+ensures !(oldApp in toSet(graph.vacation))
+ensures |toSet(graph.vacation)| == old(|toSet(graph.vacation)|)
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+ensures inv_2(graph.vacation)
+{
+  graph.vacation := add(remove(graph.vacation, oldApp), newApp)
+} 
+
+method change_work (
+  // graph
+  graph: Ref,
+  // arguments
+  oldApp: Appointment,
+  newApp: Appointment
+)
+returns ()
+// permissions
+requires acc(graph.work)
+requires acc(graph.vacation, 1/2)
+// preconditions
+requires get_start(newApp) < get_end(newApp)
+requires oldApp in toSet(graph.work)
+requires !(newApp in toSet(graph.work))
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+// permissions
+ensures acc(graph.work)
+ensures acc(graph.vacation, 1/2)
+// postconditions
+ensures newApp in toSet(graph.work)
+ensures toSet(graph.work) == old(toSet(graph.work) setminus Set(oldApp) union Set(newApp))
+ensures !(oldApp in toSet(graph.work))
+ensures |toSet(graph.work)| == old(|toSet(graph.work)|)
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+{
+  graph.work := add(remove(graph.work, oldApp), newApp)
+} 
+
+method remove_vacation (
+  // graph
+  graph: Ref,
+  // arguments
+  a: Appointment
+)
+returns ()
+// permissions
+requires acc(graph.vacation)
+requires acc(graph.work, 1/2)
+// preconditions
+requires a in toSet(graph.vacation)
+// relevant invariants
+requires inv_1(graph.vacation, graph.work)
+requires inv_2(graph.vacation)
+// permissions
+ensures acc(graph.vacation)
+ensures acc(graph.work, 1/2)
+// postconditions
+ensures !(a in toSet(graph.vacation))
+ensures toSet(graph.vacation) == old(toSet(graph.vacation)) setminus Set(a)
+ensures sumDays(toSet(graph.vacation)) == old(sumDays(toSet(graph.vacation))) - sumDays(Set(a))
+// relevant invariants
+ensures inv_1(graph.vacation, graph.work)
+ensures inv_2(graph.vacation)
+{
+  graph.vacation := remove(graph.vacation, a)
+} 
+
 method add_vacation (
   // graph
   graph: Ref,

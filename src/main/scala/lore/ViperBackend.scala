@@ -110,7 +110,6 @@ object ViperBackend:
       case t => t
     val ctx1 =
       ctx.copy(ast = ctx.ast.map(traverseFromNode(_, insertTypes)))
-    // TODO: step 0: find field calls and function calls that use anonymous functions as arguments and transform them to synthetic functions
     // step 1: field calls as function calls
     def fieldCallToFunCall: Term => Term =
       case TFCall(parent, field, args) =>

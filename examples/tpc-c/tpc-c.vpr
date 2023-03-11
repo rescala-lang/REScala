@@ -12,7 +12,10 @@ field paymentHistory: AWSet[History]
 field customers: AWSet[Customer]
 // derived
 define orderLineCount(orderLines, orders) toMap(map(orderLinesPerOrder(orders, orderLines), length))
+define customerBalance(customers, paymentHistory) toMap(YTDMinusSum(customerYTD(customers, paymentHistory), sumOfOrdersPerCustomer(customers, oderLines)))
 define customerYTD(customers, paymentHistory) toMap(map(paymentsPerCustomer(customers, paymentHistory), sum))
+define warehouseYTD(districts, warehouses) toMap(mapDistrictYTD(districtsPerWarehouse(warehouses, districts)))
+define nextOrderId(districts) toMap(mapPlusOne(highestOrderIDperDistrict(districts, oders)))
 define districtYTD(districts, paymentHistory) toMap(map(paymentsPerDistrict(districts, paymentHistory), sum))
 // invariants
 define inv_1(districts, newOrders) forall d: District :: contains(districts, d) ==> (maxNOrderNum(toSet(newOrders), get_d_id(d)) - minNOrderNum(toSet(newOrders), get_d_id(d)) + 1 == countNewOrders(toSet(newOrders), get_d_id(d)))

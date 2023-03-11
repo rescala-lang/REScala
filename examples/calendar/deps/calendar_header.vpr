@@ -14,48 +14,5 @@ domain Appointment {
   }
 }
 
-// function sumDayInternal(appointments: Set[Appointment], accu: Int): Int
-// ensures |appointments| == 0 ==> result == accu
-// ensures |appointments| >= 1 && a in appointments ==> sumDayInternal()
-
 function sumDays(appointments: Set[Appointment]): Int
-ensures |appointments| == 0 ==> result == 0
-ensures forall a: Appointment :: |appointments| == 1 && a in appointments ==> result == days(a)
-ensures appointments == Set() ==> result == 0
-ensures forall s1: Set[Appointment], s2: Set[Appointment] ::{sumDays(s1 union s2)} s1 intersection s2 == Set() ==> sumDays(s1 union s2) == sumDays(s1) + sumDays(s2)
-ensures forall s1: Set[Appointment], s2: Set[Appointment], s3: Set[Appointment] ::{sumDays(s1), sumDays(s2), sumDays(s3)} s1 == s2 setminus s3 ==> sumDays(s1) == sumDays(s2) - sumDays(s3)
-// ensures false
-// ensures forall a: Appointment, b: Appointment :: {sumDays(Set(a,b))} appointments == Set(a,b) ==> result == days(a) + days(b)
-// ensures forall s: Set[Appointment], t: Set[Appointment] :: {sumDays(s), sumDays(t)} s intersection t == Set() ==> result == sumDays(s) + sumDays(t)
-
-
-method tests() returns (){
-  var a1: Appointment
-  var a2: Appointment
-  var a3: Appointment
-  var a4: Appointment
-  assume days(a1) == 1
-  assume days(a2) == 2
-  assume days(a3) == 3
-  assume days(a4) == 4
-  assert sumDays(Set(a1)) == 1
-  assert sumDays(Set(a2)) == 2
-  assert sumDays(Set(a1,a2)) == 3
-  assert days(a3) == 3
-  assert days(a2) == 2
-  assert sumDays(Set(a2,a3)) == 5
-  assert sumDays(Set(a1,a2,a3)) == 6
-  // assert sumDays(Set(a1,a2,a3,a4)) == 10
-}
-// // GRAPH //
-// // sources
-// field work: AWSet[Appointment]
-// field vacation: AWSet[Appointment]
-// // derived
-// define all_appointments(g) toSet(g.work) union toSet(g.vacation)
-// define remaining_vacation(g) 30 - |toSet(g.vacation)|
-
-// // INVARIANTS //
-// define allValid(g)forall a: Appointment :: a in all_appointments(g) ==> get_start(a) < get_end(a)
-// define vacGtZero(g) remaining_vacation(g) >= 0
-// define noOverlaps(g) forall a1: Appointment, a2: Appointment :: a1 != a2 && a1 in all_appointments(g) && a2 in all_appointments(g) ==> get_start(a1) >= get_end(a2) || get_start(a2) >= get_end(a1)
+ensures |appointments| == result
