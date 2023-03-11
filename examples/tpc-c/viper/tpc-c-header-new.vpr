@@ -24,7 +24,7 @@ method processOrderLines(o_id: Int)
 returns (newOrderLines: Seq[OrderLine])
 ensures forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0 && get_ol_o_num(ol) == o_id
 
-function addOrderLines(oldOrderLines: AWSet[OrderLine], newOrderLines: Seq[OrderLine]): AWSet[OrderLine]
+function addAll(oldOrderLines: AWSet[OrderLine], newOrderLines: Seq[OrderLine]): AWSet[OrderLine]
 ensures toSet(result) == toSet(oldOrderLines) union seqToSet(newOrderLines)
 
 function genOrder(orderNum: Int, d_id: Id, c_id: Int, oldOrders: AWSet[Order]): Order
@@ -37,3 +37,9 @@ ensures forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> g
 function genNewOrder(orderNum: Int, d_id: Id): NewOrder
 ensures get_no_o_num(result) == orderNum
 ensures get_no_d_id(result) == d_id
+
+// payment
+function findCustomer(_customers: AWSet[Customer], c_id: Id, c_last: Option[String]): Customer
+ensures contains(_customers, result)
+
+function getId(customer: Customer): Id

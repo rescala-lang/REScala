@@ -379,15 +379,13 @@ object ViperBackend:
         case TNum(i)    => s"$i"
         case TParens(inner) => s"(${expressionToViper(inner)})"
         case TFunC(
-              "union",
+              setOp,
               x :: y :: Nil
-            ) => // handle set arithmetics. TODO: support more cases
-          s"${expressionToViper(x)} union ${expressionToViper(y)}"
-        case TFunC(
-              "setminus",
-              x :: y :: Nil
-            ) => // handle set arithmetics. TODO: support more cases
-          s"${expressionToViper(x)} setminus ${expressionToViper(y)}"
+            )
+            if Set("setminus", "union", "subset", "intersection").contains(
+              setOp
+            ) => // handle set arithmetics.
+          s"${expressionToViper(x)} $setOp ${expressionToViper(y)}"
         case TFunC(
               name,
               x :: Nil

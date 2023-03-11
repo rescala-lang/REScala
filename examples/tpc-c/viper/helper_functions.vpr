@@ -1,6 +1,6 @@
-import "crdts/aw_set.vpr"
+import "../../lib/crdts/aw_set.vpr"
 import "types.vpr"
-import "basic_types.vpr"
+import "../../lib/basic_types.vpr"
 
 // helper functions needed to formulate the consistency criteria
 // returns all districts with a specific warehouse_id

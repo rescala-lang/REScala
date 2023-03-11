@@ -47,9 +47,23 @@ invariant forall ol: OrderLine, o: Order ::
     get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0
 ) 
 
-type PaymentArgs = (Id, String, Int)
+// (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date)
+type PaymentArgs = (Id, Id, Id, Id, Id, Option[String], Int, Timestamp)
 // TODO: payment
 val payment: Unit = Interaction[AWSet[History]][PaymentArgs]
+    .modifies(paymentHistory)
+    .requires{histories => (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date) => h_amount != 0}
+    .requires{forall w1: Warehouse, w2: Warehouse :: // warehouse ids are unique
+        contains(warehouses, w1) && contains(warehouses, w2) && get_w_id(w1) == get_w_id(w2) ==> w1 == w2}
+    .ensures{ph => (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date) => old(ph.toSet).subset(ph.toSet)}
+    .executes{ph => (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date) => {
+        val customer: Customer = findCustomer(customers, c_id, c_last)
+        val realID: Id = getId(customer)
+        val newHistory: History = new_history(realID, c_d_id, c_w_id, d_id, w_id, h_date, h_amount)
+        ph.add(newHistory)
+        assert(ph.toSet == old(ph.toSet.union(Set(newHistory))))
+    }
+    }
 
 type NOArgs = (Id, Id, Id, Timestamp, Seq[Option[Id]], Seq[Id], Seq[Int])
 val new_order: Unit = Interaction[(AWSet[District], AWSet[NewOrder], AWSet[Order], AWSet[OrderLine])][NOArgs]
@@ -121,10 +135,10 @@ val new_order: Unit = Interaction[(AWSet[District], AWSet[NewOrder], AWSet[Order
             )
 
             (
-                add(districts_temp, district_), // add updated district
-                add(newOrders, neworder), // add newOrder
-                add(orders, order_), // add new order
-                addOrderLines(orderLines, newOrderLines) // add all new orderline
+                districts_temp.add(district_), // add updated district
+                newOrders.add(neworder), // add newOrder
+                orders.add(order_), // add new order
+                orderLines.addAll(newOrderLines) // add all new orderline
             )
 
             // helper assertions
