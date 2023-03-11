@@ -12,7 +12,7 @@ val stocks: Source[AWSet[Stock]]          = Source(AWSet())
 val paymentHistory: Source[AWSet[History]]     = Source(AWSet())
 
 
-// fixme: before compiling to Viper, check which derived reactives are used in interactions and invariants
+// FIXME: before compiling to Viper, check which derived reactives are used in interactions and invariants
 // val warehouseYTD: Derived[Map[Warehouse, YTD]] = Derived {
 // 	districtsPerWarehouse(warehouses,districts)
 // 	.map(d => districtYTD.get(d)).toMap()
@@ -49,7 +49,6 @@ invariant forall ol: OrderLine, o: Order ::
 
 // (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date)
 type PaymentArgs = (Id, Id, Id, Id, Id, Option[String], Int, Timestamp)
-// TODO: payment
 val payment: Unit = Interaction[AWSet[History]][PaymentArgs]
     .modifies(paymentHistory)
     .requires{histories => (w_id, d_id, c_w_id, c_d_id, c_id, c_last, h_amount, h_date) => h_amount != 0}
