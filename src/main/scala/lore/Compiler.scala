@@ -37,7 +37,7 @@ object Compiler extends IOApp:
     // yield result
 
   def toViper(ast: NonEmptyList[AST.Term], options: Options): String =
-    ViperBackend.toViper(ast.toList)
+    ViperBackend.compileAsSingleFile(ast.toList)
     // result = ViperBackend.toViper(ast)
     // for _ <- options.toFile match
     //     case None       => IO.println(result)

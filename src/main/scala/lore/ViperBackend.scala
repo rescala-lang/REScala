@@ -7,39 +7,90 @@ object ViperBackend:
   case class ViperCompilationException(message: String)
       extends Exception(message)
 
-  def toViper(ast: Seq[Term]): String =
+  case class ViperCompilationResult(
+      ctx: CompilationContext,
+      sources: Seq[String],
+      derived: Seq[String],
+      invariants: Seq[String],
+      interactions: Seq[(String, String)]
+  )
+
+  /** Compiles a given ast to Viper. This function returns a list of (filename,
+    * sourcecode) tuples in order to allow compilation to multiple target files.
+    *
+    * @param ast
+    * @return
+    */
+  def compileAsSeparateFiles(
+      ast: Seq[Term],
+      benchMarkMode: Boolean = false
+  ): Seq[(String, String)] =
+    val res = toViper(ast)
+    res.interactions.map((name, code) =>
+      (
+        name,
+        s"""|// imports
+            |${res.ctx.viperImports
+             .map(i => s"import \"${i.path.toString}\"")
+             .mkString("\n")}
+            |// sources
+            |${res.sources.mkString("\n")}
+            |// derived
+            |${res.derived.mkString("\n")}
+            |// invariants
+            |${res.invariants.mkString("\n")}
+            |
+            |$code
+            |""".stripMargin
+      )
+    )
+
+  def compileAsSingleFile(ast: Seq[Term]): String =
+    val res = toViper(ast)
+
+    s"""|// imports
+          |${res.ctx.viperImports
+         .map(i => s"import \"${i.path.toString}\"")
+         .mkString("\n")}
+          |// sources
+          |${res.sources.mkString("\n")}
+          |// derived
+          |${res.derived.mkString("\n")}
+          |// invariants
+          |${res.invariants.mkString("\n")}
+          |
+          |// interactions
+          |${res.interactions.map(_._2).mkString("\n")}
+          |""".stripMargin
+
+  def toViper(
+      ast: Seq[Term]
+  ): ViperCompilationResult =
     //// step 1: build context object that we pass around to subfunctions
     val ctx = flattenInteractions(CompilationContext(ast))
 
-    //// new step: Viper specific AST transformations
+    //// step 2: Viper specific AST transformations
     val ctxy = viperTransformations(ctx)
 
-    //// step 2: compile source reactives
+    //// step 3: compile source reactives
     val (ctx3, sourcesCompiled) = compileSources(ctxy)
 
-    // compile derived reactives
+    //// step 4: compile derived reactives
     val (ctx4, derivedCompiled) = compileDerived(ctx3)
 
-    //// step 4: compile invariants
+    //// step 5: compile invariants
     val (ctx5, invariantsCompiled) = compileInvariants(ctx4)
 
-//     // step 4: compile interactions
+    //// step 6: compile interactions
     val (ctx6, interactionsCompiled) = compileInteractions(ctx5)
 
-    s"""|// imports
-        |${ctx6.viperImports
-         .map(i => s"import \"${i.path.toString}\"")
-         .mkString("\n")}
-        |// sources
-				|${sourcesCompiled.mkString("\n")}
-				|// derived
-				|${derivedCompiled.mkString("\n")}
-				|// invariants
-				|${invariantsCompiled.mkString("\n")}
-				|
-				|// interactions
-				|${interactionsCompiled.mkString("\n")}
-				|""".stripMargin
+    return ViperCompilationResult(
+      ctx6,
+      sourcesCompiled,
+      derivedCompiled,
+      invariantsCompiled,
+      interactionsCompiled
+    )
 
   private def viperTransformations(
       ctx: CompilationContext
@@ -133,7 +184,9 @@ object ViperBackend:
         )
     )
 
-  private def compileInteractions(ctx: CompilationContext): CompilationResult =
+  private def compileInteractions(
+      ctx: CompilationContext
+  ): (CompilationContext, List[(String, String)]) =
     val interactions = ctx.interactions
       // only compile interactions that modify some reactives and have some guarantees or affect an invariant
       .filter((_, i) =>
@@ -142,7 +195,7 @@ object ViperBackend:
             .overlappingInvariants(i)(using ctx)
             .isEmpty)
       )
-      .map(interactionToMethod(_, _)(using ctx))
+      .map((name, i) => (name, interactionToMethod(name, i)(using ctx)))
       .toList
     return (ctx, interactions)
 
