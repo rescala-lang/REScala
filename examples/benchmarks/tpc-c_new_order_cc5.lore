@@ -1,0 +1,172 @@
+//> viperimport ../tpc-c/deps/tpc-c-header.vpr
+
+// graph definition
+val warehouses: Source[AWSet[Warehouse]]  = Source(AWSet()) 
+val districts: Source[AWSet[District]]    = Source(AWSet()) 
+val customers: Source[AWSet[Customer]]    = Source(AWSet())
+val orders: Source[AWSet[Order]]          = Source(AWSet())
+val newOrders: Source[AWSet[NewOrder]]    = Source(AWSet())
+val orderLines: Source[AWSet[OrderLine]]  = Source(AWSet())
+val items: Source[AWSet[Item]]            = Source(AWSet())
+val stocks: Source[AWSet[Stock]]          = Source(AWSet())
+val paymentHistory: Source[AWSet[History]]     = Source(AWSet())
+
+
+val warehouseYTD: Derived[Map[Warehouse, YTD]] = Derived {
+	mapDistrictYTD(districtsPerWarehouse(warehouses,districts)).toMap()
+}
+val districtYTD: Derived[Map[District, YTD]] = Derived{
+    paymentsPerDistrict(districts,paymentHistory).map(sum).toMap()
+}
+val customerYTD: Derived[Map[Customer, YTD]] = Derived{
+    paymentsPerCustomer(customers, paymentHistory).map(sum).toMap()
+}
+val customerBalance: Derived[Map[Customer, Balance]] = Derived {
+ 	YTDMinusSum(customerYTD, sumOfOrdersPerCustomer(customers, oderLines)).toMap()
+}
+val nextOrderId: Derived[Map[District, OrderID]] = Derived{
+	mapPlusOne(highestOrderIDperDistrict(districts, oders)).toMap()
+}
+val orderLineCount: Derived[Map[Order, Int]] = Derived{
+    orderLinesPerOrder(orders, orderLines).map(length).toMap()
+}
+
+// invariants
+// cc5
+invariant forall o: Order :: orders.contains(o) ==> 
+    (get_o_c_id(o) == 0 <==> is_new_order(toSet(newOrders), o))
+
+type NOArgs = (Id, Id, Id, Timestamp, Seq[Option[Id]], Seq[Id], Seq[Int])
+val new_order: Unit = Interaction[(AWSet[District], AWSet[NewOrder], AWSet[Order], AWSet[OrderLine])][NOArgs]
+    .modifies(districts, newOrders, orders, orderLines)
+    // helper assertions
+    .requires{forall w: Warehouse ::
+        contains(warehouses, w) ==> (
+            get_w_ytd(w) == sumOfYtds(getDistrictsByWID(toSet(districts),get_w_id(w)))
+    )}
+    .requires{forall d: District :: contains(districts,d) ==> (
+        get_d_next_order_num(d) - 1 == maxOrderNum(toSet(orders), get_d_id(d)) &&
+        get_d_next_order_num(d) - 1 == maxNOrderNum(toSet(newOrders), get_d_id(d))
+    )}
+     // district ids are unique
+    .requires{forall d1: District, d2: District ::
+        contains(districts, d1) && contains(districts, d2) && get_d_id(d1) == get_d_id(d2) ==> d1 == d2}
+    // order ids are unique
+    .requires{forall o1: Order, o2: Order :: 
+        contains(orders, o1) && contains(orders, o2) && get_o_num(o1) == get_o_num(o2) ==> o1 == o2}
+    // new Order order nums are unique
+    .requires{forall n1: NewOrder, n2: NewOrder :: contains(newOrders, n1) && contains(newOrders, n2) && 
+        get_no_o_num(n1) == get_no_o_num(n2) ==> n1 == n2}
+     // district remain unique
+    .ensures{forall d1: District, d2: District ::
+        contains(districts, d1) && contains(districts, d2) && get_d_id(d1) == get_d_id(d2) ==> d1 == d2}
+    // helper assertions
+    .ensures{forall w: Warehouse ::
+        contains(warehouses, w) ==> (
+            get_w_ytd(w) == sumOfYtds(getDistrictsByWID(toSet(districts),get_w_id(w)))
+    )}
+    .ensures{forall d: District :: contains(districts,d) ==> (
+        get_d_next_order_num(d) - 1 == maxOrderNum(toSet(orders), get_d_id(d)) &&
+        get_d_next_order_num(d) - 1 == maxNOrderNum(toSet(newOrders), get_d_id(d))
+    )}
+    .executes{
+        (districts, newOrders, orders, orderLines) =>
+        (w_id, d_id, c_id, o_entry_d, i_ids, i_w_ids, i_qtys) => {
+            val district: District = getDistrict(districts, d_id)
+            val warehouse: Warehouse = getWarehouse(warehouses, w_id)
+            val customer: Customer = getCustomer(customers, c_id)
+            val nextOrderNum: Int = get_d_next_order_num(district)
+
+            val newOrderLines: Seq[OrderLine] = processOrderLines(nextOrderNum)
+            assert(forall d: District :: contains(districts, d) ==>
+                maxNOrderNum(toSet(newOrders), get_d_id(d)) - minNOrderNum(toSet(newOrders), get_d_id(d)) + 1 ==
+                countNewOrders(toSet(newOrders), get_d_id(d)))
+
+            // gen order
+            assert(forall o: Order :: contains(orders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != nextOrderNum)
+            val order_: Order = genOrder(nextOrderNum, d_id, 0, orders)
+
+            // gen newOrder
+            val neworder : NewOrder = genNewOrder(nextOrderNum, d_id)
+            assert(get_no_o_num(neworder) == get_o_num(order_))
+            assert(get_no_d_id(neworder) == d_id)
+
+            // assume new order number does not overlap with existing ones
+            assume(forall o: Order :: contains(old(orders), o) ==> get_o_num(o) != get_no_o_num(neworder))
+
+            val districts_temp: AWSet[District] = remove(districts, district)
+
+            // gen new district
+            val district_: District = new_district(
+                get_d_id(district),
+                get_d_w_id(district),
+                get_d_next_order_num(district) + 1,
+                get_d_tax_rate(district),
+                get_d_ytd(district)
+            )
+
+            (
+                districts_temp.add(district_), // add updated district
+                newOrders.add(neworder), // add newOrder
+                orders.add(order_), // add new order
+                orderLines.addAll(newOrderLines) // add all new orderline
+            )
+
+            // helper assertions
+            assert(get_o_c_id(order_) == 0 <==> is_new_order(toSet(newOrders), order_))
+            assert(contains(newOrders, neworder))
+            assert(forall n: NewOrder :: contains(old(newOrders), n) ==> contains(newOrders, n))
+            assert(toSet(newOrders) ==  union(toSet(old(newOrders)), Set(neworder)))
+            assert(get_no_d_id(neworder) == d_id)
+            assert(neworder in filterNewOrdersByDistrict(toSet(newOrders), d_id))
+            assert(!(neworder in filterNewOrdersByDistrict(toSet(old(newOrders)), d_id)))
+            assert(filterNewOrdersByDistrict(toSet(newOrders), d_id) == union(filterNewOrdersByDistrict(toSet(old(newOrders)),d_id),  Set(neworder)))
+            assert(size(filterNewOrdersByDistrict(toSet(newOrders), d_id)) == size(filterNewOrdersByDistrict(toSet(old(newOrders)), d_id)) + 1)
+            assert(get_no_o_num(neworder) == nextOrderNum)
+            assert(forall no: NewOrder :: no in filterNewOrdersByDistrict(toSet(old(newOrders)), d_id) ==> nextOrderNum > get_no_o_num(no))
+            assert(minNOrderNum(toSet(newOrders), d_id) == minNOrderNum(toSet(old(newOrders)), d_id))
+            assert(countNewOrders(toSet(newOrders), d_id) == countNewOrders(toSet(old(newOrders)), d_id) + 1)
+
+            assert( is_new_order(toSet(newOrders), order_))
+            assert( get_o_c_id(order_) == 0 <==> is_new_order(toSet(newOrders), order_))
+            assert( forall o: Order :: contains(old(orders), o) ==> contains((orders), o))
+            assert( forall o: Order :: old(contains(orders, o)) ==>
+                (get_o_c_id(o) == 0 <==> is_new_order(toSet(old(newOrders)),o)))
+            assert( forall o: Order :: contains(orders, o) && contains(old(orders),o) ==>
+                (get_o_c_id(o) == old(get_o_c_id(o))))
+            assert( forall o: Order :: contains(orders, o) && contains(old(orders),o) ==>
+                (is_new_order(toSet(newOrders), o) == old(is_new_order(toSet(newOrders), o))))
+            assert( forall o: Order :: o != order_ && contains(orders, o) ==>
+                (get_o_c_id(o) == 0 <==> is_new_order(toSet(newOrders),o)))
+
+            assert(toSet(districts) == setminus(old(toSet(districts)), union(Set(district), Set(district_))))
+            assert(toSet(newOrders) == union(old(toSet(newOrders)), Set(neworder)))
+            assert(filterNewOrdersByDistrict(toSet(newOrders), d_id) == union(old(filterNewOrdersByDistrict(toSet(newOrders), d_id)), Set(neworder)))
+            assert(countNewOrders(toSet(newOrders), d_id) == old(countNewOrders(toSet(newOrders), d_id)) + 1)
+            assert(minNOrderNum(toSet(newOrders), d_id) == minNOrderNum(toSet(old(newOrders)), d_id))
+            assert(maxNOrderNum(toSet(newOrders), d_id) == old(maxNOrderNum(toSet(newOrders), d_id)) + 1)
+            assert(forall s1: Set[NewOrder], s2: Set[NewOrder], d: Id :: filterNewOrdersByDistrict(s1, d) == filterNewOrdersByDistrict(s2, d) ==> countNewOrders(s1,d) == countNewOrders(s2,d))
+
+            // save to assume since we don't update any ytds
+            assume(forall id: Id :: sumOfYtds(getDistrictsByWID(toSet(districts),id)) == sumOfYtds(getDistrictsByWID(old(toSet(districts)),id)))
+
+            assert(toSet(orders) == union(toSet(old(orders)), Set(order_)))
+            assert(forall o: Order :: old(o in toSet(orders) && is_new_order(toSet(newOrders), o)) ==> o in toSet(orders) && is_new_order(toSet(newOrders), o))
+            assert(forall o: Order :: contains(orders, o) && contains(old(orders),o) ==>
+                (is_new_order(toSet(newOrders), o) == old(is_new_order(toSet(newOrders), o))))
+            assert(forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0)
+            assert(get_o_c_id(order_) == 0)
+            assume(forall ol: OrderLine :: ol in newOrderLines ==> !(exists o: Order :: contains(orders, o) && get_o_num(o) == get_ol_o_num(ol)))
+            assume(forall ol: OrderLine :: ol in toSet(old(orderLines)) ==> get_ol_o_num(ol) != get_o_num(order_))
+            assert(toSet(orderLines) == union(toSet(old(orderLines)), seqToSet(newOrderLines)))
+            assume(forall ol: OrderLine :: contains(orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==> ol in newOrderLines && !(ol in toSet(old(orderLines))))
+            assert(forall ol: OrderLine :: contains(orderLines, ol) && get_ol_o_num(ol) == get_o_num(order_) ==>
+                get_ol_del_date(ol) == 0 <==> get_o_c_id(order_) == 0)
+            assert(forall o: Order :: contains(orders, o) && contains(old(orders), o) ==> get_o_c_id(o) == old(get_o_c_id(o)))
+
+            assert(forall ol: OrderLine, o: Order :: contains(old(orders), o) && contains(old(orderLines), ol) && get_ol_o_num(ol) == get_o_num(o) ==> (
+                get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0))
+            assert(forall ol: OrderLine, o: Order :: ol in (setminus(toSet(orderLines), seqToSet(newOrderLines))) && contains(old(orders), o) && get_ol_o_num(ol) == get_o_num(o) && o != order_ ==>
+                (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0))
+        }
+    }
