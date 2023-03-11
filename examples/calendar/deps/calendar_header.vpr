@@ -6,6 +6,12 @@ domain Appointment {
   function get_start(a: Appointment): Int
   function get_end(a: Appointment): Int
   function days(a: Appointment) : Int
+
+  axiom days_ax{
+    forall a:Appointment :: 
+      { days(a) }
+        days(a) > 0
+  }
 }
 
 // function sumDayInternal(appointments: Set[Appointment], accu: Int): Int
@@ -18,6 +24,7 @@ ensures forall a: Appointment :: |appointments| == 1 && a in appointments ==> re
 ensures appointments == Set() ==> result == 0
 ensures forall a: Appointment, s: Set[Appointment] :: {sumDays(Set(a)), sumDays(s)} |appointments| > 1 && a in appointments ==> result == days(a) + sumDays(appointments setminus Set(a))
 ensures forall s1: Set[Appointment], s2: Set[Appointment] ::{sumDays(s1 union s2)} s1 intersection s2 == Set() ==> sumDays(s1 union s2) == sumDays(s1) + sumDays(s2)
+ensures forall s1: Set[Appointment], s2: Set[Appointment], s3: Set[Appointment] ::{sumDays(s1), sumDays(s2), sumDays(s3)} s1 == s2 setminus s3 ==> sumDays(s1) == sumDays(s2) - sumDays(s3)
 // ensures false
 // ensures forall a: Appointment, b: Appointment :: {sumDays(Set(a,b))} appointments == Set(a,b) ==> result == days(a) + days(b)
 // ensures forall s: Set[Appointment], t: Set[Appointment] :: {sumDays(s), sumDays(t)} s intersection t == Set() ==> result == sumDays(s) + sumDays(t)
