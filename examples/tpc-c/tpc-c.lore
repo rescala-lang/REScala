@@ -38,7 +38,7 @@ val orderLineCount: Derived[Map[Order, Int]] = Derived{
 invariant forall d: District :: districts.contains(d) ==> 
     (maxNOrderNum(toSet(newOrders), get_d_id(d)) - minNOrderNum(toSet(newOrders), get_d_id(d)) + 1 ==
     countNewOrders(toSet(newOrders), get_d_id(d)))
-// cc4
+// cc5
 invariant forall o: Order :: orders.contains(o) ==> 
     (get_o_c_id(o) == 0 <==> is_new_order(toSet(newOrders), o))
 // cc7
