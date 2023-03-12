@@ -20,7 +20,7 @@ object LastWriterWins {
 
   def empty[A: Bottom](dot: Dot): LastWriterWins[A] = now(dot, Bottom.empty)
 
-  def fallback[A: Bottom](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, 0, v)
+  def fallback[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Long.MinValue, v)
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
@@ -37,8 +37,29 @@ object LastWriterWins {
       else if right.context.contains(left.store.dot)
       then right.store
       else if ordering.lteq(left.store, right.store)
-      then left.store
-      else right.store
+      then right.store
+      else left.store
+  }
+
+  given optionalLwwLattice[A]: DottedLattice[Option[LastWriterWins[A]]] with {
+    override def mergePartial(
+        left: Dotted[Option[LastWriterWins[A]]],
+        right: Dotted[Option[LastWriterWins[A]]]
+    ): Option[LastWriterWins[A]] =
+      lazy val empty: LastWriterWins[A] = LastWriterWins.fallback[A](Dot(Uid.gen(), 0), null.asInstanceOf)
+      val res = dottedLattice.mergePartial(
+        left.map(_.getOrElse(empty)),
+        right.map(_.getOrElse(empty))
+      )
+      if res == empty then None else Some(res)
+
+    override def lteq(left: Dotted[Option[LastWriterWins[A]]], right: Dotted[Option[LastWriterWins[A]]]): Boolean =
+      (left.context <= right.context) &&
+      ((left.store, right.store) match
+        case (None, _)          => true
+        case (_, None)          => false
+        case (Some(l), Some(r)) => left.map(_ => l) <= right.map(_ => r)
+      )
   }
 
   extension [C, A](container: C)
