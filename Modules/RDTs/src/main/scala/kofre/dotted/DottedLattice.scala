@@ -128,16 +128,17 @@ object DottedLattice {
           decomposedContext
         )
         val containedDots = added.map(_.context).reduceOption(_ merge _).getOrElse(Dots.empty)
-        val removed = a.context.diff(containedDots)
-        val empty = pm.fromProduct(new Product {
+        val removed       = a.context.diff(containedDots)
+        def empty = pm.fromProduct(new Product {
           def canEqual(that: Any): Boolean = false
 
           def productArity: Int = lattices.productArity
 
           def productElement(i: Int): Any = bot(i).empty
         })
-        added :+ Dotted(empty, removed)
-
+        if removed.isEmpty
+        then added
+        else added :+ Dotted(empty, removed)
 
     override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
       Range(0, lattices.productArity).forall { i =>
