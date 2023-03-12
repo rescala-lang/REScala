@@ -32,7 +32,7 @@ abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.
         assertNotEquals(empty, d, "decomposed result was empty")
       }
 
-      assertEquals(empty merge theValue, theValue, "bottom is bottom")
+      assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
 
       val merged = decomposed.foldLeft(empty)(Lattice.merge)
 
