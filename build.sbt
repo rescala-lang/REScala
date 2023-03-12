@@ -88,7 +88,7 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
   .settings(
     scalaVersion_3,
     publishSonatype,
-    libraryDependencies ++= List(munit.value, munitScalacheck.value),
+    libraryDependencies ++= List(munit.value, munitCheck.value),
   )
   .jsSettings(
     sourcemapFromEnv()
@@ -102,7 +102,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
       "org.scalatest"     %%% "scalatest"       % "3.2.15"   % "test",
       "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.15.0" % "test",
       munit.value,
-      munitScalacheck.value,
+      munitCheck.value,
     )
   )
   .jvmSettings(
@@ -214,7 +214,7 @@ lazy val replicationExamples =
       libraryDependencies ++= Seq(
         loci.tcp.value,
         loci.jsoniterScala.value,
-        munitScalacheck.value,
+        munitCheck.value,
         munit.value,
         scalacheck.value,
         slips.options.value,

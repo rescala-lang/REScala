@@ -23,7 +23,7 @@ object Dependencies {
     val scalaJavaTime = "2.3.0"
     val scalaLoci     = "eb0719f08f"
     val scalacheck    = "1.17.0"
-    val scalajsDom    = "2.3.0"
+    val scalajsDom    = "2.4.0"
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
     val scribe        = "3.10.7"
@@ -34,26 +34,26 @@ object Dependencies {
 
   import Dependencies.Versions as V
 
-  val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
-  val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
-  val jsoniterScala   = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScala)
-  val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
-  val munit           = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
-  val munitScalacheck = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
-  val okHttp          = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
-  val pprint          = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
-  val quicklens       = Def.setting("com.softwaremill.quicklens" %%% "quicklens" % V.quicklens)
-  val scalacheck      = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % Test)
-  val scalaJavaTime   = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
-  val scalajsDom      = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
-  val scalatags       = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
-  val scopt           = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
-  val scribe          = Def.setting("com.outr" %%% "scribe" % V.scribe)
-  val scribeSlf4j     = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
-  val scribeSlf4j2    = Def.setting("com.outr" %% "scribe-slf4j2" % V.scribe)
-  val sourcecode      = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
-  val sqliteJdbc      = Def.setting("org.xerial" % "sqlite-jdbc" % V.sqliteJdbc)
-  val upickle         = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
+  val directories   = Def.setting("dev.dirs" % "directories" % V.directories)
+  val jol           = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
+  val jsoniterScala = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScala)
+  val jsoup         = Def.setting("org.jsoup" % "jsoup" % V.jsoup)
+  val munit         = Def.setting("org.scalameta" %%% "munit" % V.munit % Test)
+  val munitCheck    = Def.setting("org.scalameta" %%% "munit-scalacheck" % V.munit % Test)
+  val okHttp        = Def.setting("com.squareup.okhttp3" % "okhttp" % V.okHttp)
+  val pprint        = Def.setting("com.lihaoyi" %%% "pprint" % V.pprint)
+  val quicklens     = Def.setting("com.softwaremill.quicklens" %%% "quicklens" % V.quicklens)
+  val scalacheck    = Def.setting("org.scalacheck" %%% "scalacheck" % V.scalacheck % Test)
+  val scalaJavaTime = Def.setting("io.github.cquiroz" %%% "scala-java-time" % V.scalaJavaTime)
+  val scalajsDom    = Def.setting("org.scala-js" %%% "scalajs-dom" % V.scalajsDom)
+  val scalatags     = Def.setting("com.lihaoyi" %%% "scalatags" % V.scalatags)
+  val scopt         = Def.setting("com.github.scopt" %%% "scopt" % V.scopt)
+  val scribe        = Def.setting("com.outr" %%% "scribe" % V.scribe)
+  val scribeSlf4j   = Def.setting("com.outr" %% "scribe-slf4j" % V.scribe)
+  val scribeSlf4j2  = Def.setting("com.outr" %% "scribe-slf4j2" % V.scribe)
+  val sourcecode    = Def.setting("com.lihaoyi" %%% "sourcecode" % V.sourcecode)
+  val sqliteJdbc    = Def.setting("org.xerial" % "sqlite-jdbc" % V.sqliteJdbc)
+  val upickle       = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
   object slips {
     val category = Def.setting("de.rmgk.slips" %%% "category" % "0.4.7")
