@@ -11,6 +11,7 @@ import scala.compiletime.summonAll
 trait Bottom[A] {
   def empty: A
 }
+
 object Bottom {
   def empty[A](using bottom: Bottom[A]): A         = bottom.empty
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
@@ -28,8 +29,6 @@ object Bottom {
     override val empty: Set[Nothing] = Set.empty
   }
   given setBottom[V]: Bottom[Set[V]] = setBottomInstance.asInstanceOf
-
-  def intMaxBottom: Bottom[Int] = new { override def empty: Int = Int.MinValue }
 
   given queueBottom[V]: Bottom[Queue[V]] with {
     override def empty: Queue[V] = Queue.empty
