@@ -8,6 +8,7 @@ import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
 /** Well, its technically a semilattice, but that is just more to type. */
+@FunctionalInterface
 trait Lattice[A] {
 
   /** By assumption: associative, commutative, idempotent.

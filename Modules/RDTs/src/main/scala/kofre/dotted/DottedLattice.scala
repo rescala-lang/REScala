@@ -26,6 +26,7 @@ val DottedDecompose: DottedLattice.type = DottedLattice
   *
   * Separating into a [[mergePartial]] allows extracting the context into the outermost layer reducing metadata overhead.
   */
+@FunctionalInterface
 trait DottedLattice[A] extends Lattice[Dotted[A]] {
 
   /** Partial merging combines the stored values, but ignores the context.

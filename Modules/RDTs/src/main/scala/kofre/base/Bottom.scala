@@ -8,6 +8,7 @@ import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
 /** Bottom.empty is the identity of Lattice.merge */
+@FunctionalInterface
 trait Bottom[A] {
   def empty: A
 }

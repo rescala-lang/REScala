@@ -12,7 +12,7 @@ object GrowOnlyCounter {
   def zero: GrowOnlyCounter = GrowOnlyCounter(Map.empty)
 
   given lattice: Lattice[GrowOnlyCounter] =
-    given Lattice[Int] = math.max _
+    given Lattice[Int] = math.max
     Lattice.derived
 
   given contextDecompose: DottedLattice[GrowOnlyCounter] = DottedLattice.liftLattice
