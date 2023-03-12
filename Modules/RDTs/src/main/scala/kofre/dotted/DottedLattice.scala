@@ -67,11 +67,13 @@ object DottedLattice {
   def decomposedDeletions[A: HasDots: Bottom](dotted: Dotted[A]) =
     dotted.deletions.decomposed.map(d => Dotted(Bottom.empty, d))
 
-  given optionInstance[A: DottedLattice: Bottom]: DottedLattice[Option[A]] with {
+  given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
     override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
-      lazy val empty = Bottom.empty
-      val res        = left.map(_.getOrElse(empty)) mergePartial right.map(_.getOrElse(empty))
-      if res == empty then None else Some(res)
+      (left.store, right.store) match
+        case (None, None) => None
+        case (None, Some(r)) => DottedLattice.apply.filter(r, left.context)
+        case (Some(l), None) => DottedLattice.apply.filter(l, right.context)
+        case (Some(l), Some(r)) => Some(DottedLattice.apply.mergePartial(left.map(_ => l), right.map(_ => r)))
 
     override def filter(value: Option[A], dots: Dots): Option[Option[A]] =
       value.map(v => DottedLattice[A].filter(v, dots))

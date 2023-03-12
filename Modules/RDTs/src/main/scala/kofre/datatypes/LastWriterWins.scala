@@ -42,33 +42,8 @@ object LastWriterWins {
       then right.store
       else left.store
 
-    override def filter(value: LastWriterWins[A], dots: Dots): Option[LastWriterWins[A]] = None
-  }
-
-  given optionalLwwLattice[A]: DottedLattice[Option[LastWriterWins[A]]] with {
-    override def mergePartial(
-        left: Dotted[Option[LastWriterWins[A]]],
-        right: Dotted[Option[LastWriterWins[A]]]
-    ): Option[LastWriterWins[A]] =
-      lazy val empty: LastWriterWins[A] = LastWriterWins.fallback[A](Dot(Uid.gen(), 0), null.asInstanceOf)
-      val res = dottedLattice.mergePartial(
-        left.map(_.getOrElse(empty)),
-        right.map(_.getOrElse(empty))
-      )
-      if res == empty then None else Some(res)
-
-    override def filter(value: Option[LastWriterWins[A]], dots: Dots): Option[Option[LastWriterWins[A]]] =
-      value.map { v =>
-        DottedLattice.apply.filter(v, dots)
-      }
-
-    override def lteq(left: Dotted[Option[LastWriterWins[A]]], right: Dotted[Option[LastWriterWins[A]]]): Boolean =
-      (left.context <= right.context) &&
-      ((left.store, right.store) match
-        case (None, _)          => true
-        case (_, None)          => false
-        case (Some(l), Some(r)) => left.map(_ => l) <= right.map(_ => r)
-      )
+    override def filter(value: LastWriterWins[A], dots: Dots): Option[LastWriterWins[A]] =
+      if dots.contains(value.dot) then None else Some(value)
   }
 
   extension [C, A](container: C)
