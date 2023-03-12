@@ -87,7 +87,7 @@ object Lattice {
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
   }
 
-  given optionLattice[A: Lattice]: Lattice[Option[A]] = new Lattice[Option[A]] {
+  given optionLattice[A: Lattice]: Lattice[Option[A]] with {
 
     override def merge(left: Option[A], right: Option[A]): Option[A] = (left, right) match {
       case (None, r)          => r
