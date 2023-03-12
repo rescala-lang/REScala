@@ -16,10 +16,13 @@ object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
+
+  val assertEqualsOrdering: Ordering[Any] = (l, r) =>
+    if l == r then 0
+    else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
+
   given dottedLattice[A]: DottedLattice[MultiVersionRegister[A]] =
-    given Lattice[A] = (l, r) =>
-      if l == r then l
-      else throw IllegalStateException(s"multi version register assumes no conflicts")
+    given Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
     DottedLattice.derived
 
   extension [C, A](container: C)
@@ -27,7 +30,7 @@ object MultiVersionRegister {
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
-    def read(using PermQuery): Set[A]        = current.repr.repr.values.toSet
+    def read(using PermQuery): Set[A] = current.repr.repr.values.toSet
 
     def write(using ReplicaId)(v: A): CausalMutate = {
       val nextDot = context.nextDot(replicaId)

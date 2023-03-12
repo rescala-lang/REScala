@@ -6,10 +6,15 @@ import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
-import math.Ordering.Implicits.infixOrderingOps
+import scala.math.Ordering.Implicits.infixOrderingOps
 
-/** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics. */
-case class LastWriterWins[A](dot: Dot, wallTime: Time, payload: A)
+/** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
+  *
+  * This implementation uses [[Dot]]s to have “last” coincide with causal order (independent of wall clock time).
+  * Concurrent writes are resolved by wallclock time first (favouring replicas with clock drift into the future),
+  * and by replica ID, in case both writes happened in the same millisecond.
+  */
+case class LastWriterWins[+A](dot: Dot, wallTime: Time, payload: A)
 
 object LastWriterWins {
 
@@ -19,22 +24,21 @@ object LastWriterWins {
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
+  given ordering: Ordering[LastWriterWins[Any]] =
+    Ordering.by[LastWriterWins[Any], Time](_.wallTime)
+      .orElseBy(_.dot.replicaId)
+      .orElseBy(_.dot.time)
+      .orElse(MultiVersionRegister.assertEqualsOrdering.on(_.payload))
+
   given dottedLattice[A]: DottedLattice[LastWriterWins[A]] with {
-    override def mergePartial(left: Dotted[LastWriterWins[A]], right: Dotted[LastWriterWins[A]]): LastWriterWins[A] = {
+    override def mergePartial(left: Dotted[LastWriterWins[A]], right: Dotted[LastWriterWins[A]]): LastWriterWins[A] =
       if left.context.contains(right.store.dot)
       then left.store
       else if right.context.contains(left.store.dot)
       then right.store
-      else
-        java.lang.Long.compare(left.store.wallTime, right.store.wallTime) match
-          case -1 => right.store
-          case 1  => left.store
-          case 0 =>
-            if left.store.dot.replicaId <= right.store.dot.replicaId
-            then right.store
-            else left.store
-    }
-
+      else if ordering.lteq(left.store, right.store)
+      then left.store
+      else right.store
   }
 
   extension [C, A](container: C)
