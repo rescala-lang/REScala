@@ -7,7 +7,7 @@ import kofre.time.{Dot, Dots}
   * They are the prototype of an [[EnableWinsFlag]]
   */
 case class DotSet(repr: Dots) {
-  export repr.*
+  export repr.{contains, isEmpty, toSet}
 }
 
 object DotSet {

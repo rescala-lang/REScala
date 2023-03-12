@@ -91,11 +91,11 @@ class DotSetTest extends munit.ScalaCheckSuite {
         s"DotSet.merge should not add new elements to the DotSet, but $dsMerged is not a subset of ${dsA union dsB}"
       )
       assert(
-        (dsMerged intersect (deletedA diff dsA)).isEmpty,
+        (dsMerged.repr intersect (deletedA diff dsA)).isEmpty,
         s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the lhs, but $dsMerged contains elements from ${deletedA diff dsA}"
       )
       assert(
-        (dsMerged intersect (deletedB diff dsB)).isEmpty,
+        (dsMerged.repr intersect (deletedB diff dsB)).isEmpty,
         s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the rhs, but $dsMerged contains elements from ${deletedB diff dsB}"
       )
     }
