@@ -114,19 +114,20 @@ object DottedLattice {
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       if !dotsAndBottoms then super.decompose(a)
       else
-        val added = for
-          index <- Range(0, lattices.productArity)
-          element = a.store.productElement(index)
-          dots    = hdots(index).dots(element)
-          Dotted(decomposedElement, decomposedContext) <- lat(index).decompose(Dotted(element, dots))
-        yield Dotted(
-          pm.fromProduct(new Product {
-            def canEqual(that: Any): Boolean = false
-            def productArity: Int            = lattices.productArity
-            def productElement(i: Int): Any  = if i == index then decomposedElement else bot(i).empty
-          }),
-          decomposedContext
-        )
+        val added =
+          for
+            index <- Range(0, lattices.productArity)
+            element = a.store.productElement(index)
+            dots    = hdots(index).dots(element)
+            Dotted(decomposedElement, decomposedContext) <- lat(index).decompose(Dotted(element, dots))
+          yield Dotted(
+            pm.fromProduct(new Product {
+              def canEqual(that: Any): Boolean = false
+              def productArity: Int            = lattices.productArity
+              def productElement(i: Int): Any  = if i == index then decomposedElement else bot(i).empty
+            }),
+            decomposedContext
+          )
         val containedDots = added.map(_.context).reduceOption(_ merge _).getOrElse(Dots.empty)
         val removed       = a.context.diff(containedDots)
         def empty = pm.fromProduct(new Product {
