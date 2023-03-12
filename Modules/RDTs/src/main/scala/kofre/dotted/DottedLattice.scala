@@ -9,6 +9,7 @@ import kofre.time.{Dot, Dots}
 import scala.annotation.{implicitNotFound, targetName}
 import scala.compiletime.{erasedValue, summonAll, summonInline}
 import scala.deriving.Mirror
+import scala.util.control.ControlThrowable
 
 /** The delta CRDT paper introduces a lot of individual abstractions
   * that all do a lot of cool stuff, but often not separated into their pieces.
@@ -70,9 +71,9 @@ object DottedLattice {
   given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
     override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
       (left.store, right.store) match
-        case (None, None) => None
-        case (None, Some(r)) => DottedLattice.apply.filter(r, left.context)
-        case (Some(l), None) => DottedLattice.apply.filter(l, right.context)
+        case (None, None)       => None
+        case (None, Some(r))    => DottedLattice.apply.filter(r, left.context)
+        case (Some(l), None)    => DottedLattice.apply.filter(l, right.context)
         case (Some(l), Some(r)) => Some(DottedLattice.apply.mergePartial(left.map(_ => l), right.map(_ => r)))
 
     override def filter(value: Option[A], dots: Dots): Option[Option[A]] =
@@ -120,12 +121,18 @@ object DottedLattice {
       })
 
     override def filter(value: T, dots: Dots): Option[T] =
-      Some(pm.fromProduct(new Product {
-        def canEqual(that: Any): Boolean = false
-        def productArity: Int = lattices.productArity
-        def productElement(i: Int): Any =
-          lat(i).filter(value.productElement(i), dots)
-      }))
+      object FilterControl extends ControlThrowable
+      try
+        Some(pm.fromProduct(new Product {
+          def canEqual(that: Any): Boolean = false
+          def productArity: Int            = lattices.productArity
+          def productElement(i: Int): Any =
+            lat(i).filter(value.productElement(i), dots).getOrElse {
+              if bot(i) == null then throw FilterControl
+              bot(i).empty
+            }
+        }))
+      catch case FilterControl => None
 
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       if !dotsAndBottoms then super.decompose(a)

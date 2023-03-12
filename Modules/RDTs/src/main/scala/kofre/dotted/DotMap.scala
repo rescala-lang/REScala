@@ -1,6 +1,5 @@
 package kofre.dotted
 
-import kofre.base.Bottom
 import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.Dots
 
@@ -24,20 +23,14 @@ object DotMap {
       a.repr.valuesIterator.map(v => v.dots).reduceOption(_ union _).getOrElse(Dots.empty)
   }
 
-  given dottedLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[DotMap[K, V]] with {
-    lazy val empty: V = Bottom.empty[V]
+  given dottedLattice[K, V: DottedLattice: HasDots]: DottedLattice[DotMap[K, V]] with {
 
-    def access(key: K)(m: DotMap[K, V]): V = m.repr.getOrElse(key, empty)
+    def access(key: K)(m: DotMap[K, V]): Option[V] = m.repr.get(key)
 
     override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-      val keys = left.store.repr.keySet union right.store.repr.keySet
-      val inner =
-        for
-          key <- keys.iterator
-          merged = left.map(access(key)) mergePartial right.map(access(key))
-          if empty != merged
-        yield key -> merged
-      DotMap(inner.toMap)
+      DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
+        (left.map(access(key)) mergePartial right.map(access(key))).map(key -> _)
+      }.toMap)
     }
 
     override def filter(value: DotMap[K, V], dots: Dots): Option[DotMap[K, V]] =
