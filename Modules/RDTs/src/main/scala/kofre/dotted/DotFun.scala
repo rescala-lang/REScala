@@ -1,6 +1,7 @@
 package kofre.dotted
 
 import kofre.base.{Bottom, Lattice}
+import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
@@ -38,6 +39,11 @@ object DotFun {
         }
       DotFun(fromLeft ++ fromCombined)
     }
+
+    override def filter(value: DotFun[A], dots: Dots): Option[DotFun[A]] =
+      val res = value.repr.filter((dot, v) => !dots.contains(dot))
+      if res.isEmpty then None
+      else Some(DotFun(res))
 
     /** Insertion is larger. Removals are larger. Otherwise compare the value for each dot. */
     override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {

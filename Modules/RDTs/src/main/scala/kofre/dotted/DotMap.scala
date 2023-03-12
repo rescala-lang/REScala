@@ -1,6 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Bottom
+import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.Dots
 
 /** DotMap is just a container to use maps in a dotted context.
@@ -38,6 +39,13 @@ object DotMap {
         yield key -> merged
       DotMap(inner.toMap)
     }
+
+    override def filter(value: DotMap[K, V], dots: Dots): Option[DotMap[K, V]] =
+      val res = value.repr.flatMap { (k, v) =>
+        DottedLattice.apply.filter(v, dots).map(k -> _)
+      }
+      if res.isEmpty then None
+      else Some(DotMap(res))
 
     override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
       (right.context <= left.context) &&

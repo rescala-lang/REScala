@@ -1,6 +1,7 @@
 package kofre.datatypes.alternatives.rga
 
-import kofre.base.{Uid, Lattice}
+import kofre.base.{Lattice, Uid}
+import kofre.datatypes
 import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper
@@ -136,5 +137,10 @@ object DeltaSequence {
           values = values.view.filterKeys(vertices.contains).toMap
         )
       }
+
+      override def filter(value: DeltaSequence[A], dots: Dots): Option[DeltaSequence[A]] =
+        DottedLattice.apply[datatypes.AddWinsSet[Vertex]].filter(value.vertices, dots).map{ nv =>
+          value.copy(vertices = nv)
+        }
     }
 }

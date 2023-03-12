@@ -67,4 +67,7 @@ object CausalQueue:
       val res = (li concat ri).to(Queue)
         .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
       CausalQueue(res)
+
+    override def filter(value: CausalQueue[A], dots: Dots): Option[CausalQueue[A]] =
+      Some(CausalQueue(value.values.filter(qe => !dots.contains(qe.dot))))
   }

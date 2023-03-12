@@ -41,6 +41,8 @@ object LastWriterWins {
       else if ordering.lteq(left.store, right.store)
       then right.store
       else left.store
+
+    override def filter(value: LastWriterWins[A], dots: Dots): Option[LastWriterWins[A]] = None
   }
 
   given optionalLwwLattice[A]: DottedLattice[Option[LastWriterWins[A]]] with {
@@ -54,6 +56,11 @@ object LastWriterWins {
         right.map(_.getOrElse(empty))
       )
       if res == empty then None else Some(res)
+
+    override def filter(value: Option[LastWriterWins[A]], dots: Dots): Option[Option[LastWriterWins[A]]] =
+      value.map { v =>
+        DottedLattice.apply.filter(v, dots)
+      }
 
     override def lteq(left: Dotted[Option[LastWriterWins[A]]], right: Dotted[Option[LastWriterWins[A]]]): Boolean =
       (left.context <= right.context) &&
