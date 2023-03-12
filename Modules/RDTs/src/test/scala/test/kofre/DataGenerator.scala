@@ -32,6 +32,21 @@ object DataGenerator {
     } yield Dotted(LastWriterWins(dot, time, value), Dots.single(dot))
   )
 
+  given arbOptLww: Arbitrary[Dotted[Option[LastWriterWins[Int]]]] = Arbitrary(
+    for {
+      lww <- arbLww.arbitrary
+    } yield lww.map(Some.apply)
+  )
+
+  given arbTupleOptLww: Arbitrary[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]] = Arbitrary(
+    for {
+      left <- arbLww.arbitrary
+      right <- arbLww.arbitrary
+    } yield Dotted((Some(left.store), Some(right.store)), left.context union right.context)
+  )
+
+  given Lattice[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]] = DottedLattice.derived
+
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
     Gen.mapOf[Uid, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
   )

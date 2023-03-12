@@ -2,7 +2,8 @@ package test.kofre
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.{CausalQueue, GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.{CausalQueue, GrowOnlyCounter, LastWriterWins, PosNegCounter}
+import kofre.dotted.Dotted
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -12,24 +13,30 @@ class GrowDecomposes       extends DecomposeProperties[GrowOnlyCounter]
 class PosNegDecomposes     extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes      extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 class MultiValueDecomposes extends DecomposeProperties[MultiValueRegister[Int]]
+class LWWDecomposes        extends DecomposeProperties[Dotted[Option[LastWriterWins[Int]]]]
+
+// this may fail in cases where both LWWs have the same dot generated
+class LWWTupleDecomposes extends DecomposeProperties[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]]
 
 abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
 
   test("decomposition") {
-    forAll { (counter: A) =>
+    forAll { (theValue: A) =>
 
-      val decomposed = counter.decomposed
+      val decomposed = theValue.decomposed
 
       val empty = Bottom[A].empty
 
       decomposed.foreach { d =>
-        assert(Lattice[A].lteq(d, counter), s"decompose not smaller: »$d« <= »$counter«\nmerge: ${d merge counter}")
+        assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
         assertNotEquals(empty, d, "decomposed result was empty")
       }
 
-      val merged = counter.decomposed.foldLeft(empty)(Lattice.merge)
+      assertEquals(empty merge theValue, theValue, "bottom is bottom")
 
-      assertEquals(merged, Lattice.normalize(counter), "decompose does not recompose")
+      val merged = decomposed.foldLeft(empty)(Lattice.merge)
+
+      assertEquals(merged, Lattice.normalize(theValue), s"decompose does not recompose ${empty}")
 
     }
   }
