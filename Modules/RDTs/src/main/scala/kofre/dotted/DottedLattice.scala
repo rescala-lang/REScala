@@ -80,17 +80,27 @@ object DottedLattice {
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
-//    val bottoms: Tuple  = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    new ProductDottedLattice[T](lattices, null, pm, valueOf[pm.MirroredLabel])
+    val bottoms: Tuple  = Lattice.Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
+    val hasDots: Tuple  = Lattice.Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, HasDots]]
+    new ProductDottedLattice[T](lattices, bottoms, hasDots, pm, valueOf[pm.MirroredLabel])
   }
 
-  class ProductDottedLattice[T <: Product](lattices: Tuple, bottoms: Tuple, pm: Mirror.ProductOf[T], label: String)
-      extends DottedLattice[T] {
+  class ProductDottedLattice[T <: Product](
+      lattices: Tuple,
+      bottoms: Tuple,
+      hasDots: Tuple,
+      pm: Mirror.ProductOf[T],
+      label: String
+  ) extends DottedLattice[T] {
 
     override def toString: String = s"ProductLattice[${label}]"
 
     private def lat(i: Int): DottedLattice[Any] = lattices.productElement(i).asInstanceOf[DottedLattice[Any]]
     private def bot(i: Int): Bottom[Any]        = bottoms.productElement(i).asInstanceOf[Bottom[Any]]
+    private def hdots(i: Int): HasDots[Any]     = hasDots.productElement(i).asInstanceOf[HasDots[Any]]
+    private lazy val dotsAndBottoms =
+      bottoms.productIterator.forall(v => null != v) &&
+      hasDots.productIterator.forall(v => null != v)
 
     override def mergePartial(left: Dotted[T], right: Dotted[T]): T =
       pm.fromProduct(new Product {
@@ -100,19 +110,33 @@ object DottedLattice {
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
 
-    // // TODO: figure out what decompose means for dotted values
-    // override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
-    // Range(0, lattices.productArity).flatMap { j =>
-    //  lat(j).decompose(a.map(_.productElement(j))).map {
-    //    _.map { elem =>
-    //      pm.fromProduct(new Product {
-    //        def canEqual(that: Any): Boolean = false
-    //        def productArity: Int            = lattices.productArity
-    //        def productElement(i: Int): Any  = if i == j then elem else bot(i).empty
-    //      })
-    //    }
-    //  }
-    // }
+    override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
+      if !dotsAndBottoms then super.decompose(a)
+      else
+        val added = for
+          index <- Range(0, lattices.productArity)
+          element = a.store.productElement(index)
+          dots    = hdots(index).dots(element)
+          Dotted(decomposedElement, decomposedContext) <- lat(index).decompose(Dotted(element, dots))
+        yield Dotted(
+          pm.fromProduct(new Product {
+            def canEqual(that: Any): Boolean = false
+            def productArity: Int            = lattices.productArity
+            def productElement(i: Int): Any  = if i == index then decomposedElement else bot(i).empty
+          }),
+          decomposedContext
+        )
+        val containedDots = added.map(_.context).reduceOption(_ merge _).getOrElse(Dots.empty)
+        val removed = a.context.diff(containedDots)
+        val empty = pm.fromProduct(new Product {
+          def canEqual(that: Any): Boolean = false
+
+          def productArity: Int = lattices.productArity
+
+          def productElement(i: Int): Any = bot(i).empty
+        })
+        added :+ Dotted(empty, removed)
+
 
     override def lteq(left: Dotted[T], right: Dotted[T]): Boolean =
       Range(0, lattices.productArity).forall { i =>
