@@ -9,9 +9,6 @@ import scala.annotation.{implicitNotFound, targetName}
 import scala.compiletime.{erasedValue, summonAll, summonInline}
 import scala.deriving.Mirror
 
-type DottedDecompose[A] = DottedLattice[A]
-val DottedDecompose: DottedLattice.type = DottedLattice
-
 /** The delta CRDT paper introduces a lot of individual abstractions
   * that all do a lot of cool stuff, but often not separated into their pieces.
   * This is one of those pieces systematically handling removals based on metadata.

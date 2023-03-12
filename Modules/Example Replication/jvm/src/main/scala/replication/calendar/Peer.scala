@@ -4,7 +4,7 @@ import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
-import kofre.dotted.{DottedDecompose, Dotted}
+import kofre.dotted.{DottedLattice, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -79,7 +79,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
-      tokens.tokenFreed.deltaBuffer.reduceOption(DottedDecompose[AddWinsSet[Token]].merge).foreach { state =>
+      tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[AddWinsSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 

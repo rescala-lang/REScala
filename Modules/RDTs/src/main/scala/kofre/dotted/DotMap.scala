@@ -52,7 +52,7 @@ object DotMap {
         Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
       } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 
-      added ++ DottedDecompose.decomposedDeletions(state)
+      added ++ DottedLattice.decomposedDeletions(state)
     }
   }
 }

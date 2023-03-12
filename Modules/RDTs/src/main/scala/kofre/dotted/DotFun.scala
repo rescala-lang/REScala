@@ -58,7 +58,7 @@ object DotFun {
         val df = DotFun(m)
         Dotted(df, df.dots)
       }
-      added ++ DottedDecompose.decomposedDeletions(state)
+      added ++ DottedLattice.decomposedDeletions(state)
     }
   }
 }

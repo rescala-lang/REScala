@@ -39,7 +39,7 @@ object DotSet {
 
       override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
         val added   = state.store.dots.decomposed.map(d => Dotted(DotSet(d), d))
-        added ++ DottedDecompose.decomposedDeletions(state)
+        added ++ DottedLattice.decomposedDeletions(state)
       }
     }
 

@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tools
 
 import kofre.base.Lattice
-import kofre.dotted.{Dotted, DottedDecompose, DottedLattice}
+import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{PermCausalMutate, PermMutate}
 import kofre.time.Dots
 import kofre.base.Uid
@@ -41,7 +41,7 @@ class AntiEntropyContainer[State](
 
 object AntiEntropyContainer {
 
-  given allPermissions[L: DottedDecompose]
+  given allPermissions[L: DottedLattice]
       : (PermMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
     new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
       override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =

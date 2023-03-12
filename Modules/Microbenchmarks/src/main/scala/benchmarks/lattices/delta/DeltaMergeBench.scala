@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import kofre.datatypes.ReplicatedList
 import kofre.time.{Dots, Dot}
-import kofre.dotted.{DottedDecompose, Dotted}
+import kofre.dotted.{DottedLattice, Dotted}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 import kofre.base.Uid.asId
@@ -35,33 +35,33 @@ class DeltaMergeBench {
 
     val deltaState: Dotted[ReplicatedList[Long]] =
       baseState.insertAll(using "".asId)(0, 0L to size)
-    fullState = DottedDecompose[ReplicatedList[Long]].merge(baseState, deltaState)
+    fullState = DottedLattice[ReplicatedList[Long]].merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.insert(using "".asId)(0, size)
-    plusOneState = DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
+    plusOneState = DottedLattice[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: Dotted[ReplicatedList[Long]] = {
-    DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneState)
+    DottedLattice[ReplicatedList[Long]].merge(fullState, plusOneState)
   }
 
   @Benchmark
   def fullDiff: Option[Dotted[ReplicatedList[Long]]] = {
-    DottedDecompose[ReplicatedList[Long]].diff(fullState, plusOneState)
+    DottedLattice[ReplicatedList[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: Dotted[ReplicatedList[Long]] = {
-    DottedDecompose[ReplicatedList[Long]].diff(fullState, plusOneDeltaState) match {
+    DottedLattice[ReplicatedList[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DottedDecompose[ReplicatedList[Long]].merge(fullState, stateDiff)
+        DottedLattice[ReplicatedList[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: Dotted[ReplicatedList[Long]] = {
-    DottedDecompose[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
+    DottedLattice[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
   }
 }

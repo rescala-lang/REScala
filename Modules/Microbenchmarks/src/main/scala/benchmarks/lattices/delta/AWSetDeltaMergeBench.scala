@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.AddWinsSet
-import kofre.dotted.{Dotted, DottedDecompose}
+import kofre.dotted.{Dotted, DottedLattice}
 import kofre.time.{Dot, Dots}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
@@ -50,20 +50,20 @@ class AWSetDeltaMergeBench {
 
   @Benchmark
   def fullDiff: Option[Dotted[AddWinsSet[Long]]] = {
-    DottedDecompose[AddWinsSet[Long]].diff(fullState, plusOneState)
+    DottedLattice[AddWinsSet[Long]].diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: Dotted[AddWinsSet[Long]] = {
-    DottedDecompose[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
+    DottedLattice[AddWinsSet[Long]].diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
-        DottedDecompose[AddWinsSet[Long]].merge(fullState, stateDiff)
+        DottedLattice[AddWinsSet[Long]].merge(fullState, stateDiff)
       case None => fullState
     }
   }
 
   @Benchmark
   def deltaMergeNoDiff: Dotted[AddWinsSet[Long]] = {
-    DottedDecompose[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
+    DottedLattice[AddWinsSet[Long]].merge(fullState, plusOneDeltaState)
   }
 }

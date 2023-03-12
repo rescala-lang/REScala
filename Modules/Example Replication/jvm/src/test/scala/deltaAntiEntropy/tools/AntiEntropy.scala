@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import kofre.base.Uid.asId
 import kofre.base.{Bottom, Lattice, Uid}
-import kofre.dotted.{Dotted, DottedDecompose}
+import kofre.dotted.{Dotted, DottedLattice}
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
@@ -29,7 +29,7 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedDecompose[A]) {
+)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedLattice[A]) {
 
   def state: Dotted[A] = fullState
 
