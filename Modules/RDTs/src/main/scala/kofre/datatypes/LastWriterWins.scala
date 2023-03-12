@@ -2,7 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice, Time, Uid}
 import kofre.datatypes.MultiVersionRegister
-import kofre.dotted.{DotFun, Dotted, DottedLattice}
+import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -23,6 +23,8 @@ object LastWriterWins {
   def fallback[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Long.MinValue, v)
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
+
+  given HasDots[LastWriterWins[Any]] = a => Dots.single(a.dot)
 
   given ordering: Ordering[LastWriterWins[Any]] =
     Ordering.by[LastWriterWins[Any], Time](_.wallTime)

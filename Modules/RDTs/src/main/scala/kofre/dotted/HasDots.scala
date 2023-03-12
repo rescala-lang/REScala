@@ -25,6 +25,12 @@ object HasDots {
 
   def apply[A](using dotStore: HasDots[A]): dotStore.type = dotStore
 
+  given option[A: HasDots]: HasDots[Option[A]] =
+    case None => Dots.empty
+    case Some(v) => v.dots
+
+  inline given tuple[T <: Tuple: Mirror.ProductOf]: HasDots[T] = derived
+
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): HasDots[T] =
     val lattices =
       summonAll[Tuple.Map[pm.MirroredElemTypes, HasDots]].toIArray.map(_.asInstanceOf[HasDots[Any]])
