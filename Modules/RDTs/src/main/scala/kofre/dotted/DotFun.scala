@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.Lattice
 import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.{Dot, Dots}
 
