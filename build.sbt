@@ -192,20 +192,14 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= List(jsoniterScala.value),
     scalaFxDependencies,
     fork := true,
-    libraryDependencies ++= {
-      val jettyVersion = "11.0.13"
-      Seq(
-        "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
-        "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
-        "com.google.crypto.tink"      % "tink"                   % "1.7.0",
-        "org.conscrypt"               % "conscrypt-openjdk-uber" % "2.5.2",
-      )
-    },
+    libraryDependencies += jsoniterScala.value,
+    libraryDependencies ++= jetty11.value,
+    libraryDependencies ++= Seq(
+      "com.google.crypto.tink" % "tink"                   % "1.7.0",
+      "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
+    ),
   )
 
 lazy val replicationExamples =
@@ -231,11 +225,10 @@ lazy val replicationExamples =
     .jvmSettings(
       libraryDependencies ++= Seq(
         loci.wsJetty11.value,
-        jetty.value,
         scribeSlf4j2.value,
         slips.script.value,
         sqliteJdbc.value,
-      )
+      ) ++ jetty11.value
     )
     .jsSettings(
       libraryDependencies ++= Seq(

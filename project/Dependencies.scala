@@ -9,9 +9,8 @@ object Dependencies {
 
   object Versions {
     val directories   = "26"
-    val jetty         = "11.0.13"
-    val jol           = "0.16"
-    val jsoniterScala = "2.21.0"
+    val jol           = "0.17"
+    val jsoniterScala = "2.21.3"
     val jsoup         = "1.15.3"
     val munit         = "1.0.0-M7"
     val okHttp        = "4.10.0"
@@ -30,13 +29,12 @@ object Dependencies {
     val scribe        = "3.10.7"
     val sqliteJdbc    = "3.40.1.0"
     val sourcecode    = "0.3.0"
-    val upickle       = "2.0.0"
+    val upickle       = "3.0.0"
   }
 
   import Dependencies.Versions as V
 
   val directories     = Def.setting("dev.dirs" % "directories" % V.directories)
-  val jetty           = Def.setting("org.eclipse.jetty" % "jetty-rewrite" % V.jetty)
   val jol             = Def.setting("org.openjdk.jol" % "jol-core" % V.jol)
   val jsoniterScala   = Def.setting("com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % V.jsoniterScala)
   val jsoup           = Def.setting("org.jsoup" % "jsoup" % V.jsoup)

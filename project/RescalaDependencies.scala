@@ -19,6 +19,16 @@ object RescalaDependencies {
     if (`is 3`(scalaVersion.value)) None
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
   )
+  val jetty11 = Def.setting {
+    val jettyVersion = "11.0.14"
+    Seq(
+      "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
+      "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
+      "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
+      "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
+      "org.eclipse.jetty"           % "jetty-rewrite"          % jettyVersion,
+    )
+  }
 
   val scalaSwing = Def.setting("org.scala-lang.modules" %% "scala-swing" % "3.0.0")
 
