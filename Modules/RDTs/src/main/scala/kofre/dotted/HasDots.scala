@@ -1,10 +1,11 @@
 package kofre.dotted
 
-import kofre.base.{Bottom, Uid, Lattice}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.time.{Dot, Dots}
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
+import scala.util.control.ControlThrowable
 
 /** HasDots implies that the container stores values that are somehow associated to individual [[Dot]]s.
   * This is different from a dot context, which could also contain dots for deleted values or other metadata.
@@ -12,22 +13,30 @@ import scala.deriving.Mirror
   *
   * See also: Dot stores in delta state replicated data types
   */
-trait HasDots[-A] {
-  def getDots(a: A): Dots
-
-  def map[B](f: B => A): HasDots[B] = (b: B) => getDots(f(b))
-
-  extension (a: A) def dots: Dots = getDots(a)
-
+trait HasDots[A] {
+  extension (dotted: A)
+    def dots: Dots
+    def removeDots(dots: Dots): Option[A]
 }
 
 object HasDots {
 
   def apply[A](using dotStore: HasDots[A]): dotStore.type = dotStore
 
-  given option[A: HasDots]: HasDots[Option[A]] =
-    case None => Dots.empty
-    case Some(v) => v.dots
+  def noDots[A]: HasDots[A] = new {
+    extension (dotted: A)
+      def dots: Dots = Dots.empty
+      def removeDots(dots: Dots): Option[A] = Some(dotted)
+  }
+
+  given option[A: HasDots]: HasDots[Option[A]] with
+    extension (dotted: Option[A])
+      def dots: Dots = dotted match
+        case None    => Dots.empty
+        case Some(v) => HasDots[A].dots(v)
+      def removeDots(dots: Dots): Option[Option[A]] = dotted match
+        case None    => None
+        case Some(v) => v.removeDots(dots).map(Some.apply)
 
   inline given tuple[T <: Tuple: Mirror.ProductOf]: HasDots[T] = derived
 
@@ -36,11 +45,23 @@ object HasDots {
       summonAll[Tuple.Map[pm.MirroredElemTypes, HasDots]].toIArray.map(_.asInstanceOf[HasDots[Any]])
     new ProductHasDots(pm, lattices)
 
-  class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]])
-      extends HasDots[T] {
-    override def getDots(a: T): Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
-      c.union(children(i).getDots(a.productElement(i)))
-    }
+  class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]]) extends HasDots[T] {
+    extension (a: T)
+      def dots: Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
+        c.union(children(i).dots(a.productElement(i)))
+      }
+      def removeDots(dots: Dots): Option[T] =
+        object FilterControl extends ControlThrowable
+        try
+          Some(pm.fromProduct(new Product {
+            def canEqual(that: Any): Boolean = false
+            def productArity: Int            = children.size
+            def productElement(i: Int): Any =
+              children(i).removeDots(a.productElement(i))(dots).getOrElse {
+                throw FilterControl
+              }
+          }))
+        catch case FilterControl => None
 
   }
 }

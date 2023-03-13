@@ -21,7 +21,7 @@ object ObserveRemoveMap {
 
   given bottom[K, V]: Bottom[ObserveRemoveMap[K, V]] = Bottom.derived
 
-  given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = DotMap.hasDots[K, V].map(_.inner)
+  given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = HasDots.derived
 
   given contextDecompose[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[ObserveRemoveMap[K, V]] =
     DottedLattice.derived
@@ -66,14 +66,14 @@ object ObserveRemoveMap {
       val v = current.inner.repr.getOrElse(k, Bottom[V].empty)
 
       make[K, V](
-        cc = HasDots[V].getDots(v)
+        cc = HasDots[V].dots(v)
       ).mutator
     }
 
     def removeAll(using PermCausalMutate, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {
       val values = keys.map(k => current.inner.repr.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
-        case (set, v) => set union HasDots[V].getDots(v)
+        case (set, v) => set union HasDots[V].dots(v)
       }
 
       make(
@@ -83,7 +83,7 @@ object ObserveRemoveMap {
 
     def removeByValue(using PermCausalMutate, DottedLattice[V], HasDots[V])(cond: Dotted[V] => Boolean): C = {
       val toRemove = current.inner.repr.values.collect {
-        case v if cond(Dotted(v, context)) => HasDots[V].getDots(v)
+        case v if cond(Dotted(v, context)) => v.dots
       }.fold(Dots.empty)(_ union _)
 
       make(

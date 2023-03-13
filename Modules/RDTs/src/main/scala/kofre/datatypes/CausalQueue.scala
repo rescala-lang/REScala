@@ -21,8 +21,12 @@ object CausalQueue:
 
   def empty[T]: CausalQueue[T] = CausalQueue(Queue())
 
-  given hasDots: HasDots[CausalQueue[Any]] with {
-    override def getDots(a: CausalQueue[Any]): Dots = Dots.from(a.values.view.map(_.dot))
+  given hasDots[A]: HasDots[CausalQueue[A]] with {
+    extension (value: CausalQueue[A])
+      override def dots: Dots = Dots.from(value.values.view.map(_.dot))
+
+      override def removeDots(dots: Dots): Option[CausalQueue[A]] =
+        Some(CausalQueue(value.values.filter(qe => !dots.contains(qe.dot))))
   }
 
   given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived
@@ -67,7 +71,4 @@ object CausalQueue:
       val res = (li concat ri).to(Queue)
         .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
       CausalQueue(res)
-
-    override def filter(value: CausalQueue[A], dots: Dots): Option[CausalQueue[A]] =
-      Some(CausalQueue(value.values.filter(qe => !dots.contains(qe.dot))))
   }

@@ -18,7 +18,13 @@ object DotFun {
   def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
   given dotStore[V]: HasDots[DotFun[V]] with {
-    override def getDots(dotStore: DotFun[V]): Dots = Dots.from(dotStore.repr.keys)
+    extension (value: DotFun[V])
+      override def dots: Dots = Dots.from(value.repr.keys)
+
+      override def removeDots(dots: Dots): Option[DotFun[V]] =
+        val res = value.repr.filter((dot, v) => !dots.contains(dot))
+        if res.isEmpty then None
+        else Some(DotFun(res))
   }
 
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] with {
@@ -39,11 +45,6 @@ object DotFun {
         }
       DotFun(fromLeft ++ fromCombined)
     }
-
-    override def filter(value: DotFun[A], dots: Dots): Option[DotFun[A]] =
-      val res = value.repr.filter((dot, v) => !dots.contains(dot))
-      if res.isEmpty then None
-      else Some(DotFun(res))
 
     /** Insertion is larger. Removals are larger. Otherwise compare the value for each dot. */
     override def lteq(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): Boolean = {

@@ -49,7 +49,7 @@ object DeltaAddWinsMap {
   def deltaRemove[K, V: HasDots](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
     Dotted(
       DotMap.empty,
-      map.store.repr.get(key).map(HasDots[V].getDots).getOrElse(Dots.empty)
+      map.store.repr.get(key).map(HasDots[V].dots).getOrElse(Dots.empty)
     )
 
   /** Returns the '''delta''' that removes all values from the `map`.

@@ -24,7 +24,12 @@ object LastWriterWins {
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
-  given HasDots[LastWriterWins[Any]] = a => Dots.single(a.dot)
+  given [A]: HasDots[LastWriterWins[A]] with {
+    extension (value: LastWriterWins[A])
+      def dots: Dots = Dots.single(value.dot)
+      def removeDots(dots: Dots): Option[LastWriterWins[A]] =
+        if dots.contains(value.dot) then None else Some(value)
+  }
 
   given ordering: Ordering[LastWriterWins[Any]] =
     Ordering.by[LastWriterWins[Any], Time](_.wallTime)
@@ -41,9 +46,6 @@ object LastWriterWins {
       else if ordering.lteq(left.store, right.store)
       then right.store
       else left.store
-
-    override def filter(value: LastWriterWins[A], dots: Dots): Option[LastWriterWins[A]] =
-      if dots.contains(value.dot) then None else Some(value)
   }
 
   extension [C, A](container: C)

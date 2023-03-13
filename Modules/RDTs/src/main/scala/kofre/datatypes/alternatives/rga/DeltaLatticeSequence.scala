@@ -102,6 +102,15 @@ object DeltaSequence {
       }
   }
 
+  given hasDots[A]: HasDots[DeltaSequence[A]] with {
+    extension (value: DeltaSequence[A])
+      def dots: Dots = value.vertices.dots
+      override def removeDots(dots: Dots): Option[DeltaSequence[A]] =
+          HasDots.apply[datatypes.AddWinsSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
+            value.copy(vertices = nv)
+          }
+  }
+
   given deltaSequenceLattice[A]: DottedLattice[DeltaSequence[A]] =
     new DottedLattice[DeltaSequence[A]] {
 
@@ -138,9 +147,6 @@ object DeltaSequence {
         )
       }
 
-      override def filter(value: DeltaSequence[A], dots: Dots): Option[DeltaSequence[A]] =
-        DottedLattice.apply[datatypes.AddWinsSet[Vertex]].filter(value.vertices, dots).map{ nv =>
-          value.copy(vertices = nv)
-        }
+
     }
 }

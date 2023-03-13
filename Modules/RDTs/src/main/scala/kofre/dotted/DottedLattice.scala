@@ -32,8 +32,6 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
     */
   def mergePartial(left: Dotted[A], right: Dotted[A]): A
 
-  def filter(value: A, dots: Dots): Option[A]
-
   def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
     Dotted(
       mergePartial(left, right),
@@ -52,8 +50,6 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
     new DottedLattice[B] {
       override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedLattice.this.lteq(from(left), from(right))
       override def decompose(a: Dotted[B]): Iterable[Dotted[B]]     = DottedLattice.this.decompose(from(a)).map(to)
-      override def filter(value: B, dots: Dots): Option[B] =
-        DottedLattice.this.filter(from(Dotted(value)).store, dots).map(v => to(Dotted(v)).store)
       override def mergePartial(left: Dotted[B], right: Dotted[B]): B =
         to(Dotted(DottedLattice.this.mergePartial(from(left), from(right)))).store
     }
@@ -68,16 +64,13 @@ object DottedLattice {
   def decomposedDeletions[A: HasDots: Bottom](dotted: Dotted[A]) =
     dotted.deletions.decomposed.map(d => Dotted(Bottom.empty, d))
 
-  given optionInstance[A: DottedLattice]: DottedLattice[Option[A]] with {
+  given optionInstance[A: DottedLattice: HasDots]: DottedLattice[Option[A]] with {
     override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
       (left.store, right.store) match
         case (None, None)       => None
-        case (None, Some(r))    => DottedLattice.apply.filter(r, left.context)
-        case (Some(l), None)    => DottedLattice.apply.filter(l, right.context)
+        case (None, Some(r))    => r.removeDots(left.context)
+        case (Some(l), None)    => l.removeDots(right.context)
         case (Some(l), Some(r)) => Some(DottedLattice.apply.mergePartial(left.map(_ => l), right.map(_ => r)))
-
-    override def filter(value: Option[A], dots: Dots): Option[Option[A]] =
-      value.map(v => DottedLattice[A].filter(v, dots))
 
     override def lteq(left: Dotted[Option[A]], right: Dotted[Option[A]]): Boolean =
       (left.context <= right.context) &&
@@ -119,20 +112,6 @@ object DottedLattice {
         def productElement(i: Int): Any =
           lat(i).mergePartial(left.map(_.productElement(i)), right.map(_.productElement(i)))
       })
-
-    override def filter(value: T, dots: Dots): Option[T] =
-      object FilterControl extends ControlThrowable
-      try
-        Some(pm.fromProduct(new Product {
-          def canEqual(that: Any): Boolean = false
-          def productArity: Int            = lattices.productArity
-          def productElement(i: Int): Any =
-            lat(i).filter(value.productElement(i), dots).getOrElse {
-              if bot(i) == null then throw FilterControl
-              bot(i).empty
-            }
-        }))
-      catch case FilterControl => None
 
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       if !dotsAndBottoms then super.decompose(a)
@@ -178,8 +157,6 @@ object DottedLattice {
     new DottedLattice[A] {
       override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
         Lattice[A].merge(left.store, right.store)
-
-      override def filter(value: A, dots: Dots): Option[A] = Some(value)
 
       override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
         Lattice[A].lteq(left.store, right.store)

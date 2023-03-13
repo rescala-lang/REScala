@@ -15,9 +15,7 @@ case class EnableWinsFlag(inner: DotSet) derives Bottom
 object EnableWinsFlag {
 
   given contextDecompose: DottedLattice[EnableWinsFlag] = DottedLattice.derived
-  given hasDotsEWF: HasDots[EnableWinsFlag] with {
-    override def getDots(a: EnableWinsFlag): Dots = a.inner.dots
-  }
+  given hasDotsEWF: HasDots[EnableWinsFlag] = HasDots.derived
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
 

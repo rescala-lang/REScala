@@ -52,9 +52,7 @@ given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
 
 given DottedLattice[RespValue] = DottedLattice.liftLattice
 
-given HasDots[RespValue] with {
-  override def getDots(a: RespValue): Dots = Dots.empty
-}
+given HasDots[RespValue] = HasDots.noDots
 
 case class State(
     requests: CausalQueue[Req],

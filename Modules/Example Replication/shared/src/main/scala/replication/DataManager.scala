@@ -118,7 +118,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
   }
 
   registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
-    val contained = HasDots[State].getDots(mergedState.now.store)
+    val contained = HasDots[State].dots(mergedState.now.store)
     val cc        = currentContext.now
     // we always send all the removals in addition to any other deltas
     val removed = cc subtract contained

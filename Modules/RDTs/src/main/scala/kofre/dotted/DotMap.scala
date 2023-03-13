@@ -19,8 +19,16 @@ object DotMap {
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
 
   given hasDots[K, V: HasDots]: HasDots[DotMap[K, V]] with {
-    override def getDots(a: DotMap[K, V]): Dots =
-      a.repr.valuesIterator.map(v => v.dots).reduceOption(_ union _).getOrElse(Dots.empty)
+    extension (value: DotMap[K, V])
+      override def dots: Dots =
+        value.repr.valuesIterator.map(v => v.dots).reduceOption(_ union _).getOrElse(Dots.empty)
+      override def removeDots(dots: Dots): Option[DotMap[K, V]] =
+        val res = value.repr.flatMap { (k, v) =>
+          HasDots.apply.removeDots(v)(dots).map(k -> _)
+        }
+        if res.isEmpty then None
+        else Some(DotMap(res))
+
   }
 
   given dottedLattice[K, V: DottedLattice: HasDots]: DottedLattice[DotMap[K, V]] with {
@@ -32,14 +40,6 @@ object DotMap {
         (left.map(access(key)) mergePartial right.map(access(key))).map(key -> _)
       }.toMap)
     }
-
-    override def filter(value: DotMap[K, V], dots: Dots): Option[DotMap[K, V]] =
-      val res = value.repr.flatMap { (k, v) =>
-        DottedLattice.apply.filter(v, dots).map(k -> _)
-      }
-      if res.isEmpty then None
-      else Some(DotMap(res))
-
     override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
       (right.context <= left.context) &&
       (left.store.repr.keySet union right.store.repr.keySet).forall { k =>

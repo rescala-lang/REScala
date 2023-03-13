@@ -17,7 +17,13 @@ object DotSet {
   def from(it: Iterable[Dot]): DotSet = DotSet(Dots.from(it))
 
   given hasDots: HasDots[DotSet] with {
-    override def getDots(a: DotSet): Dots = a.repr
+    extension(value: DotSet)
+      override def dots: Dots = value.repr
+
+      override def removeDots(dots: Dots): Option[DotSet] =
+        val res = value.repr.diff(dots)
+        if res.isEmpty then None
+        else Some(DotSet(res))
   }
 
   given dottedLattice: DottedLattice[DotSet] =
@@ -32,10 +38,6 @@ object DotSet {
         DotSet(fromLeft union fromRight)
       }
 
-      override def filter(value: DotSet, dots: Dots): Option[DotSet] =
-        val res = value.repr.diff(dots)
-        if res.isEmpty then None
-        else Some(DotSet(res))
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         (left.context <= right.context) &&
