@@ -116,6 +116,7 @@ object DottedLattice {
     override def decompose(a: Dotted[T]): Iterable[Dotted[T]] =
       if !dotsAndBottoms then super.decompose(a)
       else
+        val bottomValues = Range(0, bottoms.productArity).map(i => bot(i).empty)
         val added =
           for
             index <- Range(0, lattices.productArity)
@@ -126,7 +127,7 @@ object DottedLattice {
             pm.fromProduct(new Product {
               def canEqual(that: Any): Boolean = false
               def productArity: Int            = lattices.productArity
-              def productElement(i: Int): Any  = if i == index then decomposedElement else bot(i).empty
+              def productElement(i: Int): Any  = if i == index then decomposedElement else bottomValues(i)
             }),
             decomposedContext
           )
@@ -137,7 +138,7 @@ object DottedLattice {
 
           def productArity: Int = lattices.productArity
 
-          def productElement(i: Int): Any = bot(i).empty
+          def productElement(i: Int): Any = bottomValues(i)
         })
         if removed.isEmpty
         then added
