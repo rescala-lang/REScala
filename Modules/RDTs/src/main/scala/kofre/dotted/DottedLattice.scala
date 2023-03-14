@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.Lattice.{Operators, optionLattice}
+import kofre.base.Lattice.{ optionLattice}
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.ReplicatedList
 import kofre.dotted.DottedLattice.Partitioned

@@ -58,6 +58,9 @@ object Lattice {
 
   def decompose[A: Lattice](a: A): Iterable[A] = a.decomposed
 
+  // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
+  // But when this is also an extension method, it becomes ambiguous in some cases.
+  // Thus, it is a good old implicit class.
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
 

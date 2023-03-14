@@ -1,6 +1,5 @@
 package kofre.datatypes
 
-import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice, HasDots}

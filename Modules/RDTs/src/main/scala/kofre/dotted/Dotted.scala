@@ -1,11 +1,17 @@
 package kofre.dotted
 
-import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.{DotFun, DotSet}
 import kofre.syntax.{PermCausalMutate, PermQuery}
 import kofre.time.{Dot, Dots}
 
+/** Associates a context of Dots with some data structure.
+  * The most common use is to interpret the context as the set of:
+  * • all dots that are present in data
+  * • all dots directly subsumed by data
+  *
+  * Specifically, the `deletions` and `contained` methods reflect this interpretation.
+  * */
 case class Dotted[A](data: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]      = Dotted(f(data), context)
   def knows(dot: Dot): Boolean          = context.contains(dot)
