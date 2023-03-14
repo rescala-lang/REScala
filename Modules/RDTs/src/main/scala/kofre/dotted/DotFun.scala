@@ -30,11 +30,11 @@ object DotFun {
   given dottedLattice[A: Lattice]: DottedLattice[DotFun[A]] with {
 
     override def mergePartial(left: Dotted[DotFun[A]], right: Dotted[DotFun[A]]): DotFun[A] = {
-      val fromLeft = left.store.repr.filter { case (dot, _) => !right.knows(dot) }
+      val fromLeft = left.data.repr.filter { case (dot, _) => !right.knows(dot) }
       val fromCombined =
-        right.store.repr.iterator.flatMap {
+        right.data.repr.iterator.flatMap {
           case (dot, r) =>
-            left.store.repr.get(dot) match {
+            left.data.repr.get(dot) match {
               case None =>
                 // was it deleted in left, or not yet inserted?
                 if left.knows(dot)
@@ -55,13 +55,13 @@ object DotFun {
       // everything not in the right store will be deleted from left on merge
       // things that are still in left must be smaller
       // things that are not in left are not there yet (otherwise the deletion clause above would hold)
-      right.store.repr.forall { (k, r) =>
-        left.store.repr.get(k).forall { l => l <= r }
+      right.data.repr.forall { (k, r) =>
+        left.data.repr.get(k).forall { l => l <= r }
       }
     }
 
     override def decompose(state: Dotted[DotFun[A]]): Iterable[Dotted[DotFun[A]]] = {
-      val added = Lattice[Map[Dot, A]].decompose(state.store.repr).map { m =>
+      val added = Lattice[Map[Dot, A]].decompose(state.data.repr).map { m =>
         val df = DotFun(m)
         Dotted(df, df.dots)
       }

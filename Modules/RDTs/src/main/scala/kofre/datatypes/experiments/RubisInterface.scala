@@ -69,7 +69,7 @@ object RubisInterface {
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
         val merged = req.inheritContext.add(userId -> replicaId)
-        Dotted(deltaState.make(userRequests = merged.store), merged.context).mutator
+        Dotted(deltaState.make(userRequests = merged.data), merged.context).mutator
     }
 
     def resolveRegisterUser()(using PermCausalMutate): C = {

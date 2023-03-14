@@ -31,7 +31,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val mergedStore = Lattice.merge(
       Dotted(DotSet.from(s1), Dots.from(c1)),
       Dotted(DotSet.from(s2), Dots.from(c2))
-    ).store
+    ).data
 
     assert(!mergedStore.contains(d1))
     assert(mergedStore.contains(d2))
@@ -60,12 +60,12 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
       // check that already deleted elements are not added again
       for (e <- deadElements) yield {
-        assert(!m1.store.contains(e), s"$m1 ; $deadElements")
+        assert(!m1.data.contains(e), s"$m1 ; $deadElements")
       }
 
       // check that the new store contains all new elements
       for (e <- newElements) yield {
-        assert(m1.store.contains(e))
+        assert(m1.data.contains(e))
       }
 
       Prop.passed

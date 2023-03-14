@@ -40,7 +40,7 @@ object NamedDeltaBuffer {
     NamedDeltaBuffer(replicaId, Dotted(init(dot), Dots.single(dot)), List())
 
   given dottedPermissions[L: DottedLattice]: PermCausalMutate[NamedDeltaBuffer[Dotted[L]], L] = new {
-    override def query(c: NamedDeltaBuffer[Dotted[L]]): L = c.state.store
+    override def query(c: NamedDeltaBuffer[Dotted[L]]): L = c.state.data
     override def mutateContext(
         container: NamedDeltaBuffer[Dotted[L]],
         withContext: Dotted[L]

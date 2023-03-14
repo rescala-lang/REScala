@@ -16,17 +16,17 @@ object DeltaMultiValueRegister {
     val dot = register.context.clockOf(replicaId).get.advance
     Dotted(
       DotFun(Map(dot -> value)),
-      Dots.from(register.store.repr.keySet + dot)
+      Dots.from(register.data.repr.keySet + dot)
     )
   }
 
   def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
     Dotted(
       DotFun.empty,
-      Dots.from(register.store.repr.keySet)
+      Dots.from(register.data.repr.keySet)
     )
 
   def read[V](register: DeltaMultiValueRegisterLattice[V]): Set[V] = {
-    register.store.repr.values.toSet
+    register.data.repr.values.toSet
   }
 }

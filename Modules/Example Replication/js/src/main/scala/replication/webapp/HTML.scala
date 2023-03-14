@@ -38,7 +38,7 @@ object HTML {
         tr(td("total state size"), dataManager.encodedStateSize.map(s => td(s)).asModifier),
         tr(
           td("request queue"),
-          dataManager.mergedState.map(v => td(v.store.requests.elements.size)).asModifier
+          dataManager.mergedState.map(v => td(v.data.requests.elements.size)).asModifier
         ),
       )),
       section(

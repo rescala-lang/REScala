@@ -79,7 +79,7 @@ class FbdcExampleData {
       part.observeRemoveMap.mutateKey(replicaId)(_.add(using replicaId)(capability))
     }
 
-  val requests = dataManager.mergedState.map(_.store.requests.values)
+  val requests = dataManager.mergedState.map(_.data.requests.values)
   val myRequests =
     val r = requests.map(_.filter(_.value.executor == replicaId))
     r.observe { reqs =>
@@ -90,7 +90,7 @@ class FbdcExampleData {
         }
     }
     r
-  val responses = dataManager.mergedState.map(_.store.responses.entries.toMap)
+  val responses = dataManager.mergedState.map(_.data.responses.entries.toMap)
 
   val latestFortune = responses.map(_.get("fortune").flatten.map(_.payload).collect {
     case res: Res.Fortune => res
@@ -104,6 +104,6 @@ class FbdcExampleData {
     case req @ QueueElement(x: T, _, _) => req.copy(value = x)
   })
 
-  val providers = dataManager.mergedState.map(_.store.providers)
+  val providers = dataManager.mergedState.map(_.data.providers)
 
 }

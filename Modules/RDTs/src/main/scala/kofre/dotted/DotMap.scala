@@ -36,20 +36,20 @@ object DotMap {
     def access(key: K)(m: DotMap[K, V]): Option[V] = m.repr.get(key)
 
     override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-      DotMap((left.store.repr.keySet union right.store.repr.keySet).iterator.flatMap { key =>
+      DotMap((left.data.repr.keySet union right.data.repr.keySet).iterator.flatMap { key =>
         (left.map(access(key)) mergePartial right.map(access(key))).map(key -> _)
       }.toMap)
     }
     override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
       (right.context <= left.context) &&
-      (left.store.repr.keySet union right.store.repr.keySet).forall { k =>
+      (left.data.repr.keySet union right.data.repr.keySet).forall { k =>
         left.map(access(k)) <= right.map(access(k))
       }
     }
 
     override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
       val added = for {
-        (k, v)                    <- state.store.repr
+        (k, v)                    <- state.data.repr
         Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
       } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 

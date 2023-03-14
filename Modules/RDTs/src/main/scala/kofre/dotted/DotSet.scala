@@ -32,8 +32,8 @@ object DotSet {
       override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
         // the first `right.context` semantically should be `right.deletions`,
         // but the non-deleted values are added in the next line anyway
-        val fromLeft  = left.store.dots subtract right.context
-        val fromRight = right.store.dots subtract left.deletions
+        val fromLeft  = left.data.dots subtract right.context
+        val fromRight = right.data.dots subtract left.deletions
 
         DotSet(fromLeft union fromRight)
       }
@@ -41,11 +41,11 @@ object DotSet {
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         (left.context <= right.context) &&
-        (right.store.dots disjunct left.deletions)
+        (right.data.dots disjunct left.deletions)
       }
 
       override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
-        val added = state.store.dots.decomposed.map(d => Dotted(DotSet(d), d))
+        val added = state.data.dots.decomposed.map(d => Dotted(DotSet(d), d))
         added ++ DottedLattice.decomposedDeletions(state)
       }
     }

@@ -23,7 +23,7 @@ case class DeltaBuffer[State](
 object DeltaBuffer {
 
   given dottedPermissions[L: DottedLattice]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
-    override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.store
+    override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.data
     override def mutateContext(
         container: DeltaBuffer[Dotted[L]],
         withContext: Dotted[L]
@@ -48,7 +48,7 @@ object DeltaBufferContainer {
   given dottedPermissions[L](using
       pcm: PermCausalMutate[DeltaBuffer[Dotted[L]], L]
   ): PermCausalMutate[DeltaBufferContainer[Dotted[L]], L] = new {
-    override def query(c: DeltaBufferContainer[Dotted[L]]): L = c.result.state.store
+    override def query(c: DeltaBufferContainer[Dotted[L]]): L = c.result.state.data
     override def mutateContext(
         container: DeltaBufferContainer[Dotted[L]],
         withContext: Dotted[L]

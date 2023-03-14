@@ -62,11 +62,11 @@ object CausalQueue:
   given lattice[A]: DottedLattice[CausalQueue[A]] with {
     override def mergePartial(left: Dotted[CausalQueue[A]], right: Dotted[CausalQueue[A]]): CausalQueue[A] =
 
-      val leftDots  = Dots.from(left.store.values.map(_.dot))
-      val rightDots = Dots.from(right.store.values.map(_.dot))
+      val leftDots  = Dots.from(left.data.values.map(_.dot))
+      val rightDots = Dots.from(right.data.values.map(_.dot))
 
-      val li = left.store.values.iterator.filter(qe => !(right.context subtract rightDots).contains(qe.dot))
-      val ri = right.store.values.iterator.filter(qe => !(left.context subtract leftDots).contains(qe.dot))
+      val li = left.data.values.iterator.filter(qe => !(right.context subtract rightDots).contains(qe.dot))
+      val ri = right.data.values.iterator.filter(qe => !(left.context subtract leftDots).contains(qe.dot))
 
       val res = (li concat ri).to(Queue)
         .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct

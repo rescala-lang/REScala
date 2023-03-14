@@ -52,7 +52,7 @@ object Project {
     def set_name(using ReplicaId, PermCausalMutate)(newName: String): C = {
       val updatedNameRegister: Dotted[LastWriterWins[Option[String]]] = focus(_._name)(_.write(Option(newName)))
 
-      val projectDelta = empty.map(_.copy(_name = updatedNameRegister.store))
+      val projectDelta = empty.map(_.copy(_name = updatedNameRegister.data))
       // Every syntax function that uses a CausalMutationP always returns both an updated context and an updated value.
       // The updated context was produces by the `write` of the CausalLastWriterWins, while the value is the full project.
       // Note, if there are multiple different things written within the same mutation,
@@ -60,7 +60,7 @@ object Project {
       // – this is currently not handled by the focus method above
       // (the `context` inside there always just returns the initial context).
       Dotted(
-        projectDelta.store,
+        projectDelta.data,
         updatedNameRegister.context,
       ).mutator
       // the above is the same as

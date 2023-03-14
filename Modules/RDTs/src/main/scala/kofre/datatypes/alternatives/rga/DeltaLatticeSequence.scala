@@ -22,7 +22,7 @@ object DeltaSequence {
       Vertex.start
     )
     DeltaSequence(
-      addStart.store,
+      addStart.data,
       DeltaSequenceOrder(Map()),
       Map.empty,
     )
@@ -58,7 +58,7 @@ object DeltaSequence {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
       val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
       val newValues   = Map(insertee -> value)
-      newVertices.context.wrap(DeltaSequence(newVertices.store, newEdges, newValues)).mutator
+      newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues)).mutator
     }
 
     def prependDelta(replica: Uid, value: A)(using PermCausalMutate): C =
@@ -124,21 +124,21 @@ object DeltaSequence {
           left: Dotted[DeltaSequence[A]],
           right: Dotted[DeltaSequence[A]]
       ): DeltaSequence[A] = {
-        val newVertices = right.store.vertices.elements.filter(!left.store.edges.inner.contains(_))
+        val newVertices = right.data.vertices.elements.filter(!left.data.edges.inner.contains(_))
 
         // build map of old insertion positions of the new vertices
-        val oldPositions = right.store.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
+        val oldPositions = right.data.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
           case (m, (u, v)) => if (newVertices.contains(v)) { m + (v -> u) }
             else m
         }
 
-        val newEdges = newVertices.foldLeft(left.store.edges) {
+        val newEdges = newVertices.foldLeft(left.data.edges) {
           case (merged, v) =>
             if (v == Vertex.start) merged
             else merged.addRightEdge(oldPositions(v), v)
         }
         val vertices = left.map(_.vertices) mergePartial right.map(_.vertices)
-        val values   = Lattice.merge(left.store.values, right.store.values)(Lattice.mapLattice(noMapConflictsLattice))
+        val values   = Lattice.merge(left.data.values, right.data.values)(Lattice.mapLattice(noMapConflictsLattice))
 
         DeltaSequence(
           vertices = vertices,

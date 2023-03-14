@@ -51,7 +51,7 @@ trait DottedLattice[A] extends Lattice[Dotted[A]] {
       override def lteq(left: Dotted[B], right: Dotted[B]): Boolean = DottedLattice.this.lteq(from(left), from(right))
       override def decompose(a: Dotted[B]): Iterable[Dotted[B]]     = DottedLattice.this.decompose(from(a)).map(to)
       override def mergePartial(left: Dotted[B], right: Dotted[B]): B =
-        to(Dotted(DottedLattice.this.mergePartial(from(left), from(right)))).store
+        to(Dotted(DottedLattice.this.mergePartial(from(left), from(right)))).data
     }
 }
 
@@ -66,7 +66,7 @@ object DottedLattice {
 
   given optionInstance[A: DottedLattice: HasDots]: DottedLattice[Option[A]] with {
     override def mergePartial(left: Dotted[Option[A]], right: Dotted[Option[A]]): Option[A] =
-      (left.store, right.store) match
+      (left.data, right.data) match
         case (None, None)       => None
         case (None, Some(r))    => r.removeDots(left.context)
         case (Some(l), None)    => l.removeDots(right.context)
@@ -74,7 +74,7 @@ object DottedLattice {
 
     override def lteq(left: Dotted[Option[A]], right: Dotted[Option[A]]): Boolean =
       (left.context <= right.context) &&
-      ((left.store, right.store) match
+      ((left.data, right.data) match
         case (None, _)          => true
         case (_, None)          => false
         case (Some(l), Some(r)) => left.map(_ => l) <= right.map(_ => r)
@@ -120,7 +120,7 @@ object DottedLattice {
         val added =
           for
             index <- Range(0, lattices.productArity)
-            element = a.store.productElement(index)
+            element = a.data.productElement(index)
             dots    = hdots(index).dots(element)
             Dotted(decomposedElement, decomposedContext) <- lat(index).decompose(Dotted(element, dots))
           yield Dotted(
@@ -157,13 +157,13 @@ object DottedLattice {
   def liftLattice[A: Lattice]: DottedLattice[A] =
     new DottedLattice[A] {
       override def mergePartial(left: Dotted[A], right: Dotted[A]): A =
-        Lattice[A].merge(left.store, right.store)
+        Lattice[A].merge(left.data, right.data)
 
       override def lteq(left: Dotted[A], right: Dotted[A]): Boolean =
-        Lattice[A].lteq(left.store, right.store)
+        Lattice[A].lteq(left.data, right.data)
 
       override def decompose(state: Dotted[A]): Iterable[Dotted[A]] = {
-        Lattice[A].decompose(state.store).map(Dotted(_, Dots.empty))
+        Lattice[A].decompose(state.data).map(Dotted(_, Dots.empty))
       }
     }
 }

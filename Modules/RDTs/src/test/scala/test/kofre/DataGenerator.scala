@@ -42,7 +42,7 @@ object DataGenerator {
     for {
       left <- arbLww.arbitrary
       right <- arbLww.arbitrary
-    } yield Dotted((Some(left.store), Some(right.store)), left.context union right.context)
+    } yield Dotted((Some(left.data), Some(right.data)), left.context union right.context)
   )
 
   given Lattice[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]] = DottedLattice.derived

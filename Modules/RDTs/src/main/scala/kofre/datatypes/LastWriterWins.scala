@@ -39,13 +39,13 @@ object LastWriterWins {
 
   given dottedLattice[A]: DottedLattice[LastWriterWins[A]] with {
     override def mergePartial(left: Dotted[LastWriterWins[A]], right: Dotted[LastWriterWins[A]]): LastWriterWins[A] =
-      if left.context.contains(right.store.dot)
-      then left.store
-      else if right.context.contains(left.store.dot)
-      then right.store
-      else if ordering.lteq(left.store, right.store)
-      then right.store
-      else left.store
+      if left.context.contains(right.data.dot)
+      then left.data
+      else if right.context.contains(left.data.dot)
+      then right.data
+      else if ordering.lteq(left.data, right.data)
+      then right.data
+      else left.data
   }
 
   extension [C, A](container: C)

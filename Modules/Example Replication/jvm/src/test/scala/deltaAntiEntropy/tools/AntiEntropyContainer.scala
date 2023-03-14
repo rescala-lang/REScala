@@ -46,7 +46,7 @@ object AntiEntropyContainer {
     new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
       override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =
         c.applyDelta(Named(c.replicaID, Dotted(delta, Dots.empty)))
-      override def query(c: AntiEntropyContainer[L]): L = c.state.store
+      override def query(c: AntiEntropyContainer[L]): L = c.state.data
       override def mutateContext(
           container: AntiEntropyContainer[L],
           withContext: Dotted[L]

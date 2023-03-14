@@ -144,7 +144,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
             Lattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
         }
 
-      val dmMerged: TestedMap = wc.store
+      val dmMerged: TestedMap = wc.data
       val ccMerged            = wc.context
 
       assertEquals(
