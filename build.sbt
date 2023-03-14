@@ -107,7 +107,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   )
   .jvmSettings(
     libraryDependencies ++= Seq(
-      "com.google.crypto.tink" % "tink" % "1.7.0"
+      tink.value
     )
   )
   .jsConfigure(_.enablePlugins(ScalablyTypedConverterPlugin))
@@ -197,8 +197,8 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     libraryDependencies += jsoniterScala.value,
     libraryDependencies ++= jetty11.value,
     libraryDependencies ++= Seq(
-      "com.google.crypto.tink" % "tink"                   % "1.7.0",
-      "org.conscrypt"          % "conscrypt-openjdk-uber" % "2.5.2",
+      tink.value,
+      "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
     ),
   )
 

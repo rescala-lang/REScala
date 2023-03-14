@@ -30,6 +30,9 @@ object RescalaDependencies {
     )
   }
 
+  // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
+  val tink = Def.setting("com.google.crypto.tink" % "tink" % "1.7.0")
+
   val scalaSwing = Def.setting("org.scala-lang.modules" %% "scala-swing" % "3.0.0")
 
   // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
