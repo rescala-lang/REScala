@@ -86,7 +86,7 @@ trait Twoversion {
       val tx = makeTransaction(_currentTransaction.value)
 
       val txhash                    = tx.hashCode()
-      def tracePhase(phase: String) = Tracing.observe(Tracing.Transaction(tx.hashCode(), phase))
+      def tracePhase(phase: String) = Tracing.observe(Tracing.Transaction(txhash, phase))
       tracePhase("started")
 
       val result =
