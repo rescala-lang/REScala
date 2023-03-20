@@ -3,7 +3,7 @@ package rescala.extra
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, Node}
-import rescala.core.{CreationTicket, Disconnectable, DynamicScope}
+import rescala.core.{CreationTicket, Disconnectable, DynamicScope, Tracing}
 import scalatags.JsDom.all.{Attr, AttrValue, Modifier, Style, StyleValue}
 import scalatags.JsDom.{StringFrag, TypedTag}
 import scalatags.generic
@@ -77,6 +77,7 @@ class Tags[Api <: Interface](val api: Api) {
             // println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
+              Tracing.observe(Tracing.DomAssociation(rendered, Tracing.RawWrapper(newNode)))
               newNode match
                 case elem: dom.Element =>
                   elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
@@ -130,6 +131,7 @@ class Tags[Api <: Interface](val api: Api) {
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
           parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
+          Tracing.observe(Tracing.DomAssociation(rendered, Tracing.RawWrapper(parent)))
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
           observe.disconnect()
