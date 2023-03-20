@@ -10,7 +10,7 @@ object Tracing {
   case class Discover(source: ReSource, sink: ReSource)                             extends Data
   case class Drop(source: ReSource, sink: ReSource)                                 extends Data
   case class Value(source: ReSource, value: ValueWrapper)                           extends Data
-  case class DomAssociation(reSource: ReSource, element: RawWrapper)                  extends Data
+  case class DomAssociation(reSource: ReSource, node: RawWrapper)                   extends Data
 
   var observer: Data => Unit = null
 

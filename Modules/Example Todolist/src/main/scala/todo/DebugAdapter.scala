@@ -53,9 +53,9 @@ object DebugAdapter {
     Tracing.observer = {
       case raw: Tracing.DomAssociation =>
         obs(js.Dictionary(
-          "type" -> "DomAssociation",
+          "type"     -> "DomAssociation",
           "reSource" -> writeToString(raw.reSource),
-          "element"  -> raw.element.v
+          "node"     -> raw.node.v
         ))
       case data => obs(writeToString(data))
     }
