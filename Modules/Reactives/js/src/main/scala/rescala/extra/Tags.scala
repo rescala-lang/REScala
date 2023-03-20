@@ -78,10 +78,10 @@ class Tags[Api <: Interface](val api: Api) {
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
               newNode match
-                case elem: dom.Element => elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
+                case elem: dom.Element =>
+                  elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
                 case other =>
                   parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
-                  println(s"not an element: $other")
               // println(s"$rendered appending $newNode to $parent with $currentNode")
               if (currentNode != null) parent.replaceChild(newNode, currentNode)
               else parent.appendChild(newNode)
@@ -129,6 +129,7 @@ class Tags[Api <: Interface](val api: Api) {
           currentTags = tx.now(rendered)
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
+          parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")
           observe.disconnect()
