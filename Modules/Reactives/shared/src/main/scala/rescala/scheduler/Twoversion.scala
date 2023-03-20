@@ -85,27 +85,41 @@ trait Twoversion {
     ): R = {
       val tx = makeTransaction(_currentTransaction.value)
 
+      val txhash                    = tx.hashCode()
+      def tracePhase(phase: String) = Tracing.observe(Tracing.Transaction(tx.hashCode(), phase))
+      tracePhase("started")
+
       val result =
         try {
+          tracePhase("preparation")
           tx.preparationPhase(initialWrites)
           val result = withDynamicInitializer(tx) {
+            tracePhase("admission")
             val admissionTicket = tx.makeAdmissionPhaseTicket(initialWrites)
             val admissionResult = admissionPhase(admissionTicket)
             tx.initializationPhase(admissionTicket.initialChanges)
+            tracePhase("propagation")
             tx.propagationPhase()
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(tx)
+            if (admissionTicket.wrapUp != null)
+              tracePhase("wrapUp")
+              admissionTicket.wrapUp(tx)
             admissionResult
           }
+          tracePhase("commit")
           tx.commitPhase()
           result
         } catch {
           case e: Throwable =>
+            tracePhase("rollback")
             tx.rollbackPhase()
             throw e
         } finally {
+          tracePhase("release")
           tx.releasePhase()
         }
+      tracePhase("observer")
       tx.observerPhase()
+      tracePhase("ended")
       result
     }
 
