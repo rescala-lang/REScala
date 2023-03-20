@@ -64,7 +64,7 @@ object Lattice {
   implicit class Operators[A: Lattice](left: A):
     infix def merge(right: A): A = Lattice[A].merge(left, right)
 
-  given latticeOrder[A: Lattice]: PartialOrdering[A] with {
+  def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
     override def tryCompare(x: A, y: A): Option[Int] = {
       val lr = lteq(x, y)
       val rl = lteq(y, x)
