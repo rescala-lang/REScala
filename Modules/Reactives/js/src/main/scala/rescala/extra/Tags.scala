@@ -22,6 +22,7 @@ class Tags[Api <: Interface](val api: Api) {
     js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
   }
 
+  /* This only returns true the second time it is called to prevent observers to directly trigger */
   def isInDocumentHack(elem: dom.Element): Any => Boolean = {
     var second = false
     _ => {
@@ -76,6 +77,11 @@ class Tags[Api <: Interface](val api: Api) {
             // println(s"$rendered parent $parent")
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
+              newNode match
+                case elem: dom.Element => elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
+                case other =>
+                  parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
+                  println(s"not an element: $other")
               // println(s"$rendered appending $newNode to $parent with $currentNode")
               if (currentNode != null) parent.replaceChild(newNode, currentNode)
               else parent.appendChild(newNode)
