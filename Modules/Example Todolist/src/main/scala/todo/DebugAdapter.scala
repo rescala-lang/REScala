@@ -41,9 +41,10 @@ object DebugAdapter {
     override def nullValue: Tracing.ValueWrapper = null
 
   given JsonValueCodec[Tracing.RawWrapper] = new JsonValueCodec[Tracing.RawWrapper]:
-    override def decodeValue(in: JsonReader, default: Tracing.RawWrapper): Tracing.RawWrapper = RawWrapper(null)
-    override def encodeValue(x: Tracing.RawWrapper, out: JsonWriter): Unit                    = ()
-    override def nullValue: Tracing.RawWrapper                                                = null
+    override def decodeValue(in: JsonReader, default: Tracing.RawWrapper): Tracing.RawWrapper =
+      RawWrapper(in.readNullOrError(default, "unexpected"))
+    override def encodeValue(x: Tracing.RawWrapper, out: JsonWriter): Unit = out.writeNull()
+    override def nullValue: Tracing.RawWrapper                             = null
 
   given dataCodec: JsonValueCodec[Tracing.Data] = JsonCodecMaker.make
 

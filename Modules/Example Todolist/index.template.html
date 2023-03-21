@@ -9,7 +9,7 @@
 	<body>
 		<section class="todoapp">
 			<noscript><div style="padding:2em;text-align:center;font-size:2em">
-			  Please enable JavaScript!
+				Please enable JavaScript!
 			</div></noscript>
 		</section>
 
@@ -21,7 +21,12 @@
 
 		<script type="text/javascript" src="JSPATH"></script>
 		<script type="text/javascript">
-			DebugAdapter.setListener(data => console.log(data))
+			window.reScalaEvents = []
+			window.reScalaId = Math.random();
+			DebugAdapter.setListener(data => {
+				console.log(data);
+				window.reScalaEvents.push(JSON.parse(data));
+			})
 			Todolist()
 		</script>
 

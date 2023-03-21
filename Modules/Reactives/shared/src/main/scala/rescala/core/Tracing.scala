@@ -11,7 +11,7 @@ object Tracing {
   case class Drop(source: ReSource, sink: ReSource)                                 extends Data
   case class Value(source: ReSource, value: ValueWrapper)                           extends Data
   case class DomAssociation(reSource: ReSource, node: RawWrapper)                   extends Data
-  case class Transaction(id: Int, phase: String)                                  extends Data
+  case class Transaction(id: Int, phase: String)                                    extends Data
 
   var observer: Data => Unit = null
 
