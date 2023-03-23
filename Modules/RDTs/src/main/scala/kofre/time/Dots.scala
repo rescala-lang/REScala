@@ -99,7 +99,24 @@ object Dots {
   }.toMap)
 
   given partialOrder: PartialOrdering[Dots] with {
-    override def tryCompare(x: Dots, y: Dots): Option[Int] = None
+    override def tryCompare(x: Dots, y: Dots): Option[Int] =
+      var leftLTE  = true
+      var rightLTE = true
+      (x.internal.keySet concat y.internal.keySet).forall { k =>
+        ArrayRanges.partialOrder.tryCompare(x.rangeAt(k), y.rangeAt(k)) match
+          case None =>
+            leftLTE = false
+            rightLTE = false
+          case Some(-1) =>
+            rightLTE = false
+          case Some(1) =>
+            leftLTE = false
+          case Some(0) =>
+          case Some(_) => // does not happen
+        end match
+        leftLTE || rightLTE
+      }
+      ArrayRanges.leftRightToOrder(leftLTE, rightLTE)
 
     override def lteq(x: Dots, y: Dots): Boolean = x <= y
   }

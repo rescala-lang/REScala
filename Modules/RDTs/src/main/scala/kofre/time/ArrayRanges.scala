@@ -330,6 +330,12 @@ object ArrayRanges {
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
   }
 
+  def leftRightToOrder: (Boolean, Boolean) => Option[Int] =
+    case (true, true) => Some(0)
+    case (true, false) => Some(-1)
+    case (false, true) => Some(1)
+    case (false, false) => None
+
   given partialOrder: PartialOrdering[ArrayRanges] with {
     override def lteq(x: ArrayRanges, y: ArrayRanges): Boolean = x <= y
     override def tryCompare(left: ArrayRanges, right: ArrayRanges): Option[Int] = {
@@ -381,11 +387,7 @@ object ArrayRanges {
               rightIndex += 2
           end while
 
-          (leftLTE, rightLTE) match
-            case (true, true) => Some(0)
-            case (true, false) => Some(-1)
-            case (false, true) => Some(1)
-            case (false, false) => None
+          leftRightToOrder(leftLTE, rightLTE)
     }
   }
 }

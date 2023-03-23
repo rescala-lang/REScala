@@ -10,6 +10,7 @@ import math.Ordering.Implicits.infixOrderingOps
 class VectorClockOrderTest
     extends OrderTests[VectorClock](total = true)(using VectorClock.vectorClockTotalOrdering, summon)
 class ArrayRangesOrderTest extends OrderTests[ArrayRanges](total = false)(using ArrayRanges.partialOrder, summon)
+class DotsOrderTest extends OrderTests[Dots](total = false)(using Dots.partialOrder, summon)
 
 // the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
 // that they will produce any kind of comparable values
@@ -21,7 +22,6 @@ abstract class OrderTests[A: PartialOrdering: Arbitrary](total: Boolean) extends
 
   property("transitive") {
     forAll { (a: A, b: A, c: A) =>
-      println(s"$a, $b, $c")
       if a < b && b < c then assert(a < c)
     }
   }
