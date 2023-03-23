@@ -101,6 +101,13 @@ object DataGenerator {
 
   implicit val arbDietMapCContext: Arbitrary[Dots] = Arbitrary(genDietMapCContext)
 
+  given Arbitrary[ArrayRanges] = Arbitrary (
+    for
+      x <- Gen.listOf(Gen.oneOf(0L to 10L))
+    yield
+      ArrayRanges.from(x)
+  )
+
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
   def genDotFun[A](implicit g: Arbitrary[A]): Gen[DotFun[A]] = for {

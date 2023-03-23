@@ -43,12 +43,12 @@ class ArrayRanges(
     if (isEmpty) return true
     if (right.isEmpty) return true
 
-    var leftIndex = 0
+    var leftIndex  = 0
     var rightIndex = 0
 
     while (leftIndex < used && rightIndex < right.used) {
-      val leftLower = inner(leftIndex)
-      val leftUpper = inner(leftIndex + 1)
+      val leftLower  = inner(leftIndex)
+      val leftUpper  = inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
       val rightUpper = right.inner(rightIndex + 1)
 
@@ -59,7 +59,6 @@ class ArrayRanges(
 
     return true
   }
-
 
   @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
@@ -83,7 +82,6 @@ class ArrayRanges(
 
     return true
   }
-
 
   def contains(x: Time): Boolean = {
     val res = java.util.Arrays.binarySearch(inner.asInstanceOf[Array[Time]], 0, used, x)
@@ -330,5 +328,64 @@ object ArrayRanges {
     override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
     override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
+  }
+
+  given partialOrder: PartialOrdering[ArrayRanges] with {
+    override def lteq(x: ArrayRanges, y: ArrayRanges): Boolean = x <= y
+    override def tryCompare(left: ArrayRanges, right: ArrayRanges): Option[Int] = {
+      (left.isEmpty, right.isEmpty) match
+        case (true, true)  => Some(0)
+        case (true, false) => Some(-1)
+        case (false, true) => Some(1)
+        case (false, false) =>
+          var leftIndex  = 0
+          var rightIndex = 0
+
+          var leftLTE  = true
+          var rightLTE = true
+
+          while
+            leftIndex < left.used &&
+            rightIndex < right.used &&
+            (leftLTE || rightLTE)
+          do
+            val leftLower  = left.inner(leftIndex)
+            val leftUpper  = left.inner(leftIndex + 1)
+            val rightLower = right.inner(rightIndex)
+            val rightUpper = right.inner(rightIndex + 1)
+
+
+            if
+              // complete right interval not known by left
+              rightUpper <= leftLower ||
+              // right starts earlier
+              rightLower < leftLower ||
+              // right is longer
+              leftUpper < rightUpper
+            then
+              rightLTE = false
+              rightIndex += 2
+            else if
+              // complete left interval not known by right
+              leftUpper <= rightLower ||
+              // left starts earlier
+              leftLower < rightLower ||
+              // left is longer
+              rightUpper < leftUpper
+            then
+              leftLTE = false
+              leftIndex += 2
+            else
+              // both are equal
+              leftIndex += 2
+              rightIndex += 2
+          end while
+
+          (leftLTE, rightLTE) match
+            case (true, true) => Some(0)
+            case (true, false) => Some(-1)
+            case (false, true) => Some(1)
+            case (false, false) => None
+    }
   }
 }

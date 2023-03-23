@@ -98,4 +98,10 @@ object Dots {
     times => ArrayRanges.from(times.view.map(_.time))
   }.toMap)
 
+  given partialOrder: PartialOrdering[Dots] with {
+    override def tryCompare(x: Dots, y: Dots): Option[Int] = None
+
+    override def lteq(x: Dots, y: Dots): Boolean = x <= y
+  }
+
 }
