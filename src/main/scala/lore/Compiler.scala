@@ -2,13 +2,15 @@ package lore
 
 import cats.effect._
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, Paths}
 import com.monovore.decline._
 import cats.implicits._
 import cats.data.NonEmptyList
 import lore.AST.Term
 import java.nio.file.NoSuchFileException
 import lore.Parser.ParsingException
+import cats.instances.option
+import cats.syntax.parallel._
 
 object Compiler extends IOApp:
 
@@ -27,7 +29,7 @@ object Compiler extends IOApp:
   // def interprete(ast: Seq[AST.ParsedExpression]): IO[Unit] =
   //   IO.blocking(Interpreter.interprete(ast))
 
-  def toScala(ast: NonEmptyList[AST.Term], options: Options): String =
+  def toScala(ast: NonEmptyList[AST.Term], options: Options): IO[Unit] =
     ???
     // for
     //   result <- IO(ScalaBackend.toAmm(ast))
@@ -36,17 +38,26 @@ object Compiler extends IOApp:
     //     case Some(path) => writeFile(path, result)
     // yield result
 
-  def toViper(ast: NonEmptyList[AST.Term], options: Options): String =
+  def toViper(ast: NonEmptyList[AST.Term], options: Options): IO[Unit] =
     ViperBackend.compileAsSingleFile(ast.toList)
-    // result = ViperBackend.toViper(ast)
-    // for _ <- options.toFile match
-    //     case None       => IO.println(result)
-    //     case Some(path) => writeFile(path, result)
-    // yield result
+    options.outputOptions match
+      case SplitMode(outDir) =>
+        ViperBackend
+          .compileAsSeparateFiles(ast.toList)
+          .map((filename, program) =>
+            writeFile(Paths.get(outDir.toString, filename ++ ".vpr"), program)
+          )
+          .parSequence
+          .as(())
+      case _ =>
+        val result = ViperBackend.compileAsSingleFile(ast.toList)
+        options.toFile match
+          case None       => IO.println(result)
+          case Some(path) => writeFile(path, result)
 
   def run(args: List[String]): IO[ExitCode] =
     // parse arguments and combine requested actions
-    val subcommand = mainCommand.parse(args) match
+    val subcommand: Subcommand = mainCommand.parse(args) match
       case h @ Left(Help(errors, _, _, _)) =>
         if errors.isEmpty
         then
@@ -70,16 +81,16 @@ object Compiler extends IOApp:
         case Left(e) =>
           IO.raiseError(Parser.ParsingException(e.show))
         case Right(a) => IO(a)
-      // transform program depending on subcommand
-      output = subcommand match
-        case ToRescala(_) => toScala(ast, options)
-        case ToViper(_)   => toViper(ast, options)
-        case Parse(_)     => ast.toString
-      // write output to file or IO
+      // perform requested subcommand
       result <-
-        options.toFile.match
-          case None       => IO.println(output)
-          case Some(path) => writeFile(path, output)
+        subcommand match
+          case ToRescala(_) => toScala(ast, options)
+          case ToViper(_)   => toViper(ast, options)
+          case Parse(_)     =>
+            // we already parsed, simply produce output
+            options.toFile.match
+              case None       => IO.println(ast.toString)
+              case Some(path) => writeFile(path, ast.toString)
     yield result
 
     // check if anything went wrong: print error messages and set return code

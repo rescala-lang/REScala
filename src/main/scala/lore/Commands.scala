@@ -9,11 +9,28 @@ private val langname: String = "LoRe"
 private val cmdname: String = "lore"
 
 // command line options
+sealed trait OutputOptions
+case class ToFile(
+    toFile: Path
+) extends OutputOptions
+case class SplitMode(
+    outDir: Path
+) extends OutputOptions
+case object StdOut extends OutputOptions
+
 case class Options(
     file: Option[Path] = None, // path to a file
     inline: Option[String] = None, // inline sourcecode of a program
-    toFile: Option[Path] = None
-)
+    outputOptions: OutputOptions = StdOut
+    // toFile: Option[Path] = None,
+    // splitMode: Option[Path] = None // write output to multiple separate files
+):
+  val toFile: Option[Path] = outputOptions match
+    case ToFile(toFile) => Some(toFile)
+    case _              => None
+  val splitMode: Option[Path] = outputOptions match
+    case SplitMode(outDir) => Some(outDir)
+    case _                 => None
 
 // ways to pass a program
 val file: Opts[Path] = Opts.argument[Path](metavar = "FILE")
@@ -28,12 +45,14 @@ val inputOpts: Opts[Options] = (file orElse inline).map {
 }
 
 // write location if output file is requested
-val toFile: Opts[Path] = Opts.option[Path](
-  "output",
-  short = "o",
-  metavar = "FILE",
-  help = "Write output to a file."
-)
+val toFile: Opts[ToFile] = Opts
+  .option[Path](
+    "output",
+    short = "o",
+    metavar = "FILE",
+    help = "Write output to a file."
+  )
+  .map(ToFile(_))
 
 // subcommands
 sealed trait Subcommand { val options: Options }
@@ -53,11 +72,22 @@ val parseSC = Opts
 case class ToRescala(options: Options) extends Subcommand
 val toRescalaSC = Opts
   .subcommand("scalarize", help = s"Compile a $langname program to REScala.") {
-    (inputOpts, toFile.map(Some(_)) withDefault None).tupled
+    (inputOpts, toFile.orNone)
+      .mapN {
+        case (opt: Options, None)         => opt
+        case (opt: Options, Some(toFile)) => opt.copy(outputOptions = toFile)
+      }
   }
-  .map { case (progOpts: Options, path) =>
-    ToRescala(progOpts.copy(toFile = path))
-  }
+  .map(ToRescala(_))
+
+// viper flags
+val split: Opts[SplitMode] = Opts
+  .option[Path](
+    "split",
+    short = "s",
+    help = s"Write output to multiple separate files in a directory."
+  )
+  .map(SplitMode(_))
 
 case class ToViper(options: Options) extends Subcommand
 val toViperSC = Opts
@@ -65,11 +95,18 @@ val toViperSC = Opts
     "viperize",
     help = s"Compile a $langname program to Viper IL for verification."
   ) {
-    (inputOpts, toFile.map(Some(_)) withDefault None).tupled
+    (inputOpts, (toFile orElse split).orNone)
+      .mapN {
+        case (opts, Some(outOpt)) => opts.copy(outputOptions = outOpt)
+        case (opts, None)         => opts
+      }
   }
-  .map { case (progOpts: Options, path) =>
-    ToViper(progOpts.copy(toFile = path))
-  }
+  .map(ToViper(_))
+
+// .map { case () => }
+// .map { case (progOpts: Options, path, split) =>
+//   ToViper(progOpts.copy(toFile = path, splitMode = split))
+// }
 
 // program
 val mainCommand = Command(
