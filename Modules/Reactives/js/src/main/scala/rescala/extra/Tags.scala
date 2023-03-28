@@ -14,9 +14,9 @@ import rescala.structure.{Observe, Pulse}
 
 import scala.scalajs.js
 
-object Tags extends Tags[rescala.default.type](rescala.default)
+object Tags extends Tags[rescala.default.type](rescala.default, true)
 
-class Tags[Api <: Interface](val api: Api) {
+class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
   import api._
   def isInDocument(element: Element): Boolean = {
     js.Dynamic.global.document.contains(element).asInstanceOf[Boolean]
@@ -78,11 +78,13 @@ class Tags[Api <: Interface](val api: Api) {
             if (parent != null && !scalajs.js.isUndefined(parent)) {
               val newNode = newTag.render
               Tracing.observe(Tracing.DomAssociation(rendered, Tracing.RawWrapper(newNode)))
-              newNode match
-                case elem: dom.Element =>
-                  elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
-                case other =>
-                  parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
+              if addDebuggingIds
+              then
+                newNode match
+                  case elem: dom.Element =>
+                    elem.setAttribute("data-rescala-resource-id", rendered.info.idCounter.toString)
+                  case other =>
+                    parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
               // println(s"$rendered appending $newNode to $parent with $currentNode")
               if (currentNode != null) parent.replaceChild(newNode, currentNode)
               else parent.appendChild(newNode)
@@ -130,7 +132,8 @@ class Tags[Api <: Interface](val api: Api) {
           currentTags = tx.now(rendered)
           currentNodes = currentTags.map(_.render)
           currentNodes.foreach(parent.appendChild)
-          parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
+          if addDebuggingIds
+          then parent.setAttribute(s"data-rescala-resource-child-${rendered.info.idCounter.toString}", "true")
           Tracing.observe(Tracing.DomAssociation(rendered, Tracing.RawWrapper(parent)))
         } else {
           // println(s"Warning, added $rendered to dom AGAIN, this is experimental")

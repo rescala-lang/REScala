@@ -9,7 +9,7 @@ import tests.rescala.testtools.RETests
 
 class RescalatagsTest extends RETests {
   multiEngined { engine =>
-    val te = new Tags(engine)
+    val te = new Tags(engine, addDebuggingIds = false)
     import te._
     import te.api._
 
