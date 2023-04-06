@@ -7,6 +7,8 @@ import cats.implicits._
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
 import java.nio.file.Path
+import cats.parse.Caret
+import cats.syntax.all._
 
 object Parser:
   final case class ParsingException(message: String) extends Exception(message)
@@ -20,11 +22,18 @@ object Parser:
   val wsOrNl = (wsp | P.defer(comment) | lf | crlf).rep0
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
   // val underscore: P[ID] = P.char('_').as("_")
-  val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
+  val number: P[TNum] =
+    (P.caret.with1 ~ digit.rep.string ~ P.caret).map {
+      case ((c1: Caret, i: String), c2: Caret) =>
+        TNum(
+          Integer.parseInt(i),
+          sourcePos = Some(SourcePos(start = c1, end = c2))
+        )
+    }
   val argT: P[TArgT] = // args with type
-    ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName)).map((id, typ) =>
-      TArgT(id, typ)
-    )
+    ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName))
+      .map((id, typ) => TArgT(id, typ))
+      .withContext("Expected name and type")
   val typeName: P[Type] = P.recursive { rec =>
     (
       tupleType(rec).map(TupleType(_)) | // tuple
@@ -89,8 +98,14 @@ object Parser:
   val booleanExpr: P[Term] = P.defer(quantifier | biImplication)
 
   // primitives
-  val tru: P[TBoolean] = P.string("true").as(TTrue)
-  val fls: P[TBoolean] = P.string("false").as(TFalse)
+  val tru: P[TBoolean] =
+    (P.caret.with1 ~ (P.string("true") *> P.caret)).map { (c1, c2) =>
+      TTrue(sourcePos = Some(SourcePos(start = c1, end = c2)))
+    }
+  val fls: P[TBoolean] =
+    (P.caret.with1 ~ (P.string("false") *> P.caret)).map { (c1, c2) =>
+      TFalse(sourcePos = Some(SourcePos(start = c1, end = c2)))
+    }
   val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(biImplication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
     ((P.char('(').soft ~ wsOrNl).with1 *> P
@@ -234,7 +249,7 @@ object Parser:
     (P.string("val") ~ ws *> P.defer(argT))
   val binding: P[TAbs] =
     P.defer((bindingLeftSide <* ws ~ P.char('=') ~ wsOrNl) ~ term)
-      .map { case (TArgT(name, _type), term) =>
+      .map { case (TArgT(name, _type, _), term) =>
         TAbs(name = name, _type = _type, body = term)
       }
 

@@ -102,29 +102,29 @@ object ViperBackend:
       case SimpleType(name, inner) => SimpleType(name, inner.map(replaceType))
       case TupleType(inner)        => TupleType(inner.map(replaceType))
     def insertTypes: Term => Term =
-      case TArgT(name, _type) => TArgT(name, replaceType(_type))
-      case TAbs(name, _type, body) =>
-        TAbs(name, replaceType(_type), body)
-      case TInteraction(rt, at, m, r, en, ex) =>
+      case t: TArgT => TArgT(t.name, replaceType(t._type))
+      case t: TAbs =>
+        TAbs(t.name, replaceType(t._type), t.body)
+      case TInteraction(rt, at, m, r, en, ex, _) =>
         TInteraction(replaceType(rt), replaceType(at), m, r, en, ex)
       case t => t
     val ctx1 =
       ctx.copy(ast = ctx.ast.map(traverseFromNode(_, insertTypes)))
     // step 1: field calls as function calls
     def fieldCallToFunCall: Term => Term =
-      case TFCall(parent, field, args) =>
-        TFunC(field, parent +: args)
+      case t: TFCall =>
+        TFunC(t.field, t.parent +: t.args)
       case t => t
     val ctx2 =
       ctx1.copy(ast = ctx1.ast.map(traverseFromNode(_, fieldCallToFunCall)))
 
     // step 2: turn references to derived reactives to macro calls
     def transformer: Term => Term =
-      case TVar(name) if ctx2.derived.contains(name) =>
-        val (derived, _) = ctx2.graph(name)
+      case t: TVar if ctx2.derived.contains(t.name) =>
+        val (derived, _) = ctx2.graph(t.name)
         val usedReactives =
           uses(derived).filter(r => ctx2.graph.keys.toSet.contains(r))
-        TFunC(name, usedReactives.toList.sorted.map(TVar(_)))
+        TFunC(t.name, usedReactives.toList.sorted.map(TVar(_)))
       case t => t
 
     return ctx2.copy(ast = ctx2.ast.map(traverseFromNode(_, transformer)))
@@ -209,9 +209,9 @@ object ViperBackend:
     val numReactiveTypes = countTypes(interaction.reactiveType)
     // extract names from body
     val allNames = interaction.executes match
-      case None                      => List()
-      case Some(term @ TArrow(_, _)) => term.args
-      case Some(term)                => List()
+      case None                         => List()
+      case Some(term @ TArrow(_, _, _)) => term.args
+      case Some(term)                   => List()
     val argNames =
       allNames.drop(numReactiveTypes)
     val argTypes: List[String] =
@@ -249,18 +249,18 @@ object ViperBackend:
       interaction.executes.map(insertArgs(interaction.modifies, argNames, _))
 
     def isAssertAssume: Term => Boolean =
-      case TAssert(_) => true
-      case TAssume(_) => true
+      case t: TAssert => true
+      case t: TAssume => true
       case _          => false
 
     def bodyAssignment(lastExpression: Term): String =
       lastExpression match
-        case tuple @ TTuple(factors) =>
-          if (factors.length != interaction.modifies.length) then
+        case t: TTuple =>
+          if (t.factors.length != interaction.modifies.length) then
             throw ViperCompilationException(
-              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${factors.length} were given: $tuple"
+              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${t.factors.length} were given: $t"
             )
-          (interaction.modifies zip factors.toList)
+          (interaction.modifies zip t.factors.toList)
             .map((reactive, assignment) =>
               s"graph.$reactive := ${expressionToViper(assignment)}"
             )
@@ -274,12 +274,12 @@ object ViperBackend:
 
     val bodyCompiled: Option[String] =
       body.map {
-        case TSeq(sequence) =>
+        case t: TSeq =>
           // ignore assertions and assumptions when looking for last expression
           val inner: List[Term] =
-            sequence.reverse.dropWhile_(isAssertAssume).reverse
+            t.body.reverse.dropWhile_(isAssertAssume).reverse
           val end: List[Term] =
-            sequence.reverse.takeWhile_(isAssertAssume).reverse
+            t.body.reverse.takeWhile_(isAssertAssume).reverse
 
           val assignment = inner.last
 
@@ -340,13 +340,13 @@ object ViperBackend:
   )(using ctx: CompilationContext): Term =
     // check if term is a function, if yes, insert reactives and method arguments
     val transformed = term match
-      case tarrow @ TArrow(_, _) =>
+      case t: TArrow =>
         // extract argument names
-        val allNames = tarrow.args
+        val allNames = t.args
         val (reactiveNames, argumentNames) = allNames.splitAt(modifies.length)
         // insert reactives names
         val reactivesInserted =
-          (reactiveNames zip modifies).foldLeft(tarrow.body) {
+          (reactiveNames zip modifies).foldLeft(t.body) {
             case (body: Term, (from: ID, to: ID)) => rename(from, to, body)
           }
         // insert method args
@@ -362,8 +362,8 @@ object ViperBackend:
 
     // replace reactive names with field accesses on the graph object
     def transformer: Term => Term =
-      case TVar(name) if ctx.sources.contains(name) =>
-        TFCall(TVar("graph"), name, List())
+      case t: TVar if ctx.sources.contains(t.name) =>
+        TFCall(TVar("graph"), t.name, List())
       case t => t
 
     return traverseFromNode(transformed, transformer)
@@ -384,55 +384,48 @@ object ViperBackend:
   ): String = expression match
     case v: TViper =>
       v match
-        case TVar(id)    => id
-        case TTrue       => "true"
-        case TFalse      => "false"
-        case TNeg(inner) => s"!${expressionToViper(inner)}"
-        case TEq(l, r) => s"${expressionToViper(l)} == ${expressionToViper(r)}"
-        case TIneq(l, r) =>
-          s"${expressionToViper(l)} != ${expressionToViper(r)}"
-        case TDisj(l, r) =>
-          s"${expressionToViper(l)} || ${expressionToViper(r)}"
-        case TConj(l, r) =>
-          s"${expressionToViper(l)} && ${expressionToViper(r)}"
-        case TBImpl(l, r) =>
-          s"${expressionToViper(l)} <==> ${expressionToViper(r)}"
-        case TImpl(l, r) =>
-          s"${expressionToViper(l)} ==> ${expressionToViper(r)}"
-        case TLt(l, r) =>
-          s"${expressionToViper(l)} < ${expressionToViper(r)}"
-        case TGt(l, r) =>
-          s"${expressionToViper(l)} > ${expressionToViper(r)}"
-        case TLeq(l, r) =>
-          s"${expressionToViper(l)} <=${expressionToViper(r)}"
-        case TGeq(l, r) =>
-          s"${expressionToViper(l)} >= ${expressionToViper(r)}"
-        case TForall(vars, triggers, body) =>
+        case b: BinaryOp =>
+          val operator: String = b match
+            case t: TDiv   => "/"
+            case t: TMul   => "*"
+            case t: TAdd   => "+"
+            case t: TSub   => "-"
+            case t: TLt    => "<"
+            case t: TGt    => ">"
+            case t: TLeq   => "<="
+            case t: TGeq   => ">="
+            case t: TEq    => "=="
+            case t: TIneq  => "!="
+            case t: TDisj  => "||"
+            case t: TConj  => "&&"
+            case t: TImpl  => "==>"
+            case t: TBImpl => "<==>"
+            case t: TInSet => "in"
+          s"${expressionToViper(b.left)} $operator ${expressionToViper(b.right)}"
+        case t: TVar   => t.name
+        case t: TTrue  => "true"
+        case t: TFalse => "false"
+        case t: TNeg   => s"!${expressionToViper(t.body)}"
+        case t: TQuantifier =>
           val varString =
-            vars
-              .map { case TArgT(name, t) => s"$name: ${typeToViper(t)}" }
+            t.vars
+              .map { case a: TArgT => s"${a.name}: ${typeToViper(a._type)}" }
               .toList
               .mkString(", ")
-          triggers match
-            case Nil => s"forall $varString :: ${expressionToViper(body)}"
-            case t =>
-              s"forall $varString :: {${t.map(expressionToViper).mkString(", ")}} ${expressionToViper(body)}"
-        case TExists(vars, body) =>
-          val varString =
-            vars
-              .map { case TArgT(name, t) => s"$name: ${typeToViper(t)}" }
-              .toList
-              .mkString(", ")
-          s"exists $varString :: ${expressionToViper(body)}"
-        case TAdd(l, r) => s"${expressionToViper(l)} + ${expressionToViper(r)}"
-        case TSub(l, r) => s"${expressionToViper(l)} - ${expressionToViper(r)}"
-        case TDiv(l, r) => s"${expressionToViper(l)} / ${expressionToViper(r)}"
-        case TMul(l, r) => s"${expressionToViper(l)} * ${expressionToViper(r)}"
-        case TNum(i)    => s"$i"
-        case TParens(inner) => s"(${expressionToViper(inner)})"
+          val (keyword, triggers) = t match
+            case f: TForall =>
+              (
+                "forall",
+                s"{${f.triggers.map(expressionToViper).mkString(", ")}}"
+              )
+            case e: TExists => ("exists", "")
+          s"$keyword $varString :: $triggers ${expressionToViper(t.body)}"
+        case t: TNum    => t.value.toString
+        case t: TParens => s"(${expressionToViper(t.inner)})"
         case TFunC(
               setOp,
-              x :: y :: Nil
+              x :: y :: Nil,
+              _
             )
             if Set("setminus", "union", "subset", "intersection").contains(
               setOp
@@ -440,28 +433,27 @@ object ViperBackend:
           s"${expressionToViper(x)} $setOp ${expressionToViper(y)}"
         case TFunC(
               name,
-              x :: Nil
+              x :: Nil,
+              _
             )
             if name == "size" || name == "length" => // handle set arithmetics. TODO: support more cases
           s"|${expressionToViper(x)}|"
-        case TFunC(name, args) =>
-          val argsString = args.map(a => expressionToViper(a)).mkString(", ")
-          s"$name($argsString)"
-        case TFCall(parent, field, List()) => // field call
-          s"${expressionToViper(parent)}.$field"
-        case TFCall(parent, field, args) => // field call
+        case t: TFunC =>
+          val argsString = t.args.map(a => expressionToViper(a)).mkString(", ")
+          s"${t.name}($argsString)"
+        case t: TFCall if t.args.isEmpty => // field call
+          s"${expressionToViper(t.parent)}.${t.field}"
+        case t: TFCall => // field call
           throw new ViperCompilationException(
-            s"Viper does only allow field but not method access! $parent.$field(${args.mkString(", ")})"
+            s"Viper does only allow field but not method access! ${t.parent}.${t.field}(${t.args.mkString(", ")})"
           )
-          s"${expressionToViper(parent)}.$field"
-        case TInSet(l, r) =>
-          s"${expressionToViper(l)} in ${expressionToViper(r)}"
-        case TAbs(name, _type, body) =>
-          s"""|var $name: ${typeToViper(_type)}
-              |$name := ${expressionToViper(body)}""".stripMargin
-        case TSeq(body)    => body.map(expressionToViper).toList.mkString("\n")
-        case TAssert(body) => s"assert ${expressionToViper(body)}"
-        case TAssume(body) => s"assume ${expressionToViper(body)}"
+          s"${expressionToViper(t.parent)}.${t.field}"
+        case t: TAbs =>
+          s"""|var ${t.name}: ${typeToViper(t._type)}
+              |${t.name} := ${expressionToViper(t.body)}""".stripMargin
+        case t: TSeq    => t.body.map(expressionToViper).toList.mkString("\n")
+        case t: TAssert => s"assert ${expressionToViper(t.body)}"
+        case t: TAssume => s"assume ${expressionToViper(t.body)}"
     case exp =>
       throw new IllegalArgumentException(
         s"Expression $exp not allowed in Viper expressions!"

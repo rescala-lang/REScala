@@ -70,7 +70,7 @@ class SimpleParsing extends ParserSuite:
     assertParsingResult(
       Parser.term,
       "foo.bar(1, false)",
-      TFCall(TVar("foo"), "bar", List(TNum(1), TFalse))
+      TFCall(TVar("foo"), "bar", List(TNum(1), TFalse()))
     )
 
     assertParsingResult(
@@ -80,7 +80,7 @@ class SimpleParsing extends ParserSuite:
         TFCall(
           TVar("foo"),
           "bar",
-          List(TEq(TTrue, TFalse))
+          List(TEq(TTrue(), TFalse()))
         ),
         "baz",
         List()
