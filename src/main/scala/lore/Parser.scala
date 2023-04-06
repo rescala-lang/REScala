@@ -2,7 +2,7 @@ package lore
 
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
-import cats.parse.Rfc5234.{alpha, char, digit, lf, wsp}
+import cats.parse.Rfc5234.{alpha, char, crlf, digit, lf, wsp}
 import cats.implicits._
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
@@ -17,7 +17,7 @@ object Parser:
     Set("Interaction", "assert", "assume", "true", "false", "forall", "exists")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // any amount of whitespace, newlines or comments
-  val wsOrNl = (wsp | P.defer(comment) | lf).rep0
+  val wsOrNl = (wsp | P.defer(comment) | lf | crlf).rep0
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
   // val underscore: P[ID] = P.char('_').as("_")
   val number: P[TNum] = digit.rep.string.map(i => TNum(Integer.parseInt(i)))
