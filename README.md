@@ -24,12 +24,10 @@ This repository contains multiple subprojects in the __Modules__ folder, the mos
   Execute wit `jmh:run`
 * __Tests__: integration tests for various subprojects.
 * __Examples__: various example applications.
-  * __dividi__: money dividing application, showing the use of distributed CRDTs integrated into rescala
   * __Editor__: basic text editor in different implementation styles (imperative, to full reactive)
   * __examples__: misc examples involing swing, time, datastructures (no reswing, using swing directly)
   * __examples-reswing__: misc reswing examples
   * __Mill__: mill game using reswing
-  * __paroli-chat__: console application demoing distributed CRDTs
   * __PongDemo__: application design demonstrating, showing multiple steps of adding features to a reactive application
   * __RSSReader__: imperative/reactive versions of a reswing RSS reader (actual network request, no support for failures yet)
   * __Shapes__: reswing drawing application
@@ -39,3 +37,6 @@ This repository contains multiple subprojects in the __Modules__ folder, the mos
 The __Historical__ folder contains code that is no longer maintained:
 
 * __Android/REAndroidThings__: contains an integration with androidthings to write apps for the android of things platform.
+* __dividiParoli__
+  * __DividiApp__: money dividing application, showing the use of distributed CRDTs integrated into rescala
+  * __ParoliChatApp__: console application demoing distributed CRDTs
