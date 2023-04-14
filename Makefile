@@ -17,5 +17,5 @@ buildReplication:
 	sbtn 'replicationExamplesJVM/stageJars'
 
 runReplication: buildReplication
-	java -cp "Code/Examples/Replication/jvm/target/jars/*" replication.cli --help
+	java -cp "Modules/Example Replication/jvm/target/jars/*" replication.cli --help
 
