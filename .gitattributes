@@ -1,6 +1,6 @@
 # Autodetect text files and ensure that we normalise their line endings to lf internally.
-# By default, checkout with lf line endings.
-* text=auto eol=lf
+# When checked out they may use different line endings.
+* text=auto
 
 # Always checkout with crlf (Windows) line endings
 *.bat text eol=crlf
@@ -9,3 +9,7 @@
 
 # Always checkout with lf (UNIX) line endings
 *.sh text eol=lf
+
+# For the remaining files the line endings of checked out
+# files is defined by the ``core.eol`` git config variable.
+# By default this is the native line ending for the platform.
