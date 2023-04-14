@@ -20,8 +20,8 @@ This repository contains multiple subprojects in the __Modules__ folder, the mos
   Also includes a concurrent scheduler for the JVM, making it thread safe.
 * __Extensions/RESwing__: contains an integration with scalaswing to write UIs on the JVM.
 * __Extensions/Rescalatags__: contains an integration with scalatags to write web applications.
-* __Research/Microbenchmarks__: contains a benchmark suite for reactive programming.
-  Execute wit `jmh:run`
+* __Microbenchmarks__: contains a benchmark suite for reactive programming.
+  Execute with `jmh:run`
 * __Tests__: integration tests for various subprojects.
 * __Examples__: various example applications.
   * __Editor__: basic text editor in different implementation styles (imperative, to full reactive)
