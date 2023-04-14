@@ -16,23 +16,21 @@ and [NICER](http://nicer.network/) projects.
 
 This repository contains multiple subprojects in the __Modules__ folder, the most important ones are:
 
-* __Main__: contains the main reactive programming library, for the JVM and JS.
-  Also includes a concurrent scheduler for the JVM, making it thread safe.
-* __Extensions/RESwing__: contains an integration with scalaswing to write UIs on the JVM.
-* __Extensions/Rescalatags__: contains an integration with scalatags to write web applications.
+* __Example Misc 2015__: various example applications.
+  * __examples__: misc examples involving swing, time, datastructures (no reswing, using swing directly)
+    * __demo__: application design demonstrating, showing multiple steps of adding features to a reactive application
+  * __reswing__: misc reswing examples
+    * __millgame__: mill game using reswing
+    * __reader__: imperative/reactive versions of a reswing RSS reader (actual network request, no support for failures yet)
+    * __reshapes__: reswing drawing application
+    * __texteditor__: basic text editor in different implementation styles (imperative, to full reactive)
+  * __universe__: console application demoing parallel execution of simulations
+* __Example Todolist__: Rescalatags todo application in the style of common todo applications
 * __Microbenchmarks__: contains a benchmark suite for reactive programming.
   Execute with `jmh:run`
-* __Tests__: integration tests for various subprojects.
-* __Examples__: various example applications.
-  * __Editor__: basic text editor in different implementation styles (imperative, to full reactive)
-  * __examples__: misc examples involing swing, time, datastructures (no reswing, using swing directly)
-  * __examples-reswing__: misc reswing examples
-  * __Mill__: mill game using reswing
-  * __PongDemo__: application design demonstrating, showing multiple steps of adding features to a reactive application
-  * __RSSReader__: imperative/reactive versions of a reswing RSS reader (actual network request, no support for failures yet)
-  * __Shapes__: reswing drawing application
-  * __Todolist__: Rescalatags todo application in the style of common todo applications
-  * __Universe__: console application demoing parallel execution of simulations
+* __Reactives__: contains the main reactive programming library, for the JVM and JS.
+  Also includes a concurrent scheduler for the JVM, making it thread safe.
+* __Swing__: contains an integration with scalaswing to write UIs on the JVM.
 
 The __Historical__ folder contains code that is no longer maintained:
 
