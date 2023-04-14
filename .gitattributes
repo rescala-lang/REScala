@@ -1,3 +1,8 @@
 # Autodetect text files and ensure that we normalise their line endings to lf internally.
 # By default, checkout with lf line endings.
 * text=auto eol=lf
+
+# Always checkout with crlf (Windows) line endings
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
