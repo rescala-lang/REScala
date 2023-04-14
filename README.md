@@ -14,8 +14,10 @@ and [NICER](http://nicer.network/) projects.
 
 ## Repository Overview
 
-This repository contains multiple subprojects in the __Modules__ folder, the most important ones are:
+This repository contains multiple subprojects in the __Modules__ folder:
 
+* __Aead__: This is a simple Scala library that provides authenticated encryption with associated data using the same interfaces on the JVM and for Scala.js.
+* __Example EncryptedTodoFx__
 * __Example Misc 2015__: various example applications.
   * __examples__: misc examples involving swing, time, datastructures (no reswing, using swing directly)
     * __demo__: application design demonstrating, showing multiple steps of adding features to a reactive application
@@ -25,7 +27,10 @@ This repository contains multiple subprojects in the __Modules__ folder, the mos
     * __reshapes__: reswing drawing application
     * __texteditor__: basic text editor in different implementation styles (imperative, to full reactive)
   * __universe__: console application demoing parallel execution of simulations
+* __Example Replication__: This case study demonstrates how the REScala project and replicated data types can be used to design an interactive application that makes use of one or more services within an arbitrary ad-hoc network.
 * __Example Todolist__: Rescalatags todo application in the style of common todo applications
+* __Graph-Compiler__
+* __Javafx__
 * __Microbenchmarks__: contains a benchmark suite for reactive programming.
   Execute with `jmh:run`
 * __Reactives__: contains the main reactive programming library, for the JVM and JS.
