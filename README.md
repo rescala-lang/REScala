@@ -14,7 +14,7 @@ and [NICER](http://nicer.network/) projects.
 
 ## Repository Overview
 
-This repository contains mutliple subprojects, the most important ones are:
+This repository contains multiple subprojects in the __Modules__ folder, the most important ones are:
 
 * __Main__: contains the main reactive programming library, for the JVM and JS.
   Also includes a concurrent scheduler for the JVM, making it thread safe.
