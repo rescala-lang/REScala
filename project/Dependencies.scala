@@ -10,8 +10,8 @@ object Dependencies {
   object Versions {
     val directories   = "26"
     val jol           = "0.17"
-    val jsoniterScala = "2.22.1"
-    val jsoup         = "1.15.3"
+    val jsoniterScala = "2.22.2"
+    val jsoup         = "1.15.4"
     val munit         = "1.0.0-M7"
     val okHttp        = "4.10.0"
     val pprint        = "0.8.0"
@@ -29,7 +29,7 @@ object Dependencies {
     val scribe        = "3.10.7"
     val sqliteJdbc    = "3.41.2.1"
     val sourcecode    = "0.3.0"
-    val upickle       = "3.0.0"
+    val upickle       = "3.1.0"
   }
 
   import Dependencies.Versions as V

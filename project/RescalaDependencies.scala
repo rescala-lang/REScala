@@ -20,7 +20,7 @@ object RescalaDependencies {
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
   )
   val jetty11 = Def.setting {
-    val jettyVersion = "11.0.14"
+    val jettyVersion = "11.0.15"
     Seq(
       "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
       "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
@@ -48,11 +48,11 @@ object RescalaDependencies {
     }
     Seq(
       libraryDependencies ++= Seq(
-        "org.scalafx" %% "scalafx" % "19.0.0-R30",
+        "org.scalafx" %% "scalafx" % "20.0.0-R31",
         scalaSwing.value,
       ),
       libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-        "org.openjfx" % s"javafx-$m" % "19" classifier osName
+        "org.openjfx" % s"javafx-$m" % "20" classifier osName
       )
     )
   }
