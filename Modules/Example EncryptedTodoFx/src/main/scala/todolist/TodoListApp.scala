@@ -63,10 +63,10 @@ class TodoListApp extends JFXApp3 {
             new HBox {
               children = Seq(newTodoTextField, addTodoButton)
             },
+            localAddressTextField,
             new HBox {
               children = Seq(connectionTextField, addConnectionButton)
             },
-            // localAddressTextField,
             // new HBox {
             //  children = Seq(
             //    new Button {
