@@ -11,7 +11,7 @@ object LocalSetting {
   // https://www.scalafx.org/news/releases/
   // then again, the announcement for 12.0.2 seems incorrect …
   val javaFxModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
-  lazy val scalaFxDependencies = {
+  lazy val javaFxDependencies = {
     val javaFxVersion = "21.0.2"
     // Determine OS version of JavaFX binaries
     val osName = System.getProperty("os.name") match {
@@ -20,15 +20,20 @@ object LocalSetting {
       case n if n.startsWith("Windows") => "win"
       case _                            => throw new Exception("Unknown platform!")
     }
+    Seq(
+      libraryDependencies ++= javaFxModules.map(m =>
+        "org.openjfx" % s"javafx-$m" % javaFxVersion classifier osName
+      )
+    )
+  }
+
+  lazy val scalaFxDependencies = javaFxDependencies ++ {
     val scalaFxVersion = "21.0.0-R32"
     Seq(
       scalaSwing,
       libraryDependencies ++= Seq(
         "org.scalafx" %% "scalafx" % scalaFxVersion,
       ),
-      libraryDependencies ++= javaFxModules.map(m =>
-        "org.openjfx" % s"javafx-$m" % javaFxVersion classifier osName
-      )
     )
   }
 
