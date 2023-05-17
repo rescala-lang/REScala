@@ -31,7 +31,7 @@ object ViperBackend:
         name,
         s"""|// imports
             |${res.ctx.viperImports
-             .map(i => s"import \"${i.path.toString}\"")
+             .map(i => s"import \"${i.path.toString.replace("\\", "/")}\"")
              .mkString("\n")}
             |// sources
             |${res.sources.mkString("\n")}
