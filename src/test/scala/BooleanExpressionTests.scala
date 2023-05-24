@@ -262,6 +262,29 @@ class BooleanExpressionParsing extends ParserSuite {
 
   }
 
+  test("exists") {
+    assertParsingResult(
+      Parser.term,
+      "exists h: History :: ph.toSet == old(ph.toSet.union(Set(h)))",
+      TExists(
+        NonEmptyList.one(TArgT("h", SimpleType("History", List()))),
+        TEq(
+          TFCall(TVar("ph"), "toSet", List()),
+          TFunC(
+            "old",
+            List(
+              TFCall(
+                TFCall(TVar("ph"), "toSet", List()),
+                "union",
+                List(TFunC("Set", List(TVar("h"))))
+              )
+            )
+          )
+        )
+      )
+    )
+  }
+
   test("forall") {
     assertParsingResult(
       Parser.boolParens,
