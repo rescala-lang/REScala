@@ -99,8 +99,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     scalaVersion_3,
     noPublish,
     libraryDependencies ++= Seq(
-      "org.scalatest"     %%% "scalatest"       % "3.2.15"   % "test",
-      "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.15.0" % "test",
+      scalatestpluscheck.value,
       munit.value,
       munitCheck.value,
     )

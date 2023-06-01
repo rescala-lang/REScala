@@ -34,7 +34,7 @@ extension [T](inline sig: CSignal[T]) {
 
   inline def changed: CEvent[T] = CEvent { Some(sig.value) }
 
-  inline def changedTo(inline value: T): CEvent[T] = CEvent {
+  inline def changedTo(value: T): CEvent[T] = CEvent {
     sig.value match {
       case `value` => Some(sig.value)
       case _       => Option.empty[T]

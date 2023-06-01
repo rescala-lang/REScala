@@ -6,7 +6,7 @@ import Settings.{`is 3`, `is 2.11`}
 
 object RescalaDependencies {
 
-  val scalatest = Def.setting("org.scalatest" %%% "scalatest" % "3.2.15" % Test)
+  val scalatest = Def.setting("org.scalatest" %%% "scalatest" % "3.2.16" % Test)
   val circe     = Def.setting(Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3"))
   val scalaReflectProvided = libraryDependencies ++=
     (if (`is 3`(scalaVersion.value)) None
@@ -14,7 +14,7 @@ object RescalaDependencies {
   val scalatestpluscheck =
     Def.setting(if (`is 2.11`(scalaVersion.value))
       "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
-    else "org.scalatestplus" %%% "scalacheck-1-16" % "3.2.14.0"   % "test")
+    else "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.16.0"   % "test")
   val retypecheck = Def.setting(
     if (`is 3`(scalaVersion.value)) None
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
