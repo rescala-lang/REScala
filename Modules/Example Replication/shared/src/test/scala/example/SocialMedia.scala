@@ -52,9 +52,9 @@ class SocialMediaTest extends munit.FunSuite {
 
     given ReplicaId = ReplicaId.fromId(Uid.gen())
 
-    val likeEvent: Event[ID]        = UI.likeButton.event.map { UI.currentPostID.value }
-    val commentEvent: Event[String] = UI.submitCommentButton.event.map { UI.textInput.value }
-    val postEvent: Event[String]    = UI.postButton.event.map { UI.textInput.value }
+    val likeEvent: Event[ID]        = UI.likeButton.event.map { _ => UI.currentPostID.value }
+    val commentEvent: Event[String] = UI.submitCommentButton.event.map { _ => UI.textInput.value }
+    val postEvent: Event[String]    = UI.postButton.event.map { _ => UI.textInput.value }
 
     val socialMedia: Signal[SocialMedia] =
       Fold(SocialMedia())(
