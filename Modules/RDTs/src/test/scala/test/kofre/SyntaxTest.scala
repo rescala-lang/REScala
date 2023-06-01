@@ -4,7 +4,7 @@ import kofre.base.Lattice
 import kofre.base.Lattice.Operators
 import kofre.time.{Dots, Dot}
 import kofre.dotted.HasDots.*
-import kofre.datatypes.EnableWinsFlag
+import kofre.datatypes.contextual.EnableWinsFlag
 import kofre.dotted.{Dotted, HasDots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*

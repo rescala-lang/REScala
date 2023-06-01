@@ -1,7 +1,8 @@
 package test.kofre
 
 import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.{EnableWinsFlag, LastWriterWins, PosNegCounter}
+import kofre.datatypes.PosNegCounter
+import kofre.datatypes.contextual.{EnableWinsFlag, LastWriterWins}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}

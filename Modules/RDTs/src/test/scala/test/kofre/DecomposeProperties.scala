@@ -2,7 +2,8 @@ package test.kofre
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.{CausalQueue, GrowOnlyCounter, LastWriterWins, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.contextual.{LastWriterWins, CausalQueue}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*

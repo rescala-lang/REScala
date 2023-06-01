@@ -5,6 +5,7 @@ import kofre.dotted.*
 import kofre.time.*
 import kofre.base.*
 import kofre.datatypes.*
+import kofre.datatypes.contextual.*
 import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 

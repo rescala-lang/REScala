@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.{Lattice, Time}
-import kofre.datatypes.{CausalQueue, LastWriterWins}
+import kofre.datatypes.contextual.{CausalQueue, LastWriterWins}
 import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.dotted.Dotted

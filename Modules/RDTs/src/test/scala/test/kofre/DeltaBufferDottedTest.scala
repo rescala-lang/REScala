@@ -1,7 +1,7 @@
 package test.kofre
 
 import kofre.base.{Bottom, Uid, Lattice}
-import kofre.datatypes.EnableWinsFlag
+import kofre.datatypes.contextual.EnableWinsFlag
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 
