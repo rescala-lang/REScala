@@ -212,6 +212,13 @@ trait EventBundle extends FoldBundle {
         this.value.map(expression)
       }
 
+    /** Transform the event.
+      *
+      * @group operator
+      */
+    final inline def map[B, T1 >: T](inline expression: B)(using CreationTicket[State])(using T1 =:= Unit): Event[B] =
+      Event.dynamic { Some(expression) }
+
     /** Folds events with a given operation to create a Signal.
       *
       * @group conversion
