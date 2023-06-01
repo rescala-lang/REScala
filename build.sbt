@@ -17,6 +17,10 @@ lazy val root = (project in file("."))
     libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0").cross(
       CrossVersion.for3Use2_13 // needed because scalafmt is 2.13
     ),
+    libraryDependencies ++= Seq(
+      "dev.optics" %% "monocle-core" % "3.1.0",
+      "dev.optics" %% "monocle-macro" % "3.1.0"
+    ),
     // test dependencies
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
     testFrameworks += new TestFramework("munit.Framework"),
