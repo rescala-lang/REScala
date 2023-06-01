@@ -12,43 +12,45 @@ class BooleanExpressionParsing extends ParserSuite {
   test("disjunction") {
     val p = Parser.disjunction
 
-    val expr = "x || true"
-    p.parseAll(expr) match
-      case Right(TDisj(TVar("x"), TTrue()), _) => ()
-      case Left(error) => fail(error.expected.head.toString)
-      case x           => fail(s"Failed to parse as disjunction: $x")
+    assertParsingResult(
+      Parser.disjunction,
+      "x || true",
+      TDisj(TVar("x"), TTrue())
+    )
 
-    val expr2 = "x || true || false"
-    p.parseAll(expr2) match
-      case Right(TDisj(_, _, _)) => ()
-      case Left(error)           => fail(error.expected.head.toString)
-      case x                     => fail(s"Failed to parse as disjunction: $x")
+    assertParsingResult(
+      Parser.term,
+      "x || true || false",
+      TDisj(TVar("x"), TDisj(TTrue(), TFalse()))
+    )
   }
 
   test("conjunction") {
     val p = Parser.conjunction
 
-    val expr = "x && true"
-    p.parseAll(expr) match
-      case Right(TConj(TVar("x"), TTrue()), _) => ()
-      case Left(error)                         => fail(error.expected.toString)
-      case x => fail(s"Failed to parse as conjunction: $x")
+    assertParsingResult(
+      p,
+      "x && true",
+      TConj(TVar("x"), TTrue())
+    )
 
-    val expr2 = "x && true && false"
-    p.parseAll(expr2) match
-      case Right(TConj(TVar(_), TConj(TTrue(), TFalse(), _))) => ()
-      case Left(error) => fail(error.expected.head.toString)
-      case x           => fail(s"Failed to parse as conjunction: $x")
+    assertParsingResult(
+      p,
+      "x && true && false",
+      TConj(TVar("x"), TConj(TTrue(), TFalse()))
+    )
 
-    Parser.disjunction.parseAll("x || true && false") match
-      case Right(TDisj(TVar("x"), TConj(TTrue(), TFalse()))) => ()
-      case Left(error) => fail(error.expected.head.toString)
-      case x           => fail(s"Failed to parse as conjunction: $x")
+    assertParsingResult(
+      Parser.term,
+      "x || true && false",
+      TDisj(TVar("x"), TConj(TTrue(), TFalse()))
+    )
 
-    Parser.disjunction.parseAll("false || true && foo") match
-      case Right(TDisj(TFalse(), TConj(TTrue(), TVar("foo")))) => ()
-      case Left(error) => fail(error.expected.head.toString)
-      case x           => fail(s"Failed to parse as conjunction: $x")
+    assertParsingResult(
+      Parser.term,
+      "false || true && foo",
+      TDisj(TFalse(), TConj(TTrue(), TVar("foo")))
+    )
 
     assertParsingResult(
       Parser.conjunction,
@@ -70,36 +72,36 @@ class BooleanExpressionParsing extends ParserSuite {
   test("inequality") {
     val p = Parser.inequality
 
-    p.parseAll("false != true") match
-      case Right(TIneq(TFalse(), TTrue())) => ()
-      case Left(error)                     => fail(error.show)
-      case x => fail(s"Failed to parse inequality: $x")
+    assertParsingResult(
+      Parser.term,
+      "false != true",
+      TIneq(TFalse(), TTrue())
+    )
 
-    Parser.conjunction.parseAll("true != false && true") match
-      case Right(TConj(TIneq(TTrue(), TFalse()), TTrue())) => ()
-      case Left(error) => fail(error.expected.toString)
-      case x           => fail(s"Failed to parse inequality: $x")
+    assertParsingResult(
+      Parser.term,
+      "true != false && true",
+      TConj(TIneq(TTrue(), TFalse()), TTrue())
+    )
 
-    Parser.disjunction.parseAll("true != false && true || x && y") match
-      case Right(
-            TDisj(
-              TConj(TIneq(TTrue(), TFalse()), TTrue()),
-              TConj(TVar("x"), TVar("y"))
-            )
-          ) =>
-        ()
-      case Left(error) => fail(error.expected.toString)
-      case x           => fail(s"Failed to parse inequality: $x")
-
+    assertParsingResult(
+      Parser.term,
+      "true != false && true || x && y",
+      TDisj(
+        TConj(TIneq(TTrue(), TFalse()), TTrue()),
+        TConj(TVar("x"), TVar("y"))
+      )
+    )
   }
 
   test("equality") {
     val p = Parser.equality
 
-    p.parseAll("true == false") match
-      case Right(TEq(TTrue(), TFalse())) => ()
-      case Left(error)                   => fail(printExp(error.expected))
-      case x => fail(s"Failed to parse as equality: $x")
+    assertParsingResult(
+      Parser.term,
+      "true == false",
+      TEq(TTrue(), TFalse())
+    )
 
     assertParsingResult(
       Parser.conjunction,
@@ -119,16 +121,14 @@ class BooleanExpressionParsing extends ParserSuite {
       )
     )
 
-    p.parseAll("size(d) == size(d2).max") match
-      case Right(
-            TEq(
-              TFunC("size", _),
-              TFCall(TFunC("size", _), "max", List())
-            )
-          ) =>
-        ()
-      case Left(error) => fail(printExp(error.expected))
-      case x           => fail(s"Failed to parse as equality: $x")
+    assertParsingResult(
+      Parser.disjunction,
+      "size(d) == size(d2).max",
+      TEq(
+        TFunC("size", List(TVar("d"))),
+        TFCall(TFunC("size", List(TVar("d2"))), "max", List())
+      )
+    )
 
   }
 

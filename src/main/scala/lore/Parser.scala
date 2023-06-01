@@ -13,6 +13,12 @@ import cats.syntax.all._
 object Parser:
   final case class ParsingException(message: String) extends Exception(message)
 
+  // helper functions
+  def withSourcePos[A](parser: P[A]): P[(A, SourcePos)] =
+    (P.caret.with1 ~ parser ~ P.caret).map { case ((c1, a), c2) =>
+      (a, SourcePos(c1, c2))
+    }
+
   // helpers
   private val infixOperators = Set("-", "+", "*", "/", ".")
   private val keywords =
@@ -79,8 +85,11 @@ object Parser:
   val divMul: P[Term] =
     P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
   val parens: P[Term] =
-    ((P.char('(').soft ~ ws).with1 *> arithmExpr <* ws ~ P.char(')'))
-      .map(TParens(_))
+    (P.caret.with1 ~ ((P.char('(').soft ~ ws).with1 *> arithmExpr <* ws ~ P
+      .char(')')) ~ P.caret)
+      .map { case ((c1, t), c2) =>
+        TParens(inner = t, sourcePos = Some(SourcePos(c1, c2)))
+      }
   val arithFactor: P[Term] =
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
@@ -108,8 +117,10 @@ object Parser:
     }
   val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(biImplication).map(TNeg(_))
   val boolParens: P[Term] = // parantheses
-    ((P.char('(').soft ~ wsOrNl).with1 *> P
-      .defer(booleanExpr) <* wsOrNl ~ P.char(')')).map(TParens(_))
+    withSourcePos(
+      (P.char('(').soft ~ wsOrNl).with1 *> P
+        .defer(booleanExpr) <* wsOrNl ~ P.char(')')
+    ).map((i, s) => TParens(inner = i, sourcePos = Some(s)))
   val boolFactor: P[Term] =
     boolParens.backtrack
       | neg

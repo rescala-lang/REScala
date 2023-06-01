@@ -1,7 +1,8 @@
 [
   {
     "TViperImport" : {
-      "path" : "calendar_header.vpr"
+      "path" : "calendar_header.vpr",
+      "sourcePos" : null
     }
   },
   {
@@ -20,7 +21,8 @@
             }
           ]
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -48,13 +50,16 @@
                 "TFunC" : {
                   "name" : "AWSet",
                   "args" : [
-                  ]
+                  ],
+                  "sourcePos" : null
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -82,13 +87,16 @@
                 "TFunC" : {
                   "name" : "AWSet",
                   "args" : [
-                  ]
+                  ],
+                  "sourcePos" : null
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -126,12 +134,14 @@
                       "TFCall" : {
                         "parent" : {
                           "TVar" : {
-                            "name" : "work"
+                            "name" : "work",
+                            "sourcePos" : null
                           }
                         },
                         "field" : "toSet",
                         "args" : [
-                        ]
+                        ],
+                        "sourcePos" : null
                       }
                     }
                   },
@@ -142,22 +152,27 @@
                         "TFCall" : {
                           "parent" : {
                             "TVar" : {
-                              "name" : "vacation"
+                              "name" : "vacation",
+                              "sourcePos" : null
                             }
                           },
                           "field" : "toSet",
                           "args" : [
-                          ]
+                          ],
+                          "sourcePos" : null
                         }
                       }
                     }
-                  ]
+                  ],
+                  "sourcePos" : null
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -188,7 +203,24 @@
                       "TViper" : {
                         "TArith" : {
                           "TNum" : {
-                            "value" : 30
+                            "value" : 30,
+                            "sourcePos" : {
+                              "start" : {
+                                "line" : 6,
+                                "col" : 48,
+                                "offset" : 320
+                              },
+                              "end" : {
+                                "line" : 6,
+                                "col" : 50,
+                                "offset" : 322
+                              },
+                              "_type" : {
+                                "Unknown" : {
+                                  
+                                }
+                              }
+                            }
                           }
                         }
                       }
@@ -203,26 +235,32 @@
                                 "TFCall" : {
                                   "parent" : {
                                     "TVar" : {
-                                      "name" : "vacation"
+                                      "name" : "vacation",
+                                      "sourcePos" : null
                                     }
                                   },
                                   "field" : "toSet",
                                   "args" : [
-                                  ]
+                                  ],
+                                  "sourcePos" : null
                                 }
                               }
                             }
-                          ]
+                          ],
+                          "sourcePos" : null
                         }
                       }
-                    }
+                    },
+                    "sourcePos" : null
                   }
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -269,7 +307,8 @@
                                   ],
                                   "ensures" : [
                                   ],
-                                  "executes" : null
+                                  "executes" : null,
+                                  "sourcePos" : null
                                 }
                               },
                               "field" : "requires",
@@ -277,14 +316,16 @@
                                 "TArrow" : {
                                   "left" : {
                                     "TVar" : {
-                                      "name" : "cal"
+                                      "name" : "cal",
+                                      "sourcePos" : null
                                     }
                                   },
                                   "right" : {
                                     "TArrow" : {
                                       "left" : {
                                         "TVar" : {
-                                          "name" : "a"
+                                          "name" : "a",
+                                          "sourcePos" : null
                                         }
                                       },
                                       "right" : {
@@ -298,10 +339,12 @@
                                                     "args" : [
                                                       {
                                                         "TVar" : {
-                                                          "name" : "a"
+                                                          "name" : "a",
+                                                          "sourcePos" : null
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "sourcePos" : null
                                                   }
                                                 }
                                               },
@@ -312,21 +355,27 @@
                                                     "args" : [
                                                       {
                                                         "TVar" : {
-                                                          "name" : "a"
+                                                          "name" : "a",
+                                                          "sourcePos" : null
                                                         }
                                                       }
-                                                    ]
+                                                    ],
+                                                    "sourcePos" : null
                                                   }
                                                 }
-                                              }
+                                              },
+                                              "sourcePos" : null
                                             }
                                           }
                                         }
-                                      }
+                                      },
+                                      "sourcePos" : null
                                     }
-                                  }
+                                  },
+                                  "sourcePos" : null
                                 }
-                              }
+                              },
+                              "sourcePos" : null
                             }
                           }
                         },
@@ -335,14 +384,16 @@
                           "TArrow" : {
                             "left" : {
                               "TVar" : {
-                                "name" : "cal"
+                                "name" : "cal",
+                                "sourcePos" : null
                               }
                             },
                             "right" : {
                               "TArrow" : {
                                 "left" : {
                                   "TVar" : {
-                                    "name" : "a"
+                                    "name" : "a",
+                                    "sourcePos" : null
                                   }
                                 },
                                 "right" : {
@@ -358,7 +409,8 @@
                                                     "TInSet" : {
                                                       "left" : {
                                                         "TVar" : {
-                                                          "name" : "a"
+                                                          "name" : "a",
+                                                          "sourcePos" : null
                                                         }
                                                       },
                                                       "right" : {
@@ -366,30 +418,54 @@
                                                           "TFCall" : {
                                                             "parent" : {
                                                               "TVar" : {
-                                                                "name" : "cal"
+                                                                "name" : "cal",
+                                                                "sourcePos" : null
                                                               }
                                                             },
                                                             "field" : "toSet",
                                                             "args" : [
-                                                            ]
+                                                            ],
+                                                            "sourcePos" : null
                                                           }
                                                         }
-                                                      }
+                                                      },
+                                                      "sourcePos" : null
                                                     }
+                                                  }
+                                                }
+                                              },
+                                              "sourcePos" : {
+                                                "start" : {
+                                                  "line" : 10,
+                                                  "col" : 26,
+                                                  "offset" : 498
+                                                },
+                                                "end" : {
+                                                  "line" : 10,
+                                                  "col" : 42,
+                                                  "offset" : 514
+                                                },
+                                                "_type" : {
+                                                  "Unknown" : {
+                                                    
                                                   }
                                                 }
                                               }
                                             }
                                           }
-                                        }
+                                        },
+                                        "sourcePos" : null
                                       }
                                     }
                                   }
-                                }
+                                },
+                                "sourcePos" : null
                               }
-                            }
+                            },
+                            "sourcePos" : null
                           }
-                        }
+                        },
+                        "sourcePos" : null
                       }
                     }
                   },
@@ -398,14 +474,16 @@
                     "TArrow" : {
                       "left" : {
                         "TVar" : {
-                          "name" : "cal"
+                          "name" : "cal",
+                          "sourcePos" : null
                         }
                       },
                       "right" : {
                         "TArrow" : {
                           "left" : {
                             "TVar" : {
-                              "name" : "a"
+                              "name" : "a",
+                              "sourcePos" : null
                             }
                           },
                           "right" : {
@@ -413,24 +491,30 @@
                               "TFCall" : {
                                 "parent" : {
                                   "TVar" : {
-                                    "name" : "cal"
+                                    "name" : "cal",
+                                    "sourcePos" : null
                                   }
                                 },
                                 "field" : "add",
                                 "args" : [
                                   {
                                     "TVar" : {
-                                      "name" : "a"
+                                      "name" : "a",
+                                      "sourcePos" : null
                                     }
                                   }
-                                ]
+                                ],
+                                "sourcePos" : null
                               }
                             }
-                          }
+                          },
+                          "sourcePos" : null
                         }
-                      }
+                      },
+                      "sourcePos" : null
                     }
-                  }
+                  },
+                  "sourcePos" : null
                 }
               }
             },
@@ -439,14 +523,16 @@
               "TArrow" : {
                 "left" : {
                   "TVar" : {
-                    "name" : "cal"
+                    "name" : "cal",
+                    "sourcePos" : null
                   }
                 },
                 "right" : {
                   "TArrow" : {
                     "left" : {
                       "TVar" : {
-                        "name" : "a"
+                        "name" : "a",
+                        "sourcePos" : null
                       }
                     },
                     "right" : {
@@ -455,7 +541,8 @@
                           "TInSet" : {
                             "left" : {
                               "TVar" : {
-                                "name" : "a"
+                                "name" : "a",
+                                "sourcePos" : null
                               }
                             },
                             "right" : {
@@ -463,26 +550,33 @@
                                 "TFCall" : {
                                   "parent" : {
                                     "TVar" : {
-                                      "name" : "cal"
+                                      "name" : "cal",
+                                      "sourcePos" : null
                                     }
                                   },
                                   "field" : "toSet",
                                   "args" : [
-                                  ]
+                                  ],
+                                  "sourcePos" : null
                                 }
                               }
-                            }
+                            },
+                            "sourcePos" : null
                           }
                         }
                       }
-                    }
+                    },
+                    "sourcePos" : null
                   }
-                }
+                },
+                "sourcePos" : null
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -503,17 +597,20 @@
                 "TFCall" : {
                   "parent" : {
                     "TVar" : {
-                      "name" : "add_appointment"
+                      "name" : "add_appointment",
+                      "sourcePos" : null
                     }
                   },
                   "field" : "modifies",
                   "args" : [
                     {
                       "TVar" : {
-                        "name" : "vacation"
+                        "name" : "vacation",
+                        "sourcePos" : null
                       }
                     }
-                  ]
+                  ],
+                  "sourcePos" : null
                 }
               }
             },
@@ -522,14 +619,16 @@
               "TArrow" : {
                 "left" : {
                   "TVar" : {
-                    "name" : "cal"
+                    "name" : "cal",
+                    "sourcePos" : null
                   }
                 },
                 "right" : {
                   "TArrow" : {
                     "left" : {
                       "TVar" : {
-                        "name" : "a"
+                        "name" : "a",
+                        "sourcePos" : null
                       }
                     },
                     "right" : {
@@ -542,7 +641,8 @@
                                   "TSub" : {
                                     "left" : {
                                       "TVar" : {
-                                        "name" : "remaining_vacation"
+                                        "name" : "remaining_vacation",
+                                        "sourcePos" : null
                                       }
                                     },
                                     "right" : {
@@ -550,15 +650,18 @@
                                         "TFCall" : {
                                           "parent" : {
                                             "TVar" : {
-                                              "name" : "a"
+                                              "name" : "a",
+                                              "sourcePos" : null
                                             }
                                           },
                                           "field" : "days",
                                           "args" : [
-                                          ]
+                                          ],
+                                          "sourcePos" : null
                                         }
                                       }
-                                    }
+                                    },
+                                    "sourcePos" : null
                                   }
                                 }
                               }
@@ -567,22 +670,44 @@
                               "TViper" : {
                                 "TArith" : {
                                   "TNum" : {
-                                    "value" : 0
+                                    "value" : 0,
+                                    "sourcePos" : {
+                                      "start" : {
+                                        "line" : 14,
+                                        "col" : 56,
+                                        "offset" : 715
+                                      },
+                                      "end" : {
+                                        "line" : 14,
+                                        "col" : 57,
+                                        "offset" : 716
+                                      },
+                                      "_type" : {
+                                        "Unknown" : {
+                                          
+                                        }
+                                      }
+                                    }
                                   }
                                 }
                               }
-                            }
+                            },
+                            "sourcePos" : null
                           }
                         }
                       }
-                    }
+                    },
+                    "sourcePos" : null
                   }
-                }
+                },
+                "sourcePos" : null
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -600,20 +725,24 @@
           "TFCall" : {
             "parent" : {
               "TVar" : {
-                "name" : "add_appointment"
+                "name" : "add_appointment",
+                "sourcePos" : null
               }
             },
             "field" : "modifies",
             "args" : [
               {
                 "TVar" : {
-                  "name" : "work"
+                  "name" : "work",
+                  "sourcePos" : null
                 }
               }
-            ]
+            ],
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -621,22 +750,26 @@
       "TFCall" : {
         "parent" : {
           "TVar" : {
-            "name" : "UI"
+            "name" : "UI",
+            "sourcePos" : null
           }
         },
         "field" : "display",
         "args" : [
           {
             "TVar" : {
-              "name" : "all_appointments"
+              "name" : "all_appointments",
+              "sourcePos" : null
             }
           },
           {
             "TVar" : {
-              "name" : "remaining_vacation"
+              "name" : "remaining_vacation",
+              "sourcePos" : null
             }
           }
-        ]
+        ],
+        "sourcePos" : null
       }
     }
   },
@@ -648,12 +781,14 @@
             "TFCall" : {
               "parent" : {
                 "TVar" : {
-                  "name" : "UI"
+                  "name" : "UI",
+                  "sourcePos" : null
                 }
               },
               "field" : "vacationDialog",
               "args" : [
-              ]
+              ],
+              "sourcePos" : null
             }
           }
         },
@@ -662,7 +797,8 @@
           "TArrow" : {
             "left" : {
               "TVar" : {
-                "name" : "a"
+                "name" : "a",
+                "sourcePos" : null
               }
             },
             "right" : {
@@ -670,22 +806,27 @@
                 "TFCall" : {
                   "parent" : {
                     "TVar" : {
-                      "name" : "add_vacation"
+                      "name" : "add_vacation",
+                      "sourcePos" : null
                     }
                   },
                   "field" : "apply",
                   "args" : [
                     {
                       "TVar" : {
-                        "name" : "a"
+                        "name" : "a",
+                        "sourcePos" : null
                       }
                     }
-                  ]
+                  ],
+                  "sourcePos" : null
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
-        }
+        },
+        "sourcePos" : null
       }
     }
   },
@@ -703,7 +844,8 @@
                     "inner" : [
                     ]
                   }
-                }
+                },
+                "sourcePos" : null
               }
             ],
             "triggers" : [
@@ -718,14 +860,17 @@
                           "TInSet" : {
                             "left" : {
                               "TVar" : {
-                                "name" : "a"
+                                "name" : "a",
+                                "sourcePos" : null
                               }
                             },
                             "right" : {
                               "TVar" : {
-                                "name" : "all_appointments"
+                                "name" : "all_appointments",
+                                "sourcePos" : null
                               }
-                            }
+                            },
+                            "sourcePos" : null
                           }
                         }
                       }
@@ -741,10 +886,12 @@
                                   "args" : [
                                     {
                                       "TVar" : {
-                                        "name" : "a"
+                                        "name" : "a",
+                                        "sourcePos" : null
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "sourcePos" : null
                                 }
                               }
                             },
@@ -755,24 +902,30 @@
                                   "args" : [
                                     {
                                       "TVar" : {
-                                        "name" : "a"
+                                        "name" : "a",
+                                        "sourcePos" : null
                                       }
                                     }
-                                  ]
+                                  ],
+                                  "sourcePos" : null
                                 }
                               }
-                            }
+                            },
+                            "sourcePos" : null
                           }
                         }
                       }
-                    }
+                    },
+                    "sourcePos" : null
                   }
                 }
               }
-            }
+            },
+            "sourcePos" : null
           }
         }
-      }
+      },
+      "sourcePos" : null
     }
   },
   {
@@ -781,20 +934,40 @@
         "TGeq" : {
           "left" : {
             "TVar" : {
-              "name" : "remaining_vacation"
+              "name" : "remaining_vacation",
+              "sourcePos" : null
             }
           },
           "right" : {
             "TViper" : {
               "TArith" : {
                 "TNum" : {
-                  "value" : 0
+                  "value" : 0,
+                  "sourcePos" : {
+                    "start" : {
+                      "line" : 23,
+                      "col" : 32,
+                      "offset" : 1007
+                    },
+                    "end" : {
+                      "line" : 23,
+                      "col" : 33,
+                      "offset" : 1008
+                    },
+                    "_type" : {
+                      "Unknown" : {
+                        
+                      }
+                    }
+                  }
                 }
               }
             }
-          }
+          },
+          "sourcePos" : null
         }
-      }
+      },
+      "sourcePos" : null
     }
   }
 ]
