@@ -212,7 +212,8 @@ trait EventBundle extends FoldBundle {
         this.value.map(expression)
       }
 
-    /** Transform the event.
+    /** Like map, but allows to ignore the parameter if its type is Unit.
+      * Useful for snapshotting some signals when an event triggers
       *
       * @group operator
       */
