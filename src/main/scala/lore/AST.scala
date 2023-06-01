@@ -33,9 +33,7 @@ case class TViperImport(path: Path, sourcePos: Option[SourcePos] = None)
 implicit val pathEncoder: Encoder[Path] =
   Encoder.encodeString.contramap[Path](_.toString)
 implicit val pathDecoder: Decoder[Path] =
-  Decoder.decodeString.emapTry { str =>
-    Try(Path.of(str))
-  }
+  Decoder.decodeString.emapTry(str => Try(Path.of(str)))
 
 // helper types
 type ID = String

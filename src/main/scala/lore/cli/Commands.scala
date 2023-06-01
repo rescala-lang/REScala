@@ -1,4 +1,4 @@
-package lore
+package lore.cli
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}

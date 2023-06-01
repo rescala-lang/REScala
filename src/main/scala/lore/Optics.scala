@@ -7,11 +7,8 @@ import cats.Traverse
 import lore.AST._
 import cats.{Applicative, Monad}
 import cats.syntax._
-import alleycats.std.list._
-import alleycats.std.map._
 import cats.Applicative
 import cats.Traverse
-import org.scalafmt.config.Indents.RelativeToLhs.`match`
 import cats.data.NonEmptyList
 import monocle.Lens
 

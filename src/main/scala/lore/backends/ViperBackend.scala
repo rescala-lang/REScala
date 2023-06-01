@@ -1,6 +1,6 @@
-package lore
+package lore.backends
 
-import AST._
+import lore.AST._
 import cats.implicits._
 
 object ViperBackend:

@@ -11,6 +11,8 @@ import java.nio.file.NoSuchFileException
 import lore.Parser.ParsingException
 import cats.instances.option
 import cats.syntax.parallel._
+import lore.backends.ViperBackend
+import lore.cli._
 
 object Compiler extends IOApp:
 

@@ -1,5 +1,6 @@
-package lore
-import AST._
+package lore.backends
+import lore.AST._
+import lore.optics.{given, _}
 
 // type definitions
 private type Graph[R] = Map[String, (R, Type)]
@@ -90,6 +91,13 @@ def flattenInteractions(ctx: CompilationContext): CompilationContext =
   if res == ctx then return res
   else return flattenInteractions(res)
 
+/** Applies a transformer function to every node in the subgraph, starting from
+  * a given node and traversing downwards from there.
+  *
+  * @param node
+  * @param transformer
+  * @return
+  */
 def traverseFromNode[A <: Term](
     node: A,
     transformer: Term => Term
@@ -259,98 +267,32 @@ def rename(from: ID, to: ID, term: Term): Term =
     case t => t
   traverseFromNode(term, transformer)
 
-def allReactives(ast: Seq[Term]): Map[String, (TReactive, Type)] =
+private def allReactives(ast: Seq[Term]): Map[String, (TReactive, Type)] =
   ast.collect { case TAbs(name, _type, r: TReactive, _) =>
     (name, (r, _type))
   }.toMap
 
-def allInteractions(ast: Seq[Term]): Map[String, TInteraction] =
+private def allInteractions(ast: Seq[Term]): Map[String, TInteraction] =
   ast.collect { case TAbs(name, _type, t: TInteraction, _) =>
     (name, t)
   }.toMap
 
-/** Returns all ids that are used in an expression.
-  *
-  * @param e
-  *   the expression
-  * @return
-  *   a set of all used IDs
+/** Returns all ids that are used in a term.
   */
-def uses(e: Term): Set[ID] =
-  ???
-  // e match
-  // case TInvariant(body) => uses(body)
-  // case t: TInteraction =>
-  //   t.modifies.toSet ++ t.requires.flatMap(uses).toSet ++
-  //     t.ensures.flatMap(uses).toSet ++ t.executes.map(uses).getOrElse(Set.empty)
-  // case t: TAbs                      => uses(t.body)
-  // case TVar("_")                    => Set.empty
-  // case TVar(name)                   => Set(name)
-  // case TTuple(factors)              => factors.toList.flatMap(uses).toSet
-  // case t: TReactive                 => uses(t.body)
-  // case TFunC(name, args)            => args.flatMap(uses).toSet
-  // case TFCall(parent, field, args)  => uses(parent) ++ args.flatMap(uses)
-  // case TFCurly(parent, field, body) => uses(parent) ++ uses(body)
-  // case TParens(inner)               => uses(inner)
-  // case TNum(_)                      => Set()
-  // case TDiv(l, r)                   => uses(l) ++ uses(r)
-  // case TMul(l, r)                   => uses(l) ++ uses(r)
-  // case TAdd(l, r)                   => uses(l) ++ uses(r)
-  // case TSub(l, r)                   => uses(l) ++ uses(r)
-  // case TTrue                        => Set()
-  // case TFalse                       => Set()
-  // case TNeg(inner)                  => uses(inner)
-  // case TLt(l, r)                    => uses(l) ++ uses(r)
-  // case TGt(l, r)                    => uses(l) ++ uses(r)
-  // case TLeq(l, r)                   => uses(l) ++ uses(r)
-  // case TGeq(l, r)                   => uses(l) ++ uses(r)
-  // case TEq(l, r)                    => uses(l) ++ uses(r)
-  // case TIneq(l, r)                  => uses(l) ++ uses(r)
-  // case TDisj(l, r)                  => uses(l) ++ uses(r)
-  // case TConj(l, r)                  => uses(l) ++ uses(r)
-  // case TImpl(l, r)                  => uses(l) ++ uses(r)
-  // case TBImpl(l, r)                 => uses(l) ++ uses(r)
-  // case TForall(vars, triggers, body) =>
-  //   triggers.flatMap(uses).toSet ++ uses(body)
-  // case TExists(vars, body) => uses(body)
-  // case TInSet(l, r)        => uses(l) ++ uses(r)
-  // case TArgT(_, _)         => Set.empty
-  // case TArrow(l, r)        => uses(l) ++ uses(r)
-  // case TTypeAl(_, _)       => Set.empty
-  // case TString(_)          => Set.empty
-  // case TIf(cond, _then, _else) =>
-  //   uses(cond) ++ uses(_then) ++ _else.map(uses).getOrElse(Set())
-  // case TViperImport(_) => Set.empty
-  // case TSeq(body)      => body.toList.flatMap(uses).toSet
-  // case TAssert(body)   => uses(body)
-  // case TAssume(body)   => uses(body)
-
-trait Showable[A]:
-  extension (a: A) def show: String
-
-sealed trait Term2
-case class TermA(name: String) extends Term2
-case class TermB(name: List[Char]) extends Term2
-
-given Showable[TermA] with
-  extension (a: TermA) def show = s"Showing TermA: ${a.name}"
-
-given Showable[TermB] with
-  extension (a: TermB) def show = s"Showing TermB: ${a.name.toString}"
-
-// given Showable[Term] with Showable.derived
-//   case e: StringExpr                 => Set()
-
-// def getDependants(
-//     reactive: Reactive,
-//     ast: Seq[ParsedExpression]
-// ): Set[Reactive] =
-//   val directChildren: Set[DerivedReactive] = ast
-//     .collect({
-//       case d: DerivedReactive if uses(d).contains(reactive.name.name) => d
-//     })
-//     .toSet
-//   Set(reactive) ++ directChildren.flatMap(c => getDependants(c, ast))
+def uses: Term => Set[ID] =
+  // these cases mark usage of an id
+  case t: TInteraction =>
+    t.modifies.toSet ++ t.children.flatMap(uses).toSet
+  case TVar("_", _)  => Set.empty
+  case TVar(name, _) => Set(name)
+  case t: TFunC      => t.args.flatMap(uses).toSet
+  // these cases do not
+  case t: (TNum | TString | TTrue | TFalse | TArgT | TTypeAl | TViperImport) =>
+    Set.empty
+  // in these cases we have to traverse into the child nodes
+  case t: (TInvariant | TAbs | TTuple | TReactive | TFCall | TFCurly | TParens |
+        TForall | TExists | TNeg | BinaryOp | TIf | TSeq | TAssert | TAssume) =>
+    t.children.flatMap(uses).toSet
 
 /** Given the name of a reactive and the registry of all reactives, this
   * function returns all reactives that this one (transitively) depends on.
