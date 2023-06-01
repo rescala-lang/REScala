@@ -27,6 +27,8 @@ object UI {
   val currentPostID: Signal[ID] = ???
   val textInput: Signal[String] = ???
 
+  def display(ssm: Signal[SocialMedia]): Unit = ???
+
 }
 
 case class SocialMedia(sm: Map[ID, SocialPost] = Map.empty):
@@ -50,17 +52,18 @@ class SocialMediaTest extends munit.FunSuite {
 
     given ReplicaId = ReplicaId.fromId(Uid.gen())
 
-    val likeEvent: Event[ID] = UI.likeButton.event.map { UI.currentPostID.value }
-
+    val likeEvent: Event[ID]        = UI.likeButton.event.map { UI.currentPostID.value }
     val commentEvent: Event[String] = UI.submitCommentButton.event.map { UI.textInput.value }
+    val postEvent: Event[String]    = UI.postButton.event.map { UI.textInput.value }
 
-    val postEvent: Event[String] = UI.postButton.event.map { UI.textInput.value }
+    val socialMedia: Signal[SocialMedia] =
+      Fold(SocialMedia())(
+        likeEvent act { id => current.like(id) },
+        commentEvent act { text => current.comment(UI.currentPostID.value, text) },
+        postEvent act { text => current.post(text) }
+      )
 
-    Fold(SocialMedia())(
-      likeEvent act { id => current.like(id) },
-      commentEvent act { text => current.comment(UI.currentPostID.value, text) },
-      postEvent act { text => current.post(text) }
-    )
+    UI.display(socialMedia)
 
   }
 
