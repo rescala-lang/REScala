@@ -2,7 +2,7 @@ package replication.checkpointing.central
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.Dotted
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable

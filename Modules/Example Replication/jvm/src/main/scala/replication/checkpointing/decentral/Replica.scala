@@ -1,11 +1,11 @@
 package replication.checkpointing.decentral
 
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
+import kofre.datatypes.contextual.AddWinsSet
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine

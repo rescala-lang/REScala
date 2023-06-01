@@ -5,10 +5,11 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.{Argument, Style}
 import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.CausalQueue.QueueElement
+import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.*
 import kofre.datatypes.alternatives.lww.TimedVal
+import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}

@@ -1,7 +1,7 @@
 package encrdtlib.lattices
 
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.time.Dots
 

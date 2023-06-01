@@ -2,7 +2,7 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.datatypes.EnableWinsFlag
+import kofre.datatypes.contextual.EnableWinsFlag
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

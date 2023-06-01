@@ -5,8 +5,8 @@ import org.openjdk.jmh.annotations.*
 import kofre.datatypes.alternatives.rga.Sequence.RGA
 import kofre.datatypes.alternatives.rga.Sequence.RGAOps
 import kofre.base.Uid.asId
-import kofre.datatypes.CausalQueue
 import kofre.datatypes.alternatives.rga.Sequence
+import kofre.datatypes.contextual.CausalQueue
 import kofre.dotted.Dotted
 
 import java.util.concurrent.TimeUnit

@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.datatypes.{AddWinsSet, ObserveRemoveMap}
+import kofre.datatypes.contextual.{AddWinsSet, ObserveRemoveMap}
 import replication.JsoniterCodecs.*
 import org.scalacheck.Prop.*
 

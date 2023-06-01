@@ -5,8 +5,8 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.base.Uid
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.syntax.ReplicaId
-import kofre.datatypes.AddWinsSet
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

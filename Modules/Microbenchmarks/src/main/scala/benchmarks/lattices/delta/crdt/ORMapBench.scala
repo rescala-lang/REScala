@@ -1,7 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.{EnableWinsFlag, ObserveRemoveMap}
-import kofre.datatypes.ObserveRemoveMap
+import kofre.datatypes.contextual.{EnableWinsFlag, ObserveRemoveMap}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

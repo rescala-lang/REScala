@@ -1,8 +1,9 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
+import kofre.datatypes.contextual.ObserveRemoveMap
 import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
-import kofre.syntax.{OpsSyntaxHelper}
+import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.

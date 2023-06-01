@@ -1,8 +1,8 @@
 package todo
 
-import kofre.datatypes.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.base.Uid
+import kofre.datatypes.contextual.ReplicatedList
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import rescala.default.*
 

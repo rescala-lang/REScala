@@ -6,7 +6,7 @@ import de.rmgk.options.{Argument, Style}
 import de.rmgk.script.extensions
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.datatypes.alternatives.ObserveRemoveSet
-import kofre.datatypes.{AddWinsSet, CausalQueue, ObserveRemoveMap, ReplicatedList}
+import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap, ReplicatedList}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.Dots

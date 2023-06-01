@@ -1,13 +1,13 @@
 package benchmarks.lattices.delta
 
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.AddWinsSet
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.time.{Dot, Dots}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
 import kofre.base.Uid.asId
+import kofre.datatypes.contextual.AddWinsSet
 
 import java.util.concurrent.TimeUnit
 

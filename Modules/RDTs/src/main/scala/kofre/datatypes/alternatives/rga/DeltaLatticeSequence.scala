@@ -2,7 +2,7 @@ package kofre.datatypes.alternatives.rga
 
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes
-import kofre.datatypes.{AddWinsSet, EnableWinsFlag}
+import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
@@ -106,7 +106,7 @@ object DeltaSequence {
     extension (value: DeltaSequence[A])
       def dots: Dots = value.vertices.dots
       override def removeDots(dots: Dots): Option[DeltaSequence[A]] =
-          HasDots.apply[datatypes.AddWinsSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
+          HasDots.apply[AddWinsSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
             value.copy(vertices = nv)
           }
   }

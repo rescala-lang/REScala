@@ -1,7 +1,7 @@
-package kofre.datatypes
+package kofre.datatypes.contextual
 
-import kofre.base.{Bottom, Uid, Lattice}
-import kofre.datatypes.{GrowOnlyMap, ObserveRemoveMap}
+import kofre.base.{Bottom, Lattice, Uid}
+import kofre.datatypes.{GrowOnlyMap}
 import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}

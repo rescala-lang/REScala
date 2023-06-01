@@ -1,7 +1,7 @@
 package kofre.datatypes.experiments
 
 import kofre.base.{Bottom, Uid, Lattice}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}

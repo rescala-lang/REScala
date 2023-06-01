@@ -1,6 +1,7 @@
-package kofre.datatypes
+package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
+import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}

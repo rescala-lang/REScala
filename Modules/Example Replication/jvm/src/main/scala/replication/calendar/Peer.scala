@@ -3,7 +3,7 @@ package replication.calendar
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.{DottedLattice, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

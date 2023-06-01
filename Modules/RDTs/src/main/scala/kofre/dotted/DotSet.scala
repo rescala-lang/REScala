@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.datatypes.EnableWinsFlag
+import kofre.datatypes.contextual.EnableWinsFlag
 import kofre.time.{Dot, Dots}
 
 /** DotsSets track causality of events without values.

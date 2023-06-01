@@ -2,7 +2,7 @@ package replication.checkpointing.central
 
 import Bindings._
 import kofre.base.Lattice
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.Dotted
 import loci.communicator.tcp.TCP
 import loci.registry.Registry

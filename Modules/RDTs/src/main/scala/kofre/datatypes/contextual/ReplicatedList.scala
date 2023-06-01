@@ -1,8 +1,8 @@
-package kofre.datatypes
+package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.Epoche
 import kofre.datatypes.alternatives.lww.TimedVal
+import kofre.datatypes.{Epoche, GrowOnlyList}
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
@@ -31,7 +31,7 @@ import scala.math.Ordering.Implicits.infixOrderingOps
 case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[ReplicatedList.Node[E]])
 object ReplicatedList {
 
-  def empty[E]: ReplicatedList[E] = kofre.datatypes.ReplicatedList(Epoche.empty, DotFun.empty)
+  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
 
   given rgaContext[E]: DottedLattice[ReplicatedList[E]] = DottedLattice.derived[ReplicatedList[E]]
 

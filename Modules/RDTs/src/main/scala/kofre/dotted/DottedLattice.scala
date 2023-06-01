@@ -1,8 +1,8 @@
 package kofre.dotted
 
-import kofre.base.Lattice.{ optionLattice}
+import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.ReplicatedList
+import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.{Dot, Dots}
 

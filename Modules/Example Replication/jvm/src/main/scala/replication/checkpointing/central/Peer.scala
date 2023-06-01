@@ -2,7 +2,6 @@ package replication.checkpointing.central
 
 import Bindings.*
 import kofre.base.Lattice
-import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.communicator.tcp.TCP
@@ -15,6 +14,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 import kofre.base.Uid
+import kofre.datatypes.contextual.AddWinsSet
 
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 

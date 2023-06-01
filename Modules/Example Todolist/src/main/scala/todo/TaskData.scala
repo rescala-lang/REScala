@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.{LastWriterWins, MultiVersionRegister, alternatives}
+import kofre.datatypes.alternatives
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import loci.registry.Binding
@@ -16,6 +16,7 @@ import Codecs.given
 import kofre.base.Bottom
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.datatypes.alternatives.lww.{TimedVal, WallClock}
+import kofre.datatypes.contextual.{LastWriterWins, MultiVersionRegister}
 import kofre.time.Dots
 import loci.serializer.jsoniterScala.given
 

@@ -3,12 +3,12 @@ package replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.{Uid, Time}
-import kofre.datatypes.ReplicatedList.Node
+import kofre.datatypes.contextual.ReplicatedList.Node
 import kofre.datatypes.alternatives.ResettableCounter
 import kofre.datatypes.alternatives.lww.TimedVal
+import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
 import kofre.datatypes.{
-  AddWinsSet, EnableWinsFlag, Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, MultiVersionRegister,
-  ObserveRemoveMap, PosNegCounter, ReplicatedList, TwoPhaseSet
+  Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, PosNegCounter, TwoPhaseSet
 }
 import kofre.dotted.Dotted
 import kofre.datatypes.experiments.AuctionInterface.AuctionData

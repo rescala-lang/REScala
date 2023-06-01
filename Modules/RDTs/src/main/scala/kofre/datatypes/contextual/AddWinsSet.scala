@@ -1,9 +1,9 @@
-package kofre.datatypes
+package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
+import kofre.dotted.*
 import kofre.dotted.DottedLattice.*
-import kofre.dotted.{DotMap, DotSet, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 

@@ -1,13 +1,14 @@
 package kofre.dotted
 
 import kofre.base.Lattice
+import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.{Dot, Dots}
 
 import scala.annotation.targetName
 
 /** A dot fun tracks a set of values associated to a certain point in time.
-  * This makes them useful as both [[kofre.datatypes.MultiVersionRegister]] and simple observe remove sets/maps.
+  * This makes them useful as both [[MultiVersionRegister]] and simple observe remove sets/maps.
   */
 case class DotFun[A](repr: Map[Dot, A])
 

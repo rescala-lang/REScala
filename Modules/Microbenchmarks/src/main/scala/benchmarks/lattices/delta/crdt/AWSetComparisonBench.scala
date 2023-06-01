@@ -1,10 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
 import kofre.base.Lattice
-import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
 import kofre.base.Uid.asId
+import kofre.datatypes.contextual.AddWinsSet
 
 import java.util.concurrent.TimeUnit
 

@@ -3,7 +3,7 @@ package example
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Uid
-import kofre.datatypes.{MultiVersionRegister, ReplicatedList}
+import kofre.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
 

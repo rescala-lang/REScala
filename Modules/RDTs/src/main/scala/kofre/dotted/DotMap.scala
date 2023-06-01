@@ -1,5 +1,6 @@
 package kofre.dotted
 
+import kofre.datatypes.contextual.ObserveRemoveMap
 import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.Dots
 
@@ -10,7 +11,7 @@ import kofre.time.Dots
   * It would be perfectly reasonable to skip the case class and define the instance on maps directly,
   * but that might cause issues with implicit resolution
   *
-  * See [[kofre.datatypes.ObserveRemoveMap]] for a usage example.
+  * See [[ObserveRemoveMap]] for a usage example.
   */
 case class DotMap[K, V](repr: Map[K, V])
 

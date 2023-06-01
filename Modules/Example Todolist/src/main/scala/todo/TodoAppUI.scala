@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.ReplicatedList
+import kofre.datatypes.contextual.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
@@ -16,7 +16,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer}
+import kofre.syntax.DeltaBuffer
 import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {

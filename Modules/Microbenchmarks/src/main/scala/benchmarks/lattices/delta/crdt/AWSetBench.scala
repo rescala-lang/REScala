@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.AddWinsSet
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations.*
 

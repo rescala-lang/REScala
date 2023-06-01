@@ -2,13 +2,13 @@ package replication.checkpointing.decentral
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.AddWinsSet
 import kofre.dotted.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.{given, _}
 import loci.transmitter.IdenticallyTransmittable
 import replication.JsoniterCodecs.{given, _}
 import kofre.base.Uid
+import kofre.datatypes.contextual.AddWinsSet
 
 import scala.concurrent.Future
 
