@@ -46,25 +46,21 @@ case class SocialPost(
     dislikes: Counter = Counter.zero
 )
 
-class SocialMediaTest extends munit.FunSuite {
+object SocialMediaTest {
 
-  test("reactive") {
+  given ReplicaId = ReplicaId.fromId(Uid.gen())
 
-    given ReplicaId = ReplicaId.fromId(Uid.gen())
+  val likeEvent: Event[ID]        = UI.likeButton.event.snap { UI.currentPostID.value }
+  val commentEvent: Event[String] = UI.submitCommentButton.event.snap { UI.textInput.value }
+  val postEvent: Event[String]    = UI.postButton.event.snap { UI.textInput.value }
 
-    val likeEvent: Event[ID]        = UI.likeButton.event.snap { UI.currentPostID.value }
-    val commentEvent: Event[String] = UI.submitCommentButton.event.snap { UI.textInput.value }
-    val postEvent: Event[String]    = UI.postButton.event.snap { UI.textInput.value }
+  val socialMedia: Signal[SocialMedia] =
+    Fold(SocialMedia())(
+      likeEvent act { id => current.like(id) },
+      commentEvent act { text => current.comment(UI.currentPostID.value, text) },
+      postEvent act { text => current.post(text) }
+    )
 
-    val socialMedia: Signal[SocialMedia] =
-      Fold(SocialMedia())(
-        likeEvent act { id => current.like(id) },
-        commentEvent act { text => current.comment(UI.currentPostID.value, text) },
-        postEvent act { text => current.post(text) }
-      )
-
-    UI.display(socialMedia)
-
-  }
+  UI.display(socialMedia)
 
 }
