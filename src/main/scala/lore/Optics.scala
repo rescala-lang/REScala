@@ -11,6 +11,8 @@ import cats.Applicative
 import cats.Traverse
 import cats.data.NonEmptyList
 import monocle.Lens
+import monocle.Fold
+import cats.kernel.Monoid
 
 // val traverseAST: Traverse[cats.Id[Term]] = new Traverse[cats.Id[Term]] {
 //   def traverse[F[_]: Applicative](as: Term)(f: Term => F[Term]): F[Term] = ???
@@ -143,6 +145,54 @@ val Subtree: Traversal[Term, Term] =
         case (p: TNum, _)                => p
         case _                           => ???
       }
+  }
+
+val children: Fold[Term, Term] =
+  new Fold[Term, Term] {
+
+    def foldMap[M: Monoid](f: Term => M)(t: Term): M =
+      t match
+        case _: (TViperImport | TArgT | TVar | TTypeAl | TNum | TTrue | TFalse |
+              TString) =>
+          Monoid[M].empty
+        case TAbs(name, _type, body, sourcePos) => f(body)
+        case x: TTuple =>
+          Monoid[M].combineAll(x.factors.toList.map(f))
+        case TIf(cond, _then, _else, sourcePos) =>
+          Monoid[M].combineAll(
+            (List(cond, _then).map(Some(_)) :+ _else).flatten.map(f)
+          )
+        case TSeq(body, sourcePos) => Monoid[M].combineAll(body.toList.map(f))
+        case t: BinaryOp           => f(t.left) combine f(t.right)
+        case TAssert(body, sourcePos)  => f(body)
+        case TAssume(body, sourcePos)  => f(body)
+        case TSource(body, sourcePos)  => f(body)
+        case TDerived(body, sourcePos) => f(body)
+        case TInteraction(
+              reactiveType,
+              argumentType,
+              modifies,
+              requires,
+              ensures,
+              executes,
+              sourcePos
+            ) =>
+          Monoid[M].combineAll(
+            ((requires ++ ensures).map(Some(_)) :+ executes).flatten.map(f)
+          )
+        case TInvariant(condition, sourcePos) => f(condition)
+        case TNeg(body, sourcePos)            => f(body)
+        case TForall(vars, triggers, body, sourcePos) =>
+          Monoid[M].combineAll((vars.toList ++ triggers.toList :+ body).map(f))
+        case TExists(vars, body, sourcePos) =>
+          Monoid[M].combineAll(((vars.toList :+ body).map(f)))
+        case TParens(inner, sourcePos) => f(inner)
+        case TFCall(parent, field, args, sourcePos) =>
+          Monoid[M].combineAll((List(parent) ++ args).map(f))
+        case TFCurly(parent, field, body, sourcePos) =>
+          Monoid[M].combineAll((List(parent) :+ body).map(f))
+        case TFunC(name, args, sourcePos) =>
+          Monoid[M].combineAll(args.toList.map(f))
   }
 
 //   new Traversal[Term, Term] {
