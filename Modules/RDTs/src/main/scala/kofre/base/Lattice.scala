@@ -47,7 +47,12 @@ trait Lattice[A] {
 
 object Lattice {
   def apply[A](using ev: Lattice[A]): Lattice[A] = ev
-  def merge[A: Lattice](left: A, right: A): A    = apply[A].merge(left, right)
+
+  def merge[A: Lattice](left: A, right: A): A = apply[A].merge(left, right)
+
+  def lteq[A: Lattice](left: A, right: A): Boolean = apply[A].lteq(left, right)
+
+  def diff[A: Lattice](left: A, right: A): Option[A] = apply[A].diff(left, right)
 
   /** Merge functions can throw away redundant information, if one constructs values directly (not by using operators)
     * this could result in values that should be equal, but are not.
