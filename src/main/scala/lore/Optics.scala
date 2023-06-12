@@ -1,15 +1,9 @@
 package lore.optics
 
 import monocle.{Traversal}
-import monocle.function.Plated
 import cats.implicits._
-import cats.Traverse
 import lore.AST._
-import cats.{Applicative, Monad}
-import cats.syntax._
 import cats.Applicative
-import cats.Traverse
-import cats.data.NonEmptyList
 import monocle.Lens
 import monocle.Fold
 import cats.kernel.Monoid

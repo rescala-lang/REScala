@@ -3,7 +3,7 @@ val circeVersion = "0.14.1"
 lazy val root = (project in file("."))
   .settings(
     name := "lore",
-    scalaVersion := "3.2.1",
+    scalaVersion := "3.3.0",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
     libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
@@ -28,6 +28,8 @@ lazy val root = (project in file("."))
     scalacOptions ++= List(
       "-deprecation",
       "-new-syntax", // force new syntax
+      // warn in case of unused imports and values
+      "-Wunused:imports",
       "-Xfatal-warnings", // turn warnings into errors
       "-Xmax-inlines:200" // needed for circe generic
     ),

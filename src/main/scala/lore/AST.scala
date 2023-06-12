@@ -2,11 +2,9 @@ package lore.AST
 
 import io.circe._
 import cats.data.NonEmptyList
-import cats.syntax.functor._
 import cats.parse.Caret
 import io.circe.{Decoder, Encoder}
-import io.circe.syntax._
-import io.circe.generic.auto._, io.circe.syntax._
+import io.circe.generic.auto._
 import java.nio.file.Path
 import scala.util.Try
 

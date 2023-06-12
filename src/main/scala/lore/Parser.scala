@@ -2,12 +2,10 @@ package lore
 
 import AST._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
-import cats.parse.Rfc5234.{alpha, char, crlf, digit, lf, wsp}
-import cats.implicits._
+import cats.parse.Rfc5234.{alpha, crlf, digit, lf, wsp}
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
 import java.nio.file.Path
-import cats.parse.Caret
 import cats.syntax.all._
 
 object Parser:
@@ -53,9 +51,9 @@ object Parser:
         )).?) // type with optional params
     )
       .map {
-        case (outer: ID, Some(inner): Some[NonEmptyList[Type]]) =>
+        case (outer, Some(inner)) =>
           SimpleType(outer, inner.toList)
-        case (outer: ID, none) => SimpleType(outer, List.empty)
+        case (outer: ID, None) => SimpleType(outer, List.empty)
         case t @ TupleType(_)  => t
       }
   }

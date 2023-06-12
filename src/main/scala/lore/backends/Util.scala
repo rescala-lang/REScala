@@ -1,6 +1,6 @@
 package lore.backends
 import lore.AST._
-import lore.optics.{given, _}
+import lore.optics.given
 import scala.annotation.tailrec
 
 // type definitions

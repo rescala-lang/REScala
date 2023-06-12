@@ -1,7 +1,6 @@
 package lore.cli
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
+import java.nio.file.Path
 import com.monovore.decline._
 import cats.implicits._
 
