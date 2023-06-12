@@ -1,6 +1,7 @@
 package lore.backends
 import lore.AST._
 import lore.optics.{given, _}
+import scala.annotation.tailrec
 
 // type definitions
 private type Graph[R] = Map[String, (R, Type)]
@@ -42,6 +43,7 @@ private case class CompilationContext(
     .toMap
 
 // flattenInteractions until the result does not change anymore
+@tailrec
 def flattenInteractions(ctx: CompilationContext): CompilationContext =
   def flatten(t: Term, ctx: CompilationContext): Term =
     val interactionKeywords =
@@ -234,7 +236,7 @@ def traverseFromNode[A <: Term](
       case t: TAssert =>
         t.copy(body = traverseFromNode(t.body, transformer))
       case t: TAssume =>
-        t.copy(body = TAssume(traverseFromNode(t.body, transformer)))
+        t.copy(body = traverseFromNode(t.body, transformer))
       case t: (TArgT | TVar | TTypeAl | TNum | TTrue | TFalse | TString |
             TViperImport) =>
         transformed // don't traverse in cases without children

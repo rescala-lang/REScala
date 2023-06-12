@@ -14,12 +14,29 @@ object Parser:
   final case class ParsingException(message: String) extends Exception(message)
 
   // helper functions
-  def withSourcePos[A](parser: P[A]): P[(A, SourcePos)] =
+  private def withSourcePos[A](parser: P[A]): P[(A, SourcePos)] =
     (P.caret.with1 ~ parser ~ P.caret).map { case ((c1, a), c2) =>
       (a, SourcePos(c1, c2))
     }
 
-  // helpers
+  /** Helper for calculating the source position of composed terms where the
+    * first and last term are already known.
+    */
+  private def calcSourcePos(l: Term, r: Term): Option[SourcePos] =
+    for
+      sl <- l.sourcePos
+      sr <- r.sourcePos
+    yield sl.copy(end = sr.end)
+  // helper definition for parsing sequences of expressions with operators as strings
+  private def parseSeq(factor: P[Term], separator: P[String]) =
+    (factor ~
+      (((wsOrNl.with1.soft *> separator <* wsOrNl))
+        ~ factor).rep0)
+  // helper for boolean expressions with two sides
+  private def boolTpl(factor: P[Term], separator: P[Unit]) =
+    factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
+
+  // helper parsers
   private val infixOperators = Set("-", "+", "*", "/", ".")
   private val keywords =
     Set("Interaction", "assert", "assume", "true", "false", "forall", "exists")
@@ -27,19 +44,7 @@ object Parser:
   // any amount of whitespace, newlines or comments
   val wsOrNl = (wsp | P.defer(comment) | lf | crlf).rep0
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
-  // val underscore: P[ID] = P.char('_').as("_")
-  val number: P[TNum] =
-    (P.caret.with1 ~ digit.rep.string ~ P.caret).map {
-      case ((c1: Caret, i: String), c2: Caret) =>
-        TNum(
-          Integer.parseInt(i),
-          sourcePos = Some(SourcePos(start = c1, end = c2))
-        )
-    }
-  val argT: P[TArgT] = // args with type
-    ((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName))
-      .map((id, typ) => TArgT(id, typ))
-      .withContext("Expected name and type")
+  // types
   val typeName: P[Type] = P.recursive { rec =>
     (
       tupleType(rec).map(TupleType(_)) | // tuple
@@ -54,68 +59,87 @@ object Parser:
         case t @ TupleType(_)  => t
       }
   }
-
   lazy val innerType = (t: P[Type]) =>
     (ws.with1 *> t.repSep(P.char(',') ~ ws) <* ws)
   lazy val tupleType =
     (t: P[Type]) => P.char('(') *> innerType(t) <* P.char(')')
+  // val underscore: P[ID] = P.char('_').as("_")
 
-  // helper definition for parsing sequences of expressions
-  val parseSeq = (factor: P[Term], separator: P[String]) =>
-    (factor ~
-      (((wsOrNl.with1.soft *> separator <* wsOrNl))
-        ~ factor).rep0)
+  // begin AST Nodes
+  val number: P[TNum] =
+    withSourcePos(digit.rep.string)
+      .map((i, s) => TNum(Integer.parseInt(i), sourcePos = Some(s)))
+      .withContext("Expected a number.")
+  val argT: P[TArgT] = // args with type
+    withSourcePos((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName))
+      .map { case ((id, typ), s) => TArgT(id, typ) }
+      .withContext("Expected argument name and type.")
 
   //// basic terms
-  val _var: P[TVar] =
-    (P.not(P.stringIn(keywords)).with1 *> id).map(TVar(_)) // variables
+  val _var: P[TVar] = // variables
+    withSourcePos(P.not(P.stringIn(keywords)).with1 *> id)
+      .map((v, s) => TVar(v, Some(s)))
+      .withContext("Expected a variable.")
 
   // tuples
   val tuple: P[TTuple] =
-    (P.char('(').soft ~ wsOrNl *> P
-      .defer(term)
-      .repSep(2, ws.soft ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
-      .char(')'))
-      .map(TTuple(_))
+    withSourcePos(
+      P.char('(').soft ~ wsOrNl *> P
+        .defer(term)
+        .repSep(2, ws.soft ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
+        .char(')')
+    )
+      .map((t, s) => TTuple(t, Some(s)))
+      .withContext("Expected a tuple.")
 
   //// arithmetic expressions
-  val arithmExpr: P[Term] = P.defer(addSub)
+  val arithmExpr: P[Term] =
+    P.defer(addSub).withContext("Expected an arithmetic expression.")
   val addSub: P[Term] =
     P.defer(parseSeq(divMul, P.stringIn(List("+", "-")))).map(evalArithm)
   val divMul: P[Term] =
     P.defer(parseSeq(arithFactor, P.stringIn(List("/", "*")))).map(evalArithm)
   val parens: P[Term] =
-    (P.caret.with1 ~ ((P.char('(').soft ~ ws).with1 *> arithmExpr <* ws ~ P
-      .char(')')) ~ P.caret)
-      .map { case ((c1, t), c2) =>
-        TParens(inner = t, sourcePos = Some(SourcePos(c1, c2)))
-      }
+    withSourcePos(
+      (P.char('(').soft ~ ws).with1 *> arithmExpr <* ws ~ P.char(')')
+    )
+      .map((t, s) => TParens(inner = t, sourcePos = Some(s)))
+      .withContext("Expected a term in parantheses.")
   val arithFactor: P[Term] =
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
     )
   def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match
-    case (x, Nil)            => x
-    case (l, ("*", r) :: xs) => TMul(left = l, right = evalArithm(r, xs))
-    case (l, ("/", r) :: xs) => TDiv(left = l, right = evalArithm(r, xs))
-    case (l, ("+", r) :: xs) => TAdd(left = l, right = evalArithm(r, xs))
-    case (l, ("-", r) :: xs) => TSub(left = l, right = evalArithm(r, xs))
+    case (x, Nil) => x
+    case (l, (op, x) :: xs) if List("-", "+", "*", "/").contains(op) =>
+      val r = evalArithm(x, xs)
+      val s = calcSourcePos(l, r)
+      op match
+        case "*" => TMul(left = l, right = r, sourcePos = s)
+        case "/" => TDiv(left = l, right = r, sourcePos = s)
+        case "+" => TAdd(left = l, right = r, sourcePos = s)
+        case "-" => TSub(left = l, right = r, sourcePos = s)
     case sth =>
       throw new ParsingException(s"Not an arithmetic expression: $sth")
 
   // boolean expressions
-  val booleanExpr: P[Term] = P.defer(quantifier | biImplication)
+  val booleanExpr: P[Term] = P
+    .defer(quantifier | biImplication)
+    .withContext("Expected a boolean expression.")
 
   // primitives
   val tru: P[TBoolean] =
-    (P.caret.with1 ~ (P.string("true") *> P.caret)).map { (c1, c2) =>
-      TTrue(sourcePos = Some(SourcePos(start = c1, end = c2)))
+    withSourcePos(P.string("true")).map { (_, s) =>
+      TTrue(sourcePos = Some(s))
     }
   val fls: P[TBoolean] =
-    (P.caret.with1 ~ (P.string("false") *> P.caret)).map { (c1, c2) =>
-      TFalse(sourcePos = Some(SourcePos(start = c1, end = c2)))
+    withSourcePos(P.string("false")).map { (_, s) =>
+      TFalse(sourcePos = Some(s))
     }
-  val neg: P[Term] = (P.char('!') ~ ws) *> P.defer(biImplication).map(TNeg(_))
+  val neg: P[Term] =
+    withSourcePos((P.char('!') ~ ws) *> P.defer(biImplication)).map((t, s) =>
+      TNeg(t, Some(s))
+    )
   val boolParens: P[Term] = // parantheses
     withSourcePos(
       (P.char('(').soft ~ wsOrNl).with1 *> P
@@ -133,20 +157,26 @@ object Parser:
       | P.defer(functionCall)
       | _var
 
-  // helper for boolean expressions with two sides
-  val boolTpl = (factor: P[Term], separator: P[Unit]) =>
-    factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
-
   val biImplication: P[Term] =
     P.defer(boolTpl(implication, P.string("<==>"))).map {
-      case (left, None)        => left
-      case (left, Some(right)) => TBImpl(left = left, right = right)
+      case (left, None) => left
+      case (left, Some(right)) =>
+        TBImpl(
+          left = left,
+          right = right,
+          sourcePos = calcSourcePos(left, right)
+        )
     }
 
   val implication: P[Term] =
     P.defer(boolTpl(disjunction, P.string("==>"))).map {
-      case (left, None)        => left
-      case (left, Some(right)) => TImpl(left = left, right = right)
+      case (left, None) => left
+      case (left, Some(right)) =>
+        TImpl(
+          left = left,
+          right = right,
+          sourcePos = calcSourcePos(left, right)
+        )
     }
   val disjunction: P[Term] =
     P.defer(boolSeq(conjunction, "||"))
@@ -155,13 +185,23 @@ object Parser:
   val equality: P[Term] =
     P.defer(boolTpl(inequality, P.string("==") <* P.char('>').unary_!))
       .map {
-        case (left, None)        => left
-        case (left, Some(right)) => TEq(left = left, right = right)
+        case (left, None) => left
+        case (left, Some(right)) =>
+          TEq(
+            left = left,
+            right = right,
+            sourcePos = calcSourcePos(left, right)
+          )
       }
   val inequality: P[Term] =
     P.defer(boolTpl(boolFactor, P.string("!="))).map {
-      case (left, None)        => left
-      case (left, Some(right)) => TIneq(left = left, right = right)
+      case (left, None) => left
+      case (left, Some(right)) =>
+        TIneq(
+          left = left,
+          right = right,
+          sourcePos = calcSourcePos(left, right)
+        )
     }
   // helper for boolean expressions with arbitrarily long sequences like && and ||
   val boolSeq = (factor: P[Term], separator: String) =>
@@ -169,10 +209,12 @@ object Parser:
   def evalBoolSeq(seq: (Term, Seq[(String, Term)])): Term =
     seq match
       case (root, Nil) => root
-      case (root, ("||", x) :: xs) =>
-        TDisj(left = root, right = evalBoolSeq(x, xs))
-      case (root, ("&&", x) :: xs) =>
-        TConj(left = root, right = evalBoolSeq(x, xs))
+      case (root, (op, x) :: xs) if List("||", "&&").contains(op) =>
+        val r = evalBoolSeq(x, xs)
+        val s = calcSourcePos(root, r)
+        op match
+          case "||" => TDisj(left = root, right = r, sourcePos = s)
+          case "&&" => TConj(left = root, right = r, sourcePos = s)
       case sth =>
         throw new ParsingException(s"Not a boolean expression: $sth")
 
@@ -181,13 +223,15 @@ object Parser:
     P.defer(
       boolParens.backtrack | fieldAcc | functionCall.backtrack | tuple | number.backtrack | _var
     )
-  val inSet: P[TBoolean] = P
-    .defer(
-      ((inSetFactor <* ws).soft <* P
-        .string("in") ~ ws) ~ inSetFactor
-    )
-    .map { (left, right) =>
-      TInSet(left, right)
+  val inSet: P[TBoolean] = withSourcePos(
+    P
+      .defer(
+        ((inSetFactor <* ws).soft <* P
+          .string("in") ~ ws) ~ inSetFactor
+      )
+  )
+    .map { case ((left, right), s) =>
+      TInSet(left, right, Some(s))
     }
 
   // number comparisons
@@ -198,11 +242,12 @@ object Parser:
     )).backtrack <* ws) ~ arithmExpr
   )
     .map { case ((l, op), r) =>
+      val s = calcSourcePos(l, r)
       op match
-        case "<=" => TLeq(left = l, right = r)
-        case ">=" => TGeq(left = l, right = r)
-        case "<"  => TLt(left = l, right = r)
-        case ">"  => TGt(left = l, right = r)
+        case "<=" => TLeq(left = l, right = r, sourcePos = s)
+        case ">=" => TGeq(left = l, right = r, sourcePos = s)
+        case "<"  => TLt(left = l, right = r, sourcePos = s)
+        case ">"  => TGt(left = l, right = r, sourcePos = s)
     }
 
   // quantifiers
@@ -210,30 +255,43 @@ object Parser:
     (argT).repSep(ws.soft ~ P.char(',') ~ wsOrNl)
   val triggers: P0[List[TViper]] = P.unit.as(List[TViper]())
   val forall: P[TForall] =
-    (((P.string("forall") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
-      "::"
-    ) ~ wsOrNl) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
-      TForall(vars = vars, triggers = triggers, body = body)
+    withSourcePos(
+      ((P.string("forall") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
+        "::"
+      ) ~ wsOrNl) ~ triggers ~ booleanExpr
+    ).map { case (((vars, triggers), body), s) =>
+      TForall(
+        vars = vars,
+        triggers = triggers,
+        body = body,
+        sourcePos = Some(s)
+      )
     }
   val exists: P[TExists] =
-    (((P.string("exists") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
-      "::"
-    ) ~ wsOrNl) ~ triggers ~ booleanExpr).map { case ((vars, triggers), body) =>
-      TExists(vars = vars, body = body)
+    withSourcePos(
+      ((P.string("exists") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
+        "::"
+      ) ~ wsOrNl) ~ triggers ~ booleanExpr
+    ).map { case (((vars, triggers), body), s) =>
+      TExists(vars = vars, body = body, sourcePos = Some(s))
     }
   val quantifier: P[TQuantifier] = forall | exists
 
   // reactives
   val reactive: P[TReactive] = P.defer(source | derived)
   val source: P[TSource] =
-    (P.string("Source") ~ ws ~ P.char('(') ~ wsOrNl *> P.defer(
-      term
-    ) <* wsOrNl ~ P.char(')')).map((body) => TSource(body))
+    withSourcePos(
+      P.string("Source") ~ ws ~ P.char('(') ~ wsOrNl *> P.defer(
+        term
+      ) <* wsOrNl ~ P.char(')')
+    ).map((body, s) => TSource(body, Some(s)))
   val derived: P[TDerived] =
-    (P.string("Derived") ~ ws ~ P.char('{') ~ wsOrNl *> P.defer(
-      term
-    ) <* wsOrNl ~ P.char('}'))
-      .map((body) => TDerived(body))
+    withSourcePos(
+      P.string("Derived") ~ ws ~ P.char('{') ~ wsOrNl *> P.defer(
+        term
+      ) <* wsOrNl ~ P.char('}')
+    )
+      .map((body, s) => TDerived(body, Some(s)))
 
   // interactions
   val typeParam: P[Type] =
@@ -242,84 +300,103 @@ object Parser:
         .char(']')
 
   val interaction: P[TInteraction] =
-    (P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
-      .map((r, a) => TInteraction(reactiveType = r, argumentType = a))
+    withSourcePos(P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
+      .map { case ((r, a), s) =>
+        TInteraction(reactiveType = r, argumentType = a, sourcePos = Some(s))
+      }
 
   // invariants
   val invariant: P[TInvariant] =
-    (P.string("invariant") ~ wsOrNl *> booleanExpr).map {
-      case b: TBoolean => TInvariant(b)
-      case x =>
+    withSourcePos(P.string("invariant") ~ wsOrNl *> booleanExpr).map {
+      case (b: TBoolean, s) => TInvariant(b, sourcePos = Some(s))
+      case (x, s) =>
         throw ParsingException(
-          s"Expected a boolean expression as invariant body but got: $x"
+          s"Expected a boolean expression as invariant body but got: $x at $s"
         )
     }
 
   // bindings
-  val bindingLeftSide: P[TArgT] =
+  private[lore] val bindingLeftSide: P[TArgT] =
     (P.string("val") ~ ws *> P.defer(argT))
   val binding: P[TAbs] =
-    P.defer((bindingLeftSide <* ws ~ P.char('=') ~ wsOrNl) ~ term)
-      .map { case (TArgT(name, _type, _), term) =>
-        TAbs(name = name, _type = _type, body = term)
+    withSourcePos(
+      P.defer((bindingLeftSide <* ws ~ P.char('=') ~ wsOrNl) ~ term)
+    )
+      .map { case ((TArgT(name, _type, _), term), s) =>
+        TAbs(name = name, _type = _type, body = term, sourcePos = Some(s))
       }
 
   // object orientation (e.g. dot syntax)
-  val args = P.defer0(term.repSep0(P.char(',') ~ wsOrNl))
-  val objFactor = P.defer(interaction | functionCall | _var)
+  private val args = P.defer0(term.repSep0(P.char(',') ~ wsOrNl))
+  private val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
     P.defer(
-      objFactor.soft ~ (round | curly | field).rep
-    ).map((obj, calls) => evalFieldAcc(obj, calls.toList))
+      objFactor.soft ~ withSourcePos(round | curly | field).rep
+    ).map { case (obj, calls) => evalFieldAcc(obj, calls.toList) }
 
   // field accesses
-  enum callType:
+  private enum callType:
     case round, curly, field
-  inline def callBuilder[A](open: P[Char], close: P[Unit], inner: P0[A]) =
+  private inline def callBuilder[A](
+      open: P[Char],
+      close: P[Unit],
+      inner: P0[A]
+  ) =
     ((wsOrNl.with1.soft ~ P.char('.') *> id <* wsOrNl).soft <* open) ~
       (wsOrNl *> inner <* wsOrNl) <* close
-  val round =
+  private val round =
     callBuilder(P.char('(').as('('), P.char(')'), args).map((f, a) =>
       (callType.round, f, a)
     )
-  val curly =
+  private val curly =
     callBuilder(P.char('{').as('{'), P.char('}'), P.defer(term)).map((f, b) =>
       (callType.curly, f, List(b))
     )
-  val field =
+  private val field =
     ((wsOrNl.with1.soft ~ P.char('.')) *> id)
       .map((callType.field, _, List[Term]()))
   @tailrec
-  def evalFieldAcc(s: (Term, List[(callType, ID, List[Term])])): TFAcc =
-    s match
-      case (parent: TFAcc, Nil) => parent
-      case (parent, (callType.curly, field, b :: Nil) :: rest) =>
+  private def evalFieldAcc(
+      obj: Term,
+      calls: List[((callType, ID, List[Term]), SourcePos)]
+  ): TFAcc =
+    (obj, calls) match
+      case (o: TFAcc, Nil) => o
+      case (o, ((callType.curly, field, b :: Nil), s) :: rest) =>
+        val pos = Some(SourcePos(start = o.sourcePos.get.start, end = s.end))
         evalFieldAcc(
-          TFCurly(parent = parent, field = field, body = b),
+          TFCurly(parent = o, field = field, body = b, sourcePos = pos),
           rest
         )
-      case (parent, (_, field, args) :: rest) =>
+      case (o, ((_, field, args), s) :: rest) =>
+        val pos = Some(SourcePos(start = o.sourcePos.get.start, end = s.end))
         evalFieldAcc(
-          TFCall(parent = parent, field = field, args = args),
+          TFCall(parent = o, field = field, args = args, sourcePos = pos),
           rest
         )
-      case _ =>
-        throw new ParsingException(s"Not a valid field access: $s")
+      case x =>
+        throw new ParsingException(s"Not a valid field access: $x")
 
   // functions
   val functionCall: P[TFunC] =
-    P.not(P.stringIn(keywords)).with1
-      *> (id.soft ~ (P.char('(') ~ wsOrNl *> args) <* wsOrNl ~ P.char(')'))
-        .map { (id, arg) =>
-          TFunC(name = id, args = arg)
-        }
+    withSourcePos(
+      P.not(P.stringIn(keywords)).with1
+        *> (id.soft ~ (P.char('(') ~ wsOrNl *> args) <* wsOrNl ~ P.char(')'))
+    )
+      .map { case ((id, arg), s) =>
+        TFunC(name = id, args = arg, sourcePos = Some(s))
+      }
 
   val assertAssume: P[Term] =
-    (((P.string("assert").string | P.string("assume").string)
-      <* P.char('(') ~ wsOrNl) ~ P.defer(booleanExpr) <* (wsOrNl ~ P.char(')')))
+    withSourcePos(
+      ((P.string("assert").string | P.string("assume").string)
+        <* P.char('(') ~ wsOrNl) ~ P.defer(booleanExpr) <* (wsOrNl ~ P.char(
+        ')'
+      ))
+    )
       .map {
-        case ("assert", t) => TAssert(t)
-        case ("assume", t) => TAssume(t)
+        case (("assert", t), s) => TAssert(t, sourcePos = Some(s))
+        case (("assume", t), s) => TAssume(t, sourcePos = Some(s))
         case sth =>
           throw ParsingException(s"not a valid assertion/assumption: $sth")
       }
@@ -336,20 +413,26 @@ object Parser:
   def rewriteLambda(params: List[TVar], right: Term): TArrow =
     (params, right) match
       case (Nil, r: TArrow) => r
-      case (x :: xs, r)     => rewriteLambda(xs, TArrow(x, r))
+      case (x :: xs, r) =>
+        val s = calcSourcePos(params.head, right)
+        rewriteLambda(xs, TArrow(x, r, sourcePos = s))
       case (Nil, r) => throw ParsingException(s"Not a valid lambda term: $r")
 
   // type aliases
   val typeAlias: P[TTypeAl] =
-    (P.string("type") ~ ws *> id ~ (P.char('=').surroundedBy(ws) *> typeName))
-      .map((n, t) => TTypeAl(name = n, _type = t))
+    withSourcePos(
+      P.string("type") ~ ws *> id ~ (P.char('=').surroundedBy(ws) *> typeName)
+    )
+      .map { case ((n, t), s) =>
+        TTypeAl(name = n, _type = t, sourcePos = Some(s))
+      }
 
   // comments
   val comment: P[Unit] =
     (P.string("//").soft ~ P.not(P.char('>')) ~ P.anyChar.repUntil(lf)).void
 
   // imports
-  val filePath: P[Path] =
+  private val filePath: P[Path] =
     ((P.string("..") ~ P.char('/')).rep0.with1 ~ id ~ (P.charIn(
       List('/', '-')
     ) ~ id).rep0 ~ P.char(
@@ -357,24 +440,30 @@ object Parser:
     ) ~ id).string.map(Path.of(_))
 
   val viperImport: P[TViperImport] =
-    ((P.string("//>") ~ ws ~ P.string("viper").? ~ P.string(
-      "import"
-    )) ~ ws *> filePath).map(TViperImport(_))
+    withSourcePos(
+      (P.string("//>") ~ ws ~ P.string("viper").? ~ P.string(
+        "import"
+      )) ~ ws *> filePath
+    ).map((i, s) => TViperImport(i, Some(s)))
 
   // if then else expressions
   val ifThenElse: P[TIf] =
-    ((P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
-      (P.string("then") ~ wsOrNl *> P.defer(term)) ~
-      (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?)
-      .map { case ((cond, _then), _else) =>
-        TIf(cond, _then, _else)
+    withSourcePos(
+      (P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
+        (P.string("then") ~ wsOrNl *> P.defer(term)) ~
+        (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?
+    )
+      .map { case (((cond, _then), _else), s) =>
+        TIf(cond, _then, _else, Some(s))
       }
 
   // a block is a sequence of terms surrounded by curly braces
   val block: P[TSeq] =
-    (P.char('{') ~ wsOrNl *> P.defer(term.repSep(wsOrNl)) <* wsOrNl ~ P.char(
-      '}'
-    )).map(TSeq(_))
+    withSourcePos(
+      P.char('{') ~ wsOrNl *> P.defer(term.repSep(wsOrNl)) <* wsOrNl ~ P.char(
+        '}'
+      )
+    ).map((seq, pos) => TSeq(seq, Some(pos)))
 
   // programs are sequences of terms
   val term: P[Term] =
