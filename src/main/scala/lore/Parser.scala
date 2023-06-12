@@ -71,7 +71,7 @@ object Parser:
   val argT: P[TArgT] = // args with type
     withSourcePos((id <* P.char(':').surroundedBy(ws)) ~ P.defer(typeName))
       .map { case ((id, typ), s) => TArgT(id, typ) }
-      .withContext("Expected argument name and type.")
+      .withContext("Expected name and type.")
 
   //// basic terms
   val _var: P[TVar] = // variables
