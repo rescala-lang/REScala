@@ -27,6 +27,7 @@ lazy val root = (project in file("."))
     // compiler options
     scalacOptions ++= List(
       "-deprecation",
+      "-explain", // explain errors in more detail
       "-new-syntax", // force new syntax
       // warn in case of unused imports and values
       "-Wunused:imports",

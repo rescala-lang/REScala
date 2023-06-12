@@ -9,7 +9,6 @@ import cats.data.NonEmptyList
 import lore.AST.Term
 import java.nio.file.NoSuchFileException
 import lore.Parser.ParsingException
-import cats.syntax.parallel._
 import lore.backends.ViperBackend
 import lore.cli._
 
