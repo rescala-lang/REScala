@@ -1,6 +1,5 @@
 package lore
 import lore.AST._
-import cats.implicits._
 import cats.parse.Parser.Expectation
 import cats.data.NonEmptyList
 import lore.test.util.ParserSuite
@@ -10,8 +9,6 @@ def printExp(e: NonEmptyList[Expectation]) =
 
 class BooleanExpressionParsing extends ParserSuite {
   test("disjunction") {
-    val p = Parser.disjunction
-
     assertParsingResult(
       Parser.disjunction,
       "x || true",
@@ -70,8 +67,6 @@ class BooleanExpressionParsing extends ParserSuite {
   }
 
   test("inequality") {
-    val p = Parser.inequality
-
     assertParsingResult(
       Parser.term,
       "false != true",
@@ -95,8 +90,6 @@ class BooleanExpressionParsing extends ParserSuite {
   }
 
   test("equality") {
-    val p = Parser.equality
-
     assertParsingResult(
       Parser.term,
       "true == false",

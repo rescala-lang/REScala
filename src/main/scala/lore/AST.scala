@@ -141,27 +141,25 @@ case class TInvariant(
 ) extends Term
 
 // arithmetic expressions
-sealed trait TArith(sourcePos: Option[SourcePos] = None)
-    extends Term
-    with TViper
+sealed trait TArith extends Term with TViper
 // numbers
 case class TNum(value: Number, sourcePos: Option[SourcePos] = None)
-    extends TArith(sourcePos)
+    extends TArith
 // division
 case class TDiv(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith(sourcePos)
+    extends TArith
     with BinaryOp
 // multiplication
 case class TMul(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith(sourcePos)
+    extends TArith
     with BinaryOp
 // addition
 case class TAdd(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith(sourcePos)
+    extends TArith
     with BinaryOp
 // subtraction
 case class TSub(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith(sourcePos) // substraction
+    extends TArith // substraction
     with BinaryOp
 
 // boolean expressions
@@ -249,7 +247,7 @@ case class TString(value: String, sourcePos: Option[SourcePos] = None)
 
 // Scala stuff
 // field access
-sealed trait TFAcc(sourcePos: Option[SourcePos] = None) extends Term:
+sealed trait TFAcc extends Term:
   def parent: Term
   def field: ID
 case class TFCall( // field call
@@ -257,14 +255,14 @@ case class TFCall( // field call
     field: ID,
     args: List[Term],
     sourcePos: Option[SourcePos] = None
-) extends TFAcc(sourcePos)
+) extends TFAcc
     with TViper
 case class TFCurly( // field call with curly braces
     parent: Term,
     field: ID,
     body: Term,
     sourcePos: Option[SourcePos] = None
-) extends TFAcc(sourcePos)
+) extends TFAcc
 
 // function call
 case class TFunC(name: ID, args: Seq[Term], sourcePos: Option[SourcePos] = None)

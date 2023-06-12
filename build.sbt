@@ -30,6 +30,11 @@ lazy val root = (project in file("."))
       "-new-syntax", // force new syntax
       // warn in case of unused imports and values
       "-Wunused:imports",
+      "-Wunused:locals",
+      "-Wunused:privates",
+      "-Wunused:params",
+      "-Wunused:implicits",
+      "-Wunused:linted", // not sure what this does actually
       "-Xfatal-warnings", // turn warnings into errors
       "-Xmax-inlines:200" // needed for circe generic
     ),

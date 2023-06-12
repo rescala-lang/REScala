@@ -2,11 +2,10 @@ package lore
 import munit.FunSuite
 import lore.AST._
 import io.circe.parser.decode
-import io.circe.syntax._
 import cats.parse
 import cats.implicits._
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
+// import java.nio.file.{Files, Path}
 import cats.data.NonEmptyList
 
 class WholeProgramParsing extends FunSuite:

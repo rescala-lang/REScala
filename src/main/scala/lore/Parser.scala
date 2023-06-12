@@ -35,7 +35,7 @@ object Parser:
     factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
 
   // helper parsers
-  private val infixOperators = Set("-", "+", "*", "/", ".")
+  // private val infixOperators = Set("-", "+", "*", "/", ".")
   private val keywords =
     Set("Interaction", "assert", "assume", "true", "false", "forall", "exists")
   val ws: P0[Unit] = wsp.rep0.void // whitespace

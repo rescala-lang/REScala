@@ -1,10 +1,6 @@
 package lore
 import lore.AST._
-import cats.implicits._
-import monocle.syntax.all._
-import monocle.Lens
 import munit.FunSuite
-import cats.parse.Caret
 import cats.data.NonEmptyList
 import lore.backends.traverseFromNode
 import lore.optics.{_, given}
@@ -26,7 +22,6 @@ class OpticsSuite extends FunSuite:
 
   test("Playground2") {
     val a = Parser.prog.parseAll("((12))")
-    val replaceSourcePos = Subtree.modify(sourcePosLens.replace(None))
     // println(Children.getAll(a.getOrElse(NonEmptyList.one(TVar("a"))).head))
     for
       parsed <- a
@@ -39,7 +34,6 @@ class OpticsSuite extends FunSuite:
   }
   test("Children lens") {
     val a = Parser.prog.parseAll("((12))")
-    val replaceSourcePos = Subtree.modify(sourcePosLens.replace(None))
     // println(Children.getAll(a.getOrElse(NonEmptyList.one(TVar("a"))).head))
     for
       parsed <- a
@@ -52,7 +46,7 @@ class OpticsSuite extends FunSuite:
   }
   test("Children typeclass") {
     val a = Parser.prog.parseAll("((12))")
-    val replaceSourcePos = Subtree.modify(sourcePosLens.replace(None))
+    // val replaceSourcePos = Subtree.modify(sourcePosLens.replace(None))
     // println(Children.getAll(a.getOrElse(NonEmptyList.one(TVar("a"))).head))
     for
       parsed <- a

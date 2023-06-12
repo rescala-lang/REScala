@@ -240,7 +240,7 @@ object ViperBackend:
       OverlapAnalysis.overlappingInvariants(interaction)
     val relevantInvariants: Seq[String] =
       invariantsNumbered
-        .filter((inv, num) => overlappingInvariants.contains(inv))
+        .filter((inv, _) => overlappingInvariants.contains(inv))
         .map((inv, num) =>
           s"inv_$num(${ctx.reactivesPerInvariant(inv).toList.sorted.map("graph." + _).mkString(", ")})"
         )

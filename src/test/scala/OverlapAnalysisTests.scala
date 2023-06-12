@@ -6,7 +6,7 @@ import cats.implicits._
 import cats.data.NonEmptyList
 import lore.Parser
 import OverlapAnalysis._
-import lore.backends.{CompilationContext, flattenInteractions}
+import lore.backends.flattenInteractions
 
 class OverlapAnalysisTests extends FunSuite {
   // simple reaches test
