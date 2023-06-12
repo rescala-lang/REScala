@@ -4,7 +4,6 @@ import cats.implicits._
 import monocle.syntax.all._
 import monocle.Lens
 import munit.FunSuite
-import monocle.macros.GenLens
 import cats.parse.Caret
 import cats.data.NonEmptyList
 import lore.backends.traverseFromNode
