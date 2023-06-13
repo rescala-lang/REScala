@@ -34,7 +34,7 @@ object Dotted extends Dotted.LowPrio {
   }
 
   trait LowPrio {
-    given identitDsyntaxPermissions[L](using DottedLattice[L]): PermMutate[Dotted[L], L] with {
+    given identitySyntaxPermissions[L](using DottedLattice[L]): PermMutate[Dotted[L], L] with {
       override def mutate(c: Dotted[L], delta: L): Dotted[L] = c merge Dotted(delta)
 
       override def query(c: Dotted[L]): L = c.data
