@@ -4,14 +4,12 @@ import api2.*
 import clangast.*
 import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl}
-import clangast.expr.{CCallExpr, CExpr, CIntegerLiteral, CMemberExpr}
-import clangast.stmt.{CCompoundStmt, CReturnStmt, CStmt}
-import clangast.types.CVoidType
+import clangast.expr.{CCallExpr, CExpr}
+import clangast.stmt.{CCompoundStmt, CReturnStmt}
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
 import compiler.context.{FunctionDeclTC, ReactiveTC, TranslationContext, ValueDeclTC}
-import rescala.macros.MacroAccess
 
 import scala.quoted.*
 
@@ -77,6 +75,7 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
         case defDef: DefDef =>
           val decl = dispatch[DefinitionIFFragment](_.compileDefDef)(defDef)
           ctx.nameToFunctionDecl.put(decl.name, decl)
+          ()
         case _ =>
       }
     }

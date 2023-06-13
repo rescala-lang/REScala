@@ -2,7 +2,7 @@ package rescala
 
 import rescala.fullmv.FullMVUtil
 import rescala.operator.Interface
-import rescala.parrp.{Backoff, ParRP, ParRPDefault}
+import rescala.parrp.{ParRPDefault}
 
 trait PlatformInterfaces {
 

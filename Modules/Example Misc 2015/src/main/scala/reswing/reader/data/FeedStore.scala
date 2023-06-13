@@ -2,8 +2,6 @@ package reswing.reader.data
 
 import rescala.default._
 
-import scala.annotation.nowarn
-
 /** The FeedStore stores RSSChannels and RSSItems.
   * More specifically, it stores the relation between an RSS Item and its channel
   * to enable clients to ask e.g. for all items stored related to a specific channel.
@@ -19,7 +17,6 @@ class FeedStore(
     fold(Set.empty[RSSItem])(_ + _))                                        // #IF
   }
 
-  @nowarn("msg=parameter value items in anonymous function is never used") // yeah right
   val itemAdded: Event[RSSItem] = addItem && { item => // #EVT //#EF
     (for {
       channel <- item.srcChannel

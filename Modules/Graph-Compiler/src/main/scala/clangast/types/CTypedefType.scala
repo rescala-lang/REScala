@@ -1,7 +1,5 @@
 package clangast.types
 
-import clangast.decl.CTypedefDecl
-
 import scala.quoted.{Expr, Quotes}
 
 case class CTypedefType(declName: String) extends CType {

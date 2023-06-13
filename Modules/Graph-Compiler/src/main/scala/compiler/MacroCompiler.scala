@@ -1,14 +1,10 @@
 package compiler
 
-import clangast.{CASTNode, WithContext}
 import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
-import compiler.context.TranslationContext
-import compiler.base.*
-import compiler.ext.*
+import clangast.{CASTNode, WithContext}
 
-import scala.quoted.*
 
 trait MacroCompiler {
   inline def compileTree(inline t: Any): WithContext[CASTNode]

@@ -1,11 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Lattice
-import kofre.datatypes.contextual.MultiVersionRegister
-import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.{Dot, Dots}
-
-import scala.annotation.targetName
 
 /** A dot fun tracks a set of values associated to a certain point in time.
   * This makes them useful as both [[MultiVersionRegister]] and simple observe remove sets/maps.
@@ -23,7 +19,7 @@ object DotFun {
       override def dots: Dots = Dots.from(value.repr.keys)
 
       override def removeDots(dots: Dots): Option[DotFun[V]] =
-        val res = value.repr.filter((dot, v) => !dots.contains(dot))
+        val res = value.repr.filter((dot, _) => !dots.contains(dot))
         if res.isEmpty then None
         else Some(DotFun(res))
   }

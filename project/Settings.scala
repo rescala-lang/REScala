@@ -38,6 +38,30 @@ object Settings {
     }
   )
 
+  def unusedWarnings(conf: TaskKey[_]*) = conf.map { c =>
+    c / scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      cond(version._1 == 3,
+        "-Wunused:imports",
+        "-Wunused:privates",
+        "-Wunused:locals",
+        "-Wunused:explicits",
+        "-Wunused:implicits",
+        "-Wunused:params",
+        "-Wunused:all"
+      )
+    }
+  }
+
+  def valueDiscard(conf: TaskKey[_]*) = conf.map { c =>
+    c / scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      cond(version._1 == 3,
+        "-Wvalue-discard"
+      )
+    }
+  }
+
   def explicitNulls(conf: Configuration*) = conf.map { c =>
     c / scalacOptions ++= {
       val version = CrossVersion.partialVersion(scalaVersion.value).get
@@ -45,7 +69,7 @@ object Settings {
     }
   }
 
-  val commonScalacOptions = fatalWarnings ++ featureOptions
+  val commonScalacOptions = fatalWarnings ++ featureOptions ++ valueDiscard(Compile/compile) ++ unusedWarnings(Compile/compile)
 
   // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
   val jsAcceptUnfairGlobalTasks =

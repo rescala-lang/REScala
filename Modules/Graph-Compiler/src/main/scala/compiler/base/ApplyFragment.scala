@@ -6,7 +6,6 @@ import clangast.expr.binaryop.*
 import clangast.expr.*
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.CCompoundStmt
-import clangast.stubs.{StdBoolH, StdIOH}
 import clangast.types.*
 import compiler.context.TranslationContext
 import compiler.FragmentedCompiler

@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.time.Dot
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
-import benchmarks.encrdt.Codecs.{*, given}
+import benchmarks.encrdt.Codecs.*
 
 import java.net.URI
 import java.time.Instant

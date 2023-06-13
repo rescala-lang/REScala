@@ -4,8 +4,6 @@ import kofre.base.Lattice.merge
 import kofre.base.{Uid, Lattice}
 import kofre.time.VectorClock
 
-import scala.collection.immutable.HashMap
-
 type Secret = String
 
 case class AEAD[S, A](cyphertext: S, metadata: A)

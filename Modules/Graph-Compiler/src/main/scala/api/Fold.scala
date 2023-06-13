@@ -1,12 +1,10 @@
 package api
 
 import clangast.WithContext
-import clangast.decl.CFunctionDecl
 import clangast.expr.CExpr
 import clangast.types.CType
 import compiler.MacroCompiler
 
-import scala.quoted.*
 
 case class Fold[V](init: WithContext[CExpr], cType: WithContext[CType], lines: List[FLine[_, V]]) extends Event[V] {
   override def inputs: List[ReSource] = lines.map(_.input)

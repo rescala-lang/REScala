@@ -4,8 +4,6 @@ import clangast.expr.*
 import clangast.stmt.*
 import clangast.types.*
 
-import scala.annotation.targetName
-
 import scala.quoted.*
 
 package object clangast {

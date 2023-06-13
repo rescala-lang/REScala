@@ -2,7 +2,7 @@ package kofre.datatypes.alternatives.rga
 
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes
-import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag}
+import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots

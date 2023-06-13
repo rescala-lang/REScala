@@ -7,9 +7,8 @@ import kofre.syntax.{DeltaBuffer, ReplicaId}
 import rescala.default.*
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.annotation.nowarn
 
-class TaskOps(taskRefs: TaskReferences, replicaID: Uid) {
+class TaskOps(replicaID: Uid) {
 
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 

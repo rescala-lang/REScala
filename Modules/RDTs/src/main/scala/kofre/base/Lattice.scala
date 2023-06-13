@@ -1,9 +1,7 @@
 package kofre.base
 
-import kofre.dotted.{Dotted, DottedLattice}
 
 import scala.annotation.targetName
-import scala.collection.immutable.HashMap
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 

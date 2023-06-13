@@ -1,13 +1,11 @@
 package replication
 
 import com.github.ckuessner.aead.{Aead, AeadHelper, ByteArray}
+import kofre.base.Lattice
 import kofre.base.Lattice.merge
-import kofre.base.{Lattice, Uid}
 import kofre.dotted.{Dotted, DottedLattice}
-import kofre.time.{Dots, VectorClock}
 import kofre.syntax.ReplicaId
-
-import scala.collection.immutable.HashMap
+import kofre.time.Dots
 
 type Secret = String
 

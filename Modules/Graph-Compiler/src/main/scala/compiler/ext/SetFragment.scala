@@ -3,19 +3,18 @@ package compiler.ext
 import clangast.*
 import clangast.given
 import clangast.decl.*
-import clangast.expr.binaryop.{CAssignmentExpr, CEqualsExpr, CGreaterThanExpr}
+import clangast.expr.binaryop.CGreaterThanExpr
 import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CIncExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.{CJSONH, HashmapH, StdLibH}
+import clangast.stubs.{CJSONH, HashmapH}
 import clangast.types.*
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
-import compiler.base.DataStructureFragment.{release, retain}
 import compiler.base.TypeFragment.typeArgs
 import compiler.context.{RecordDeclTC, TranslationContext}
-import compiler.ext.SerializationFragment.{deserialize, serialize}
+import compiler.ext.SerializationFragment.deserialize
 
 import scala.quoted.*
 import scala.collection.mutable
@@ -241,8 +240,6 @@ object SetFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> PRINT_SET, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(mapType(tpe))
 
         val name = "printSet_" + recordDecl.name
@@ -322,8 +319,6 @@ object SetFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> SERIALIZE, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(mapType(tpe))
 
         val name = "serializeSet_" + recordDecl.name
@@ -358,8 +353,6 @@ object SetFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> SERIALIZE_ITERATOR, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(mapType(tpe))
 
         val name = "serializeSetIterator_" + recordDecl.name

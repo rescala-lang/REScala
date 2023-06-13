@@ -6,7 +6,7 @@ import clangast.CASTNode
 import clangast.decl.{CFunctionDecl, CParmVarDecl, CVarDecl}
 import clangast.expr.*
 import clangast.expr.binaryop.CPlusExpr
-import clangast.stmt.{CCompoundStmt, CExprStmt, CReturnStmt, CStmt}
+import clangast.stmt.{CCompoundStmt, CReturnStmt, CStmt}
 import clangast.stubs.{CJSONH, StdBoolH, StdIOH, StdLibH, StringH}
 import clangast.types.{CCharType, CIntegerType, CPointerType, CType}
 import compiler.context.{FunctionDeclTC, TranslationContext}

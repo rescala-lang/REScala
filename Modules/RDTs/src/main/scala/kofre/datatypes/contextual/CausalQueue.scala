@@ -1,7 +1,6 @@
 package kofre.datatypes.contextual
 
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.contextual.CausalQueue
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}

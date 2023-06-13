@@ -6,7 +6,6 @@ import rescala.structure.Pulse.{Exceptional, NoChange, Value}
 import rescala.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.immutable.{LinearSeq, Queue}
 
 trait EventBundle extends FoldBundle {

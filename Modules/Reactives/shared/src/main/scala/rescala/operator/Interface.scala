@@ -1,7 +1,6 @@
 package rescala.operator
 
 import rescala.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
-import rescala.scheduler.{LevelbasedVariants, SynchronizedSidup, TopbundleImpl}
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.

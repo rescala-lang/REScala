@@ -10,11 +10,9 @@ import org.eclipse.jetty.websocket.api.{Session, WebSocketAdapter}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse}
-import encrdtlib.encrypted.statebased.{DecryptedState, EncryptedState, Replica, TrustedReplica, UntrustedReplica}
 
 import java.net.URI
 import java.time.Duration
-import scala.annotation.nowarn
 
 trait WebSocketReplica extends Replica {
   protected var server: Server         = _
@@ -54,7 +52,6 @@ trait WebSocketReplica extends Replica {
   object ReplicaWsAdapter {
     def apply(): ReplicaWsAdapter = new ReplicaWsAdapter()
 
-    @nowarn("msg=is never used")
     def apply(req: JettyServerUpgradeRequest, res: JettyServerUpgradeResponse): ReplicaWsAdapter =
       ReplicaWsAdapter.apply()
   }

@@ -11,7 +11,6 @@ import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.DataStructureFragment.{retain, release}
 
-import scala.annotation.tailrec
 import scala.quoted.*
 
 object TermFragment extends TermIFFragment {
@@ -42,7 +41,6 @@ object TermFragment extends TermIFFragment {
   override def compileTermToCStmt(using Quotes)(using FragmentedCompiler)(using
       TranslationContext
   ): PartialFunction[quotes.reflect.Term, CStmt] = {
-    import quotes.reflect.*
 
     PartialFunction.fromFunction(dispatch[TermIFFragment](_.compileTerm)).andThen {
       case stmt: CStmt              => stmt

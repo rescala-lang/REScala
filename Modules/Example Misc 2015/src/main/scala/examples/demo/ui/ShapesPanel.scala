@@ -1,12 +1,10 @@
 package examples.demo.ui
 
-import java.awt.event._
-import java.awt.{Event => _, _}
+import rescala.default.*
+
+import java.awt.event.*
+import java.awt.{Event as _, Shape as _, *}
 import java.util.NoSuchElementException
-
-import rescala.default._
-import examples.demo.ui.Shape
-
 import scala.swing.Panel
 
 case class Point(x: Int, y: Int)

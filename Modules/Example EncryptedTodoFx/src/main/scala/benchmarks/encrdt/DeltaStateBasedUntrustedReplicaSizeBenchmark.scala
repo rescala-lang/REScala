@@ -122,7 +122,9 @@ trait DeltaStateUntrustedReplicaSizeBenchEnvironment {
   val csvHeader = "concurrentUpdates,commonElements,uniqueElements,untrustedReplicaSize,mergedSize,mergedEncryptedSize"
 
   val outDir: Path = Paths.get("./", "benchmarks", "results")
-  if (!outDir.toFile.exists()) outDir.toFile.mkdirs()
+  if (!outDir.toFile.exists())
+    outDir.toFile.mkdirs()
+    ()
   val aead: Aead                                  = Helper.setupAead("AES128_GCM")
   val dummyKeyValuePairs: Array[(String, String)] = Helper.dummyKeyValuePairs(10_000)
 }

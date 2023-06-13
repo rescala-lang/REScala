@@ -1,6 +1,5 @@
 package clangast.types
 
-import clangast.decl.CEnumDecl
 
 import scala.quoted.{Expr, Quotes}
 

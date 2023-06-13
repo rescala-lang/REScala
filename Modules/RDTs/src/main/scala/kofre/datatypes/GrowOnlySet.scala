@@ -1,7 +1,6 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.GrowOnlyMap
 import kofre.dotted.DottedLattice
 import kofre.syntax.OpsSyntaxHelper
 

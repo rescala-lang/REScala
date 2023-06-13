@@ -2,9 +2,10 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
+import kofre.syntax.{PermCausalMutate, ReplicaId}
 import kofre.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -12,18 +13,15 @@ import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
 import replication.JsoniterCodecs.given
 import rescala.default.{Event, Evt, Signal, Var}
 
-import scala.collection.mutable
-import java.util.concurrent.atomic.AtomicReference
-import scala.collection.View
+import java.util.Timer
+import scala.annotation.unused
+import scala.collection.{View, mutable}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import kofre.base.Lattice.optionLattice
-
-import java.util.{Objects, Timer}
 
 type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
-class Key[T](name: String)(using lat: DottedLattice[T], hado: HasDots[T])
+class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])
 
 case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
 
@@ -137,7 +135,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
       deltas
     }
     registry.remotes.foreach { remote =>
-      val ctx = contexts.now.getOrElse(remote, Dots.empty)
+      //val ctx = contexts.now.getOrElse(remote, Dots.empty)
       pushDeltas(deltas.view, remote)
     }
 

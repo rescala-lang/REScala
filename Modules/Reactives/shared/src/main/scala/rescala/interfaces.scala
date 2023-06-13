@@ -1,10 +1,7 @@
 package rescala
 
 import rescala.operator.Interface
-import rescala.core.Scheduler
-import rescala.core.{AdmissionTicket, ReSource, Scheduler}
-import rescala.operator.Interface
-import rescala.scheduler.{Levelbased, LevelbasedVariants, Sidup, SynchronizedSidup, TopbundleImpl, TopoBundle}
+import rescala.scheduler.{LevelbasedVariants, SynchronizedSidup, TopbundleImpl}
 
 object interfaces extends PlatformInterfaces {
 

@@ -85,6 +85,7 @@ object cli {
       case Some(connections) =>
         val serv = new FbdcCli(connections)
         serv.start()
+        ()
 
   }
 }

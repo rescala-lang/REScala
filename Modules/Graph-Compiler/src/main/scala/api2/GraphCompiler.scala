@@ -4,9 +4,7 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{
-  CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr
-}
+import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}
@@ -15,11 +13,12 @@ import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.context.RecordDeclTC
 import compiler.base.*
-import compiler.base.DataStructureFragment.{deepCopy, release, retain, usesRefCount}
+import compiler.base.DataStructureFragment.{deepCopy, release, retain}
 import compiler.ext.*
 import compiler.ext.SerializationFragment.{deserialize, serialize}
 
 import java.io.{File, FileWriter}
+import scala.annotation.nowarn
 import scala.collection.mutable.ArrayBuffer
 import scala.quoted.*
 
@@ -315,6 +314,8 @@ class GraphCompiler(using Quotes)(
     val stillUsed = otherConds ++ otherConds.flatMap(reactiveInputs)
     val released  = toRelease.filterNot(stillUsed.contains)
 
+
+    @nowarn
     val serialization = CEmptyStmt :: sameCond.collect[CStmt] {
       case e: CompiledEvent if jsonVars.contains(e) =>
         CAssignmentExpr(jsonVars(e).ref, serialize(valueRef(e), e.typeRepr))

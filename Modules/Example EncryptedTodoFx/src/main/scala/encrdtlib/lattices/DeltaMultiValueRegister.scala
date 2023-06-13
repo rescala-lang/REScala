@@ -1,7 +1,7 @@
 package encrdtlib.lattices
 
 import kofre.base.{Uid, Lattice}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.dotted.{DotFun, Dotted}
 import kofre.time.{Dot, Dots}
 
 object DeltaMultiValueRegister {

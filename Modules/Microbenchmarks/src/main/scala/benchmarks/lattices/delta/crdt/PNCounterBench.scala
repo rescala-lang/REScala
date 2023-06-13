@@ -1,10 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.Lattice
-import org.openjdk.jmh.annotations.*
-import kofre.datatypes.PosNegCounter
-import kofre.dotted.{Dotted, DottedLattice}
 import kofre.base.Uid.asId
+import kofre.datatypes.PosNegCounter
+import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 

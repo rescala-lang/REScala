@@ -1,5 +1,4 @@
 package clangast.types
-import clangast.CASTNode
 import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}

@@ -2,12 +2,9 @@ package api
 
 import clangast.WithContext
 import clangast.decl.CFunctionDecl
-import clangast.traversal.CASTMapper
 import clangast.types.{CType, CVoidType}
 import compiler.MacroCompiler
-import compiler.debug.Debug
 
-import scala.quoted.*
 
 case class Map1[A, R](input: Event[A], cType: WithContext[CType], f: WithContext[CFunctionDecl]) extends Event[R] {
   override def inputs: List[ReSource] = List(input)

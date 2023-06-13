@@ -1,7 +1,6 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.*
 import kofre.dotted.DottedLattice.*
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}

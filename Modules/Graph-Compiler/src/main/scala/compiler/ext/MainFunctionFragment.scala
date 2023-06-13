@@ -1,8 +1,7 @@
 package compiler.ext
 
-import clangast.{CASTNode, given}
+import clangast.CASTNode
 import clangast.expr.CExpr
-import clangast.stmt.CStmt
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*

@@ -1,23 +1,9 @@
 package replication.fbdc
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.{Argument, Style}
-import de.rmgk.script.extensions
-import kofre.base.{Bottom, Uid, Lattice}
-import kofre.datatypes.alternatives.ObserveRemoveSet
-import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap, ReplicatedList}
-import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, ReplicaId}
-import kofre.time.Dots
 import loci.communicator.tcp.TCP
-import loci.registry.Registry
-import replication.DataManager
-import replication.JsoniterCodecs.given
 
-import java.nio.file.{Files, LinkOption, Path}
-import java.util.Timer
-import scala.annotation.nowarn
+import java.nio.file.Path
 
 case class CliConnections(
     `tcp-listen-port`: Argument[Int, Option, Style.Named] = Argument(_.text("tcp listen port")),
@@ -32,7 +18,7 @@ case class CliConnections(
 class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
-  import exData.{dataManager, registry}
+  import exData.registry
 
   def start() =
     settings.`tcp-listen-port`.value match

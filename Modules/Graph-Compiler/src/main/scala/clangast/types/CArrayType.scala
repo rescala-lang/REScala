@@ -1,7 +1,7 @@
 package clangast.types
 
-import clangast.{CASTNode, toExpr}
 import clangast.expr.CExpr
+import clangast.toExpr
 import clangast.traversal.CASTMapper
 
 import scala.quoted.{Expr, Quotes}

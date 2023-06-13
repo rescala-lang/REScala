@@ -7,7 +7,7 @@ import clangast.expr.binaryop.*
 import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
-import clangast.stubs.{CJSONH, StdArgH, StdBoolH, StdLibH, StringH}
+import clangast.stubs.{CJSONH, StdArgH, StdLibH, StringH}
 import clangast.types.*
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
@@ -15,7 +15,7 @@ import compiler.base.*
 import compiler.base.TypeFragment.typeArgs
 import compiler.base.ApplyFragment.varArgs
 import compiler.base.DataStructureFragment.{release, retain}
-import compiler.context.{FunctionDeclTC, RecordDeclTC, TranslationContext}
+import compiler.context.{RecordDeclTC, TranslationContext}
 import compiler.ext.SerializationFragment.{deserialize, serialize}
 
 import scala.quoted.*
@@ -306,8 +306,6 @@ object ArrayFragment extends SelectIFFragment with ApplyIFFragment with MatchIFF
   private def arrayStructInitializer(using Quotes)(tpe: quotes.reflect.TypeRepr, sizeExpr: CExpr)(using
       FragmentedCompiler
   )(using RecordDeclTC): CExpr = {
-    import quotes.reflect.*
-
     val recordDecl                                           = getRecordDecl(tpe)
     val CFieldDecl(_, CQualType(CPointerType(elemCType), _)) = recordDecl.getField(dataField): @unchecked
 

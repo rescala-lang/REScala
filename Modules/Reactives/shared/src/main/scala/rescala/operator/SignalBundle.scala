@@ -5,7 +5,6 @@ import rescala.macros.MacroAccess
 import rescala.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import rescala.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 
-import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal

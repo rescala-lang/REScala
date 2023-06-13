@@ -1,6 +1,5 @@
 package rescala
 
-import rescala.core.Scheduler
 import rescala.operator.Interface
 
 trait PlatformInterfaces {

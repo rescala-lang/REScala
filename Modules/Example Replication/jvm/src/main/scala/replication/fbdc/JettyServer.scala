@@ -1,26 +1,17 @@
 package replication.fbdc
 
-import jakarta.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
+import jakarta.servlet.http.{HttpServletRequest, HttpServletResponse}
 import loci.communicator.ws.jetty.*
 import loci.communicator.ws.jetty.WS.Properties
 import loci.registry.Registry
-import org.eclipse.jetty.http.{HttpCookie, HttpHeader, HttpMethod}
-import org.eclipse.jetty.rewrite.handler.{RewriteHandler, RewriteRegexRule}
-import org.eclipse.jetty.server.handler.gzip.GzipHandler
-import org.eclipse.jetty.server.handler.{AbstractHandler, HandlerList, HandlerWrapper, ResourceHandler}
+import org.eclipse.jetty.server.handler.{AbstractHandler, HandlerList, ResourceHandler}
 import org.eclipse.jetty.server.{Request, Server, ServerConnector}
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.util.resource.Resource
 import org.eclipse.jetty.util.thread.QueuedThreadPool
-import rescala.default.Signal
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Path
-import java.util.Base64
-import scala.collection.mutable
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, Promise}
-import scala.jdk.CollectionConverters.*
 
 class JettyServer(
     staticPath: Option[Path],

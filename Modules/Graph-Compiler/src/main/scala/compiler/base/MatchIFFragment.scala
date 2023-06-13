@@ -1,8 +1,8 @@
 package compiler.base
 
 import clangast.decl.CVarDecl
-import clangast.expr.{CExpr, CStmtExpr}
-import clangast.stmt.{CIfStmt, CStmt}
+import clangast.expr.CExpr
+import clangast.stmt.CStmt
 import compiler.context.TranslationContext
 import compiler.{CompilerFragment, FragmentedCompiler}
 

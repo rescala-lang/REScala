@@ -1,8 +1,4 @@
 import rescala.operator.Interface
-import rescala.core.Scheduler
-import rescala.core.{AdmissionTicket, ReSource, Scheduler}
-import rescala.operator.Interface
-import rescala.scheduler.{Levelbased, LevelbasedVariants, Sidup, SynchronizedSidup, TopbundleImpl, TopoBundle}
 
 /** see [[rescala.default]] */
 package object rescala {

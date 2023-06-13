@@ -1,15 +1,11 @@
 package kofre.dotted
 
-import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.contextual.ReplicatedList
-import kofre.dotted.DottedLattice.Partitioned
-import kofre.time.{Dot, Dots}
+import kofre.time.Dots
 
-import scala.annotation.{implicitNotFound, targetName}
+import scala.annotation.targetName
 import scala.compiletime.{erasedValue, summonAll, summonInline}
 import scala.deriving.Mirror
-import scala.util.control.ControlThrowable
 
 /** The delta CRDT paper introduces a lot of individual abstractions
   * that all do a lot of cool stuff, but often not separated into their pieces.

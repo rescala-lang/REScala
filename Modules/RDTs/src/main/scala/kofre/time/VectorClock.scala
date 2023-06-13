@@ -1,8 +1,6 @@
 package kofre.time
 
-import kofre.base.{Uid, Time}
-import kofre.time.{Dot, VectorClock}
-import kofre.base.Lattice
+import kofre.base.{Lattice, Time, Uid}
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering

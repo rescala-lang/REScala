@@ -1,7 +1,6 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.GrowOnlySet
+import kofre.base.Lattice
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.syntax.OpsSyntaxHelper
 

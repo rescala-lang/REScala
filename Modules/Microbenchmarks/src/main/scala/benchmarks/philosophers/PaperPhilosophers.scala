@@ -1,12 +1,12 @@
 package benchmarks.philosophers
 
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.{Executors, ThreadLocalRandom}
 import rescala.core.{CreationTicket, ReInfo, ReSource}
 import rescala.operator.Interface
 import rescala.parrp.Backoff
 
-import scala.annotation.{nowarn, tailrec}
+import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.{Executors, ThreadLocalRandom}
+import scala.annotation.tailrec
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
@@ -19,7 +19,7 @@ object Dynamicity {
 }
 abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicity: Dynamicity) {
 
-  import engine._
+  import engine.*
 
   sealed trait Philosopher
 
@@ -118,7 +118,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
     for (i <- 0 until size) yield sights(i).changed
   val successes = for (i <- 0 until size) yield sightChngs(i).filter(_ == Done)
 
-  def manuallyLocked[T](@nowarn idx: Int)(f: => T): T = synchronized { f }
+  def manuallyLocked[T](idx: Int)(f: => T): T = synchronized { f }
 
   def maybeEat(idx: Int): Unit = {
     transaction(phils(idx)) { implicit t =>
@@ -157,7 +157,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
 
 trait EventPyramidTopper {
   self: PaperPhilosophers =>
-  import engine._
+  import engine.*
 
   val anySuccess = successes.reduce(_ || _)
   val successCount: Signal[Int] =
@@ -167,7 +167,7 @@ trait EventPyramidTopper {
 
 trait IndividualCounts {
   self: PaperPhilosophers =>
-  import engine._
+  import engine.*
 
   val individualCounts: Seq[Signal[Int]] =
     for (idx <- 0 until size) yield {
@@ -201,7 +201,7 @@ trait NoTopper extends IndividualCounts {
 
 trait SignalPyramidTopper extends IndividualCounts {
   self: PaperPhilosophers =>
-  import engine._
+  import engine.*
 
   val successCount: Signal[Int] =
     individualCounts.reduce { (a, b) =>
@@ -214,7 +214,7 @@ trait SignalPyramidTopper extends IndividualCounts {
 
 trait SingleFoldTopper {
   self: PaperPhilosophers =>
-  import engine._
+  import engine.*
 
   val successCount: Signal[Int] = Fold(0)(successes.map(s => s act { v => current[Int] + 1 }): _*)
   override def total: Int       = successCount.readValueOnce

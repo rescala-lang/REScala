@@ -37,6 +37,7 @@ object ReShapesServer {
         println("\t  (%s, %d)".format(client._1, client._2))
       println()
       sendToClient((inetAddress, port))
+      ()
     }
 
   /** Removes a client so he no longer receives updates. */

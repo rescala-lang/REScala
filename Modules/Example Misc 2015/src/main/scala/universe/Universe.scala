@@ -17,12 +17,14 @@ object Universe {
 
     val outfile = s"universe-${Globals.engineName}.csv"
 
-    if (genCsv) Files.write(
-      Paths.get(outfile),
-      s""""Repetition","Threads","Score","Param: engineName","Benchmark","Param: height","Param: width","Param: animals","Param: plants"${"\n"}""".getBytes(),
-      StandardOpenOption.WRITE,
-      StandardOpenOption.CREATE
-    )
+    if genCsv then
+      Files.write(
+        Paths.get(outfile),
+        s""""Repetition","Threads","Score","Param: engineName","Benchmark","Param: height","Param: width","Param: animals","Param: plants"${"\n"}""".getBytes(),
+        StandardOpenOption.WRITE,
+        StandardOpenOption.CREATE
+      )
+      ()
 
     for (repetition <- 0 to repetitions) {
       println(s"rep: $repetition")
@@ -46,6 +48,7 @@ object Universe {
           s"""$repetition,$duration,"${Globals.engineName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
           StandardOpenOption.APPEND
         )
+        ()
       }
     }
   }

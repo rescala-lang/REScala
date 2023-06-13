@@ -1,8 +1,6 @@
 package api2
 
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
-import com.github.plokhotnyuk.jsoniter_scala.core.*
-
+import scala.annotation.unused
 import scala.collection.mutable
 
 object MetaBundleExample extends App {
@@ -25,6 +23,7 @@ object MetaBundleExample extends App {
 
     val emapped = esource.map(str => str)
 
+    @unused
     val arrayEvent = emapped.map { str => Array(str) }
 
     val filtered = CEvent {
@@ -41,10 +40,12 @@ object MetaBundleExample extends App {
 
     zipped.observe(t => println(t))
 
+    @unused
     val snapshotLike = CEvent {
       esource.value.map(_ => derived.value)
     }
 
+    @unused
     val snapshotLike2 = esource.map(_ => derived.value)
 
     val foldResult = esource.fold(mutable.Set[String]()) { (acc, next) =>

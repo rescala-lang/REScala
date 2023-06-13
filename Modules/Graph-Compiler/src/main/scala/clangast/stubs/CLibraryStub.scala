@@ -1,6 +1,6 @@
 package clangast.stubs
 
-import clangast.decl.{CFunctionDecl, CInclude}
+import clangast.decl.CInclude
 import compiler.context.TranslationContext
 
 trait CLibraryStub {

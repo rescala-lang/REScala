@@ -1,7 +1,7 @@
 package kofre.dotted
 
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.time.{Dot, Dots}
+
+import kofre.time.Dots
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror

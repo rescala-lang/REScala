@@ -8,7 +8,7 @@ import clangast.expr.binaryop.{CAndExpr, CEqualsExpr, COrExpr, CPlusExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, StdBoolH, StdLibH, StringH}
-import clangast.types.{CCharType, CIntegerType, CPointerType, CRecordType, CType, CVoidType}
+import clangast.types.{CCharType, CIntegerType, CPointerType, CType, CVoidType}
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*

@@ -10,8 +10,7 @@ import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
-
-import scala.annotation.{elidable, tailrec}
+import scala.annotation.{elidable, nowarn, tailrec}
 
 sealed trait MaybeWritten[+V]
 case object NotFinal                                      extends MaybeWritten[Nothing]
@@ -332,6 +331,7 @@ trait FullMvStateBundle extends FullMVBundle {
       }
     }
 
+    @nowarn()
     @tailrec private def appendAllReachable(builder: StringBuilder, current: QueuedVersion): StringBuilder = {
       builder.append(current).append("\r\n")
       val next = current.get()
@@ -720,7 +720,9 @@ trait FullMvStateBundle extends FullMVBundle {
           println(s"[${Thread.currentThread().getName}] enqueueReading fell of the list on $next.")
         null
       } else if (next != null && next.txn == txn) {
-        if (!next.isStable) ensureStableOnInsertedExecuting(firstFrame, null, next, assertSelfMayBeDropped = true)
+        if (!next.isStable)
+          ensureStableOnInsertedExecuting(firstFrame, null, next, assertSelfMayBeDropped = true)
+          ()
         next
         //      if(!next.isStable) {
         //        if (ensureStableOnInsertedExecuting(firstFrame, null, next, assertSelfMayBeDropped = true) != null) {
@@ -767,6 +769,7 @@ trait FullMvStateBundle extends FullMVBundle {
               if (stable == null) {
                 if (ff.isZeroCounters)
                   ensureStableOnInsertedExecuting(firstFrame, null, v, assertSelfMayBeDropped = true)
+                  ()
               } else {
                 casLatestStable(ls, v)
               }
@@ -1169,8 +1172,10 @@ trait FullMvStateBundle extends FullMVBundle {
         // executing this then-ready reevaluation, but for now the version is guaranteed not stable yet.
         if (arity == +1) {
           version.incrementPending()
+          ()
         } else {
           version.decrementPending()
+          ()
         }
       }
 

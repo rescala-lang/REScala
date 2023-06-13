@@ -4,7 +4,6 @@ import loci.registry.Registry
 import org.scalajs.dom.{document, window}
 import kofre.base.Uid
 
-import java.util.concurrent.ThreadLocalRandom
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {

@@ -1,8 +1,7 @@
 package api
 
-import clangast.decl.CValueDecl
 import clangast.expr.binaryop.{CAndExpr, COrExpr}
-import clangast.expr.{CDeclRefExpr, CExpr, CParenExpr, CTrueLiteral}
+import clangast.expr.{CExpr, CParenExpr, CTrueLiteral}
 
 case class UpdateCondition(normalized: Set[Set[CExpr]]) {
   def and(cond: UpdateCondition): UpdateCondition =

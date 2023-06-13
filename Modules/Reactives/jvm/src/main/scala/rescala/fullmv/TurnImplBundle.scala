@@ -132,6 +132,7 @@ trait TurnImplBundle extends FullMVBundle {
         if (activeBranches.get() > 0) {
           if (registeredForWaiting != null) {
             registeredForWaiting.waiters.remove(this.userlandThread)
+            ()
 //          parkRestart.add(head.asInstanceOf[ReevaluationResultHandling[ReSource[FullMVStruct]]].node.toString)
 //        } else if (parkAfter > 0) {
 //          spinRestart.add(head.asInstanceOf[ReevaluationResultHandling[ReSource[FullMVStruct]]].node.toString)
@@ -185,6 +186,7 @@ trait TurnImplBundle extends FullMVBundle {
           } else {
             if (registeredForWaiting != null) {
               currentUnknownPredecessor.waiters.remove(this.userlandThread)
+              ()
 //            parkSwitch += 1
 //          } else if (parkAfter > 0) {
 //            spinSwitch += 1

@@ -1,8 +1,8 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Lattice, Uid, Time}
+import kofre.base.{Bottom, Lattice, Time}
 import kofre.dotted.DottedLattice
-import kofre.syntax.{OpsSyntaxHelper, OpsTypes, PermMutate, PermQuery}
+import kofre.syntax.{OpsSyntaxHelper, PermMutate, PermQuery}
 
 case class Epoche[E](counter: Time, value: E)
 

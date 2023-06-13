@@ -5,7 +5,6 @@ import clangast.types.CType
 import compiler.MacroCompiler
 
 import scala.annotation.{compileTimeOnly, targetName}
-import scala.quoted.*
 
 case class Source[V](name: String, cType: WithContext[CType]) extends Event[V] {
   override def inputs: List[ReSource] = Nil

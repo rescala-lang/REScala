@@ -1,8 +1,6 @@
 package rescala.macros
 
 import rescala.core.ScopeSearch
-import rescala.macros.MacroAccess
-import rescala.operator.Operators
 
 import scala.quoted.*
 

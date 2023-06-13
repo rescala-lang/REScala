@@ -1,10 +1,7 @@
 package com.github.ckuessner.aead
 
-import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.subtle.Base64
-import com.google.crypto.tink.{KeyTemplates, KeysetHandle, Registry}
 
-import java.security.GeneralSecurityException
 import scala.concurrent.Future
 
 object AeadHelper {

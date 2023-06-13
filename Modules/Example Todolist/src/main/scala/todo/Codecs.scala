@@ -3,7 +3,6 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Uid
-import kofre.base.Uid.asId
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.datatypes.contextual.{LastWriterWins, ReplicatedList}
 import kofre.dotted.{DotFun, Dotted}
@@ -11,7 +10,6 @@ import kofre.syntax.DeltaBuffer
 import kofre.time.Dot
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
-import todo.Todolist.replicaId
 
 import scala.annotation.nowarn
 

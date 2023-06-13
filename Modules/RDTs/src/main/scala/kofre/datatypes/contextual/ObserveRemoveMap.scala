@@ -1,10 +1,9 @@
 package kofre.datatypes.contextual
 
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.{GrowOnlyMap}
+import kofre.base.{Bottom, Lattice}
 import kofre.dotted.{DotMap, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
-import kofre.time.{Dot, Dots}
+import kofre.time.Dots
 
 case class ObserveRemoveMap[K, V](inner: DotMap[K, V])
 

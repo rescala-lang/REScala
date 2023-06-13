@@ -1,12 +1,10 @@
 package kofre.datatypes.contextual
 
-import kofre.base.{Bottom, Lattice, Time, Uid}
-import kofre.datatypes.contextual.LastWriterWins
-import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
+import kofre.base.{Bottom, Time, Uid}
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
-import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
   *

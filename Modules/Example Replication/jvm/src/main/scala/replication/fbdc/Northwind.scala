@@ -1,14 +1,12 @@
 package replication.fbdc
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.Bottom
 import kofre.datatypes.alternatives.lww.TimedVal
-import kofre.dotted.DottedLattice
 
 import java.nio.file.{Files, Path}
 import java.sql.*
 import java.util.Properties
 import scala.collection.mutable.ListBuffer
-import scala.util.Using
 import scala.util.chaining.scalaUtilChainingOps
 
 object Northwind {

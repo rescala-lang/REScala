@@ -1,7 +1,5 @@
 package kofre.dotted
 
-import kofre.datatypes.contextual.ObserveRemoveMap
-import kofre.dotted.DottedLattice.Partitioned
 import kofre.time.Dots
 
 /** DotMap is just a container to use maps in a dotted context.

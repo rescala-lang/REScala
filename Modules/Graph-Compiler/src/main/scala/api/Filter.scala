@@ -5,7 +5,6 @@ import clangast.decl.CFunctionDecl
 import clangast.types.CType
 import compiler.MacroCompiler
 
-import scala.quoted.*
 
 case class Filter[V](input: Event[V], cType: WithContext[CType], f: WithContext[CFunctionDecl]) extends Event[V] {
   override def inputs: List[ReSource] = List(input)

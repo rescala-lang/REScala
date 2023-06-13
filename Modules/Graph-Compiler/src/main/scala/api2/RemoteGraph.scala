@@ -1,7 +1,6 @@
 package api2
 
 import rescala.default.*
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import rescala.core.ReSource
 
@@ -22,6 +21,7 @@ trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[Op
     }
 
     grouped.observe(v => connector.get.write(v))
+    ()
   }
 }
 

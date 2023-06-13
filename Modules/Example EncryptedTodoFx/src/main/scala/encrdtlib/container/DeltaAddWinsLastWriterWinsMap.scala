@@ -2,12 +2,10 @@ package encrdtlib.container
 
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import encrdtlib.lattices.DeltaMultiValueRegister.DeltaMultiValueRegisterLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
-import kofre.base.{Bottom, Lattice, Uid}
+import kofre.base.{Lattice, Uid}
 import kofre.datatypes.alternatives.lww.GenericLastWriterWins
-import kofre.dotted.{DotFun, DotMap, Dotted, DottedLattice}
-import kofre.time.Dot
+import kofre.dotted.{DotFun, DotMap, DottedLattice}
 
 import java.time.Instant
 import scala.collection.mutable.ArrayBuffer

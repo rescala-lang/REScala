@@ -29,8 +29,8 @@ class SwitchVersion {
   val tick = Evt[Unit]()
   // Using switch
 
-  val x: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + speedX.now: @scala.annotation.nowarn }
-  val y: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + speedY.now: @scala.annotation.nowarn }
+  val x: Signal[Int] = tick.fold(initPosition.x) { (pos, _) => pos + speedX.now }
+  val y: Signal[Int] = tick.fold(initPosition.y) { (pos, _) => pos + speedY.now }
 
   val xBounce = x.changed && (x => x < 0 || x + Size > Max_X)
   val yBounce = y.changed && (y => y < 0 || y + Size > Max_Y)

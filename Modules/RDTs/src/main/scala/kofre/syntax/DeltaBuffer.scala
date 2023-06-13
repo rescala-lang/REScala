@@ -1,9 +1,8 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.Lattice
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.time.Dots
-import kofre.base.Uid
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas

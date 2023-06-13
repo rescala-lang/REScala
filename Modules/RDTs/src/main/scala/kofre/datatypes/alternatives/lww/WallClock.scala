@@ -1,8 +1,7 @@
 package kofre.datatypes.alternatives.lww
 
-import kofre.base.{Lattice, Uid}
+import kofre.base.Uid
 
-import java.util.Comparator
 
 /** WallClock is a case class for values that allows chronological ordering of values based on their time of creation.
   * In the case that two values from two different replicas have the exact same timestamp, the lexical ordering of the

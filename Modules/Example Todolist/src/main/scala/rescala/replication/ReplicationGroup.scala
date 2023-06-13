@@ -1,7 +1,7 @@
 package rescala.extra.replication
 
 import kofre.base.Lattice.Operators
-import kofre.base.{Bottom, Lattice, Uid}
+import kofre.base.{Bottom, Lattice}
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
 import loci.registry.{Binding, Registry}
@@ -51,7 +51,7 @@ class ReplicationGroup[Api <: Interface, A](
     unhandled.get(name) match {
       case None =>
       case Some(changes) =>
-        changes.foreach((k, v) => deltaEvt.fire(v))
+        changes.foreach((_, v) => deltaEvt.fire(v))
     }
 
     def registerRemote(remoteRef: RemoteRef): Unit = {

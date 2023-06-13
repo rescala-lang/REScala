@@ -255,15 +255,19 @@ class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
         val nn = nti.next().render
         newNodes ::= nn
         parent.insertBefore(nn, nextSibling)
+        ()
       }
     } else {
       while (nti.hasNext) {
         val nn = nti.next().render
         newNodes ::= nn
         parent.appendChild(nn)
+        ()
       }
     }
-    while (oni.hasNext) parent.removeChild(oni.next())
+    while (oni.hasNext)
+      parent.removeChild(oni.next())
+      ()
 
     newNodes.reverse
   }

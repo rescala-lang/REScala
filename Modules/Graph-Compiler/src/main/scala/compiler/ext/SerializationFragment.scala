@@ -2,11 +2,9 @@ package compiler.ext
 
 import clangast.*
 import clangast.given
-import clangast.decl.CFunctionDecl
 import clangast.expr.{CCallExpr, CCastExpr, CExpr, CParenExpr}
 import clangast.stubs.CJSONH
 import clangast.types.{CCharType, CFloatType, CShortType}
-import compiler.base.*
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.context.TranslationContext

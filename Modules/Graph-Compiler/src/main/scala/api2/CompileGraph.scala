@@ -2,7 +2,6 @@ package api2
 
 import compiler.StandardReactiveMacroCompiler
 
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 object CompileGraph {

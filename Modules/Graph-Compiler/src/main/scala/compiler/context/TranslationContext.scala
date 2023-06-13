@@ -7,7 +7,9 @@ import scala.collection.mutable
 trait TranslationContext {
   protected val includes: mutable.Set[CInclude] = mutable.Set()
 
-  def addInclude(include: CInclude): Unit = includes.add(include)
+  def addInclude(include: CInclude): Unit =
+    includes.add(include)
+    ()
 
   def includesList: List[CInclude] = includes.toList
 
@@ -25,10 +27,12 @@ trait TranslationContext {
 
   protected val valueNames: mutable.Map[String, Int] = mutable.Map()
 
-  def registerValueName(name: String): Unit = valueNames.updateWith(name) {
-    case None    => Some(1)
-    case Some(n) => Some(n + 1)
-  }
+  def registerValueName(name: String): Unit =
+    valueNames.updateWith(name) {
+      case None    => Some(1)
+      case Some(n) => Some(n + 1)
+    }
+    ()
 
   def uniqueValueName(from: String): String = {
     registerValueName(from)

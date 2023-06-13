@@ -3,8 +3,8 @@ package compiler.ext
 import clangast.*
 import clangast.given
 import clangast.decl.*
-import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CNotEqualsExpr, COrExpr, CPlusExpr}
-import clangast.expr.unaryop.{CAddressExpr, CDerefExpr, CNotExpr}
+import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, COrExpr, CPlusExpr}
+import clangast.expr.unaryop.{CNotExpr}
 import clangast.expr.*
 import clangast.stmt.{CCompoundStmt, CIfStmt, CReturnStmt, CStmt}
 import clangast.stubs.{CJSONH, StdBoolH, StdLibH, StringH}
@@ -477,8 +477,6 @@ object OptionFragment extends DefinitionIFFragment with TermIFFragment with Sele
   )(opt: quotes.reflect.Term, f: quotes.reflect.Term, resType: quotes.reflect.TypeRepr)(using FragmentedCompiler)(using
       ctx: RecordDeclTC
   ): CExpr = {
-    import quotes.reflect.*
-
     val compiledF = dispatch[TermIFFragment](_.compileTerm)(f) match {
       case funDecl: CFunctionDecl => funDecl
     }
@@ -513,8 +511,6 @@ object OptionFragment extends DefinitionIFFragment with TermIFFragment with Sele
   private def compileFilter(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using
       FragmentedCompiler
   )(using ctx: RecordDeclTC): CExpr = {
-    import quotes.reflect.*
-
     val compiledF = dispatch[TermIFFragment](_.compileTerm)(f) match {
       case funDecl: CFunctionDecl => funDecl
     }
@@ -546,8 +542,6 @@ object OptionFragment extends DefinitionIFFragment with TermIFFragment with Sele
   private def compileForeach(using Quotes)(opt: quotes.reflect.Term, f: quotes.reflect.Term)(using
       FragmentedCompiler
   )(using ctx: RecordDeclTC): CStmt = {
-    import quotes.reflect.*
-
     val compiledF = dispatch[TermIFFragment](_.compileTerm)(f) match {
       case funDecl: CFunctionDecl => funDecl
     }

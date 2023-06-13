@@ -1,6 +1,5 @@
 package kofre.datatypes.alternatives
 
-import kofre.base.Lattice.{derived}
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.time.VectorClock
 

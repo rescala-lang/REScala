@@ -1,6 +1,6 @@
 package kofre.datatypes.alternatives.lww
 
-import kofre.base.{Lattice, Uid}
+import kofre.base.Lattice
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 

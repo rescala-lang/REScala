@@ -1,7 +1,5 @@
 package todo
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.datatypes.contextual.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
@@ -47,8 +45,7 @@ class TodoAppUI(val storagePrefix: String) {
       )
     }
 
-    val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
-    val taskOps  = new TaskOps(taskrefs, replicaId)
+    val taskOps  = new TaskOps(replicaId)
 
     val deltaEvt = Evt[Dotted[ReplicatedList[TaskRef]]]()
 

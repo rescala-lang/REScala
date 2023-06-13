@@ -2,19 +2,16 @@ package replication.webapp
 
 import org.scalajs.dom
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.{MouseEvent, document}
+import org.scalajs.dom.{MouseEvent}
 import replication.DataManager
-import replication.webapp.MetaInfo
 import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.TypedTag
-import scalatags.JsDom.all.{*, given}
-import scalatags.JsDom.tags2.{article, aside, nav, section}
+import scalatags.JsDom.all.*
+import scalatags.JsDom.tags2.{aside, section}
 import kofre.base.Uid
 import loci.transmitter.RemoteRef
 import replication.fbdc.{FbdcExampleData, Req}
-
-import scala.collection.immutable.LinearSeq
 
 object HTML {
 
@@ -64,7 +61,10 @@ object HTML {
               else
                 List(
                   td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
-                  td(button("request", onclick := leftClickHandler(dataManager.requestMissingFrom(rr)))),
+                  td(button("request", onclick := leftClickHandler{
+                    dataManager.requestMissingFrom(rr)
+                    ()
+                  })),
                   td(table(
                     dataManager.contextOf(rr).map(dotsToRows).asModifierL
                   ))

@@ -2,25 +2,19 @@ package replication.fbdc
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import de.rmgk.options.{Argument, Style}
 import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.contextual.CausalQueue.QueueElement
-import kofre.datatypes.alternatives.ObserveRemoveSet
 import kofre.datatypes.*
 import kofre.datatypes.alternatives.lww.TimedVal
+import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}
-import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
-import java.nio.file.Path
-import java.util.Timer
-import scala.annotation.nowarn
 import scala.reflect.ClassTag
 
 enum Req:
@@ -72,7 +66,7 @@ class FbdcExampleData {
   val registry  = new Registry
 
   val dataManager =
-    @nowarn given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
     new DataManager[State](replicaId, registry)
 
   def addCapability(capability: String) =

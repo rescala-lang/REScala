@@ -3,7 +3,6 @@ package encrdtlib.lattices
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.contextual.AddWinsSet
 import kofre.dotted.Dotted
-import kofre.time.Dots
 
 case class AddWinsMapLattice[K, V](
     keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),

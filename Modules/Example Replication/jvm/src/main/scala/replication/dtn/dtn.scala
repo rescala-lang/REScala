@@ -1,33 +1,21 @@
 package replication.dtn
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{
-  JsonReader, JsonValueCodec, JsonWriter, readFromArray, readFromByteBuffer, readFromString, readFromStringReentrant,
-  writeToArray, writeToByteBuffer, writeToString
-}
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.nio.charset.StandardCharsets
-import java.util.{Base64, Objects}
-import scala.concurrent.{Await, Future}
-import kofre.base.{Bottom, Lattice}
-import kofre.base.Uid
-import kofre.syntax.*
+import de.rmgk.delay.*
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.PosNegCounter
+import kofre.syntax.*
 
 import java.net.URI
-import java.net.Authenticator
-import java.net.http.{HttpClient, HttpRequest, WebSocket}
-import java.net.http.HttpClient.{Redirect, Version}
 import java.net.http.HttpResponse.BodyHandlers
-import java.time.Duration
-import de.rmgk.delay.*
-
 import java.net.http.WebSocket.Listener
+import java.net.http.{HttpClient, HttpRequest, WebSocket}
 import java.nio.ByteBuffer
-import java.util.Objects.isNull
+import java.time.Duration
+import java.util.concurrent.CompletionStage
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{CompletableFuture, CompletionStage}
+import scala.concurrent.{Await, Future}
 
 /** API base path used for http request */
 def api(using scheme: String = "http"): String =
@@ -117,6 +105,7 @@ class Replica[S: Lattice: JsonValueCodec](val id: Uid, dtnNodeId: String, val se
       connections.updateAndGet(ws :: _)
 
       ws.sendBinary(message(data), true)
+      ()
     }
 }
 

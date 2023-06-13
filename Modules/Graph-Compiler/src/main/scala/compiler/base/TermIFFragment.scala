@@ -1,7 +1,6 @@
 package compiler.base
 
 import clangast.CASTNode
-import clangast.expr.binaryop.CAssignmentExpr
 import clangast.expr.*
 import clangast.stmt.*
 import compiler.{CompilerFragment, FragmentedCompiler}

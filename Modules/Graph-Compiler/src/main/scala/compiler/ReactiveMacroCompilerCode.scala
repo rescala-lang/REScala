@@ -1,17 +1,14 @@
 package compiler
 
-import api2.{CompiledEvent, CompiledReactive, CompiledSignalExpr, GraphCompiler}
+import api2.{CompiledEvent, CompiledReactive, GraphCompiler}
 import clangast.*
 import clangast.given
-import clangast.WithContext
 import clangast.decl.CFunctionDecl
-import clangast.expr.CIntegerLiteral
-import clangast.stmt.{CCompoundStmt, CReturnStmt}
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
 import compiler.base.TypeFragment.typeArgs
 import compiler.ext.*
-import compiler.context.{ReactiveTC, RecordDeclTC}
+import compiler.context.{ReactiveTC}
 
 import scala.annotation.tailrec
 import scala.quoted.*

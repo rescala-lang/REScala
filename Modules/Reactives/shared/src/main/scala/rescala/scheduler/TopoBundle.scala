@@ -1,12 +1,10 @@
 package rescala.scheduler
 
 import rescala.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, Scheduler, SchedulerImpl,
+  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
   Transaction
 }
-import rescala.structure.Observe
 
-import scala.annotation.nowarn
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object TopbundleImpl extends TopoBundle {
@@ -99,7 +97,7 @@ trait TopoBundle {
 
     def reset(r: ReSource) = r.state.reset(r.commit(r.state.value))
 
-    def beforeCleanupHook(@nowarn all: Seq[ReSource], @nowarn initialWrites: Set[ReSource]): Unit = ()
+    def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit = ()
 
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R =
       synchronized {

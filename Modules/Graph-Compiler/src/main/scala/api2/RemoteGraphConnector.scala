@@ -1,6 +1,5 @@
 package api2
 
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 import java.net.InetSocketAddress
@@ -29,7 +28,9 @@ class TCPClientConnector(hostname: String, port: Int) extends RemoteGraphConnect
 
   def closeConnection(): Unit = chan.close()
 
-  override def write[T: JsonValueCodec](v: T): Unit = chan.write(ByteBuffer.wrap(writeToArray(v)))
+  override def write[T: JsonValueCodec](v: T): Unit =
+    chan.write(ByteBuffer.wrap(writeToArray(v)))
+    ()
 
   protected class ReadHandler[T](onRead: T => Unit)(using JsonValueCodec[T])
       extends CompletionHandler[Integer, ByteBuffer]() {

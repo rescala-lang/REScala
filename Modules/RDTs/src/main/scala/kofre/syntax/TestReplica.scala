@@ -1,6 +1,6 @@
 package kofre.syntax
 
-import kofre.base.{Bottom, Uid, Lattice}
+import kofre.base.{Uid, Lattice}
 
 import scala.annotation.targetName
 

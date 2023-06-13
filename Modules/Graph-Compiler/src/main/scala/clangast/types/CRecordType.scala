@@ -1,7 +1,5 @@
 package clangast.types
 
-import clangast.decl.CRecordDecl
-
 import scala.quoted.{Expr, Quotes}
 
 case class CRecordType(declName: String) extends CType {

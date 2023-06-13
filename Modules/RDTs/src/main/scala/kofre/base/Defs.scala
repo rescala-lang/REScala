@@ -1,6 +1,6 @@
 package kofre.base
 
-import java.util.{Base64, UUID}
+import java.util.Base64
 import scala.util.Random
 
 opaque type Uid = String

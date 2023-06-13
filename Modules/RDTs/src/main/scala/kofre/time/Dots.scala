@@ -2,7 +2,6 @@ package kofre.time
 
 import kofre.base.{Lattice, Time, Uid}
 import kofre.dotted.Dotted
-import kofre.time.Dot
 
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.

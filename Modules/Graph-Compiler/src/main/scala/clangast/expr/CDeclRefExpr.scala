@@ -1,6 +1,5 @@
 package clangast.expr
 
-import clangast.decl.CValueDecl
 
 import scala.quoted.{Expr, Quotes}
 

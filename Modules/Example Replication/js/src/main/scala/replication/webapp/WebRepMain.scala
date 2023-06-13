@@ -2,23 +2,19 @@ package replication.webapp
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.{Uid, Lattice}
+import kofre.base.Uid
 import kofre.datatypes.contextual.ReplicatedList
-import kofre.dotted.DottedLattice
-import loci.registry.Registry
 import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
-import replication.DataManager
+import replication.JsoniterCodecs.given
+import replication.fbdc.FbdcExampleData
 import rescala.default.*
 import rescala.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
-import scalatags.JsDom.tags.{body, h1, p, table, form, span, SeqFrag, SeqNode}
-import replication.JsoniterCodecs.given
-import scalatags.JsDom.tags2.{aside, article, main}
+import scalatags.JsDom.tags.{SeqFrag, body}
 import scalatags.JsDom.tags2
-
-import replication.fbdc.FbdcExampleData
+import scalatags.JsDom.tags2.{main}
 
 import scala.annotation.nowarn
 import scala.concurrent.Future

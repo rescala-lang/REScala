@@ -2,6 +2,7 @@ package api2
 
 import rescala.default.*
 
+import scala.annotation.unused
 import scala.io.StdIn.readLine
 
 object InteropTest extends App {
@@ -12,8 +13,10 @@ object InteropTest extends App {
   val remote = CompileGraph.withIO("interopTest")(toC, toCString) { (fromScala, fromScalaString) =>
     val localSource = CEvent.source[Int]
 
+    @unused
     val localMap = localSource.map(_ / 2)
 
+    @unused
     val strCopy = CEvent(fromScalaString.value)
 
     val plusOne = fromScala.map(_ + 1)

@@ -1,13 +1,10 @@
 package compiler.context
 
-import api2.{CompiledEvent, CompiledReactive}
+import api2.CompiledReactive
 import clangast.*
-import clangast.given
-import clangast.decl.{CFunctionDecl, CParmVarDecl}
-import clangast.types.CVoidType
+import clangast.decl.CParmVarDecl
 
 import scala.collection.mutable
-import scala.quoted.*
 
 trait ReactiveTC extends TranslationContext {
   val inputParameters: MappingLabel[String, (CParmVarDecl, Any)] = new MappingLabel()

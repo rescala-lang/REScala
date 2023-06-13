@@ -3,12 +3,12 @@ package compiler.base
 import clangast.*
 import clangast.given
 import clangast.decl.{CFunctionDecl, CParmVarDecl, CRecordDecl, CVarDecl}
-import clangast.expr.binaryop.{CAndExpr, CLessEqualsExpr, CLessThanExpr}
+import clangast.expr.binaryop.{CAndExpr, CLessEqualsExpr}
 import clangast.expr.unaryop.{CDecExpr, CDerefExpr, CIncExpr, CNotExpr}
-import clangast.expr.{CArraySubscriptExpr, CCallExpr, CExpr, CFalseLiteral, CMemberExpr, CParenExpr}
-import clangast.stmt.{CCompoundStmt, CDeclStmt, CForStmt, CIfStmt, CReturnStmt, CStmt}
-import clangast.stubs.{StdBoolH, StdLibH}
-import clangast.types.{CIntegerType, CQualType, CRecordType, CVoidType}
+import clangast.expr.{CCallExpr, CExpr, CFalseLiteral, CMemberExpr, CParenExpr}
+import clangast.stmt.{CCompoundStmt, CDeclStmt, CIfStmt, CReturnStmt, CStmt}
+import clangast.stubs.{StdBoolH}
+import clangast.types.{CQualType, CRecordType, CVoidType}
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.context.{RecordDeclTC, TranslationContext}

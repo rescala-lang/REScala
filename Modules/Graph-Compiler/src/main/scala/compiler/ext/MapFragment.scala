@@ -272,8 +272,6 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> CREATE, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name = "create_" + recordDecl.name
@@ -884,8 +882,6 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> DEEP_COPY, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name = "deepCopy_" + recordDecl.name
@@ -1003,8 +999,6 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> PRINT, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name = "print_" + recordDecl.name
@@ -1098,8 +1092,6 @@ object MapFragment extends ApplyIFFragment with TypeIFFragment with DataStructur
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> SERIALIZE, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name = "serialize_" + recordDecl.name

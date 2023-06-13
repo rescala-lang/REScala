@@ -5,7 +5,6 @@ import clangast.decl.CFunctionDecl
 import compiler.*
 
 import scala.annotation.compileTimeOnly
-import scala.quoted.*
 
 trait CHelperFun(val f: WithContext[CFunctionDecl])
 

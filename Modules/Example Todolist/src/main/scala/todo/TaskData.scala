@@ -1,9 +1,12 @@
 package todo
 
-import kofre.datatypes.alternatives
+import kofre.base.Bottom
+import kofre.datatypes.contextual.LastWriterWins
 import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
+import kofre.syntax.{DeltaBuffer, ReplicaId}
+import kofre.time.Dots
 import loci.registry.Binding
+import loci.serializer.jsoniterScala.given
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default.*
@@ -11,14 +14,8 @@ import rescala.extra.Tags.*
 import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
+import todo.Codecs.given
 import todo.Todolist.replicaId
-import Codecs.given
-import kofre.base.Bottom
-import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.alternatives.lww.{TimedVal, WallClock}
-import kofre.datatypes.contextual.{LastWriterWins, MultiVersionRegister}
-import kofre.time.Dots
-import loci.serializer.jsoniterScala.given
 
 import scala.Function.const
 import scala.collection.mutable

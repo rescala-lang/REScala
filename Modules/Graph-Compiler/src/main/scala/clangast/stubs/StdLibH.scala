@@ -1,7 +1,6 @@
 package clangast.stubs
 
 import clangast.decl.{CFunctionDecl, CInclude}
-import clangast.types.CVoidType
 import compiler.context.TranslationContext
 
 object StdLibH extends CLibraryStub {

@@ -4,7 +4,6 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.binaryop.*
-import clangast.expr.unaryop.*
 import clangast.expr.*
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, StdBoolH, StdIOH, StdLibH, StringH}
@@ -12,7 +11,6 @@ import clangast.types.*
 import compiler.FragmentedCompiler
 import compiler.FragmentedCompiler.dispatch
 import compiler.base.*
-import compiler.base.TypeFragment.typeArgs
 import compiler.base.DataStructureFragment.{release, retain}
 import compiler.context.{RecordDeclTC, TranslationContext}
 import compiler.ext.SerializationFragment.{deserialize, serialize}
@@ -368,8 +366,6 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> DEEP_COPY, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name         = "deepCopy_" + recordDecl.name
@@ -405,8 +401,6 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> PRINT, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
 
         val name         = "print_" + recordDecl.name
@@ -527,8 +521,6 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> SERIALIZE, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
         val isTuple    = recordDecl.name.startsWith("Tuple")
 
@@ -568,8 +560,6 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
   ): CFunctionDecl = {
     ctx.recordFunMap.getOrElseUpdate(
       dispatch[TypeIFFragment](_.typeName)(tpe) -> DESERIALIZE, {
-        import quotes.reflect.*
-
         val recordDecl = getRecordDecl(tpe)
         val isTuple    = recordDecl.name.startsWith("Tuple")
 

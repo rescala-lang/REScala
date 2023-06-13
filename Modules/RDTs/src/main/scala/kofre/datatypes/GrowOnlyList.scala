@@ -2,7 +2,6 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyList.Node
-import kofre.datatypes.Epoche
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}

@@ -1,6 +1,6 @@
 package replication.checkpointing
 
-import de.rmgk.options.{Argument, Single, Style, Subcommand}
+import de.rmgk.options.{Argument, Single, Subcommand}
 import replication.checkpointing.central.CentralOptions
 import replication.checkpointing.decentral.DecentralOptions
 

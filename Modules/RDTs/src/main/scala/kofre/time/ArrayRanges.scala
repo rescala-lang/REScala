@@ -3,9 +3,6 @@ package kofre.time
 import kofre.base.{Lattice, Time}
 
 import java.util
-import scala.annotation.tailrec
-import scala.collection.IndexedSeqView
-import scala.collection.mutable.ListBuffer
 
 /** Efficient storage of a set of [[kofre.base.Time]] when most stored values are contiguous ranges. */
 class ArrayRanges(

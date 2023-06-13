@@ -1,11 +1,10 @@
 package kofre.syntax
 
-import kofre.base.{Uid, Lattice}
+import kofre.base.Uid
 import kofre.dotted.Dotted
 import kofre.time.Dots
 
 import scala.annotation.implicitNotFound
-import scala.util.NotGiven
 
 /** The basic idea behind this machinery is to allow lattices of type L to be stored in a Container of type C.
   * In the simplest case C = L and the lattice is used as is.

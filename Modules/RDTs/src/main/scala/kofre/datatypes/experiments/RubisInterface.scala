@@ -1,9 +1,9 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Bottom, Uid, Lattice}
+import kofre.base.{Uid}
 import kofre.datatypes.contextual.AddWinsSet
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
-import kofre.dotted.{Dotted, DottedLattice}
+import kofre.dotted.{Dotted}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.

@@ -1,17 +1,12 @@
 package replication.webapp
 
-import com.github.plokhotnyuk.jsoniter_scala.core.*
 import loci.communicator.ws.webnative.WS
 import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import rescala.default.*
-import rescala.structure.RExceptions.EmptySignalControlThrowable
 
-import java.util.NoSuchElementException
 import scala.concurrent.Future
-import scala.scalajs.js
-import scala.scalajs.js.typedarray.{Int8Array, TypedArrayBuffer}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 class ContentConnectionManager(registry: Registry) {
