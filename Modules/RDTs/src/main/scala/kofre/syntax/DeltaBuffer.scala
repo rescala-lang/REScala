@@ -36,6 +36,14 @@ object DeltaBuffer {
     override def mutate(c: DeltaBuffer[L], delta: L): DeltaBuffer[L] = c.applyDelta(delta)
     override def query(c: DeltaBuffer[L]): L                         = c.state
   }
+
+  given plainNestedPermissions[L: Lattice]: PermMutate[DeltaBuffer[Dotted[L]], L] = new {
+    override def mutate(c: DeltaBuffer[Dotted[L]], delta: L): DeltaBuffer[Dotted[L]] =
+      given Lattice[Dotted[L]] = Lattice.derived
+      c.applyDelta(Dotted(delta))
+
+    override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.data
+  }
 }
 
 class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {
