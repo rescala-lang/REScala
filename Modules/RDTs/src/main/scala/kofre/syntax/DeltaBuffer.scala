@@ -43,7 +43,7 @@ class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {
     result = result.applyDelta(delta)
 }
 
-object DeltaBufferContainer {
+object DeltaBufferContainer extends DeltaBufferContainer.LowPrio {
 
   given dottedPermissions[L](using
       pcm: PermCausalMutate[DeltaBuffer[Dotted[L]], L]
