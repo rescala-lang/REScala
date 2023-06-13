@@ -2,7 +2,7 @@ package kofre.dotted
 
 import kofre.base.{Bottom, Uid, Lattice}
 import kofre.dotted.{DotFun, DotSet}
-import kofre.syntax.{PermCausalMutate, PermQuery}
+import kofre.syntax.{PermCausalMutate, PermQuery, PermMutate}
 import kofre.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.
@@ -11,7 +11,7 @@ import kofre.time.{Dot, Dots}
   * • all dots directly subsumed by data
   *
   * Specifically, the `deletions` and `contained` methods reflect this interpretation.
-  * */
+  */
 case class Dotted[A](data: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]      = Dotted(f(data), context)
   def knows(dot: Dot): Boolean          = context.contains(dot)
@@ -19,7 +19,7 @@ case class Dotted[A](data: A, context: Dots) {
   def contained(using HasDots[A]): Dots = data.dots
 }
 
-object Dotted {
+object Dotted extends Dotted.LowPrio {
 
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
@@ -31,6 +31,14 @@ object Dotted {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merge delta
     override def query(c: Dotted[L]): L                                   = c.data
     override def context(c: Dotted[L]): Dots                              = c.context
+  }
+
+  trait LowPrio {
+    given identitDsyntaxPermissions[L](using DottedLattice[L]): PermMutate[Dotted[L], L] with {
+      override def mutate(c: Dotted[L], delta: L): Dotted[L] = c merge Dotted(delta)
+
+      override def query(c: Dotted[L]): L = c.data
+    }
   }
 
 }
