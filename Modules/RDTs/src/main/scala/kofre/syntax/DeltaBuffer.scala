@@ -65,4 +65,14 @@ object DeltaBufferContainer {
       c
     override def query(c: DeltaBufferContainer[L]): L = c.result.state
   }
+
+  trait LowPrio {
+    given nestedPlainPermissions[L](using pm: PermMutate[DeltaBuffer[Dotted[L]], L]): PermMutate[DeltaBufferContainer[Dotted[L]], L] = new {
+      override def mutate(c: DeltaBufferContainer[Dotted[L]], delta: L): DeltaBufferContainer[Dotted[L]] =
+        c.result = pm.mutate(c.result, delta)
+        c
+
+      override def query(c: DeltaBufferContainer[Dotted[L]]): L = c.result.state.data
+    }
+  }
 }
