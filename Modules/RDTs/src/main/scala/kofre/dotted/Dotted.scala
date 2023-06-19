@@ -1,7 +1,7 @@
 package kofre.dotted
 
 import kofre.base.Bottom
-import kofre.syntax.PermCausalMutate
+import kofre.syntax.{PermCausalMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.
