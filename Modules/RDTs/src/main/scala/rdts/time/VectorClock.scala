@@ -1,5 +1,6 @@
 package rdts.time
 
+import rdts.base.Bottom
 import rdts.base.{Lattice, Uid}
 
 import scala.annotation.tailrec
@@ -25,6 +26,8 @@ object VectorClock {
 
   def zero: VectorClock                       = VectorClock(Map.empty)
   def fromMap(m: Map[Uid, Time]): VectorClock = VectorClock(m)
+
+  extension [Bottom[VectorClock]](v: VectorClock) def empty: VectorClock = VectorClock.zero
 
   given lattice: Lattice[VectorClock] =
     given Lattice[Time] = _ max _
