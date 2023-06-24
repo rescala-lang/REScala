@@ -20,7 +20,7 @@ object AuctionInterface {
 
   case class Bid(userId: User, bid: Int)
 
-  case object Bid {
+  object Bid {
     type User = String
   }
 
@@ -30,7 +30,7 @@ object AuctionInterface {
       winner: Option[User] = None
   )
 
-  case object AuctionData {
+  object AuctionData {
 
     implicit val AuctionDataAsUIJDLattice: Lattice[AuctionData] = new Lattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
@@ -61,12 +61,14 @@ object AuctionInterface {
           AuctionData(bidsMerged, statusMerged, winnerMerged)
       }
     }
-  }
 
-  implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
-    def bid(userId: User, price: Int): Mutate =
-      AuctionData(bids = Set(Bid(userId, price))).mutator
+    implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
+      def bid(userId: User, price: Int): Mutate =
+        AuctionData(bids = Set(Bid(userId, price))).mutator
 
-    def close()(using PermMutate): C = AuctionData(status = Closed).mutator
+      def close()(using PermMutate): C = AuctionData(status = Closed).mutator
+
+    }
+
   }
 }
