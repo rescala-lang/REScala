@@ -1,5 +1,6 @@
 package kofre.datatypes.experiments
 
+import kofre.base.Bottom
 import kofre.base.Lattice
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
 import kofre.syntax.OpsSyntaxHelper
@@ -31,6 +32,10 @@ object AuctionInterface {
   )
 
   object AuctionData {
+
+    val empty: AuctionData = AuctionData()
+
+    given bottom: Bottom[AuctionData] with { override def empty: AuctionData = AuctionData.empty }
 
     implicit val AuctionDataAsUIJDLattice: Lattice[AuctionData] = new Lattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
