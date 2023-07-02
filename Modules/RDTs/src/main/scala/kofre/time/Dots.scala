@@ -33,6 +33,11 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def nextDot(replicaId: Uid): Dot = Dot(replicaId, nextTime(replicaId))
 
+  def advanced(replicaId: Uid): Dots = {
+    val next = this.nextDot(replicaId)
+    this.add(next)
+  }
+
   def diff(other: Dots): Dots = subtract(other)
 
   def subtract(other: Dots): Dots = {
