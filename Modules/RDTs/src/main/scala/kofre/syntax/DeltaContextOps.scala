@@ -32,6 +32,7 @@ object PermMutate:
 )
 opaque type ReplicaId = Uid
 object ReplicaId:
+  given ordering: Ordering[ReplicaId]             = Uid.ordering
   extension (id: ReplicaId) def uid: Uid          = id
   def apply(id: Uid): ReplicaId                   = id
   inline given fromId: Conversion[Uid, ReplicaId] = identity
