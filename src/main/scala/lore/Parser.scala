@@ -251,7 +251,11 @@ object Parser:
   // quantifiers
   val quantifierVars: P[NonEmptyList[TArgT]] =
     (argT).repSep(ws.soft ~ P.char(',') ~ wsOrNl)
-  val triggers: P0[List[TViper]] = P.unit.as(List[TViper]())
+  val trigger: P[NonEmptyList[Term]] =
+    P.char('{') ~ wsOrNl *> inSetFactor.repSep(
+      wsOrNl ~ P.char(',') ~ wsOrNl
+    ) <* wsOrNl ~ P.char('}')
+  val triggers: P0[List[NonEmptyList[Term]]] = trigger.repSep0(wsOrNl)
   val forall: P[TForall] =
     withSourcePos(
       ((P.string("forall") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(

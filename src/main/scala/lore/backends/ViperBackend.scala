@@ -414,10 +414,15 @@ object ViperBackend:
             case f: TForall =>
               (
                 "forall",
-                s"{${f.triggers.map(expressionToViper).mkString(", ")}}"
+                f.triggers
+                  .map(x =>
+                    s"{${x.map(expressionToViper).toList.mkString(", ")}}"
+                  )
+                  .mkString(" ")
+                // s"{${f.triggers.map(expressionToViper).mkString(", ")}}"
               )
             case e: TExists => ("exists", "")
-          s"$keyword $varString :: $triggers ${expressionToViper(t.body)}"
+          s"$keyword $varString ::${if triggers.isEmpty() then "" else " "}$triggers ${expressionToViper(t.body)}"
         case t: TNum    => t.value.toString
         case t: TParens => s"(${expressionToViper(t.inner)})"
         case TFunC(

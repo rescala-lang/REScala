@@ -117,7 +117,7 @@ given HasChildren[Term] with
       case TFalse(sourcePos)                => List.empty
       case TNeg(body, sourcePos)            => List(body)
       case TForall(vars, triggers, body, sourcePos) =>
-        vars.toList ++ triggers.toList :+ body
+        vars.toList ++ triggers.map(_.toList).flatten :+ body
       case TExists(vars, body, sourcePos)          => vars.toList :+ body
       case TParens(inner, sourcePos)               => List(inner)
       case TString(value, sourcePos)               => List.empty
@@ -177,7 +177,9 @@ val children: Fold[Term, Term] =
         case TInvariant(condition, sourcePos) => f(condition)
         case TNeg(body, sourcePos)            => f(body)
         case TForall(vars, triggers, body, sourcePos) =>
-          Monoid[M].combineAll((vars.toList ++ triggers.toList :+ body).map(f))
+          Monoid[M].combineAll(
+            (vars.toList ++ triggers.map(_.toList).flatten :+ body).map(f)
+          )
         case TExists(vars, body, sourcePos) =>
           Monoid[M].combineAll(((vars.toList :+ body).map(f)))
         case TParens(inner, sourcePos) => f(inner)

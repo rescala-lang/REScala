@@ -226,7 +226,7 @@ sealed trait TQuantifier extends TBoolean:
   def body: Term
 case class TForall(
     vars: NonEmptyList[TArgT],
-    triggers: Seq[TViper],
+    triggers: List[NonEmptyList[Term]],
     body: Term,
     sourcePos: Option[SourcePos] = None
 ) extends TQuantifier
