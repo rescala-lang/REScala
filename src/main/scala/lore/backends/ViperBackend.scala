@@ -12,7 +12,8 @@ object ViperBackend:
       sources: Seq[String],
       derived: Seq[String],
       invariants: Seq[String],
-      interactions: Seq[(String, String)]
+      interactions: Seq[(String, String)],
+      imports: Seq[String]
   )
 
   /** Compiles a given ast to Viper. This function returns a list of (filename,
@@ -30,9 +31,7 @@ object ViperBackend:
       (
         name,
         s"""|// imports
-            |${res.ctx.viperImports
-             .map(i => s"import \"${i.path.toString.replace("\\", "/")}\"")
-             .mkString("\n")}
+            |${res.imports.mkString("\n")}
             |// sources
             |${res.sources.mkString("\n")}
             |// derived
@@ -49,9 +48,7 @@ object ViperBackend:
     val res = toViper(ast)
 
     s"""|// imports
-          |${res.ctx.viperImports
-         .map(i => s"import \"${i.path.toString}\"")
-         .mkString("\n")}
+          |${res.imports.mkString("\n")}
           |// sources
           |${res.sources.mkString("\n")}
           |// derived
@@ -85,11 +82,12 @@ object ViperBackend:
     val (ctx6, interactionsCompiled) = compileInteractions(ctx5)
 
     return ViperCompilationResult(
-      ctx6,
-      sourcesCompiled,
-      derivedCompiled,
-      invariantsCompiled,
-      interactionsCompiled
+      ctx = ctx6,
+      sources = sourcesCompiled,
+      derived = derivedCompiled,
+      invariants = invariantsCompiled,
+      interactions = interactionsCompiled,
+      imports = ctx6.viperImports.map(expressionToViper(_)(using ctx6))
     )
 
   private def viperTransformations(
@@ -454,6 +452,8 @@ object ViperBackend:
         case t: TSeq    => t.body.map(expressionToViper).toList.mkString("\n")
         case t: TAssert => s"assert ${expressionToViper(t.body)}"
         case t: TAssume => s"assume ${expressionToViper(t.body)}"
+        case t: TViperImport =>
+          s"import \"${t.path.toString().replace("\\", "/")}\""
     case exp =>
       throw new IllegalArgumentException(
         s"Expression $exp not allowed in Viper expressions!"

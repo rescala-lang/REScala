@@ -1,21 +1,23 @@
 [
   {
-    "TViperImport" : {
-      "path" : "deps/calendar_header.vpr",
-      "sourcePos" : {
-        "start" : {
-          "line" : 0,
-          "col" : 0,
-          "offset" : 0
-        },
-        "end" : {
-          "line" : 0,
-          "col" : 40,
-          "offset" : 40
-        },
-        "_type" : {
-          "Unknown" : {
-            
+    "TViper" : {
+      "TViperImport" : {
+        "path" : "deps/calendar_header.vpr",
+        "sourcePos" : {
+          "start" : {
+            "line" : 0,
+            "col" : 0,
+            "offset" : 0
+          },
+          "end" : {
+            "line" : 0,
+            "col" : 40,
+            "offset" : 40
+          },
+          "_type" : {
+            "Unknown" : {
+              
+            }
           }
         }
       }

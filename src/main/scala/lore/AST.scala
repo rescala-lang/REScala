@@ -27,7 +27,7 @@ sealed trait BinaryOp:
 
 // imports
 case class TViperImport(path: Path, sourcePos: Option[SourcePos] = None)
-    extends Term
+    extends TViper
 implicit val pathEncoder: Encoder[Path] =
   Encoder.encodeString.contramap[Path](_.toString)
 implicit val pathDecoder: Decoder[Path] =
