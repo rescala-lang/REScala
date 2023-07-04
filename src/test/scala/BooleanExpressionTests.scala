@@ -403,4 +403,19 @@ class BooleanExpressionParsing extends ParserSuite {
     )
 
   }
+
+  test("forall with trigger") {
+    assertParses(
+      Parser.trigger,
+      "{get_o_num(a)}"
+    )
+    assertParses(
+      Parser.booleanExpr,
+      "contains(orders, o) && get_o_num(o) == get_ol_o_num(ol)"
+    )
+    assertParses(
+      Parser.booleanExpr,
+      "forall a: Order :: {get_o_num(a), foo(a)} {contains(a)} contains(orders, o) && get_o_num(o) == get_ol_o_num(ol)"
+    )
+  }
 }

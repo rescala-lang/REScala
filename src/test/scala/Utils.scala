@@ -10,7 +10,7 @@ class ParserSuite extends FunSuite:
   def assertParses[A](p: P[A], expr: String): Unit =
     p.parseAll(expr) match {
       case Right(_) => ()
-      case Left(x)  => fail(x.toString)
+      case Left(x)  => fail(x.show)
     }
 
   def assertParsingResult(

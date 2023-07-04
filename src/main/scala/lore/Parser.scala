@@ -249,18 +249,18 @@ object Parser:
     }
 
   // quantifiers
-  val quantifierVars: P[NonEmptyList[TArgT]] =
+  private val quantifierVars: P[NonEmptyList[TArgT]] =
     (argT).repSep(ws.soft ~ P.char(',') ~ wsOrNl)
   val trigger: P[NonEmptyList[Term]] =
     P.char('{') ~ wsOrNl *> inSetFactor.repSep(
       wsOrNl ~ P.char(',') ~ wsOrNl
     ) <* wsOrNl ~ P.char('}')
-  val triggers: P0[List[NonEmptyList[Term]]] = trigger.repSep0(wsOrNl)
+  private val triggers: P0[List[NonEmptyList[Term]]] = trigger.repSep0(wsOrNl)
   val forall: P[TForall] =
     withSourcePos(
       ((P.string("forall") ~ ws *> quantifierVars) <* wsOrNl ~ P.string(
         "::"
-      ) ~ wsOrNl) ~ triggers ~ booleanExpr
+      ) ~ wsOrNl) ~ (triggers <* wsOrNl) ~ booleanExpr
     ).map { case (((vars, triggers), body), s) =>
       TForall(
         vars = vars,
