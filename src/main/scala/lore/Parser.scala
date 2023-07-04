@@ -41,7 +41,7 @@ object Parser:
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // any amount of whitespace, newlines or comments
   val wsOrNl = (wsp | P.defer(comment) | lf | crlf).rep0
-  val id: P[ID] = (alpha ~ (alpha | digit | P.char('_')).rep0).string
+  val id: P[ID] = (alpha ~ (alpha | digit | P.char('_').as('_')).rep0).string
   // types
   val typeName: P[Type] = P.recursive { rec =>
     (
