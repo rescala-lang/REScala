@@ -330,7 +330,7 @@ object ViperBackend:
         |// relevant invariants
         |${relevantInvariants.map("ensures " + _).mkString("\n")}
         |{
-        |${bodyCompiled.getOrElse("").indent(2)}} 
+        |${bodyCompiled.getOrElse("").indent(2)}}
         |""".stripMargin
 
   private def insertArgs(
