@@ -56,8 +56,10 @@ class WholeProgramParsing extends FunSuite:
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
+        // import io.circe.syntax.*
+        // import java.nio.file.{Files, Path}
         // Files.write(
-        //   Path.of("examples/calendar_new.ast"),
+        //   Path.of("src/test/resources/calendar_new.ast"),
         //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
         // )
         decode[NonEmptyList[Term]](astStr) match
