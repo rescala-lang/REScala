@@ -36,7 +36,9 @@ object ReplicaId:
   extension (id: ReplicaId) def uid: Uid          = id
   def apply(id: Uid): ReplicaId                   = id
   inline given fromId: Conversion[Uid, ReplicaId] = identity
+  def predefined(s: String): ReplicaId = ReplicaId.fromId(Uid.predefined(s))
   def unwrap(id: ReplicaId): Uid = id
+  def gen(): ReplicaId = Uid.gen()
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
