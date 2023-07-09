@@ -147,6 +147,15 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).elements, Set(1))
     assertEquals(decomposed(1).elements, Set(2))
+
+    val val_1_diff_val_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(val_1, val_2)
+    assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val merged_diff_val_1: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, val_1)
+    assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
+
+    val merged_diff_val_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, val_2)
+    assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
   }
 
   test("Dotted[GrowOnlyMap[Int, String]] decomposition") {
