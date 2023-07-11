@@ -31,8 +31,9 @@ class GrowMapTest extends munit.ScalaCheckSuite {
 
       val mapElements: Set[Int] = map.queryKey(k).map(o => o.elements).getOrElse(Set.empty[Int])
 
-      assert(
-        mapElements == set.elements,
+      assertEquals(
+        mapElements,
+        set.elements,
         s"Mutating/Querying a key in an ObserveRemoveMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
       )
     }
