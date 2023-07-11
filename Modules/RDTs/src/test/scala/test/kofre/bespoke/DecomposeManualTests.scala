@@ -27,11 +27,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: GrowOnlyCounter = Lattice[GrowOnlyCounter].merge(val_1, val_2)
     assertEquals(merged.value, 2)
 
-    val decomposed: Seq[GrowOnlyCounter] = Lattice[GrowOnlyCounter].decompose(merged).toSeq
-    assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).value, 1)
-    assertEquals(decomposed(1).value, 1)
-
     val val_1_diff_val_2: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -40,6 +35,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[GrowOnlyCounter] = Lattice[GrowOnlyCounter].decompose(merged).toSeq
+    assertEquals(decomposed.size, 2)
+    assertEquals(decomposed(0).value, 1)
+    assertEquals(decomposed(1).value, 1)
   }
 
   test("PosNegCounter decomposition") {
@@ -54,11 +54,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: PosNegCounter = Lattice[PosNegCounter].merge(val_1, val_2)
     assertEquals(merged.value, 0)
 
-    val decomposed: Seq[PosNegCounter] = Lattice[PosNegCounter].decompose(merged).toSeq.sortBy(_.value)
-    assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).value, -1)
-    assertEquals(decomposed(1).value, 1)
-
     val val_1_diff_val_2: Option[PosNegCounter] = Lattice[PosNegCounter].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -67,6 +62,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[PosNegCounter] = Lattice[PosNegCounter].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[PosNegCounter] = Lattice[PosNegCounter].decompose(merged).toSeq.sortBy(_.value)
+    assertEquals(decomposed.size, 2)
+    assertEquals(decomposed(0).value, -1)
+    assertEquals(decomposed(1).value, 1)
   }
 
   test("Dotted[MultiVersionRegister[Int]] decomposition") {
@@ -82,11 +82,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: Dotted[MultiVersionRegister[Int]] = Lattice[Dotted[MultiVersionRegister[Int]]].merge(val_1, val_2)
     assertEquals(merged.read, Set(1, 2))
 
-    val decomposed: Seq[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].decompose(merged).toSeq.sortBy(_.data.read.headOption)
-    assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).read, Set(1))
-    assertEquals(decomposed(1).read, Set(2))
-
     val val_1_diff_val_2: Option[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -95,6 +90,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].decompose(merged).toSeq.sortBy(_.data.read.headOption)
+    assertEquals(decomposed.size, 2)
+    assertEquals(decomposed(0).read, Set(1))
+    assertEquals(decomposed(1).read, Set(2))
   }
 
   test("Dotted[LastWriterWins[Int]] decomposition") {
@@ -115,10 +115,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(val_1, val_2)
     assertEquals(merged.read, 2)
 
-    val decomposed: Seq[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].decompose(merged).toSeq
-    assertEquals(decomposed.size, 1)
-    assertEquals(decomposed.head.read, 2)
-
     val val_1_diff_val_2: Option[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -127,6 +123,10 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].decompose(merged).toSeq
+    assertEquals(decomposed.size, 1)
+    assertEquals(decomposed.head.read, 2)
   }
 
   test("GrowOnlySet[Int] decomposition") {
@@ -143,11 +143,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: GrowOnlySet[Int] = Lattice[GrowOnlySet[Int]].merge(val_1, val_2)
     assertEquals(merged.elements, Set(1, 2))
 
-    val decomposed: Seq[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].decompose(merged).toSeq.sortBy(_.elements.headOption)
-    assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).elements, Set(1))
-    assertEquals(decomposed(1).elements, Set(2))
-
     val val_1_diff_val_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -156,6 +151,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].decompose(merged).toSeq.sortBy(_.elements.headOption)
+    assertEquals(decomposed.size, 2)
+    assertEquals(decomposed(0).elements, Set(1))
+    assertEquals(decomposed(1).elements, Set(2))
   }
 
   test("Dotted[GrowOnlyMap[Int, String]] decomposition") {
@@ -186,11 +186,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: Dotted[GrowOnlyMap[Int, String]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].merge(val_1, val_2)
     assertEquals(merged.data, Map(1 -> "one", 2 -> "two"))
 
-    val decomposed: Seq[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
-    assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).data, Map(1 -> "one"))
-    assertEquals(decomposed(1).data, Map(2 -> "two"))
-
     val val_1_diff_val_2: Option[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
@@ -199,6 +194,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val merged_diff_val_2: Option[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
+
+    val decomposed: Seq[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+    assertEquals(decomposed.size, 2)
+    assertEquals(decomposed(0).data, Map(1 -> "one"))
+    assertEquals(decomposed(1).data, Map(2 -> "two"))
   }
 
 }
