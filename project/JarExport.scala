@@ -14,8 +14,12 @@ object JarExport extends sbt.AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     // util to generate classpath file to be consumed by native image
     writeClasspath := {
-      val cp         = (Compile / fullClasspathAsJars).value
-      val cpstring   = cp.map(at => s"""-cp "${at.data.toString.replace("\\", "/")}"\n""").mkString("")
+      val cp = (Compile / fullClasspathAsJars).value
+      val cpstring = cp.map { at =>
+        val pathstring = at.data.toString.replace("\\", "/")
+        if (pathstring.contains("org/graalvm")) ""
+        else s"""-cp "${pathstring}"\n"""
+      }.mkString("")
       val targetpath = target.value.toPath.resolve("classpath.txt")
       IO.write(targetpath.toFile, cpstring)
       targetpath.toFile
