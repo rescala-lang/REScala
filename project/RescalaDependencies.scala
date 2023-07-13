@@ -64,7 +64,7 @@ object RescalaDependencies {
     organizationName     := "Software Technology Group",
     organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
     homepage             := Some(url("https://www.rescala-lang.com/")),
-    licenses             := List("Apache 2" -> new URL("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+    licenses             := List("Apache 2" -> new URI("http://www.apache.org/licenses/LICENSE-2.0.txt").toURL),
     scmInfo := Some(
       ScmInfo(
         url("https://github.com/rescala-lang/REScala"),

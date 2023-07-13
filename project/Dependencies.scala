@@ -3,7 +3,6 @@
 
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import sbt.*
-import sbt.Keys.*
 
 object Dependencies {
 
@@ -23,7 +22,7 @@ object Dependencies {
     val scalaJavaTime = "2.3.0"
     val scalaLoci     = "eb0719f08f"
     val scalacheck    = "1.17.0"
-    val scalajsDom    = "2.4.0"
+    val scalajsDom    = "2.6.0"
     val scalatags     = "0.12.0"
     val scopt         = "4.1.0"
     val scribe        = "3.10.7"
@@ -56,13 +55,12 @@ object Dependencies {
   val upickle       = Def.setting("com.lihaoyi" %%% "upickle" % V.upickle)
 
   object slips {
-    val category = Def.setting("de.rmgk.slips" %%% "category" % "0.4.7")
-    val chain    = Def.setting("de.rmgk.slips" %%% "chain" % "0.4.9")
-    val delay    = Def.setting("de.rmgk.slips" %%% "delay" % "0.4.9")
-    val logging  = Def.setting("de.rmgk.slips" %%% "logging" % "0.5.0")
-    val options  = Def.setting("de.rmgk.slips" %%% "options" % "0.4.9")
-    val scip     = Def.setting("de.rmgk.slips" %%% "scip" % "0.4.9")
-    val script   = Def.setting("de.rmgk.slips" %%% "script" % "0.4.9")
+    val chain   = Def.setting("de.rmgk.slips" %%% "chain" % "0.5.0")
+    val delay   = Def.setting("de.rmgk.slips" %%% "delay" % "0.5.0")
+    val logging = Def.setting("de.rmgk.slips" %%% "logging" % "0.5.0")
+    val options = Def.setting("de.rmgk.slips" %%% "options" % "0.5.0")
+    val scip    = Def.setting("de.rmgk.slips" %%% "scip" % "0.5.0")
+    val script  = Def.setting("de.rmgk.slips" %%% "script" % "0.5.0")
   }
 
   object loci {
