@@ -1,6 +1,6 @@
 package replication.fbdc
 
-import de.rmgk.script.extensions
+import de.rmgk.script.syntax
 import kofre.datatypes.alternatives.lww.TimedVal
 
 object Fortunes {

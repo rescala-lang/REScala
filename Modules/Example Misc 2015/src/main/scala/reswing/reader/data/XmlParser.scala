@@ -1,17 +1,15 @@
 package reswing.reader.data
 
-import java.net.MalformedURLException
-import java.net.URL
+import java.net.{MalformedURLException, URI, URL}
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
 import reswing.reader.Observable
 
 import scala.xml.Node
 import scala.xml.NodeSeq
-import rescala.default._
+import rescala.default.*
 
 /** The XMLParser is responsible for the translation of xml to the
   * internal represantation of the RSS Feed
@@ -137,7 +135,7 @@ class XmlParser {
   }
 
   private def tryToCreateURL(s: String): Option[URL] = {
-    try Some(new URL(s))
+    try Some(new URI(s).toURL)
     catch {
       case _: MalformedURLException => None
     }

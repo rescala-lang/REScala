@@ -1,12 +1,9 @@
 package reswing.reader.network
 
 import java.io.FileNotFoundException
-import java.net.MalformedURLException
-import java.net.URL
-import java.net.UnknownHostException
-
+import java.net.{MalformedURLException, URI, URL, UnknownHostException}
 import reswing.reader.Observable
-import rescala.default._
+import rescala.default.*
 
 class UrlChecker {
   type CheckArg    = String
@@ -24,7 +21,7 @@ class UrlChecker {
     // if not successful, a Left with an error message is returned
     (url: String) =>
       try {
-        val u = new URL(url)
+        val u = new URI(url).toURL
         u.getContent
         Right(u)
       } catch {
