@@ -173,7 +173,33 @@ class ContainerTest extends munit.FunSuite {
 
   // START AuctionData
 
-  test("Dotted can contain AuctionData") {
+  test("plain AuctionData without container returns deltas") {
+    val auction: AuctionData = AuctionData.empty
+
+    assertEquals(auction.bids, Set.empty)
+    assertEquals(auction.status, AuctionInterface.Open)
+    assertEquals(auction.winner, None)
+
+    val added_delta = auction.bid("First", 1)
+    assertEquals(added_delta.bids, Set(Bid("First", 1)))
+    assertEquals(added_delta.status, AuctionInterface.Open)
+    assertEquals(added_delta.winner, None)
+
+    val added: AuctionData = auction merge added_delta
+
+    val closed_delta: AuctionData = added.close()
+    assertEquals(closed_delta.bids, Set.empty)
+    assertEquals(closed_delta.status, AuctionInterface.Closed)
+    assertEquals(closed_delta.winner, None)
+
+    val closed: AuctionData = added merge closed_delta
+
+    assertEquals(closed.bids, Set(Bid("First", 1)))
+    assertEquals(closed.status, AuctionInterface.Closed)
+    assertEquals(closed.winner, Some("First"))
+  }
+
+  test("Dotted can contain plain AuctionData") {
     val auction: Dotted[AuctionData] = Dotted.empty
 
     assertEquals(auction.data.bids,   Set.empty)
