@@ -158,7 +158,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(decomposed(1).elements, Set(2))
   }
 
-  test("Dotted[GrowOnlyMap[Int, String]] decomposition") {
+  test("Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] decomposition") {
     import GrowOnlyMap.given
 
     given stringOrdering: Ordering[String] = scala.math.Ordering.String
@@ -171,34 +171,44 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
       override def empty: String = ""
     }
 
-    val empty: Dotted[GrowOnlyMap[Int, String]] = Dotted(Bottom[GrowOnlyMap[Int, String]].empty)
+    val emptyMap: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = Dotted(Bottom[GrowOnlyMap[Int, LastWriterWins[String]]].empty)
 
     val k1: Int = 1
     val v1: String = "one"
-    val val_1: Dotted[GrowOnlyMap[Int, String]] = empty.mutateKeyNamedCtx(k1, v1)(e => e)
-    assertEquals(val_1.data, Map(1 -> "one"))
+    val e1 = LastWriterWins.now(Dot(r1.uid, 0), "")
+    val val_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k1, e1)(_.write(using r1)(v1))
+    assertEquals(val_1.data.keySet, Set(1))
+    assertEquals(val_1.data.get(1).map(_.payload), Some("one"))
 
     val k2: Int = 2
     val v2: String = "two"
-    val val_2: Dotted[GrowOnlyMap[Int, String]] = empty.mutateKeyNamedCtx(k2, v2)(e => e)
-    assertEquals(val_2.data, Map(2 -> "two"))
+    val e2 = LastWriterWins.now(Dot(r2.uid, 0), "")
+    val val_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k2, e2)(_.write(using r2)(v2))
+    assertEquals(val_2.data.keySet, Set(2))
+    assertEquals(val_2.data.get(2).map(_.payload), Some("two"))
 
-    val merged: Dotted[GrowOnlyMap[Int, String]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].merge(val_1, val_2)
-    assertEquals(merged.data, Map(1 -> "one", 2 -> "two"))
+    val merged: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].merge(val_1, val_2)
+    assertEquals(merged.data.keySet, Set(1, 2))
+    assertEquals(merged.data.get(1).map(_.payload), Some("one"))
+    assertEquals(merged.data.get(2).map(_.payload), Some("two"))
 
-    val val_1_diff_val_2: Option[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].diff(val_1, val_2)
+    val val_1_diff_val_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
 
-    val merged_diff_val_1: Option[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].diff(merged, val_1)
+    val merged_diff_val_1: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
 
-    val merged_diff_val_2: Option[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].diff(merged, val_2)
+    val merged_diff_val_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(merged, val_2)
     assertEquals(merged_diff_val_2, None, "val_2 should be contained in merged")
 
-    val decomposed: Seq[Dotted[GrowOnlyMap[Int, String]]] = Lattice[Dotted[GrowOnlyMap[Int, String]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+    val decomposed: Seq[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
     assertEquals(decomposed.size, 2)
-    assertEquals(decomposed(0).data, Map(1 -> "one"))
-    assertEquals(decomposed(1).data, Map(2 -> "two"))
+
+    assertEquals(decomposed(0).data.get(1).map(_.payload), Some("one"))
+    assertEquals(decomposed(0).context.internal.keySet.size, 1)
+
+    assertEquals(decomposed(1).data.get(2).map(_.payload), Some("two"))
+    assertEquals(decomposed(1).context.internal.keySet.size, 1)
   }
 
 }
