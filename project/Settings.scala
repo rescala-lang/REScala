@@ -1,7 +1,6 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import Dependencies.Versions as V
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 import sbt.*
@@ -11,7 +10,15 @@ import scala.math.Ordering.Implicits.infixOrderingOps
 
 object Settings {
 
-  val commonCrossBuildVersions = crossScalaVersions := Seq(V.scala211, V.scala212, V.scala213, V.scala3)
+  object Versions {
+    val scala211 = "2.11.12"
+    val scala212 = "2.12.17"
+    val scala213 = "2.13.10"
+    val scala3   = "3.3.0"
+  }
+
+  val commonCrossBuildVersions =
+    crossScalaVersions := Seq(Versions.scala211, Versions.scala212, Versions.scala213, Versions.scala3)
 
   private def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
 
@@ -78,19 +85,19 @@ object Settings {
     )
 
   val scalaVersion_211 = Def.settings(
-    scalaVersion := V.scala211,
+    scalaVersion := Versions.scala211,
     commonScalacOptions
   )
   val scalaVersion_212 = Def.settings(
-    scalaVersion := V.scala212,
+    scalaVersion := Versions.scala212,
     commonScalacOptions
   )
   val scalaVersion_213 = Def.settings(
-    scalaVersion := V.scala213,
+    scalaVersion := Versions.scala213,
     commonScalacOptions
   )
   val scalaVersion_3 = Def.settings(
-    scalaVersion := V.scala3,
+    scalaVersion := Versions.scala3,
     commonScalacOptions
   )
 
@@ -129,7 +136,7 @@ object Settings {
   val jolSettings = Seq(
     javaOptions += "-Djdk.attach.allowAttachSelf",
     fork := true,
-    libraryDependencies += Dependencies.jol.value
+    Dependencies.jol
   )
 
   // see https://www.scala-js.org/doc/project/js-environments.html

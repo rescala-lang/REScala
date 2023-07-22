@@ -1,91 +1,94 @@
 package replication
 
 import de.rmgk.options.*
-import replication.calendar.{CalendarOptions, Peer}
-import replication.checkpointing.CheckpointingOptions
-import replication.checkpointing.central.{CentralOptions, Checkpointer}
-import replication.checkpointing.decentral.{DecentralOptions, Replica}
 import kofre.base.Uid
-import replication.fbdc.FbdcCli
+import replication.checkpointing.central.Checkpointer
+import replication.fbdc.{CliConnections, FbdcCli}
 
 import java.nio.file.Path
+import scala.util.boundary
 
-case class CliArgs(
-    calendar: Subcommand[CalendarOptions] = Subcommand(CalendarOptions()),
-    dtn: Subcommand[Unit] = Subcommand.empty(),
-    checkpointing: Subcommand[CheckpointingOptions] = Subcommand(CheckpointingOptions()),
-    conn: Subcommand[fbdc.CliConnections] = Subcommand(fbdc.CliConnections()),
-)
+given [T](using avp: ArgumentValueParser[T]): ArgumentValueParser[List[T]] with
+  override def apply(args: List[String]): (Option[List[T]], List[String]) =
+    def rec(remaining: List[String], acc: List[T]): (Option[List[T]], List[String]) =
+      if remaining.isEmpty
+      then (Some(acc), Nil)
+      else
+        val (value, rest) = avp.apply(remaining)
+        value match
+          case None    => (Some(acc.reverse), remaining)
+          case Some(v) => rec(rest, v :: acc)
+    rec(args, Nil)
+
+  override def valueDescription: String = s"${avp.valueDescription}*"
 
 object cli {
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit =
 
-    val instance = CliArgs()
-
-    val parser = makeParser(
-      instance,
-      { b =>
-        scopt.OParser.sequence(
-          b.programName("repl-cli"),
-          b.help("help").text("prints this usage text")
-        )
-      }
-    )
-    scopt.OParser.parse(parser, args, instance)
+    val id         = named[String]("--id", "")
+    val listenPort = named[Int]("--listenPort", "")
 
     val ipAndPort = """([\d.]*):(\d*)""".r
 
-    instance.calendar.value match
-      case None =>
-      case Some(calArgs) =>
-        val ipsAndPorts = calArgs.connectTo.value.collect {
-          case ipAndPort(ip, port) => (ip, port.toInt)
+    given ArgumentValueParser[(String, Int)] with
+      override def apply(args: List[String]): (Option[(String, Int)], List[String]) =
+        args match {
+          case ipAndPort(ip, port) :: rest => (Some((ip, Integer.parseInt(port))), rest)
+          case _ => (None, args)
         }
 
-        new Peer(Uid.predefined(calArgs.id.value), calArgs.listenPort.value, ipsAndPorts).run()
+      override def valueDescription: String = "<ip:port>"
 
-    instance.checkpointing.value.flatMap(_.decentral.value) match
-      case None =>
-      case Some(decArgs) =>
-        val ipsAndPorts = decArgs.connectTo.value.collect {
-          case ipAndPort(ip, port) => (ip, port.toInt)
-        }
+    parseArguments(args.toList) {
 
-        new Replica(
-          decArgs.listenPort.value,
-          ipsAndPorts,
-          Uid.predefined(decArgs.id.value),
-          decArgs.initSize.value
-        ).run()
 
-    instance.checkpointing.value.flatMap(_.central.value) match
-      case None =>
-      case Some(centralArgs) =>
-        centralArgs.peer.value match
-          case None =>
-          case Some(centralPeerArgs) =>
-            val ipsAndPorts = centralPeerArgs.connectTo.value.collect {
-              case ipAndPort(ip, port) => (ip, port.toInt)
-            }
+      val ipsAndPorts = named[List[(String, Int)]]("--connectTo", "<ip:port>", Nil).value
 
-            new replication.checkpointing.central.Peer(
-              Uid.predefined(centralPeerArgs.id.value),
-              centralPeerArgs.listenPort.value,
-              ipsAndPorts
+
+      boundary {
+
+        subcommand("calendar", ""):
+          new replication.calendar.Peer(Uid.predefined(id.value), listenPort.value, ipsAndPorts).run()
+          boundary.break()
+
+        subcommand("checkpointing", ""):
+          subcommand("decentral", ""):
+            new replication.checkpointing.decentral.Replica(
+              listenPort.value,
+              ipsAndPorts,
+              Uid.predefined(id.value),
+              named[Int]("--initSize", "").value
             ).run()
-        centralArgs.checkpointer.value match
-          case None =>
-          case Some(checkpointerArgs) =>
-            new Checkpointer(checkpointerArgs.listenPort.value).run()
+            boundary.break()
 
-    if instance.dtn.value.isDefined then dtn.run()
+          subcommand("central", ""):
+            subcommand("peer", ""):
+              new replication.checkpointing.central.Peer(
+                Uid.predefined(id.value),
+                listenPort.value,
+                ipsAndPorts
+              ).run()
+              boundary.break()
+            subcommand("checkpointer", ""):
+              new Checkpointer(listenPort.value).run()
+              boundary.break()
 
-    instance.conn.value match
-      case None =>
-      case Some(connections) =>
-        val serv = new FbdcCli(connections)
-        serv.start()
-        ()
+        subcommand("dtn", ""):
+          dtn.run()
+          boundary.break()
 
-  }
+        subcommand("conn", ""):
+          val serv = new FbdcCli(CliConnections(
+            named[Option[Int]]("--tcp-listen-port", "tcp listen port", None).value,
+            named[List[(String, Int)]]("--tcp-connect", "connections", Nil).value,
+            named[Option[Int]]("--webserver-listen-port", "webserver listen port", None).value,
+            named[Option[Path]]("--webserver-static-path", "webserver static path", None).value,
+            named[Option[Path]]("--northwind-path", "northwind sqlite database path", None).value,
+          ))
+          serv.start()
+          boundary.break()
+
+        throw ParseException("no subcommand matched")
+      }
+    }.printHelp()
 }

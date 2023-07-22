@@ -1,4 +1,3 @@
-import Dependencies.*
 import RescalaDependencies.*
 import Settings.*
 
@@ -50,22 +49,20 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     publishSonatype,
     scalaReflectProvided,
     resolverJitpack,
-    libraryDependencies ++= Seq(
-      sourcecode.value,
-      scalatest.value,
-      scalatestpluscheck.value,
-    ),
-    libraryDependencies ++= retypecheck.value
+    Dependencies.sourcecode,
+    RescalaDependencies.scalatest,
+    RescalaDependencies.scalatestpluscheck,
+    RescalaDependencies.retypecheck
   )
   .jsSettings(
-    libraryDependencies += scalatags.value % "provided,test",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % "provided,test",
     jsAcceptUnfairGlobalTasks,
     jsEnvDom,
     sourcemapFromEnv(),
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scalaVersion_3, noPublish, libraryDependencies += scalaSwing.value)
+  .settings(scalaVersion_3, noPublish,  RescalaDependencies.scalaSwing)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
@@ -88,7 +85,8 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
   .settings(
     scalaVersion_3,
     publishSonatype,
-    libraryDependencies ++= List(munit.value, munitCheck.value),
+    Dependencies.munit,
+    Dependencies.munitCheck,
   )
   .jsSettings(
     sourcemapFromEnv()
@@ -98,17 +96,13 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= Seq(
-      scalatest.value,
-      scalatestpluscheck.value,
-      munit.value,
-      munitCheck.value,
-    )
+    RescalaDependencies.scalatest,
+    RescalaDependencies.scalatestpluscheck,
+    Dependencies.munit,
+    Dependencies.munitCheck,
   )
   .jvmSettings(
-    libraryDependencies ++= Seq(
-      tink.value
-    )
+      RescalaDependencies.tink
   )
   .jsConfigure(_.enablePlugins(ScalablyTypedConverterPlugin))
   .jsSettings(
@@ -126,7 +120,7 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).c
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= List(jsoniterScala.value)
+    Dependencies.jsoniterScala,
   )
   .dependsOn(rescala)
 
@@ -136,10 +130,8 @@ lazy val microbench = project.in(file("Modules/Microbenchmarks"))
     scalaVersion_3,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
-    libraryDependencies ++= List(
-      upickle.value,
-      jsoniterScala.value
-    ),
+    Dependencies.upickle,
+    Dependencies.jsoniterScala,
     jolSettings,
   )
   .dependsOn(rescala.jvm, kofre.jvm)
@@ -165,12 +157,10 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .settings(
     scalaVersion_3,
     noPublish,
-    libraryDependencies ++= Seq(
-      scalatags.value,
-      loci.webrtc.value,
-      loci.jsoniterScala.value,
-      jsoniterScala.value
-    ),
+    Dependencies.scalatags,
+    Dependencies.loci.webrtc,
+    Dependencies.loci.jsoniterScala,
+    Dependencies.jsoniterScala,
     jsAcceptUnfairGlobalTasks,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value
@@ -194,12 +184,10 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     noPublish,
     scalaFxDependencies,
     fork := true,
-    libraryDependencies += jsoniterScala.value,
-    libraryDependencies ++= jetty11.value,
-    libraryDependencies ++= Seq(
-      tink.value,
-      "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-    ),
+    Dependencies.jsoniterScala,
+    RescalaDependencies.jetty11,
+    RescalaDependencies.tink,
+    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
 lazy val replicationExamples =
@@ -211,30 +199,25 @@ lazy val replicationExamples =
       run / fork         := true,
       run / connectInput := true,
       resolverJitpack,
-      libraryDependencies ++= Seq(
-        loci.tcp.value,
-        loci.jsoniterScala.value,
-        munitCheck.value,
-        munit.value,
-        scalacheck.value,
-        slips.options.value,
-        slips.delay.value,
-        jsoniterScala.value
-      ),
+      Dependencies.loci.tcp,
+      Dependencies.loci.jsoniterScala,
+      Dependencies.munitCheck,
+      Dependencies.munit,
+      Dependencies.scalacheck,
+      Dependencies.slips.options,
+      Dependencies.slips.delay,
+      Dependencies.jsoniterScala
     )
     .jvmSettings(
-      libraryDependencies ++= Seq(
-        loci.wsJetty11.value,
-        scribeSlf4j2.value,
-        slips.script.value,
-        sqliteJdbc.value,
-      ) ++ jetty11.value
+      Dependencies.loci.wsJetty11,
+      Dependencies.scribeSlf4j2,
+      Dependencies.slips.script,
+      Dependencies.sqliteJdbc,
+      RescalaDependencies.jetty11,
     )
     .jsSettings(
-      libraryDependencies ++= Seq(
-        scalatags.value,
-        loci.wsWeb.value,
-      ),
+      Dependencies.scalatags,
+      Dependencies.loci.wsWeb,
       TaskKey[File]("deploy", "generates a correct index.html") := {
         val fastlink   = (Compile / fastLinkJS).value
         val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
