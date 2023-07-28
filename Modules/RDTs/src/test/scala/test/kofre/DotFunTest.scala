@@ -1,8 +1,8 @@
 package test.kofre
 
 import kofre.base.{Lattice, Uid}
-import kofre.time.{Dot, Dots}
 import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
+import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 

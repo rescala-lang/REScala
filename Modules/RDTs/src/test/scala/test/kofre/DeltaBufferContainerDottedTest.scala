@@ -3,9 +3,7 @@ package test.kofre
 import kofre.base.Uid
 import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
-import kofre.syntax.DeltaBufferContainer
-import kofre.syntax.ReplicaId
+import kofre.syntax.{DeltaBuffer, DeltaBufferContainer, ReplicaId}
 
 class DeltaBufferContainerDottedTest extends munit.FunSuite {
 

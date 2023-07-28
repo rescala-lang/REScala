@@ -2,14 +2,14 @@ package test.kofre
 
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators
-import kofre.time.{Dots, Dot}
-import kofre.dotted.HasDots.*
+import kofre.base.Uid.asId
 import kofre.datatypes.contextual.EnableWinsFlag
+import kofre.dotted.HasDots.*
 import kofre.dotted.{Dotted, HasDots}
+import kofre.syntax.ReplicaId
+import kofre.time.{Dot, Dots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
-import kofre.syntax.ReplicaId
-import kofre.base.Uid.asId
 
 class SyntaxTest extends munit.FunSuite {
 

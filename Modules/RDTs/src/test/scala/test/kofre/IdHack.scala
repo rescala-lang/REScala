@@ -1,7 +1,7 @@
 package test.kofre
 
-import munit.Compare
 import kofre.base.Uid
+import munit.Compare
 
 implicit def idFromString(s: String): kofre.base.Uid = kofre.base.Uid.predefined(s)
 

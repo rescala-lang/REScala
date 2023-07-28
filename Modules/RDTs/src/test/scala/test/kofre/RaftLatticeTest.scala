@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.Lattice
 import kofre.datatypes.experiments.RaftState
-import RaftState.Vote
+import kofre.datatypes.experiments.RaftState.Vote
 
 class RaftLatticeTest extends munit.FunSuite {
 

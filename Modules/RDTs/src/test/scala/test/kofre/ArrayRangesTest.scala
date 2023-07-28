@@ -1,6 +1,6 @@
 package test.kofre
 
-import kofre.base.{Uid, Time}
+import kofre.base.{Time, Uid}
 import kofre.time.{ArrayRanges, Dot}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*

@@ -5,7 +5,7 @@ import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}
 
-import math.Ordering.Implicits.infixOrderingOps
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 class VectorClockOrderTest
     extends OrderTests[VectorClock](total = true)(using VectorClock.vectorClockTotalOrdering, summon)

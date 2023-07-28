@@ -1,9 +1,9 @@
 package test.kofre
 
-import kofre.time.{Dots, Dot}
-import org.scalacheck.Prop.*
-import test.kofre.DataGenerator.{given, *}
 import kofre.base.Uid
+import kofre.time.{Dot, Dots}
+import org.scalacheck.Prop.*
+import test.kofre.DataGenerator.{*, given}
 
 class DotsTest extends munit.ScalaCheckSuite {
 

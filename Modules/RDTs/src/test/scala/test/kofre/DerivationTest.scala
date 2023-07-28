@@ -1,5 +1,5 @@
 package test.kofre
-import kofre.base.{Uid, Lattice}
+import kofre.base.{Lattice, Uid}
 import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.arbId

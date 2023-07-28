@@ -1,7 +1,7 @@
 package test.kofre
 
-import kofre.base.Lattice.{*, given}
 import kofre.base.Lattice
+import kofre.base.Lattice.given
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 
