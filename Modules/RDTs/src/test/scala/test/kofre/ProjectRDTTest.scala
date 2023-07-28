@@ -95,8 +95,8 @@ class ProjectRDTTest extends munit.FunSuite {
     val newProject: Dotted[Project] = p.merge(deltaRes)
 
     // I did not actually run this, but that should work™ :-)
-    assert(newProject.name == "some project")
-    assert(newProject.map(_._name).read == Some("some project"))
+    assertEquals(newProject.name, "some project")
+    assertEquals(newProject.map(_._name).read, Some("some project"))
   }
 
   test("pos neg delta buffer") {

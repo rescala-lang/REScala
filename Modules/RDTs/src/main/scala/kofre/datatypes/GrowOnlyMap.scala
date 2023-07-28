@@ -18,7 +18,7 @@ object GrowOnlyMap {
 
   def empty[K, V]: GrowOnlyMap[K, V] = Map.empty
 
-  given [K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.mapBottom
+  given bottom[K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.mapBottom
 
   given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.mapLattice
   given contextLattice[K, V: DottedLattice: HasDots: Bottom]: DottedLattice[GrowOnlyMap[K, V]] =
@@ -40,7 +40,7 @@ object GrowOnlyMap {
         PermCausalMutate,
     ): C = {
       m(
-        queryKey(k).getOrElse(default).inheritContext
+        container.queryKey(k).getOrElse(default).inheritContext
       ).map(v => Map(k -> v)).mutator
     }
   }

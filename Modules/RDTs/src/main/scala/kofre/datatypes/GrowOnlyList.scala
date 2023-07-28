@@ -64,8 +64,10 @@ object GrowOnlyList {
             state.get(l) match {
               case None => GrowOnlyList(state.innerContents + edge)
               case Some(next @ Elem(e2)) =>
-                if (e1.timestamp > e2.timestamp) GrowOnlyList(state.innerContents + edge + (r -> next))
-                else insertEdge(state, next                                                   -> r)
+                if e1.timestamp > e2.timestamp
+                then GrowOnlyList(state.innerContents + edge + (r -> next))
+                else
+                  insertEdge(state, next -> r)
             }
         }
 
@@ -79,10 +81,9 @@ object GrowOnlyList {
           case None => left
           case Some(next) =>
             val leftMerged =
-              if (left.contains(current) && left.exists { case (_, r) => r == next })
-                left
-              else
-                insertEdge(left, (current, next))
+              if left.contains(current) && left.exists { case (_, r) => r == next }
+              then left
+              else insertEdge(left, (current, next))
 
             insertRec(leftMerged, right, next)
         }
