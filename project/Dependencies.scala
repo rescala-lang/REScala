@@ -13,7 +13,7 @@ object Dependencies {
   def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.0-M8" % Test
   def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.0.0-M8" % Test
   def okHttp        = libraryDependencies += "com.squareup.okhttp3"         % "okhttp"           % "4.10.0"
-  def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.8.0"
+  def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.8.1"
   def quicklens     = libraryDependencies += "com.softwaremill.quicklens" %%% "quicklens"        % "1.9.0"
   def scalacheck    = libraryDependencies += "org.scalacheck"             %%% "scalacheck"       % "1.17.0"   % Test
   def scalaJavaTime = libraryDependencies += "io.github.cquiroz"          %%% "scala-java-time"  % "2.3.0"
@@ -26,7 +26,10 @@ object Dependencies {
   def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.42.0.0"
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.2"
   def jsoniterScala =
-    libraryDependencies += "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.23.2"
+    libraryDependencies ++= Seq(
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.23.2",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.23.2" % "provided"
+    )
 
   object slips {
     def chain   = libraryDependencies += "de.rmgk.slips" %%% "chain"   % "0.5.0"
