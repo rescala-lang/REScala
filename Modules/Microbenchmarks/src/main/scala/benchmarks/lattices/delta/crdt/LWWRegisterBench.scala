@@ -14,20 +14,20 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var full: DeltaBufferDotted[CausalLastWriterWins[Int]]  = _
+  var full: NamedDeltaBuffer[CausalLastWriterWins[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    full = NamedDeltaBuffer.dottedInit("b", CausalLastWriterWins.now(_, 0))
+    full = NamedDeltaBuffer("b", CausalLastWriterWins.now(0))
   }
 
   @Benchmark
   def readFull(): Int = full.read
 
   @Benchmark
-  def writeFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.write(using full.replicaID)(1)
+  def writeFull(): NamedDeltaBuffer[CausalLastWriterWins[Int]] = full.write(1)
 
   @Benchmark
-  def mapFull(): DeltaBufferDotted[CausalLastWriterWins[Int]] = full.write(using full.replicaID)(full.read + 1)
+  def mapFull(): NamedDeltaBuffer[CausalLastWriterWins[Int]] = full.write(full.read + 1)
 
 }

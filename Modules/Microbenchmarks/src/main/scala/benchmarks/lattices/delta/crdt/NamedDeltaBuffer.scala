@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.{Bottom, Lattice, Uid}
+import kofre.base.{Lattice, Uid}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.*
 import kofre.time.{Dot, Dots}
@@ -48,7 +48,7 @@ object NamedDeltaBuffer {
     override def context(c: NamedDeltaBuffer[Dotted[L]]): Dots = c.state.context
   }
 
-  given plainPermissions[L: Lattice: Bottom]: PermMutate[NamedDeltaBuffer[L], L] = new {
+  given plainPermissions[L: Lattice]: PermMutate[NamedDeltaBuffer[L], L] = new {
     override def mutate(c: NamedDeltaBuffer[L], delta: L): NamedDeltaBuffer[L] =
       c.applyDelta(c.replicaID, delta)
     override def query(c: NamedDeltaBuffer[L]): L = c.state

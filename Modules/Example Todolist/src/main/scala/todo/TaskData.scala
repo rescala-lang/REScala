@@ -1,10 +1,9 @@
 package todo
 
-import kofre.base.Bottom
+import kofre.base.{Bottom}
 import kofre.datatypes.alternatives.lww.CausalLastWriterWins
-import kofre.dotted.Dotted
+import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, ReplicaId}
-import kofre.time.Dots
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.given
 import org.scalajs.dom.UIEvent
@@ -28,6 +27,8 @@ case class TaskData(
   def toggle(): TaskData          = copy(done = !done)
   def edit(str: String): TaskData = copy(desc = str)
 }
+
+given [A]: DottedLattice[CausalLastWriterWins[A]] = DottedLattice.liftLattice
 
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
@@ -81,10 +82,9 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       task: Option[TaskData],
   ): TaskRefData = {
     val lww: DeltaBuffer[Dotted[CausalLastWriterWins[Option[TaskData]]]] =
-      val dot = Dots.empty.nextDot(fixedId.uid)
       if task.isEmpty
-      then DeltaBuffer(Dotted(CausalLastWriterWins.fallback(dot, task)))
-      else DeltaBuffer(Dotted(CausalLastWriterWins.now(dot, task)))
+      then DeltaBuffer(Dotted(CausalLastWriterWins.fallback(task)))
+      else DeltaBuffer(Dotted(CausalLastWriterWins.now(task)))
 
     val edittext: Event.CBR[UIEvent, HtmlTag] = Event.fromCallback {
       input(`class` := "edit", `type` := "text", onchange := Event.handle[UIEvent], onblur := Event.handle[UIEvent])

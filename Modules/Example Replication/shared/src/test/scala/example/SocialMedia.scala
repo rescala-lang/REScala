@@ -6,7 +6,7 @@ import kofre.base.Uid
 import kofre.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
-import kofre.datatypes.contextual.LastWriterWins as LWW
+import kofre.datatypes.alternatives.lww.CausalLastWriterWins as LWW
 import kofre.datatypes.GrowOnlyCounter as Counter
 import kofre.syntax.ReplicaId
 
