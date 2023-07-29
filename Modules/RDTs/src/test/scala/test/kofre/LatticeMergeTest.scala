@@ -15,21 +15,16 @@ import scala.util.NotGiven
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[GenericLastWriterWins[Time, Int]]
 class OrSetLatice        extends LatticeMergeTest[ObserveRemoveSet[Int]]
-
-// This may fail because of colliding dots
-class LWWLattice extends LatticeMergeTest[Dotted[LastWriterWins[Int]]]
-
-// This may fail in cases where we generate colliding dots with different values.
-class MVRLattice extends LatticeMergeTest[MultiValueRegister[Int]]
-
-
+class LWWLattice         extends LatticeMergeTest[Dotted[LastWriterWins[Int]]]
+class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice]
     extends munit.ScalaCheckSuite {
 
   /** because examples are generated independently, they sometimes produce causally inconsistent results */
   inline def ignoreCausalErrors[A](inline expr: Unit): Unit =
-    try expr catch case _: CausalityException => ()
+    try expr
+    catch case _: CausalityException => ()
 
   property("idempotent") {
     forAll { (a: A, b: A) =>
@@ -37,7 +32,6 @@ abstract class LatticeMergeTest[A: Arbitrary: Lattice]
         val ab  = Lattice.merge(a, b)
         val abb = Lattice.merge(ab, b)
         assertEquals(ab, abb)
-
 
     }
   }
@@ -58,7 +52,6 @@ abstract class LatticeMergeTest[A: Arbitrary: Lattice]
     }
   }
 }
-
 
 /** Not used, was implemented to filter out duplicates, but seems too complicated. */
 class DistinctMachinery[A](using maybeHasDots: Option[HasDots[A]]) {

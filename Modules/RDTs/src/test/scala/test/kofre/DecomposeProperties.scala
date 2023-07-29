@@ -15,8 +15,6 @@ class PosNegDecomposes     extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes      extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 class MultiValueDecomposes extends DecomposeProperties[MultiValueRegister[Int]]
 class LWWDecomposes        extends DecomposeProperties[Dotted[Option[LastWriterWins[Int]]]]
-
-// this may fail in cases where both LWWs have the same dot generated
 class LWWTupleDecomposes extends DecomposeProperties[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]]
 
 abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
@@ -39,7 +37,7 @@ abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.
           decomposed.foreach: other =>
             if d != other
             then
-              val thisCtx = d.asInstanceOf[Dotted[_]].context
+              val thisCtx  = d.asInstanceOf[Dotted[_]].context
               val otherCtx = other.asInstanceOf[Dotted[_]].context
               assert(thisCtx disjunct otherCtx, s"overlapping context ${thisCtx} and ${otherCtx}")
       }
