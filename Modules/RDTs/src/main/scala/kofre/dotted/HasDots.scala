@@ -9,7 +9,7 @@ import scala.util.control.ControlThrowable
 
 /** HasDots implies that the container stores values that are somehow associated to individual [[Dot]]s.
   * This is different from a dot context, which could also contain dots for deleted values or other metadata.
-  * HasDots is explicitly for dots that are present/existing in some datastructure right now.
+  * HasDots is explicitly for dots that are present/existing in some datastructures right now.
   *
   * See also: Dot stores in delta state replicated data types
   */
