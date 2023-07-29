@@ -8,3 +8,5 @@ import kofre.base.{Uid, Time}
 case class Dot(replicaId: Uid, time: Time) {
   def advance: Dot = Dot(replicaId, time + 1)
 }
+
+class CausalityException(msg: String) extends Exception(msg)

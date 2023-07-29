@@ -3,8 +3,7 @@ package kofre.datatypes.contextual
 import kofre.base.{Bottom, Time, Uid}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
-import kofre.time.{Dot, Dots}
-
+import kofre.time.{CausalityException, Dot, Dots}
 
 /** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
   *
@@ -22,7 +21,7 @@ object LastWriterWins {
 
   def now[A](dot: Dot, v: A): LastWriterWins[A] = LastWriterWins(dot, Time.current(), v)
 
-  given [A]: HasDots[LastWriterWins[A]] with {
+  given hasDots[A]: HasDots[LastWriterWins[A]] with {
     extension (value: LastWriterWins[A])
       def dots: Dots = Dots.single(value.dot)
       def removeDots(dots: Dots): Option[LastWriterWins[A]] =
@@ -37,11 +36,16 @@ object LastWriterWins {
 
   given dottedLattice[A]: DottedLattice[LastWriterWins[A]] with {
     override def mergePartial(left: Dotted[LastWriterWins[A]], right: Dotted[LastWriterWins[A]]): LastWriterWins[A] =
-      if left.context.contains(right.data.dot)
-      then left.data
-      else if right.context.contains(left.data.dot)
-      then right.data
-      else if ordering.lteq(left.data, right.data)
+      val leftKnowsRight = left.context.contains(right.data.dot)
+      val rightKnowsLeft = right.context.contains(left.data.dot)
+      if leftKnowsRight && !rightKnowsLeft then return left.data
+      if rightKnowsLeft && !leftKnowsRight then return right.data
+      if leftKnowsRight && rightKnowsLeft
+      then
+        if left.data == right.data
+        then return left.data
+        else throw CausalityException(s"Different values both claim to be newer than the other:\n  »${left}«\n  »${right}«")
+      if ordering.lteq(left.data, right.data)
       then right.data
       else left.data
   }
