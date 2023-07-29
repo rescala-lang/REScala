@@ -44,7 +44,10 @@ object LastWriterWins {
       then
         if left.data == right.data
         then return left.data
-        else throw CausalityException(s"Different values both claim to be newer than the other:\n  »${left}«\n  »${right}«")
+        else
+          throw CausalityException(
+            s"Different values both claim to be newer than the other:\n  »${left}«\n  »${right}«"
+          )
       if ordering.lteq(left.data, right.data)
       then right.data
       else left.data
