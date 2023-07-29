@@ -1,4 +1,4 @@
-package test.kofre.bespoke
+package test.kofre.corestructs
 
 import kofre.base.Uid
 import kofre.time.{Dot, Dots}

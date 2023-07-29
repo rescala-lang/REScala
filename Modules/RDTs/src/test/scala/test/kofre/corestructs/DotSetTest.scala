@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.corestructs
 
 import kofre.base.Lattice
 import kofre.dotted.{DotSet, Dotted, HasDots}
@@ -6,7 +6,7 @@ import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
-import test.kofre.bespoke.given
+import test.kofre.given
 
 class DotSetTest extends munit.ScalaCheckSuite {
 

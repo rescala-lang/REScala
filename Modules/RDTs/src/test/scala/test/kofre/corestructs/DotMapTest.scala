@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.corestructs
 
 import kofre.base.Lattice
 import kofre.dotted.DottedLattice.*
