@@ -7,7 +7,15 @@ import scala.collection.immutable.Queue
 import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
-/** Bottom.empty is the identity of Lattice.merge */
+/** Provides an [[empty]] value of type [[A]]
+ *
+ * By assumption [[empty]] is the identity of [[Lattice.merge]]
+ *
+ * That is:
+ * ```scala
+ * Lattice.merge(empty, x) == x
+ * ```
+ */
 @FunctionalInterface
 trait Bottom[A] {
   def empty: A

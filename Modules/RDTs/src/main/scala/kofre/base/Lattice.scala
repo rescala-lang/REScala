@@ -5,7 +5,8 @@ import scala.annotation.targetName
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
-/** Well, its technically a semilattice, but that is just more to type. */
+/** A lattice describes a set of values where we always can [[merge]] two values and get a “consistent” result.
+ * Technically, this is a join semilattice. See [[Bottom]] */
 @FunctionalInterface
 trait Lattice[A] {
 
