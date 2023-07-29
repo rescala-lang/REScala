@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.datatypes.contextual.{CausalQueue, LastWriterWins}
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
-import kofre.dotted.{Dotted, DottedLattice}
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -21,16 +21,27 @@ class LWWTupleDecomposes extends DecomposeProperties[Dotted[(Option[LastWriterWi
 
 abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
 
-  test("decomposition") {
+  property("decomposition") {
     forAll { (theValue: A) =>
 
       val decomposed = theValue.decomposed
 
       val empty = Bottom[A].empty
 
+      val isDotted = theValue.isInstanceOf[Dotted[_]]
+
       decomposed.foreach { d =>
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
         assertNotEquals(empty, d, "decomposed result was empty")
+        if isDotted
+        then
+          // do some extra checks which will cause failure later, but have better error reporting when done here
+          decomposed.foreach: other =>
+            if d != other
+            then
+              val thisCtx = d.asInstanceOf[Dotted[_]].context
+              val otherCtx = other.asInstanceOf[Dotted[_]].context
+              assert(thisCtx disjunct otherCtx, s"overlapping context ${thisCtx} and ${otherCtx}")
       }
 
       assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
