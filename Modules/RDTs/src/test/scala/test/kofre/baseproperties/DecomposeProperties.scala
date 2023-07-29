@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.baseproperties
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
@@ -14,10 +14,13 @@ class GrowDecomposes       extends DecomposeProperties[GrowOnlyCounter]
 class PosNegDecomposes     extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes      extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 class MultiValueDecomposes extends DecomposeProperties[MultiValueRegister[Int]]
-class LWWDecomposes        extends DecomposeProperties[Dotted[Option[LastWriterWins[Int]]]]
+class LWWDecomposes        extends LatticeMergeTest[Dotted[LastWriterWins[Int]]]
+class LWWOptionDecomposes  extends DecomposeProperties[Dotted[Option[LastWriterWins[Int]]]]
 class LWWTupleDecomposes extends DecomposeProperties[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]]
 
-abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends munit.ScalaCheckSuite {
+abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends LatticeMergeTest {
+
+  override def scalaCheckInitialSeed = "e7t1GZf0uxItbW0JbGfq4uE1lIM8_DO-7l3DnhezSoC="
 
   property("decomposition") {
     forAll { (theValue: A) =>

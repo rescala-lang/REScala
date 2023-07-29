@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.containers
 
 import kofre.base.{Bottom, Uid}
 import kofre.datatypes.contextual.EnableWinsFlag

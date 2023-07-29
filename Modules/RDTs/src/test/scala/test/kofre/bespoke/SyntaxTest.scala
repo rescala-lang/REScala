@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.bespoke
 
 import kofre.base.Lattice
 import kofre.base.Lattice.Operators

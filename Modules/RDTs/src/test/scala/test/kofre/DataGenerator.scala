@@ -11,7 +11,7 @@ import org.scalacheck.{Arbitrary, Gen}
 
 object DataGenerator {
 
-  given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(_.toString))
+  given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(c => Uid.predefined(c.toString)))
 
   given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
     ids: Set[Uid]     <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
@@ -90,7 +90,7 @@ object DataGenerator {
   implicit val genDot: Gen[Dot] = for {
     id    <- Gen.oneOf('a' to 'g')
     value <- Gen.oneOf(0 to 100)
-  } yield Dot(id.toString, value)
+  } yield Dot(Uid.predefined(id.toString), value)
 
   implicit val arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 

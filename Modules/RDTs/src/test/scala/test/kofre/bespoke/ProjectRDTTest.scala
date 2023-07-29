@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.bespoke
 
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.PosNegCounter
@@ -6,7 +6,7 @@ import kofre.datatypes.contextual.{EnableWinsFlag, LastWriterWins}
 import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
-import test.kofre.Project.ProjectSyntax
+import test.kofre.bespoke.Project.ProjectSyntax
 
 case class Project(
     _name: LastWriterWins[Option[String]],
@@ -22,6 +22,7 @@ object Project {
       Project(
         LastWriterWins.empty(dot),
         PosNegCounter.zero,
+        //TODO do we need advance?
         LastWriterWins.empty(dot.advance)
       ),
       Dots.single(dot).add(dot.advance)

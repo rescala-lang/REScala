@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.containers
 
 import kofre.base.Uid
 import kofre.datatypes.experiments.AuctionInterface.AuctionData

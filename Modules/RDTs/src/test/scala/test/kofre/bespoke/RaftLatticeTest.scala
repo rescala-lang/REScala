@@ -1,8 +1,9 @@
-package test.kofre
+package test.kofre.bespoke
 
 import kofre.base.Lattice
 import kofre.datatypes.experiments.RaftState
 import kofre.datatypes.experiments.RaftState.Vote
+import test.kofre.given
 
 class RaftLatticeTest extends munit.FunSuite {
 

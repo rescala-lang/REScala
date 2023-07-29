@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.baseproperties
 
 import kofre.base.{Lattice, Time}
 import kofre.datatypes.alternatives.lww.GenericLastWriterWins
@@ -15,7 +15,6 @@ import scala.util.NotGiven
 class VectorClockLattice extends LatticeMergeTest[VectorClock]
 class LWWLatice          extends LatticeMergeTest[GenericLastWriterWins[Time, Int]]
 class OrSetLatice        extends LatticeMergeTest[ObserveRemoveSet[Int]]
-class LWWLattice         extends LatticeMergeTest[Dotted[LastWriterWins[Int]]]
 class MVRLattice         extends LatticeMergeTest[MultiValueRegister[Int]]
 
 abstract class LatticeMergeTest[A: Arbitrary: Lattice]
@@ -48,7 +47,7 @@ abstract class LatticeMergeTest[A: Arbitrary: Lattice]
         val bc   = Lattice.merge(b, c)
         val abc  = Lattice.merge(ab, c)
         val abc2 = Lattice.merge(a, bc)
-        assertEquals(abc, abc2)
+        assertEquals(abc, abc2, s"merge not equal, steps:\n  $ab\n  $bc")
     }
   }
 }

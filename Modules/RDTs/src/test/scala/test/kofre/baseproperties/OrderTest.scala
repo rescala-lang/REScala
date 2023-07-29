@@ -1,4 +1,4 @@
-package test.kofre
+package test.kofre.baseproperties
 
 import kofre.time.{ArrayRanges, Dots, VectorClock}
 import org.scalacheck.Prop.*

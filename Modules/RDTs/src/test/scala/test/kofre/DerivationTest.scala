@@ -3,6 +3,7 @@ import kofre.base.{Lattice, Uid}
 import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.arbId
+import test.kofre.baseproperties.LatticeMergeTest
 
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 

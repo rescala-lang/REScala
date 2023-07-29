@@ -1,7 +1,8 @@
-package test.kofre
+package test.kofre.bespoke
 
 import kofre.datatypes.experiments.BoundedCounter
 import kofre.syntax.TestReplica
+import test.kofre.given
 
 class BoundedCounterTest extends munit.FunSuite {
 
