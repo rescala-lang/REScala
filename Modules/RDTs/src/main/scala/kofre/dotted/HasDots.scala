@@ -16,6 +16,7 @@ import scala.util.control.ControlThrowable
 trait HasDots[A] {
   extension (dotted: A)
     def dots: Dots
+    // TODO: I don’t remember what this was supposed to do anymore
     def removeDots(dots: Dots): Option[A]
 }
 

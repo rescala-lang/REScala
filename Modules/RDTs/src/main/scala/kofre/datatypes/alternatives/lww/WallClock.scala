@@ -1,6 +1,6 @@
 package kofre.datatypes.alternatives.lww
 
-import kofre.base.Uid
+import kofre.base.{Lattice, Uid}
 
 
 /** WallClock is a case class for values that allows chronological ordering of values based on their time of creation.
@@ -21,5 +21,7 @@ object WallClock {
     Ordering.by[WallClock, Long](_.timestamp)
       .orElseBy(wc => Uid.unwrap(wc.replicaID))
       .orElseBy(_.nanoTime)
+
+  given lattice: Lattice[WallClock] = Lattice.fromOrdering(ordering)
 
 }

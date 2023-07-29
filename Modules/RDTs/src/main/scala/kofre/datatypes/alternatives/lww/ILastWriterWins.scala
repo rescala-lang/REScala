@@ -4,7 +4,7 @@ import kofre.base.Lattice
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-trait ILastWriterWins[Time, Value] {
+trait ILastWriterWins[Time, +Value] {
   def timestamp: Time
   def payload: Value
 }
@@ -21,7 +21,7 @@ object ILastWriterWins {
         case 0 =>
           assert(left.payload == right.payload, s"LWW same timestamp, different value: »$left«, »$right«")
           left
-        case -1 => right
-        case 1  => left
+        case x if x < 0 => right
+        case x if x > 0 => left
   }
 }

@@ -2,7 +2,7 @@ package test.kofre
 
 import kofre.base.*
 import kofre.datatypes.*
-import kofre.datatypes.alternatives.lww.GenericLastWriterWins
+import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, CausalTime, GenericLastWriterWins, TimedVal, WallClock}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
@@ -25,28 +25,27 @@ object DataGenerator {
     } yield GenericLastWriterWins(time, value)
   )
 
-  given arbLww: Arbitrary[Dotted[LastWriterWins[Int]]] = Arbitrary(
+  given arbLww: Arbitrary[CausalLastWriterWins[Int]] = Arbitrary(
     for {
       time  <- Gen.long
-      dot   <- arbDot.arbitrary
+      causal <- Gen.long
+      nanotime <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield Dotted(LastWriterWins(dot, time, value), Dots.single(dot))
+    } yield CausalLastWriterWins(CausalTime(time, causal , nanotime), value)
   )
 
-  given arbOptLww: Arbitrary[Dotted[Option[LastWriterWins[Int]]]] = Arbitrary(
+  given arbOptLww: Arbitrary[Option[CausalLastWriterWins[Int]]] = Arbitrary(
     for {
       lww <- arbLww.arbitrary
-    } yield lww.map(Some.apply)
+    } yield Some(lww)
   )
 
-  given arbTupleOptLww: Arbitrary[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]] = Arbitrary(
+  given arbTupleOptLww: Arbitrary[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])] = Arbitrary(
     for {
       left <- arbLww.arbitrary
       right <- arbLww.arbitrary
-    } yield Dotted((Some(left.data), Some(right.data)), left.context union right.context)
+    } yield (Some(left), Some(right)),
   )
-
-  given Lattice[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]] = DottedLattice.derived
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
     Gen.mapOf[Uid, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))

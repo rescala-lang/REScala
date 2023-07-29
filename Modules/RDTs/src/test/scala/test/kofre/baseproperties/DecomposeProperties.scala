@@ -2,7 +2,8 @@ package test.kofre.baseproperties
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.MultiValueRegister
-import kofre.datatypes.contextual.{CausalQueue, LastWriterWins}
+import kofre.datatypes.alternatives.lww.CausalLastWriterWins
+import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.time.VectorClock
@@ -14,26 +15,33 @@ class GrowDecomposes       extends DecomposeProperties[GrowOnlyCounter]
 class PosNegDecomposes     extends DecomposeProperties[PosNegCounter]
 class TupleDecomposes      extends DecomposeProperties[(Set[Int], GrowOnlyCounter)]
 class MultiValueDecomposes extends DecomposeProperties[MultiValueRegister[Int]]
-class LWWDecomposes        extends LatticeMergeTest[Dotted[LastWriterWins[Int]]]
-class LWWOptionDecomposes  extends DecomposeProperties[Dotted[Option[LastWriterWins[Int]]]]
-class LWWTupleDecomposes extends DecomposeProperties[Dotted[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]]
+class LWWDecomposes        extends DecomposeProperties[CausalLastWriterWins[Int]]
+class LWWOptionDecomposes  extends DecomposeProperties[Option[CausalLastWriterWins[Int]]]
+class LWWTupleDecomposes
+    extends DecomposeProperties[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])]
 
-abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends LatticeMergeTest {
 
-  override def scalaCheckInitialSeed = "e7t1GZf0uxItbW0JbGfq4uE1lIM8_DO-7l3DnhezSoC="
+private inline given bottomOption[A]: Option[Bottom[A]] =
+  scala.compiletime.summonFrom:
+    case b: Bottom[A] => Some(b)
+    case _ => None
+
+abstract class DecomposeProperties[A: Arbitrary: Lattice](using bot: Option[Bottom[A]]) extends LatticeMergeTest {
+
+  val empty = bot.map(_.empty)
 
   property("decomposition") {
     forAll { (theValue: A) =>
 
       val decomposed = theValue.decomposed
 
-      val empty = Bottom[A].empty
-
       val isDotted = theValue.isInstanceOf[Dotted[_]]
 
       decomposed.foreach { d =>
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
-        assertNotEquals(empty, d, "decomposed result was empty")
+        empty match
+          case Some(empty) => assertNotEquals(empty, d, "decomposed result was empty")
+          case other =>
         if isDotted
         then
           // do some extra checks which will cause failure later, but have better error reporting when done here
@@ -45,11 +53,14 @@ abstract class DecomposeProperties[A: Arbitrary: Lattice: Bottom] extends Lattic
               assert(thisCtx disjunct otherCtx, s"overlapping context ${thisCtx} and ${otherCtx}")
       }
 
-      assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
+      empty match
+        case Some(empty) => assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
+        case other =>
 
-      val merged = decomposed.foldLeft(empty)(Lattice.merge)
 
-      assertEquals(merged, Lattice.normalize(theValue), s"decompose does not recompose ${empty}")
+      val merged = decomposed.reduceLeftOption(Lattice.merge)
+
+      assertEquals(merged.orElse(empty), Some(Lattice.normalize(theValue)), s"decompose does not recompose")
 
     }
   }

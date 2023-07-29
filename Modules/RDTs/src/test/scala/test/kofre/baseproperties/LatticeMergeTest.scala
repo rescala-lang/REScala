@@ -1,9 +1,9 @@
 package test.kofre.baseproperties
 
 import kofre.base.{Lattice, Time}
-import kofre.datatypes.alternatives.lww.GenericLastWriterWins
+import kofre.datatypes.alternatives.lww.{GenericLastWriterWins, CausalLastWriterWins}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
-import kofre.datatypes.contextual.{CausalQueue, LastWriterWins}
+import kofre.datatypes.contextual.CausalQueue
 import kofre.dotted.{Dotted, HasDots}
 import kofre.time.{CausalityException, Dots, VectorClock}
 import org.scalacheck.Prop.*
