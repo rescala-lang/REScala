@@ -3,7 +3,7 @@ import kofre.base.{Lattice, Uid}
 import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.arbId
-import test.kofre.baseproperties.LatticeMergeTest
+import test.kofre.baseproperties.{LatticePropertyChecks, bottomOption}
 
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 
@@ -17,4 +17,4 @@ given Arbitrary[SomeProductType[NotInt, NotInt]] = Arbitrary(for {
 // interestingly enough … this is found as the lattice instance of everything else ...
 given Lattice[NotInt] = math.max _
 
-class DerivedLattice extends LatticeMergeTest[SomeProductType[NotInt, NotInt]]
+class DerivedLattice extends LatticePropertyChecks[SomeProductType[NotInt, NotInt]]

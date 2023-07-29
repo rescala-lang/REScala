@@ -1,0 +1,147 @@
+package test.kofre.baseproperties
+
+import kofre.base.{Bottom, Lattice, Time}
+import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, GenericLastWriterWins}
+import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
+import kofre.datatypes.contextual.CausalQueue
+import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
+import kofre.time.{CausalityException, Dots, VectorClock}
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
+import test.kofre.DataGenerator.{*, given}
+
+import scala.util.NotGiven
+
+class GrowDecomposes       extends LatticePropertyChecks[GrowOnlyCounter]
+class IntDecomposes        extends LatticePropertyChecks[Int]
+class LWWDecomposes        extends LatticePropertyChecks[CausalLastWriterWins[Int]]
+class LWWLatice            extends LatticePropertyChecks[GenericLastWriterWins[Time, Int]]
+class LWWOptionDecomposes  extends LatticePropertyChecks[Option[CausalLastWriterWins[Int]]]
+class MVRLattice           extends LatticePropertyChecks[MultiValueRegister[Int]]
+class MultiValueDecomposes extends LatticePropertyChecks[MultiValueRegister[Int]]
+class OrSetLatice          extends LatticePropertyChecks[ObserveRemoveSet[Int]]
+class PosNegDecomposes     extends LatticePropertyChecks[PosNegCounter]
+class TupleDecomposes      extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
+class VectorClockLattice   extends LatticePropertyChecks[VectorClock]
+class LWWTupleDecomposes
+    extends LatticePropertyChecks[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])]
+
+inline given bottomOption[A]: Option[Bottom[A]] =
+  scala.compiletime.summonFrom:
+    case b: Bottom[A] => Some(b)
+    case _            => None
+
+abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bottom[A]])
+    extends munit.ScalaCheckSuite {
+
+  /** because examples are generated independently, they sometimes produce causally inconsistent results */
+  inline def ignoreCausalErrors[A](inline expr: Unit): Unit =
+    try expr
+    catch case _: CausalityException => ()
+
+  property("idempotent") {
+    forAll { (a: A, b: A) =>
+      ignoreCausalErrors:
+        val ab  = Lattice.merge(a, b)
+        val abb = Lattice.merge(ab, b)
+        assertEquals(ab, abb)
+
+    }
+  }
+  property("commutative") {
+    forAll { (a: A, b: A) =>
+      ignoreCausalErrors:
+        assertEquals(Lattice.merge(b, a), Lattice.merge(a, b))
+    }
+  }
+  property("associative") {
+    forAll { (a: A, b: A, c: A) =>
+      ignoreCausalErrors:
+        val ab   = Lattice.merge(a, b)
+        val bc   = Lattice.merge(b, c)
+        val abc  = Lattice.merge(ab, c)
+        val abc2 = Lattice.merge(a, bc)
+        assertEquals(abc, abc2, s"merge not equal, steps:\n  $ab\n  $bc")
+    }
+  }
+
+  property("is order") {
+    forAll { (a: A, b: A, c: A) =>
+      assert(
+        a <= a,
+        s"leq should be reflexive, but $a is not leq $a"
+      )
+
+      assert(
+        !((a <= b) && (b <= c)) || (a <= c),
+        s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
+      )
+    }
+  }
+
+  val empty = bot.map(_.empty)
+
+  property("decomposition") {
+    forAll { (theValue: A) =>
+
+      val decomposed = theValue.decomposed
+
+      val isDotted = theValue.isInstanceOf[Dotted[_]]
+
+      decomposed.foreach { d =>
+        assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
+        empty match
+          case Some(empty) => assertNotEquals(empty, d, "decomposed result was empty")
+          case other       =>
+        if isDotted
+        then
+          // do some extra checks which will cause failure later, but have better error reporting when done here
+          decomposed.foreach: other =>
+            if d != other
+            then
+              val thisCtx  = d.asInstanceOf[Dotted[_]].context
+              val otherCtx = other.asInstanceOf[Dotted[_]].context
+              assert(thisCtx disjunct otherCtx, s"overlapping context ${thisCtx} and ${otherCtx}")
+      }
+
+      empty match
+        case Some(empty) => assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
+        case other       =>
+
+      val merged = decomposed.reduceLeftOption(Lattice.merge)
+
+      assertEquals(merged.orElse(empty), Some(Lattice.normalize(theValue)), s"decompose does not recompose")
+
+    }
+  }
+
+}
+
+/** Not used, was implemented to filter out duplicates, but seems too complicated. */
+class DistinctMachinery[A](using maybeHasDots: Option[HasDots[A]]) {
+
+  /** In the case that [[A]] has a [[kofre.dotted.DottedLattice]], merging of two randomly generated values may not be commutative/associative, because */
+  def distinct(a: A, b: A): Boolean =
+    maybeHasDots match
+      case Some(hd) =>
+        hd.dots(a) disjunct hd.dots(b)
+      case None =>
+        true
+
+  private inline given hasDotsIfPresent[A](using NotGiven[A =:= Dotted[_]]): Option[HasDots[A]] =
+    scala.compiletime.summonFrom:
+      case hd: HasDots[A] => Some(hd)
+      case _              => None
+
+  private inline given hasDotsIfPresent[A]: Option[HasDots[Dotted[A]]] =
+    scala.compiletime.summonFrom:
+      case hd: HasDots[A] =>
+        Some(new HasDots[Dotted[A]] {
+          extension (dotted: Dotted[A])
+            def dots: Dots                                = hd.dots(dotted.data)
+            def removeDots(dots: Dots): Option[Dotted[A]] = None
+        })
+      case _ =>
+        None
+}
