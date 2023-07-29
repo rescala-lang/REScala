@@ -13,18 +13,20 @@ import test.kofre.DataGenerator.{*, given}
 
 import scala.util.NotGiven
 
-class GrowDecomposes       extends LatticePropertyChecks[GrowOnlyCounter]
-class IntDecomposes        extends LatticePropertyChecks[Int]
-class LWWDecomposes        extends LatticePropertyChecks[CausalLastWriterWins[Int]]
-class LWWLatice            extends LatticePropertyChecks[GenericLastWriterWins[Time, Int]]
-class LWWOptionDecomposes  extends LatticePropertyChecks[Option[CausalLastWriterWins[Int]]]
-class MVRLattice           extends LatticePropertyChecks[MultiValueRegister[Int]]
-class MultiValueDecomposes extends LatticePropertyChecks[MultiValueRegister[Int]]
-class OrSetLatice          extends LatticePropertyChecks[ObserveRemoveSet[Int]]
-class PosNegDecomposes     extends LatticePropertyChecks[PosNegCounter]
-class TupleDecomposes      extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
-class VectorClockLattice   extends LatticePropertyChecks[VectorClock]
-class LWWTupleDecomposes
+class GrowChecks        extends LatticePropertyChecks[GrowOnlyCounter]
+class IntChecks         extends LatticePropertyChecks[Int]
+class SetChecks         extends LatticePropertyChecks[Set[String]]
+class MapChecks         extends LatticePropertyChecks[Map[String, Int]]
+class OptionChecks      extends LatticePropertyChecks[Option[Int]]
+class CusalLwwChecks    extends LatticePropertyChecks[CausalLastWriterWins[Int]]
+class GenericLwwChecks  extends LatticePropertyChecks[GenericLastWriterWins[Time, Int]]
+class LWWOptionChecks   extends LatticePropertyChecks[Option[CausalLastWriterWins[Int]]]
+class MultiValueChecks  extends LatticePropertyChecks[MultiValueRegister[Int]]
+class OrSetChecks       extends LatticePropertyChecks[ObserveRemoveSet[Int]]
+class PosNegChecks      extends LatticePropertyChecks[PosNegCounter]
+class TupleChecks       extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
+class VectorClockChecks extends LatticePropertyChecks[VectorClock]
+class LWWTupleChecks
     extends LatticePropertyChecks[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])]
 
 inline given bottomOption[A]: Option[Bottom[A]] =
