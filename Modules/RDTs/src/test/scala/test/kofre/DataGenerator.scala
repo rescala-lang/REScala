@@ -151,4 +151,11 @@ object DataGenerator {
     Gen.listOf(arb.arbitrary).flatMap: additions =>
       Gen.listOf(arb.arbitrary).map: removals =>
         TwoPhaseSet(additions.toSet, removals.toSet)
+
+  given arbDotted[E: HasDots](using arb: Arbitrary[E]): Arbitrary[Dotted[E]] = Arbitrary:
+    for
+      dots <- Arbitrary.arbitrary[Dots]
+      elem <- arb.arbitrary
+    yield
+      Dotted(elem, dots union elem.dots)
 }
