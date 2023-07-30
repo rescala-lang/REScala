@@ -3,7 +3,7 @@ package test.kofre.baseproperties
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, LastWriterWins, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.time.{CausalityException, Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
@@ -12,19 +12,21 @@ import test.kofre.DataGenerator.{*, given}
 
 import scala.util.NotGiven
 
-class GrowChecks        extends LatticePropertyChecks[GrowOnlyCounter]
-class IntChecks         extends LatticePropertyChecks[Int]
-class SetChecks         extends LatticePropertyChecks[Set[String]]
-class MapChecks         extends LatticePropertyChecks[Map[String, Int]]
-class OptionChecks      extends LatticePropertyChecks[Option[Int]]
-class CusalLwwChecks    extends LatticePropertyChecks[LastWriterWins[Int]]
-class LWWOptionChecks   extends LatticePropertyChecks[Option[LastWriterWins[Int]]]
-class MultiValueChecks  extends LatticePropertyChecks[MultiValueRegister[Int]]
-class OrSetChecks       extends LatticePropertyChecks[ObserveRemoveSet[Int]]
-class PosNegChecks      extends LatticePropertyChecks[PosNegCounter]
-class TupleChecks       extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
-class VectorClockChecks extends LatticePropertyChecks[VectorClock]
-class GrowOnlyListChecks extends LatticePropertyChecks[GrowOnlyList[Int]]
+class GrowOnlyCounterChecks extends LatticePropertyChecks[GrowOnlyCounter]
+class GrowOnlyMapChecks     extends LatticePropertyChecks[GrowOnlyMap[String, Int]]
+class TwoPhaseSetChecks     extends LatticePropertyChecks[TwoPhaseSet[Int]]
+class IntChecks             extends LatticePropertyChecks[Int]
+class SetChecks             extends LatticePropertyChecks[Set[String]]
+class MapChecks             extends LatticePropertyChecks[Map[String, Int]]
+class OptionChecks          extends LatticePropertyChecks[Option[Int]]
+class CusalLwwChecks        extends LatticePropertyChecks[LastWriterWins[Int]]
+class LWWOptionChecks       extends LatticePropertyChecks[Option[LastWriterWins[Int]]]
+class MultiValueChecks      extends LatticePropertyChecks[MultiValueRegister[Int]]
+class OrSetChecks           extends LatticePropertyChecks[ObserveRemoveSet[Int]]
+class PosNegChecks          extends LatticePropertyChecks[PosNegCounter]
+class TupleChecks           extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
+class VectorClockChecks     extends LatticePropertyChecks[VectorClock]
+class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]]
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 

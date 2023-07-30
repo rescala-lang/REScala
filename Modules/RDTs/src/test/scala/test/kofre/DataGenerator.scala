@@ -2,6 +2,7 @@ package test.kofre
 
 import kofre.base.*
 import kofre.datatypes.*
+import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
@@ -12,36 +13,29 @@ object DataGenerator {
 
   given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(c => Uid.predefined(c.toString)))
 
-  given arbVersion: Arbitrary[VectorClock] = Arbitrary(for {
-    ids: Set[Uid]     <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
-    value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
-  } yield VectorClock.fromMap(ids.zip(value).toMap))
+  given arbVectorClock: Arbitrary[VectorClock] = Arbitrary:
+    for
+      ids: Set[Uid]     <- Gen.nonEmptyListOf(arbId.arbitrary).map(_.toSet)
+      value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
+    yield VectorClock.fromMap(ids.zip(value).toMap)
 
+  val smallNum = Gen.chooseNum(-10, 10)
 
-  given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
+  given arbCausalTime: Arbitrary[CausalTime] = Arbitrary:
     for {
-      time     <- Gen.long
-      causal   <- Gen.long
+      time     <- smallNum
+      causal   <- smallNum
       nanotime <- Gen.long
-      value    <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield LastWriterWins(kofre.time.CausalTime(time, causal, nanotime), value)
-  )
+    } yield CausalTime(time, causal, nanotime)
 
-  given arbOptLww: Arbitrary[Option[LastWriterWins[Int]]] = Arbitrary(
-    for {
-      lww <- arbLww.arbitrary
-    } yield Some(lww)
-  )
-
-  given arbTupleOptLww: Arbitrary[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])] = Arbitrary(
-    for {
-      left  <- arbLww.arbitrary
-      right <- arbLww.arbitrary
-    } yield (Some(left), Some(right)),
-  )
+  given arbLww[E: Arbitrary]: Arbitrary[LastWriterWins[E]] = Arbitrary:
+    for
+      causal <- arbCausalTime.arbitrary
+      value  <- Arbitrary.arbitrary
+    yield LastWriterWins(causal, value)
 
   given arbGcounter: Arbitrary[GrowOnlyCounter] = Arbitrary(
-    Gen.mapOf[Uid, Int](Gen.zip(arbId.arbitrary, Arbitrary.arbitrary[Int])).map(GrowOnlyCounter(_))
+    Gen.mapOf[Uid, Int](Gen.zip(arbId.arbitrary, smallNum)).map(GrowOnlyCounter(_))
   )
 
   given arbPosNeg: Arbitrary[PosNegCounter] = Arbitrary(
@@ -63,7 +57,7 @@ object DataGenerator {
 
   given arbMVR[A: Arbitrary]: Arbitrary[MultiValueRegister[A]] =
     val pairgen = for {
-      version <- arbVersion.arbitrary
+      version <- arbVectorClock.arbitrary
       value   <- Arbitrary.arbitrary[A]
     } yield (version, value)
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
@@ -138,7 +132,23 @@ object DataGenerator {
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
   } yield (SmallTimeSet(contents.toSet)))
 
-  given [E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
+
+  given arbGrowOnlyList[E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
     Gen.listOf(arb.arbitrary).map: list =>
       GrowOnlyList.empty.insertAllGL(0, list)
+
+  def badInternalGrowOnlyList[E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
+    Gen.listOf(arbLww(using arb).arbitrary).map: list =>
+      val elems: List[Node.Elem[LastWriterWins[E]]] = list.map(GrowOnlyList.Node.Elem.apply)
+      val pairs = elems.distinct.sortBy(_.value.timestamp).sliding(2).flatMap:
+        case Seq(l, r) => Some((l) -> (r))
+        case _ => None // filters out uneven numbers of elements
+      val all =
+        elems.headOption.map(GrowOnlyList.Node.Head -> _) concat pairs
+      GrowOnlyList(all.toMap)
+
+  given arbTwoPhaseSet[E](using arb: Arbitrary[E]): Arbitrary[TwoPhaseSet[E]] = Arbitrary:
+    Gen.listOf(arb.arbitrary).flatMap: additions =>
+      Gen.listOf(arb.arbitrary).map: removals =>
+        TwoPhaseSet(additions.toSet, removals.toSet)
 }

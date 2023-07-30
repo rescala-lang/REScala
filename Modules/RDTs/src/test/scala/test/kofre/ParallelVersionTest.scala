@@ -4,14 +4,14 @@ import kofre.datatypes.alternatives.MultiValueRegister
 import kofre.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import test.kofre.DataGenerator.arbVersion
+import test.kofre.DataGenerator.arbVectorClock
 
 import scala.Console.in
 import scala.collection.Seq
 
 class ParallelVersionTest extends munit.ScalaCheckSuite {
 
-  given Arbitrary[List[VectorClock]] = Arbitrary(Gen.nonEmptyListOf(arbVersion.arbitrary))
+  given Arbitrary[List[VectorClock]] = Arbitrary(Gen.nonEmptyListOf(arbVectorClock.arbitrary))
 
   property("works") {
     forAll { (a: List[VectorClock]) =>
