@@ -78,23 +78,17 @@ object DataGenerator {
     value <- Gen.oneOf(0 to 100)
   } yield Dot(Uid.predefined(id.toString), value)
 
-  implicit val arbDot: Arbitrary[Dot] = Arbitrary(genDot)
+  given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 
-  val genDotSet: Gen[Set[Dot]] = Gen.containerOf[Set, Dot](genDot)
 
-  val genDietMapCContext: Gen[Dots] = for {
-    ds <- genDotSet
-  } yield Dots.from(ds)
-
-  implicit val arbDietMapCContext: Arbitrary[Dots] = Arbitrary(genDietMapCContext)
+  given arbDots: Arbitrary[Dots] = Arbitrary:
+    Gen.containerOf[Set, Dot](genDot).map(Dots.from)
 
   given Arbitrary[ArrayRanges] = Arbitrary(
     for
-      x <- Gen.listOf(Gen.oneOf(0L to 10L))
-    yield ArrayRanges.from(x)
+      x <- Gen.listOf(smallNum)
+    yield ArrayRanges.from(x.map(_.toLong))
   )
-
-  implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
 
   def genDotFun[A](implicit g: Arbitrary[A]): Gen[DotFun[A]] = for {
     n      <- Gen.posNum[Int]
@@ -109,29 +103,14 @@ object DataGenerator {
       case Nil    => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
 
-  def genDotMap[K](implicit gk: Arbitrary[K]): Gen[Map[K, Dots]] =
-    (for {
-      n         <- Gen.posNum[Int]
-      keys      <- Gen.listOfN(n, gk.arbitrary)
-      dupvalues <- Gen.listOfN(n, arbDietMapCContext.arbitrary)
-    } yield {
-      (keys zip makeUnique(dupvalues, Nil, Dots.empty)).toMap
-    })
-
-  implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary(genDietMapCContext.map(DotSet.apply))
-
-  implicit def arbDotMap[K](implicit gk: Arbitrary[K]): Arbitrary[Map[K, DotSet]] =
-    Arbitrary(genDotMap[K].map { _.map((k, v) => k -> DotSet(v)) })
-
-  implicit def arbRealDotmap[K](implicit gk: Arbitrary[K]): Arbitrary[DotMap[K, DotSet]] =
-    Arbitrary(arbDotMap.arbitrary.map(DotMap.apply))
+  implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary:
+    arbDots.arbitrary.map(DotSet.apply)
 
   case class SmallTimeSet(s: Set[Time])
 
   given Arbitrary[SmallTimeSet] = Arbitrary(for {
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
   } yield (SmallTimeSet(contents.toSet)))
-
 
   given arbGrowOnlyList[E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
     Gen.listOf(arb.arbitrary).map: list =>
@@ -142,7 +121,7 @@ object DataGenerator {
       val elems: List[Node.Elem[LastWriterWins[E]]] = list.map(GrowOnlyList.Node.Elem.apply)
       val pairs = elems.distinct.sortBy(_.value.timestamp).sliding(2).flatMap:
         case Seq(l, r) => Some((l) -> (r))
-        case _ => None // filters out uneven numbers of elements
+        case _         => None // filters out uneven numbers of elements
       val all =
         elems.headOption.map(GrowOnlyList.Node.Head -> _) concat pairs
       GrowOnlyList(all.toMap)
@@ -156,6 +135,11 @@ object DataGenerator {
     for
       dots <- Arbitrary.arbitrary[Dots]
       elem <- arb.arbitrary
-    yield
-      Dotted(elem, dots union elem.dots)
+    yield Dotted(elem, dots union elem.dots)
+
+  given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[DotMap[K, V]] =
+    Arbitrary:
+      Gen.listOf(Gen.zip[K, V](arbElem.arbitrary, arbKey.arbitrary)).map: pairs =>
+        // remove dots happens to normalize the structure to remove empty inner elements
+        DotMap(pairs.toMap).removeDots(Dots.empty).getOrElse(DotMap(Map.empty))
 }

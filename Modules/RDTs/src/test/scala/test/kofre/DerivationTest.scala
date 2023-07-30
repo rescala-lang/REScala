@@ -4,17 +4,16 @@ import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.arbId
 import test.kofre.baseproperties.{LatticePropertyChecks, bottomOption}
+import test.kofre.DataGenerator.given
 
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 
-opaque type NotInt = Int
+type NotInt = Int
 
 given Arbitrary[SomeProductType[NotInt, NotInt]] = Arbitrary(for {
   as: NotInt <- Gen.posNum[Int]
   bs: NotInt <- Gen.posNum[Int]
 } yield SomeProductType(as, bs))
 
-// interestingly enough … this is found as the lattice instance of everything else ...
-given Lattice[NotInt] = math.max _
 
 class DerivedLattice extends LatticePropertyChecks[SomeProductType[NotInt, NotInt]]

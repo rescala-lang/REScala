@@ -6,7 +6,7 @@ import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice}
 import kofre.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import test.kofre.DataGenerator.*
+import test.kofre.DataGenerator.{given, *}
 
 import scala.annotation.tailrec
 
@@ -96,24 +96,27 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccA = dmA.dots union deletedA
         val ccB = dmB.dots union deletedB
 
+        val dottedA = Dotted(dmA, ccA)
+        val dottedB = Dotted(dmB, ccB)
+
         assert(
-          Dotted(dmA, (ccA)) <= Lattice.normalize(Dotted(dmA, (ccA))),
-          s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA, $dmA, $ccA)"
+          dottedA <= Dotted(dmA, (ccA)),
+          s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA)"
         )
 
-        val Dotted(dmMerged, ccMerged) =
+        val merged =
           Lattice[Dotted[TestedMap]].merge(
-            Dotted(dmA, (ccA)),
-            Dotted(dmB, (ccB))
+            dottedA,
+            dottedB
           )
 
         assert(
-          Dotted(dmA, (ccA)) <= Dotted(dmMerged, ccMerged),
-          s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to ($dmA, $ccA, $dmMerged, $ccMerged)"
+          dottedA <= merged,
+          s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to:\n  $dottedA\n  $merged"
         )
         assert(
-          Dotted(dmB, (ccB)) <= Dotted(dmMerged, ccMerged),
-          s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to ($dmB, $ccB, $dmMerged, $ccMerged)"
+          dottedB <= merged,
+          s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to\n  $dottedB\n  $merged"
         )
     }
 

@@ -5,7 +5,7 @@ import kofre.dotted.{DotSet, Dotted, HasDots}
 import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.*
-import test.kofre.DataGenerator.*
+import test.kofre.DataGenerator.{*, given}
 import test.kofre.given
 
 class DotSetTest extends munit.ScalaCheckSuite {
