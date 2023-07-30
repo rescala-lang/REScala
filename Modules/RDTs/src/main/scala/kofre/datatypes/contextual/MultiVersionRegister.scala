@@ -1,7 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.{DotFun, Dotted, DottedLattice}
+import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -24,6 +24,8 @@ object MultiVersionRegister {
   given dottedLattice[A]: DottedLattice[MultiVersionRegister[A]] =
     given Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
     DottedLattice.derived
+
+  given hasDot[A]: HasDots[MultiVersionRegister[A]] = HasDots.derived
 
   extension [C, A](container: C)
     def multiVersionRegister: syntax[C, A] = syntax(container)

@@ -75,9 +75,14 @@ object DataGenerator {
     })
     Arbitrary(map)
 
-  implicit val genDot: Gen[Dot] = for {
+  val genDot: Gen[Dot] = for {
     id    <- Gen.oneOf('a' to 'g')
     value <- Gen.oneOf(0 to 100)
+  } yield Dot(Uid.predefined(id.toString), value)
+
+  val uniqueDot: Gen[Dot] = for {
+    id    <- Gen.oneOf('a' to 'g')
+    value <- Gen.long
   } yield Dot(Uid.predefined(id.toString), value)
 
   given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
@@ -150,4 +155,9 @@ object DataGenerator {
       dotted.data.removeDots(e).map(Dotted(_, dotted.context.subtract(e)))
 
   summon[Shrink[Dotted[DotMap[String, Dots]]]]
+
+  given arbCMultiVersion[E](using arb: Arbitrary[E]): Arbitrary[contextual.MultiVersionRegister[E]] = Arbitrary:
+    Gen.listOf(Gen.zip(uniqueDot, arb.arbitrary)).map: pairs =>
+      MultiVersionRegister(DotFun(pairs.toMap))
+
 }

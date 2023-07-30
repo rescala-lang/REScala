@@ -9,10 +9,14 @@ import kofre.time.{CausalityException, Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
+import kofre.datatypes.contextual
 
 import scala.util.NotGiven
 
+val x = summon[Arbitrary[contextual.MultiVersionRegister[Int]]]
+
 class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
+class ConMultiVersionChecks extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
 class DotMapChecks          extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]]
 class GrowOnlyCounterChecks extends LatticePropertyChecks[GrowOnlyCounter]
 class GrowOnlyMapChecks     extends LatticePropertyChecks[GrowOnlyMap[String, Int]]
@@ -108,7 +112,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
       val merged = left merge right
       assert(left <= merged, s"merged:\n  ${merged}")
       assert(right <= merged, s"merged:\n  ${merged}")
-      assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}" )
-      assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}" )
+      assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}")
+      assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
 
 }
