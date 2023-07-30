@@ -1,7 +1,6 @@
 package test.kofre.baseproperties
 
 import kofre.base.{Bottom, Lattice, Time}
-import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, LastWriterWins, PosNegCounter}
@@ -19,7 +18,6 @@ class SetChecks         extends LatticePropertyChecks[Set[String]]
 class MapChecks         extends LatticePropertyChecks[Map[String, Int]]
 class OptionChecks      extends LatticePropertyChecks[Option[Int]]
 class CusalLwwChecks    extends LatticePropertyChecks[LastWriterWins[Int]]
-class GenericLwwChecks  extends LatticePropertyChecks[GenericLastWriterWins[Time, Int]]
 class LWWOptionChecks   extends LatticePropertyChecks[Option[LastWriterWins[Int]]]
 class MultiValueChecks  extends LatticePropertyChecks[MultiValueRegister[Int]]
 class OrSetChecks       extends LatticePropertyChecks[ObserveRemoveSet[Int]]

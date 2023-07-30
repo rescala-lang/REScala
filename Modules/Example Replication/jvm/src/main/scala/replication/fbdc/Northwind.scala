@@ -1,7 +1,7 @@
 package replication.fbdc
 
 import kofre.base.Bottom
-import kofre.datatypes.alternatives.lww.TimedVal
+import kofre.datatypes.LastWriterWins
 
 import java.nio.file.{Files, Path}
 import java.sql.*
@@ -45,7 +45,7 @@ object Northwind {
           val ress = res.mutable
           queries.foreach { q =>
             val resp = Res.Northwind(q.value, query(q.value.query))
-            ress.observeRemoveMap.insert("northwind", Some(TimedVal.now(resp, exampleData.replicaId)))
+            ress.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp)))
           }
           ress.result
         }

@@ -1,8 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.alternatives.lww.TimedVal
-import kofre.datatypes.{Epoche, GrowOnlyList}
+import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
 import kofre.dotted.{DotFun, Dotted, DottedLattice}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
@@ -39,7 +38,7 @@ object ReplicatedList {
     override def empty: ReplicatedList[E] = ReplicatedList.empty
 
   enum Node[A]:
-    case Alive[A](v: TimedVal[A]) extends Node[A]
+    case Alive[A](v: LastWriterWins[A]) extends Node[A]
     case Dead[A]()                extends Node[A]
   import Node.{Alive, Dead}
 
@@ -56,7 +55,7 @@ object ReplicatedList {
 
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: Node[A], right: Node[A]): Node[A] = (left, right) match {
-        case (Alive(lv), Alive(rv)) => Alive(Lattice[TimedVal[A]].merge(lv, rv))
+        case (Alive(lv), Alive(rv)) => Alive(Lattice[LastWriterWins[A]].merge(lv, rv))
         case _                      => Dead()
       }
     }
@@ -127,7 +126,7 @@ object ReplicatedList {
           val glistDelta = fw.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.single(nextDot, Alive(TimedVal.now(e, replicaId)))
+          val dfDelta = DotFun.single(nextDot, Alive(LastWriterWins.now(e)))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -152,7 +151,7 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[Node[E]].repr ++ (nextDots zip elems.map(e => Alive(TimedVal.now(e, replicaId))))
+          val dfDelta = DotFun.empty[Node[E]].repr ++ (nextDots zip elems.map(e => Alive(LastWriterWins.now(e))))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -177,7 +176,7 @@ object ReplicatedList {
     }
 
     def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
-      updateRGANode(current, i, Alive(TimedVal.now(e, replicaId))).mutator
+      updateRGANode(current, i, Alive(LastWriterWins.now(e))).mutator
 
     def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
 
@@ -195,7 +194,7 @@ object ReplicatedList {
     }
 
     def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
-      updateRGANodeBy(current, cond, Alive(TimedVal.now(e, replicaId))).mutator
+      updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e))).mutator
 
     def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, Dead[E]()).mutator

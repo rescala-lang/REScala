@@ -8,7 +8,6 @@ import todolist.SyncedTodoListCrdt.StateType
 import benchmarks.encrdt.Codecs.*
 
 import java.net.URI
-import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.annotation.nowarn
@@ -18,7 +17,7 @@ import scala.util.Try
 import benchmarks.encrdt.idFromString
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.sync.ConnectionManager
-import kofre.datatypes.alternatives.lww.GenericLastWriterWins
+import kofre.datatypes.LastWriterWins
 
 class SyncedTodoListCrdt(val replicaId: String) {
 
@@ -104,21 +103,21 @@ class SyncedTodoListCrdt(val replicaId: String) {
 object SyncedTodoListCrdt {
   type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
 
-  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, GenericLastWriterWins[Instant, String]))]] =
+  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, LastWriterWins[String]))]] =
     JsonCodecMaker.make
   @nowarn
-  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])]] =
-    new JsonValueCodec[Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])]] {
+  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[String])]] =
+    new JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[String])]] {
       override def decodeValue(
           in: JsonReader,
-          default: Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])]
-      ): Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])] =
+          default: Map[Dot, (TodoEntry, LastWriterWins[String])]
+      ): Map[Dot, (TodoEntry, LastWriterWins[String])] =
         dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
 
-      override def encodeValue(x: Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])], out: JsonWriter): Unit =
+      override def encodeValue(x: Map[Dot, (TodoEntry, LastWriterWins[String])], out: JsonWriter): Unit =
         dotMapAsSetCodec.encodeValue(x.toSet, out)
 
-      override def nullValue: Map[Dot, (TodoEntry, GenericLastWriterWins[Instant, String])] =
+      override def nullValue: Map[Dot, (TodoEntry, LastWriterWins[String])] =
         Map.empty
     }
 

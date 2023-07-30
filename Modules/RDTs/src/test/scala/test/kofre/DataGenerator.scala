@@ -3,7 +3,6 @@ package test.kofre
 import kofre.base.*
 import kofre.datatypes.*
 import kofre.datatypes.LastWriterWins.CausalTime
-import kofre.datatypes.alternatives.lww.{GenericLastWriterWins, TimedVal, WallClock}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
@@ -19,12 +18,6 @@ object DataGenerator {
     value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
   } yield VectorClock.fromMap(ids.zip(value).toMap))
 
-  given arbGenericLww: Arbitrary[GenericLastWriterWins[Time, Int]] = Arbitrary(
-    for {
-      time  <- Gen.long
-      value <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield GenericLastWriterWins(time, value)
-  )
 
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
     for {

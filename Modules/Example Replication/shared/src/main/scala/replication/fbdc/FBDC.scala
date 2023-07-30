@@ -5,7 +5,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.*
-import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
@@ -42,7 +41,7 @@ class Focus[Inner: DottedLattice, Outer](dm: DataManager[Outer])(extract: Outer 
   }
 }
 
-type RespValue = Option[TimedVal[Res]]
+type RespValue = Option[LastWriterWins[Res]]
 given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
 
 given DottedLattice[RespValue] = DottedLattice.liftLattice

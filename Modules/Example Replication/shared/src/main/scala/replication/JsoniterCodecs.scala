@@ -2,14 +2,11 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.{Uid, Time}
+import kofre.base.{Time, Uid}
 import kofre.datatypes.contextual.ReplicatedList.Node
 import kofre.datatypes.alternatives.ResettableCounter
-import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
-import kofre.datatypes.{
-  Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, PosNegCounter, TwoPhaseSet
-}
+import kofre.datatypes.{Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet}
 import kofre.dotted.Dotted
 import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
@@ -67,10 +64,10 @@ object JsoniterCodecs {
   implicit def GSetStateCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlySet[E]] = JsonCodecMaker.make
 
   /** LastWriterWins */
-  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[Dotted[Map[Dot, TimedVal[A]]]] =
+  implicit def LastWriterWinsStateCodec[A: JsonValueCodec]: JsonValueCodec[Dotted[Map[Dot, LastWriterWins[A]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, TimedVal[A]]] =
+  implicit def LastWriterWinsEmbeddedCodec[A: JsonValueCodec]: JsonValueCodec[Map[Dot, LastWriterWins[A]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** MultiVersionRegister */
