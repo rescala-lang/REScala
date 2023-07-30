@@ -26,7 +26,7 @@ case class GrowOnlyList[E](innerContents: Map[Node[TimedVal[E]], Elem[TimedVal[E
 
 object GrowOnlyList {
   enum Node[+E]:
-    case Head()            extends Node[Nothing]
+    case Head            extends Node[Nothing]
     case Elem[E](value: E) extends Node[E]
   import Node.{Elem, Head}
 
@@ -114,8 +114,8 @@ object GrowOnlyList {
     }
 
     def read(using PermQuery)(i: Int): Option[E] =
-      findNth(current, Head(), i + 1).flatMap {
-        case Head()  => None
+      findNth(current, Head, i + 1).flatMap {
+        case Head  => None
         case Elem(e) => Some(e.payload)
       }
 
@@ -127,10 +127,10 @@ object GrowOnlyList {
       }
 
     def toList(using PermQuery): List[E] =
-      toListRec(current, Head(), ListBuffer.empty[E]).toList
+      toListRec(current, Head, ListBuffer.empty[E]).toList
 
     def toLazyList(using PermQuery): LazyList[E] =
-      LazyList.unfold[E, Node[TimedVal[E]]](Head()) { node =>
+      LazyList.unfold[E, Node[TimedVal[E]]](Head) { node =>
         current.get(node) match {
           case None                  => None
           case Some(next @ Elem(tv)) => Some((tv.payload, next))
@@ -140,7 +140,7 @@ object GrowOnlyList {
     def size(using PermQuery): Int = current.size
 
     def insertGL(i: Int, e: E): IdMutate = {
-      GrowOnlyList(findNth(current, Head(), i) match {
+      GrowOnlyList(findNth(current, Head, i) match {
         case None       => Map.empty
         case Some(pred) => Map(pred -> Elem(TimedVal.now(e, replicaId)))
       })
@@ -150,7 +150,7 @@ object GrowOnlyList {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
-        GrowOnlyList(findNth(current, Head(), i) match {
+        GrowOnlyList(findNth(current, Head, i) match {
           case None => Map.empty
           case Some(after) =>
             val order = elems.map(e => Elem(TimedVal.now(e, replicaId)): Elem[TimedVal[E]])
@@ -172,7 +172,7 @@ object GrowOnlyList {
         case Some(next) => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using PermMutate): C = withoutRec(current, Head(), elems).mutator
+    def without(elems: Set[E])(using PermMutate): C = withoutRec(current, Head, elems).mutator
   }
 
 }
