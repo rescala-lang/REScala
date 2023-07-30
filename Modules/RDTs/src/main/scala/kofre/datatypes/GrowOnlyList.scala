@@ -3,9 +3,8 @@ package kofre.datatypes
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.GrowOnlyList.Node.Elem
-import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.DottedLattice
-import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
+import kofre.syntax.{OpsSyntaxHelper}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -20,7 +19,7 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
-case class GrowOnlyList[E](inner: Map[Node[TimedVal[E]], Elem[TimedVal[E]]])
+case class GrowOnlyList[E](inner: Map[Node[LastWriterWins[E]], Elem[LastWriterWins[E]]])
 
 object GrowOnlyList {
   enum Node[+E]:
@@ -46,12 +45,12 @@ object GrowOnlyList {
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
-        state.inner.toList.map((edge: (Node[TimedVal[E]], Elem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
+        state.inner.toList.map((edge: (Node[LastWriterWins[E]], Elem[LastWriterWins[E]])) => GrowOnlyList(Map(edge)))
 
       @tailrec
       private def insertEdge(
           state: GrowOnlyList[E],
-          edge: (Node[TimedVal[E]], Elem[TimedVal[E]])
+          edge: (Node[LastWriterWins[E]], Elem[LastWriterWins[E]])
       ): GrowOnlyList[E] =
         edge match {
           case (l, r @ Elem(e1)) =>
@@ -69,7 +68,7 @@ object GrowOnlyList {
       private def insertRec(
           left: GrowOnlyList[E],
           right: GrowOnlyList[E],
-          current: Node[TimedVal[E]]
+          current: Node[LastWriterWins[E]]
       ): GrowOnlyList[E] =
         right.inner.get(current) match {
           case None => left
@@ -101,9 +100,9 @@ object GrowOnlyList {
     @tailrec
     private def findNth(
         state: GrowOnlyList[E],
-        current: Node[TimedVal[E]],
+        current: Node[LastWriterWins[E]],
         i: Int
-    ): Option[Node[TimedVal[E]]] = {
+    ): Option[Node[LastWriterWins[E]]] = {
       if (i == 0) Some(current)
       else state.inner.get(current) match {
         case None       => None
@@ -118,7 +117,7 @@ object GrowOnlyList {
       }
 
     @tailrec
-    private def toListRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
+    private def toListRec(state: GrowOnlyList[E], current: Node[LastWriterWins[E]], acc: ListBuffer[E]): ListBuffer[E] =
       state.inner.get(current) match {
         case None                  => acc
         case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.payload))
@@ -128,7 +127,7 @@ object GrowOnlyList {
       toListRec(current, Head, ListBuffer.empty[E]).toList
 
     def toLazyList(using PermQuery): LazyList[E] =
-      LazyList.unfold[E, Node[TimedVal[E]]](Head) { node =>
+      LazyList.unfold[E, Node[LastWriterWins[E]]](Head) { node =>
         current.inner.get(node) match {
           case None                  => None
           case Some(next @ Elem(tv)) => Some((tv.payload, next))
@@ -137,27 +136,27 @@ object GrowOnlyList {
 
     def size(using PermQuery): Int = current.inner.size
 
-    def insertGL(i: Int, e: E): IdMutate = {
+    def insertGL(i: Int, e: E): Mutate = {
       GrowOnlyList(findNth(current, Head, i) match {
         case None       => Map.empty
-        case Some(pred) => Map(pred -> Elem(TimedVal.now(e, replicaId)))
+        case Some(pred) => Map(pred -> Elem(LastWriterWins.now(e)))
       })
     }.mutator
 
-    def insertAllGL(using ReplicaId)(i: Int, elems: Iterable[E]): Mutate = {
+    def insertAllGL(i: Int, elems: Iterable[E]): Mutate = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
         GrowOnlyList(findNth(current, Head, i) match {
           case None => Map.empty
           case Some(after) =>
-            val order = elems.map(e => Elem(TimedVal.now(e, replicaId)): Elem[TimedVal[E]])
+            val order = elems.map(e => Elem(LastWriterWins.now(e)): Elem[LastWriterWins[E]])
             Map((List(after) ++ order.init) zip order: _*)
         })
     }.mutator
 
     @tailrec
-    private def withoutRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
+    private def withoutRec(state: GrowOnlyList[E], current: Node[LastWriterWins[E]], elems: Set[E]): GrowOnlyList[E] =
       state.inner.get(current) match {
         case None => state
         case Some(next @ Elem(tv)) if elems.contains(tv.payload) =>

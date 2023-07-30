@@ -28,11 +28,11 @@ object DataGenerator {
 
   given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
     for {
-      time  <- Gen.long
-      causal <- Gen.long
+      time     <- Gen.long
+      causal   <- Gen.long
       nanotime <- Gen.long
-      value <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield LastWriterWins(CausalTime(time, causal , nanotime), value)
+      value    <- Gen.choose(Int.MinValue, Int.MaxValue)
+    } yield LastWriterWins(CausalTime(time, causal, nanotime), value)
   )
 
   given arbOptLww: Arbitrary[Option[LastWriterWins[Int]]] = Arbitrary(
@@ -43,7 +43,7 @@ object DataGenerator {
 
   given arbTupleOptLww: Arbitrary[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])] = Arbitrary(
     for {
-      left <- arbLww.arbitrary
+      left  <- arbLww.arbitrary
       right <- arbLww.arbitrary
     } yield (Some(left), Some(right)),
   )
@@ -102,11 +102,10 @@ object DataGenerator {
 
   implicit val arbDietMapCContext: Arbitrary[Dots] = Arbitrary(genDietMapCContext)
 
-  given Arbitrary[ArrayRanges] = Arbitrary (
+  given Arbitrary[ArrayRanges] = Arbitrary(
     for
       x <- Gen.listOf(Gen.oneOf(0L to 10L))
-    yield
-      ArrayRanges.from(x)
+    yield ArrayRanges.from(x)
   )
 
   implicit val arbDotSet: Arbitrary[Set[Dot]] = Arbitrary(genDotSet)
@@ -147,9 +146,7 @@ object DataGenerator {
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
   } yield (SmallTimeSet(contents.toSet)))
 
-
   given [E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
-    arbId.arbitrary.flatMap: id =>
-      Gen.listOf(arb.arbitrary).map: list =>
-        GrowOnlyList.empty.insertAllGL(using id)(0, list)
+    Gen.listOf(arb.arbitrary).map: list =>
+      GrowOnlyList.empty.insertAllGL(0, list)
 }

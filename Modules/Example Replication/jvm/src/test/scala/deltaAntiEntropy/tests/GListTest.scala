@@ -19,7 +19,7 @@ object GListGenerators {
     val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
 
     elems.foldLeft(AntiEntropyContainer[GrowOnlyList[E]](ae)) {
-      case (list, el) => list.insertGL(0, el)(using list.replicaID)
+      case (list, el) => list.insertGL(0, el)
     }
   }
 
@@ -51,7 +51,7 @@ class GListTest extends munit.ScalaCheckSuite {
       val szeBefore = list.size
       val l         = list.toList
 
-      val inserted = list.insertGL(n, e)(using list.replicaID)
+      val inserted = list.insertGL(n, e)
 
       assert(
         n > szeBefore || n < 0 || inserted.size == szeBefore + 1,
@@ -95,7 +95,7 @@ class GListTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
-        case (l, e) => l.insertGL(0, e)(using l.replicaID)
+        case (l, e) => l.insertGL(0, e)
       }
 
       AntiEntropy.sync(aea, aeb)
@@ -105,8 +105,8 @@ class GListTest extends munit.ScalaCheckSuite {
       val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
       val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
 
-      val la1 = la0.insertGL(idx1, e1)(using la0.replicaID)
-      lb0.insertGL(idx2, e2)(using lb0.replicaID)
+      val la1 = la0.insertGL(idx1, e1)
+      lb0.insertGL(idx2, e2)
 
       AntiEntropy.sync(aea, aeb)
 
@@ -132,15 +132,15 @@ class GListTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
-        case (l, e) => l.insertGL(0, e)(using l.replicaID)
+        case (l, e) => l.insertGL(0, e)
       }
       network.startReliablePhase()
       AntiEntropy.sync(aea, aeb)
       network.endReliablePhase()
       val lb0 = AntiEntropyContainer[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
-      val la1 = insertedA.foldLeft(la0) { (l, e) => l.insertGL(e, e)(using l.replicaID) }
-      val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insertGL(e, e)(using l.replicaID) }
+      val la1 = insertedA.foldLeft(la0) { (l, e) => l.insertGL(e, e) }
+      val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insertGL(e, e) }
 
       AntiEntropy.sync(aea, aeb)
       network.startReliablePhase()
