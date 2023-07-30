@@ -7,7 +7,7 @@ import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWi
 import kofre.dotted.{DotMap, DotSet, Dotted, DottedLattice, HasDots}
 import kofre.time.{CausalityException, Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
 
 import scala.util.NotGiven
@@ -32,7 +32,7 @@ class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]]
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt]
+abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
     extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
 
   /** because examples are generated independently, they sometimes produce causally inconsistent results */
@@ -106,7 +106,9 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt]
   property("merge agrees with order"):
     forAll: (left: A, right: A) =>
       val merged = left merge right
-      assert(left <= merged)
-      assert(right <= merged)
+      assert(left <= merged, s"merged:\n  ${merged}")
+      assert(right <= merged, s"merged:\n  ${merged}")
+      assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}" )
+      assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}" )
 
 }

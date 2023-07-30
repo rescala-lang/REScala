@@ -30,9 +30,6 @@ object MultiValueRegister {
     override def decompose(a: MultiValueRegister[T]): Iterable[MultiValueRegister[T]] = {
       a.versions.view.map(pair => MultiValueRegister(Map(pair)))
     }
-    override def lteq(left: MultiValueRegister[T], right: MultiValueRegister[T]): Boolean = {
-      left.versions.forall((k, v) => right.versions.get(k).contains(v))
-    }
   }
 
   given bottom[T]: Bottom[MultiValueRegister[T]] = Bottom.derived

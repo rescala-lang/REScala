@@ -7,7 +7,9 @@ import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
 import kofre.time.*
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
+
+import scala.annotation.nowarn
 
 object DataGenerator {
 
@@ -80,7 +82,6 @@ object DataGenerator {
 
   given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 
-
   given arbDots: Arbitrary[Dots] = Arbitrary:
     Gen.containerOf[Set, Dot](genDot).map(Dots.from)
 
@@ -142,4 +143,11 @@ object DataGenerator {
       Gen.listOf(Gen.zip[K, V](arbElem.arbitrary, arbKey.arbitrary)).map: pairs =>
         // remove dots happens to normalize the structure to remove empty inner elements
         DotMap(pairs.toMap).removeDots(Dots.empty).getOrElse(DotMap(Map.empty))
+
+  @nowarn
+  given shrinkDotted[A: HasDots]: Shrink[Dotted[A]] = Shrink: dotted =>
+    dotted.context.decomposed.toStream.flatMap: e =>
+      dotted.data.removeDots(e).map(Dotted(_, dotted.context.subtract(e)))
+
+  summon[Shrink[Dotted[DotMap[String, Dots]]]]
 }

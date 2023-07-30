@@ -41,7 +41,7 @@ object GrowOnlyList {
       ): Boolean =
         left.inner.keys.forall { k =>
           right.inner.get(k).contains(left.inner(k))
-        }
+        } || super.lteq(left, right)
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =

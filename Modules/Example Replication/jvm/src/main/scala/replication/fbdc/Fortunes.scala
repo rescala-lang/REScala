@@ -23,7 +23,7 @@ object Fortunes {
         val reqq = reqqI.mutable
         fortunes.foreach { q =>
           val resp = processFortune(q.value)
-          reqq.insert(using dataManager.replicaId)(
+          reqq.update(using dataManager.replicaId)(
             "fortune",
             Some(LastWriterWins.now(resp))
           )

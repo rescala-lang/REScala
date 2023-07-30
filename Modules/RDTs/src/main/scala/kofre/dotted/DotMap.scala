@@ -6,9 +6,6 @@ import kofre.time.Dots
   * Merge/<= are done per entry, with missing entries replaced by `Bottom.empty`.
   * Decompose decomposes all components.
   *
-  * It would be perfectly reasonable to skip the case class and define the instance on maps directly,
-  * but that might cause issues with implicit resolution
-  *
   * See [[ObserveRemoveMap]] for a usage example.
   */
 case class DotMap[K, V](repr: Map[K, V])
@@ -38,12 +35,6 @@ object DotMap {
       DotMap((left.data.repr.keySet union right.data.repr.keySet).iterator.flatMap { key =>
         (left.map(access(key)) mergePartial right.map(access(key))).map(key -> _)
       }.toMap)
-    }
-    override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
-      (left.context <= right.context) &&
-      (left.data.repr.keySet union right.data.repr.keySet).forall { k =>
-        left.map(access(k)) <= right.map(access(k))
-      }
     }
 
     override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {

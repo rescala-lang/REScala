@@ -45,7 +45,7 @@ object Northwind {
           val ress = res.mutable
           queries.foreach { q =>
             val resp = Res.Northwind(q.value, query(q.value.query))
-            ress.observeRemoveMap.insert("northwind", Some(LastWriterWins.now(resp)))
+            ress.observeRemoveMap.update("northwind", Some(LastWriterWins.now(resp)))
           }
           ress.result
         }

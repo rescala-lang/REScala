@@ -45,11 +45,11 @@ object ObserveRemoveMap {
     def queryAllEntries(using PermQuery): Iterable[V] = current.inner.repr.values
     def entries(using PermQuery): Iterable[(K, V)]    = current.inner.repr.view
 
-    def insert(using ReplicaId, PermCausalMutate, Bottom[V])(k: K, v: V): C = {
-      mutateKey(k)(dotted => Dotted(v, Dots.single(context.nextDot(replicaId))))
+    def update(using ReplicaId, PermCausalMutate, Bottom[V])(k: K, v: V): C = {
+      transform(k)(_ => Dotted(v, Dots.single(context.nextDot(replicaId))))
     }
 
-    def mutateKey(using
+    def transform(using
         pcm: PermCausalMutate,
         bot: Bottom[V]
     )(k: K)(m: Dotted[V] => Dotted[V]): C = {
@@ -61,12 +61,13 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def remove(using PermCausalMutate, Bottom[V], HasDots[V])(k: K): C = {
-      val v = current.inner.repr.getOrElse(k, Bottom[V].empty)
+    def remove(using PermCausalMutate, HasDots[V])(k: K): C = {
+      current.inner.repr.get(k) match
+        case Some(value) => make[K, V](
+            cc = HasDots[V].dots(value)
+          ).mutator
+        case None => make[K, V]().mutator
 
-      make[K, V](
-        cc = HasDots[V].dots(v)
-      ).mutator
     }
 
     def removeAll(using PermCausalMutate, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {

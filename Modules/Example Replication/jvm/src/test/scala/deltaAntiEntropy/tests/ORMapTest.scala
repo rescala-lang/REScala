@@ -32,11 +32,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
           case (m, e) =>
-            m.mutateKey(k)(_.add(using m.replicaID)(e))
+            m.transform(k)(_.add(using m.replicaID)(e))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.mutateKey(k)(_.remove(e))
+          case (m, e) => m.transform(k)(_.remove(e))
         }
       }
 
@@ -60,11 +60,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
-          case (m, e) => m.mutateKey(k)(_.add(using m.replicaID)(e))
+          case (m, e) => m.transform(k)(_.add(using m.replicaID)(e))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.mutateKey(k)(_.remove(e))
+          case (m, e) => m.transform(k)(_.remove(e))
         }
       }
 
