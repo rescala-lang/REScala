@@ -72,8 +72,8 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val queryResult = removed.queryKey(k).elements
 
-      assert(
-        queryResult == empty.elements,
+      assertEquals(
+        queryResult, empty.elements,
         s"Querying a removed key should produce the same result as querying an empty CRDT, but $queryResult does not equal ${empty.elements}"
       )
     }

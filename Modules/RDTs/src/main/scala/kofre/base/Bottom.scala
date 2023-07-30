@@ -19,6 +19,7 @@ import scala.compiletime.summonAll
 @FunctionalInterface
 trait Bottom[A] {
   def empty: A
+  extension (value: A) def isEmpty: Boolean = value == empty
 }
 
 object Bottom {
@@ -27,20 +28,26 @@ object Bottom {
 
   private[this] object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
     override def empty: Map[Nothing, Nothing] = Map.empty
+    extension (value: Map[Nothing, Nothing]) override def isEmpty: Boolean = value.isEmpty
   }
   given mapBottom[K, V]: Bottom[Map[K, V]] = mapBottomInstance.asInstanceOf
 
   given optionBottom[V]: Bottom[Option[V]] with {
     override def empty: Option[V] = None
+    extension (value: Option[V]) override def isEmpty: Boolean = value.isEmpty
   }
 
   private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
     override val empty: Set[Nothing] = Set.empty
+    extension (value: Set[Nothing]) override def isEmpty: Boolean = value.isEmpty
+
   }
   given setBottom[V]: Bottom[Set[V]] = setBottomInstance.asInstanceOf
 
   given queueBottom[V]: Bottom[Queue[V]] with {
     override def empty: Queue[V] = Queue.empty
+    extension (value: Queue[V]) override def isEmpty: Boolean = value.isEmpty
+
   }
 
   given dotMap[K, V]: Bottom[DotMap[K, V]]   = Bottom.derived
@@ -61,6 +68,9 @@ object Bottom {
       pm.fromProduct(
         bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
       )
+    extension (value: T) override def isEmpty: Boolean =
+      value.productIterator.zipWithIndex.forall: (v, i) =>
+        bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
   }
 
 }

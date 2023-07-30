@@ -13,7 +13,9 @@ object Epoche {
 
   given contextDecompose[E: Lattice]: DottedLattice[Epoche[E]] = DottedLattice.liftLattice
 
-  given bottom[E: Bottom]: Bottom[Epoche[E]] with { override def empty: Epoche[E] = Epoche.empty }
+  given bottom[E: Bottom]: Bottom[Epoche[E]] with {
+    override def empty: Epoche[E] = Epoche.empty
+  }
 
   extension [C, E](container: C)
     def epoche: syntax[C, E] = syntax(container)
