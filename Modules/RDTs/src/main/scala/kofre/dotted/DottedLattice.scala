@@ -80,16 +80,19 @@ object DottedLattice {
   // This takes the list of individual deltas above, and re-merges all the ones that have an overlapping context because those may not be split into multiple deltas, otherwise they would remove each other on merge
   def compact[T](rem: List[Dotted[T]], acc: List[Dotted[T]])(using dl: DottedLattice[T]): List[Dotted[T]] = rem match
     case Nil => acc
-    case h :: t =>
+    case h :: tail =>
       def overlap(e: Dotted[T]): Boolean = !h.context.disjunct(e.context)
 
-      val (tin, tother) = t.partition(overlap)
+      val (tin, tother) = tail.partition(overlap)
       val (accin, accother) = acc.partition(overlap)
       val all = tin ++ accin
       val compacted = all.foldLeft(h): (l, r) =>
         Dotted(dl.mergePartial(Dotted(l.data, Dots.empty), Dotted(r.data, Dots.empty)), l.context union r.context)
 
-      compact(tother, compacted :: accother)
+      // have to repeat the check with compacted, until it did not grow
+      if all.isEmpty
+      then compact(tother, compacted :: accother)
+      else compact(compacted :: tother, accother)
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
