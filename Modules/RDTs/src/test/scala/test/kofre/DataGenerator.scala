@@ -151,10 +151,8 @@ object DataGenerator {
 
   @nowarn
   given shrinkDotted[A: HasDots]: Shrink[Dotted[A]] = Shrink: dotted =>
-    dotted.context.decomposed.toStream.flatMap: e =>
+    (dotted.context.decomposed.iterator concat dotted.context.iterator.map(Dots.single)).toStream.flatMap: e =>
       dotted.data.removeDots(e).map(Dotted(_, dotted.context.subtract(e)))
-
-  summon[Shrink[Dotted[DotMap[String, Dots]]]]
 
   given arbCMultiVersion[E](using arb: Arbitrary[E]): Arbitrary[contextual.MultiVersionRegister[E]] = Arbitrary:
     Gen.listOf(Gen.zip(uniqueDot, arb.arbitrary)).map: pairs =>
