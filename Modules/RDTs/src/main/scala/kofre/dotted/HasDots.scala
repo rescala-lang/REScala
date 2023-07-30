@@ -16,7 +16,8 @@ import scala.util.control.ControlThrowable
 trait HasDots[A] {
   extension (dotted: A)
     def dots: Dots
-    // TODO: I don’t remember what this was supposed to do anymore
+    /** Removes dots and anything associated to them from the value.
+     * In case the value becomes fully “empty” returns None */
     def removeDots(dots: Dots): Option[A]
 }
 
