@@ -1,12 +1,12 @@
 package kofre.base
 
-
 import scala.annotation.targetName
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
 /** A lattice describes a set of values where we always can [[merge]] two values and get a “consistent” result.
- * Technically, this is a join semilattice. See [[Bottom]] */
+  * Technically, this is a join semilattice. See also [[Bottom]].
+  */
 @FunctionalInterface
 trait Lattice[A] {
 
