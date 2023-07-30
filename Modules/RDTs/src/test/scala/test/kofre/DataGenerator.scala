@@ -146,4 +146,10 @@ object DataGenerator {
   given Arbitrary[SmallTimeSet] = Arbitrary(for {
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
   } yield (SmallTimeSet(contents.toSet)))
+
+
+  given [E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
+    arbId.arbitrary.flatMap: id =>
+      Gen.listOf(arb.arbitrary).map: list =>
+        GrowOnlyList.empty.insertAllGL(using id)(0, list)
 }

@@ -4,7 +4,7 @@ import kofre.base.{Bottom, Lattice, Time}
 import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.time.{CausalityException, Dots, VectorClock}
 import org.scalacheck.Prop.*
@@ -26,6 +26,7 @@ class OrSetChecks       extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks      extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks       extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks extends LatticePropertyChecks[VectorClock]
+class GrowOnlyListChecks extends LatticePropertyChecks[GrowOnlyList[Int]]
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
