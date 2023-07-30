@@ -18,7 +18,7 @@ trait Lattice[A] {
   def merge(left: A, right: A): A
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
-  def lteq(left: A, right: A): Boolean = merge(left, right) == right
+  def lteq(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
 
   /** computes delta without state */
   def diff(state: A, delta: A): Option[A] = {
@@ -37,7 +37,7 @@ trait Lattice[A] {
   extension (left: A) {
 
     /** Lattice order is derived from merge, but should be overridden for efficiency. */
-    def <=(right: A): Boolean = this.merge(left, right) == Lattice.normalize(right)(using this)
+    def <=(right: A): Boolean = this.lteq(left, right)
     @targetName("mergeInfix")
     def merge(right: A): A = this.merge(left, right)
 
