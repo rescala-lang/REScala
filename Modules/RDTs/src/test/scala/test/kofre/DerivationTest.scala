@@ -2,9 +2,8 @@ package test.kofre
 import kofre.base.{Lattice, Uid}
 import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
-import test.kofre.DataGenerator.arbId
-import test.kofre.baseproperties.{LatticePropertyChecks, bottomOption}
-import test.kofre.DataGenerator.given
+import test.kofre.DataGenerator.{arbId, given}
+import test.kofre.baseproperties.LatticePropertyChecks
 
 case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 

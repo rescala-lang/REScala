@@ -1,6 +1,6 @@
 package test.kofre.baseproperties
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet}
@@ -32,12 +32,7 @@ class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]]
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-inline given bottomOption[A]: Option[Bottom[A]] =
-  scala.compiletime.summonFrom:
-    case b: Bottom[A] => Some(b)
-    case _            => None
-
-abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bottom[A]])
+abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt]
     extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
 
   /** because examples are generated independently, they sometimes produce causally inconsistent results */
@@ -71,8 +66,6 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
     }
   }
 
-  val empty = bot.map(_.empty)
-
   property("decomposition") {
     forAll { (theValue: A) =>
 
@@ -83,9 +76,8 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
       decomposed.foreach { d =>
         // assertEquals(d merge theValue, Lattice.normalize(theValue), "naive order broken")
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
-        empty match
-          case Some(empty) => assertNotEquals(empty, d, "decomposed result was empty")
-          case other       =>
+        BottomOpt.explicit: bo =>
+          assertNotEquals(bo.empty, d, "decomposed result was empty")
         if isDotted
         then
           // do some extra checks which will cause failure later, but have better error reporting when done here
@@ -97,13 +89,16 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
               assert(thisCtx disjunct otherCtx, s"overlapping context\n  ${d}\n  ${other}")
       }
 
-      empty match
-        case Some(empty) => assertEquals(empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
-        case other       =>
+      BottomOpt.explicit: bo =>
+        assertEquals(bo.empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
 
       val merged = decomposed.reduceLeftOption(Lattice.merge)
 
-      assertEquals(merged.orElse(empty), Some(Lattice.normalize(theValue)), s"decompose does not recompose")
+      assertEquals(
+        merged.orElse(BottomOpt.explicit(_.empty)),
+        Some(Lattice.normalize(theValue)),
+        s"decompose does not recompose"
+      )
 
     }
   }
@@ -115,4 +110,3 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
       assert(right <= merged)
 
 }
-

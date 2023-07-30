@@ -8,14 +8,14 @@ import scala.deriving.Mirror
 import scala.compiletime.summonAll
 
 /** Provides an [[empty]] value of type [[A]]
- *
- * By assumption [[empty]] is the identity of [[Lattice.merge]]
- *
- * That is:
- * ```scala
- * Lattice.merge(empty, x) == x
- * ```
- */
+  *
+  * By assumption [[empty]] is the identity of [[Lattice.merge]]
+  *
+  * That is:
+  * ```scala
+  * Lattice.merge(empty, x) == x
+  * ```
+  */
 @FunctionalInterface
 trait Bottom[A] {
   def empty: A
@@ -27,25 +27,25 @@ object Bottom {
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
   private[this] object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
-    override def empty: Map[Nothing, Nothing] = Map.empty
+    override def empty: Map[Nothing, Nothing]                              = Map.empty
     extension (value: Map[Nothing, Nothing]) override def isEmpty: Boolean = value.isEmpty
   }
   given mapBottom[K, V]: Bottom[Map[K, V]] = mapBottomInstance.asInstanceOf
 
   given optionBottom[V]: Bottom[Option[V]] with {
-    override def empty: Option[V] = None
+    override def empty: Option[V]                              = None
     extension (value: Option[V]) override def isEmpty: Boolean = value.isEmpty
   }
 
   private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
-    override val empty: Set[Nothing] = Set.empty
+    override val empty: Set[Nothing]                              = Set.empty
     extension (value: Set[Nothing]) override def isEmpty: Boolean = value.isEmpty
 
   }
   given setBottom[V]: Bottom[Set[V]] = setBottomInstance.asInstanceOf
 
   given queueBottom[V]: Bottom[Queue[V]] with {
-    override def empty: Queue[V] = Queue.empty
+    override def empty: Queue[V]                              = Queue.empty
     extension (value: Queue[V]) override def isEmpty: Boolean = value.isEmpty
 
   }
@@ -68,9 +68,25 @@ object Bottom {
       pm.fromProduct(
         bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
       )
-    extension (value: T) override def isEmpty: Boolean =
-      value.productIterator.zipWithIndex.forall: (v, i) =>
-        bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
+    extension (value: T)
+      override def isEmpty: Boolean =
+        value.productIterator.zipWithIndex.forall: (v, i) =>
+          bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
   }
 
 }
+
+case class BottomOpt[A](maybeBottom: Option[Bottom[A]]):
+  inline def withBottom[R](inline block: Bottom[A] ?=> R): Option[R] = maybeBottom match
+    case Some(value) => Some(block(using value))
+    case None        => None
+
+object BottomOpt:
+  inline def explicit[A, R](using inline bo: BottomOpt[A])(inline block: Bottom[A] => R): Option[R] =
+    bo.withBottom(bo ?=> block(bo))
+
+  inline given bottomOpt[A]: BottomOpt[A] =
+    BottomOpt:
+      scala.compiletime.summonFrom:
+        case b: Bottom[A] => Some(b)
+        case _            => None
