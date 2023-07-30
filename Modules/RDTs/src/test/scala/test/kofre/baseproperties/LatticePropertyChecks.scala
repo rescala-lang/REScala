@@ -71,20 +71,6 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
     }
   }
 
-  property("is order") {
-    forAll { (a: A, b: A, c: A) =>
-      assert(
-        a <= a,
-        s"leq should be reflexive, but $a is not leq $a"
-      )
-
-      assert(
-        !((a <= b) && (b <= c)) || (a <= c),
-        s"leq should be transitive, but $a leq $b and $b leq $c and $a is not leq $c"
-      )
-    }
-  }
-
   val empty = bot.map(_.empty)
 
   property("decomposition") {
@@ -121,6 +107,12 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
 
     }
   }
+
+  property("merge agrees with order"):
+    forAll: (left: A, right: A) =>
+      val merged = left merge right
+      assert(left <= merged)
+      assert(right <= merged)
 
 }
 
