@@ -14,8 +14,6 @@ import kofre.dotted.Dotted
 import kofre.datatypes.experiments.AuctionInterface.AuctionData
 import kofre.time.{ArrayRanges, Dot, Dots}
 
-import scala.annotation.nowarn
-
 object JsoniterCodecs {
 
   def bimapCodec[A, B](codec: JsonValueCodec[A], to: A => B, from: B => A): JsonValueCodec[B] = new JsonValueCodec[B]:
@@ -62,7 +60,6 @@ object JsoniterCodecs {
   implicit def GCounterStateCodec: JsonValueCodec[GrowOnlyCounter]      = JsonCodecMaker.make
 
   /** GrowOnlyList */
-  @nowarn()
   implicit def growOnlyListCodec[E: JsonValueCodec]: JsonValueCodec[GrowOnlyList[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
@@ -95,8 +92,6 @@ object JsoniterCodecs {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   /** RGA */
-
-  @nowarn()
   implicit def RGAStateCodec[E: JsonValueCodec]: JsonValueCodec[Dotted[ReplicatedList[E]]] = {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   }

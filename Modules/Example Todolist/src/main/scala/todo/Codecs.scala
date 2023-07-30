@@ -12,7 +12,6 @@ import kofre.time.Dot
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 
-import scala.annotation.nowarn
 
 object Codecs {
 
@@ -29,7 +28,6 @@ object Codecs {
     override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
     override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
 
-  @nowarn()
   implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   implicit val codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =

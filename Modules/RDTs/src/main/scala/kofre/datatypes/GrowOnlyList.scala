@@ -20,9 +20,7 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
-case class GrowOnlyList[E](innerContents: Map[Node[TimedVal[E]], Elem[TimedVal[E]]]) {
-  export innerContents.*
-}
+case class GrowOnlyList[E](inner: Map[Node[TimedVal[E]], Elem[TimedVal[E]]])
 
 object GrowOnlyList {
   enum Node[+E]:
@@ -42,13 +40,13 @@ object GrowOnlyList {
           left: GrowOnlyList[E],
           right: GrowOnlyList[E]
       ): Boolean =
-        left.keys.forall { k =>
-          right.get(k).contains(left(k))
+        left.inner.keys.forall { k =>
+          right.inner.get(k).contains(left.inner(k))
         }
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
-        state.toList.map((edge: (Node[TimedVal[E]], Elem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
+        state.inner.toList.map((edge: (Node[TimedVal[E]], Elem[TimedVal[E]])) => GrowOnlyList(Map(edge)))
 
       @tailrec
       private def insertEdge(
@@ -57,11 +55,11 @@ object GrowOnlyList {
       ): GrowOnlyList[E] =
         edge match {
           case (l, r @ Elem(e1)) =>
-            state.get(l) match {
-              case None => GrowOnlyList(state.innerContents + edge)
+            state.inner.get(l) match {
+              case None => GrowOnlyList(state.inner + edge)
               case Some(next @ Elem(e2)) =>
                 if e1.timestamp > e2.timestamp
-                then GrowOnlyList(state.innerContents + edge + (r -> next))
+                then GrowOnlyList(state.inner + edge + (r -> next))
                 else
                   insertEdge(state, next -> r)
             }
@@ -73,11 +71,11 @@ object GrowOnlyList {
           right: GrowOnlyList[E],
           current: Node[TimedVal[E]]
       ): GrowOnlyList[E] =
-        right.get(current) match {
+        right.inner.get(current) match {
           case None => left
           case Some(next) =>
             val leftMerged =
-              if left.contains(current) && left.exists { case (_, r) => r == next }
+              if left.inner.contains(current) && left.inner.exists { case (_, r) => r == next }
               then left
               else insertEdge(left, (current, next))
 
@@ -89,7 +87,7 @@ object GrowOnlyList {
           left: GrowOnlyList[E],
           right: GrowOnlyList[E]
       ): GrowOnlyList[E] =
-        (right.keySet -- right.values).foldLeft(left) { (state, startNode) =>
+        (right.inner.keySet -- right.inner.values).foldLeft(left) { (state, startNode) =>
           insertRec(state, right, startNode)
         }
     }
@@ -107,7 +105,7 @@ object GrowOnlyList {
         i: Int
     ): Option[Node[TimedVal[E]]] = {
       if (i == 0) Some(current)
-      else state.get(current) match {
+      else state.inner.get(current) match {
         case None       => None
         case Some(elem) => findNth(state, elem, i - 1)
       }
@@ -115,13 +113,13 @@ object GrowOnlyList {
 
     def read(using PermQuery)(i: Int): Option[E] =
       findNth(current, Head, i + 1).flatMap {
-        case Head  => None
+        case Head    => None
         case Elem(e) => Some(e.payload)
       }
 
     @tailrec
     private def toListRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], acc: ListBuffer[E]): ListBuffer[E] =
-      state.get(current) match {
+      state.inner.get(current) match {
         case None                  => acc
         case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.payload))
       }
@@ -131,13 +129,13 @@ object GrowOnlyList {
 
     def toLazyList(using PermQuery): LazyList[E] =
       LazyList.unfold[E, Node[TimedVal[E]]](Head) { node =>
-        current.get(node) match {
+        current.inner.get(node) match {
           case None                  => None
           case Some(next @ Elem(tv)) => Some((tv.payload, next))
         }
       }
 
-    def size(using PermQuery): Int = current.size
+    def size(using PermQuery): Int = current.inner.size
 
     def insertGL(i: Int, e: E): IdMutate = {
       GrowOnlyList(findNth(current, Head, i) match {
@@ -160,12 +158,12 @@ object GrowOnlyList {
 
     @tailrec
     private def withoutRec(state: GrowOnlyList[E], current: Node[TimedVal[E]], elems: Set[E]): GrowOnlyList[E] =
-      state.get(current) match {
+      state.inner.get(current) match {
         case None => state
         case Some(next @ Elem(tv)) if elems.contains(tv.payload) =>
-          val edgeRemoved = state.get(next) match {
-            case Some(nextnext) => state.removed(current).removed(next) + (current -> nextnext)
-            case None           => state.removed(current).removed(next)
+          val edgeRemoved = state.inner.get(next) match {
+            case Some(nextnext) => state.inner.removed(current).removed(next) + (current -> nextnext)
+            case None           => state.inner.removed(current).removed(next)
           }
 
           withoutRec(GrowOnlyList(edgeRemoved), current, elems)
