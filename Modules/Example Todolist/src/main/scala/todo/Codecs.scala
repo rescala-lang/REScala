@@ -3,7 +3,8 @@ package todo
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Uid
-import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, TimedVal}
+import kofre.datatypes.LastWriterWins
+import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.{DotFun, Dotted}
 import kofre.syntax.DeltaBuffer
@@ -50,11 +51,11 @@ object Codecs {
     IdenticallyTransmittable()
   implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[ReplicatedList[TaskRef]]] = JsonCodecMaker.make
 
-  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[CausalLastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[CausalLastWriterWins[Option[TaskData]]]] =
+  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LastWriterWins[Option[TaskData]]]] =
     IdenticallyTransmittable()
 
-  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[CausalLastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
+  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
 
 }

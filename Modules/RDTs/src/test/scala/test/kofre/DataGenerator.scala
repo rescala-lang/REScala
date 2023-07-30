@@ -2,7 +2,8 @@ package test.kofre
 
 import kofre.base.*
 import kofre.datatypes.*
-import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, CausalTime, GenericLastWriterWins, TimedVal, WallClock}
+import kofre.datatypes.LastWriterWins.CausalTime
+import kofre.datatypes.alternatives.lww.{GenericLastWriterWins, TimedVal, WallClock}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
@@ -25,22 +26,22 @@ object DataGenerator {
     } yield GenericLastWriterWins(time, value)
   )
 
-  given arbLww: Arbitrary[CausalLastWriterWins[Int]] = Arbitrary(
+  given arbLww: Arbitrary[LastWriterWins[Int]] = Arbitrary(
     for {
       time  <- Gen.long
       causal <- Gen.long
       nanotime <- Gen.long
       value <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield CausalLastWriterWins(CausalTime(time, causal , nanotime), value)
+    } yield LastWriterWins(CausalTime(time, causal , nanotime), value)
   )
 
-  given arbOptLww: Arbitrary[Option[CausalLastWriterWins[Int]]] = Arbitrary(
+  given arbOptLww: Arbitrary[Option[LastWriterWins[Int]]] = Arbitrary(
     for {
       lww <- arbLww.arbitrary
     } yield Some(lww)
   )
 
-  given arbTupleOptLww: Arbitrary[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])] = Arbitrary(
+  given arbTupleOptLww: Arbitrary[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])] = Arbitrary(
     for {
       left <- arbLww.arbitrary
       right <- arbLww.arbitrary

@@ -1,10 +1,10 @@
 package test.kofre.baseproperties
 
 import kofre.base.{Bottom, Lattice, Time}
-import kofre.datatypes.alternatives.lww.{CausalLastWriterWins, GenericLastWriterWins}
+import kofre.datatypes.alternatives.lww.GenericLastWriterWins
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.{GrowOnlyCounter, PosNegCounter}
+import kofre.datatypes.{GrowOnlyCounter, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.time.{CausalityException, Dots, VectorClock}
 import org.scalacheck.Prop.*
@@ -18,16 +18,16 @@ class IntChecks         extends LatticePropertyChecks[Int]
 class SetChecks         extends LatticePropertyChecks[Set[String]]
 class MapChecks         extends LatticePropertyChecks[Map[String, Int]]
 class OptionChecks      extends LatticePropertyChecks[Option[Int]]
-class CusalLwwChecks    extends LatticePropertyChecks[CausalLastWriterWins[Int]]
+class CusalLwwChecks    extends LatticePropertyChecks[LastWriterWins[Int]]
 class GenericLwwChecks  extends LatticePropertyChecks[GenericLastWriterWins[Time, Int]]
-class LWWOptionChecks   extends LatticePropertyChecks[Option[CausalLastWriterWins[Int]]]
+class LWWOptionChecks   extends LatticePropertyChecks[Option[LastWriterWins[Int]]]
 class MultiValueChecks  extends LatticePropertyChecks[MultiValueRegister[Int]]
 class OrSetChecks       extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks      extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks       extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks extends LatticePropertyChecks[VectorClock]
 class LWWTupleChecks
-    extends LatticePropertyChecks[(Option[CausalLastWriterWins[Int]], Option[CausalLastWriterWins[Int]])]
+    extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
 inline given bottomOption[A]: Option[Bottom[A]] =
   scala.compiletime.summonFrom:

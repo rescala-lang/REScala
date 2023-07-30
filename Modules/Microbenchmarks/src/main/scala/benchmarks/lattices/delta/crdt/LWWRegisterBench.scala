@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.alternatives.lww.CausalLastWriterWins
+import kofre.datatypes.LastWriterWins
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
@@ -14,20 +14,20 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var full: NamedDeltaBuffer[CausalLastWriterWins[Int]]  = _
+  var full: NamedDeltaBuffer[LastWriterWins[Int]]  = _
 
   @Setup
   def setup(): Unit = {
-    full = NamedDeltaBuffer("b", CausalLastWriterWins.now(0))
+    full = NamedDeltaBuffer("b", LastWriterWins.now(0))
   }
 
   @Benchmark
   def readFull(): Int = full.read
 
   @Benchmark
-  def writeFull(): NamedDeltaBuffer[CausalLastWriterWins[Int]] = full.write(1)
+  def writeFull(): NamedDeltaBuffer[LastWriterWins[Int]] = full.write(1)
 
   @Benchmark
-  def mapFull(): NamedDeltaBuffer[CausalLastWriterWins[Int]] = full.write(full.read + 1)
+  def mapFull(): NamedDeltaBuffer[LastWriterWins[Int]] = full.write(full.read + 1)
 
 }
