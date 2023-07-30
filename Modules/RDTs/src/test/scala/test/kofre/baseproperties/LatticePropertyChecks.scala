@@ -5,7 +5,7 @@ import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet}
 import kofre.dotted.{DotMap, DotSet, Dotted, DottedLattice, HasDots}
-import kofre.time.{CausalityException, Dots, Time, VectorClock}
+import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
@@ -39,34 +39,26 @@ class LWWTupleChecks
 abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
     extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
 
-  /** because examples are generated independently, they sometimes produce causally inconsistent results */
-  inline def ignoreCausalErrors[A](inline expr: Unit): Unit =
-    try expr
-    catch case _: CausalityException => ()
-
   property("idempotent") {
     forAll { (a: A, b: A) =>
-      ignoreCausalErrors:
-        val ab  = Lattice.merge(a, b)
-        val abb = Lattice.merge(ab, b)
-        assertEquals(ab, abb)
+      val ab  = Lattice.merge(a, b)
+      val abb = Lattice.merge(ab, b)
+      assertEquals(ab, abb)
 
     }
   }
   property("commutative") {
     forAll { (a: A, b: A) =>
-      ignoreCausalErrors:
-        assertEquals(Lattice.merge(b, a), Lattice.merge(a, b))
+      assertEquals(Lattice.merge(b, a), Lattice.merge(a, b))
     }
   }
   property("associative") {
     forAll { (a: A, b: A, c: A) =>
-      ignoreCausalErrors:
-        val ab   = Lattice.merge(a, b)
-        val bc   = Lattice.merge(b, c)
-        val abc  = Lattice.merge(ab, c)
-        val abc2 = Lattice.merge(a, bc)
-        assertEquals(abc, abc2, s"merge not equal, steps:\n  $ab\n  $bc")
+      val ab   = Lattice.merge(a, b)
+      val bc   = Lattice.merge(b, c)
+      val abc  = Lattice.merge(ab, c)
+      val abc2 = Lattice.merge(a, bc)
+      assertEquals(abc, abc2, s"merge not equal, steps:\n  $ab\n  $bc")
     }
   }
 
@@ -78,7 +70,11 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
       val isDotted = theValue.isInstanceOf[Dotted[_]]
 
       decomposed.foreach { d =>
-        assertEquals(d merge theValue, Lattice.normalize(theValue), s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("", "\n", "\n").indent(3)}")
+        assertEquals(
+          d merge theValue,
+          Lattice.normalize(theValue),
+          s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("", "\n", "\n").indent(3)}"
+        )
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
         BottomOpt.explicit: bo =>
           assertNotEquals(bo.empty, d, "decomposed result was empty")

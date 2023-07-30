@@ -21,4 +21,3 @@ object Dot {
       x.replicaId == y.replicaId && x.time <= y.time
 }
 
-class CausalityException(msg: String) extends Exception(msg)
