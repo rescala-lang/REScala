@@ -78,7 +78,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
       val isDotted = theValue.isInstanceOf[Dotted[_]]
 
       decomposed.foreach { d =>
-        // assertEquals(d merge theValue, Lattice.normalize(theValue), "naive order broken")
+        assertEquals(d merge theValue, Lattice.normalize(theValue), s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("", "\n", "\n").indent(3)}")
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
         BottomOpt.explicit: bo =>
           assertNotEquals(bo.empty, d, "decomposed result was empty")
