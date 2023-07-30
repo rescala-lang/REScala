@@ -40,7 +40,7 @@ object DotMap {
       }.toMap)
     }
     override def lteq(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): Boolean = {
-      (right.context <= left.context) &&
+      (left.context <= right.context) &&
       (left.data.repr.keySet union right.data.repr.keySet).forall { k =>
         left.map(access(k)) <= right.map(access(k))
       }
