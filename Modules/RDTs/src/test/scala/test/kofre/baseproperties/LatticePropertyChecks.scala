@@ -77,7 +77,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
         assertEquals(
           d merge theValue,
           Lattice.normalize(theValue),
-          s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("", "\n", "\n").indent(3)}"
+          s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
         BottomOpt.explicit: bo =>
