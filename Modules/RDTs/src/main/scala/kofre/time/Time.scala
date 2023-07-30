@@ -1,4 +1,4 @@
-package kofre.base
+package kofre.time
 
 type Time = Long
 

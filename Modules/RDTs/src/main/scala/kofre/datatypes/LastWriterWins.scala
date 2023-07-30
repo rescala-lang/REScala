@@ -1,8 +1,8 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Lattice, Time}
-import kofre.datatypes.LastWriterWins.CausalTime
+import kofre.base.{Bottom, Lattice}
 import kofre.syntax.OpsSyntaxHelper
+import kofre.time.{CausalTime, Time}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -15,27 +15,14 @@ case class LastWriterWins[+A](timestamp: CausalTime, payload: A)
 
 object LastWriterWins {
 
-  case class CausalTime(time: Time, causal: Long, random: Long):
-    def inc: CausalTime = CausalTime(time, causal + 1, System.nanoTime())
-    def advance: CausalTime =
-      val now = CausalTime.now()
-      if now <= this
-      then inc
-      else now
 
-  object CausalTime:
-    given ordering: Ordering[CausalTime] =
-      Ordering.by[CausalTime, Long](_.time)
-        .orElseBy(_.causal)
-        .orElseBy(_.random)
-    def now() = CausalTime(Time.current(), 0, System.nanoTime())
 
   def empty[A: Bottom]: LastWriterWins[A] = now(Bottom.empty)
 
   def fallback[A](v: A): LastWriterWins[A] =
-    LastWriterWins(CausalTime(Long.MinValue, 0, System.nanoTime()), v)
+    LastWriterWins(kofre.time.CausalTime(Long.MinValue, 0, System.nanoTime()), v)
 
-  def now[A](v: A): LastWriterWins[A] = LastWriterWins(CausalTime(Time.current(), 0, System.nanoTime()), v)
+  def now[A](v: A): LastWriterWins[A] = LastWriterWins(kofre.time.CausalTime(Time.current(), 0, System.nanoTime()), v)
 
   given lattice[A]: Lattice[LastWriterWins[A]] with {
     override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp

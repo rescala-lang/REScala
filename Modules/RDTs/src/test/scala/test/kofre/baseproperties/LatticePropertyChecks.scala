@@ -1,11 +1,11 @@
 package test.kofre.baseproperties
 
-import kofre.base.{Bottom, Lattice, Time}
+import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.time.{CausalityException, Dots, VectorClock}
+import kofre.time.{CausalityException, Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}

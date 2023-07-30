@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.{Lattice, Time, Uid}
+import kofre.base.{Lattice, Uid}
 import kofre.dotted.Dotted
 
 /** Essentially a more efficient version of a [[Set[Dot] ]].

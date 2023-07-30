@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.{Lattice, Time, Uid}
+import kofre.base.{Lattice, Uid}
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering

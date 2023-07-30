@@ -1,10 +1,10 @@
 package encrdtlib.container
 
 import encrdtlib.container.AddWinsLastWriterWinsMap.LatticeType
-import encrdtlib.lattices.{AddWinsMapLattice}
+import encrdtlib.lattices.AddWinsMapLattice
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.LastWriterWins
-import kofre.datatypes.LastWriterWins.CausalTime
+import kofre.time.CausalTime
 
 class AddWinsLastWriterWinsMap[K, V](
     val replicaId: Uid,

@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.{Uid, Time}
+import kofre.base.Uid
 
 /** A Dot is a globally unique point in time.
   * Dots are partially ordered by their time per replicaId.

@@ -1,10 +1,10 @@
 package kofre.time
 
-import kofre.base.{Lattice, Time}
+import kofre.base.Lattice
 
 import java.util
 
-/** Efficient storage of a set of [[kofre.base.Time]] when most stored values are contiguous ranges. */
+/** Efficient storage of a set of [[Time]] when most stored values are contiguous ranges. */
 class ArrayRanges(
     /** Internally, ranges are stored as [begin, end) in a single array where begin is inclusive and end is exclusive.
       * Note that this is accessible to enable efficient external serialization, but any direct use of this field is discouraged.

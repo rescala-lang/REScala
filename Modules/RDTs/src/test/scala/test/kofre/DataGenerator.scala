@@ -2,7 +2,6 @@ package test.kofre
 
 import kofre.base.*
 import kofre.datatypes.*
-import kofre.datatypes.LastWriterWins.CausalTime
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.dotted.*
@@ -25,7 +24,7 @@ object DataGenerator {
       causal   <- Gen.long
       nanotime <- Gen.long
       value    <- Gen.choose(Int.MinValue, Int.MaxValue)
-    } yield LastWriterWins(CausalTime(time, causal, nanotime), value)
+    } yield LastWriterWins(kofre.time.CausalTime(time, causal, nanotime), value)
   )
 
   given arbOptLww: Arbitrary[Option[LastWriterWins[Int]]] = Arbitrary(

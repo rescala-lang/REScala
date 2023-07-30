@@ -1,7 +1,7 @@
 package test.kofre.corestructs
 
-import kofre.base.{Time, Uid}
-import kofre.time.{ArrayRanges, Dot}
+import kofre.base.Uid
+import kofre.time.{ArrayRanges, Dot, Time}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
 
