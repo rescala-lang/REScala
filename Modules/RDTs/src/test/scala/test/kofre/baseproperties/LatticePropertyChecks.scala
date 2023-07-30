@@ -118,31 +118,3 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bo
   }
 
 }
-
-/** Not used, was implemented to filter out duplicates, but seems too complicated. */
-class DistinctMachinery[A](using maybeHasDots: Option[HasDots[A]]) {
-
-  /** In the case that [[A]] has a [[kofre.dotted.DottedLattice]], merging of two randomly generated values may not be commutative/associative, because */
-  def distinct(a: A, b: A): Boolean =
-    maybeHasDots match
-      case Some(hd) =>
-        hd.dots(a) disjunct hd.dots(b)
-      case None =>
-        true
-
-  private inline given hasDotsIfPresent[A](using NotGiven[A =:= Dotted[_]]): Option[HasDots[A]] =
-    scala.compiletime.summonFrom:
-      case hd: HasDots[A] => Some(hd)
-      case _              => None
-
-  private inline given hasDotsIfPresent[A]: Option[HasDots[Dotted[A]]] =
-    scala.compiletime.summonFrom:
-      case hd: HasDots[A] =>
-        Some(new HasDots[Dotted[A]] {
-          extension (dotted: Dotted[A])
-            def dots: Dots                                = hd.dots(dotted.data)
-            def removeDots(dots: Dots): Option[Dotted[A]] = None
-        })
-      case _ =>
-        None
-}
