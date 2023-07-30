@@ -56,11 +56,15 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
     forAll { (a: A, b: A, c: A) =>
       val ab   = Lattice.merge(a, b)
       val bc   = Lattice.merge(b, c)
-      val abc  = Lattice.merge(ab, c)
-      val abc2 = Lattice.merge(a, bc)
-      assertEquals(abc, abc2, s"merge not equal, steps:\n  $ab\n  $bc")
+      val ab_c  = Lattice.merge(ab, c)
+      val a_bc = Lattice.merge(a, bc)
+      assertEquals(ab_c, a_bc, s"merge not equal, steps:\n  $ab\n  $bc")
+
+      val bc_ab = bc merge ab
+      assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work unsufficient test generators")
     }
   }
+
 
   property("decomposition") {
     forAll { (theValue: A) =>
