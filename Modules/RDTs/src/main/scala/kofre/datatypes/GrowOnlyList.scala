@@ -2,6 +2,7 @@ package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyList.Node
+import kofre.datatypes.GrowOnlyList.Node.Elem
 import kofre.datatypes.alternatives.lww.TimedVal
 import kofre.dotted.DottedLattice
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
@@ -19,7 +20,7 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
-case class GrowOnlyList[E](innerContents: GrowOnlyList.Repr[E]) {
+case class GrowOnlyList[E](innerContents: Map[Node[TimedVal[E]], Elem[TimedVal[E]]]) {
   export innerContents.*
 }
 
@@ -28,11 +29,6 @@ object GrowOnlyList {
     case Head()            extends Node[Nothing]
     case Elem[E](value: E) extends Node[E]
   import Node.{Elem, Head}
-
-  type Repr[E] = Map[
-    Node[TimedVal[E]],
-    Elem[TimedVal[E]]
-  ]
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
