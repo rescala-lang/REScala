@@ -26,8 +26,8 @@ case class GrowOnlyList[E](innerContents: Map[Node[TimedVal[E]], Elem[TimedVal[E
 
 object GrowOnlyList {
   enum Node[+E]:
-    case Head            extends Node[Nothing]
-    case Elem[E](value: E) extends Node[E]
+    case Head
+    case Elem(value: E)
   import Node.{Elem, Head}
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
