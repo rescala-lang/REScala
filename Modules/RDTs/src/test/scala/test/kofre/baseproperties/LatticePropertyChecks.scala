@@ -36,7 +36,7 @@ inline given bottomOption[A]: Option[Bottom[A]] =
     case _            => None
 
 abstract class LatticePropertyChecks[A: Arbitrary: Lattice](using bot: Option[Bottom[A]])
-    extends munit.ScalaCheckSuite {
+    extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
 
   /** because examples are generated independently, they sometimes produce causally inconsistent results */
   inline def ignoreCausalErrors[A](inline expr: Unit): Unit =

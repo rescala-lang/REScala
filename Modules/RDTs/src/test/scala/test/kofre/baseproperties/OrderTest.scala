@@ -40,7 +40,7 @@ abstract class OrderTests[A: PartialOrdering: Arbitrary](total: Boolean) extends
       }
   }
 
-  property("reflxive") {
+  property("reflexive") {
     forAll { (a: A) =>
       assert(a <= a)
     }
