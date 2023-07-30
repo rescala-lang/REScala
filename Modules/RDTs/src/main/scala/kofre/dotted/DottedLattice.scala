@@ -77,6 +77,20 @@ object DottedLattice {
       )
   }
 
+  // This takes the list of individual deltas above, and re-merges all the ones that have an overlapping context because those may not be split into multiple deltas, otherwise they would remove each other on merge
+  def compact[T](rem: List[Dotted[T]], acc: List[Dotted[T]])(using dl: DottedLattice[T]): List[Dotted[T]] = rem match
+    case Nil => acc
+    case h :: t =>
+      def overlap(e: Dotted[T]) = !h.context.disjunct(e.context)
+
+      val (tin, tother) = t.partition(overlap)
+      val (accin, accother) = acc.partition(overlap)
+      val all = tin ++ accin
+      val compacted = all.foldLeft(h): (l, r) =>
+        Dotted(dl.mergePartial(Dotted(l.data, Dots.empty), Dotted(r.data, Dots.empty)), l.context union r.context)
+
+      compact(tother, compacted :: accother)
+
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): DottedLattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, DottedLattice]]
     val bottoms: Tuple  = Lattice.Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
@@ -131,19 +145,8 @@ object DottedLattice {
                 )
           .toList
 
-        // This takes the list of individual deltas above, and re-merges all the ones that have an overlapping context because those may not be split into multiple deltas, otherwise they would remove each other on merge
-        def compact(rem: List[Dotted[T]], acc: List[Dotted[T]]): List[Dotted[T]] = rem match
-          case Nil => acc
-          case h :: t =>
-            def overlap(e: Dotted[T]) = !h.context.disjunct(e.context)
-            val (tin, tother)         = t.span(overlap)
-            val (accin, accother)     = acc.span(overlap)
-            val all                   = tin ++ accin
-            val compacted = all.foldLeft(h): (l, r) =>
-              Dotted(mergePartial(Dotted(l.data, Dots.empty), Dotted(r.data, Dots.empty)), l.context union r.context)
 
-            compact(tother, compacted :: accother)
-        val compacted = compact(added, Nil)
+        val compacted = compact(added, Nil)(using this)
 
         val containedDots = compacted.map(_.context).reduceOption(_ merge _).getOrElse(Dots.empty)
         val removed       = a.context.diff(containedDots)

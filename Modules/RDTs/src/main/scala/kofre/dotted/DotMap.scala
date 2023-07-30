@@ -52,7 +52,9 @@ object DotMap {
         Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
       } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
 
-      added ++ DottedLattice.decomposedDeletions(state)
+      val compacted = DottedLattice.compact(added.toList, Nil)(using this)
+
+      compacted ++ DottedLattice.decomposedDeletions(state)
     }
   }
 }
