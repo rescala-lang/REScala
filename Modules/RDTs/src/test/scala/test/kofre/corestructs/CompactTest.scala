@@ -8,7 +8,7 @@ import test.kofre.DataGenerator.*
 
 class CompactTest extends munit.ScalaCheckSuite {
 
-  test("contains works") {
+  test("basic compact test") {
     val a1                           = Uid.gen()
     given DottedLattice[Set[String]] = DottedLattice.liftLattice
 
