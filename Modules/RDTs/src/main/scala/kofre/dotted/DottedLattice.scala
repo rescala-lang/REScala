@@ -81,7 +81,7 @@ object DottedLattice {
   def compact[T](rem: List[Dotted[T]], acc: List[Dotted[T]])(using dl: DottedLattice[T]): List[Dotted[T]] = rem match
     case Nil => acc
     case h :: t =>
-      def overlap(e: Dotted[T]) = !h.context.disjunct(e.context)
+      def overlap(e: Dotted[T]): Boolean = !h.context.disjunct(e.context)
 
       val (tin, tother) = t.partition(overlap)
       val (accin, accother) = acc.partition(overlap)
