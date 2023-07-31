@@ -2,7 +2,7 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.contextual.CausalQueue.QueueElement
-import kofre.dotted.{Dotted, DottedLattice, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots, VectorClock}
 
@@ -58,16 +58,10 @@ object CausalQueue:
 
   }
 
-  given lattice[A]: DottedLattice[CausalQueue[A]] with {
-    override def mergePartial(left: Dotted[CausalQueue[A]], right: Dotted[CausalQueue[A]]): CausalQueue[A] =
+  given lattice[A]: Lattice[CausalQueue[A]] with {
+    override def merge(left: CausalQueue[A], right: CausalQueue[A]): CausalQueue[A] =
+      CausalQueue:
+        (left.values concat right.values)
+          .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
 
-      val leftDots  = Dots.from(left.data.values.map(_.dot))
-      val rightDots = Dots.from(right.data.values.map(_.dot))
-
-      val li = left.data.values.iterator.filter(qe => !(right.context subtract rightDots).contains(qe.dot))
-      val ri = right.data.values.iterator.filter(qe => !(left.context subtract leftDots).contains(qe.dot))
-
-      val res = (li concat ri).to(Queue)
-        .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
-      CausalQueue(res)
   }

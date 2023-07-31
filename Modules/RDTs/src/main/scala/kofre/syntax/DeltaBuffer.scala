@@ -1,7 +1,7 @@
 package kofre.syntax
 
 import kofre.base.Lattice
-import kofre.dotted.{Dotted, DottedLattice}
+import kofre.dotted.{Dotted}
 import kofre.time.Dots
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
@@ -21,7 +21,7 @@ case class DeltaBuffer[State](
 
 object DeltaBuffer {
 
-  given dottedPermissions[L: DottedLattice]: PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
+  given dottedPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
     override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.data
     override def mutateContext(
         container: DeltaBuffer[Dotted[L]],

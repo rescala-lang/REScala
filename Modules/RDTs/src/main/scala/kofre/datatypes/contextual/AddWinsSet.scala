@@ -2,7 +2,6 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 import kofre.dotted.*
-import kofre.dotted.DottedLattice.*
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -18,7 +17,7 @@ object AddWinsSet {
 
   given bottom[E]: Bottom[AddWinsSet[E]] with { override def empty: AddWinsSet[E] = AddWinsSet.empty }
 
-  given contextDecompose[E]: DottedLattice[AddWinsSet[E]] = DottedLattice.derived
+  given lattice[E]: Lattice[AddWinsSet[E]] = Lattice.derived
   given asCausalContext[E]: HasDots[AddWinsSet[E]]        = HasDots.derived
 
   extension [C, E](container: C)

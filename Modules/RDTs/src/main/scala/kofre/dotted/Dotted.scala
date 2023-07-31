@@ -24,24 +24,21 @@ object Dotted extends Dotted.LowPrio {
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
 
-  given dottedLattice[A: HasDots: Bottom: Lattice]: DottedLattice[A] with {
-    def mergePartial(left: Dotted[A], right: Dotted[A]): A =
+  given dottedLattice[A: HasDots: Bottom: Lattice]: Lattice[Dotted[A]] with {
+    def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
       val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
       val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
-      l merge r
+      Dotted(l merge r, left.context union  right.context)
   }
 
-  // causes DottedLattice instance to be found in some cases where we are only looking for a Lattice[Dotted[A]]
-  export DottedLattice.given
-
-  given syntaxPermissions[L](using DottedLattice[L]): PermCausalMutate[Dotted[L], L] with {
+  given syntaxPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[Dotted[L], L] with {
     override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merge delta
     override def query(c: Dotted[L]): L                                   = c.data
     override def context(c: Dotted[L]): Dots                              = c.context
   }
 
   trait LowPrio {
-    given identitySyntaxPermissions[L](using DottedLattice[L]): PermMutate[Dotted[L], L] with {
+    given identitySyntaxPermissions[L](using Lattice[Dotted[L]]): PermMutate[Dotted[L], L] with {
       override def mutate(c: Dotted[L], delta: L): Dotted[L] = c merge Dotted(delta)
 
       override def query(c: Dotted[L]): L = c.data

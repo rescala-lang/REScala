@@ -1,7 +1,6 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.DottedLattice
 import kofre.syntax.OpsSyntaxHelper
 
 type GrowOnlySet[E] = Set[E]
@@ -13,7 +12,6 @@ object GrowOnlySet {
 
   given bottomInstance[E]: Bottom[GrowOnlySet[E]]          = Bottom.setBottom
   given lattice[E]: Lattice[GrowOnlySet[E]]                = Lattice.setLattice
-  given contextDecompose[E]: DottedLattice[GrowOnlySet[E]] = DottedLattice.liftLattice
 
   extension [C, E](container: C)
     def growOnlySet: syntax[C, E] = syntax(container)

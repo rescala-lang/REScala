@@ -1,7 +1,7 @@
 package test.kofre.corestructs
 
 import kofre.base.{Lattice, Uid}
-import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.{given, *}
@@ -88,22 +88,22 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB = dfB.dots union deletedB
 
       assert(
-        DottedLattice[DotFun[Int]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
+        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
       )
 
       val Dotted(dfMerged, ccMerged) =
-        DottedLattice[DotFun[Int]].merge(
+        Lattice[Dotted[DotFun[Int]]].merge(
           Dotted(dfA, (ccA)),
           Dotted(dfB, (ccB))
         )
 
       assert(
-        DottedLattice[DotFun[Int]].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
+        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
       )
       assert(
-        DottedLattice[DotFun[Int]].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
+        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
       )
     }
@@ -140,7 +140,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       val withContext = Dotted(df, cc)
 
-      val decomposed: Iterable[Dotted[DotFun[Int]]] = DottedLattice[DotFun[Int]].decompose(withContext)
+      val decomposed: Iterable[Dotted[DotFun[Int]]] = Lattice.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)

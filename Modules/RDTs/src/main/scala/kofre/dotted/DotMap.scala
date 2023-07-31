@@ -1,5 +1,6 @@
 package kofre.dotted
 
+import kofre.base.Lattice
 import kofre.time.Dots
 
 /** DotMap is just a container to use maps in a dotted context.
@@ -14,6 +15,8 @@ object DotMap {
 
   def empty[K, V]: DotMap[K, V] = DotMap(Map.empty)
 
+  given lattice[K, V: Lattice]: Lattice[DotMap[K, V]] = Lattice.derived
+
   given hasDots[K, V: HasDots]: HasDots[DotMap[K, V]] with {
     extension (value: DotMap[K, V])
       override def dots: Dots =
@@ -27,25 +30,4 @@ object DotMap {
 
   }
 
-  given dottedLattice[K, V: DottedLattice: HasDots]: DottedLattice[DotMap[K, V]] with {
-
-    def access(key: K)(m: DotMap[K, V]): Option[V] = m.repr.get(key)
-
-    override def mergePartial(left: Dotted[DotMap[K, V]], right: Dotted[DotMap[K, V]]): DotMap[K, V] = {
-      DotMap((left.data.repr.keySet union right.data.repr.keySet).iterator.flatMap { key =>
-        (left.map(access(key)) mergePartial right.map(access(key))).map(key -> _)
-      }.toMap)
-    }
-
-    override def decompose(state: Dotted[DotMap[K, V]]): Iterable[Dotted[DotMap[K, V]]] = {
-      val added = for {
-        (k, v)                    <- state.data.repr
-        Dotted(atomicV, atomicCC) <- Dotted(v, v.dots).decomposed
-      } yield Dotted(DotMap(Map(k -> atomicV)), atomicCC)
-
-      val compacted = DottedLattice.compact(added.toList, Nil)(using this)
-
-      compacted ++ DottedLattice.decomposedDeletions(state)
-    }
-  }
 }

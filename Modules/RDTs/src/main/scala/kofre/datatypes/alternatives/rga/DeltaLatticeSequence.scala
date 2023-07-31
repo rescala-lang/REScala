@@ -1,9 +1,9 @@
 package kofre.datatypes.alternatives.rga
 
-import kofre.base.{Lattice, Uid}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes
 import kofre.datatypes.contextual.AddWinsSet
-import kofre.dotted.{Dotted, DottedLattice, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
 
@@ -16,6 +16,10 @@ case class DeltaSequence[A](
 )
 
 object DeltaSequence {
+
+  given bottom[A]: Bottom[DeltaSequence[A]] with {
+    override def empty: DeltaSequence[A] = DeltaSequence.empty
+  }
 
   def empty[A]: DeltaSequence[A] =
     val addStart = Dotted(AddWinsSet.empty[Vertex]).add(using Vertex.start.id)(
@@ -111,34 +115,32 @@ object DeltaSequence {
           }
   }
 
-  given deltaSequenceLattice[A]: DottedLattice[DeltaSequence[A]] =
-    new DottedLattice[DeltaSequence[A]] {
-
-      override def decompose(a: Dotted[DeltaSequence[A]]): Iterable[Dotted[DeltaSequence[A]]] = Iterable(a)
+  given deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
+    new Lattice[DeltaSequence[A]] {
 
       private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
         if (left == right) left
         else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
 
-      override def mergePartial(
-          left: Dotted[DeltaSequence[A]],
-          right: Dotted[DeltaSequence[A]]
+      override def merge(
+          left: DeltaSequence[A],
+          right: DeltaSequence[A]
       ): DeltaSequence[A] = {
-        val newVertices = right.data.vertices.elements.filter(!left.data.edges.inner.contains(_))
+        val newVertices = right.vertices.elements.filter(!left.edges.inner.contains(_))
 
         // build map of old insertion positions of the new vertices
-        val oldPositions = right.data.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
+        val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
           case (m, (u, v)) => if (newVertices.contains(v)) { m + (v -> u) }
             else m
         }
 
-        val newEdges = newVertices.foldLeft(left.data.edges) {
+        val newEdges = newVertices.foldLeft(left.edges) {
           case (merged, v) =>
             if (v == Vertex.start) merged
             else merged.addRightEdge(oldPositions(v), v)
         }
-        val vertices = left.map(_.vertices) mergePartial right.map(_.vertices)
-        val values   = Lattice.merge(left.data.values, right.data.values)(Lattice.mapLattice(noMapConflictsLattice))
+        val vertices = left.vertices merge right.vertices
+        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
 
         DeltaSequence(
           vertices = vertices,

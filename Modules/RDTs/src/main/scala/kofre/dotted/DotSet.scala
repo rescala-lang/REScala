@@ -1,5 +1,6 @@
 package kofre.dotted
 
+import kofre.base.Lattice
 import kofre.time.{Dot, Dots}
 
 /** DotsSets track causality of events without values.
@@ -15,6 +16,8 @@ object DotSet {
 
   def from(it: Iterable[Dot]): DotSet = DotSet(Dots.from(it))
 
+  given lattice: Lattice[DotSet] = Lattice.derived
+
   given hasDots: HasDots[DotSet] with {
     extension (value: DotSet)
       override def dots: Dots = value.repr
@@ -24,26 +27,5 @@ object DotSet {
         if res.isEmpty then None
         else Some(DotSet(res))
   }
-
-  given dottedLattice: DottedLattice[DotSet] =
-    new DottedLattice[DotSet] {
-
-      override def mergePartial(left: Dotted[DotSet], right: Dotted[DotSet]): DotSet = {
-        val fromLeft  = left.data.removeDots(right.deletions).getOrElse(DotSet.empty)
-        val fromRight = right.data.removeDots(left.deletions).getOrElse(DotSet.empty)
-
-        DotSet(fromLeft.repr union fromRight.repr)
-      }
-
-      override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
-        (left.context <= right.context) &&
-        (right.data.dots disjunct left.deletions)
-      }
-
-      override def decompose(state: Dotted[DotSet]): Iterable[Dotted[DotSet]] = {
-        val added = state.data.dots.decomposed.map(d => Dotted(DotSet(d), d))
-        added ++ DottedLattice.decomposedDeletions(state)
-      }
-    }
 
 }

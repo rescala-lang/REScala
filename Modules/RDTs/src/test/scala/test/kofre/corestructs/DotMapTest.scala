@@ -1,8 +1,7 @@
 package test.kofre.corestructs
 
 import kofre.base.Lattice
-import kofre.dotted.DottedLattice.*
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice}
+import kofre.dotted.{DotFun, DotMap, DotSet, Dotted}
 import kofre.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -73,11 +72,11 @@ class DotMapTest extends munit.ScalaCheckSuite {
         if (dotsA.intersect(dotsB).isEmpty) {
           (dmA.repr.keySet union dmB.repr.keySet).foreach { k =>
             val vMerged =
-              Dotted(dmA.repr.getOrElse(k, DotSet.empty), (ccA)) mergePartial
+              Dotted(dmA.repr.getOrElse(k, DotSet.empty), (ccA)) merge
               Dotted(dmB.repr.getOrElse(k, DotSet.empty), (ccB))
 
             assert(
-              vMerged.isEmpty || dmMerged.repr(k) == vMerged,
+              vMerged.data.isEmpty || dmMerged.repr(k) == vMerged.data,
               s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.repr.get(k)} does not equal $vMerged"
             )
           }
@@ -140,7 +139,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val cc = dm.dots union deleted
 
       val decomposed: Iterable[Dotted[TestedMap]] =
-        DottedLattice[TestedMap].decompose(Dotted(dm, (cc)))
+        Lattice[Dotted[TestedMap]].decompose(Dotted(dm, (cc)))
       val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>

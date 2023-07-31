@@ -6,7 +6,7 @@ import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{
   GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
 }
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}

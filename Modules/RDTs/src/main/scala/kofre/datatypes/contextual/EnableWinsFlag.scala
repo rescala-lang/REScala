@@ -2,7 +2,7 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 
-import kofre.dotted.{DotSet, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotSet, Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.Dots
 
@@ -14,7 +14,7 @@ case class EnableWinsFlag(inner: DotSet) derives Bottom
 
 object EnableWinsFlag {
 
-  given contextDecompose: DottedLattice[EnableWinsFlag] = DottedLattice.derived
+  given lattice: Lattice[EnableWinsFlag] = Lattice.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] = HasDots.derived
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)

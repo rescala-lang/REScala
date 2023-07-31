@@ -2,7 +2,7 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
-import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -63,7 +63,6 @@ object ReplicatedList {
   }
 
   private class DeltaStateFactory[E] {
-    given DottedLattice[Epoche[GrowOnlyList[Dot]]] = DottedLattice.liftLattice
 
     def make(
         epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
