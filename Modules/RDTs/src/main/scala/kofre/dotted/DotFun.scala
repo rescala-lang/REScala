@@ -4,7 +4,7 @@ import kofre.base.Lattice
 import kofre.time.{Dot, Dots}
 
 /** A dot fun tracks a set of values associated to a certain point in time.
-  * This makes them useful as both [[MultiVersionRegister]] and simple observe remove sets/maps.
+  * This makes them useful as both [[kofre.datatypes.contextual.MultiVersionRegister]] and simple observe remove sets/maps.
   */
 case class DotFun[A](repr: Map[Dot, A])
 
@@ -14,7 +14,7 @@ object DotFun {
 
   def single[A](dot: Dot, value: A): DotFun[A] = DotFun(Map(dot -> value))
 
-  given dotStore[V]: HasDots[DotFun[V]] with {
+  given hasDots[V]: HasDots[DotFun[V]] with {
     extension (value: DotFun[V])
       override def dots: Dots = Dots.from(value.repr.keys)
 

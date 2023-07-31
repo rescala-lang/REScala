@@ -3,7 +3,7 @@ package kofre.dotted
 import kofre.time.{Dot, Dots}
 
 /** DotsSets track causality of events without values.
-  * They are the prototype of an [[EnableWinsFlag]]
+  * They are the prototype of an [[kofre.datatypes.contextual.EnableWinsFlag]]
   */
 case class DotSet(repr: Dots) {
   export repr.{contains, isEmpty, toSet}
@@ -16,7 +16,7 @@ object DotSet {
   def from(it: Iterable[Dot]): DotSet = DotSet(Dots.from(it))
 
   given hasDots: HasDots[DotSet] with {
-    extension(value: DotSet)
+    extension (value: DotSet)
       override def dots: Dots = value.repr
 
       override def removeDots(dots: Dots): Option[DotSet] =
@@ -36,7 +36,6 @@ object DotSet {
 
         DotSet(fromLeft union fromRight)
       }
-
 
       override def lteq(left: Dotted[DotSet], right: Dotted[DotSet]): Boolean = {
         (left.context <= right.context) &&

@@ -6,7 +6,7 @@ import kofre.time.Dots
   * Merge/<= are done per entry, with missing entries replaced by `Bottom.empty`.
   * Decompose decomposes all components.
   *
-  * See [[ObserveRemoveMap]] for a usage example.
+  * See [[kofre.datatypes.contextual.ObserveRemoveMap]] for a usage example.
   */
 case class DotMap[K, V](repr: Map[K, V])
 

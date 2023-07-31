@@ -1,13 +1,12 @@
 package kofre.dotted
 
-
 import kofre.time.Dots
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
 import scala.util.control.ControlThrowable
 
-/** HasDots implies that the container stores values that are somehow associated to individual [[Dot]]s.
+/** HasDots implies that the container stores values that are somehow associated to individual [[kofre.time.Dot]]s.
   * This is different from a dot context, which could also contain dots for deleted values or other metadata.
   * HasDots is explicitly for dots that are present/existing in some datastructures right now.
   *
@@ -16,8 +15,10 @@ import scala.util.control.ControlThrowable
 trait HasDots[A] {
   extension (dotted: A)
     def dots: Dots
+
     /** Removes dots and anything associated to them from the value.
-     * In case the value becomes fully “empty” returns None */
+      * In case the value becomes fully “empty” returns None
+      */
     def removeDots(dots: Dots): Option[A]
 }
 
@@ -27,7 +28,7 @@ object HasDots {
 
   def noDots[A]: HasDots[A] = new {
     extension (dotted: A)
-      def dots: Dots = Dots.empty
+      def dots: Dots                        = Dots.empty
       def removeDots(dots: Dots): Option[A] = Some(dotted)
   }
 

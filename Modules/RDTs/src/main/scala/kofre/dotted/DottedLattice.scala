@@ -83,9 +83,9 @@ object DottedLattice {
     case h :: tail =>
       def overlap(e: Dotted[T]): Boolean = !h.context.disjunct(e.context)
 
-      val (tin, tother) = tail.partition(overlap)
+      val (tin, tother)     = tail.partition(overlap)
       val (accin, accother) = acc.partition(overlap)
-      val all = tin ++ accin
+      val all               = tin ++ accin
       val compacted = all.foldLeft(h): (l, r) =>
         Dotted(dl.mergePartial(Dotted(l.data, Dots.empty), Dotted(r.data, Dots.empty)), l.context union r.context)
 
@@ -147,7 +147,6 @@ object DottedLattice {
                   decomposedContext
                 )
           .toList
-
 
         val compacted = compact(added, Nil)(using this)
 
