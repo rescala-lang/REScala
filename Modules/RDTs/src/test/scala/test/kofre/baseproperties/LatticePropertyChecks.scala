@@ -4,7 +4,7 @@ import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet}
-import kofre.dotted.{DotMap, DotSet, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -16,6 +16,7 @@ import scala.util.NotGiven
 val x = summon[Arbitrary[contextual.MultiVersionRegister[Int]]]
 
 class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
+class DotFunChecks          extends LatticePropertyChecks[Dotted[DotFun[Int]]]
 class ConMultiVersionChecks extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
 class DotMapChecks          extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]]
 class GrowOnlyCounterChecks extends LatticePropertyChecks[GrowOnlyCounter]
