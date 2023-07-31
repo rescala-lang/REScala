@@ -55,7 +55,7 @@ object DataGenerator {
     for {
       pos <- arbGcounter.arbitrary
       neg <- arbGcounter.arbitrary
-    } yield (PosNegCounter(pos, neg))
+    } yield PosNegCounter(pos, neg)
   )
 
   given Lattice[Int] = _ max _
@@ -79,10 +79,10 @@ object DataGenerator {
   given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
     Arbitrary:
       Gen.listOf(Gen.zip(uniqueDot, Arbitrary.arbitrary[A])).map: list =>
-        CausalQueue(Queue(
-          (list.map: (dot, value) =>
-            QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))): _*
-        ))
+        CausalQueue:
+          Queue.from:
+            list.map: (dot, value) =>
+              QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))
 
   val genDot: Gen[Dot] = for {
     id    <- Gen.oneOf('a' to 'g')

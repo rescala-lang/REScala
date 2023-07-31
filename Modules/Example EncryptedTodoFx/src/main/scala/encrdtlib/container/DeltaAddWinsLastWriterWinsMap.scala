@@ -5,7 +5,7 @@ import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
 import kofre.base.{Lattice, Uid}
 import kofre.datatypes.LastWriterWins
-import kofre.dotted.{DotFun, DotMap, DottedLattice}
+import kofre.dotted.{DotFun, DotMap}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -108,8 +108,8 @@ object DeltaAddWinsLastWriterWinsMap {
         // note, this is incorrect when both are equal
         if left._2.timestamp <= right._2.timestamp then right
         else left
-    given DottedLattice[DotFun[(V, LastWriterWins[Uid])]] =
-      DotFun.dottedLattice[(V, LastWriterWins[Uid])](using timestampedValueLattice)
+    given Lattice[DotFun[(V, LastWriterWins[Uid])]] =
+      DotFun.lattice[(V, LastWriterWins[Uid])](using timestampedValueLattice)
     DotMap.dottedLattice[K, DotFun[(V, LastWriterWins[Uid])]]
   }
 

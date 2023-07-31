@@ -1,7 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.DottedLattice
+import kofre.dotted.{DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermMutate, PermQuery}
 import kofre.time.Time
 
@@ -16,6 +16,11 @@ object Epoche {
   given bottom[E: Bottom]: Bottom[Epoche[E]] with {
     override def empty: Epoche[E] = Epoche.empty
   }
+
+  given hasDots[E: HasDots]: HasDots[Epoche[E]] =
+    given HasDots[Time] = HasDots.noDots
+    HasDots.derived
+
 
   extension [C, E](container: C)
     def epoche: syntax[C, E] = syntax(container)

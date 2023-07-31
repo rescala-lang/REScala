@@ -1,6 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
+import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.{CausalTime, Time}
 
@@ -23,6 +24,8 @@ object LastWriterWins {
     LastWriterWins(kofre.time.CausalTime(Long.MinValue, 0, System.nanoTime()), v)
 
   def now[A](v: A): LastWriterWins[A] = LastWriterWins(kofre.time.CausalTime(Time.current(), 0, System.nanoTime()), v)
+
+  given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
   given lattice[A]: Lattice[LastWriterWins[A]] with {
     override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp

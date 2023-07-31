@@ -3,8 +3,8 @@ package kofre.datatypes
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.GrowOnlyList.Node.Elem
-import kofre.dotted.DottedLattice
-import kofre.syntax.{OpsSyntaxHelper}
+import kofre.dotted.HasDots
+import kofre.syntax.OpsSyntaxHelper
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -30,8 +30,8 @@ object GrowOnlyList {
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
   given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
-  given contextDecompose[E]: DottedLattice[GrowOnlyList[E]] =
-    DottedLattice.liftLattice
+  given hasDots[E]: HasDots[GrowOnlyList[E]] = HasDots.noDots
+
 
   given Lattice[E]: Lattice[GrowOnlyList[E]] =
     new Lattice[GrowOnlyList[E]] {

@@ -1,6 +1,6 @@
 package kofre.dotted
 
-import kofre.base.Bottom
+import kofre.base.{Bottom, Lattice}
 import kofre.syntax.{PermCausalMutate, PermMutate}
 import kofre.time.{Dot, Dots}
 
@@ -22,6 +22,14 @@ object Dotted extends Dotted.LowPrio {
 
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
+
+
+  given dottedLattice[A: HasDots: Bottom: Lattice]: DottedLattice[A] with {
+    def mergePartial(left: Dotted[A], right: Dotted[A]): A =
+      val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
+      val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
+      l merge r
+  }
 
   // causes DottedLattice instance to be found in some cases where we are only looking for a Lattice[Dotted[A]]
   export DottedLattice.given

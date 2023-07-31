@@ -32,6 +32,29 @@ object HasDots {
       def removeDots(dots: Dots): Option[A] = Some(dotted)
   }
 
+  inline def mapInstance[K, V]: HasDots[Map[K, V]] =
+    val kdots = scala.compiletime.summonFrom:
+      case hd: HasDots[K] => Some(hd)
+      case _              => None
+    val vdots = scala.compiletime.summonFrom:
+      case hd: HasDots[V] => Some(hd)
+      case _              => None
+    new HasDots[Map[K, V]] {
+      extension (dotted: Map[K, V])
+        def dots: Dots =
+          val all = kdots.iterator.flatMap(d => dotted.keysIterator.map(d.dots))
+            ++ vdots.iterator.flatMap(d => dotted.valuesIterator.map(d.dots))
+          all.foldLeft(Dots.empty)(_ union _)
+
+        def removeDots(dots: Dots): Option[Map[K, V]] =
+          val res = dotted.iterator.flatMap: (k, v) =>
+            val nk = kdots.map(d => d.removeDots(k)(dots)).getOrElse(Some(k))
+            val nv = vdots.map(d => d.removeDots(v)(dots)).getOrElse(Some(v))
+            nk.zip(nv)
+          .toMap
+          if res.isEmpty then None else Some(res)
+    }
+
   given option[A: HasDots]: HasDots[Option[A]] with
     extension (dotted: Option[A])
       def dots: Dots = dotted match

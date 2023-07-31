@@ -2,7 +2,7 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
-import kofre.dotted.{DotFun, Dotted, DottedLattice}
+import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -32,7 +32,8 @@ object ReplicatedList {
 
   def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
 
-  given rgaContext[E]: DottedLattice[ReplicatedList[E]] = DottedLattice.derived[ReplicatedList[E]]
+  given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived[ReplicatedList[E]]
+  given hasDots[E]: HasDots[ReplicatedList[E]] = HasDots.derived
 
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty

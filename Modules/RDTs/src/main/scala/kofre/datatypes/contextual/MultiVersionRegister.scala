@@ -1,7 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.{DotFun, Dotted, DottedLattice, HasDots}
+import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -21,9 +21,9 @@ object MultiVersionRegister {
     if l == r then 0
     else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
 
-  given dottedLattice[A]: DottedLattice[MultiVersionRegister[A]] =
+  given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
     given Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
-    DottedLattice.derived
+    Lattice.derived
 
   given hasDot[A]: HasDots[MultiVersionRegister[A]] = HasDots.derived
 
