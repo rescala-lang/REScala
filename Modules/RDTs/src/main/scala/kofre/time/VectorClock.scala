@@ -10,9 +10,15 @@ case class VectorClock(timestamps: Map[Uid, Time]) {
 
   def dotOf(replicaId: Uid): Dot = Dot(replicaId, timeOf(replicaId))
 
-  def inc(id: Uid): VectorClock   = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
-  def <=(o: VectorClock): Boolean = timestamps.forall((k, v) => v <= o.timestamps.getOrElse(k, 0L))
-  def <(o: VectorClock): Boolean  = this <= o && timestamps.exists((k, v) => v < o.timestamps.getOrElse(k, 0L))
+  def inc(id: Uid): VectorClock = VectorClock(Map(id -> (timestamps.getOrElse(id, 0L) + 1)))
+  def <=(o: VectorClock): Boolean = timestamps.forall: (k, v) =>
+    o.timestamps.get(k) match
+      case None        => false
+      case Some(other) => v <= other
+  def <(o: VectorClock): Boolean = this <= o && timestamps.exists: (k, v) =>
+    o.timestamps.get(k) match
+      case None        => false
+      case Some(other) => v < other
 }
 
 object VectorClock {
@@ -32,11 +38,12 @@ object VectorClock {
           @tailrec
           def smaller(remaining: List[Uid]): Int = remaining match {
             case h :: t =>
-              val l   = x.timestamps.getOrElse(h, 0L)
-              val r   = y.timestamps.getOrElse(h, 0L)
-              val res = Ordering[Time].compare(l, r)
-              if (res == 0) then smaller(t) else res
-            case Nil => 0
+              val l   = x.timestamps.get(h)
+              val r   = y.timestamps.get(h)
+              val res = Ordering[Option[Time]].compare(l, r)
+              if res == 0 then smaller(t) else res
+            case Nil =>
+              0
           }
           val ids = (x.timestamps.keysIterator ++ y.timestamps.keysIterator).toList.sorted
           smaller(ids)
