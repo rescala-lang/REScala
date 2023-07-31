@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.GrowOnlyMap
 import replication.JsoniterCodecs.given
-import kofre.datatypes.GrowOnlyMap.{syntax, bottom, contextLattice}
+import kofre.datatypes.GrowOnlyMap.{syntax, bottom}
 import kofre.datatypes.contextual.AddWinsSet
 import org.scalacheck.Prop.forAll
 

@@ -28,7 +28,7 @@ case class TaskData(
   def edit(str: String): TaskData = copy(desc = str)
 }
 
-given [A]: DottedLattice[LastWriterWins[A]] = DottedLattice.liftLattice
+given [A]: DottedLattice[LastWriterWins[A]] = Dotted.liftLattice
 
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)

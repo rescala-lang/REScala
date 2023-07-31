@@ -18,17 +18,29 @@ case class Dotted[A](data: A, context: Dots) {
   def contained(using HasDots[A]): Dots = data.dots
 }
 
+type DottedLattice[T] = Lattice[Dotted[T]]
+object DottedLattice {
+  export Lattice.{apply as _, *}
+
+  def apply[A](using ev: Lattice[Dotted[A]]): Lattice[Dotted[A]] = ev
+}
+
 object Dotted extends Dotted.LowPrio {
 
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
 
-  given dottedLattice[A: HasDots: Bottom: Lattice]: Lattice[Dotted[A]] with {
+  given lattice[A: HasDots: Bottom: Lattice]: Lattice[Dotted[A]] with {
     def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
       val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
       val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
       Dotted(l merge r, left.context union  right.context)
+  }
+
+  def liftLattice[A: Lattice]: Lattice[Dotted[A]] = new {
+    def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
+      Dotted (left.data merge right.data, left.context union right.context)
   }
 
   given syntaxPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[Dotted[L], L] with {
