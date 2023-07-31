@@ -57,7 +57,7 @@ class EventTest extends RETests {
 
     }
 
-    "from callback in transaction test" ignore {
+    test("from callback in transaction test") {
 
       val res = transaction() { implicit at =>
         val res = Event.fromCallback {
