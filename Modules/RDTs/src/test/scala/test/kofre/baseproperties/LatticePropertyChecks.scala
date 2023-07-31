@@ -3,13 +3,13 @@ package test.kofre.baseproperties
 import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet}
+import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
-import kofre.datatypes.contextual
+import test.kofre.isGithubCi
 
 import scala.util.NotGiven
 
@@ -19,7 +19,7 @@ class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
 class EnableWinsFlagChecks  extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks          extends LatticePropertyChecks[Dotted[DotFun[Int]]]
 class ConMultiVersionChecks extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
-class DotMapChecks          extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]]
+class DotMapChecks          extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]](expensive = true)
 class GrowOnlyCounterChecks extends LatticePropertyChecks[GrowOnlyCounter]
 class GrowOnlyMapChecks     extends LatticePropertyChecks[GrowOnlyMap[String, Int]]
 class TwoPhaseSetChecks     extends LatticePropertyChecks[TwoPhaseSet[Int]]
@@ -34,14 +34,14 @@ class OrSetChecks           extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks          extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks           extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks     extends LatticePropertyChecks[VectorClock]
-class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]] {
-  override def munitIgnore: Boolean = _root_.test.kofre.isGithubCi
-}
+class GrowOnlyListChecks extends LatticePropertyChecks[GrowOnlyList[Int]](expensive = true)
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
+abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](expensive: Boolean = false)
     extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
+
+  override def munitIgnore: Boolean = expensive && isGithubCi
 
   property("idempotent") {
     forAll { (a: A, b: A) =>
