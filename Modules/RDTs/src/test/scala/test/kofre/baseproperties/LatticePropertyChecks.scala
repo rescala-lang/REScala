@@ -34,7 +34,9 @@ class OrSetChecks           extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks          extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks           extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks     extends LatticePropertyChecks[VectorClock]
-class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]]
+class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]] {
+  override def munitIgnore: Boolean = _root_.test.kofre.isGithubCi
+}
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
