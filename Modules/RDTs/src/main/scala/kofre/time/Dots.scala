@@ -111,7 +111,7 @@ object Dots {
           case Some(1) =>
             leftLTE = false
           case Some(0) =>
-          case Some(_) => // does not happen
+          case Some(_) => throw IllegalStateException("does not happen")
         end match
         leftLTE || rightLTE
       }

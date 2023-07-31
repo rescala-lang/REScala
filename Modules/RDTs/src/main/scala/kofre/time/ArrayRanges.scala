@@ -328,9 +328,9 @@ object ArrayRanges {
   }
 
   def leftRightToOrder: (Boolean, Boolean) => Option[Int] =
-    case (true, true) => Some(0)
-    case (true, false) => Some(-1)
-    case (false, true) => Some(1)
+    case (true, true)   => Some(0)
+    case (true, false)  => Some(-1)
+    case (false, true)  => Some(1)
     case (false, false) => None
 
   given partialOrder: PartialOrdering[ArrayRanges] with {
@@ -357,31 +357,40 @@ object ArrayRanges {
             val rightLower = right.inner(rightIndex)
             val rightUpper = right.inner(rightIndex + 1)
 
-
-            if
-              // complete right interval not known by left
-              rightUpper <= leftLower ||
-              // right starts earlier
-              rightLower < leftLower ||
-              // right is longer
-              leftUpper < rightUpper
+            if // complete right interval not known by left
+              rightUpper <= leftLower
             then
               rightLTE = false
               rightIndex += 2
-            else if
-              // complete left interval not known by right
-              leftUpper <= rightLower ||
-              // left starts earlier
-              leftLower < rightLower ||
-              // left is longer
-              rightUpper < leftUpper
+            else if // complete left interval not known by right
+              leftUpper <= rightLower
             then
               leftLTE = false
               leftIndex += 2
-            else
-              // both are equal
+            else // some overlap
+            // same
+            if leftLower == rightLower && rightUpper == leftUpper
+            then
               leftIndex += 2
               rightIndex += 2
+            else if
+              // right inside left
+              rightUpper <= leftUpper &&
+              leftLower <= rightLower
+            then
+              leftLTE = false
+              rightIndex += 2
+            else if
+              // left inside right
+              leftUpper <= rightUpper &&
+              rightLower <= leftLower
+            then
+              rightLTE = false
+              leftIndex += 2
+            else
+              // both partially overlap
+              rightLTE = false
+              leftLTE = false
           end while
 
           leftRightToOrder(leftLTE, rightLTE)

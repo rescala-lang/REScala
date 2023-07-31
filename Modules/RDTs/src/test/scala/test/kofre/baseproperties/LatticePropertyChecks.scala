@@ -17,7 +17,7 @@ import scala.util.NotGiven
 
 val x = summon[Arbitrary[contextual.MultiVersionRegister[Int]]]
 
-class CausalQueueChecks     extends LatticePropertyChecks[Dotted[CausalQueue[Int]]]
+class CausalQueueChecks     extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
 class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
 class EnableWinsFlagChecks  extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks          extends LatticePropertyChecks[Dotted[DotFun[Int]]]
@@ -42,7 +42,7 @@ class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
 abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](expensive: Boolean = false)
-    extends OrderTests(total = false)(using Lattice.latticeOrder, summon) {
+    extends OrderTests(using Lattice.latticeOrder)(total = false) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
 
@@ -76,13 +76,14 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
     forAll { (theValue: A) =>
 
       val decomposed = theValue.decomposed
+      val normalized = Lattice.normalize(theValue)
 
       val isDotted = theValue.isInstanceOf[Dotted[_]]
 
       decomposed.foreach { d =>
         assertEquals(
           d merge theValue,
-          Lattice.normalize(theValue),
+          normalized,
           s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
@@ -102,13 +103,16 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
       }
 
       BottomOpt.explicit: bo =>
-        assertEquals(bo.empty merge theValue, Lattice.normalize(theValue), "bottom is bottom")
+        assertEquals(bo.empty merge theValue, normalized, "bottom is bottom")
 
-      val merged = decomposed.reduceLeftOption(Lattice.merge)
+      val merged =
+        if decomposed.sizeIs == 1
+        then Some(Lattice.normalize(decomposed.head))
+        else decomposed.reduceLeftOption(Lattice.merge)
 
       assertEquals(
         merged.orElse(BottomOpt.explicit(_.empty)),
-        Some(Lattice.normalize(theValue)),
+        Some(normalized),
         s"decompose does not recompose"
       )
 
@@ -127,4 +131,3 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
       assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
 
 }
-

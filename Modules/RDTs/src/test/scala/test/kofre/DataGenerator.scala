@@ -15,6 +15,15 @@ import scala.collection.immutable.Queue
 
 object DataGenerator {
 
+  case class ExampleData(content: Set[String]) derives Lattice, Bottom {
+    override def toString: _root_.java.lang.String = content.mkString("\"", "", "\"")
+  }
+
+  given Arbitrary[ExampleData] = Arbitrary:
+    Gen.oneOf(List("Anne", "Ben", "Chris", "Ecrin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
+      ExampleData(Set(name))
+    )
+
   given arbId: Arbitrary[Uid] = Arbitrary(Gen.oneOf('a' to 'g').map(c => Uid.predefined(c.toString)))
 
   given arbVectorClock: Arbitrary[VectorClock] = Arbitrary:
@@ -71,9 +80,8 @@ object DataGenerator {
     Arbitrary:
       Gen.listOf(Gen.zip(uniqueDot, Arbitrary.arbitrary[A])).map: list =>
         CausalQueue(Queue(
-          list.map: (dot, value) =>
-            QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))
-          :_*
+          (list.map: (dot, value) =>
+            QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))): _*
         ))
 
   val genDot: Gen[Dot] = for {
