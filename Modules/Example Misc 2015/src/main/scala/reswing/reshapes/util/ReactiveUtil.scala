@@ -82,9 +82,9 @@ object ReactiveUtil {
     res
   }
 
-  /** Creates an [[rescala.Event]] that fires whenever
+  /** Creates an [[rescala.default.Event]] that fires whenever
     * any event in the given event list fires, where the list itself
-    * is wrapped in a [[rescala.Signal]].
+    * is wrapped in a [[rescala.default.Signal]].
     */
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Iterable[E]](signal: Signal[L[E[T]]]): Event[T] = {

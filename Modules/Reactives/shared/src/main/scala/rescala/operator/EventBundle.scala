@@ -43,7 +43,7 @@ trait EventBundle extends FoldBundle {
 
     /** Add an observer.
       *
-      * @return the resulting [[rescala.operator.ObserveBundle.Observe]] can be used to remove the observer.
+      * @return the resulting [[rescala.structure.Observe]] can be used to remove the observer.
       * @group accessor
       */
     final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
@@ -229,11 +229,11 @@ trait EventBundle extends FoldBundle {
 
   }
 
-  /** Similar to [[Signal]] expressions, but resulting in an event.
+  /** Similar to [[rescala.operator.SignalBundle.Signal]] expressions, but resulting in an event.
     * Accessed events return options depending on whether they fire or not,
     * and the complete result of the expression is an event as well.
     *
-    * @see [[Signal]]
+    * @see [[rescala.operator.SignalBundle.Signal]]
     * @group create
     */
   object Event {

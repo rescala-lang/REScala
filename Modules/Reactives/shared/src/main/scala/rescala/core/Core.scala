@@ -104,7 +104,7 @@ trait Initializer[S[_]] {
     reactive
   }
 
-  /** Creates the internal state of [[Derived]]s */
+  /** Creates the internal state of [[rescala.core.Derived]]s */
   protected[this] def makeDerivedStructState[V](initialValue: V): S[V]
 
   /** Creates the internal state of [[ReSource]]s */

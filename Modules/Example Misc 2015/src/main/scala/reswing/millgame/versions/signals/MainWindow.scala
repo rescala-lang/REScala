@@ -1,18 +1,15 @@
 package reswing.millgame.versions.signals
 
+import rescala.default.*
+import reswing.*
+import reswing.millgame.*
+import reswing.millgame.types.*
+
 import java.awt.{BasicStroke, Color, Dimension, Font, RenderingHints}
-
-import reswing.millgame._
-import reswing.millgame.types._
-import rescala.default._
-import reswing._
-
-import scala.swing._
-import scala.swing.event._
+import scala.swing.*
+import scala.swing.event.*
 
 object MainWindow extends SimpleSwingApplication {
-  // uncomment to enable logging:
-  // react.ReactiveEngine.log.enableAllLogging
 
   val game = new MillGame
 

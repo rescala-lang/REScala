@@ -94,7 +94,7 @@ trait FullMVBundle {
       *
       * @param txn the executing reevaluation's transaction
       * @param add the new edge's sink node
-      * @return the appropriate [[rescala.fullmv. Version.value]].
+      * @return the appropriate `Version.value`.
       */
     def discover(txn: T, add: OutDep): (List[T], Option[T])
 
