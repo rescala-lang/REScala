@@ -109,7 +109,7 @@ object DataGenerator {
       case Nil    => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
 
-  implicit val arbrealDotSet: Arbitrary[DotSet] = Arbitrary:
+  given arbDotSet: Arbitrary[DotSet] = Arbitrary:
     arbDots.arbitrary.map(DotSet.apply)
 
   case class SmallTimeSet(s: Set[Time])
@@ -157,5 +157,8 @@ object DataGenerator {
   given arbCMultiVersion[E](using arb: Arbitrary[E]): Arbitrary[contextual.MultiVersionRegister[E]] = Arbitrary:
     Gen.listOf(Gen.zip(uniqueDot, arb.arbitrary)).map: pairs =>
       MultiVersionRegister(DotFun(pairs.toMap))
+
+  given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
+    arbDotSet.arbitrary.map(EnableWinsFlag.apply)
 
 }

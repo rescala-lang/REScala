@@ -16,6 +16,7 @@ import scala.util.NotGiven
 val x = summon[Arbitrary[contextual.MultiVersionRegister[Int]]]
 
 class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
+class EnableWinsFlagChecks  extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks          extends LatticePropertyChecks[Dotted[DotFun[Int]]]
 class ConMultiVersionChecks extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
 class DotMapChecks          extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]]
@@ -57,7 +58,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
     forAll { (a: A, b: A, c: A) =>
       val ab   = Lattice.merge(a, b)
       val bc   = Lattice.merge(b, c)
-      val ab_c  = Lattice.merge(ab, c)
+      val ab_c = Lattice.merge(ab, c)
       val a_bc = Lattice.merge(a, bc)
       assertEquals(ab_c, a_bc, s"merge not equal, steps:\n  $ab\n  $bc")
 
@@ -65,7 +66,6 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink]
       assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work unsufficient test generators")
     }
   }
-
 
   property("decomposition") {
     forAll { (theValue: A) =>
