@@ -5,11 +5,13 @@ import kofre.datatypes.*
 import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
+import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.dotted.*
 import kofre.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
 import scala.annotation.nowarn
+import scala.collection.immutable.Queue
 
 object DataGenerator {
 
@@ -65,15 +67,14 @@ object DataGenerator {
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
     Arbitrary(map)
 
-  given arbCausalQueue[A: Arbitrary]: Arbitrary[Dotted[CausalQueue[A]]] =
-    val pairgen = for {
-      id    <- arbId.arbitrary
-      value <- Arbitrary.arbitrary[A]
-    } yield (id, value)
-    val map = Gen.listOf(pairgen).map(_.foldLeft(Dotted(CausalQueue.empty[A])) { case (acc, (id, value)) =>
-      acc merge acc.causalQueue.enqueue(using id)(value)
-    })
-    Arbitrary(map)
+  given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
+    Arbitrary:
+      Gen.listOf(Gen.zip(uniqueDot, Arbitrary.arbitrary[A])).map: list =>
+        CausalQueue(Queue(
+          list.map: (dot, value) =>
+            QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))
+          :_*
+        ))
 
   val genDot: Gen[Dot] = for {
     id    <- Gen.oneOf('a' to 'g')

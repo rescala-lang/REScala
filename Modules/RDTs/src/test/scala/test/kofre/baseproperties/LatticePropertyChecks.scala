@@ -3,7 +3,9 @@ package test.kofre.baseproperties
 import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
+import kofre.datatypes.{
+  GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
+}
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, DottedLattice, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
@@ -15,6 +17,7 @@ import scala.util.NotGiven
 
 val x = summon[Arbitrary[contextual.MultiVersionRegister[Int]]]
 
+class CausalQueueChecks     extends LatticePropertyChecks[Dotted[CausalQueue[Int]]]
 class DotSetChecks          extends LatticePropertyChecks[Dotted[DotSet]]
 class EnableWinsFlagChecks  extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks          extends LatticePropertyChecks[Dotted[DotFun[Int]]]
@@ -34,7 +37,7 @@ class OrSetChecks           extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks          extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks           extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks     extends LatticePropertyChecks[VectorClock]
-class GrowOnlyListChecks extends LatticePropertyChecks[GrowOnlyList[Int]](expensive = true)
+class GrowOnlyListChecks    extends LatticePropertyChecks[GrowOnlyList[Int]](expensive = true)
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
@@ -83,8 +86,10 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
           s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
         assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
-        BottomOpt.explicit: bo =>
-          assertNotEquals(bo.empty, d, "decomposed result was empty")
+        if decomposed.sizeIs > 1
+        then
+          BottomOpt.explicit: bo =>
+            assertNotEquals(bo.empty, d, "decomposed result was empty")
         if isDotted
         then
           // do some extra checks which will cause failure later, but have better error reporting when done here
@@ -113,9 +118,13 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
   property("merge agrees with order"):
     forAll: (left: A, right: A) =>
       val merged = left merge right
-      assert(left <= merged, s"merged:\n  ${merged}")
-      assert(right <= merged, s"merged:\n  ${merged}")
+
+      assertEquals(left merge merged, merged, "naive lteq")
+      assertEquals(right merge merged, merged, "naive lteq")
+      assert(left <= merged, s"merged:\n  ${merged}\n ${left merge merged}")
+      assert(right <= merged, s"merged:\n  ${merged}\n ${right merge merged}")
       assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}")
       assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
 
 }
+
