@@ -1,18 +1,13 @@
-package test.kofre
+package test.kofre.bespoke
 
-import kofre.base.Bottom
-import kofre.base.Lattice
+import kofre.base.{Bottom, Lattice}
+import kofre.datatypes.contextual.{CausalQueue, MultiVersionRegister}
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
-import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.contextual.MultiVersionRegister
-import kofre.dotted.Dotted
-import kofre.dotted.DottedLattice
-import kofre.dotted.HasDots
+import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.ReplicaId
 import kofre.time.VectorClock
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.*
-import org.scalacheck.Arbitrary
-import org.scalacheck.Gen
 
 class DecomposeManualTests extends munit.ScalaCheckSuite {
 

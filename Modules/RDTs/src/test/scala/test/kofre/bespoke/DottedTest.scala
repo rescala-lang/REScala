@@ -1,11 +1,9 @@
-package test.kofre
+package test.kofre.bespoke
 
 import kofre.datatypes.experiments.AuctionInterface
-import kofre.datatypes.experiments.AuctionInterface.AuctionData
-import kofre.datatypes.experiments.AuctionInterface.Bid
+import kofre.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
 import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
-import kofre.syntax.DeltaBufferContainer
+import kofre.syntax.{DeltaBuffer, DeltaBufferContainer}
 
 class DottedTest extends munit.FunSuite {
 
