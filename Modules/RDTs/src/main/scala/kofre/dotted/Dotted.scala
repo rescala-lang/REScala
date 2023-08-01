@@ -36,7 +36,36 @@ object Dotted {
       val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
       val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
       Dotted(l merge r, left.context union right.context)
+
+    override def decompose(a: Dotted[A]): Iterable[Dotted[A]] =
+      val deltas = a.data.decomposed.flatMap: delta =>
+        val dots = delta.dots
+        Option.when(!dots.isEmpty || !delta.isEmpty):
+          Dotted(delta, delta.dots)
+
+      val compacted   = compact(deltas.toList, Nil)
+      val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ union _)
+      val removed     = a.context subtract presentDots
+      val empty       = Bottom[A].empty
+      compacted concat removed.decomposed.map(dots => Dotted(empty, dots))
+
   }
+
+  def compact[T](rem: List[Dotted[T]], acc: List[Dotted[T]])(using dl: Lattice[T]): List[Dotted[T]] = rem match
+    case Nil => acc
+    case h :: tail =>
+      def overlap(e: Dotted[T]): Boolean = !h.context.disjunct(e.context)
+
+      val (tin, tother)     = tail.partition(overlap)
+      val (accin, accother) = acc.partition(overlap)
+      val all               = tin ++ accin
+      val compacted = all.foldLeft(h): (l, r) =>
+        Dotted(dl.merge(l.data, r.data), l.context union r.context)
+
+      // have to repeat the check with compacted, until it did not grow
+      if all.isEmpty
+      then compact(tother, compacted :: accother)
+      else compact(compacted :: tother, accother)
 
   def liftLattice[A: Lattice]: Lattice[Dotted[A]] = new {
     def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
