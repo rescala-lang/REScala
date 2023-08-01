@@ -1,23 +1,18 @@
-package test.kofre
+package test.kofre.containers
 
-import kofre.base.Bottom
-import kofre.base.Lattice
+import kofre.base.{Bottom, Lattice}
 import kofre.base.Lattice.Operators
-import kofre.time.{Dots, Dot}
-import kofre.dotted.HasDots.*
-import kofre.datatypes.contextual.AddWinsSet
-import kofre.datatypes.contextual.EnableWinsFlag
-import kofre.datatypes.contextual.LastWriterWins
+import kofre.base.Uid.asId
+import kofre.datatypes.LastWriterWins
+import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag}
 import kofre.datatypes.experiments.AuctionInterface
-import kofre.datatypes.experiments.AuctionInterface.AuctionData
-import kofre.datatypes.experiments.AuctionInterface.Bid
+import kofre.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
+import kofre.dotted.HasDots.*
 import kofre.dotted.{Dotted, HasDots}
+import kofre.syntax.{DeltaBuffer, DeltaBufferContainer, ReplicaId}
+import kofre.time.{Dot, Dots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.*
-import kofre.syntax.DeltaBuffer
-import kofre.syntax.DeltaBufferContainer
-import kofre.syntax.ReplicaId
-import kofre.base.Uid.asId
 
 class ContainerTest extends munit.FunSuite {
 
@@ -33,7 +28,7 @@ class ContainerTest extends munit.FunSuite {
     }
 
     given bottomLLW[A: Bottom]: Bottom[LastWriterWins[A]] with {
-      override def empty: LastWriterWins[A] = LastWriterWins.empty(initialDot)
+      override def empty: LastWriterWins[A] = LastWriterWins.empty
     }
 
   }
