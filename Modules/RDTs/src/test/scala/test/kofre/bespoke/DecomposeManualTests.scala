@@ -5,7 +5,7 @@ import kofre.datatypes.contextual.{CausalQueue, MultiVersionRegister}
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.ReplicaId
-import kofre.time.VectorClock
+import kofre.time.{Dot, VectorClock}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.*
 
@@ -175,15 +175,15 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val k1: Int = 1
     val v1: String = "one"
-    val e1 = LastWriterWins.now(Dot(r1.uid, 0), "")
-    val val_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k1, e1)(_.write(using r1)(v1))
+    val e1 = LastWriterWins.now("")
+    val val_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k1, e1)(_.write(v1))
     assertEquals(val_1.data.keySet, Set(1))
     assertEquals(val_1.data.get(1).map(_.payload), Some("one"))
 
     val k2: Int = 2
     val v2: String = "two"
-    val e2 = LastWriterWins.now(Dot(r2.uid, 0), "")
-    val val_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k2, e2)(_.write(using r2)(v2))
+    val e2 = LastWriterWins.now("")
+    val val_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k2, e2)(_.write(v2))
     assertEquals(val_2.data.keySet, Set(2))
     assertEquals(val_2.data.get(2).map(_.payload), Some("two"))
 

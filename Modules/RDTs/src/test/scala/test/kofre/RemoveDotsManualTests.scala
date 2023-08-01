@@ -1,11 +1,9 @@
 package test.kofre
 
-import kofre.base.Time
-import kofre.datatypes.contextual.LastWriterWins
+import kofre.datatypes.LastWriterWins
 import kofre.dotted.Dotted
 import kofre.syntax.ReplicaId
-import kofre.time.Dot
-import kofre.time.Dots
+import kofre.time.{Dot, Dots, Time}
 
 class RemoveDotsManualTests extends munit.ScalaCheckSuite {
 
@@ -29,14 +27,14 @@ class RemoveDotsManualTests extends munit.ScalaCheckSuite {
   import OptionManualTestsUtils._
 
   test("Dotted[LastWriterWins[Option[Int]]] removeDots") {
-    val empty: Dotted[LastWriterWins[Option[Int]]] = Dotted(LastWriterWins[Option[Int]](dot_1_0, Time.current(), None), c_0)
+    val empty: Dotted[LastWriterWins[Option[Int]]] = Dotted(LastWriterWins.fallback(None), c_0)
 
     // remove current dots deletes
     val empty_r_0_0: Option[LastWriterWins[Option[Int]]] = empty.data.removeDots(c_0)
     assertEquals(empty_r_0_0, None)
 
 
-    val val_1: Dotted[LastWriterWins[Option[Int]]] = empty.write(using r1)(Some(1).asInstanceOf[Option[Int]])
+    val val_1: Dotted[LastWriterWins[Option[Int]]] = empty.write(Some(1).asInstanceOf[Option[Int]])
     assertEquals(val_1.read, Some(1))
 
     // remove old dots keeps new value
@@ -52,7 +50,7 @@ class RemoveDotsManualTests extends munit.ScalaCheckSuite {
     assertEquals(empty_r_1_2, Some(val_1.data))
 
 
-    val val_2: Dotted[LastWriterWins[Option[Int]]] = val_1.write(using r1)(Some(2).asInstanceOf[Option[Int]])
+    val val_2: Dotted[LastWriterWins[Option[Int]]] = val_1.write(Some(2).asInstanceOf[Option[Int]])
     assertEquals(val_2.read, Some(2))
 
     // remove old dots keeps new value
