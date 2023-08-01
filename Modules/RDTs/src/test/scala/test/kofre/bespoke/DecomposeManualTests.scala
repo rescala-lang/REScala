@@ -204,8 +204,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val decomposed: Seq[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
     assertEquals(decomposed.size, 2)
 
-    println(decomposed)
-
     assertEquals(decomposed(0).data.get(1).map(_.payload), Some("one"))
     assertEquals(decomposed(0).context.internal.keySet.size, 0)
 
