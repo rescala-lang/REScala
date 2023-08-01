@@ -2,13 +2,8 @@ package test.kofre
 
 import kofre.base.Bottom
 import kofre.base.Lattice
-import kofre.datatypes.GrowOnlyCounter
-import kofre.datatypes.GrowOnlyList
-import kofre.datatypes.GrowOnlyMap
-import kofre.datatypes.GrowOnlySet
-import kofre.datatypes.PosNegCounter
+import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import kofre.datatypes.contextual.CausalQueue
-import kofre.datatypes.contextual.LastWriterWins
 import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.Dotted
 import kofre.dotted.DottedLattice
@@ -87,12 +82,12 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val empty: Dotted[LastWriterWins[Int]] = Bottom[Dotted[LastWriterWins[Int]]].empty
 
-    val val_1: Dotted[LastWriterWins[Int]] = empty.write(using r1)(1)
+    val val_1: Dotted[LastWriterWins[Int]] = empty.write(1)
     assertEquals(val_1.read, 1)
 
     Thread.sleep(1)
 
-    val val_2: Dotted[LastWriterWins[Int]] = empty.write(using r2)(2)
+    val val_2: Dotted[LastWriterWins[Int]] = empty.write(2)
     assertEquals(val_2.read, 2)
 
     val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(val_1, val_2)
@@ -129,8 +124,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     given stringOrdering: Ordering[String] = scala.math.Ordering.String
 
     given stringLattice: Lattice[String] = Lattice.fromOrdering(stringOrdering)
-
-    given stringDottedLattice: DottedLattice[String] = DottedLattice.liftLattice
 
     given HasDots[String] = HasDots.noDots
 
