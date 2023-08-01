@@ -107,8 +107,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: Dotted[LastWriterWins[Int]] = empty.write(1)
     assertEquals(val_1.read, 1)
 
-    Thread.sleep(1)
-
     val val_2: Dotted[LastWriterWins[Int]] = empty.write(2)
     assertEquals(val_2.read, 2)
 
