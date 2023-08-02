@@ -38,16 +38,16 @@ object ReplicatedList {
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty
 
-  enum Node[A]:
-    case Alive[A](v: LastWriterWins[A]) extends Node[A]
-    case Dead[A]()                extends Node[A]
+  enum Node[+A]:
+    case Alive(v: LastWriterWins[A])
+    case Dead
   import Node.{Alive, Dead}
 
   object Node {
     implicit def RGANodeAsUIJDLattice[A]: Lattice[Node[A]] = new Lattice[Node[A]] {
       override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
-        case (Dead(), _)            => false
-        case (_, Dead())            => true
+        case (Dead, _)            => false
+        case (_, Dead)            => true
         case (Alive(lv), Alive(rv)) => rv.timestamp > lv.timestamp
       }
 
@@ -57,7 +57,7 @@ object ReplicatedList {
       /** By assumption: associative, commutative, idempotent. */
       override def merge(left: Node[A], right: Node[A]): Node[A] = (left, right) match {
         case (Alive(lv), Alive(rv)) => Alive(Lattice[LastWriterWins[A]].merge(lv, rv))
-        case _                      => Dead()
+        case _                      => Dead
       }
     }
   }
@@ -89,7 +89,7 @@ object ReplicatedList {
     def size(using PermQuery): Int = {
       val ReplicatedList(_, df) = current
       df.repr.values.count {
-        case Dead()   => false
+        case Dead   => false
         case Alive(_) => true
       }
     }
@@ -111,7 +111,7 @@ object ReplicatedList {
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
           case (dot, _) => df.repr(dot) match {
               case Alive(_) => true
-              case Dead()   => false
+              case Dead   => false
             }
         }.map(_._2).prepended(0).lift(n)
     }
@@ -166,7 +166,7 @@ object ReplicatedList {
       fw.value.toLazyList.filter { dot =>
         df.repr(dot) match {
           case Alive(_) => true
-          case Dead()   => false
+          case Dead   => false
         }
       }.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
@@ -178,7 +178,7 @@ object ReplicatedList {
     def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
       updateRGANode(current, i, Alive(LastWriterWins.now(e))).mutator
 
-    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead[E]()).mutator
+    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
@@ -197,12 +197,12 @@ object ReplicatedList {
       updateRGANodeBy(current, cond, Alive(LastWriterWins.now(e))).mutator
 
     def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
-      updateRGANodeBy(current, cond, Dead[E]()).mutator
+      updateRGANodeBy(current, cond, Dead).mutator
 
     def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
       val ReplicatedList(epoche, df) = current
       val toRemove = df.repr.collect {
-        case (dot, Dead()) => dot
+        case (dot, Dead) => dot
       }.toSet
 
       val golistPurged = epoche.value.without(toRemove)
