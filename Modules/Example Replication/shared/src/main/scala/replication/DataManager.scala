@@ -14,7 +14,7 @@ import replication.JsoniterCodecs.given
 import rescala.default.{Event, Evt, Signal, Var}
 
 import java.util.Timer
-import scala.annotation.unused
+import scala.annotation.{nowarn, unused}
 import scala.collection.{View, mutable}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -95,11 +95,13 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
   }
 
   def requestMissingBinding[PushBinding[Dots]] =
+    @nowarn
     given IdenticallyTransmittable[Dots] = IdenticallyTransmittable[Dots]()
     Binding[Dots => Unit]("requestMissing")
 
   val pushStateBinding: PushBinding[TransferState] =
     given JsonValueCodec[TransferState]           = JsonCodecMaker.make
+    @nowarn
     given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
     Binding[TransferState => Unit]("pushState")
 
