@@ -45,6 +45,7 @@ object Dotted {
 
       val compacted   = compact(deltas.toList, Nil)
       val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ union _)
+      assert(a.context.contains(presentDots), "phantasized new dots, this likely means a bug elsewhere")
       val removed     = a.context subtract presentDots
       val empty       = Bottom[A].empty
       compacted concat removed.decomposed.map(dots => Dotted(empty, dots))
