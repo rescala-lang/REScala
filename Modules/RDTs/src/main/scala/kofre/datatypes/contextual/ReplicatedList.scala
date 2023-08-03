@@ -32,7 +32,20 @@ object ReplicatedList {
 
   def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
 
-  given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived[ReplicatedList[E]]
+  given lattice[E]: Lattice[ReplicatedList[E]] =
+    val derived = Lattice.derived[ReplicatedList[E]]
+    new Lattice[ReplicatedList[E]] {
+      export derived.merge
+
+      override def decompose(a: ReplicatedList[E]): Iterable[ReplicatedList[E]] =
+        a.meta.decomposed.flatMap: (df: DotFun[ReplicatedList.Node[E]]) =>
+          val dots = df.dots
+          a.order.value.inner.find: (_, v) =>
+            dots.contains(v.value.payload)
+          .map: kv =>
+            ReplicatedList(a.order.copy(value = GrowOnlyList(Map(kv))), df)
+
+    }
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
       def dots: Dots = dotted.meta.dots union Dots.from(dotted.order.value.growOnlyList.toList)
