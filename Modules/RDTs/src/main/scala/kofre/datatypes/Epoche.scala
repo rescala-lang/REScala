@@ -39,10 +39,9 @@ object Epoche {
     }
 
     /** Decomposes a lattice state into ic unique irredundant join decomposition of join-irreducible states */
-    override def decompose(state: Epoche[E]): Iterable[Epoche[E]] = state match {
-      case Epoche(c, v) =>
-        Lattice[E].decompose(v).map(Epoche(c, _))
-    }
+    override def decompose(state: Epoche[E]): Iterable[Epoche[E]] =
+      val Epoche(c, v) = state
+      Lattice[E].decompose(v).map(Epoche(c, _))
 
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Epoche[E], right: Epoche[E]): Epoche[E] = (left, right) match {
