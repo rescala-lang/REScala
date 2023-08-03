@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 object GListGenerators {
   def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] = for {
-    elems <- Gen.listOfN(2, e.arbitrary)
+    elems <- Gen.listOfN(20, e.arbitrary)
   } yield {
     elems.foldLeft(GrowOnlyList.empty[E]) {
       case (list, el) => list merge list.insertGL(0, el)
@@ -62,7 +62,7 @@ class GListTest extends munit.ScalaCheckSuite {
 
       assertEquals(szeBefore, l.size)
 
-      val n = if szeBefore == 0 then 0 else insertIndex.abs % szeBefore
+      val n = if szeBefore == 0 then 0 else (insertIndex % szeBefore).abs
 
       list.insertGL(n, e)
 
