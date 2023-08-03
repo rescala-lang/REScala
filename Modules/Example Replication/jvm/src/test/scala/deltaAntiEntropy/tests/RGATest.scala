@@ -54,15 +54,9 @@ class RGATest extends munit.ScalaCheckSuite {
     forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], readIdx: Int) =>
       val listInitial: List[Int] = rga.toList
 
-      assert(
-        rga.size == listInitial.size,
-        s"The size of the rga should equal the size of the list returned by toList, but ${rga.size} does not equal ${listInitial.size}"
-      )
+      assertEquals(rga.size, listInitial.size)
 
-      assert(
-        rga.read(readIdx) == listInitial.lift(readIdx),
-        s"Reading the rga at an index should produce the same result as accessing the list returned by toList, but at index $readIdx ${rga.read(readIdx)} does not equal ${listInitial.lift(readIdx)}"
-      )
+      assertEquals(rga.read(readIdx), listInitial.lift(readIdx))
     }
 
   }
