@@ -61,7 +61,6 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     assertEquals(aec.toList, List("00"))
 
-    println(s"inserting into ${aec.state}")
     aec.insertGL(1, "100")
 
     assertEquals(aec.toList, List("00", "100"), aec.state)

@@ -183,24 +183,25 @@ object ReplicatedList {
       }
     }.mutator
 
-    private def updateRGANode(state: ReplicatedList[E], i: Int, newNode: Node[E]): Dotted[ReplicatedList[E]] = {
+    private def updateRGANode(state: ReplicatedList[E], i: Int, newNode: Option[E]): Dotted[ReplicatedList[E]] = {
       val ReplicatedList(fw, df) = state
-      fw.value.toLazyList.filter { dot =>
-        df.repr(dot) match {
-          case Alive(_) => true
-          case Dead     => false
-        }
-      }.lift(i) match {
+      fw.value.toLazyList.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
+
         case Some(d) =>
-          deltaState[E].make(df = DotFun.single(d, newNode), cc = Dots.single(d))
+          df.repr(d) match
+            case Dead =>  Dotted(ReplicatedList.empty)
+            case Alive(current) =>
+              newNode match
+                case None => deltaState[E].make(df = DotFun.single(d, Dead), cc = Dots.single(d))
+                case Some(value) => deltaState[E].make(df = DotFun.single(d, Alive(current.write(value))), cc = Dots.single(d))
       }
     }
 
     def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
-      updateRGANode(current, i, Alive(LastWriterWins.now(e))).mutator
+      updateRGANode(current, i, Some(e)).mutator
 
-    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, Dead).mutator
+    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, None).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
