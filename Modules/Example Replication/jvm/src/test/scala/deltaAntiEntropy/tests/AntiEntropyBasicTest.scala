@@ -29,11 +29,13 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     aec.insert(using aec.replicaID)(0, "00")
 
-    assertEquals(aec.toList, List("00"))
+    aec.update(using Uid.predefined("b"))(0, "UPD")
+
+    assertEquals(aec.toList, List("UPD"))
 
     aec.insert(using aec.replicaID)(1, "100")
 
-    assertEquals(aec.toList, List("00", "100"))
+    assertEquals(aec.toList, List("UPD", "100"))
 
     val lots = List.tabulate(100)(_.toString)
 
@@ -41,7 +43,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
       aec.insert(using aec.replicaID)(0, elem)
     // aec.insertAll(using aec.replicaID)(0, lots)
 
-    assertEquals(aec.toList, lots.reverse ::: List("00", "100"))
+    assertEquals(aec.toList, lots.reverse ::: List("UPD", "100"))
 
     aec.insert(using Uid.predefined("b"))(1, "b00")
 

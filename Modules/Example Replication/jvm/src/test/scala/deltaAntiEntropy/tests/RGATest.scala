@@ -57,6 +57,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
+
   property("size, toList, read") {
     forAll { (rl: Dotted[ReplicatedList[Int]], readIdx: Int) =>
       val listInitial: List[Int] = rl.toList
@@ -125,7 +126,7 @@ class RGATest extends munit.ScalaCheckSuite {
         updateIdx < 0 || updateIdx >= rga.size || updated.read(updateIdx).contains(updateValue),
         s"After updating a valid index reading the rga at that index should return the updated value, but ${updated.read(
             updateIdx
-          )} does not contain $updateValue ($updateIdx) \n  ${rga.toList}\n  ${initiallist}\n  ${updated.state}"
+          )} does not contain $updateValue ($updateIdx) \n  ${rga.toList}\n  $rllist\n  ${initiallist}\n  ${updated.state}\n  $rl"
       )
       assert(
         (updateIdx >= 0 && updateIdx < rga.size) || updated.toList == rga.toList,
