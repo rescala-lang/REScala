@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 object GListGenerators {
   def genGList[E: JsonValueCodec: HasDots](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlyList[E]]] = for {
-    elems <- Gen.containerOf[List, E](e.arbitrary)
+    elems <- Gen.containerOfN[List, E](20, e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
