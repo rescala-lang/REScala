@@ -60,7 +60,7 @@ class ReplicatedListTest extends munit.FunSuite {
 
     assertEquals(v3.toList, List("10", "20"))
 
-    val v4 = v3 merge v3.insert(using Uid.predefined("a"))(1, "30")
+    val v4 = v3 merge v3.insert(using aid)(1, "30")
 
 
     assertEquals(v4.toList, List("10", "30", "20"))

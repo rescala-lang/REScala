@@ -5,10 +5,8 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.GrowOnlyList.Node.Elem
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
-import kofre.time.Dots
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** A GrowOnlyList is a Delta CRDT modeling a grow-only list where list elements can neither be removed nor modified.
@@ -31,28 +29,7 @@ object GrowOnlyList {
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
   given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
-  given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] with {
-    extension (dotted: GrowOnlyList[E])
-      def dots: Dots = dotted.inner.valuesIterator.map(_.value.dots).foldLeft(Dots.empty)(_ union _)
-
-      /* Okay, I know, it says “grow only” but this may delete stuff.
-       * That’s fine, I thought about it for a minute while being pretty tired ;-) */
-      def removeDots(dots: Dots): Option[GrowOnlyList[E]] =
-        val filtered: List[Elem[LastWriterWins[E]]] = dotted.inner.valuesIterator.flatMap: elem =>
-          elem.value.removeDots(dots)
-        .map(e => Elem(e): Elem[LastWriterWins[E]]).toList
-        val pairs = filtered.sliding(2).map:
-          case List(a, b) => Some((a, b))
-          case other      => None
-        val res = filtered.headOption.map: h =>
-          Some((Head, h))
-        .concat(pairs)
-          .flatten
-
-        if res.isEmpty then None
-        else Some(GrowOnlyList(res.toMap))
-
-  }
+  given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] = HasDots.noDots
 
   given Lattice[E]: Lattice[GrowOnlyList[E]] =
     new Lattice[GrowOnlyList[E]] {
@@ -137,15 +114,16 @@ object GrowOnlyList {
         case Elem(e) => Some(e.payload)
       }
 
-    @tailrec
-    private def toListRec(state: GrowOnlyList[E], current: Node[LastWriterWins[E]], acc: ListBuffer[E]): ListBuffer[E] =
-      state.inner.get(current) match {
-        case None                  => acc
-        case Some(next @ Elem(tv)) => toListRec(state, next, acc.append(tv.payload))
-      }
-
     def toList(using PermQuery): List[E] =
-      toListRec(current, Head, ListBuffer.empty[E]).toList
+      val state = current
+      @tailrec
+      def toListRec(current: Node[LastWriterWins[E]], acc: List[E]): List[E] =
+        state.inner.get(current) match {
+          case None                  => acc.reverse
+          case Some(next @ Elem(tv)) => toListRec(next, tv.payload :: acc)
+        }
+
+      toListRec(Head, Nil)
 
     def toLazyList(using PermQuery): LazyList[E] =
       LazyList.unfold[E, Node[LastWriterWins[E]]](Head) { node =>

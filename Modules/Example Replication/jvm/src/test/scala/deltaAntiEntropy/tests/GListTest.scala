@@ -3,7 +3,7 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
 import kofre.base.Lattice
 import kofre.datatypes.GrowOnlyList
 import kofre.dotted.{Dotted, HasDots}
@@ -14,73 +14,77 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E: JsonValueCodec: HasDots](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlyList[E]]] = for {
-    elems <- Gen.containerOfN[List, E](20, e.arbitrary)
+  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] = for {
+    elems <- Gen.listOfN(2, e.arbitrary)
   } yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
-
-    elems.foldLeft(AntiEntropyContainer[GrowOnlyList[E]](ae)) {
-      case (list, el) => list.insertGL(0, el)
+    elems.foldLeft(GrowOnlyList.empty[E]) {
+      case (list, el) => list merge list.insertGL(0, el)
     }
   }
 
-  implicit def arbGList[E: JsonValueCodec: HasDots](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlyList[E]]] =
+  implicit def arbGList[E: JsonValueCodec: HasDots](implicit
+      e: Arbitrary[E]
+  ): Arbitrary[GrowOnlyList[E]] =
     Arbitrary(genGList)
+
+  def makeNet[E: JsonValueCodec: HasDots](v: GrowOnlyList[E]) =
+    val network = new Network(0, 0, 0)
+    val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
+    val aec     = AntiEntropyContainer[GrowOnlyList[E]](ae)
+    aec.applyDelta(Named(aec.replicaID, Dotted(v)))
+
 }
 
 class GListTest extends munit.ScalaCheckSuite {
   import GListGenerators.*
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
-  given HasDots[Int] = HasDots.noDots
+  given HasDots[Int]                         = HasDots.noDots
 
   property("size, toList, read") {
-    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]], readIdx: Int) =>
-      val l = list.toList
+    forAll { (gol: GrowOnlyList[Int], readIdx: Int) =>
+      val list = makeNet(gol)
+      val l    = list.toList
 
-      assert(
-        list.size == l.size,
-        s"The size of a GrowOnlyList should equal the size of the list resulting from toList, but ${list.size} does not equal ${list.toList.size}"
-      )
-      assert(
-        list.read(readIdx) == l.lift(readIdx),
-        s"Reading from the GrowOnlyList at any valid index should return the same value as reading from the list returned by toList, but at index $readIdx ${list.read(readIdx)} does not equal ${l.lift(readIdx)}"
-      )
+      assertEquals(list.size, l.size)
+      assert(list.read(readIdx) == l.lift(readIdx))
     }
   }
   property("insert") {
-    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]], n: Int, e: Int) =>
+    forAll { (gol: GrowOnlyList[Int], insertIndex: Int, e: Int) =>
+      val list = makeNet(gol)
+
       val szeBefore = list.size
       val l         = list.toList
 
-      val inserted = list.insertGL(n, e)
+      l.zipWithIndex.foreach: (e, i) =>
+        assertEquals(list.read(i), Some(e))
+
+      assertEquals(szeBefore, l.size)
+
+      val n = if szeBefore == 0 then 0 else insertIndex.abs % szeBefore
+
+      list.insertGL(n, e)
+
+      val inserted =
+        val (b, a) = l.splitAt(n)
+        b ::: (e :: a)
+
+      assertEquals(list.read(n), Some(e), s"$n ${insertIndex},\n  ${l}\n  ${list.toList}\n  ${list.state}")
 
       assert(
-        n > szeBefore || n < 0 || inserted.size == szeBefore + 1,
-        s"When an element is inserted into the list its size should increase by 1, but ${inserted.size} does not equal ${szeBefore} + 1"
-      )
-      assert(
-        (n <= szeBefore || n >= 0) || inserted.toList == l,
-        s"When insertGL is called with an invalid position the list should not change, but ${inserted.toList} does not equal ${list.toList}"
-      )
-      assert(
-        n > szeBefore || n < 0 || inserted.read(n).contains(e),
-        s"Reading the position where an element was inserted should return that element, but ${inserted.read(n)} does not contain $e"
+        list.size == szeBefore + 1,
+        s"When an element is inserted into the list its size should increase by 1, but ${list.size} does not equal ${szeBefore} + 1"
       )
 
-      val from = if (n < 0) 0 else n
-
-      (from until l.size).foreach { i =>
-        assert(
-          n < 0 || inserted.read(i + 1).contains(l(i)),
-          s"All elements after the insertion point should be shifted by 1, but element at ${i + 1} does not equal element originally at $i: ${inserted.read(i + 1)} does not contain ${l(i)}"
-        )
-      }
+      assertEquals(list.toList.toSet, inserted.toSet)
+      assertEquals(list.toList.sorted, inserted.sorted)
+      assertEquals(list.toList, inserted)
     }
   }
   property("toLazyList") {
-    forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]]) =>
+    forAll { (gol: GrowOnlyList[Int]) =>
+      val list  = makeNet(gol)
       val l     = list.toList
       val lazyl = list.toLazyList.toList
 
