@@ -72,7 +72,7 @@ class RGATest extends munit.ScalaCheckSuite {
 
       assert(
         insertIdx < 0 || insertIdx > rga.size || inserted.read(insertIdx).contains(insertValue),
-        s"After inserting a value at a valid index, reading the rga at that index should return the inserted value but ${inserted.read(insertIdx)} does not contain $insertValue"
+        s"After inserting a value at a valid index, reading the rga at that index should return the inserted value but ${inserted.read(insertIdx)} does not contain $insertValue\n  $rga\n  $inserted"
       )
       assert(
         (insertIdx >= 0 && insertIdx <= rga.size) || inserted.toList == rga.toList,
