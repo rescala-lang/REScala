@@ -3,8 +3,11 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
+import kofre.base.Uid
 import kofre.datatypes.contextual.ReplicatedList
+import kofre.dotted.Dotted
+import kofre.syntax.ReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -15,34 +18,38 @@ object RGAGenerators {
   def makeRGA[E](
       inserted: List[(Int, E)],
       removed: List[Int],
-      ae: AntiEntropy[ReplicatedList[E]]
-  ): AntiEntropyContainer[ReplicatedList[E]] = {
-    val afterInsert = inserted.foldLeft(AntiEntropyContainer[ReplicatedList[E]](ae)) {
-      case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
+      rid: ReplicaId
+  ): Dotted[ReplicatedList[E]] = {
+    val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
+      case (rga, (i, e)) => rga merge rga.insert(using rid)(i, e)
     }
 
     removed.foldLeft(afterInsert) {
-      case (rga, i) => rga.delete(using rga.replicaID)(i)
+      case (rga, i) => rga.delete(using rid)(i)
     }
   }
 
-  def genRGA[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[ReplicatedList[E]]] = for {
-    nInserted       <- Arbitrary.arbitrary[Byte].map(_.toInt.abs)
+  def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for {
+    nInserted       <- Gen.choose(0,20)
     insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
     insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
     removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
+    id <- Gen.oneOf('a' to 'g')
   } yield {
-    val network = new Network(0, 0, 0)
-
-    val ae = new AntiEntropy[ReplicatedList[E]]("a", network, mutable.Buffer())
-
-    makeRGA(insertedIndices zip insertedValues, removed, ae)
+    makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
   }
 
   implicit def arbRGA[E: JsonValueCodec](implicit
       e: Arbitrary[E],
-  ): Arbitrary[AntiEntropyContainer[ReplicatedList[E]]] =
+  ): Arbitrary[Dotted[ReplicatedList[E]]] =
     Arbitrary(genRGA)
+
+  def makeNet[E: JsonValueCodec](rl: Dotted[ReplicatedList[E]]) =
+    val network = new Network(0, 0, 0)
+    val ae = new AntiEntropy[ReplicatedList[E]]("a", network, mutable.Buffer())
+    val aec = AntiEntropyContainer[ReplicatedList[E]](ae)
+    aec.applyDelta(Named(Uid.predefined("a"), rl))
+    aec
 }
 
 class RGATest extends munit.ScalaCheckSuite {
@@ -51,22 +58,30 @@ class RGATest extends munit.ScalaCheckSuite {
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("size, toList, read") {
-    forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], readIdx: Int) =>
-      val listInitial: List[Int] = rga.toList
+    forAll { (rl: Dotted[ReplicatedList[Int]], readIdx: Int) =>
+      val listInitial: List[Int] = rl.toList
+      val rga = makeNet(rl)
 
-      assertEquals(rga.size, listInitial.size)
+      val rgaList = rga.toList
+
+      assertEquals(listInitial, rgaList)
+
+      assertEquals(rga.size, listInitial.size, s"  ${rga.state}\n  $listInitial")
 
       assertEquals(rga.read(readIdx), listInitial.lift(readIdx))
     }
 
   }
   property("insert") {
-    forAll { (rga: AntiEntropyContainer[ReplicatedList[Int]], insertIdx: Int, insertValue: Int) =>
+    forAll { (rl: Dotted[ReplicatedList[Int]], insertIdx: Int, insertValue: Int) =>
+      val rga = makeNet(rl)
       val inserted = rga.insert(using rga.replicaID)(insertIdx, insertValue)
 
       assert(
         insertIdx < 0 || insertIdx > rga.size || inserted.read(insertIdx).contains(insertValue),
-        s"After inserting a value at a valid index, reading the rga at that index should return the inserted value but ${inserted.read(insertIdx)} does not contain $insertValue\n  $rga\n  $inserted"
+        s"After inserting a value at a valid index, reading the rga at that index should return the inserted value but ${inserted.read(
+            insertIdx
+          )} does not contain $insertValue\n  $rga\n  $inserted"
       )
       assert(
         (insertIdx >= 0 && insertIdx <= rga.size) || inserted.toList == rga.toList,
