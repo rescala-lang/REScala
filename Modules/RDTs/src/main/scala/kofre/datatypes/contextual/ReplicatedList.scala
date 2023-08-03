@@ -33,7 +33,19 @@ object ReplicatedList {
   def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
 
   given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived[ReplicatedList[E]]
-  given hasDots[E]: HasDots[ReplicatedList[E]] = HasDots.derived
+  given hasDots[E]: HasDots[ReplicatedList[E]] with {
+    extension (dotted: ReplicatedList[E])
+      def dots: Dots = dotted.meta.dots
+      def removeDots(dots: Dots): Option[ReplicatedList[E]] =
+        val nmeta = dotted.meta.repr.map: (k, v) =>
+          if dots.contains(k)
+          then (k, Node.Dead)
+          else (k, v)
+        .toMap
+
+        if nmeta.isEmpty then None
+        else Some(dotted.copy(meta = DotFun(nmeta)))
+  }
 
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty
