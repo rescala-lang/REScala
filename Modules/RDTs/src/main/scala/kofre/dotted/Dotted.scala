@@ -73,10 +73,10 @@ object Dotted {
       Dotted(left.data merge right.data, left.context union right.context)
   }
 
-  given syntaxPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[Dotted[L], L] with PermMutate[Dotted[L], L]
+  given syntaxPermissions[L]: PermCausalMutate[Dotted[L], L] with PermMutate[Dotted[L], L]
     with {
-    override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = c merge delta
-    override def mutate(c: Dotted[L], delta: L): Dotted[L]                = c merge Dotted(delta)
+    override def mutateContext(c: Dotted[L], delta: Dotted[L]): Dotted[L] = delta
+    override def mutate(c: Dotted[L], delta: L): Dotted[L]                = Dotted(delta)
     override def query(c: Dotted[L]): L                                   = c.data
     override def context(c: Dotted[L]): Dots                              = c.context
   }
