@@ -132,24 +132,18 @@ class EWFlagTest extends munit.ScalaCheckSuite {
   }
 
   property("convergence") {
-    forAll { (enableA: Short, disableA: Short, enableB: Short, disableB: Short, network: Network) =>
+    forAll { (enableA: Short, opsA: List[Boolean], opsB: List[Boolean], network: Network) =>
       val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-      val opsA = Random.shuffle(List.fill(enableA.toInt)(1) ++ List.fill(disableA.toInt)(0))
-      val opsB = Random.shuffle(List.fill(enableB.toInt)(1) ++ List.fill(disableB.toInt)(0))
 
       val fa0 = opsA.foldLeft(AntiEntropyContainer[EnableWinsFlag](aea)) {
-        case (f, 0) => f.disable()
-        case (f, 1) => f.enable(using f.replicaID)()
-        // default case is only needed to stop the compiler from complaining about non-exhaustive match
-        case (f, _) => f
+        case (f, false) => f.disable()
+        case (f, true) => f.enable(using f.replicaID)()
       }
       val fb0 = opsB.foldLeft(AntiEntropyContainer[EnableWinsFlag](aeb)) {
-        case (f, 0) => f.disable()
-        case (f, 1) => f.enable(using f.replicaID)()
-        // default case is only needed to stop the compiler from complaining about non-exhaustive match
-        case (f, _) => f
+        case (f, false) => f.disable()
+        case (f, true) => f.enable(using f.replicaID)()
       }
 
       AntiEntropy.sync(aea, aeb)
