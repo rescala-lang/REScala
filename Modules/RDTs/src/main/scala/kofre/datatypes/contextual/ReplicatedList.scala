@@ -35,7 +35,7 @@ object ReplicatedList {
   given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived[ReplicatedList[E]]
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
-      def dots: Dots = dotted.meta.dots union Dots.from(dotted.order.value.inner.values.map(_.value.payload))
+      def dots: Dots = dotted.meta.dots union Dots.from(dotted.order.value.growOnlyList.toList)
       def removeDots(dots: Dots): Option[ReplicatedList[E]] =
         val nmeta = dotted.meta.repr.map: (k, v) =>
           if dots.contains(k)
@@ -180,7 +180,7 @@ object ReplicatedList {
       }.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
         case Some(d) =>
-          deltaState[E].make(df = DotFun.single(d, newNode))
+          deltaState[E].make(df = DotFun.single(d, newNode), cc = Dots.single(d))
       }
     }
 
