@@ -108,9 +108,10 @@ class RGATest extends munit.ScalaCheckSuite {
         updated.size == rga.size,
         s"update should not change the size of the rga, but ${updated.size} does not equal ${rga.size}"
       )
+      assertEquals(rga.size, rga.toList.size)
       assert(
         updateIdx < 0 || updateIdx >= rga.size || updated.read(updateIdx).contains(updateValue),
-        s"After updating a valid index reading the rga at that index should return the updated value, but ${updated.read(updateIdx)} does not contain $updateValue"
+        s"After updating a valid index reading the rga at that index should return the updated value, but ${updated.read(updateIdx)} does not contain $updateValue\n ${rga.toList}\n  ${rga.state}\n  ${updated.state}"
       )
       assert(
         (updateIdx >= 0 && updateIdx < rga.size) || updated.toList == rga.toList,
@@ -146,7 +147,7 @@ class RGATest extends munit.ScalaCheckSuite {
           idx1 < idx2 && la2.read(idx1).contains(e1) ||
           idx1 > idx2 && la2.read(idx1 + 1).contains(e1) ||
           idx1 == idx2 && (la2.read(idx1).contains(e1) || la2.read(idx1 + 1).contains(e1)),
-          s"After synchronization $e1 was not found at its expected location in ${la2.toList}"
+          s"After synchronization $e1 was not found at its expected location in ${la2.toList}\n  ${la1} \n  ${lb0}"
         )
         assert(
           idx1 < idx2 && la2.read(idx2 + 1).contains(e2) ||

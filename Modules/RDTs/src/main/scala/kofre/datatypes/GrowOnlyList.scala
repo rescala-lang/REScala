@@ -5,6 +5,7 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.GrowOnlyList.Node.Elem
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
+import kofre.time.Dots
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
@@ -30,8 +31,28 @@ object GrowOnlyList {
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
   given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
-  given hasDots[E]: HasDots[GrowOnlyList[E]] = HasDots.noDots
+  given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] with {
+    extension (dotted: GrowOnlyList[E])
+      def dots: Dots = dotted.inner.valuesIterator.map(_.value.dots).foldLeft(Dots.empty)(_ union _)
 
+      /* Okay, I know, it says “grow only” but this may delete stuff.
+       * That’s fine, I thought about it for a minute while being pretty tired ;-) */
+      def removeDots(dots: Dots): Option[GrowOnlyList[E]] =
+        val filtered: List[Elem[LastWriterWins[E]]] = dotted.inner.valuesIterator.flatMap: elem =>
+          elem.value.removeDots(dots)
+        .map(e => Elem(e): Elem[LastWriterWins[E]]).toList
+        val pairs = filtered.sliding(2).map:
+          case List(a, b) => Some((a, b))
+          case other      => None
+        val res = filtered.headOption.map: h =>
+          Some((Head, h))
+        .concat(pairs)
+          .flatten
+
+        if res.isEmpty then None
+        else Some(GrowOnlyList(res.toMap))
+
+  }
 
   given Lattice[E]: Lattice[GrowOnlyList[E]] =
     new Lattice[GrowOnlyList[E]] {

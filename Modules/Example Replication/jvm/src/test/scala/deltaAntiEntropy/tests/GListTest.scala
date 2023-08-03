@@ -4,7 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
+import kofre.base.Lattice
 import kofre.datatypes.GrowOnlyList
+import kofre.dotted.{Dotted, HasDots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -12,7 +14,7 @@ import replication.JsoniterCodecs.*
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlyList[E]]] = for {
+  def genGList[E: JsonValueCodec: HasDots](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlyList[E]]] = for {
     elems <- Gen.containerOf[List, E](e.arbitrary)
   } yield {
     val network = new Network(0, 0, 0)
@@ -23,7 +25,7 @@ object GListGenerators {
     }
   }
 
-  implicit def arbGList[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlyList[E]]] =
+  implicit def arbGList[E: JsonValueCodec: HasDots](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlyList[E]]] =
     Arbitrary(genGList)
 }
 
@@ -31,6 +33,7 @@ class GListTest extends munit.ScalaCheckSuite {
   import GListGenerators.*
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given HasDots[Int] = HasDots.noDots
 
   property("size, toList, read") {
     forAll { (list: AntiEntropyContainer[GrowOnlyList[Int]], readIdx: Int) =>

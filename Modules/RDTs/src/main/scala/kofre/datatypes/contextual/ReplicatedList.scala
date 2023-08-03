@@ -38,23 +38,21 @@ object ReplicatedList {
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty
 
+
   enum Node[+A]:
     case Alive(v: LastWriterWins[A])
     case Dead
   import Node.{Alive, Dead}
 
   object Node {
-    implicit def RGANodeAsUIJDLattice[A]: Lattice[Node[A]] = new Lattice[Node[A]] {
-      override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match {
-        case (Dead, _)            => false
-        case (_, Dead)            => true
+
+    /** Lattice y order: Dead > Alive */
+    given lattice[A]: Lattice[Node[A]] with {
+      override def lteq(left: Node[A], right: Node[A]): Boolean = (left, right) match
+        case (Dead, _)              => false
+        case (_, Dead)              => true
         case (Alive(lv), Alive(rv)) => rv.timestamp > lv.timestamp
-      }
 
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: Node[A]): Iterable[Node[A]] = List(state)
-
-      /** By assumption: associative, commutative, idempotent. */
       override def merge(left: Node[A], right: Node[A]): Node[A] = (left, right) match {
         case (Alive(lv), Alive(rv)) => Alive(Lattice[LastWriterWins[A]].merge(lv, rv))
         case _                      => Dead
@@ -74,7 +72,7 @@ object ReplicatedList {
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
 
   extension [C, E](container: C)
-    def multiVersionRegister: syntax[C, E] = syntax(container)
+    def replicatedList: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
@@ -87,9 +85,8 @@ object ReplicatedList {
     }
 
     def size(using PermQuery): Int = {
-      val ReplicatedList(_, df) = current
-      df.repr.values.count {
-        case Dead   => false
+      current.meta.repr.values.count {
+        case Dead     => false
         case Alive(_) => true
       }
     }
@@ -111,7 +108,7 @@ object ReplicatedList {
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
           case (dot, _) => df.repr(dot) match {
               case Alive(_) => true
-              case Dead   => false
+              case Dead     => false
             }
         }.map(_._2).prepended(0).lift(n)
     }
@@ -166,7 +163,7 @@ object ReplicatedList {
       fw.value.toLazyList.filter { dot =>
         df.repr(dot) match {
           case Alive(_) => true
-          case Dead   => false
+          case Dead     => false
         }
       }.lift(i) match {
         case None => Dotted(ReplicatedList.empty)

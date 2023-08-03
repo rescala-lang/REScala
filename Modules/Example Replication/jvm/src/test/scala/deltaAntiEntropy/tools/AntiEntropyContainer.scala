@@ -21,6 +21,9 @@ class AntiEntropyContainer[State](
 
   def state: Dotted[State] = antiEntropy.state
 
+  override def toString: String =
+    s"AntiEntropy($replicaID, $state)"
+
   def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
       case Named(origin, deltaCtx) =>
