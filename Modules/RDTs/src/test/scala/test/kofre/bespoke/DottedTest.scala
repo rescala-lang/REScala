@@ -19,7 +19,7 @@ class DottedTest extends munit.FunSuite {
     assert(added.data.status == AuctionInterface.Open)
     assert(added.data.winner == None)
 
-    val closed = added.close()
+    val closed = added merge added.close()
     assert(closed.data.bids   == Set(Bid("First", 1)))
     assert(closed.data.status == AuctionInterface.Closed)
     assert(closed.data.winner == Some("First"))
