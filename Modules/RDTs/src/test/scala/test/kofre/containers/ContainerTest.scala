@@ -211,7 +211,7 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added.data.status, AuctionInterface.Open)
     assertEquals(added.data.winner, None)
 
-    val closed = added.close()
+    val closed = added merge added.close()
     assertEquals(closed.data.bids,   Set(Bid("First", 1)))
     assertEquals(closed.data.status, AuctionInterface.Closed)
     assertEquals(closed.data.winner, Some("First"))
