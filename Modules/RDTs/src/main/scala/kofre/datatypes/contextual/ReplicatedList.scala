@@ -63,7 +63,6 @@ object ReplicatedList {
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
     override def empty: ReplicatedList[E] = ReplicatedList.empty
 
-
   enum Node[+A]:
     case Alive(v: LastWriterWins[A])
     case Dead
@@ -104,7 +103,7 @@ object ReplicatedList {
 
     def read(using PermQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.toLazyList.map(df.repr).collect {
+      fw.value.toLazyList.flatMap(df.repr.get).collect {
         case Alive(tv) => tv.payload
       }.lift(i)
     }
@@ -118,7 +117,7 @@ object ReplicatedList {
 
     def toList(using PermQuery): List[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.growOnlyList.toList.map(df.repr).collect {
+      fw.value.growOnlyList.toList.flatMap(df.repr.get).collect {
         case Alive(tv) => tv.payload
       }
     }
@@ -131,9 +130,9 @@ object ReplicatedList {
     private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
       case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
-          case (dot, _) => df.repr(dot) match {
-              case Alive(_) => true
-              case Dead     => false
+          case (dot, _) => df.repr.get(dot) match {
+              case Some(Alive(_))    => true
+              case None | Some(Dead) => false
             }
         }.map(_._2).prepended(0).lift(n)
     }
@@ -187,14 +186,14 @@ object ReplicatedList {
       val ReplicatedList(fw, df) = state
       fw.value.toLazyList.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
-
         case Some(d) =>
-          df.repr(d) match
-            case Dead =>  Dotted(ReplicatedList.empty)
-            case Alive(current) =>
+          df.repr.get(d) match
+            case Some(Dead) | None => Dotted(ReplicatedList.empty)
+            case Some(Alive(current)) =>
               newNode match
                 case None => deltaState[E].make(df = DotFun.single(d, Dead), cc = Dots.single(d))
-                case Some(value) => deltaState[E].make(df = DotFun.single(d, Alive(current.write(value))), cc = Dots.single(d))
+                case Some(value) =>
+                  deltaState[E].make(df = DotFun.single(d, Alive(current.write(value))), cc = Dots.single(d))
       }
     }
 
