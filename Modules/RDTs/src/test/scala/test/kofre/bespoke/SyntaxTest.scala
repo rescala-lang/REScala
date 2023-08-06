@@ -1,7 +1,6 @@
 package test.kofre.bespoke
 
 import kofre.base.Lattice
-import kofre.base.Lattice.Operators
 import kofre.base.Uid.asId
 import kofre.datatypes.contextual.EnableWinsFlag
 import kofre.dotted.HasDots.*

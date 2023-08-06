@@ -1,7 +1,6 @@
 package test.kofre.containers
 
 import kofre.base.{Bottom, Lattice}
-import kofre.base.Lattice.Operators
 import kofre.base.Uid.asId
 import kofre.datatypes.LastWriterWins
 import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag}

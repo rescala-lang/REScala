@@ -1,6 +1,5 @@
 package rescala.extra.replication
 
-import kofre.base.Lattice.Operators
 import kofre.base.{Bottom, Lattice}
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
@@ -9,6 +8,7 @@ import loci.transmitter.RemoteRef
 import rescala.core.Disconnectable
 import rescala.operator.Interface
 import scribe.Execution.global
+import kofre.base.Lattice.syntax
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

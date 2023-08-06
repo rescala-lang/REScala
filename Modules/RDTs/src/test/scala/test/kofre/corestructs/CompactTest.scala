@@ -5,7 +5,6 @@ import kofre.dotted.Dotted
 import kofre.time.{ArrayRanges, Dot, Dots, Time}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.*
-import kofre.base.Lattice.Operators
 
 
 class CompactTest extends munit.ScalaCheckSuite {

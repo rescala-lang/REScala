@@ -1,6 +1,5 @@
 package benchmarks.lattices
 
-import kofre.base.Lattice.Operators
 import org.openjdk.jmh.annotations.*
 import kofre.datatypes.alternatives.rga.Sequence.RGA
 import kofre.datatypes.alternatives.rga.Sequence.RGAOps
