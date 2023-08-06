@@ -199,7 +199,7 @@ class ArrayRanges(
 
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
-    @inline def includeRangeInclusive(min: Time, max: Time): Unit = {
+    def includeRangeInclusive(min: Time, max: Time): Unit = {
       newInner(newInnerNextIndex) = min         // From lMin
       newInner(newInnerNextIndex + 1) = max + 1 // to lMax (but range is in array is exclusive, so lMax+1)
       newInnerNextIndex += 2
@@ -208,7 +208,7 @@ class ArrayRanges(
     var lIndex = 0
     var lMin   = inner(0)
     var lMax   = inner(1) - 1
-    @inline def nextLeft(): Boolean = {
+    def nextLeft(): Boolean = {
       lIndex += 2
       if (lIndex < used) {
         lMin = inner(lIndex)
@@ -222,7 +222,7 @@ class ArrayRanges(
     var rIndex = 0
     var rMin   = right.inner(0)
     var rMax   = right.inner(1) - 1
-    @inline def nextRightOrAddAllFromLeft(): Boolean = {
+    def nextRightOrAddAllFromLeft(): Boolean = {
       rIndex += 2
       if (rIndex < right.used) {
         rMin = right.inner(rIndex)
@@ -244,38 +244,40 @@ class ArrayRanges(
     }
 
     // Loop over ranges in left, creating holes for ranges that are in right
-    while (
-      if (lMin > rMax) { // left range is entirely after right range
+    while
+      if lMin > rMax // left range is entirely after right range
+      then
         // Look at next range of right
         nextRightOrAddAllFromLeft()
-      } else if (lMax < rMin) { // left range is entirely before right range
+      else if lMax < rMin // left range is entirely before right range
+      then
         // Add left range
         includeRangeInclusive(lMin, lMax)
         // Look at next range from left
         nextLeft()
-      } else if (lMin >= rMin) { // left range starts after or at start of right range
-        if (lMax > rMax) {       // overlap from start but not until end
-          lMin = rMax + 1        // punch a hole in left range ending at rMax
+      else if lMin >= rMin // left range starts after or at start of right range
+      then
+        if lMax > rMax // overlap from start but not until end
+        then
+          lMin = rMax + 1 // punch a hole in left range ending at rMax
           // Look at next range of right
           nextRightOrAddAllFromLeft()
-        } else { // Complete overlap
+        else // Complete overlap
           // Don't add left range
           // Look at next left range
           nextLeft()
-        }
-      } else { // overlap after start of left until end of left
+      else // overlap after start of left until end of left
         // Add parts of left range
         includeRangeInclusive(lMin, rMin - 1) // Exclude rMin
-        if (lMax < rMax) {                    // l is completely removed
+        if (lMax < rMax)                      // l is completely removed
+        then
           // Look at next left range
           nextLeft()
-        } else { // l is only partially removed
+        else // l is only partially removed
           // increase left pointer to after right and recur
           lMin = rMax
           true
-        }
-      }
-    ) {}
+    do ()
 
     new ArrayRanges(newInner, newInnerNextIndex)
   }
@@ -367,28 +369,25 @@ object ArrayRanges {
             then
               leftLTE = false
               leftIndex += 2
-            else // some overlap
-            // same
-            if leftLower == rightLower && rightUpper == leftUpper
+            else if // intervals are exactly the same
+              leftLower == rightLower && rightUpper == leftUpper
             then
               leftIndex += 2
               rightIndex += 2
-            else if
-              // right inside left
+            else // now we know there is some overlap, disambiguate further
+            if   // right inside left
               rightUpper <= leftUpper &&
               leftLower <= rightLower
             then
               leftLTE = false
               rightIndex += 2
-            else if
-              // left inside right
+            else if // left inside right
               leftUpper <= rightUpper &&
               rightLower <= leftLower
             then
               rightLTE = false
               leftIndex += 2
-            else
-              // both partially overlap
+            else // both partially overlap
               rightLTE = false
               leftLTE = false
           end while
