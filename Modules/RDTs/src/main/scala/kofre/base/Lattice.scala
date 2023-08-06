@@ -69,7 +69,8 @@ object Lattice {
     infix def merge(right: A): A = Lattice[A].merge(left, right)
 
   def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
-    override def tryCompare(x: A, y: A): Option[Int] = {
+    override def lteq(x: A, y: A): Boolean = x <= y
+    override def tryCompare(x: A, y: A): Option[Int] =
       val lr = lteq(x, y)
       val rl = lteq(y, x)
       (lr, rl) match
@@ -77,9 +78,6 @@ object Lattice {
         case (false, false) => None
         case (true, false)  => Some(-1)
         case (false, true)  => Some(1)
-    }
-
-    override def lteq(x: A, y: A): Boolean = x <= y
   }
 
   def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
