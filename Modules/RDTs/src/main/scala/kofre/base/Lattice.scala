@@ -89,32 +89,15 @@ object Lattice {
 
   // /////////////// common instances below ///////////////
 
-  given setLattice[A]: Lattice[Set[A]] = new Lattice[Set[A]] {
+  given setLattice[A]: Lattice[Set[A]] with
     override def merge(left: Set[A], right: Set[A]): Set[A] = left union right
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
-  }
 
-  given optionLattice[A: Lattice]: Lattice[Option[A]] with {
-
-    override def merge(left: Option[A], right: Option[A]): Option[A] = (left, right) match {
-      case (None, r)          => r
-      case (l, None)          => l
-      case (Some(l), Some(r)) => Some(l merge r)
-    }
-
-    override def lteq(left: Option[A], right: Option[A]): Boolean = (left, right) match {
-      case (None, _)          => true
-      case (Some(_), None)    => false
-      case (Some(l), Some(r)) => l <= r
-    }
-
-    override def decompose(state: Option[A]): Iterable[Option[A]] = state match {
-      case None    => List.empty[Option[A]]
-      case Some(v) => v.decomposed.map(Some.apply)
-    }
-
-  }
+  given optionLattice[A: Lattice]: Lattice[Option[A]] =
+    given Lattice[None.type] = Lattice.derived
+    given Lattice[Some[A]]   = Lattice.derived
+    Lattice.sumLattice
 
   given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = new Lattice[Map[K, V]] {
     override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
@@ -150,6 +133,10 @@ object Lattice {
     */
   inline given tupleLattice[T <: Tuple](using pm: Mirror.ProductOf[T]): Lattice[T] = derived
 
+  inline def sumLattice[T](using sm: Mirror.SumOf[T]): Lattice[T] =
+    val lattices: Tuple = summonAll[Tuple.Map[sm.MirroredElemTypes, Lattice]]
+    new Derivation.SumLattice[T](sm, lattices)
+
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]]
     val bottoms: Tuple  = Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
@@ -157,6 +144,28 @@ object Lattice {
   }
 
   object Derivation {
+
+    class SumLattice[T](sm: Mirror.SumOf[T], lattices: Tuple) extends Lattice[T] {
+
+      private def lat(i: Int): Lattice[T] = lattices.productElement(i).asInstanceOf[Lattice[T]]
+
+      def merge(left: T, right: T): T =
+        val lo = sm.ordinal(left)
+        val ro = sm.ordinal(right)
+        Integer.compare(lo, ro) match
+          case 0          => lat(lo).merge(left, right)
+          case x if x < 0 => right
+          case x if x > 0 => left
+
+      override def lteq(left: T, right: T): Boolean =
+        val lo = sm.ordinal(left)
+        val ro = sm.ordinal(right)
+        Integer.compare(lo, ro) match
+          case 0     => lat(lo).lteq(left, right)
+          case other => other < 0
+
+      override def decompose(a: T): Iterable[T] = lat(sm.ordinal(a)).decompose(a)
+    }
 
     inline def summonAllMaybe[T <: Tuple]: T =
       val res =
@@ -184,6 +193,9 @@ object Lattice {
         if btm == null
         then default
         else btm.asInstanceOf[Bottom[Any]].empty
+      private def isEmpty(i: Int)(a: Any): Boolean =
+        val btm = bottoms.productElement(i)
+        if btm == null then false else btm.asInstanceOf[Bottom[Any]].isEmpty(a)
 
       override def merge(left: T, right: T): T =
         pm.fromProduct(new Product {
@@ -193,15 +205,18 @@ object Lattice {
         })
 
       override def decompose(a: T): Iterable[T] =
-        Range(0, lattices.productArity).flatMap { j =>
-          lat(j).decompose(a.productElement(j)).map { elem =>
-            pm.fromProduct(new Product {
-              def canEqual(that: Any): Boolean = false
-              def productArity: Int            = lattices.productArity
-              def productElement(i: Int): Any  = if i == j then elem else bot(i, a.productElement(i))
-            })
+        // handle singleton types, otherwise we filter them out explicitly
+        if lattices.productArity == 0 then Iterable(a)
+        else
+          Range(0, lattices.productArity).flatMap { j =>
+            lat(j).decompose(a.productElement(j)).iterator.filterNot(isEmpty(j)).map { elem =>
+              pm.fromProduct(new Product {
+                def canEqual(that: Any): Boolean = false
+                def productArity: Int            = lattices.productArity
+                def productElement(i: Int): Any  = if i == j then elem else bot(i, a.productElement(i))
+              })
+            }
           }
-        }
 
       override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
         lat(i).lteq(left.productElement(i), right.productElement(i))

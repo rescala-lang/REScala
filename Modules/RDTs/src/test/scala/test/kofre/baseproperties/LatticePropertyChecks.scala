@@ -90,7 +90,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
         if decomposed.sizeIs > 1
         then
           BottomOpt.explicit: bo =>
-            assertNotEquals(bo.empty, d, "decomposed result was empty")
+            assertNotEquals(bo.empty, d, s"decomposed result was empty\n  $decomposed")
         if isDotted
         then
           // do some extra checks which will cause failure later, but have better error reporting when done here
