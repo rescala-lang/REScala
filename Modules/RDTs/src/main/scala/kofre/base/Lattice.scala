@@ -34,14 +34,14 @@ trait Lattice[A] {
     */
   def decompose(a: A): Iterable[A] = Iterable(a)
 
+  /** Convenience extensions for the above. */
+  /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
+   * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
-
-    /** Lattice order is derived from merge, but should be overridden for efficiency. */
-    def <=(right: A): Boolean = this.lteq(left, right)
+    final inline infix def <=(right: A): Boolean = Lattice.this.lteq(left, right)
     @targetName("mergeInfix")
-    def merge(right: A): A = this.merge(left, right)
-
-    def decomposed: Iterable[A] = decompose(left)
+    final inline infix def merge(right: A): A = Lattice.this.merge(left, right)
+    final inline def decomposed: Iterable[A]  = Lattice.this.decompose(left)
   }
 }
 
