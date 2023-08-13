@@ -1,6 +1,6 @@
 package test.kofre.bespoke
 
-import kofre.base.{Lattice, Uid}
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.time.VectorClock
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{arbId, given}
@@ -27,6 +27,9 @@ object TestEnum:
     given Lattice[TestEnum.B.type] = Lattice.derived
     given Lattice[TestEnum.C]      = Lattice.derived
     Lattice.sumLattice
+  given Bottom[TestEnum] =
+    given Bottom[TestEnum.A.type] = Bottom.derived
+    Bottom.derived
 
   given Arbitrary[TestEnum] = Arbitrary:
     Arbitrary.arbitrary[Int].flatMap: i =>

@@ -18,12 +18,7 @@ trait Lattice[A] {
   def merge(left: A, right: A): A
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
-  def lteq(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
-
-  /** computes delta without state */
-  def diff(state: A, delta: A): Option[A] = {
-    decompose(delta).filter(!lteq(_, state)).reduceOption(merge)
-  }
+  def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
   /** Decompose a state into potentially smaller parts.
     * The only requirement is that merging the decomposed results produces the original state.
@@ -33,6 +28,18 @@ trait Lattice[A] {
     * It is also not guaranteed that the result does not overlap.
     */
   def decompose(a: A): Iterable[A] = Iterable(a)
+
+  /** Computes delta without state.
+    * Overriding this is discouraged.
+    */
+  def diff(state: A, delta: A): Option[A] = {
+    decompose(delta).filter(!lteq(_, state)).reduceOption(merge)
+  }
+
+  /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
+    * Overriding this is discouraged.
+    */
+  def normalize(v: A): A = v merge v
 
   /** Convenience extensions for the above. */
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
@@ -48,19 +55,12 @@ trait Lattice[A] {
 object Lattice {
   def apply[A](using ev: Lattice[A]): Lattice[A] = ev
 
-  def merge[A: Lattice](left: A, right: A): A = apply[A].merge(left, right)
-
-  def lteq[A: Lattice](left: A, right: A): Boolean = apply[A].lteq(left, right)
-
+  // forwarder for better syntax/type inference
+  def merge[A: Lattice](left: A, right: A): A        = apply[A].merge(left, right)
+  def lteq[A: Lattice](left: A, right: A): Boolean   = apply[A].lteq(left, right)
   def diff[A: Lattice](left: A, right: A): Option[A] = apply[A].diff(left, right)
-
-  /** Merge functions can throw away redundant information, if one constructs values directly (not by using operators)
-    * this could result in values that should be equal, but are not.
-    * Normalize fixes this.
-    */
-  def normalize[A: Lattice](v: A): A = v merge v
-
-  def decompose[A: Lattice](a: A): Iterable[A] = a.decomposed
+  def normalize[A: Lattice](v: A): A                 = apply[A].normalize(v)
+  def decompose[A: Lattice](a: A): Iterable[A]       = a.decomposed
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
   // This could be just an extension method, but then would be ambiguous in cases where the extension on the interface is available.
@@ -205,7 +205,8 @@ object Lattice {
         })
 
       override def decompose(a: T): Iterable[T] =
-        // singleton types (product arity == 0) would return an empty iterable if not handled explicitly
+        // Singleton types (product arity == 0) would return an empty iterable if not handled explicitly.
+        // That would be fine if we could guarantee that every singleton type has a bottom instance (producing the singleton value), but we currently do not do that
         if lattices.productArity == 0 then Iterable(a)
         else
           Range(0, lattices.productArity).flatMap { j =>

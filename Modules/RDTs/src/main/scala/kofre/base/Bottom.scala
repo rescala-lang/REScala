@@ -5,7 +5,7 @@ import kofre.time.Dots
 
 import scala.collection.immutable.Queue
 import scala.deriving.Mirror
-import scala.compiletime.summonAll
+import scala.compiletime.{summonAll, summonInline}
 
 /** Provides an [[empty]] value of type [[A]]
   *
@@ -21,7 +21,8 @@ trait Bottom[A] {
   def empty: A
 
   /** Tests if the state is an identity of [[merge]], i.e., forall `a` with `isEmpty(a)` we require that `a merge b == b`.
-   * See [[Bottom]] for cases when an empty element can be generated. */
+    * See [[Bottom]] for cases when an empty element can be generated.
+    */
   extension (value: A) def isEmpty: Boolean = value == empty
 }
 
@@ -61,22 +62,46 @@ object Bottom {
 
   given pairBottom[A: Bottom, B: Bottom]: Bottom[(A, B)] = Bottom.derived
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Bottom[T] =
+  inline def derived[T](using m: Mirror.Of[T]): Bottom[T] =
+    inline m match
+      case pm: Mirror.ProductOf[T] => productBottom[T](using pm).asInstanceOf[Bottom[T]]
+      case sm: Mirror.SumOf[T]     => sumBottom[T](using sm)
+
+  inline def sumBottom[T](using sm: Mirror.SumOf[T]): Bottom[T] =
+    val bottoms: Bottom[Derived.Head[sm.MirroredElemTypes]] = summonInline
+    Derived.SumBottom[T](sm, bottoms)
+
+  inline def productBottom[T](using pm: Mirror.ProductOf[T]): Bottom[T] =
     val lattices = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
-    ProductBottom(pm, lattices)
+    Derived.ProductBottom(pm, lattices)
 
-  class ProductBottom[T <: Product](pm: Mirror.ProductOf[T], bottoms: Tuple) extends Bottom[T] {
-    override def empty: T =
-      type Unbottom[A] = A match { case Bottom[b] => b }
-      pm.fromProduct(
-        bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
-      )
-    extension (value: T)
-      override def isEmpty: Boolean =
-        value.productIterator.zipWithIndex.forall: (v, i) =>
-          bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
+  object Derived {
+
+    type Head[X <: Tuple] = X match {
+      case x *: _ => x
+    }
+
+    class ProductBottom[T](pm: Mirror.ProductOf[T], bottoms: Tuple) extends Bottom[T] {
+      override def empty: T =
+        type Unbottom[A] = A match { case Bottom[b] => b }
+        pm.fromProduct(
+          bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
+        )
+      extension (value: T)
+        override def isEmpty: Boolean =
+          value.asInstanceOf[Product].productIterator.zipWithIndex.forall: (v, i) =>
+            bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
+    }
+
+    class SumBottom[T](sm: Mirror.SumOf[T], bottoms: Bottom[Head[sm.MirroredElemTypes]])
+        extends Bottom[T] {
+      override def empty: T = bottoms.empty.asInstanceOf[T]
+      extension (value: T)
+        override def isEmpty: Boolean =
+          sm.ordinal(value) == 0 && bottoms.isEmpty(value.asInstanceOf[Head[sm.MirroredElemTypes]])
+    }
+
   }
-
 }
 
 case class BottomOpt[A](maybeBottom: Option[Bottom[A]]):
