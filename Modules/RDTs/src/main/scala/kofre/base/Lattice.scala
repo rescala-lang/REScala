@@ -21,11 +21,13 @@ trait Lattice[A] {
   def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
   /** Decompose a state into potentially smaller parts.
-    * The only requirement is that merging the decomposed results produces the original state.
+    * Guarantees that `decompose(a).reduce(merge) == normalize(a)`
+    *
     * Requires a bottom to enable automatic decomposition of Product types
     * Note that the goal here is small individual storage size at reasonable computational cost.
     * Minimalism of returned results is not guaranteed.
     * It is also not guaranteed that the result does not overlap.
+    * The result is never empty.
     */
   def decompose(a: A): Iterable[A] = Iterable(a)
 
