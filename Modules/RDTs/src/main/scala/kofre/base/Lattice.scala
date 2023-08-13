@@ -21,13 +21,9 @@ trait Lattice[A] {
   def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
   /** Decompose a state into potentially smaller parts.
-    * Guarantees that `decompose(a).reduce(merge) == normalize(a)`
+    * Guarantees for any two states a and b that `decompose(a).fold(b)(merge) == b merge a`, i.e., merging the decomposed values into b has the same result as merging the full a into b (assuming b is normalized).
     *
-    * Requires a bottom to enable automatic decomposition of Product types
-    * Note that the goal here is small individual storage size at reasonable computational cost.
-    * Minimalism of returned results is not guaranteed.
-    * It is also not guaranteed that the result does not overlap.
-    * The result is never empty.
+    * Note that the goal here is small individual storage size at reasonable computational cost. Minimalism of returned results is not guaranteed. It is also not guaranteed that the result does not overlap. The result may be the empty sequence.
     */
   def decompose(a: A): Iterable[A] = Iterable(a)
 
@@ -170,7 +166,13 @@ object Lattice {
           case 0     => lat(lo).lteq(left, right)
           case other => other < 0
 
-      override def decompose(a: T): Iterable[T] = lat(sm.ordinal(a)).decompose(a)
+      override def decompose(a: T): Iterable[T] =
+        val ordinal = sm.ordinal(a)
+        val res = lat(ordinal).decompose(a)
+        // When `a` decomposes into nothing, it is no longer possible to distinguish which alternative of the sum we are dealing with. That is fine when the ordinal is 0 because then we have reached the bottom case for the sum type, but in all other cases we must keep enough information around to figure out the ordinal.
+        if ordinal != 0 && res.isEmpty
+        then Iterable(a)
+        else res
     }
 
     inline def summonAllMaybe[T <: Tuple]: T =
@@ -212,7 +214,7 @@ object Lattice {
 
       override def decompose(a: T): Iterable[T] =
         // Singleton types (product arity == 0) would return an empty iterable if not handled explicitly.
-        // That would be fine if we could guarantee that every singleton type has a bottom instance (producing the singleton value), but we currently do not do that
+        // That would be “fine” with regards to the guarantees of decompose, but is slightly less useful in cases where the singleton type does not have a bottom instance defined.
         if lattices.productArity == 0 then Iterable(a)
         else
           Range(0, lattices.productArity).flatMap { j =>
