@@ -64,7 +64,7 @@ object Lattice {
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
   // This could be just an extension method, but then would be ambiguous in cases where the extension on the interface is available.
-  // Thus, we put the extension into this implicit object, when `Lattice.syntax` is imported (or otherwise in the implicit scope) then it is elegible as the receiver for the extension method rewrite. For some reason, this never causes conflicts even if multiple objects are named `synax` (as opposed to name conflicts with the extension method, which does cause conflicts).
+  // Thus, we put the extension into this implicit object, when `Lattice.syntax` is imported (or otherwise in the implicit scope) then it is eligible as the receiver for the extension method rewrite. For some reason, this never causes conflicts even if multiple objects are named `syntax` (as opposed to name conflicts with the extension method, which does cause conflicts).
   // In case we ever want to fully migrate away from the  `implicit` keyword, the first line is equivalent to: `given syntax: {} with`, but that seems just weird.
   implicit object syntax:
     extension [A: Lattice](left: A)
