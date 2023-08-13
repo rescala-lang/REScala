@@ -35,7 +35,7 @@ object TestEnum:
     Arbitrary.arbitrary[Int].flatMap: i =>
       Gen.oneOf(TestEnum.A, TestEnum.B, TestEnum.C(i))
 
-class EnumLattice extends LatticePropertyChecks[TestEnum]:
+class EnumLatticeChecks extends LatticePropertyChecks[TestEnum]:
   test("custom enum lattice tests"):
 
     import TestEnum.*
