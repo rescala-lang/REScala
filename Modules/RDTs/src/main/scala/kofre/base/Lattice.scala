@@ -205,7 +205,7 @@ object Lattice {
         })
 
       override def decompose(a: T): Iterable[T] =
-        // handle singleton types, otherwise we filter them out explicitly
+        // singleton types (product arity == 0) would return an empty iterable if not handled explicitly
         if lattices.productArity == 0 then Iterable(a)
         else
           Range(0, lattices.productArity).flatMap { j =>
