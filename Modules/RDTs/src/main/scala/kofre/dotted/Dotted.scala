@@ -37,7 +37,6 @@ object Dotted {
       val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
       Dotted(l merge r, left.context union right.context)
 
-
     /** Dotted decompose guarantees decomposes its inner value, but recomposes any values with overlapping dots, such that each dot is present in exactly one of the returned deltas. */
     override def decompose(a: Dotted[A]): Iterable[Dotted[A]] =
       val deltas = a.data.decomposed.flatMap: delta =>
@@ -48,9 +47,9 @@ object Dotted {
       val compacted   = compact(deltas.toList, Nil)
       val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ union _)
       assert(a.context.contains(presentDots), "fantasized new dots, this likely means a bug elsewhere")
-      val removed     = a.context subtract presentDots
-      val empty       = Bottom[A].empty
-      compacted concat removed.decomposed.map(dots => Dotted(empty, dots))
+      val removed = a.context subtract presentDots
+      val empty   = Bottom[A].empty
+      compacted concat removed.decomposed.flatMap(dots => Option.when(!dots.isEmpty)(Dotted(empty, dots)))
 
   }
 
