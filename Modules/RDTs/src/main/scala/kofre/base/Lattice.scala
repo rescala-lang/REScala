@@ -80,6 +80,10 @@ object Lattice {
         case (false, false) => None
         case (true, false)  => Some(-1)
         case (false, true)  => Some(1)
+
+    // overrides because parent implementation calls lteq(x, y) twice
+    override def lt(x: A, y: A): Boolean = lteq(x, y) && !lteq(y, x)
+    override def gt(x: A, y: A): Boolean = gteq(x, y) && !lteq(x, y)
   }
 
   def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
