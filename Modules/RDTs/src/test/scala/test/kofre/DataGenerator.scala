@@ -20,7 +20,7 @@ object DataGenerator {
   }
 
   given Arbitrary[ExampleData] = Arbitrary:
-    Gen.oneOf(List("Anne", "Ben", "Chris", "Ecrin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
+    Gen.oneOf(List("Anne", "Ben", "Chris", "Erin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
       ExampleData(Set(name))
     )
 
