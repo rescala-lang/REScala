@@ -6,6 +6,7 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.datatypes.contextual.CausalQueue.QueueElement
+import kofre.datatypes.experiments.{CausalDelta, CausalStore}
 import kofre.dotted.*
 import kofre.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -172,4 +173,15 @@ object DataGenerator {
   given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
     arbDotSet.arbitrary.map(EnableWinsFlag.apply)
 
+  given arbCausalDelta[A: Arbitrary: HasDots]: Arbitrary[CausalDelta[A]] = Arbitrary:
+    for
+      predec <- arbDots.arbitrary
+      value  <- Arbitrary.arbitrary[A]
+    yield CausalDelta(value.dots, Dots.empty, value)
+
+  given arbCausalStore[A: Arbitrary: HasDots: Bottom: Lattice]: Arbitrary[CausalStore[A]] = Arbitrary:
+    for
+      predec <- arbCausalDelta.arbitrary
+      value  <- Arbitrary.arbitrary[A]
+    yield Lattice.normalize(CausalStore(predec, value))
 }
