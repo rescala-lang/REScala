@@ -14,8 +14,11 @@ object Epoche {
   given bottom[E: Bottom]: Bottom[Epoche[E]] with
     override def empty: Epoche[E] = Epoche.empty
 
-  given hasDots[E: HasDots]: HasDots[Epoche[E]] =
+  given hasDots[E: HasDots: Bottom]: HasDots[Epoche[E]] =
     given HasDots[Time] = HasDots.noDots
+    given Bottom[Time] = new {
+      def empty: Time = 0
+    }
     HasDots.derived
 
   extension [C, E](container: C)

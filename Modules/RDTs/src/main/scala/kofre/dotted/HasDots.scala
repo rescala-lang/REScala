@@ -1,10 +1,10 @@
 package kofre.dotted
 
+import kofre.base.Bottom
 import kofre.time.Dots
 
 import scala.compiletime.summonAll
 import scala.deriving.Mirror
-import scala.util.control.ControlThrowable
 
 /** HasDots implies that the container stores values that are somehow associated to individual [[kofre.time.Dot]]s.
   * This is different from a dot context, which could also contain dots for deleted values or other metadata.
@@ -38,7 +38,7 @@ object HasDots {
       case _              => None
     new {
       extension (dotted: Set[A])
-        def dots: Dots                        = kdots.iterator.flatMap(kd => dotted.map(kd.dots)).foldLeft(Dots.empty)(_ union _)
+        def dots: Dots = kdots.iterator.flatMap(kd => dotted.map(kd.dots)).foldLeft(Dots.empty)(_ union _)
         def removeDots(dots: Dots): Option[Set[A]] =
           val res = dotted.iterator.flatMap: elem =>
             kdots.map(kd => kd.removeDots(elem)(dots)).getOrElse(Some(elem))
@@ -81,27 +81,30 @@ object HasDots {
   inline given tuple[T <: Tuple: Mirror.ProductOf]: HasDots[T] = derived
 
   inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): HasDots[T] =
-    val lattices =
+    val hasDots =
       summonAll[Tuple.Map[pm.MirroredElemTypes, HasDots]].toIArray.map(_.asInstanceOf[HasDots[Any]])
-    new ProductHasDots(pm, lattices)
+    val bottoms: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]]
 
-  class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]]) extends HasDots[T] {
+    new ProductHasDots(pm, hasDots, bottoms)
+
+  class ProductHasDots[T <: Product](pm: Mirror.ProductOf[T], children: IArray[HasDots[Any]], bottoms: Tuple)
+      extends HasDots[T] {
     extension (a: T)
       def dots: Dots = Range(0, a.productArity).foldLeft(Dots.empty) { (c, i) =>
         c.union(children(i).dots(a.productElement(i)))
       }
       def removeDots(dots: Dots): Option[T] =
-        object FilterControl extends ControlThrowable
-        try
-          Some(pm.fromProduct(new Product {
-            def canEqual(that: Any): Boolean = false
-            def productArity: Int            = children.size
-            def productElement(i: Int): Any =
-              children(i).removeDots(a.productElement(i))(dots).getOrElse {
-                throw FilterControl
-              }
-          }))
-        catch case FilterControl => None
+        val res = pm.fromProduct(new Product {
+          def canEqual(that: Any): Boolean = false
+          def productArity: Int            = children.size
+          def productElement(i: Int): Any =
+            children(i).removeDots(a.productElement(i))(dots).getOrElse {
+              bottoms.productElement(i).asInstanceOf[Bottom[Any]].empty
+            }
+        })
+        val allEmpty = res.productIterator.zipWithIndex.forall: (v, i) =>
+          bottoms.productElement(i).asInstanceOf[Bottom[Any]].isEmpty(v)
+        if allEmpty then None else Some(res)
 
   }
 }
