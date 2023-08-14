@@ -1,9 +1,9 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.{HasDots}
+import kofre.dotted.HasDots
 import kofre.syntax.{OpsSyntaxHelper, PermMutate, PermQuery}
-import kofre.time.Time
+import kofre.time.{Dots, Time}
 
 case class Epoche[E](counter: Time, value: E)
 
@@ -14,12 +14,11 @@ object Epoche {
   given bottom[E: Bottom]: Bottom[Epoche[E]] with
     override def empty: Epoche[E] = Epoche.empty
 
-  given hasDots[E: HasDots: Bottom]: HasDots[Epoche[E]] =
-    given HasDots[Time] = HasDots.noDots
-    given Bottom[Time] = new {
-      def empty: Time = 0
-    }
-    HasDots.derived
+  given hasDots[E: HasDots: Bottom]: HasDots[Epoche[E]] = new {
+    extension (dotted: Epoche[E])
+      def dots: Dots = dotted.value.dots
+      def removeDots(dots: Dots): Option[Epoche[E]] = dotted.value.removeDots(dots).map(nv => dotted.copy(value = nv))
+  }
 
   extension [C, E](container: C)
     def epoche: syntax[C, E] = syntax(container)
