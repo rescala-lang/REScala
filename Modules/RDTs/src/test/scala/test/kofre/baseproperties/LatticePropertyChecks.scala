@@ -2,7 +2,7 @@ package test.kofre.baseproperties
 
 import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
-import kofre.datatypes.contextual.CausalQueue
+import kofre.datatypes.contextual.{CausalQueue, ReplicatedList}
 import kofre.datatypes.experiments.CausalStore
 import kofre.datatypes.{
   GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
@@ -12,6 +12,7 @@ import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
+import test.kofre.DataGenerator.RGAGen.given
 import test.kofre.isGithubCi
 
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[DotFun[ExampleData]]]
@@ -38,6 +39,7 @@ class PosNegChecks            extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks             extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
 class VectorClockChecks       extends LatticePropertyChecks[VectorClock]
 class GrowOnlyListChecks      extends LatticePropertyChecks[GrowOnlyList[Int]](expensive = true)
+class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedList[ExampleData]]](expensive = true)
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
