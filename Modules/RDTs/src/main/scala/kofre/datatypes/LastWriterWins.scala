@@ -3,7 +3,7 @@ package kofre.datatypes
 import kofre.base.{Bottom, Lattice}
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
-import kofre.time.{CausalTime, Time}
+import kofre.time.CausalTime
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -16,14 +16,12 @@ case class LastWriterWins[+A](timestamp: CausalTime, payload: A)
 
 object LastWriterWins {
 
-
-
   def empty[A: Bottom]: LastWriterWins[A] = now(Bottom.empty)
 
   def fallback[A](v: A): LastWriterWins[A] =
-    LastWriterWins(kofre.time.CausalTime(Long.MinValue, 0, System.nanoTime()), v)
+    LastWriterWins(kofre.time.CausalTime(Long.MinValue, 0, CausalTime.countedTime()), v)
 
-  def now[A](v: A): LastWriterWins[A] = LastWriterWins(kofre.time.CausalTime(Time.current(), 0, System.nanoTime()), v)
+  def now[A](v: A): LastWriterWins[A] = LastWriterWins(CausalTime.now(), v)
 
   given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
