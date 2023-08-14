@@ -18,6 +18,8 @@ object DataGenerator {
   case class ExampleData(content: Set[String]) derives Lattice, Bottom {
     override def toString: _root_.java.lang.String = content.mkString("\"", "", "\"")
   }
+  object ExampleData:
+    given Conversion[String, ExampleData] = ed => ExampleData(Set(ed))
 
   given Arbitrary[ExampleData] = Arbitrary:
     Gen.oneOf(List("Anne", "Ben", "Chris", "Erin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
@@ -97,7 +99,7 @@ object DataGenerator {
   given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 
   given arbDots: Arbitrary[Dots] = Arbitrary:
-    Gen.containerOf[Set, Dot](genDot).map(Dots.from)
+    Gen.containerOfN[Set, Dot](10, genDot).map(Dots.from)
 
   given Arbitrary[ArrayRanges] = Arbitrary(
     for
@@ -106,7 +108,7 @@ object DataGenerator {
   )
 
   def genDotFun[A](implicit g: Arbitrary[A]): Gen[DotFun[A]] = for {
-    n      <- Gen.posNum[Int]
+    n      <- Gen.choose(0, 10)
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g.arbitrary)
   } yield DotFun((dots zip values).toMap)

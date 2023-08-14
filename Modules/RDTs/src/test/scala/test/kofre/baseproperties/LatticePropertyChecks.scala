@@ -68,7 +68,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
       assertEquals(ab_c, a_bc, s"merge not equal, steps:\n  $ab\n  $bc")
 
       val bc_ab = bc merge ab
-      assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work unsufficient test generators")
+      assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work around insufficient test generators")
     }
   }
 
