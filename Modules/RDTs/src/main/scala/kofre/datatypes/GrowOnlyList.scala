@@ -43,7 +43,7 @@ object GrowOnlyList {
 
       /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
       override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
-        state.inner.toList.map((edge: (Node[LastWriterWins[E]], Elem[LastWriterWins[E]])) => GrowOnlyList(Map(edge)))
+        state.inner.toList.map(edge => GrowOnlyList(Map(edge)))
 
       @tailrec
       private def insertEdge(
