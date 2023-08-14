@@ -44,11 +44,14 @@ object ReplicatedList {
             dots.contains(v.value.payload)
           ReplicatedList(a.order.copy(value = GrowOnlyList(Map(kv.toSeq: _*))), df)
 
-
     }
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
-      def dots: Dots = dotted.meta.dots union Dots.from(dotted.order.value.growOnlyList.toList)
+      def dots: Dots = Dots.from:
+        dotted.meta.repr.flatMap: (k, v) =>
+          v match
+            case Node.Dead => None
+            case other     => Some(k)
       def removeDots(dots: Dots): Option[ReplicatedList[E]] =
         val nmeta = dotted.meta.repr.map: (k, v) =>
           if dots.contains(k)

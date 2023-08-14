@@ -12,37 +12,12 @@ import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
 
+import test.kofre.DataGenerator.RGAGen.{makeRGA, given}
+
 import scala.collection.mutable
 
 object RGAGenerators {
-  def makeRGA[E](
-      inserted: List[(Int, E)],
-      removed: List[Int],
-      rid: ReplicaId
-  ): Dotted[ReplicatedList[E]] = {
-    val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
-      case (rga, (i, e)) => rga merge rga.insert(using rid)(i, e)
-    }
 
-    removed.foldLeft(afterInsert) {
-      case (rga, i) => rga.delete(using rid)(i)
-    }
-  }
-
-  def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for {
-    nInserted       <- Gen.choose(0, 20)
-    insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
-    insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
-    removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
-    id              <- Gen.oneOf('a' to 'g')
-  } yield {
-    makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
-  }
-
-  implicit def arbRGA[E: JsonValueCodec](implicit
-      e: Arbitrary[E],
-  ): Arbitrary[Dotted[ReplicatedList[E]]] =
-    Arbitrary(genRGA)
 
   def makeNet[E: JsonValueCodec](rl: Dotted[ReplicatedList[E]]) =
     val network = new Network(0, 0, 0)

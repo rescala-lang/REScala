@@ -8,6 +8,7 @@ import kofre.datatypes.contextual.*
 import kofre.datatypes.contextual.CausalQueue.QueueElement
 import kofre.datatypes.experiments.{CausalDelta, CausalStore}
 import kofre.dotted.*
+import kofre.syntax.ReplicaId
 import kofre.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 
@@ -21,6 +22,7 @@ object DataGenerator {
   }
   object ExampleData:
     given Conversion[String, ExampleData] = ed => ExampleData(Set(ed))
+    given hasDots: HasDots[ExampleData] = HasDots.noDots
 
   given Arbitrary[ExampleData] = Arbitrary:
     Gen.oneOf(List("Anne", "Ben", "Chris", "Erin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
@@ -184,4 +186,37 @@ object DataGenerator {
       predec <- arbCausalDelta.arbitrary
       value  <- Arbitrary.arbitrary[A]
     yield Lattice.normalize(CausalStore(predec, value))
+
+  object RGAGen {
+    def makeRGA[E](
+        inserted: List[(Int, E)],
+        removed: List[Int],
+        rid: ReplicaId
+    ): Dotted[ReplicatedList[E]] = {
+      val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
+        case (rga, (i, e)) => rga merge rga.insert(using rid)(i, e)
+      }
+
+      removed.foldLeft(afterInsert) {
+        case (rga, i) => rga.delete(using rid)(i)
+      }
+    }
+
+    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for {
+      nInserted       <- Gen.choose(0, 20)
+      insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
+      insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
+      removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
+      id              <- Gen.oneOf('a' to 'g')
+    } yield {
+      makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
+    }
+
+    implicit def arbRGA[E](implicit
+        e: Arbitrary[E],
+    ): Arbitrary[Dotted[ReplicatedList[E]]] =
+      Arbitrary(genRGA)
+
+    given arbPlainRGA[E: Arbitrary]: Arbitrary[ReplicatedList[E]] = Arbitrary(genRGA.map(_.data))
+  }
 }

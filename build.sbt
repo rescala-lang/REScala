@@ -192,7 +192,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
 
 lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(rescala, kofre, aead)
+    .dependsOn(rescala, kofre, aead, kofre % "compile->compile;test->test")
     .settings(
       scalaVersion_3,
       noPublish,
