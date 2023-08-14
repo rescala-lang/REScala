@@ -14,10 +14,6 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
 import test.kofre.isGithubCi
 
-import scala.util.NotGiven
-
-val x = Dotted.lattice[CausalStore[DotFun[ExampleData]]]
-
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[DotFun[ExampleData]]]
 class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[DotFun[ExampleData]]]]
 class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
