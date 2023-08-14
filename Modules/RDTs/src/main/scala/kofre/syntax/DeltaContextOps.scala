@@ -13,7 +13,7 @@ import scala.annotation.implicitNotFound
   * No matter the concrete container, they should all offer the same API to the underlying lattice.
   */
 
-@implicitNotFound("Requires query permission »${L}«\nfrom »${C}")
+@implicitNotFound("Requires query permission. If the syntax is incorrect, try specifying it explicitly:\n  container:  »${C}«\n  syntax for: »${L}«")
 trait PermQuery[C, L]:
   def query(c: C): L
 object PermQuery:
