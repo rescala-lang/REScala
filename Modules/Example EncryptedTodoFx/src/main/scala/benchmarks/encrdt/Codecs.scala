@@ -49,7 +49,7 @@ object Codecs {
       Dot(inputString.substring(index + 1).asId, inputString.substring(0, index).toLong)
     }
 
-    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}@${x.replicaId}")
+    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}@${x.place}")
   }
 
   implicit val toDoMapCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[UUID, ToDoEntry]] =

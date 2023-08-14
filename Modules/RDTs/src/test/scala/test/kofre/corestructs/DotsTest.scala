@@ -52,7 +52,7 @@ class DotsTest extends munit.ScalaCheckSuite {
   property("max") {
     forAll { (cc: Dots, randId: Uid) =>
       val asSet = cc.toSet
-      val ids   = asSet.map(_.replicaId) + randId
+      val ids   = asSet.map(_.place) + randId
 
       ids.foreach { id =>
         val counterVals = asSet.collect {
@@ -82,14 +82,14 @@ class DotsTest extends munit.ScalaCheckSuite {
   property("nextDot") {
     forAll { (cc: Dots, randId: Uid) =>
       val asSet = (cc.toSet)
-      val ids   = asSet.map(_.replicaId) + randId
+      val ids   = asSet.map(_.place) + randId
 
       ids.foreach { id =>
         val nd = cc.nextDot(id)
 
         assert(
-          nd.replicaId == id,
-          s"DietMapCContext.nextDot should return a dot for the given replicaID, but ${nd.replicaId} does not equal $id"
+          nd.place == id,
+          s"DietMapCContext.nextDot should return a dot for the given replicaID, but ${nd.place} does not equal $id"
         )
 
         cc.max(id) match {

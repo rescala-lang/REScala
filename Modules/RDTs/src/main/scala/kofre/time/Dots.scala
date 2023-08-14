@@ -21,7 +21,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def clock: VectorClock = VectorClock(internal.view.mapValues(_.next.fold(0L)(_ - 1)).toMap)
 
-  def add(dot: Dot): Dots = add(dot.replicaId, dot.time)
+  def add(dot: Dot): Dots = add(dot.place, dot.time)
 
   def add(replicaId: Uid, time: Time): Dots =
     Dots(internal.updated(
@@ -72,7 +72,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 
-  def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
+  def contains(d: Dot): Boolean = internal.get(d.place).exists(_.contains(d.time))
 
   def contains(other: Dots): Boolean = other <= this
 
@@ -94,11 +94,11 @@ object Dots {
 
   val empty: Dots = Dots(Map.empty)
 
-  def single(dot: Dot): Dots = empty.add(dot.replicaId, dot.time)
+  def single(dot: Dot): Dots = empty.add(dot.place, dot.time)
 
   given contextLattice: Lattice[Dots] = Lattice.derived
 
-  def from(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.replicaId).view.mapValues {
+  def from(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.place).view.mapValues {
     times => ArrayRanges.from(times.view.map(_.time))
   }.toMap)
 

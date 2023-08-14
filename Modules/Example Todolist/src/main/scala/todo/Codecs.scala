@@ -20,7 +20,7 @@ object Codecs {
       val Array(time, id) = in.readKeyAsString().split("-", 2)
       Dot(Uid.predefined(id), time.toLong)
     }
-    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.replicaId}")
+    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.place}")
   }
   implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
   implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:

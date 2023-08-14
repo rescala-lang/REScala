@@ -87,7 +87,7 @@ object DataGenerator {
         CausalQueue:
           Queue.from:
             list.map: (dot, value) =>
-              QueueElement(value, dot, VectorClock(Map(dot.replicaId -> dot.time)))
+              QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
 
   val genDot: Gen[Dot] = for {
     id    <- Gen.oneOf('a' to 'g')
