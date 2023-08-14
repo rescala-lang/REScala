@@ -4,20 +4,18 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
-import kofre.base.Uid
+import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.syntax.ReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
-
 import test.kofre.DataGenerator.RGAGen.{makeRGA, given}
 
 import scala.collection.mutable
 
 object RGAGenerators {
-
 
   def makeNet[E: JsonValueCodec](rl: Dotted[ReplicatedList[E]]) =
     val network = new Network(0, 0, 0)
@@ -31,7 +29,6 @@ class RGATest extends munit.ScalaCheckSuite {
   import RGAGenerators.*
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
-
 
   property("size, toList, read") {
     forAll { (rl: Dotted[ReplicatedList[Int]], readIdx: Int) =>
@@ -302,6 +299,7 @@ class RGATest extends munit.ScalaCheckSuite {
           network: Network
       ) =>
         {
+
           val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
           val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
 
@@ -343,6 +341,9 @@ class RGATest extends munit.ScalaCheckSuite {
             }
           }
 
+          val beforeA1: Dotted[ReplicatedList[Int]] = la1.state
+          val beforeB1 = lb1.state
+
           AntiEntropy.sync(aea, aeb)
           network.startReliablePhase()
           AntiEntropy.sync(aea, aeb)
@@ -350,9 +351,16 @@ class RGATest extends munit.ScalaCheckSuite {
           val la2 = la1.processReceivedDeltas()
           val lb2 = lb1.processReceivedDeltas()
 
-          assert(
-            la2.toList == lb2.toList,
-            s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}"
+          assertEquals(beforeA1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]), beforeA1)
+          assertEquals(beforeB1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]), beforeB1)
+
+          assertEquals(beforeA1 merge beforeB1, lb2.state)
+          assertEquals(beforeA1 merge beforeB1, la2.state)
+
+          assertEquals(
+            la2.toList,
+            lb2.toList,
+            s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}\n  before A: $beforeA1\n  before B: $beforeB1\n  ${la2.state}\n  ${lb2.state}"
           )
         }
     }
