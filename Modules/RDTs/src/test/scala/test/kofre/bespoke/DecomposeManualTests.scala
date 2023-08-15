@@ -21,6 +21,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: GrowOnlyCounter = empty.inc()(using r1)
     assertEquals(val_1.value, 1)
 
+    // val_1 and val_2 are in parallel
+
     val val_2: GrowOnlyCounter = empty.inc()(using r2)
     assertEquals(val_2.value, 1)
 
@@ -29,6 +31,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, Some(val_1), "val_1 is not contained in val_2")
 
     val merged_diff_val_1: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
@@ -48,6 +53,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: PosNegCounter = empty.inc()(using r1)
     assertEquals(val_1.value, 1)
 
+    // val_1 and val_2 are in parallel
+
     val val_2: PosNegCounter = empty.dec()(using r2)
     assertEquals(val_2.value, -1)
 
@@ -56,6 +63,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[PosNegCounter] = Lattice[PosNegCounter].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[PosNegCounter] = Lattice[PosNegCounter].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, Some(val_1), "val_1 is not contained in val_2")
 
     val merged_diff_val_1: Option[PosNegCounter] = Lattice[PosNegCounter].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
@@ -76,6 +86,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: Dotted[MultiVersionRegister[Int]] = empty.write(using r1)(1)
     assertEquals(val_1.read, Set(1))
 
+    // val_1 and val_2 are in parallel
+
     val val_2: Dotted[MultiVersionRegister[Int]] = empty.write(using r2)(2)
     assertEquals(val_2.read, Set(2))
 
@@ -84,6 +96,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, Some(val_1), "val_1 is not contained in val_2")
 
     val merged_diff_val_1: Option[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
@@ -107,6 +122,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: Dotted[LastWriterWins[Int]] = empty.write(1)
     assertEquals(val_1.read, 1)
 
+    // val_1 and val_2 are in parallel
+
     val val_2: Dotted[LastWriterWins[Int]] = empty.write(2)
     assertEquals(val_2.read, 2)
 
@@ -115,6 +132,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, None, "val_1 happened before val_2 - val_1 is obsolete")
 
     val merged_diff_val_1: Option[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
@@ -135,6 +155,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: GrowOnlySet[Int] = empty.insert(1)
     assertEquals(val_1.elements, Set(1))
 
+    // val_1 and val_2 are in parallel
+
     val val_2: GrowOnlySet[Int] = empty.insert(2)
     assertEquals(val_2.elements, Set(2))
 
@@ -143,6 +165,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, Some(val_1), "val_1 is not contained in val_2")
 
     val merged_diff_val_1: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
@@ -178,6 +203,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(val_1.data.keySet, Set(1))
     assertEquals(val_1.data.get(1).map(_.payload), Some("one"))
 
+    // val_1 and val_2 are in parallel
+
     val k2: Int = 2
     val v2: String = "two"
     val e2 = LastWriterWins.now("")
@@ -192,6 +219,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     val val_1_diff_val_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(val_1, val_2)
     assertEquals(val_1_diff_val_2, Some(val_2), "val_2 is not contained in val_1")
+
+    val val_2_diff_val_1: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(val_2, val_1)
+    assertEquals(val_2_diff_val_1, Some(val_1), "val_1 is not contained in val_2")
 
     val merged_diff_val_1: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(merged, val_1)
     assertEquals(merged_diff_val_1, None, "val_1 should be contained in merged")
