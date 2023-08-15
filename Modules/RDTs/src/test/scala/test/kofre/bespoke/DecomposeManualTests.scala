@@ -243,11 +243,13 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     }
 
     val emptyMap: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = Dotted(Bottom[GrowOnlyMap[Int, LastWriterWins[String]]].empty)
+    assertEquals(emptyMap.context.internal, Map.empty)
 
     val k1: Int = 1
     val v1: String = "one"
     val e1 = LastWriterWins.now("")
     val delta_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k1, e1)(_.write(v1))
+    assertEquals(delta_1.context.internal, Map.empty)
     assertEquals(delta_1.data.keySet, Set(1))
     assertEquals(delta_1.data.get(1).map(_.payload), Some("one"))
 
@@ -257,10 +259,12 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val v2: String = "two"
     val e2 = LastWriterWins.now("")
     val delta_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mutateKeyNamedCtx(k2, e2)(_.write(v2))
+    assertEquals(delta_2.context.internal, Map.empty)
     assertEquals(delta_2.data.keySet, Set(2))
     assertEquals(delta_2.data.get(2).map(_.payload), Some("two"))
 
     val merged: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].merge(delta_1, delta_2)
+    assertEquals(merged.context.internal, Map.empty)
     assertEquals(merged.data.keySet, Set(1, 2))
     assertEquals(merged.data.get(1).map(_.payload), Some("one"))
     assertEquals(merged.data.get(2).map(_.payload), Some("two"))
@@ -283,11 +287,11 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     // Dotted decomposes context and value, but as LWW is not contextual, the context is empty and there is no additional entry for it.
     assertEquals(decomposed.size, 2)
 
+    assertEquals(decomposed(0).context.internal, Map.empty)
     assertEquals(decomposed(0).data.get(1).map(_.payload), Some("one"))
-    assertEquals(decomposed(0).context.internal.keySet.size, 0)
 
+    assertEquals(decomposed(1).context.internal, Map.empty)
     assertEquals(decomposed(1).data.get(2).map(_.payload), Some("two"))
-    assertEquals(decomposed(1).context.internal.keySet.size, 0)
   }
 
 }
