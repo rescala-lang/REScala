@@ -19,15 +19,8 @@ class ContainerTest extends munit.FunSuite {
 
     given r: ReplicaId = "me".asId
 
-    // it would be nicer to ask the context, but for that we need the container, for that we need an empty LWW...
-    val initialDot: Dot = Dot(r.uid, 0)
-
     given bottomString: Bottom[String] with {
       override def empty: String = ""
-    }
-
-    given bottomLLW[A: Bottom]: Bottom[LastWriterWins[A]] with {
-      override def empty: LastWriterWins[A] = LastWriterWins.empty
     }
 
   }
