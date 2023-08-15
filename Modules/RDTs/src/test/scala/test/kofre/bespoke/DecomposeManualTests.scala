@@ -294,4 +294,57 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(decomposed(1).data.get(2).map(_.payload), Some("two"))
   }
 
+  test("Dotted[GrowOnlyMap[Int, EnableWinsFlag]] decomposition") {
+    import GrowOnlyMap.given
+
+    val emptyMap: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = Dotted(Bottom[GrowOnlyMap[Int, EnableWinsFlag]].empty)
+
+    val k1: Int = 1
+    val e1 = EnableWinsFlag.empty
+    val delta_1: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = emptyMap.mutateKeyNamedCtx(k1, e1)(_.enable(using r1)())
+    assertEquals(delta_1.context.internal.size, 1)
+    assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(delta_1.data.keySet, Set(1))
+    assertEquals(delta_1.data.get(1).map(_.read), Some(true))
+
+    // delta_1 and delta_2 are in parallel
+
+    val k2: Int = 2
+    val e2 = EnableWinsFlag.empty
+    val delta_2: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = emptyMap.mutateKeyNamedCtx(k2, e2)(_.enable(using r2)())
+    assertEquals(delta_2.context.internal.size, 1)
+    assertEquals(delta_2.context.max(r2.uid), Some(Dot(r2.uid, 0)))
+    assertEquals(delta_2.data.keySet, Set(2))
+    assertEquals(delta_2.data.get(2).map(_.read), Some(true))
+
+    val merged: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].merge(delta_1, delta_2)
+    assertEquals(merged.context.internal.size, 2)
+    assertEquals(merged.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(merged.context.max(r2.uid), Some(Dot(r2.uid, 0)))
+    assertEquals(merged.data.keySet, Set(1, 2))
+    assertEquals(merged.data.get(1).map(_.read), Some(true))
+    assertEquals(merged.data.get(2).map(_.read), Some(true))
+
+    val delta_1_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(delta_1, delta_2)
+    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+
+    val delta_2_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(delta_2, delta_1)
+    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+
+    val merged_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(merged, delta_1)
+    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+
+    val merged_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(merged, delta_2)
+    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+
+    val decomposed: Seq[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] = Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+    // GrowOnlyMap decomposes every entry and the context.
+    // EnableWinsFlag is contextual. Every entry has its own required context.
+    // The complete context is covered by the entries.
+    assertEquals(decomposed.size, 2)
+
+    assertEquals(decomposed(0), delta_1) // context contains only r1, delta_2 is irrelevant for the first entry
+    assertEquals(decomposed(1), delta_2) // context contains only r2, delta_1 is irrelevant for the second entry
+  }
+
 }
