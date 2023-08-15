@@ -122,7 +122,7 @@ class ContainerTest extends munit.FunSuite {
 
   // START LastWriterWins
 
-  test("Dotted can contain contextual LastWriterWins[String]") {
+  test("Dotted can contain non-contextual LastWriterWins[String]") {
     val lww: Dotted[LastWriterWins[String]] = Dotted.empty
 
     assertEquals(lww.read, "")
@@ -134,9 +134,19 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(removed.read, "")
   }
 
-  // NOTE: DeltaBuffer cannot contain contextual LastWriterWins without Dotted, as LastWriterWins needs a context
+  test("DeltaBuffer can contain non-contextual LastWriterWins[String]") {
+    val lww: DeltaBuffer[LastWriterWins[String]] = DeltaBuffer(LastWriterWins.empty)
 
-  test("Dotted DeltaBuffer can contain contextual LastWriterWins[String]") {
+    assertEquals(lww.read, "")
+
+    val added = lww.write("First")
+    assertEquals(added.read, "First")
+
+    val removed = added.write("")
+    assertEquals(removed.read, "")
+  }
+
+  test("Dotted DeltaBuffer can contain non-contextual LastWriterWins[String]") {
     val lww: DeltaBuffer[Dotted[LastWriterWins[String]]] = DeltaBuffer(Dotted.empty)
 
     assertEquals(lww.read, "")
@@ -148,7 +158,7 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(removed.read, "")
   }
 
-  test("Dotted DeltaBufferContainer can contain contextual LastWriterWins[String]") {
+  test("Dotted DeltaBufferContainer can contain non-contextual LastWriterWins[String]") {
     val lww: DeltaBufferContainer[Dotted[LastWriterWins[String]]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
     assertEquals(lww.read, "")
