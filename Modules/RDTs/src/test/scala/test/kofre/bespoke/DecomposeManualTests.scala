@@ -2,11 +2,11 @@ package test.kofre.bespoke
 
 import kofre.base.{Bottom, Lattice}
 import kofre.base.Uid.asId
-import kofre.datatypes.contextual.{CausalQueue, MultiVersionRegister}
+import kofre.datatypes.contextual.{CausalQueue, EnableWinsFlag, MultiVersionRegister}
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.ReplicaId
-import kofre.time.{Dot, VectorClock}
+import kofre.time.{Dot, Dots, VectorClock}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.*
 
@@ -79,6 +79,48 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).value, -1)
     assertEquals(decomposed(1).value, 1)
+  }
+
+  test("Dotted[EnableWinsFlag] decomposition") {
+    val emptyEWFlag: Dotted[EnableWinsFlag] = Dotted(Bottom[EnableWinsFlag].empty)
+    assertEquals(emptyEWFlag.context, Dots.empty)
+
+    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.enable(using r1)()
+    assertEquals(delta_1.context.internal.size, 1)
+    assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(delta_1.data.read, true)
+
+    // delta_1 and delta_2 are in parallel
+
+    val delta_2: Dotted[EnableWinsFlag] = emptyEWFlag.disable()
+    assertEquals(delta_2.context.internal, Map.empty)
+    assertEquals(delta_2.data.read, false)
+
+    val merged: Dotted[EnableWinsFlag] = Lattice[Dotted[EnableWinsFlag]].merge(delta_1, delta_2)
+    assertEquals(merged.context.internal.size, 1)
+    assertEquals(merged.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(merged.data.read, true)
+
+    val delta_1_diff_delta_2: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(delta_1, delta_2)
+    assertEquals(delta_1_diff_delta_2, None, "delta_1 wins - delta_2 is obsolete")
+
+    val delta_2_diff_delta_1: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(delta_2, delta_1)
+    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+
+    val merged_diff_delta_1: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(merged, delta_1)
+    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+
+    val merged_diff_delta_2: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(merged, delta_2)
+    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+
+    val decomposed: Seq[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].decompose(merged).toSeq.sortBy(_.data.inner.repr.internal.keys.headOption)
+    // EnableWinsFlag does not decompose, only returns the value.
+    // Dotted decomposes context and value. As context is completely covered by EnableWinsFlag, no additional entry for context.
+    assertEquals(decomposed.size, 1)
+
+    assertEquals(decomposed(0).data.read, true)
+    assertEquals(decomposed(0).context.internal.size, 1)
+    assertEquals(decomposed(0).context.max(r1.uid), Some(Dot(r1.uid, 0)))
   }
 
   test("Dotted[MultiVersionRegister[Int]] decomposition") {
