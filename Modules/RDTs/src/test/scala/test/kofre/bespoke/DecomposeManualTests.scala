@@ -1,6 +1,7 @@
 package test.kofre.bespoke
 
 import kofre.base.{Bottom, Lattice}
+import kofre.base.Uid.asId
 import kofre.datatypes.contextual.{CausalQueue, MultiVersionRegister}
 import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
@@ -11,9 +12,8 @@ import org.scalacheck.Prop.*
 
 class DecomposeManualTests extends munit.ScalaCheckSuite {
 
-  val r1: ReplicaId = ReplicaId.gen()
-  val r2: ReplicaId = ReplicaId.gen()
-  assert(r1 != r2)
+  val r1: ReplicaId = "r1".asId
+  val r2: ReplicaId = "r2".asId
 
   test("GrowOnlyCounter decomposition") {
     val empty: GrowOnlyCounter = Bottom[GrowOnlyCounter].empty
