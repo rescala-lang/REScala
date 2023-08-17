@@ -3,14 +3,18 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
-import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.base.{Lattice, Uid}
-import kofre.datatypes.GrowOnlyList
+import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
+import kofre.base.Uid.asId
+import kofre.base.{Bottom, Lattice, Uid}
+import kofre.datatypes.GrowOnlyList.Node.Elem
+import kofre.datatypes.{GrowOnlyList, LastWriterWins}
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.{Dotted, HasDots}
+import kofre.time.{CausalTime, Dot}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
+import test.kofre.DataGenerator.RGAGen.{makeRGA, given}
 
 import scala.collection.mutable
 
@@ -79,6 +83,88 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     assertEquals(aec.read(1), Some("b00"))
 
+  }
+
+  test("specific property example") {
+
+    implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+
+    val inserted: List[(Int, Int)]                       = List((0, 100))
+    val removed: List[Int]                               = Nil
+    val insertedAB: (List[(Int, Int)], List[(Int, Int)]) = (List((1, 4678)), Nil)
+    val removedAB: (List[Int], List[Int])                = (Nil, List(0))
+    val updatedAB: (List[(Int, Int)], List[(Int, Int)])  = (Nil, Nil)
+    val network: Network = NetworkGenerator(0.4413085645880368, 0.382367536830158, 0.7030039323564119).make()
+
+    val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
+    val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
+
+    val la0 = AntiEntropyContainer(aea)
+    la0.applyDelta(Named(
+      Uid.predefined(aea.replicaID),
+      makeRGA(inserted, removed, Uid.predefined(aea.replicaID))
+    ))
+    network.startReliablePhase()
+    AntiEntropy.sync(aea, aeb)
+    network.endReliablePhase()
+    val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
+
+    val la1 = {
+      val inserted = insertedAB._1.foldLeft(la0) {
+        case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
+      }
+
+      val deleted = removedAB._1.foldLeft(inserted) {
+        case (rga, i) => rga.delete(using rga.replicaID)(i)
+      }
+
+      updatedAB._1.foldLeft(deleted) {
+        case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
+      }
+    }
+
+    val lb1 = {
+      val inserted = insertedAB._2.foldLeft(lb0) {
+        case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
+      }
+
+      val deleted = removedAB._2.foldLeft(inserted) {
+        case (rga, i) => rga.delete(using rga.replicaID)(i)
+      }
+
+      updatedAB._2.foldLeft(deleted) {
+        case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
+      }
+    }
+
+    val beforeA1: Dotted[ReplicatedList[Int]] = la1.state
+    val beforeB1                              = lb1.state
+
+    AntiEntropy.sync(aea, aeb)
+    network.startReliablePhase()
+    AntiEntropy.sync(aea, aeb)
+
+    val la2 = la1.processReceivedDeltas()
+    val lb2 = lb1.processReceivedDeltas()
+
+    assertEquals(
+      beforeA1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]),
+      beforeA1
+    )
+    assertEquals(
+      beforeB1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]),
+      beforeB1
+    )
+
+    val directMergedState = beforeA1 merge beforeB1
+    assertEquals(la2.state, directMergedState)
+    assertEquals(lb2.state, directMergedState)
+
+    assertEquals(
+      la2.toList,
+      lb2.toList,
+      s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}\n  before A: $beforeA1\n  before B: $beforeB1\n  ${la2.state}\n  ${lb2.state}"
+    )
   }
 
 }
