@@ -45,7 +45,7 @@ object ReplicatedList {
       def removeDots(dots: Dots): Option[ReplicatedList[E]] =
         val nmeta = dotted.meta.repr.filter((k, _) => !dots.contains(k))
 
-        if nmeta.isEmpty then None
+        if nmeta.isEmpty && dotted.order.isEmpty then None
         else Some(dotted.copy(meta = DotFun(nmeta)))
   }
 
