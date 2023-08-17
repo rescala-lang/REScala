@@ -5,13 +5,17 @@ import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 
 object NetworkGenerators {
-  val genNetwork: Gen[Network] = for {
+
+  case class NetworkGenerator(lossChance: Double, duplicateChance: Double, delayChance: Double):
+    def make() = Network(lossChance, duplicateChance, delayChance)
+
+  val genNetwork: Gen[NetworkGenerator] = for {
     lossChance      <- Gen.choose(0.0, 1.0)
     duplicateChance <- Gen.choose(0.0, 1.0)
     delayChance     <- Gen.choose(0.0, 1.0)
-  } yield new Network(lossChance, duplicateChance, delayChance)
+  } yield new NetworkGenerator(lossChance, duplicateChance, delayChance)
 
-  implicit val arbNetwork: Arbitrary[Network] = Arbitrary(genNetwork)
+  implicit val arbNetwork: Arbitrary[NetworkGenerator] = Arbitrary(genNetwork)
 }
 
 class NetworkTest extends munit.ScalaCheckSuite {
@@ -111,7 +115,8 @@ class NetworkTest extends munit.ScalaCheckSuite {
     }
   }
   property("reliablePhase") {
-    forAll { (msg: Array[Byte], network: Network) =>
+    forAll { (msg: Array[Byte], networkGen: NetworkGenerator) =>
+      val network = networkGen.make()
       network.startReliablePhase()
       network.sendMessage("a", msg)
 

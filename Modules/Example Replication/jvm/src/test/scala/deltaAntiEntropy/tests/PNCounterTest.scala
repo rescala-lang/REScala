@@ -87,7 +87,8 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
     }
   }
   property("convergence") {
-    forAll { (incA: Byte, decA: Byte, incB: Byte, decB: Byte, network: Network) =>
+    forAll { (incA: Byte, decA: Byte, incB: Byte, decB: Byte, networkGen: NetworkGenerator) =>
+      val network = networkGen.make()
       val aea = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
 

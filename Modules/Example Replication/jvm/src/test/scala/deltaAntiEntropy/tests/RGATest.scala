@@ -288,6 +288,7 @@ class RGATest extends munit.ScalaCheckSuite {
     }
 
   }
+
   property("convergence") {
     forAll {
       (
@@ -296,9 +297,10 @@ class RGATest extends munit.ScalaCheckSuite {
           insertedAB: (List[(Int, Int)], List[(Int, Int)]),
           removedAB: (List[Int], List[Int]),
           updatedAB: (List[(Int, Int)], List[(Int, Int)]),
-          network: Network
+          networkGen: NetworkGenerator
       ) =>
         {
+          val network = networkGen.make()
 
           val aea = new AntiEntropy[ReplicatedList[Int]]("a", network, mutable.Buffer("b"))
           val aeb = new AntiEntropy[ReplicatedList[Int]]("b", network, mutable.Buffer("a"))
@@ -342,7 +344,7 @@ class RGATest extends munit.ScalaCheckSuite {
           }
 
           val beforeA1: Dotted[ReplicatedList[Int]] = la1.state
-          val beforeB1 = lb1.state
+          val beforeB1                              = lb1.state
 
           AntiEntropy.sync(aea, aeb)
           network.startReliablePhase()
@@ -351,11 +353,18 @@ class RGATest extends munit.ScalaCheckSuite {
           val la2 = la1.processReceivedDeltas()
           val lb2 = lb1.processReceivedDeltas()
 
-          assertEquals(beforeA1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]), beforeA1)
-          assertEquals(beforeB1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]), beforeB1)
+          assertEquals(
+            beforeA1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]),
+            beforeA1
+          )
+          assertEquals(
+            beforeB1.decomposed.reduceOption(Lattice.merge).getOrElse(Bottom.empty[Dotted[ReplicatedList[Int]]]),
+            beforeB1
+          )
 
-          assertEquals(beforeA1 merge beforeB1, lb2.state)
-          assertEquals(beforeA1 merge beforeB1, la2.state)
+          val directMergedState = beforeA1 merge beforeB1
+          assertEquals(lb2.state, directMergedState)
+          assertEquals(la2.state, directMergedState)
 
           assertEquals(
             la2.toList,

@@ -106,7 +106,8 @@ class TowPSetTest extends munit.ScalaCheckSuite {
   }
   property("convergence") {
     forAll {
-      (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], network: Network) =>
+      (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], networkGen: NetworkGenerator) =>
+        val network = networkGen.make()
         val aea = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
         val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 

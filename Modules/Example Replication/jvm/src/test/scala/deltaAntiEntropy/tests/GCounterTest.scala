@@ -67,7 +67,8 @@ class GCounterTest extends munit.ScalaCheckSuite {
   }
 
   property("convergence") {
-    forAll { (incA: Short, incB: Short, network: Network) =>
+    forAll { (incA: Short, incB: Short, networkGen: NetworkGenerator) =>
+      val network = networkGen.make()
       val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 

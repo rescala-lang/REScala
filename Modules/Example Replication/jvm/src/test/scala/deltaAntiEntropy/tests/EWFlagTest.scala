@@ -132,7 +132,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
   }
 
   property("convergence") {
-    forAll { (enableA: Short, opsA: List[Boolean], opsB: List[Boolean], network: Network) =>
+    forAll { (enableA: Short, opsA: List[Boolean], opsB: List[Boolean], networkGen: NetworkGenerator) =>
+      val network = networkGen.make()
       val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 

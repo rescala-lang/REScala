@@ -117,7 +117,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
   }
   property("convergence") {
     forAll {
-      (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, network: Network) =>
+      (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, networkGen: NetworkGenerator) =>
+        val network = networkGen.make()
         val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
         val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
