@@ -24,6 +24,7 @@ import kofre.time.{Dot, Dots}
   *
   * This implementation was modeled after the RGA proposed by Roh et al. in "Replicated abstract data types: Building blocks
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
+ * However, since then the implementation was changed significantly, thus it may be a different or even a novel strategy by now.
   */
 case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[LastWriterWins[E]])
 object ReplicatedList {
