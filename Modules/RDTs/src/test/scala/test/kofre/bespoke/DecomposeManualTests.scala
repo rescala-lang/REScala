@@ -119,8 +119,57 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(decomposed.size, 1)
 
     assertEquals(decomposed(0).data.read, true)
-    assertEquals(decomposed(0).context.internal.size, 1)
-    assertEquals(decomposed(0).context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(decomposed(0).data.dots, Dots.single(Dot(r1.uid, 0)))
+    assertEquals(decomposed(0).context.toSet, Set(Dot(r1.uid, 0)))
+  }
+
+  test("Dotted[EnableWinsFlag] context decomposition") {
+    val emptyEWFlag: Dotted[EnableWinsFlag] = Dotted(Bottom[EnableWinsFlag].empty)
+    assertEquals(emptyEWFlag.context, Dots.empty)
+
+    // The first enable creates a dot, first disable keep it. Second enable creates a new dot.
+    // At the end, both dots are in the context, but only the last one is contained within.
+
+    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.enable(using r1)()
+    assertEquals(delta_1.context.internal.size, 1)
+    assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(delta_1.data.read, true)
+    assertEquals(delta_1.data.dots, Dots.single(Dot(r1.uid, 0)))
+
+    val val_1: Dotted[EnableWinsFlag] = delta_1
+    assertEquals(val_1.data.read, true)
+
+
+    val delta_2: Dotted[EnableWinsFlag] = val_1.disable()
+    assertEquals(delta_2.context.internal.size, 1)
+    assertEquals(delta_2.context.max(r1.uid), Some(Dot(r1.uid, 0)))
+    assertEquals(delta_2.data.read, false)
+    assertEquals(delta_2.data.dots, Dots.empty)
+
+    val val_2: Dotted[EnableWinsFlag] = val_1 merge delta_2
+    assertEquals(val_2.data.read, false)
+
+
+    val delta_3: Dotted[EnableWinsFlag] = val_2.enable(using r2)()
+    assertEquals(delta_3.context.internal.size, 1)
+    assertEquals(delta_3.context.toSet, Set(Dot(r2.uid, 0))) // it's a delta - r1 dot not here, only r2
+    assertEquals(delta_3.data.read, true)
+    assertEquals(delta_3.data.dots, Dots.single(Dot(r2.uid, 0)))
+
+    val val_3: Dotted[EnableWinsFlag] = val_2 merge delta_3
+    assertEquals(val_3.data.read, true)
+
+    val decomposed: Seq[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].decompose(val_3).toSeq.sortBy(_.data.inner.repr.internal.keys.headOption)
+    // Dotted decomposes context and value - one entry for EnableWinsFlag with their Dot and one entry with remaining context
+    assertEquals(decomposed.size, 2)
+
+    assertEquals(decomposed(0).data, EnableWinsFlag.empty)
+    assertEquals(decomposed(0).data.dots, Dots.empty)
+    assertEquals(decomposed(0).context.toSet, Set(Dot(r1.uid, 0)))
+
+    assertEquals(decomposed(1).data.read, true)
+    assertEquals(decomposed(1).data.dots, Dots.single(Dot(r2.uid, 0)))
+    assertEquals(decomposed(1).context.toSet, Set(Dot(r2.uid, 0)))
   }
 
   test("Dotted[MultiVersionRegister[Int]] decomposition") {
