@@ -5,11 +5,11 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import rdts.base.Uid
 import rdts.datatypes.alternatives.ResettableCounter
 import rdts.datatypes.contextual.{ReplicatedSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
+import rdts.datatypes.experiments.AuctionInterface.AuctionData
 import rdts.datatypes.{
   Epoch, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet
 }
 import rdts.dotted.Dotted
-import rdts.datatypes.experiments.AuctionInterface.AuctionData
 import rdts.time.{ArrayRanges, Dot, Dots, Time}
 
 object JsoniterCodecs {
