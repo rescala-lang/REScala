@@ -34,12 +34,17 @@ jobs:
     - name: install jsdom
       run: npm install jsdom
 
+    # Compile all modules, before starting any tests.
+    # Compilation should not fail spuriously, therefore fail the overall test and don't retry compilation.
+    - name: Compile
+      run: sbt Test/compile
+
+    # Run tests once, but allow failures.
+    # Some tests may fail spuriously, therefore continue on error and retry with the next step
     - name: Run tests
       continue-on-error: true
-      run: |
-        sbt compile Test/compile testQuick
+      run: sbt test
 
-      # the idea here is, that we first do compile, Test / compile, testQuick sequentially, so if compilation fails on some sub project we abort early without half starting tests on some other sub project. However, sometimes compilation or testing fails spuriously, so we just do it again, which should fix most of the spurious compilation failures, and also may try to reexecute some of the spurious tests. As this keeps the incremental sbt cache, if the first one succeeds, the second one should be essentially for free.
+    # Run all failed test cases, this time failing the overall test
     - name: Run tests again for added reliability
-      run: |
-        sbt compile Test/compile testQuick
+      run: sbt testQuick
