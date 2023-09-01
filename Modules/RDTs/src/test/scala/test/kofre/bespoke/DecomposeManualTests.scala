@@ -42,6 +42,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[GrowOnlyCounter] = Lattice[GrowOnlyCounter].decompose(merged).toSeq
+    // GrowOnlyCounter decomposes into every increment
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).value, 1)
     assertEquals(decomposed(1).value, 1)
@@ -74,6 +75,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[PosNegCounter] = Lattice[PosNegCounter].decompose(merged).toSeq.sortBy(_.value)
+    // GrowOnlyCounter decomposes into every increment & decrement
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).value, -1)
     assertEquals(decomposed(1).value, 1)
@@ -107,6 +109,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[Dotted[MultiVersionRegister[Int]]] = Lattice[Dotted[MultiVersionRegister[Int]]].decompose(merged).toSeq.sortBy(_.data.read.headOption)
+    // MultiVersionRegister decomposes every version
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).read, Set(1))
     assertEquals(decomposed(1).read, Set(2))
@@ -143,6 +146,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].decompose(merged).toSeq
+    // LastWriterWins does not decompose, only returns the value.
+    // Dotted decomposes context and value, but as LWW is not contextual, context is empty and not decomposed.
     assertEquals(decomposed.size, 1)
     assertEquals(decomposed.head.read, 2)
   }
@@ -176,6 +181,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].decompose(merged).toSeq.sortBy(_.elements.headOption)
+    // GrowOnlySet decomposes every entry
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).elements, Set(1))
     assertEquals(decomposed(1).elements, Set(2))
@@ -230,6 +236,9 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] = Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+    // GrowOnlyMap decomposes every entry.
+    // LastWriterWins does not decompose, only returns the value.
+    // Dotted decomposes context and value, but as LWW is not contextual, the context is empty and there is no additional entry for it.
     assertEquals(decomposed.size, 2)
 
     assertEquals(decomposed(0).data.get(1).map(_.payload), Some("one"))
