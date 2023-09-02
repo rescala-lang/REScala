@@ -3,10 +3,9 @@ package test.kofre.baseproperties
 import kofre.base.{Bottom, BottomOpt, Lattice}
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.{CausalQueue, ReplicatedList}
+import kofre.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import kofre.datatypes.experiments.CausalStore
-import kofre.datatypes.{
-  GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
-}
+import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
@@ -15,6 +14,7 @@ import test.kofre.DataGenerator.{*, given}
 import test.kofre.DataGenerator.RGAGen.given
 import test.kofre.isGithubCi
 
+class OpGraphChecks           extends LatticePropertyChecks[OpGraph[ExampleData]]
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[DotFun[ExampleData]]]
 class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[DotFun[ExampleData]]]]
 class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
@@ -43,7 +43,7 @@ class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedLis
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](expensive: Boolean = false)
+abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using arbitrary: Arbitrary[A], lattice: Lattice[A], bottomOpt: BottomOpt[A], shrink: Shrink[A])
     extends OrderTests(using Lattice.latticeOrder)(total = false) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
@@ -115,7 +115,7 @@ abstract class LatticePropertyChecks[A: Arbitrary: Lattice: BottomOpt: Shrink](e
       assertEquals(
         merged.orElse(BottomOpt.explicit(_.empty)),
         Some(normalized),
-        s"decompose does not recompose"
+        s"decompose does not recompose (test may require a bottom instance if any component decomposes into None)"
       )
 
     }

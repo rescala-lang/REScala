@@ -6,6 +6,7 @@ import kofre.datatypes.GrowOnlyList.Node
 import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.*
 import kofre.datatypes.contextual.CausalQueue.QueueElement
+import kofre.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import kofre.datatypes.experiments.{CausalDelta, CausalStore}
 import kofre.dotted.*
 import kofre.syntax.ReplicaId
@@ -219,4 +220,10 @@ object DataGenerator {
 
     given arbPlainRGA[E: Arbitrary]: Arbitrary[ReplicatedList[E]] = Arbitrary(genRGA.map(_.data))
   }
+
+  given arbOpGraph[T](using arbData: Arbitrary[T]): Arbitrary[OpGraph[T]] = Arbitrary:
+    Gen.containerOf[List, T](arbData.arbitrary).map: elems =>
+      elems.foldLeft(OpGraph.bottom.empty): (curr, elem) =>
+        curr merge curr.set(elem)
+
 }
