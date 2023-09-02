@@ -118,10 +118,6 @@ object DeltaSequence {
   given deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
     new Lattice[DeltaSequence[A]] {
 
-      private val noMapConflictsLattice: Lattice[A] = (left: A, right: A) =>
-        if (left == right) left
-        else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
-
       override def merge(
           left: DeltaSequence[A],
           right: DeltaSequence[A]
@@ -140,7 +136,7 @@ object DeltaSequence {
             else merged.addRightEdge(oldPositions(v), v)
         }
         val vertices = left.vertices merge right.vertices
-        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(noMapConflictsLattice))
+        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(Lattice.assertNoConflicts))
 
         DeltaSequence(
           vertices = vertices,

@@ -89,6 +89,10 @@ object Lattice {
     override def lteq(left: A, right: A): Boolean = Ordering[A].lteq(left, right)
   }
 
+  def assertNoConflicts[A]: Lattice[A] = (left: A, right: A) =>
+    if (left == right) left
+    else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
+
   // /////////////// common instances below ///////////////
 
   given setLattice[A]: Lattice[Set[A]] with
