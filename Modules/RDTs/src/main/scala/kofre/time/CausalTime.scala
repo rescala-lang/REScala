@@ -1,5 +1,7 @@
 package kofre.time
 
+import kofre.base.Lattice
+
 import java.util.concurrent.atomic.AtomicLong
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.Random
@@ -22,6 +24,8 @@ object CausalTime:
     Ordering.by[CausalTime, Long](_.time)
       .orElseBy(_.causal)
       .orElseBy(_.random)
+
+  given lattice: Lattice[CausalTime] = Lattice.fromOrdering(ordering)
 
   // originally used `System.nanoTime` for the third component, but the Web does not offer high precision timers, so a counter it is!
   private val timeCounter = AtomicLong(Random.nextLong())
