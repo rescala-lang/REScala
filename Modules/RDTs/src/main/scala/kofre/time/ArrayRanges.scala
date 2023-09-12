@@ -136,12 +136,15 @@ class ArrayRanges(
     inline def rok = rightPos < other.used
 
     def findNextRange(): Unit =
-      var (curStart, minEnd) =
+      val selection =
         if (!lok) (rstart, rend)
         else if !rok || lstart < rstart then
           (lstart, lend)
         else
           (rstart, rend)
+
+      val curStart = selection._1
+      var minEnd = selection._2
 
       def mergeOverlapping(): Boolean =
         var res = false
