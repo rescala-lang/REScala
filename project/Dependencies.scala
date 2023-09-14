@@ -23,7 +23,7 @@ object Dependencies {
   def scribeSlf4j   = libraryDependencies += "com.outr"                    %% "scribe-slf4j"     % "3.10.7"
   def scribeSlf4j2  = libraryDependencies += "com.outr"                    %% "scribe-slf4j2"    % "3.10.7"
   def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.3.0"
-  def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.42.0.0"
+  def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.43.0.0"
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.2"
   def jsoniterScala =
     libraryDependencies ++= Seq(
