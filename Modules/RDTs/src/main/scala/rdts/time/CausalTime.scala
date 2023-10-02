@@ -1,8 +1,9 @@
 package rdts.time
 
-import rdts.base.{Lattice, Orderings}
+import rdts.base.{Bottom, Lattice, Orderings}
 
 import java.util.concurrent.atomic.AtomicLong
+
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.Random
 
@@ -20,6 +21,11 @@ case class CausalTime(time: Time, causal: Long, random: Long):
     else now
 
 object CausalTime:
+  val empty: CausalTime = CausalTime(0, 0, Long.MinValue)
+
+  given causalTimeBottom: Bottom[CausalTime] with
+    override def empty: CausalTime = CausalTime.empty
+
   given ordering: Ordering[CausalTime] = Orderings.lexicographic
 
   given lattice: Lattice[CausalTime] = Lattice.fromOrdering(using ordering)
