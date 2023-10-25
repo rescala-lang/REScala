@@ -20,7 +20,7 @@ object RescalaDependencies {
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
   )
   def jetty11 = {
-    val jettyVersion = "11.0.16"
+    val jettyVersion = "11.0.17"
     libraryDependencies ++= Seq(
       "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
       "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
