@@ -68,6 +68,13 @@ object Settings {
     }
   }
 
+  def nonunitStatements(conf: TaskKey[_]*) = conf.map { c =>
+    c / scalacOptions ++= {
+      val version = CrossVersion.partialVersion(scalaVersion.value).get
+      cond(version._1 == 3, "-Wnonunit-statement")
+    }
+  }
+
   def explicitNulls(conf: Configuration*) = conf.map { c =>
     c / scalacOptions ++= {
       val version = CrossVersion.partialVersion(scalaVersion.value).get
