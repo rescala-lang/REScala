@@ -31,7 +31,7 @@ object RescalaDependencies {
   }
 
   // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
-  val tink = libraryDependencies +="com.google.crypto.tink" % "tink" % "1.11.0"
+  val tink = libraryDependencies +="com.google.crypto.tink" % "tink" % "1.7.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 

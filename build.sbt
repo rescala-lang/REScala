@@ -209,11 +209,10 @@ lazy val replicationExamples =
       Dependencies.jsoniterScala
     )
     .jvmSettings(
-      Dependencies.loci.wsJetty11,
+      Dependencies.loci.wsJetty12,
       Dependencies.scribeSlf4j2,
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
-      RescalaDependencies.jetty11,
     )
     .jsSettings(
       Dependencies.scalatags,

@@ -46,7 +46,7 @@ object Dependencies {
       if (false)
         libraryDependencies += "io.github.scala-loci" %%% s"scala-loci-$n" % "0.5.0"
       else
-        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "eb0719f08f"
+        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "e7f17cc41a"
 
     def communication = generic("communication")
     def circe         = generic("serializer-circe")
@@ -58,6 +58,6 @@ object Dependencies {
     def wsWeb         = generic("communicator-ws-webnative")
     def wsJavalin     = generic("communicator-ws-javalin")
     def wsJetty       = generic("communicator-ws-jetty")
-    def wsJetty11     = generic("communicator-ws-jetty11")
+    def wsJetty12     = generic("communicator-ws-jetty12")
   }
 }
