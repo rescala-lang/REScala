@@ -1,11 +1,35 @@
 = Changelog
 
-== v.next
+== v0.34.0
+date = 2023-11-10
+
+for reactives:
 
 • drop Scala 2 support
 	• We kept this around for compatibility with Scala Loci case studies, but those will keep working just fine with 0.33.
 	• Maintaining the Scala 2 macros became too much. Every refactor breaks them in very subtle ways, due to the interactions of the generic nature of the code, and the macros resolving types weirdly.
 	• We would like to update some APIs to make better use of Scala 3 features, in particular better handling of implicits, and more flexible macros will make certain parts of the code much more maintainable and enable better syntax for users.
+• removed internal types from the public interface trait
+• remove old fold syntax
+• remove reduce (use new fold syntax instead)
+• remove zip events (use event expressions instead)
+• remove += (use observe instead)
+• remove apply for reading values, use value instead
+• rename \ to except
+• rename latest to hold
+• rename last to list
+• improve Event.fromCallback syntax
+• remove reactive-streams dependency and upgrade to java Flow instead (still mostly untested, because their test suite requires finite streams, which we don’t have)
+• add snap to snapshot some signals when an event triggers (like map, but ignoring the event parameter)
+• enable debugger hooks
+
+
+for replicated data types:
+
+• generate lattices from orderings
+• more systematic causal time implementation and use
+• generalized dot using lattices by filtering dots instead of custom merges
+• drop decompose lattice and normal lattice distinction, decomposition is now simply a best effort feature
 
 
 == v0.33.0
