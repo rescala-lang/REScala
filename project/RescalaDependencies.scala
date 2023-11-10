@@ -30,6 +30,7 @@ object RescalaDependencies {
     )
   }
 
+
   // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
   val tink = libraryDependencies +="com.google.crypto.tink" % "tink" % "1.7.0"
 
