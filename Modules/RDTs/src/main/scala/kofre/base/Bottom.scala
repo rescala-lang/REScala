@@ -13,7 +13,7 @@ import scala.compiletime.{summonAll, summonInline}
   *
   * That is:
   * ```scala
-  * Lattice.merge(empty, x) == x
+  * Lattice.merge(empty, x) == Lattice.normalize(x)
   * ```
   */
 @FunctionalInterface
