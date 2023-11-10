@@ -20,7 +20,7 @@ import scala.compiletime.{summonAll, summonInline}
 trait Bottom[A] {
   def empty: A
 
-  /** Tests if the state is an identity of [[merge]], i.e., forall `a` with `isEmpty(a)` we require that `a merge b == b`.
+  /** Tests if the state is an identity of [[Lattice.merge]], i.e., forall `a` with `isEmpty(a)` we require that `a merge b == b`.
     * See [[Bottom]] for cases when an empty element can be generated.
     */
   extension (value: A) def isEmpty: Boolean = value == empty
