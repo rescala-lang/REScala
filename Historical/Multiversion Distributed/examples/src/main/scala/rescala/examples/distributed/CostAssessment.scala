@@ -44,18 +44,22 @@ object CostAssessment {
 
       given JsonValueCodec[scala.Tuple2[
         scala.Long,
-        scala.Tuple3[java.lang.String, scala.collection.immutable.List[scala.Tuple4[
-          scala.Long,
-          scala.Int,
-          scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
-            rescala.fullmv.mirrors.Host.GUID,
-            rescala.fullmv.TurnPhase.Type
-          ]], scala.Int]],
-          scala.Option[scala.Tuple2[
-            scala.Option[scala.collection.immutable.Map[java.lang.String, scala.collection.immutable.Set[scala.Int]]],
-            scala.Option[scala.Array[scala.Byte]]
-          ]]
-        ]], scala.Array[scala.Byte]]
+        scala.Tuple3[
+          java.lang.String,
+          scala.collection.immutable.List[scala.Tuple4[
+            scala.Long,
+            scala.Int,
+            scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
+              rescala.fullmv.mirrors.Host.GUID,
+              rescala.fullmv.TurnPhase.Type
+            ]], scala.Int]],
+            scala.Option[scala.Tuple2[
+              scala.Option[scala.collection.immutable.Map[java.lang.String, scala.collection.immutable.Set[scala.Int]]],
+              scala.Option[scala.Array[scala.Byte]]
+            ]]
+          ]],
+          scala.Array[scala.Byte]
+        ]
       ]] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
       implicit val host: this.type = this
       def binding(i: Int)          = Binding[Signal[Map[String, Set[Int]]]](s"binding-$i")
