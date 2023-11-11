@@ -144,7 +144,7 @@ class ArrayRanges(
           (rstart, rend)
 
       val curStart = selection._1
-      var minEnd = selection._2
+      var minEnd   = selection._2
 
       def mergeOverlapping(): Boolean =
         var res = false

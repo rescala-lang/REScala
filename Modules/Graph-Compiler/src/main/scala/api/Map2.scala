@@ -5,7 +5,6 @@ import clangast.decl.CFunctionDecl
 import clangast.types.CType
 import compiler.MacroCompiler
 
-
 case class Map2[A, B, R](l: Event[A], r: Event[B], cType: WithContext[CType], f: WithContext[CFunctionDecl])
     extends Event[R] {
   override def inputs: List[ReSource] = List(l, r)

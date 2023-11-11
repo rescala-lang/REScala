@@ -5,7 +5,9 @@ import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.{CausalQueue, ReplicatedList}
 import kofre.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import kofre.datatypes.experiments.CausalStore
-import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
+import kofre.datatypes.{
+  GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
+}
 import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
@@ -43,8 +45,12 @@ class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedLis
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using arbitrary: Arbitrary[A], lattice: Lattice[A], bottomOpt: BottomOpt[A], shrink: Shrink[A])
-    extends OrderTests(using Lattice.latticeOrder)(total = false) {
+abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using
+    arbitrary: Arbitrary[A],
+    lattice: Lattice[A],
+    bottomOpt: BottomOpt[A],
+    shrink: Shrink[A]
+) extends OrderTests(using Lattice.latticeOrder)(total = false) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
 

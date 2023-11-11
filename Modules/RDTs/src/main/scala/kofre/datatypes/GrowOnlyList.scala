@@ -28,7 +28,7 @@ object GrowOnlyList {
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 
-  given bottomInstance[E]: Bottom[GrowOnlyList[E]] = Bottom.derived
+  given bottomInstance[E]: Bottom[GrowOnlyList[E]]    = Bottom.derived
   given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] = HasDots.noDots
 
   given Lattice[E]: Lattice[GrowOnlyList[E]] =

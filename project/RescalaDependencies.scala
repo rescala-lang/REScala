@@ -7,14 +7,14 @@ import Settings.{`is 3`, `is 2.11`}
 object RescalaDependencies {
 
   val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test
-  val circe     = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
+  val circe = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
   val scalaReflectProvided = libraryDependencies ++=
     (if (`is 3`(scalaVersion.value)) None
      else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
   val scalatestpluscheck =
     libraryDependencies += (if (`is 2.11`(scalaVersion.value))
-      "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
-    else "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.17.0"   % "test")
+                              "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
+                            else "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.17.0"   % "test")
   val retypecheck = libraryDependencies += (
     if (`is 3`(scalaVersion.value)) None
     else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
@@ -30,9 +30,8 @@ object RescalaDependencies {
     )
   }
 
-
   // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
-  val tink = libraryDependencies +="com.google.crypto.tink" % "tink" % "1.7.0"
+  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.7.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 

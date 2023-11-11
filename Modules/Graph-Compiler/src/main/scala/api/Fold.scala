@@ -5,7 +5,6 @@ import clangast.expr.CExpr
 import clangast.types.CType
 import compiler.MacroCompiler
 
-
 case class Fold[V](init: WithContext[CExpr], cType: WithContext[CType], lines: List[FLine[_, V]]) extends Event[V] {
   override def inputs: List[ReSource] = lines.map(_.input)
 

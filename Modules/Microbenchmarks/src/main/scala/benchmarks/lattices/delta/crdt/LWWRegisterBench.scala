@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class LWWRegisterBench {
 
-  var full: NamedDeltaBuffer[LastWriterWins[Int]]  = _
+  var full: NamedDeltaBuffer[LastWriterWins[Int]] = _
 
   @Setup
   def setup(): Unit = {

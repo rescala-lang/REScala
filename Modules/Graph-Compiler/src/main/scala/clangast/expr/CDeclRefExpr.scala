@@ -1,6 +1,5 @@
 package clangast.expr
 
-
 import scala.quoted.{Expr, Quotes}
 
 case class CDeclRefExpr(declName: String) extends CExpr {

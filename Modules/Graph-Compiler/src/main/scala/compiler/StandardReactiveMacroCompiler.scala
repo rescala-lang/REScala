@@ -11,16 +11,16 @@ object StandardReactiveMacroCompiler extends ReactiveMacroCompiler {
   export impl.*
 
   override inline def compileTree(inline t: Any): WithContext[CASTNode] =
-    ${ compileTreeCode('{t}) }
+    ${ compileTreeCode('{ t }) }
 
   override inline def compileExpr(inline e: Any): WithContext[CExpr] =
-    ${ compileExprCode('{e}) }
+    ${ compileExprCode('{ e }) }
 
   override inline def compileFun(inline f: AnyRef): WithContext[CFunctionDecl] =
-    ${ compileFunCode('{f}) }
+    ${ compileFunCode('{ f }) }
 
   override inline def compileAnonFun(inline f: AnyRef): WithContext[CFunctionDecl] =
-    ${ compileAnonFunCode('{f}) }
+    ${ compileAnonFunCode('{ f }) }
 
   override inline def compileType[T]: WithContext[CType] =
     ${ compileTypeCode[T] }
@@ -29,5 +29,5 @@ object StandardReactiveMacroCompiler extends ReactiveMacroCompiler {
     ${ valNameCode }
 
   override inline def compileGraph(inline appName: String)(inline graph: Any): Unit =
-    ${ compileGraphCode('{appName})('{graph}) }
+    ${ compileGraphCode('{ appName })('{ graph }) }
 }

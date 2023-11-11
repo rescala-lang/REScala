@@ -62,7 +62,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scalaVersion_3, noPublish,  RescalaDependencies.scalaSwing)
+  .settings(scalaVersion_3, noPublish, RescalaDependencies.scalaSwing)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
@@ -102,7 +102,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     Dependencies.munitCheck,
   )
   .jvmSettings(
-      RescalaDependencies.tink
+    RescalaDependencies.tink
   )
   .jsConfigure(_.enablePlugins(ScalablyTypedConverterPlugin))
   .jsSettings(

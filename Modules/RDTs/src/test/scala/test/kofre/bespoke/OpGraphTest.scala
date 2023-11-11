@@ -25,7 +25,7 @@ class OpGraphTest extends munit.FunSuite {
     assertEquals(r1r2.values, List("bye!", "hi!"))
 
     val deletion = r1r2.del()
-    val deleted = r1r2 merge deletion
+    val deleted  = r1r2 merge deletion
 
     assertEquals(deleted.values, List())
 

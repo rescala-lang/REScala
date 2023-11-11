@@ -74,7 +74,9 @@ object DeltaBufferContainer extends DeltaBufferContainer.LowPrio {
   }
 
   trait LowPrio {
-    given nestedPlainPermissions[L](using pm: PermMutate[DeltaBuffer[Dotted[L]], L]): PermMutate[DeltaBufferContainer[Dotted[L]], L] = new {
+    given nestedPlainPermissions[L](using
+        pm: PermMutate[DeltaBuffer[Dotted[L]], L]
+    ): PermMutate[DeltaBufferContainer[Dotted[L]], L] = new {
       override def mutate(c: DeltaBufferContainer[Dotted[L]], delta: L): DeltaBufferContainer[Dotted[L]] =
         c.result = pm.mutate(c.result, delta)
         c

@@ -1,8 +1,7 @@
 package rescala.scheduler
 
 import rescala.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
-  Transaction
+  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
 }
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}

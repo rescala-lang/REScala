@@ -31,7 +31,7 @@ class ContainerTest extends munit.FunSuite {
 
   test("Dotted can contain contextual EnableWinsFlag") {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given ReplicaId = "me".asId
+    given ReplicaId                  = "me".asId
 
     assertEquals(flag.read, false)
 
@@ -69,7 +69,6 @@ class ContainerTest extends munit.FunSuite {
   }
 
   // END EnableWinsFlag
-
 
   // START AddWinsSet
 
@@ -118,7 +117,6 @@ class ContainerTest extends munit.FunSuite {
   }
 
   // END AddWinsSet
-
 
   // START LastWriterWins
 
@@ -172,7 +170,6 @@ class ContainerTest extends munit.FunSuite {
 
   // END LastWriterWins
 
-
   // START AuctionData
 
   test("plain AuctionData without container returns deltas") {
@@ -204,17 +201,17 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted can contain plain AuctionData") {
     val auction: Dotted[AuctionData] = Dotted.empty
 
-    assertEquals(auction.data.bids,   Set.empty)
+    assertEquals(auction.data.bids, Set.empty)
     assertEquals(auction.data.status, AuctionInterface.Open)
     assertEquals(auction.data.winner, None)
 
     val added = auction.bid("First", 1)
-    assertEquals(added.data.bids,   Set(Bid("First", 1)))
+    assertEquals(added.data.bids, Set(Bid("First", 1)))
     assertEquals(added.data.status, AuctionInterface.Open)
     assertEquals(added.data.winner, None)
 
     val closed = added merge added.close()
-    assertEquals(closed.data.bids,   Set(Bid("First", 1)))
+    assertEquals(closed.data.bids, Set(Bid("First", 1)))
     assertEquals(closed.data.status, AuctionInterface.Closed)
     assertEquals(closed.data.winner, Some("First"))
   }
@@ -222,17 +219,17 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBuffer can contain plain AuctionData") {
     val auction: DeltaBuffer[AuctionData] = DeltaBuffer(AuctionData.empty)
 
-    assertEquals(auction.state.bids,   Set.empty)
+    assertEquals(auction.state.bids, Set.empty)
     assertEquals(auction.state.status, AuctionInterface.Open)
     assertEquals(auction.state.winner, None)
 
     val added = auction.bid("First", 1)
-    assertEquals(added.state.bids,   Set(Bid("First", 1)))
+    assertEquals(added.state.bids, Set(Bid("First", 1)))
     assertEquals(added.state.status, AuctionInterface.Open)
     assertEquals(added.state.winner, None)
 
     val closed = added.close()
-    assertEquals(closed.state.bids,   Set(Bid("First", 1)))
+    assertEquals(closed.state.bids, Set(Bid("First", 1)))
     assertEquals(closed.state.status, AuctionInterface.Closed)
     assertEquals(closed.state.winner, Some("First"))
   }
@@ -240,17 +237,17 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBuffer can contain plain AuctionData") {
     val auction: DeltaBuffer[Dotted[AuctionData]] = DeltaBuffer(Dotted.empty)
 
-    assertEquals(auction.state.data.bids,   Set.empty)
+    assertEquals(auction.state.data.bids, Set.empty)
     assertEquals(auction.state.data.status, AuctionInterface.Open)
     assertEquals(auction.state.data.winner, None)
 
     val added = auction.bid("First", 1)
-    assertEquals(added.state.data.bids,   Set(Bid("First", 1)))
+    assertEquals(added.state.data.bids, Set(Bid("First", 1)))
     assertEquals(added.state.data.status, AuctionInterface.Open)
     assertEquals(added.state.data.winner, None)
 
     val closed = added.close()
-    assertEquals(closed.state.data.bids,   Set(Bid("First", 1)))
+    assertEquals(closed.state.data.bids, Set(Bid("First", 1)))
     assertEquals(closed.state.data.status, AuctionInterface.Closed)
     assertEquals(closed.state.data.winner, Some("First"))
   }
@@ -258,17 +255,17 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBufferContainer can contain plain AuctionData") {
     val auction: DeltaBufferContainer[Dotted[AuctionData]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
-    assertEquals(auction.result.state.data.bids,   Set.empty)
+    assertEquals(auction.result.state.data.bids, Set.empty)
     assertEquals(auction.result.state.data.status, AuctionInterface.Open)
     assertEquals(auction.result.state.data.winner, None)
 
     auction.bid("First", 1)
-    assertEquals(auction.result.state.data.bids,   Set(Bid("First", 1)))
+    assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
     assertEquals(auction.result.state.data.status, AuctionInterface.Open)
     assertEquals(auction.result.state.data.winner, None)
 
     auction.close()
-    assertEquals(auction.result.state.data.bids,   Set(Bid("First", 1)))
+    assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
     assertEquals(auction.result.state.data.status, AuctionInterface.Closed)
     assertEquals(auction.result.state.data.winner, Some("First"))
   }

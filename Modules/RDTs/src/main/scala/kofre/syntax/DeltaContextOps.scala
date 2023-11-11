@@ -13,7 +13,9 @@ import scala.annotation.implicitNotFound
   * No matter the concrete container, they should all offer the same API to the underlying lattice.
   */
 
-@implicitNotFound("Requires query permission. If the syntax is incorrect, try specifying it explicitly:\n  container:  »${C}«\n  syntax for: »${L}«")
+@implicitNotFound(
+  "Requires query permission. If the syntax is incorrect, try specifying it explicitly:\n  container:  »${C}«\n  syntax for: »${L}«"
+)
 trait PermQuery[C, L]:
   def query(c: C): L
 object PermQuery:
@@ -36,9 +38,9 @@ object ReplicaId:
   extension (id: ReplicaId) def uid: Uid          = id
   def apply(id: Uid): ReplicaId                   = id
   inline given fromId: Conversion[Uid, ReplicaId] = identity
-  def predefined(s: String): ReplicaId = ReplicaId.fromId(Uid.predefined(s))
-  def unwrap(id: ReplicaId): Uid = id
-  def gen(): ReplicaId = Uid.gen()
+  def predefined(s: String): ReplicaId            = ReplicaId.fromId(Uid.predefined(s))
+  def unwrap(id: ReplicaId): Uid                  = id
+  def gen(): ReplicaId                            = Uid.gen()
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"

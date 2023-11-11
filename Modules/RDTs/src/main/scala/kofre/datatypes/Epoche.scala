@@ -16,7 +16,7 @@ object Epoche {
 
   given hasDots[E: HasDots: Bottom]: HasDots[Epoche[E]] = new {
     extension (dotted: Epoche[E])
-      def dots: Dots = dotted.value.dots
+      def dots: Dots                                = dotted.value.dots
       def removeDots(dots: Dots): Option[Epoche[E]] = dotted.value.removeDots(dots).map(nv => dotted.copy(value = nv))
   }
 

@@ -46,7 +46,7 @@ class TodoAppUI(val storagePrefix: String) {
     }
 
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
-    val taskOps = new TaskOps(taskrefs, replicaId)
+    val taskOps  = new TaskOps(taskrefs, replicaId)
 
     val deltaEvt = Evt[Dotted[ReplicatedList[TaskRef]]]()
 

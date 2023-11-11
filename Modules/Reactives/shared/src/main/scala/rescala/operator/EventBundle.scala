@@ -264,10 +264,8 @@ trait EventBundle extends FoldBundle {
       val res = block(using evt)
       CBR(evt, res)
 
-
     case class CBR[T, R](event: Event[T], data: R)
     opaque type Accepts[T] = Evt[T]
-
 
     /** The callback available within `fromCallback` */
     def handle[T](using cbt: Accepts[T], scheduler: Scheduler[BundleState])(v: T): Unit = cbt.fire(v)

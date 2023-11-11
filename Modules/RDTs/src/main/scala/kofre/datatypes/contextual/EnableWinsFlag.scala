@@ -14,7 +14,7 @@ case class EnableWinsFlag(inner: DotSet) derives Bottom
 
 object EnableWinsFlag {
 
-  given lattice: Lattice[EnableWinsFlag] = Lattice.derived
+  given lattice: Lattice[EnableWinsFlag]    = Lattice.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] = HasDots.derived
 
   val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)

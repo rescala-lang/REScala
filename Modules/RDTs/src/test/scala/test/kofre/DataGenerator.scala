@@ -23,7 +23,7 @@ object DataGenerator {
   }
   object ExampleData:
     given Conversion[String, ExampleData] = ed => ExampleData(Set(ed))
-    given hasDots: HasDots[ExampleData] = HasDots.noDots
+    given hasDots: HasDots[ExampleData]   = HasDots.noDots
 
   given Arbitrary[ExampleData] = Arbitrary:
     Gen.oneOf(List("Anne", "Ben", "Chris", "Erin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>

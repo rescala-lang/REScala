@@ -61,10 +61,13 @@ object HTML {
               else
                 List(
                   td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
-                  td(button("request", onclick := leftClickHandler{
-                    dataManager.requestMissingFrom(rr)
-                    ()
-                  })),
+                  td(button(
+                    "request",
+                    onclick := leftClickHandler {
+                      dataManager.requestMissingFrom(rr)
+                      ()
+                    }
+                  )),
                   td(table(
                     dataManager.contextOf(rr).map(dotsToRows).asModifierL
                   ))

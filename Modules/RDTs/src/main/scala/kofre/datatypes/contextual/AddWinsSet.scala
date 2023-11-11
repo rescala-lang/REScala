@@ -17,8 +17,8 @@ object AddWinsSet {
 
   given bottom[E]: Bottom[AddWinsSet[E]] with { override def empty: AddWinsSet[E] = AddWinsSet.empty }
 
-  given lattice[E]: Lattice[AddWinsSet[E]] = Lattice.derived
-  given asCausalContext[E]: HasDots[AddWinsSet[E]]        = HasDots.derived
+  given lattice[E]: Lattice[AddWinsSet[E]]         = Lattice.derived
+  given asCausalContext[E]: HasDots[AddWinsSet[E]] = HasDots.derived
 
   extension [C, E](container: C)
     def addWinsSet: syntax[C, E] = syntax(container)

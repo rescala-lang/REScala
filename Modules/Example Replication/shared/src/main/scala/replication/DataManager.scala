@@ -100,7 +100,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     Binding[Dots => Unit]("requestMissing")
 
   val pushStateBinding: PushBinding[TransferState] =
-    given JsonValueCodec[TransferState]           = JsonCodecMaker.make
+    given JsonValueCodec[TransferState] = JsonCodecMaker.make
     @unused
     given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
     Binding[TransferState => Unit]("pushState")
@@ -137,7 +137,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
       deltas
     }
     registry.remotes.foreach { remote =>
-      //val ctx = contexts.now.getOrElse(remote, Dots.empty)
+      // val ctx = contexts.now.getOrElse(remote, Dots.empty)
       pushDeltas(deltas.view, remote)
     }
 

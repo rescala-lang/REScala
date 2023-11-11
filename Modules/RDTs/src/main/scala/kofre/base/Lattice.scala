@@ -172,7 +172,7 @@ object Lattice {
 
       override def decompose(a: T): Iterable[T] =
         val ordinal = sm.ordinal(a)
-        val res = lat(ordinal).decompose(a)
+        val res     = lat(ordinal).decompose(a)
         // When `a` decomposes into nothing, it is no longer possible to distinguish which alternative of the sum we are dealing with. That is fine when the ordinal is 0 because then we have reached the bottom case for the sum type, but in all other cases we must keep enough information around to figure out the ordinal.
         if ordinal != 0 && res.isEmpty
         then Iterable(a)

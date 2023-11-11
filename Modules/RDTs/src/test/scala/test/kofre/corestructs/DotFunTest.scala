@@ -110,11 +110,11 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   test("deletions are larger") {
-    val ia = Uid.gen()
-    val ib = Uid.gen()
+    val ia      = Uid.gen()
+    val ib      = Uid.gen()
     val someDot = Dot(ia, 1)
-    val left = Dotted(DotFun(Map(someDot -> 10)), Dots.single(someDot))
-    val right = Dotted(DotFun.empty[Int], Dots.single(someDot))
+    val left    = Dotted(DotFun(Map(someDot -> 10)), Dots.single(someDot))
+    val right   = Dotted(DotFun.empty[Int], Dots.single(someDot))
 
     assert(left <= right)
 

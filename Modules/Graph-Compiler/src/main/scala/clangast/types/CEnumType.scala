@@ -1,6 +1,5 @@
 package clangast.types
 
-
 import scala.quoted.{Expr, Quotes}
 
 case class CEnumType(declName: String) extends CType {

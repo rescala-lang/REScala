@@ -51,7 +51,6 @@ class CausalStoreTest extends munit.FunSuite {
       ))
     )
 
-
     val ab = a merge b
     val bc = b merge c
 

@@ -8,7 +8,6 @@ import kofre.base.Uid.asId
 import kofre.datatypes.contextual.ReplicatedList
 import java.util.concurrent.TimeUnit
 
-
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)

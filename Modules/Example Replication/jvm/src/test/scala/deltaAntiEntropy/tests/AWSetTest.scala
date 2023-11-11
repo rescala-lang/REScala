@@ -260,10 +260,10 @@ class AWSetTest extends munit.ScalaCheckSuite {
   }
   property("convergence") {
     forAll {
-      (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int],networkGen: NetworkGenerator) =>
+      (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int], networkGen: NetworkGenerator) =>
         val network = networkGen.make()
-        val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+        val aea     = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
+        val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
 
         val setaAdded = addedA.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aea)) {
           case (set, e) => set.add(using set.replicaID)(e)

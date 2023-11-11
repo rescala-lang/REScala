@@ -37,8 +37,7 @@ abstract class HasDotsChecks[A: Arbitrary: HasDots] extends munit.ScalaCheckSuit
     forAll: (a: A) =>
       a.removeDots(a.dots) match
         case Some(value) => assertEquals(value.dots, Dots.empty)
-        case None => // good
-
+        case None        => // good
   }
 
 }

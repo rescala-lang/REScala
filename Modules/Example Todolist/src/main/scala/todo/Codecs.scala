@@ -11,7 +11,6 @@ import kofre.time.Dot
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 
-
 object Codecs {
 
   implicit val taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
