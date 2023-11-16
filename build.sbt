@@ -21,6 +21,7 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   // examples & case studies
   examples,
   todolist,
+  unitConversion,
   encryptedTodo,
   replicationExamples.js,
   replicationExamples.jvm,
@@ -168,7 +169,7 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
       val bp         = baseDirectory.value.toPath
       val tp         = target.value.toPath
       val template   = IO.read(bp.resolve("index.template.html").toFile)
-      val targetpath = tp.resolve("index.template.html")
+      val targetpath = tp.resolve("index.html")
       val jsrel      = targetpath.getParent.relativize(jspath.toPath)
       IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
       IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
@@ -190,7 +191,7 @@ lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
       val bp = baseDirectory.value.toPath
       val tp = target.value.toPath
       val template = IO.read(bp.resolve("index.template.html").toFile)
-      val targetpath = tp.resolve("index.template.html")
+      val targetpath = tp.resolve("index.html")
       val jsrel = targetpath.getParent.relativize(jspath.toPath)
       IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
       //IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)

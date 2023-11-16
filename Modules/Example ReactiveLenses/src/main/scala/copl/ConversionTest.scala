@@ -1,19 +1,28 @@
 package copl
 
-import geny.Generator.from
-import org.scalajs.dom.html.{Div, Input, Paragraph}
-import org.scalajs.dom.{UIEvent, document, window}
-import rescala.default.*
-import rescala.extra.Tags.*
+import org.scalajs.dom.html.{Input, Paragraph}
+import org.scalajs.dom.document
+import rescala.extra.Tags
+import rescala.interfaces.toposort.*
 import scalatags.JsDom
 import scalatags.JsDom.all.*
-import scalatags.JsDom.{Attr, TypedTag}
+import scalatags.JsDom.TypedTag
+
+import scala.scalajs.js.annotation.JSExportTopLevel
+
+object TopoTags extends Tags[rescala.interfaces.toposort.type](rescala.interfaces.toposort, true)
+import TopoTags.*
 
 object ConversionTest {
 
+  @JSExportTopLevel("UnitConversion")
+  def run(): Unit = main(Array.empty[String])
+
   def main(args: Array[String]): Unit = {
-    val oneWayConverter = getOneWayConverter()
-    document.body.replaceChild(oneWayConverter.render, document.body.firstChild)
+    println("hello")
+    //val oneWayConverter = getOneWayConverter()
+    //document.body.replaceChild(oneWayConverter.render, document.body.firstChild)
+    //()
   }
 
   def getOneWayConverter() = {
@@ -21,7 +30,6 @@ object ConversionTest {
     val meterInput: TypedTag[Input] = input(placeholder := "Meters")
     val (meterEvent: Event[String], renderedMeter: Input) = RenderUtil.inputFieldHandler(meterInput, oninput, clear = false)
 
-    //Q: Used to be latest
     val yardSignal: Signal[Option[Double]] = meterEvent.hold(init="Please enter a valid value for meters.").map { str => convertMeterToYard(str.toDoubleOption)}
 
     val yardParagraph: Signal[TypedTag[Paragraph]] = yardSignal.map { yard => p(if (yard.isEmpty) "Please enter a valid value for meters." else yard.get.toString)}
@@ -37,7 +45,3 @@ object ConversionTest {
   }
 
 }
-
-//Q: RenderUtil not working
-//Q: LensBundle in rescala.operator
-//Q: Integration of TopoBundle
