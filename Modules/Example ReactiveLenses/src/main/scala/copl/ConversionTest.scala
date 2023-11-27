@@ -3,6 +3,7 @@ package copl
 import org.scalajs.dom.html.{Input, Paragraph}
 import org.scalajs.dom.document
 import rescala.extra.Tags
+import rescala.interfaces.toposort
 import rescala.interfaces.toposort.*
 import scalatags.JsDom
 import scalatags.JsDom.all.*
@@ -19,10 +20,22 @@ object ConversionTest {
   def run(): Unit = main(Array.empty[String])
 
   def main(args: Array[String]): Unit = {
-    println("hello")
+    signalTest()
     //val oneWayConverter = getOneWayConverter()
     //document.body.replaceChild(oneWayConverter.render, document.body.firstChild)
     //()
+  }
+
+  def signalTest() = {
+
+    val a = Var(2)
+    val b = Var(3)
+    val c = Signal { a.value + b.value }
+
+    a.set(3)
+    println(a.now)
+    println(b.now)
+    println(c.now)
   }
 
   def getOneWayConverter() = {
