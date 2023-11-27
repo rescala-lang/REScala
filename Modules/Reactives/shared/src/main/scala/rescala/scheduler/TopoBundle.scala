@@ -64,6 +64,11 @@ trait TopoBundle {
       reactive.state.dirty = needsReevaluation
       createdReactives :+= reactive
 
+      for (in <- incoming) {
+        println(in.state.value)
+        println(in.state.value)
+      }
+
       val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
       // requires reev, any predecessor is dirty, but all discovered predecessors are already done
       val requiresReev = incoming.exists(_.state.dirty) && predecessorsDone
