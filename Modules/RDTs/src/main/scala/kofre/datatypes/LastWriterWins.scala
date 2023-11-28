@@ -1,6 +1,7 @@
 package kofre.datatypes
 
 import kofre.base.{Bottom, Lattice}
+import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.CausalTime
@@ -25,7 +26,12 @@ object LastWriterWins {
 
   given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
-  given lattice[A]: Lattice[LastWriterWins[A]] with {
+  inline given lattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom{
+    case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)
+    case _ => GenericLastWriterWinsLattice(MultiVersionRegister.assertEqualsLattice)
+  }
+
+  class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] {
     override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp
 
     override def decompose(state: LastWriterWins[A]): Iterable[LastWriterWins[A]] = List(state)
@@ -33,8 +39,8 @@ object LastWriterWins {
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
       CausalTime.ordering.compare(left.timestamp, right.timestamp) match
         case 0 =>
-          assert(left.payload == right.payload, s"LWW same timestamp, different value: »$left«, »$right«")
-          left
+          val newPayload = conflict.merge(left.payload, right.payload)
+          LastWriterWins(left.timestamp, newPayload)
         case x if x < 0 => right
         case x if x > 0 => left
   }

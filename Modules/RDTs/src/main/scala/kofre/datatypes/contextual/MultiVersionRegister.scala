@@ -20,6 +20,7 @@ object MultiVersionRegister {
   val assertEqualsOrdering: Ordering[Any] = (l, r) =>
     if l == r then 0
     else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
+  def assertEqualsLattice[A]: Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
 
   given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
     given Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
