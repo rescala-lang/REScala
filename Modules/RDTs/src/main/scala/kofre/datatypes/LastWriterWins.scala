@@ -26,9 +26,16 @@ object LastWriterWins {
 
   given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
-  inline given lattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom{
+  given lattice[A]: Lattice[LastWriterWins[A]] =
+    Lattice.fromOrdering:
+      CausalTime.ordering.on[LastWriterWins[A]](_.timestamp).orElse:
+        // Technically, this is not necessary, as equal timestamps are assumed to have equal values by precondition.
+        // But it is a heck of a lot easier to debug when this throws a proper exception instead of producing inconsistencies due to the violated assumptions.
+        MultiVersionRegister.assertEqualsOrdering.on(_.payload)
+
+  inline def generalizedLattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom {
     case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)
-    case _ => GenericLastWriterWinsLattice(MultiVersionRegister.assertEqualsLattice)
+    case _                        => GenericLastWriterWinsLattice(MultiVersionRegister.assertEqualsLattice)
   }
 
   class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] {
