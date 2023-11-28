@@ -3,7 +3,9 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
+import kofre.base.Bottom
 import kofre.datatypes.contextual.{AddWinsSet, ObserveRemoveMap}
+import kofre.dotted.Dotted
 import replication.JsoniterCodecs.*
 import org.scalacheck.Prop.*
 
@@ -11,6 +13,18 @@ import scala.collection.mutable
 
 class ORMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+
+  property("contains") {
+    given kofre.syntax.ReplicaId = kofre.syntax.ReplicaId.predefined("test")
+    given Bottom[Int] with
+      def empty = Int.MinValue
+    forAll{ (entries: List[Int]) =>
+      val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) {(curr, elem) => curr.update(elem, elem)}
+      orMap.entries.foreach{(k, v) =>
+        assert(orMap.contains(k))
+      }
+    }
+  }
 
   property("mutateKey/queryKey") {
     forAll { (add: List[Int], remove: List[Int], k: Int) =>

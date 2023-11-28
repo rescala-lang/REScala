@@ -36,7 +36,7 @@ object ObserveRemoveMap {
   implicit class syntax[C, K, V](container: C)
       extends OpsSyntaxHelper[C, ObserveRemoveMap[K, V]](container) {
 
-    def contains(using PermQuery)(k: K): Boolean = current.contains(k)
+    def contains(using PermQuery)(k: K): Boolean = current.inner.repr.contains(k)
 
     def queryKey[A](using PermQuery, Bottom[V])(k: K): V = {
       current.inner.repr.getOrElse(k, Bottom[V].empty)
