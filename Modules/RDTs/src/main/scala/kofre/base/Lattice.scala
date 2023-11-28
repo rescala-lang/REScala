@@ -12,8 +12,9 @@ trait Lattice[A] {
 
   /** By assumption: associative, commutative, idempotent.
     *
-    * For use with Delta CRDTs, this function should be optimized for the case
-    * that left >> right, i.e., that left is the current state and right the delta
+    * Implementation note: If it matters, assume that `left` is the current state and `right` is an added delta.
+    * All code should assume that `left` is the larger state (and optimize for this).
+    * If `left == right`, prefer to return `left`.
     */
   def merge(left: A, right: A): A
 
