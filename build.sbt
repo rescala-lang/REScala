@@ -3,6 +3,8 @@ val circeVersion = "0.14.4"
 lazy val root = (project in file("."))
   .settings(
     name := "lore",
+    organization := "de.tu-darmstadt.stg",
+    version := "0.2-SNAPSHOT",
     scalaVersion := "3.3.0",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
