@@ -31,15 +31,7 @@ object ReplicatedList {
 
   def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
 
-  given lattice[E]: Lattice[ReplicatedList[E]] =
-    new Lattice[ReplicatedList[E]] {
-      override def merge(left: ReplicatedList[E], right: ReplicatedList[E]): ReplicatedList[E] =
-        ReplicatedList(left.order merge right.order, left.meta merge right.meta)
-
-      override def decompose(a: ReplicatedList[E]): Iterable[ReplicatedList[E]] =
-        Iterable(a)
-
-    }
+  given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
       def dots: Dots = dotted.meta.dots
