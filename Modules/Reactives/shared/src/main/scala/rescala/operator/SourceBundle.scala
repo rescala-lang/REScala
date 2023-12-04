@@ -109,4 +109,31 @@ trait SourceBundle {
     }
   }
 
+  trait Lens[M, V] {
+    def toView(m: M): V
+    def toModel(v: V, m: M): M
+  }
+
+  trait BijectiveLens[M, V] extends Lens[M, V] {
+    def toView(m: M): V
+    def toModel(v: V): M
+    def toModel(v: V, m: M): M = toModel(v)
+  }
+
+  class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
+    def toView(m: A): A = num.plus(m, k)
+    def toModel(v: A): A = num.minus(v, k)
+  }
+
+  class LVar[A] private[rescala] (initialState: BundleState[Pulse[A]], name: ReInfo)
+    extends Var(initialState, name){}
+
+  object LVar {
+    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.empty)
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
+      ticket.createSource[Pulse[T], LVar[T]](change)(s => new LVar[T](s, ticket.info))
+    }
+  }
+
 }

@@ -28,9 +28,16 @@ object ConversionTest {
 
   def signalTest() = {
 
-    val a = Var(2)
-    val b = Var(3)
-    val c = Signal { a.value + b.value }
+    val a = LVar(2)
+    val b = LVar(3)
+
+    println(a.now)
+    println(b.now)
+
+    val c = Signal { a.value + b.value } // { a() + b() }
+    println(a.now)
+    println(b.now)
+    println(c.now)
 
     a.set(3)
     println(a.now)

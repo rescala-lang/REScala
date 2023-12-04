@@ -1,9 +1,8 @@
 package rescala.scheduler
 
-import rescala.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
-  Transaction
-}
+import rescala.core.{AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
+import rescala.structure.Pulse
+import rescala.operator.SignalBundle
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -63,11 +62,6 @@ trait TopoBundle {
       reactive.state.discovered = needsReevaluation
       reactive.state.dirty = needsReevaluation
       createdReactives :+= reactive
-
-      for (in <- incoming) {
-        println(in.state.value)
-        println(in.state.value)
-      }
 
       val predecessorsDone = incoming.forall(r => !r.state.discovered || r.state.done)
       // requires reev, any predecessor is dirty, but all discovered predecessors are already done
@@ -141,6 +135,14 @@ trait TopoBundle {
               val created = creation.drainCreated()
               Util.evaluateAll(created, transaction, afterCommitObservers).foreach(reset)
               assert(creation.drainCreated().isEmpty)
+
+              //Reset Vars
+              if (admissionResult.isInstanceOf[ReSource]) {
+                val resState = admissionResult.asInstanceOf[ReSource]
+                for (in <- resState.state.incoming) {
+                  in.state.value = Pulse.Value(0).asInstanceOf[in.Value]
+                }
+              }
 
               beforeCleanupHook(created ++ sorted ++ initialWrites, initialWrites)
 
