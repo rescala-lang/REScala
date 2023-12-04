@@ -11,7 +11,8 @@ lazy val loreDSL = project
     scalaVersion := scala3Version,
 
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
-    libraryDependencies ++= List(scala3Compiler)
+    libraryDependencies ++= List(scala3Compiler),
+    libraryDependencies += "de.tu-darmstadt.stg" %% "lore" % "0.2-SNAPSHOT"
   )
 
 lazy val additionExample = project.in(file("examples/addition"))

@@ -7,6 +7,8 @@ This is a scala 3 sbt project. To start, compile and publish the DSL plugin loca
 
 Afterward, you can try compiling the given examples (via e.g. `sbt foo/clean foo/compile`) to test the plugin.
 
+If you receive errors about the [LoRe](https://github.com/stg-tud/LoRe) dependency not being found, clone its repository and publish it locally (via `sbt publishLocal`), then resume above instructions.
+
 For more information on the sbt-dotty plugin, see the
 [scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
 
