@@ -29,7 +29,7 @@ object ConversionTest {
   def signalTest() = {
 
     val a = LVar(2)
-    val b = LVar(3)
+    val b = Var(3)
 
     println(a.now)
     println(b.now)
@@ -39,7 +39,7 @@ object ConversionTest {
     println(b.now)
     println(c.now)
 
-    a.set(3)
+    a.set(1)
     println(a.now)
     println(b.now)
     println(c.now)

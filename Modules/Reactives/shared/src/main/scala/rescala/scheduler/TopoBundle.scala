@@ -2,7 +2,7 @@ package rescala.scheduler
 
 import rescala.core.{AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction}
 import rescala.structure.Pulse
-import rescala.operator.SignalBundle
+import rescala.operator.SourceBundle
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -140,7 +140,9 @@ trait TopoBundle {
               if (admissionResult.isInstanceOf[ReSource]) {
                 val resState = admissionResult.asInstanceOf[ReSource]
                 for (in <- resState.state.incoming) {
-                  in.state.value = Pulse.Value(0).asInstanceOf[in.Value]
+                  if(in.isInstanceOf[SourceBundle#LVar[Any]]) {
+                    in.state.value = Pulse.Value(0).asInstanceOf[in.Value]
+                  }
                 }
               }
 
