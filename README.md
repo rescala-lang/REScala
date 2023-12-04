@@ -5,7 +5,7 @@
 
 This is a scala 3 sbt project. To start, compile and publish the DSL plugin locally via `sbt publishPluginLocal`. This is a custom command invoking the `clean`, `compile`, `package` and `publishLocal` commands successively. Once this is done, you can import the sbt project in your editor of choice.
 
-Afterward, you can try compiling the given examples (via e.g. `sbt foo/clean foo/compile`) to test the plugin.
+Afterward, you can try compiling the given examples (via e.g. `sbt additionExample/clean additionExample/compile`) to test the plugin.
 
 If you receive errors about the [LoRe](https://github.com/stg-tud/LoRe) dependency not being found, clone its repository and publish it locally (via `sbt publishLocal`), then resume above instructions.
 
