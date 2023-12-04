@@ -98,7 +98,7 @@ sealed trait Pulse[+P] {
       case NoChange       => throw new NoSuchElementException("Tried to access the value of a NoChange Pulse")
     }
 
-  def getOrElse[U >: P](default: U): U =
+  def getOrElse[U >: P](default: => U): U =
     this match {
       case Value(value) => value
       case _            => default

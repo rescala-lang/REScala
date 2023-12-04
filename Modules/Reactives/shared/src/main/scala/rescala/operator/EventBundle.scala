@@ -224,7 +224,7 @@ trait EventBundle extends FoldBundle {
       * @group conversion
       * @inheritdoc
       */
-    final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
+    final inline def fold[A](inline init: A)(inline op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
       Fold(init)(this act { v => op(current, v) })
 
   }
