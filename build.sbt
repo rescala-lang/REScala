@@ -1,17 +1,14 @@
-import Dependencies.*
-
-ThisBuild / version := "0.0.1-SNAPSHOT"
-ThisBuild / sbtPlugin := false
-ThisBuild / organization := "lore.dsl"
-
-lazy val loreDSL = project
+lazy val root = project
   .in(file("."))
   .settings(
     name := "lore-dsl",
-    scalaVersion := scala3Version,
+    organization := "de.tu-darmstadt.stud",
+    version := "0.0.1-SNAPSHOT",
+    scalaVersion := "3.3.1",
+    sbtPlugin := false,
 
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
-    libraryDependencies ++= List(scala3Compiler),
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.1" % "provided",
     libraryDependencies += "de.tu-darmstadt.stg" %% "lore" % "0.2-SNAPSHOT"
   )
 

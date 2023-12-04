@@ -1,4 +1,4 @@
-package lore.DSL
+package loreDSL
 
 class DSL:
 
