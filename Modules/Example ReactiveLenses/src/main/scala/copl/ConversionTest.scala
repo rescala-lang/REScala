@@ -34,7 +34,7 @@ object ConversionTest {
     println(a.now)
     println(b.now)
 
-    val c = Signal { a.value + b.value } // { a() + b() }
+    val c: toposort.Signal[Int] = Signal { a.value + b.value } // { a() + b() }
     println(a.now)
     println(b.now)
     println(c.now)
