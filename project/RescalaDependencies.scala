@@ -49,10 +49,10 @@ object RescalaDependencies {
     Seq(
       scalaSwing,
       libraryDependencies ++= Seq(
-        "org.scalafx" %% "scalafx" % "20.0.0-R31",
+        "org.scalafx" %% "scalafx" % "21.0.0-R32",
       ),
       libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-        "org.openjfx" % s"javafx-$m" % "20" classifier osName
+        "org.openjfx" % s"javafx-$m" % "21.0.1" classifier osName
       )
     )
   }
