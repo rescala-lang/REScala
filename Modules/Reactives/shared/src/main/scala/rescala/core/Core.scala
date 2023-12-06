@@ -1,7 +1,8 @@
 package rescala.core
 
 import rescala.structure.RExceptions
-import scala.annotation.{implicitNotFound}
+
+import scala.annotation.implicitNotFound
 import scala.util.DynamicVariable
 
 /** Source of (reactive) values. */

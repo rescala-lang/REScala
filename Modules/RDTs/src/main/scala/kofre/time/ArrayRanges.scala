@@ -37,19 +37,19 @@ class ArrayRanges(
   }.mkString("[", ", ", "]")
 
   def disjunct(right: ArrayRanges): Boolean = {
-    if (isEmpty) return true
-    if (right.isEmpty) return true
+    if this.isEmpty then return true
+    if right.isEmpty then return true
 
     var leftIndex  = 0
     var rightIndex = 0
 
-    while (leftIndex < used && rightIndex < right.used) {
-      val leftLower  = inner(leftIndex)
-      val leftUpper  = inner(leftIndex + 1)
+    while (leftIndex < this.used && rightIndex < right.used) {
+      val leftLower  = this.inner(leftIndex)
+      val leftUpper  = this.inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
       val rightUpper = right.inner(rightIndex + 1)
 
-      if (leftLower >= rightUpper) rightIndex += 2
+      if leftLower >= rightUpper then rightIndex += 2
       else if rightLower >= leftUpper then leftIndex += 2
       else return false
     }
@@ -81,14 +81,16 @@ class ArrayRanges(
   }
 
   def contains(x: Time): Boolean = {
-    val res = java.util.Arrays.binarySearch(inner.asInstanceOf[Array[Time]], 0, used, x)
-    val pos = if res < 0 then -res - 1 else res
-    if pos >= used then false
-    else if pos % 2 == 0
+    val index =
+      // binary search returns either the index of x, or the position where x should be inserted (but shifted into negative numbers)
+      val res = java.util.Arrays.binarySearch(inner, 0, used, x)
+      if res < 0 then -res - 1 else res
+    if index >= used then false
+    else if index % 2 == 0
       // found a start
-    then inner(pos) == x
+    then inner(index) == x
     // found an end
-    else x < inner(pos)
+    else x < inner(index)
   }
 
   def isEmpty: Boolean = used == 0
@@ -99,8 +101,9 @@ class ArrayRanges(
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
   def iterator: Iterator[Time] = new Iterator[Time] {
-    var pos                       = 0
-    var value                     = if used == 0 then 0 else inner(0)
+    var pos   = 0
+    var value = if used == 0 then 0 else inner(0)
+
     override def hasNext: Boolean = used > pos
     override def next(): Time =
       val res = value
@@ -157,7 +160,7 @@ class ArrayRanges(
       write(minEnd)
     end findNextRange
 
-    while (rok || lok) do findNextRange()
+    while rok || lok do findNextRange()
 
     new ArrayRanges(merged, mergedPos)
 
