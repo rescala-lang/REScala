@@ -1,8 +1,6 @@
 package rescala.operator
 
-import rescala.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
-}
+import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
 import rescala.structure.Pulse
 
 trait SourceBundle {
@@ -109,6 +107,38 @@ trait SourceBundle {
     }
   }
 
+  class LVar[M] private[rescala](initialState: BundleState[Pulse[M]], name: ReInfo, model : Var[M], lens: Lens[M, M])
+    extends Var(initialState, name) {
+
+    override def set(value : M)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
+      model.set(lens.toModel(value, this.now))
+    }
+
+    def applyLens(lens: Lens[M, M])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[State]): LVar[M] = {
+      ticket.createSource[Pulse[M], LVar[M]](Pulse.Value(lens.toView(this.now)))(s => new LVar[M](s, ticket.info, this, lens))
+//      val (inputs, fun, isStatic) =
+//        rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true](expr)
+//      ticket.create[Pulse[M], SignalImpl[BundleState, M] with Signal[M]](
+//        inputs.toSet,
+//        Pulse.empty,
+//        needsReevaluation = true
+//      ) {
+//        state => new SignalImpl(state, (t, _) => expr(t), ct.info, None) with Signal[T]
+//      }
+    }
+
+  }
+
+  object LVar {
+    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.Value(initval))
+
+    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.empty)
+
+    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
+      ticket.createSource[Pulse[T], LVar[T]](change)(s => new LVar[T](s, ticket.info, new Var[T](s, ticket.info), new NeutralLens[T]()))
+    }
+  }
+
   trait Lens[M, V] {
     def toView(m: M): V
     def toModel(v: V, m: M): M
@@ -125,15 +155,11 @@ trait SourceBundle {
     def toModel(v: A): A = num.minus(v, k)
   }
 
-  class LVar[A] private[rescala] (initialState: BundleState[Pulse[A]], name: ReInfo)
-    extends Var(initialState, name){}
+  class NeutralLens[A] extends BijectiveLens[A, A] {
+    def toView(m: A): A = m
 
-  object LVar {
-    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.Value(initval))
-    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.empty)
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-      ticket.createSource[Pulse[T], LVar[T]](change)(s => new LVar[T](s, ticket.info))
-    }
+    def toModel(v: A): A = v
   }
+
 
 }

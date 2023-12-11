@@ -136,15 +136,15 @@ trait TopoBundle {
               Util.evaluateAll(created, transaction, afterCommitObservers).foreach(reset)
               assert(creation.drainCreated().isEmpty)
 
-              //Reset Vars
-              if (admissionResult.isInstanceOf[ReSource]) {
-                val resState = admissionResult.asInstanceOf[ReSource]
-                for (in <- resState.state.incoming) {
-                  if(in.isInstanceOf[SourceBundle#LVar[Any]]) {
-                    in.state.value = Pulse.Value(0).asInstanceOf[in.Value]
-                  }
-                }
-              }
+//              //Reset Vars
+//              if (admissionResult.isInstanceOf[ReSource]) {
+//                val resState = admissionResult.asInstanceOf[ReSource]
+//                for (in <- resState.state.incoming) {
+//                  if(in.isInstanceOf[SourceBundle#LVar[Any]]) {
+//                    in.state.value = Pulse.Value(0).asInstanceOf[in.Value]
+//                  }
+//                }
+//              }
 
               beforeCleanupHook(created ++ sorted ++ initialWrites, initialWrites)
 
