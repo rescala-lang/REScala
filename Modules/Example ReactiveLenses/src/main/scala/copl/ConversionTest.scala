@@ -28,32 +28,27 @@ object ConversionTest {
 
   def signalTest() = {
 
+    println("Init Vars")
     val a = LVar(2)
-//    val b = Var(3)
-//
-//    println(a.now)
-//    println(b.now)
-//
-//    val c: toposort.Signal[Int] = Signal { a.value + b.value } // { a() + b() }
-//    println(a.now)
-//    println(b.now)
-//    println(c.now)
-//
-//    a.set(1)
-//    println(a.now)
-//    println(b.now)
-//    println(c.now)
-
-    println("Starting Lens Tests")
-    val d = a.applyLens(new AddLens(10))
+    val b = a.applyLens(new AddLens(10))
+    val c = a.applyLens(new AddLens(-1))
+    //val c = a.applyLens(new CharCountLens())
     println(a.now)
-    println(d.now)
-    d.set(20)
-    println(a.now)
-//    println(b.now)
-//    println(c.now)
-    println(d.now)
+    println(b.now)
+    println(c.now)
 
+    println("Changing b")
+    b.set(0)
+    println(a.now)
+    println(b.now)
+    println(c.now)
+
+    println("Changing c")
+    //c.set("abc")
+    c.set(5)
+    println(a.now)
+    println(b.now)
+    println(c.now)
   }
 
   def getOneWayConverter() = {

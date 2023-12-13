@@ -1,7 +1,9 @@
 package rescala.operator
 
 import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
-import rescala.structure.Pulse
+import rescala.structure.{Pulse, SignalImpl}
+
+import scala.util.Random
 
 trait SourceBundle {
   self: Operators =>
@@ -107,36 +109,42 @@ trait SourceBundle {
     }
   }
 
-  class LVar[M] private[rescala](initialState: BundleState[Pulse[M]], name: ReInfo, model : Var[M], lens: Lens[M, M])
-    extends Var(initialState, name) {
+  class LVar[M] private[rescala](model : LVar[M], lens: BijectiveLens[M, M], internal : Signal[M]) {
 
-    override def set(value : M)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
-      model.set(lens.toModel(value, this.now))
+    def set(value: M)(implicit sched: Scheduler[internal.State]): Unit = {
+      model.set(lens.toModel(value))
     }
 
-    def applyLens(lens: Lens[M, M])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[State]): LVar[M] = {
-      ticket.createSource[Pulse[M], LVar[M]](Pulse.Value(lens.toView(this.now)))(s => new LVar[M](s, ticket.info, this, lens))
-//      val (inputs, fun, isStatic) =
-//        rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true](expr)
-//      ticket.create[Pulse[M], SignalImpl[BundleState, M] with Signal[M]](
-//        inputs.toSet,
-//        Pulse.empty,
-//        needsReevaluation = true
-//      ) {
-//        state => new SignalImpl(state, (t, _) => expr(t), ct.info, None) with Signal[T]
-//      }
+    def applyLens(lens : BijectiveLens[M, M])(implicit ticket: CreationTicket[BundleState]) : LVar[M] = {
+      new LVar[M](this, lens, Signal{lens.toView(internal.value)})
+    }
+
+    def now(implicit sched: Scheduler[internal.State]) : M = internal.now
+
+    //How to make value accessible to the outside?
+    //def value(implicit sched: Scheduler[internal.State]) : M = internal.value
+
+  }
+
+  class RootLVar[M] private[rescala](internal: Var[M])
+    extends LVar[M] (null, null, internal) {
+
+    override def set(value: M)(implicit sched: Scheduler[internal.State]): Unit = {
+      internal.set(value)
     }
 
   }
 
   object LVar {
-    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.Value(initval))
 
-    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.empty)
-
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-      ticket.createSource[Pulse[T], LVar[T]](change)(s => new LVar[T](s, ticket.info, new Var[T](s, ticket.info), new NeutralLens[T]()))
+    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
+      new RootLVar[T](Var(initval))
     }
+
+    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = {
+      new RootLVar[T](Var.empty)
+    }
+
   }
 
   trait Lens[M, V] {
@@ -155,11 +163,10 @@ trait SourceBundle {
     def toModel(v: A): A = num.minus(v, k)
   }
 
-  class NeutralLens[A] extends BijectiveLens[A, A] {
-    def toView(m: A): A = m
-
-    def toModel(v: A): A = v
+  class CharCountLens extends BijectiveLens[Int, String] {
+    // Lens that converts an int to a sequence of chars, eg. 5 => "aaaaa"
+    def toView(m: Int): String = Random.alphanumeric.take(m).mkString
+    def toModel(v: String): Int = v.length
   }
-
 
 }
