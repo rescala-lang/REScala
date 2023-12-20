@@ -109,14 +109,14 @@ trait SourceBundle {
     }
   }
 
-  class LVar[M] private[rescala](model : LVar[M], lens: BijectiveLens[M, M], internal : Signal[M]) {
+  class LVar[M] private[rescala](model : LVar[_], lens: BijectiveLens[_ , M], internal : Signal[M]) {
 
     def set(value: M)(implicit sched: Scheduler[internal.State]): Unit = {
       model.set(lens.toModel(value))
     }
 
-    def applyLens(lens : BijectiveLens[M, M])(implicit ticket: CreationTicket[BundleState]) : LVar[M] = {
-      new LVar[M](this, lens, Signal{lens.toView(internal.value)})
+    def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]) : LVar[V] = {
+      new LVar[V](this, lens, Signal{lens.toView(internal.value)})
     }
 
     def now(implicit sched: Scheduler[internal.State]) : M = internal.now

@@ -99,6 +99,24 @@ object ConversionTest {
     div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
   }
 
+  def toStringConverter() = {
+
+    val intVar = LVar(0)
+    val strVar = celsiusVar.applyLens(new CharCountLens())
+
+    val intInput: TypedTag[Input] = input(value := intVar.now)
+    val (intEvent: Event[String], renderedInt: Input) = RenderUtil.inputFieldHandler(intInput, oninput, clear = false)
+
+    val strInput: TypedTag[Input] = input(value := strVar.now)
+    val (strEvent: Event[String], renderedStr: Input) = RenderUtil.inputFieldHandler(strInput, oninput, clear = false)
+
+    intEvent.observe { str => intVar.set(str.toDouble); renderedStr.value = strVar.now }
+    strEvent.observe { str => strVar.set(str.toDouble); renderedInt.value = celsiusVar.now.toString }
+
+    div(p("Unit Conversion with Lenses :D"), renderedInt, renderedStr)
+  }
+  
+
   def convertMeterToYard(meter : Option[Double]): Option[Double] = {
     if(meter.isEmpty)
       Option.empty[Double]
