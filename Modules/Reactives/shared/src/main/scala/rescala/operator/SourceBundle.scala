@@ -109,8 +109,8 @@ trait SourceBundle {
     }
   }
 
-  class LVar[M] private[rescala](model : LVar[_], lens: BijectiveLens[_ , M], internal : Signal[M]) {
-
+  class LVar[M] private[rescala](model : LVar[?], lens: BijectiveLens[model.T , M], internal : Signal[M]) {
+    type T = M
     def set(value: M)(implicit sched: Scheduler[internal.State]): Unit = {
       model.set(lens.toModel(value))
     }
@@ -122,9 +122,49 @@ trait SourceBundle {
     def now(implicit sched: Scheduler[internal.State]) : M = internal.now
 
     //How to make value accessible to the outside?
-    //def value(implicit sched: Scheduler[internal.State]) : M = internal.value
+    inline def value(implicit sched: Scheduler[internal.State]) : M = internal.value
 
   }
+
+
+//  class LVar[M] private[rescala](model : LVar[_], lens: BijectiveLens[_ , M], initialState: BundleState[Pulse[M]], name: ReInfo)
+//    extends Var[M](initialState, name){
+//    def applyLens[V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]): LVar[V] = {
+//      val expr = lens.toView(value)
+//      val (sources, fun, isStatic) =
+//      rescala.macros.getDependencies[V, ReSource.of[BundleState], rescala.core.DynamicTicket[BundleState], false](
+//        expr
+//      )
+//      ticket.create[Pulse[V], SignalImpl[BundleState, V] with Signal[V]](
+//        sources.toSet,
+//        Pulse.empty,
+//        needsReevaluation = true
+//      ) {
+//        state => new SignalImpl(state, (t, _) => fun(t), ticket.info, None) with Signal[V]
+//      }
+//    }
+//
+//    override def set(value: M)(implicit sched: Scheduler[State]): Unit = {
+//      if (model == null){
+//        super.set(value)
+//      } else {
+//        model.set(lens.toModel(value))
+//      }
+//    }
+//
+//  }
+
+//  object LVar {
+//
+//    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.Value(initval))
+//
+//    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = fromChange(Pulse.empty)
+//
+//    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
+//      ticket.createSource[Pulse[T], LVar[T]](change)(s => new LVar[T](null, null, s, ticket.info))
+//    }
+//
+//  }
 
   class RootLVar[M] private[rescala](internal: Var[M])
     extends LVar[M] (null, null, internal) {
