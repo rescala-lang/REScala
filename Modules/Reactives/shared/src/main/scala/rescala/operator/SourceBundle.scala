@@ -1,7 +1,7 @@
 package rescala.operator
 
 import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
-import rescala.structure.{Pulse, SignalImpl}
+import rescala.structure.Pulse
 
 import scala.util.Random
 
@@ -169,4 +169,10 @@ trait SourceBundle {
     def toModel(v: String): Int = v.length
   }
 
+  class UpperCharLens extends BijectiveLens[String, String]{
+    //shift up a char's letters to all caps
+    //würde aber eh noch so "if-checks" benötigen, dass man vorher überprüft obs schon upperCase ist or not
+    def toView(m: String): String = m.toUpperCase()
+    def toModel(v: String): String = v.toLowerCase()
+  }
 }

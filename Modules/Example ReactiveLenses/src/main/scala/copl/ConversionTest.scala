@@ -20,14 +20,16 @@ object ConversionTest {
   def run(): Unit = main(Array.empty[String])
 
   def main(args: Array[String]): Unit = {
-    signalTest()
-    //val oneWayConverter = getOneWayConverter()
-    //document.body.replaceChild(oneWayConverter.render, document.body.firstChild)
-    //()
+    //signalTest()
+    val temperatureConverter = getTemperatureConverter()
+    document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
+    ()
   }
+
 
   def signalTest() = {
 
+    /**
     println("Init Vars")
     val a = LVar(2)
     val b = a.applyLens(new AddLens(10))
@@ -49,6 +51,23 @@ object ConversionTest {
     println(a.now)
     println(b.now)
     println(c.now)
+    **/
+
+    //val g = LVar(5)
+    //val h = g.applyLens(new CharCountLens())
+    //println(g.now)
+    //println(h.now)
+
+    /**
+    val x = LVar("kaesekuchen")
+    val y = x.applyLens(new UpperCharLens() )
+    println(x.now)
+    println(y.now)
+    y.set("APFELMUS")
+    println(x.now)
+    println(y.now)
+    **/
+
   }
 
   def getOneWayConverter() = {
@@ -61,6 +80,23 @@ object ConversionTest {
     val yardParagraph: Signal[TypedTag[Paragraph]] = yardSignal.map { yard => p(if (yard.isEmpty) "Please enter a valid value for meters." else yard.get.toString)}
 
     div(p("One way conversion using Signal"), renderedMeter, yardParagraph.asModifier)
+  }
+
+  def getTemperatureConverter() = {
+
+    val celsiusVar = LVar(0.0)
+    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15))
+
+    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
+    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
+
+    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
+    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
+
+    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
+    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
+    
+    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
   }
 
   def convertMeterToYard(meter : Option[Double]): Option[Double] = {
