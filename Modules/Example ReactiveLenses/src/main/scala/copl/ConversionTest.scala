@@ -1,5 +1,6 @@
 package copl
 
+import jdk.vm.ci.hotspot.HotSpotJVMCICompilerFactory.CompilationLevel
 import org.scalajs.dom.html.{Input, Paragraph}
 import org.scalajs.dom.document
 import rescala.extra.Tags
@@ -20,53 +21,48 @@ object ConversionTest {
   def run(): Unit = main(Array.empty[String])
 
   def main(args: Array[String]): Unit = {
-    //signalTest()
-    val temperatureConverter = toStringConverter()
-    document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
+    signalTest()
+//    val temperatureConverter = getTemperatureConverter()
+//    document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
     ()
   }
 
 
   def signalTest() = {
 
-    /**
-    println("Init Vars")
+    val evA: toposort.Evt[Int] = Evt[Int]()
+    val evB: toposort.Evt[Int] = Evt[Int]()
+    val evC: toposort.Evt[Int] = Evt[Int]()
     val a = LVar(2)
     val b = a.applyLens(new AddLens(10))
     val c = a.applyLens(new AddLens(-1))
-    //val c = a.applyLens(new CharCountLens())
+    a.observe(evA)
+    b.observe(evB)
+    c.observe(evC)
+    a.getEvent().observe{value => println("Value of a changed to " + value)}
+
+    println("Init Vars")
+    println(a.now)
+    println(b.now)
+    println(c.now)
+
+    println("Changing a")
+    evA.fire(0)
     println(a.now)
     println(b.now)
     println(c.now)
 
     println("Changing b")
-    b.set(0)
+    evB.fire(0)
     println(a.now)
     println(b.now)
     println(c.now)
 
     println("Changing c")
-    //c.set("abc")
-    c.set(5)
+    evC.fire(5)
     println(a.now)
     println(b.now)
     println(c.now)
-    **/
-
-    //val g = LVar(5)
-    //val h = g.applyLens(new CharCountLens())
-    //println(g.now)
-    //println(h.now)
-
-    /**
-    val x = LVar("kaesekuchen")
-    val y = x.applyLens(new UpperCharLens() )
-    println(x.now)
-    println(y.now)
-    y.set("APFELMUS")
-    println(x.now)
-    println(y.now)
-    **/
 
   }
 
@@ -93,10 +89,15 @@ object ConversionTest {
     val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
     val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
 
-    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
-    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
+//    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
+//    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
 
-    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
+    celsiusVar.observe(celsiusEvent.map { str => str.toDouble })
+    kelvinVar.observe(kelvinEvent.map { str => str.toDouble })
+
+    val isFreezing: Signal[TypedTag[Paragraph]] = Signal.dynamic{p(if (celsiusVar.value > 0) "It's not freezing." else "Brrr its so cold.")}
+
+    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin, isFreezing.asModifier)
   }
 
 
@@ -111,8 +112,8 @@ object ConversionTest {
     val strInput: TypedTag[Input] = input(value := strVar.now)
     val (strEvent: Event[String], renderedStr: Input) = RenderUtil.inputFieldHandler(strInput, oninput, clear = false)
 
-    intEvent.observe { str => intVar.set(str.toInt); renderedStr.value = strVar.now }
-    strEvent.observe { str => strVar.set(str); renderedInt.value = intVar.now.toString }
+//    intEvent.observe { str => intVar.set(str.toInt); renderedStr.value = strVar.now }
+//    strEvent.observe { str => strVar.set(str); renderedInt.value = intVar.now.toString }
 
     div(p("Unit Conversion with Lenses :D"), renderedInt, renderedStr)
   }
