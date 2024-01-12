@@ -1,8 +1,7 @@
 package copl
 
-import jdk.vm.ci.hotspot.HotSpotJVMCICompilerFactory.CompilationLevel
 import org.scalajs.dom.html.{Input, Paragraph}
-import org.scalajs.dom.document
+//import org.scalajs.dom.document
 import rescala.extra.Tags
 import rescala.interfaces.toposort
 import rescala.interfaces.toposort.*

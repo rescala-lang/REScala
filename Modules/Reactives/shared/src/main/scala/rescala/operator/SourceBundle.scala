@@ -114,7 +114,7 @@ trait SourceBundle {
     type T = M
 
     def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]) : LVar[V] = {
-      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, ListBuffer.empty[Event[V]])
+      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, ListBuffer[Event[V]](Evt[V]()))
       events += newVar.getEvent().map(e => lens.toModel(e))
       return newVar
     }
@@ -140,7 +140,7 @@ trait SourceBundle {
   object LVar {
 
     def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-      val events = ListBuffer.empty[Event[T]]
+      val events = ListBuffer[Event[T]](Evt[T]())
       new LVar[T](events.reduce { (a, b) => a || b }.hold(init = initval), events)
     }
 
