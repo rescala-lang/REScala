@@ -40,6 +40,8 @@ object ConversionTest {
     b.observe(evB)
     c.observe(evC)
     a.getEvent().observe{value => println("Value of a changed to " + value)}
+    b.getEvent().observe{value => println("Value of b changed to " + value)}
+    c.getEvent().observe{value => println("Value of c changed to " + value)}
 
     println("Init Vars")
     println(a.now)

@@ -4,6 +4,7 @@ import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Obser
 import rescala.structure.Pulse
 
 import scala.util.Random
+import scala.collection.mutable.ListBuffer
 
 trait SourceBundle {
   self: Operators =>
@@ -109,20 +110,20 @@ trait SourceBundle {
     }
   }
 
-  class LVar[M] private[rescala](internal : Signal[M], var event : Event[M]) {
+  class LVar[M] private[rescala](internal : Signal[M], events : ListBuffer[Event[M]]) {
     type T = M
 
     def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]) : LVar[V] = {
-      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, Evt[V]())
-      event = event.||(newVar.getEvent().map(e => lens.toModel(e)))
+      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, ListBuffer.empty[Event[V]])
+      events += newVar.getEvent().map(e => lens.toModel(e))
       return newVar
     }
 
     def observe(e: Event[M])(implicit ticket: CreationTicket[BundleState]) : Unit = {
-      event = event.||(e)
+      events += e
     }
 
-    def getEvent() : Event[M] = event
+    def getEvent() (implicit ticket: CreationTicket[BundleState]) : Event[M] = events.reduce { (a, b) => a || b }
 
     def now(implicit sched: Scheduler[internal.State]) : M = internal.now
 
@@ -131,15 +132,16 @@ trait SourceBundle {
 
   }
 
-  class RootLVar[M] private[rescala](initVal : M, var event: Event[M]) (implicit ticket: CreationTicket[BundleState])
-    extends LVar[M] (event.hold(init = initVal), event) {
-
-  }
+//  class RootLVar[M] private[rescala](initVal : M, var event: Event[M]) (implicit ticket: CreationTicket[BundleState])
+//    extends LVar[M] (event.hold(init = initVal), event) {
+//
+//  }
 
   object LVar {
 
     def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-      new RootLVar[T](initval, Evt[T]())
+      val events = ListBuffer.empty[Event[T]]
+      new LVar[T](events.reduce { (a, b) => a || b }.hold(init = initval), events)
     }
 
 //    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = {
