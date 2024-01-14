@@ -83,7 +83,7 @@ object Settings {
   }
 
   val commonScalacOptions =
-    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile) ++ unusedWarnings(Compile / compile)
+    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
 
   // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
   val jsAcceptUnfairGlobalTasks =

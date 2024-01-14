@@ -2,7 +2,7 @@
  * and may contain unused dependencies */
 
 // scalajs 1.0
-addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.14.0")
+addSbtPlugin("org.scala-js"            % "sbt-scalajs"              % "1.15.0")
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"
 
 // scalanative
@@ -20,5 +20,5 @@ addSbtPlugin("com.eed3si9n"   % "sbt-buildinfo" % "0.11.0")
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
 
 // tooling
-addSbtPlugin("pl.project13.scala"          % "sbt-jmh"       % "0.4.6")
+addSbtPlugin("pl.project13.scala"          % "sbt-jmh"       % "0.4.7")
 addSbtPlugin("org.scalablytyped.converter" % "sbt-converter" % "1.0.0-beta43")

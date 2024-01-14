@@ -9,7 +9,7 @@ object Dependencies {
 
   def directories   = libraryDependencies += "dev.dirs"                     % "directories"      % "26"
   def jol           = libraryDependencies += "org.openjdk.jol"              % "jol-core"         % "0.17"
-  def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.16.2"
+  def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.17.2"
   def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.0-M10" % Test
   def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.0.0-M10" % Test
   def okHttp        = libraryDependencies += "com.squareup.okhttp3"         % "okhttp"           % "4.10.0"
@@ -17,18 +17,18 @@ object Dependencies {
   def quicklens     = libraryDependencies += "com.softwaremill.quicklens" %%% "quicklens"        % "1.9.0"
   def scalacheck    = libraryDependencies += "org.scalacheck"             %%% "scalacheck"       % "1.17.0"    % Test
   def scalaJavaTime = libraryDependencies += "io.github.cquiroz"          %%% "scala-java-time"  % "2.3.0"
-  def scalajsDom    = libraryDependencies += "org.scala-js"               %%% "scalajs-dom"      % "2.6.0"
+  def scalajsDom    = libraryDependencies += "org.scala-js"               %%% "scalajs-dom"      % "2.8.0"
   def scalatags     = libraryDependencies += "com.lihaoyi"                %%% "scalatags"        % "0.12.0"
   def scribe        = libraryDependencies += "com.outr"                   %%% "scribe"           % "3.10.7"
   def scribeSlf4j   = libraryDependencies += "com.outr"                    %% "scribe-slf4j"     % "3.10.7"
   def scribeSlf4j2  = libraryDependencies += "com.outr"                    %% "scribe-slf4j2"    % "3.10.7"
   def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.3.1"
   def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.44.1.0"
-  def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.3"
+  def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.4"
   def jsoniterScala =
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.25.0",
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.25.0" % "provided"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.27.3",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.27.3" % "provided"
     )
 
   object slips {
@@ -37,7 +37,7 @@ object Dependencies {
     def logging = libraryDependencies += "de.rmgk.slips" %%% "logging" % "0.5.0"
     def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.7.0"
     def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.5.0"
-    def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.7.0"
+    def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.8.0"
   }
 
   object loci {

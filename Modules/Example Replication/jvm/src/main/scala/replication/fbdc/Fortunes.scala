@@ -1,12 +1,12 @@
 package replication.fbdc
 
-import de.rmgk.script.syntax
+import de.rmgk.script.{process, runOutput}
 import kofre.datatypes.LastWriterWins
 
 object Fortunes {
 
   def enableConditional(exampleData: FbdcExampleData) = {
-    if process"which fortune".scriptStart().waitFor() == 0
+    if process"which fortune".inheritIO().start().waitFor() == 0
     then
       println(s"enabling fortunes")
       enableFortuneProcessing(exampleData)
@@ -33,6 +33,6 @@ object Fortunes {
     }
 
   def processFortune(r: Req.Fortune) =
-    Res.Fortune(r, process"fortune".run())
+    Res.Fortune(r, process"fortune".runOutput())
 
 }
