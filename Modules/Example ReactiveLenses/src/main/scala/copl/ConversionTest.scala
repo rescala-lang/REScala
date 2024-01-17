@@ -1,6 +1,6 @@
 package copl
 
-import org.scalajs.dom.html.{Input, Paragraph}
+import org.scalajs.dom.html.Input
 import org.scalajs.dom.document
 import rescala.extra.Tags
 import rescala.interfaces.toposort
@@ -12,7 +12,7 @@ import scalatags.JsDom.TypedTag
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object TopoTags extends Tags[rescala.interfaces.toposort.type](rescala.interfaces.toposort, true)
-import TopoTags.*
+//import TopoTags.*
 
 object ConversionTest {
 
@@ -21,7 +21,7 @@ object ConversionTest {
 
   def main(args: Array[String]): Unit = {
     //signalTest()
-    val temperatureConverter = toStringConverter()
+    val temperatureConverter = testSignalLens()
     document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
     ()
   }
@@ -70,35 +70,56 @@ object ConversionTest {
 
   }
 
-  def getOneWayConverter() = {
+//  def getOneWayConverter() = {
+//
+//    val meterInput: TypedTag[Input] = input(placeholder := "Meters")
+//    val (meterEvent: Event[String], renderedMeter: Input) = RenderUtil.inputFieldHandler(meterInput, oninput, clear = false)
+//
+//    val yardSignal: Signal[Option[Double]] = meterEvent.hold(init="Please enter a valid value for meters.").map { str => convertMeterToYard(str.toDoubleOption)}
+//
+//    val yardParagraph: Signal[TypedTag[Paragraph]] = yardSignal.map { yard => p(if (yard.isEmpty) "Please enter a valid value for meters." else yard.get.toString)}
+//
+//    div(p("One way conversion using Signal"), renderedMeter, yardParagraph.asModifier)
+//  }
 
-    val meterInput: TypedTag[Input] = input(placeholder := "Meters")
-    val (meterEvent: Event[String], renderedMeter: Input) = RenderUtil.inputFieldHandler(meterInput, oninput, clear = false)
+//  def getTemperatureConverter() = {
+//
+//    val celsiusVar = LVar(0.0)
+//    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15))
+//
+//    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
+//    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
+//
+//    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
+//    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
+//
+//    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
+//    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
+//
+//    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
+//  }
 
-    val yardSignal: Signal[Option[Double]] = meterEvent.hold(init="Please enter a valid value for meters.").map { str => convertMeterToYard(str.toDoubleOption)}
+  def testSignalLens() = {
+    val leftVar = LVar(0.0)
+    val summand = Var{3.0}
+    val lensSig = Signal{ new AddLens(summand.value) }
+    val rightVar = leftVar.applyLens(new BijectiveSigLens(lensSig))
 
-    val yardParagraph: Signal[TypedTag[Paragraph]] = yardSignal.map { yard => p(if (yard.isEmpty) "Please enter a valid value for meters." else yard.get.toString)}
+    val leftInput: TypedTag[Input] = input(value := leftVar.now)
+    val (leftEvent: Event[String], renderedLeft: Input) = RenderUtil.inputFieldHandler(leftInput, oninput, clear = false)
 
-    div(p("One way conversion using Signal"), renderedMeter, yardParagraph.asModifier)
+    val sigInput: TypedTag[Input] = input(value := summand.now)
+    val (sigEvent: Event[String], renderedSig: Input) = RenderUtil.inputFieldHandler(sigInput, oninput, clear = false)
+
+    val rightInput: TypedTag[Input] = input(value := rightVar.now)
+    val (rightEvent: Event[String], renderedRight: Input) = RenderUtil.inputFieldHandler(rightInput, oninput, clear = false)
+
+    leftEvent.observe { str => leftVar.set(str.toDouble);renderedSig.value = summand.now.toString; renderedRight.value = rightVar.now.toString }
+    sigEvent.observe { str => summand.set(str.toDouble); renderedRight.value = rightVar.now.toString;  renderedLeft.value = leftVar.now.toString }
+    rightEvent.observe { str => rightVar.set(str.toDouble); renderedSig.value = summand.now.toString; renderedLeft.value = leftVar.now.toString }
+
+    div(p("Unit Conversion with Lenses :D"), renderedLeft, renderedSig, renderedRight)
   }
-
-  def getTemperatureConverter() = {
-
-    val celsiusVar = LVar(0.0)
-    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15))
-
-    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
-    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
-
-    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
-    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
-
-    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
-    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
-
-    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
-  }
-
 
   def toStringConverter() = {
 
@@ -116,13 +137,13 @@ object ConversionTest {
 
     div(p("Unit Conversion with Lenses :D"), renderedInt, renderedStr)
   }
-
-
-  def convertMeterToYard(meter : Option[Double]): Option[Double] = {
-    if(meter.isEmpty)
-      Option.empty[Double]
-    else
-      Option[Double](meter.get * 0.9144)
-  }
+//
+//
+//  def convertMeterToYard(meter : Option[Double]): Option[Double] = {
+//    if(meter.isEmpty)
+//      Option.empty[Double]
+//    else
+//      Option[Double](meter.get * 0.9144)
+//  }
 
 }
