@@ -4,26 +4,26 @@ import lore.DSL.*
 
 object additionExample:
   @main def main: Unit =
-    val a: Source[Int] = Source(0)
-    val b: Derived[Int] = Derived { a() + a() }
-    val add10 = Interaction[Int, Int]
-      .requires((curr, _) => curr < 20)
-      .modifies(a)
-      .executes((curr, _) => curr + 10)
+    val firstRealVariable: Source[Int] = Source(0)
+//    val secondRealVariable: Derived[Int] = Derived { firstRealVariable() + firstRealVariable() }
+//    val add10 = Interaction[Int, Int]
 //      .requires((curr, _) => curr < 20)
-//      .modifies(a)
+//      .modifies(firstRealVariable)
+//      .executes((curr, _) => curr + 10)
+//      .requires((curr, _) => curr < 20)
+//      .modifies(firstRealVariable)
 //      .requires(() => false)
 //      .executes((curr) => curr + 10)
 
-    println(s"a: ${a.now}, b: ${b.now}")
+//    println(s"firstRealVariable: ${firstRealVariable.now}, secondRealVariable: ${secondRealVariable.now}")
 
-    add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
+//    add10(0)
+//    println(s"firstRealVariable: ${firstRealVariable.now}, secondRealVariable: ${secondRealVariable.now}")
 
-    add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
+//    add10(0)
+//    println(s"firstRealVariable: ${firstRealVariable.now}, secondRealVariable: ${secondRealVariable.now}")
 
-    add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
+//    add10(0)
+//    println(s"firstRealVariable: ${firstRealVariable.now}, b: ${b.now}")
   end main
 end additionExample
