@@ -112,21 +112,17 @@ trait SourceBundle {
 
   class LVar[M] private[rescala](model : LVar[?], lens: BijectiveSigLens[model.T, M], internal : Signal[M]) {
     type T = M
-    
+
     def set(value: M)(implicit sched: Scheduler[internal.State]): Unit = {
       model.set(lens.toModel(value))
     }
 
     def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState]): LVar[V] = {
-      new LVar[V](this, lens, Signal.dynamic {
-        lens.toView(internal.value).value
-      })
+      new LVar[V](this, lens, Signal.dynamic{lens.toView(internal.value).value})
     }
 
-    def applyLens[V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]): LVar[V] = {
-      new LVar[V](this, lens, Signal.dynamic {
-        lens.toView(internal.value)
-      })
+    def applyLens[V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[internal.State]): LVar[V] = {
+      new LVar[V](this, new BijectiveSigLens(Signal{lens}), Signal.dynamic {lens.toView(internal.value)})
     }
     def now(implicit sched: Scheduler[internal.State]) : M = internal.now
 
