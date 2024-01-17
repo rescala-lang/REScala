@@ -4,7 +4,6 @@ import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Obser
 import rescala.structure.Pulse
 
 import scala.util.Random
-import scala.collection.mutable.ListBuffer
 
 trait SourceBundle {
   self: Operators =>
@@ -110,25 +109,25 @@ trait SourceBundle {
     }
   }
 
-  class LVar[M] private[rescala](internal : Signal[M], events : ListBuffer[Event[M]]) {
+  class LVar[M] private[rescala](val internal : Signal[M], events : Evt[Event[M]]) {
     type T = M
 
-    def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState]) : LVar[V] = {
-      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, ListBuffer[Event[V]](Evt[V]()))
-      events += newVar.getEvent().map(e => lens.toModel(e))
+    def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]) : LVar[V] = {
+      val newVar = new LVar[V](Signal{lens.toView(internal.value)}, Evt())
+      events.fire(newVar.getEvent().map{e => lens.toModel(e)})
       return newVar
     }
 
-    def observe(e: Event[M])(implicit ticket: CreationTicket[BundleState]) : Unit = {
-      events += e
+    def observe(e: Event[M])(implicit sched: Scheduler[BundleState]) : Unit = {
+      events.fire(e)
     }
 
-    def getEvent() (implicit ticket: CreationTicket[BundleState]) : Event[M] = events.reduce { (a, b) => a || b }
+    def getEvent()(implicit ticket: CreationTicket[BundleState]) : Event[M] = events.list().flatten(firstFiringEvent)//.map(_.flatten.head)
 
-    def now(implicit sched: Scheduler[internal.State]) : M = internal.now
+    def now(implicit sched: Scheduler[BundleState]) : M = internal.now
 
     //How to make value accessible to the outside?
-    inline def value(implicit sched: Scheduler[internal.State]) : M = internal.value
+    inline def value(implicit sched: Scheduler[BundleState]) : M = internal.value
 
   }
 
@@ -140,8 +139,8 @@ trait SourceBundle {
   object LVar {
 
     def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-      val events = ListBuffer[Event[T]](Evt[T]())
-      new LVar[T](events.reduce { (a, b) => a || b }.hold(init = initval), events)
+      val events : Evt[Event[T]] = Evt()
+      new LVar[T](events.list().flatten(firstFiringEvent).hold(initval), events)
     }
 
 //    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = {
