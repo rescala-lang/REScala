@@ -79,28 +79,46 @@ object ConversionTest {
     div(p("One way conversion using Signal"), renderedMeter, yardParagraph.asModifier)
   }
 
-  def getTemperatureConverter() = {
-
-    val celsiusVar = LVar(0.0)
-    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15))
-
-    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
-    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
-
-    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
-    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
-
+//  def getTemperatureConverter() = {
+//
+//    val celsiusVar = LVar(0.0)
+//    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15))
+//
+//    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
+//    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
+//
+//    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
+//    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
+//
 //    celsiusEvent.observe{ str => celsiusVar.set(str.toDouble); renderedKelvin.value = kelvinVar.now.toString }
 //    kelvinEvent.observe { str => kelvinVar.set(str.toDouble); renderedCelsius.value = celsiusVar.now.toString }
+//  celsiusVar.observe(celsiusEvent.map { str => str.toDouble })
+//  kelvinVar.observe(kelvinEvent.map { str => str.toDouble })
+//
+//    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
+//  }
 
-    celsiusVar.observe(celsiusEvent.map { str => str.toDouble })
-    kelvinVar.observe(kelvinEvent.map { str => str.toDouble })
+  def testSignalLens() = {
+    val leftVar = LVar(0.0)
+    val summand = Var{3.0}
+    val lensSig = Signal{ new AddLens(summand.value) }
+    val rightVar = leftVar.applyLens(new BijectiveSigLens(lensSig))
 
-    val isFreezing: Signal[TypedTag[Paragraph]] = Signal.dynamic{p(if (celsiusVar.value > 0) "It's not freezing." else "Brrr its so cold.")}
+    val leftInput: TypedTag[Input] = input(value := leftVar.now)
+    val (leftEvent: Event[String], renderedLeft: Input) = RenderUtil.inputFieldHandler(leftInput, oninput, clear = false)
 
-    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin, isFreezing.asModifier)
+    val sigInput: TypedTag[Input] = input(value := summand.now)
+    val (sigEvent: Event[String], renderedSig: Input) = RenderUtil.inputFieldHandler(sigInput, oninput, clear = false)
+
+    val rightInput: TypedTag[Input] = input(value := rightVar.now)
+    val (rightEvent: Event[String], renderedRight: Input) = RenderUtil.inputFieldHandler(rightInput, oninput, clear = false)
+
+    leftEvent.observe { str => leftVar.set(str.toDouble);renderedSig.value = summand.now.toString; renderedRight.value = rightVar.now.toString }
+    sigEvent.observe { str => summand.set(str.toDouble); renderedRight.value = rightVar.now.toString;  renderedLeft.value = leftVar.now.toString }
+    rightEvent.observe { str => rightVar.set(str.toDouble); renderedSig.value = summand.now.toString; renderedLeft.value = leftVar.now.toString }
+
+    div(p("Unit Conversion with Lenses :D"), renderedLeft, renderedSig, renderedRight)
   }
-
 
   def toStringConverter() = {
 
@@ -118,8 +136,8 @@ object ConversionTest {
 
     div(p("Unit Conversion with Lenses :D"), renderedInt, renderedStr)
   }
-
-
+//
+//
   def convertMeterToYard(meter : Option[Double]): Option[Double] = {
     if(meter.isEmpty)
       Option.empty[Double]

@@ -3,6 +3,7 @@ package rescala.operator
 import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
 import rescala.structure.Pulse
 
+//import scala.language.implicitConversions
 import scala.util.Random
 
 trait SourceBundle {
@@ -124,7 +125,14 @@ trait SourceBundle {
 
     def getEvent()(implicit ticket: CreationTicket[BundleState]) : Event[M] = events.list().flatten(firstFiringEvent)//.map(_.flatten.head)
 
-    def now(implicit sched: Scheduler[BundleState]) : M = internal.now
+//    def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState]): LVar[V] = {
+//      new LVar[V](this, lens, Signal.dynamic{lens.toView(internal.value).value})
+//    }
+//
+//    def applyLens[V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[internal.State]): LVar[V] = {
+//      new LVar[V](this, new BijectiveSigLens(Signal{lens}), Signal.dynamic {lens.toView(internal.value)})
+//    }
+    def now(implicit sched: Scheduler[internal.State]) : M = internal.now
 
     //How to make value accessible to the outside?
     inline def value(implicit sched: Scheduler[BundleState]) : M = internal.value
@@ -158,7 +166,19 @@ trait SourceBundle {
     def toView(m: M): V
     def toModel(v: V): M
     def toModel(v: V, m: M): M = toModel(v)
+
+//    implicit def toSigLens(lens: BijectiveLens[M, V]): BijectiveSigLens[M, V] = new BijectiveSigLens(Signal {
+//      lens
+//    })
   }
+
+  class BijectiveSigLens[M, V](lensSig : Signal[BijectiveLens[M, V]])(implicit sched: Scheduler[lensSig.State]){
+    def toView(m: M) : Signal[V] = Signal{ lensSig.value.toView(m)}
+    def toModel(v: V) : M = lensSig.now.toModel(v)
+    def toModel(v: V, m: M): M = toModel(v)
+  }
+
+  //given Conversion[BijectiveLens[M, V], BijectiveSigLens[M, V]] = new BijectiveSigLens(Signal{ _ })
 
   class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
     def toView(m: A): A = num.plus(m, k)
