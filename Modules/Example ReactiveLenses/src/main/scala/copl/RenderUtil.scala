@@ -7,7 +7,7 @@ import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
 object RenderUtil {
-    def inputFieldHandler(tag: TypedTag[Input], attr: Attr, clear: Boolean = true): (Event[String], Input) = {
+  def inputFieldHandler(tag: TypedTag[Input], attr: Attr, clear: Boolean = true): (Event[String], Input) = {
     val handler = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
     val todoInputField: Input = handler.data.render
 

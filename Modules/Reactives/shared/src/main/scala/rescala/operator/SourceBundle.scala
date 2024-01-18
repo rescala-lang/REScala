@@ -119,30 +119,24 @@ trait SourceBundle {
       return newVar
     }
 
-    def observe(e: Event[M])(implicit sched: Scheduler[BundleState]) : Unit = {
-      events.fire(e)
+    def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
+      val newVar = new LVar[V](Signal{lens.toView(internal.value)}.flatten, Evt())
+      events.fire(newVar.getEvent().map { e => lens.toModel(e) })
+      return newVar
     }
+
+    def fire(e: Event[M])(implicit sched: Scheduler[BundleState]) : Unit = events.fire(e)
+
+    def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)
+               (implicit ticket: CreationTicket[BundleState]) = internal.observe(onValue, onError, fireImmediately)
 
     def getEvent()(implicit ticket: CreationTicket[BundleState]) : Event[M] = events.list().flatten(firstFiringEvent)//.map(_.flatten.head)
 
-//    def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState]): LVar[V] = {
-//      new LVar[V](this, lens, Signal.dynamic{lens.toView(internal.value).value})
-//    }
-//
-//    def applyLens[V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[internal.State]): LVar[V] = {
-//      new LVar[V](this, new BijectiveSigLens(Signal{lens}), Signal.dynamic {lens.toView(internal.value)})
-//    }
     def now(implicit sched: Scheduler[internal.State]) : M = internal.now
 
-    //How to make value accessible to the outside?
     inline def value(implicit sched: Scheduler[BundleState]) : M = internal.value
 
   }
-
-//  class RootLVar[M] private[rescala](initVal : M, var event: Event[M]) (implicit ticket: CreationTicket[BundleState])
-//    extends LVar[M] (event.hold(init = initVal), event) {
-//
-//  }
 
   object LVar {
 
@@ -150,10 +144,6 @@ trait SourceBundle {
       val events : Evt[Event[T]] = Evt()
       new LVar[T](events.list().flatten(firstFiringEvent).hold(initval), events)
     }
-
-//    def empty[T](implicit ticket: CreationTicket[BundleState]): LVar[T] = {
-//      new RootLVar[T](Var.empty)
-//    }
 
   }
 
