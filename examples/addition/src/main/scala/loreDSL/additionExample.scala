@@ -5,8 +5,8 @@ import lore.DSL.*
 object additionExample:
   @main def main: Unit =
     val firstRealVariable: Source[Int] = Source(0)
-//    val secondRealVariable: Derived[Int] = Derived { firstRealVariable() + firstRealVariable() }
-//    val add10 = Interaction[Int, Int]
+    val secondRealVariable: Derived[Int] = Derived { firstRealVariable() + firstRealVariable() }
+    val thirdRealVariable = Interaction[Int, Int]
 //      .requires((curr, _) => curr < 20)
 //      .modifies(firstRealVariable)
 //      .executes((curr, _) => curr + 10)
@@ -24,6 +24,6 @@ object additionExample:
 //    println(s"firstRealVariable: ${firstRealVariable.now}, secondRealVariable: ${secondRealVariable.now}")
 
 //    add10(0)
-//    println(s"firstRealVariable: ${firstRealVariable.now}, b: ${b.now}")
+//    println(s"firstRealVariable: ${firstRealVariable.now}, secondRealVariable: ${secondRealVariable.now}")
   end main
 end additionExample

@@ -24,37 +24,40 @@ end DSL
 class DSLPhase extends PluginPhase:
   import tpd.*
   val phaseName: String = "DSL"
-  var loreTerms: List[Term] = List()
 
   override val runsAfter: Set[String] = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Staging.name)
 
+  var loreTerms: List[Term] = List()
+  private val reactiveTypeNames: List[String] = List(
+    "Source", "Derived", "Interaction",
+    "InteractionWithTypes", "InteractionWithRequires",
+    "InteractionWithRequiresAndModifies"
+  )
+
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
-      case ValDef(name, tpt, rhs) if name.toString.equals("firstRealVariable") =>
+      // Catch any Source, Derived and Interaction definitions
+      case ValDef(name, tpt, rhs) if reactiveTypeNames.contains(tpt.denot.name.toString) =>
         tpt match
+          // Doesn't work for Interaction, because it gets inlined to InteractionWithTypes etc.
+          // Structure of Interaction(WithTypes) also seems different, using a generic TypeTree and
+          // then an AppliedType, instead of an AppliedTypeTree, so unsure how to match that part
           case AppliedTypeTree(typeName: Ident, typeParameters: List[Ident]) =>
-            println(typeName)
-            println(typeParameters.mkString(", "))
-            loreTerms ++: List(TAbs(name.toString, SimpleType(typeName.toString, typeParameters.map(t => SimpleType(t.toString, List()))), TNum(39)))
-//            val num: TNum = TNum(39)
+            report.warning(s"${typeName.name.toString} definition detected", tree.sourcePos)
+            println(s"typeName: $typeName")
+            println(s"typeParameters: ${typeParameters.mkString(", ")}")
           case _ =>
             ()
-
-        println("--------------------")
+      case ValDef(name, tpt, rhs) if name.toString.equals("thirdRealVariable") =>
         println(s"name: $name")
         println("----------------")
         println(s"tpt: $tpt")
         println(s"tpt.tpe: ${tpt.tpe}")
-        println(s"tpt.typeOpt: ${tpt.typeOpt}")
-        println(s"tpt.toList: ${tpt.toList}")
-        println(s"tpt.denot: ${tpt.denot}")
         println("----------------")
         println(s"rhs: $rhs")
 
-        report.warning("First variable", tree.sourcePos)
-//      case ValDef(name, tpt, rhs) if tpt.denot.name.toString.equals("Source") =>
-//        report.warning("Source definition detected", tree.sourcePos)
+        report.warning("Third variable", tree.sourcePos)
       case _ =>
         ()
       tree
