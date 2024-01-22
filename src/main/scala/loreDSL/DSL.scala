@@ -41,8 +41,9 @@ class DSLPhase extends PluginPhase:
       case ValDef(name, tpt, rhs) if reactiveTypeNames.contains(tpt.denot.name.toString) =>
         tpt match
           // Doesn't work for Interaction, because it gets inlined to InteractionWithTypes etc.
-          // Structure of Interaction(WithTypes) also seems different, using a generic TypeTree and
-          // then an AppliedType, instead of an AppliedTypeTree, so unsure how to match that part
+          // Structure of InteractionWithTypes also seems different, it doesn't have a denotation,
+          // is using a generic TypeTree and then an AppliedType, instead of an AppliedTypeTree.
+          // Unsure how to match that part for type name / type parameters.
           case AppliedTypeTree(typeName: Ident, typeParameters: List[Ident]) =>
             report.warning(s"${typeName.name.toString} definition detected", tree.sourcePos)
             println(s"typeName: $typeName")
