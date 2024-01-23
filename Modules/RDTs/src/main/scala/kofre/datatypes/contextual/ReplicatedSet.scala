@@ -35,7 +35,7 @@ object ReplicatedSet {
       val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
       val v: DotSet = dm.repr.getOrElse(e, DotSet.empty)
 
-      deltaState[E].make(
+      deltaState(
         dm = DotMap(Map(e -> DotSet(Dots.single(nextDot)))),
         cc = v.dots add nextDot
       ).mutator
@@ -54,7 +54,7 @@ object ReplicatedSet {
           }
       }
 
-      deltaState[E].make(
+      deltaState(
         dm = DotMap((elems zip nextDots.iterator.map(dot => DotSet(Dots.single(dot)))).toMap),
         cc = ccontextSet
       ).mutator
@@ -64,8 +64,8 @@ object ReplicatedSet {
       val dm = current.inner
       val v  = dm.repr.getOrElse(e, DotSet.empty)
 
-      deltaState[E].make(
-        cc = v.dots
+      deltaState(
+        v.dots
       ).mutator
     }
 
@@ -78,8 +78,8 @@ object ReplicatedSet {
           }
       }
 
-      deltaState[E].make(
-        cc = dotsToRemove
+      deltaState(
+        dotsToRemove
       ).mutator
     }
 
@@ -89,28 +89,25 @@ object ReplicatedSet {
         case (k, v) if cond(k) => v
       }.foldLeft(Dots.empty)(_ union _.dots)
 
-      deltaState[E].make(
-        cc = removedDots
+      deltaState(
+        removedDots
       ).mutator
     }
 
     def clear()(using PermQuery, PermCausalMutate): C = {
       val dm = current.inner
-      deltaState[E].make(
-        cc = dm.dots
+      deltaState(
+        dm.dots
       ).mutator
     }
 
   }
 
-  private class DeltaStateFactory[E] {
+  private def deltaState[E](
+      dm: DotMap[E, DotSet],
+      cc: Dots
+  ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
 
-    def make(
-        dm: DotMap[E, DotSet] = DotMap.empty,
-        cc: Dots = Dots.empty
-    ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
-  }
-
-  private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]
+  private def deltaState[E](cc: Dots): Dotted[ReplicatedSet[E]] = deltaState(DotMap.empty, cc)
 
 }
