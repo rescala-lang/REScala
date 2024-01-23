@@ -27,6 +27,9 @@ trait Bottom[A] {
 }
 
 object Bottom {
+  def provide[A](v: A) = new Bottom[A]:
+    override val empty: A = v
+
   def empty[A](using bottom: Bottom[A]): A         = bottom.empty
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
