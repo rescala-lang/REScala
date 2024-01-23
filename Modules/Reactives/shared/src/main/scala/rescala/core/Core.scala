@@ -15,6 +15,8 @@ trait ReSource {
   /** Converts the `base` value that is used during the transaction, to the value stored outside the transaction */
   protected[rescala] def commit(base: Value): Value
 }
+// we could replace this pattern by just a type operator for all types, but currently does not seem worth it
+// infix type of[R <: ReSource, S[_]] = R {type State[A] = S[A]}
 object ReSource { type of[S[_]] = ReSource { type State[V] = S[V] } }
 
 /** A reactive value is something that can be reevaluated */
