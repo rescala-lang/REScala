@@ -9,7 +9,7 @@ import rescala.core.{
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
-class Token()
+class Token
 
 trait Twoversion {
 
