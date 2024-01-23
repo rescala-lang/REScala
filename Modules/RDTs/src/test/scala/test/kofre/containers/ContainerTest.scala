@@ -3,7 +3,7 @@ package test.kofre.containers
 import kofre.base.{Bottom, Lattice}
 import kofre.base.Uid.asId
 import kofre.datatypes.LastWriterWins
-import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag}
+import kofre.datatypes.contextual.{ReplicatedSet, EnableWinsFlag}
 import kofre.datatypes.experiments.AuctionInterface
 import kofre.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
 import kofre.dotted.HasDots.*
@@ -70,26 +70,10 @@ class ContainerTest extends munit.FunSuite {
 
   // END EnableWinsFlag
 
-  // START AddWinsSet
+  // START ReplicatedSet
 
-  test("Dotted can contain contextual AddWinsSet[String]") {
-    val awSet: Dotted[AddWinsSet[String]] = Dotted.empty
-
-    assert(awSet.elements.isEmpty)
-
-    val added = awSet.add("First")
-    assertEquals(added.elements.size, 1)
-    assert(added.elements.contains("First"))
-    assert(added.contains("First"))
-
-    val removed = added.remove("First")
-    assert(removed.elements.isEmpty)
-  }
-
-  // NOTE: DeltaBuffer cannot contain contextual AddWinsSet without Dotted, as AddWinsSet needs a context
-
-  test("Dotted DeltaBuffer can contain contextual AddWinsSet[String]") {
-    val awSet: DeltaBuffer[Dotted[AddWinsSet[String]]] = DeltaBuffer(Dotted.empty)
+  test("Dotted can contain contextual ReplicatedSet[String]") {
+    val awSet: Dotted[ReplicatedSet[String]] = Dotted.empty
 
     assert(awSet.elements.isEmpty)
 
@@ -102,8 +86,24 @@ class ContainerTest extends munit.FunSuite {
     assert(removed.elements.isEmpty)
   }
 
-  test("Dotted DeltaBufferContainer can contain contextual AddWinsSet[String]") {
-    val awSet: DeltaBufferContainer[Dotted[AddWinsSet[String]]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
+  // NOTE: DeltaBuffer cannot contain contextual ReplicatedSet without Dotted, as ReplicatedSet needs a context
+
+  test("Dotted DeltaBuffer can contain contextual ReplicatedSet[String]") {
+    val awSet: DeltaBuffer[Dotted[ReplicatedSet[String]]] = DeltaBuffer(Dotted.empty)
+
+    assert(awSet.elements.isEmpty)
+
+    val added = awSet.add("First")
+    assertEquals(added.elements.size, 1)
+    assert(added.elements.contains("First"))
+    assert(added.contains("First"))
+
+    val removed = added.remove("First")
+    assert(removed.elements.isEmpty)
+  }
+
+  test("Dotted DeltaBufferContainer can contain contextual ReplicatedSet[String]") {
+    val awSet: DeltaBufferContainer[Dotted[ReplicatedSet[String]]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
     assert(awSet.elements.isEmpty)
 
@@ -116,7 +116,7 @@ class ContainerTest extends munit.FunSuite {
     assert(awSet.elements.isEmpty)
   }
 
-  // END AddWinsSet
+  // END ReplicatedSet
 
   // START LastWriterWins
 
