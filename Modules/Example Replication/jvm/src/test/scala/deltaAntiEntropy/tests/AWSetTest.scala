@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.base.Uid
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.syntax.ReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -15,18 +15,18 @@ import replication.dtn.Replica
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyContainer[AddWinsSet[A]]] =
+  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyContainer[ReplicatedSet[A]]] =
     for {
       added   <- Gen.containerOf[List, A](a.arbitrary)
       n       <- Gen.choose(0, added.size)
       removed <- Gen.pick(n, added)
     } yield {
       val network = new Network(0, 0, 0)
-      val ae      = new AntiEntropy[AddWinsSet[A]]("a", network, mutable.Buffer())
+      val ae      = new AntiEntropy[ReplicatedSet[A]]("a", network, mutable.Buffer())
 
       given ReplicaId = Uid.predefined(ae.replicaID)
 
-      val setAdded = added.foldLeft(AntiEntropyContainer[AddWinsSet[A]](ae)) {
+      val setAdded = added.foldLeft(AntiEntropyContainer[ReplicatedSet[A]](ae)) {
         case (set, e) => set.add(e)
       }
       removed.foldLeft(setAdded) {
@@ -36,7 +36,7 @@ object AWSetGenerators {
 
   implicit def arbAWSet[A: JsonValueCodec](implicit
       a: Arbitrary[A]
-  ): Arbitrary[AntiEntropyContainer[AddWinsSet[A]]] =
+  ): Arbitrary[AntiEntropyContainer[ReplicatedSet[A]]] =
     Arbitrary(genAWSet[A])
 }
 
@@ -45,9 +45,9 @@ class AWSetTest extends munit.ScalaCheckSuite {
 
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("add") {
-    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]], e: Int) =>
+    forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
       given ReplicaId                                  = set.replicaID
-      val added: AntiEntropyContainer[AddWinsSet[Int]] = set.add(e)
+      val added: AntiEntropyContainer[ReplicatedSet[Int]] = set.add(e)
 
       val elems = added.elements
       assert(
@@ -57,7 +57,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("remove") {
-    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]], e: Int) =>
+    forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
       given ReplicaId         = set.replicaID
       val removedNotContained = set.remove(e)
       val added               = set.add(e)
@@ -75,7 +75,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
     }
   }
   property("clear") {
-    forAll { (set: AntiEntropyContainer[AddWinsSet[Int]]) =>
+    forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]]) =>
       val cleared = set.clear()
 
       assert(
@@ -88,11 +88,11 @@ class AWSetTest extends munit.ScalaCheckSuite {
     forAll { (e: Int, e1: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
-      val seta0 = AntiEntropyContainer[AddWinsSet[Int]](aea)
-      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb)
+      val seta0 = AntiEntropyContainer[ReplicatedSet[Int]](aea)
+      val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb)
 
       val seta1 = seta0.add(using seta0.replicaID)(e)
       val setb1 = setb0.add(using setb0.replicaID)(e)
@@ -133,15 +133,15 @@ class AWSetTest extends munit.ScalaCheckSuite {
     forAll { (e: Int, e1: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
         given ReplicaId = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[AddWinsSet[Int]](aea).add(e).add(e1).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e).add(e1).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
-      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.remove(e)
       val setb1 = setb0.remove(e)
@@ -182,15 +182,15 @@ class AWSetTest extends munit.ScalaCheckSuite {
     forAll { (e: Int, e1: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
         given ReplicaId = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[AddWinsSet[Int]](aea).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e2)
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
-      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.add(using seta0.replicaID)(e)
       val setb1 = setb0.remove(e)
@@ -231,14 +231,14 @@ class AWSetTest extends munit.ScalaCheckSuite {
     forAll { (e: Int, e1: Int, e2: Int) =>
       val network = new Network(0, 0, 0)
 
-      val aea = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+      val aea = new AntiEntropy[ReplicatedSet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
         given ReplicaId = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[AddWinsSet[Int]](aea).add(e1).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e1).add(e2)
       AntiEntropy.sync(aea, aeb)
-      val setb0 = AntiEntropyContainer[AddWinsSet[Int]](aeb).processReceivedDeltas()
+      val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
       val seta1 = seta0.add(using seta0.replicaID)(e)
       val setb1 = setb0.clear()
@@ -262,17 +262,17 @@ class AWSetTest extends munit.ScalaCheckSuite {
     forAll {
       (addedA: List[Int], removedA: List[Int], addedB: List[Int], removedB: List[Int], networkGen: NetworkGenerator) =>
         val network = networkGen.make()
-        val aea     = new AntiEntropy[AddWinsSet[Int]]("a", network, mutable.Buffer("b"))
-        val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer("a"))
+        val aea     = new AntiEntropy[ReplicatedSet[Int]]("a", network, mutable.Buffer("b"))
+        val aeb     = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
-        val setaAdded = addedA.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aea)) {
+        val setaAdded = addedA.foldLeft(AntiEntropyContainer[ReplicatedSet[Int]](aea)) {
           case (set, e) => set.add(using set.replicaID)(e)
         }
         val seta0 = removedA.foldLeft(setaAdded) {
           case (set, e) => set.remove(e)
         }
 
-        val setbAdded = addedB.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aeb)) {
+        val setbAdded = addedB.foldLeft(AntiEntropyContainer[ReplicatedSet[Int]](aeb)) {
           case (set, e) => set.add(using set.replicaID)(e)
         }
         val setb0 = removedB.foldLeft(setbAdded) {

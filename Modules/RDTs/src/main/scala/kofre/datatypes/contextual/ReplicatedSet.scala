@@ -9,21 +9,21 @@ import kofre.time.{Dot, Dots}
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
-case class AddWinsSet[E](inner: DotMap[E, DotSet])
+case class ReplicatedSet[E](inner: DotMap[E, DotSet])
 
-object AddWinsSet {
+object ReplicatedSet {
 
-  def empty[E]: AddWinsSet[E] = AddWinsSet(DotMap.empty)
+  def empty[E]: ReplicatedSet[E] = ReplicatedSet(DotMap.empty)
 
-  given bottom[E]: Bottom[AddWinsSet[E]] with { override def empty: AddWinsSet[E] = AddWinsSet.empty }
+  given bottom[E]: Bottom[ReplicatedSet[E]] with { override def empty: ReplicatedSet[E] = ReplicatedSet.empty }
 
-  given lattice[E]: Lattice[AddWinsSet[E]]         = Lattice.derived
-  given asCausalContext[E]: HasDots[AddWinsSet[E]] = HasDots.derived
+  given lattice[E]: Lattice[ReplicatedSet[E]]         = Lattice.derived
+  given asCausalContext[E]: HasDots[ReplicatedSet[E]] = HasDots.derived
 
   extension [C, E](container: C)
     def addWinsSet: syntax[C, E] = syntax(container)
 
-  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, AddWinsSet[E]](container) {
+  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, ReplicatedSet[E]](container) {
 
     def elements(using PermQuery): Set[E] = current.inner.repr.keySet
 
@@ -108,7 +108,7 @@ object AddWinsSet {
     def make(
         dm: DotMap[E, DotSet] = DotMap.empty,
         cc: Dots = Dots.empty
-    ): Dotted[AddWinsSet[E]] = Dotted(AddWinsSet(dm), cc)
+    ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
   }
 
   private def deltaState[E]: DeltaStateFactory[E] = new DeltaStateFactory[E]

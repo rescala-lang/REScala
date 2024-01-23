@@ -3,7 +3,7 @@ package replication.checkpointing.decentral
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import kofre.base.Uid
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.*
@@ -13,7 +13,7 @@ import replication.JsoniterCodecs.given
 import scala.concurrent.Future
 
 object Bindings {
-  type SetState = Dotted[AddWinsSet[Int]]
+  type SetState = Dotted[ReplicatedSet[Int]]
 
   case class CheckpointMessage(cp: Checkpoint, changes: SetState)
 

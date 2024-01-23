@@ -2,7 +2,7 @@ package replication.checkpointing.central
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
@@ -13,7 +13,7 @@ import scala.concurrent.Future
 
 object Bindings {
 
-  type SetState = Dotted[AddWinsSet[Int]]
+  type SetState = Dotted[ReplicatedSet[Int]]
 
   case class SyncMessage(cp: Int, deltaState: SetState)
 

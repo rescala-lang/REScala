@@ -4,7 +4,7 @@ import kofre.base.Lattice
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations._
 import kofre.base.Uid.asId
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +20,7 @@ class AWSetComparisonBench {
   @Param(Array("0", "1", "10", "100", "1000"))
   var setSize: Int = _
 
-  type State = Dotted[AddWinsSet[String]]
+  type State = Dotted[ReplicatedSet[String]]
 
   var setAState: State        = _
   var setBState: State        = _
@@ -28,7 +28,7 @@ class AWSetComparisonBench {
   var setAStatePlusOne: State = _
 
   private def createSet(replicaID: String): State = {
-    (0 until setSize).foldLeft(Dotted(AddWinsSet.empty[String])) { (s, i) =>
+    (0 until setSize).foldLeft(Dotted(ReplicatedSet.empty[String])) { (s, i) =>
       val delta = s.add(using replicaID.asId)(s"${i.toString}$replicaID")
       Lattice[State].merge(s, delta)
     }

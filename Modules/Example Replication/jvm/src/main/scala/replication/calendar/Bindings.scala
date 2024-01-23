@@ -5,7 +5,7 @@ import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
 import replication.JsoniterCodecs
@@ -14,12 +14,12 @@ import scala.concurrent.Future
 
 sealed trait SyncMessage
 object SyncMessage {
-  type CalendarState = Dotted[AddWinsSet[Appointment]]
+  type CalendarState = Dotted[ReplicatedSet[Appointment]]
 
   case class AppointmentMessage(state: CalendarState, target: String) extends SyncMessage
   case class RaftMessage(state: RaftState[Token])                     extends SyncMessage
-  case class WantMessage(state: Dotted[AddWinsSet[Token]])            extends SyncMessage
-  case class FreeMessage(state: Dotted[AddWinsSet[Token]])            extends SyncMessage
+  case class WantMessage(state: Dotted[ReplicatedSet[Token]])            extends SyncMessage
+  case class FreeMessage(state: Dotted[ReplicatedSet[Token]])            extends SyncMessage
 
 }
 

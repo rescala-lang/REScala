@@ -3,7 +3,7 @@ package replication.calendar
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.{DottedLattice, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -75,11 +75,11 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
         ))
       }
 
-      tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[AddWinsSet[Token]]].merge).foreach { state =>
+      tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[ReplicatedSet[Token]]].merge).foreach { state =>
         remoteReceiveSyncMessage(WantMessage(state))
       }
 
-      tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[AddWinsSet[Token]].merge).foreach { state =>
+      tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[ReplicatedSet[Token]].merge).foreach { state =>
         remoteReceiveSyncMessage(FreeMessage(state))
       }
 
@@ -104,7 +104,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: Dotted[AddWinsSet[Appointment]],
+      delta: Dotted[ReplicatedSet[Appointment]],
       crdtid: String,
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {

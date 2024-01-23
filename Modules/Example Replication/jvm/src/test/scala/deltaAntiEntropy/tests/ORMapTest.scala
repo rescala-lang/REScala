@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.base.Bottom
-import kofre.datatypes.contextual.{AddWinsSet, ObserveRemoveMap}
+import kofre.datatypes.contextual.{ReplicatedSet, ObserveRemoveMap}
 import kofre.dotted.Dotted
 import replication.JsoniterCodecs.*
 import org.scalacheck.Prop.*
@@ -30,11 +30,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
     forAll { (add: List[Int], remove: List[Int], k: Int) =>
 
       val network = new Network(0, 0, 0)
-      val aea     = new AntiEntropy[ObserveRemoveMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
-      val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
+      val aea     = new AntiEntropy[ObserveRemoveMap[Int, ReplicatedSet[Int]]]("a", network, mutable.Buffer())
+      val aeb     = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer())
 
       val set = {
-        val added: AntiEntropyContainer[AddWinsSet[Int]] = add.foldLeft(AntiEntropyContainer(aeb)) {
+        val added: AntiEntropyContainer[ReplicatedSet[Int]] = add.foldLeft(AntiEntropyContainer(aeb)) {
           case (s, e) => s.add(using s.replicaID)(e)
         }
 
@@ -44,7 +44,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
       }
 
       val map = {
-        val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
+        val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
           case (m, e) =>
             m.transform(k)(_.add(using m.replicaID)(e))
         }
@@ -67,13 +67,13 @@ class ORMapTest extends munit.ScalaCheckSuite {
     forAll { (add: List[Int], remove: List[Int], k: Int) =>
       val network = new Network(0, 0, 0)
       val aea =
-        new AntiEntropy[ObserveRemoveMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
-      val aeb = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
+        new AntiEntropy[ObserveRemoveMap[Int, ReplicatedSet[Int]]]("a", network, mutable.Buffer())
+      val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer())
 
-      val empty = AntiEntropyContainer[AddWinsSet[Int]](aeb)
+      val empty = AntiEntropyContainer[ReplicatedSet[Int]](aeb)
 
       val map = {
-        val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, AddWinsSet[Int]]](aea)) {
+        val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
           case (m, e) => m.transform(k)(_.add(using m.replicaID)(e))
         }
 

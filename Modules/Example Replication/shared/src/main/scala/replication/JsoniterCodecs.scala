@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import kofre.base.Uid
 import kofre.datatypes.alternatives.ResettableCounter
-import kofre.datatypes.contextual.{AddWinsSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
+import kofre.datatypes.contextual.{ReplicatedSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
 import kofre.datatypes.{
   Epoche, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet
 }
@@ -35,7 +35,7 @@ object JsoniterCodecs {
 
   /** AddWinsSet */
 
-  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[AddWinsSet[E]] =
+  implicit def AWSetStateCodec[E: JsonValueCodec]: JsonValueCodec[ReplicatedSet[E]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   given JsonValueCodec[Uid] = bimapCodec(
@@ -112,7 +112,7 @@ object JsoniterCodecs {
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
     withContextWrapper(TwoPSetStateCodec)
 
-  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, AddWinsSet[Int]]]] =
-    JsonCodecMaker.make[Dotted[Map[Int, AddWinsSet[Int]]]].asInstanceOf
+  implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, ReplicatedSet[Int]]]] =
+    JsonCodecMaker.make[Dotted[Map[Int, ReplicatedSet[Int]]]].asInstanceOf
 
 }

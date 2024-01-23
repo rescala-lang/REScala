@@ -14,7 +14,7 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 import kofre.base.Uid
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
@@ -31,11 +31,11 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
   val size: String     = "size"
   val exit: String     = "exit"
 
-  var set: DeltaBuffer[Dotted[AddWinsSet[Int]]] = DeltaBuffer(Dotted(AddWinsSet.empty))
+  var set: DeltaBuffer[Dotted[ReplicatedSet[Int]]] = DeltaBuffer(Dotted(ReplicatedSet.empty))
 
   var checkpoint: Int = 0
 
-  var changesSinceCP: SetState = Dotted(AddWinsSet.empty[Int])
+  var changesSinceCP: SetState = Dotted(ReplicatedSet.empty[Int])
 
   var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 
@@ -83,7 +83,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   def sendRecursive(
       remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: Dotted[AddWinsSet[Int]]
+      delta: Dotted[ReplicatedSet[Int]]
   ): Unit = new FutureTask[Unit](() => {
     def attemptSend(atoms: Iterable[SetState], merged: SetState): Unit = {
       remoteReceiveSyncMessage(SyncMessage(checkpoint, merged)).failed.foreach {

@@ -1,9 +1,9 @@
 package kofre.datatypes.experiments
 
-import kofre.base.{Uid}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.base.Uid
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.datatypes.experiments.AuctionInterface.Bid.User
-import kofre.dotted.{Dotted}
+import kofre.dotted.Dotted
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
@@ -19,13 +19,13 @@ import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 object RubisInterface {
   type AID = String
 
-  type State = (AddWinsSet[(User, Uid)], Map[User, Uid], Map[AID, AuctionInterface.AuctionData])
+  type State = (ReplicatedSet[(User, Uid)], Map[User, Uid], Map[AID, AuctionInterface.AuctionData])
 
   private class DeltaStateFactory {
-    val bottom: State = (AddWinsSet.empty, Map.empty, Map.empty)
+    val bottom: State = (ReplicatedSet.empty, Map.empty, Map.empty)
 
     def make(
-        userRequests: AddWinsSet[(User, Uid)] = bottom._1,
+        userRequests: ReplicatedSet[(User, Uid)] = bottom._1,
         users: Map[User, Uid] = bottom._2,
         auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
     ): State = (userRequests, users, auctions)

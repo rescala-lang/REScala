@@ -2,7 +2,7 @@ package kofre.datatypes.alternatives.rga
 
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
@@ -10,7 +10,7 @@ import kofre.time.Dots
 import scala.collection.{AbstractIterator, immutable}
 
 case class DeltaSequence[A](
-    vertices: AddWinsSet[Vertex],
+    vertices: ReplicatedSet[Vertex],
     edges: DeltaSequence.DeltaSequenceOrder,
     values: Map[Vertex, A]
 )
@@ -22,7 +22,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = Dotted(AddWinsSet.empty[Vertex]).add(using Vertex.start.id)(
+    val addStart = Dotted(ReplicatedSet.empty[Vertex]).add(using Vertex.start.id)(
       Vertex.start
     )
     DeltaSequence(
@@ -110,7 +110,7 @@ object DeltaSequence {
     extension (value: DeltaSequence[A])
       def dots: Dots = value.vertices.dots
       override def removeDots(dots: Dots): Option[DeltaSequence[A]] =
-        HasDots.apply[AddWinsSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
+        HasDots.apply[ReplicatedSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
           value.copy(vertices = nv)
         }
   }
