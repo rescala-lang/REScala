@@ -27,8 +27,8 @@ object Dependencies {
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.4"
   def jsoniterScala =
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.27.3",
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.27.3" % "provided"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.27.4",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.27.4" % "provided"
     )
 
   object slips {
@@ -44,9 +44,9 @@ object Dependencies {
     def generic(n: String) =
       // use maven (true) jitpack (false)?
       if (false)
-        libraryDependencies += "io.github.scala-loci" %%% s"scala-loci-$n" % "0.5.0"
+        libraryDependencies += "io.github.scala-loci" %%% s"scala-loci-$n" % "0.5.0-62-gd313a2f"
       else
-        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "e7f17cc41a"
+        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "b9809c9c2d"
 
     def communication = generic("communication")
     def circe         = generic("serializer-circe")
