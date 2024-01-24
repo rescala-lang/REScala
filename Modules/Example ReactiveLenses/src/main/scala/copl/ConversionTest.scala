@@ -21,7 +21,7 @@ object ConversionTest {
 
   def main(args: Array[String]): Unit = {
 //    signalTest()
-    val temperatureConverter = testSignalLens()
+    val temperatureConverter = toStringConverter()
     document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
     ()
   }
@@ -131,7 +131,7 @@ object ConversionTest {
   def toStringConverter() = {
 
     val intVar = LVar(0)
-    val strVar = intVar.applyLens(new CharCountLens())
+    val strVar = intVar.applyLens(new NonDeterministicCharCountLens())
 
     val intInput: TypedTag[Input] = input(value := intVar.now)
     val (intEvent: Event[String], renderedInt: Input) = RenderUtil.inputFieldHandler(intInput, oninput, clear = false)

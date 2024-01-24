@@ -110,18 +110,34 @@ trait SourceBundle {
     }
   }
 
+/*
+On Determinism:
+Due to the chosen propagation strategy all lens projections must be deterministic, as non-deterministic behaviour may override user Inputs,
+e.g. see the CharLens. There are two approaches two fix this issue. The first is an update the propagation mechanism which would need to be
+developed from scratch as the current implementation cannot allow for the exclusion of the original path. The second way is to include the View
+state in the lens, i.e. change the function signature to toView(m: M, v : V). Then, in the example of the CharLens, the check v.length == m
+could prevent an update, though this might not always be the intended behaviour (i.e. a button to regenerate password should give a new password,
+even if the length did not change).
+
+On State in Lenses:
+To me, the inclusion of the model state in the default lens seems to be unnecessary. In my opinion, the state should be included in the LVar instead,
+where a fold on getEvent() should allow for the same functionality AFIK. This separates functionality more cleanly on the rescala transaction side
+and reduces the complexity of the Lenses, by reducing them to their "pure" form of a simple bijective mapping.
+ */
+
   class LVar[M] private[rescala](val internal : Signal[M], events : Evt[Event[M]]) {
     type T = M
 
-    def applyLens[V](lens : BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]) : LVar[V] = {
+    def applyLens[V](lens : Lens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]) : LVar[V] = {
       val newVar = new LVar[V](Signal{lens.toView(internal.value)}, Evt())
-      events.fire(newVar.getEvent().map{e => lens.toModel(e)})
+      events.fire(newVar.getEvent().map{ e => lens.toModel(e, internal.now) })
       return newVar
     }
 
+    //TODO make not bijective
     def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
       val newVar = new LVar[V](Signal{lens.toView(internal.value)}.flatten, Evt())
-      events.fire(newVar.getEvent().map { e => lens.toModel(e) })
+      events.fire(newVar.getEvent().map { e => lens.toModel(e, internal.now) })
       return newVar
     }
 
@@ -156,10 +172,6 @@ trait SourceBundle {
     def toView(m: M): V
     def toModel(v: V): M
     def toModel(v: V, m: M): M = toModel(v)
-
-//    implicit def toSigLens(lens: BijectiveLens[M, V]): BijectiveSigLens[M, V] = new BijectiveSigLens(Signal {
-//      lens
-//    })
   }
 
   class BijectiveSigLens[M, V](lensSig : Signal[BijectiveLens[M, V]])(implicit sched: Scheduler[lensSig.State]){
@@ -175,7 +187,7 @@ trait SourceBundle {
     def toModel(v: A): A = num.minus(v, k)
   }
 
-  class CharCountLens extends BijectiveLens[Int, String] {
+  class NonDeterministicCharCountLens extends BijectiveLens[Int, String] {
     // Lens that converts an int to a sequence of chars, eg. 5 => "aaaaa"
     def toView(m: Int): String = Random.alphanumeric.take(m).mkString
     def toModel(v: String): Int = v.length
