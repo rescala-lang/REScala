@@ -25,7 +25,7 @@ case class TokenAgreement(
 )
 object TokenAgreement {
 
-  val unchanged: Dotted[TokenAgreement] = Dotted(TokenAgreement(Token.unchanged, ReplicatedSet.empty))
+  val unchanged: TokenAgreement = TokenAgreement(Token.unchanged, ReplicatedSet.empty)
 
   extension [C, E](container: C)
     def tokens: syntax[C] = syntax(container)
@@ -42,16 +42,17 @@ object TokenAgreement {
 
     def release(using ReplicaId): CausalMutate = updateWant(_.remove(replicaId))
 
-    def grant(using ReplicaId): CausalMutate = mutate:
-      // We finde the “largest” ID that wants the token.
-      // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
-      current.wants.elements.maxOption match
-        case Some(head) if head != replicaId =>
-          val removeWant: Dotted[ReplicatedSet[Uid]] = current.wants.inheritContext.remove(head)
-          removeWant.map: rw =>
-            TokenAgreement(Token(current.token.epoche + 1, head), rw)
-        case _ => unchanged
+    def grant(using ReplicaId): Mutate = mutate:
+      if !isOwner then unchanged
+      else
+        // We find the “largest” ID that wants the token.
+        // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
+        current.wants.elements.maxOption match
+          case Some(head) if head != replicaId =>
+            TokenAgreement(Token(current.token.epoche + 1, head), ReplicatedSet.empty)
+          case _ => unchanged
 
+    def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.token.owner
   }
 }
 
