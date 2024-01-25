@@ -21,7 +21,7 @@ object ConversionTest {
 
   def main(args: Array[String]): Unit = {
 //    signalTest()
-    val temperatureConverter = toStringConverter()
+    val temperatureConverter = getTemperatureConverter()
     document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
     ()
   }
