@@ -121,8 +121,9 @@ trait SourceBundle {
      * Creates a new LVar which is connected to this LVar via the given Lens.
      * @param lens The lens which connects the LVars. Can use implicit conversion from BijectiveLens if the Lens does not need to change later
      */
+
     def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
-      val newVar = new LVar[V](state.map { model => lens.toView(model)}.flatten, Evt())
+      val newVar = new LVar[V](state.map { model => lens.toView(model) }.flatten, Evt())
       events.fire(newVar.getEvent().map { e => lens.toModel(e) })
       return newVar
     }
@@ -173,10 +174,41 @@ trait SourceBundle {
     def toModel(v: V, m: M): M
   }
 
-  trait BijectiveLens[M, V] extends Lens[M, V] {
+  /**
+   * The base trait for all bijective lenses
+   * @tparam M The type of the model
+   * @tparam V The type of the view
+   */
+  trait BijectiveLens[M, V] {
+    /**
+     * Transforms the model to the view
+     */
     def toView(m: M): V
+
+    /**
+     * Transforms the view to the model
+     */
     def toModel(v: V): M
-    def toModel(v: V, m: M): M = toModel(v)
+
+    //TODO: Better way to pass this than via implicit?
+
+    /**
+     * Inverts the lens such that e.g. an AddLens functions like a SubLens. Note that this does not change the model-view relationship,
+     * i.e. the asymmetry is not inverted.
+     */
+    def inverse(implicit lens: BijectiveLens[M, V] = this): BijectiveLens[V, M] = new BijectiveLens[V, M] {
+      override def toView(m: V): M = lens.toModel(m)
+      override def toModel(v: M): V = lens.toView(v)
+    }
+
+    /**
+     * Concatenates this lens with another lens and returns the resulting lens.
+     * @param other The other lens
+     */
+    def compose[W](other: BijectiveLens[V, W])(implicit lens: BijectiveLens[M, V] = this): BijectiveLens[M, W] = new BijectiveLens[M, W] {
+      override def toView(m: M) : W = other.toView(lens.toView(m))
+      override def toModel(w: W): M = lens.toModel(other.toModel(w))
+    }
   }
 
   /**
@@ -200,6 +232,11 @@ trait SourceBundle {
   class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
     def toView(m: A): A = num.plus(m, k)
     def toModel(v: A): A = num.minus(v, k)
+  }
+
+  class NeutralLens[A] extends BijectiveLens[A, A] {
+    def toView(m: A): A = m
+    def toModel(v: A): A = v
   }
 
   //IS NOT BIJECTIVE
