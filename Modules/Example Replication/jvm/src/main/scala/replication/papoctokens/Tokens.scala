@@ -1,6 +1,6 @@
 package replication.papoctokens
 
-import kofre.base.{Bottom, Lattice, Uid}
+import kofre.base.{Bottom, Lattice, Orderings, Uid}
 import kofre.datatypes.contextual.ReplicatedSet
 import kofre.datatypes.contextual.ReplicatedSet.syntax
 import kofre.datatypes.experiments.RaftState
@@ -9,34 +9,33 @@ import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 
 import scala.util.Random
 
-case class Token(epoche: Long, owner: Uid)
+case class Ownership(epoche: Long, owner: Uid)
 
-object Token {
-  given Lattice[Token] = Lattice.fromOrdering(Ordering.by(_.epoche))
+object Ownership {
+  given Lattice[Ownership] = Lattice.fromOrdering(Orderings.lexicographic)
 
-  given bottom: Bottom[Token] = Bottom.provide(Token(Long.MinValue, Uid.zero))
+  given bottom: Bottom[Ownership] = Bottom.provide(Ownership(Long.MinValue, Uid.zero))
 
-  def unchanged: Token = bottom.empty
+  def unchanged: Ownership = bottom.empty
 }
 
-case class TokenAgreement(
-    token: Token,
-    wants: ReplicatedSet[Uid]
-)
-object TokenAgreement {
+case class Token(owner: Ownership, wants: ReplicatedSet[Uid])
+object Token {
 
-  val unchanged: TokenAgreement = TokenAgreement(Token.unchanged, ReplicatedSet.empty)
+  val unchanged: Token = Token(Ownership.unchanged, ReplicatedSet.empty)
+
+  given Lattice[Token] = Lattice.derived
 
   extension [C, E](container: C)
     def tokens: syntax[C] = syntax(container)
 
-  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, TokenAgreement](container) {
+  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, Token](container) {
 
     def updateWant(f: Dotted[ReplicatedSet[Uid]] => Dotted[ReplicatedSet[Uid]]): CausalMutate = mutate:
       val addWant: Dotted[ReplicatedSet[Uid]] = f(current.wants.inheritContext)
 
       addWant.map: aw =>
-        TokenAgreement(Token.unchanged, aw)
+        Token(Ownership.unchanged, aw)
 
     def request(using ReplicaId): CausalMutate = updateWant(_.add(replicaId))
 
@@ -49,14 +48,14 @@ object TokenAgreement {
         // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
         current.wants.elements.maxOption match
           case Some(head) if head != replicaId =>
-            TokenAgreement(Token(current.token.epoche + 1, head), ReplicatedSet.empty)
+            Token(Ownership(current.owner.epoche + 1, head), ReplicatedSet.empty)
           case _ => unchanged
 
-    def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.token.owner
+    def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.owner.owner
   }
 }
 
 case class ExampleTokens(
-    calendarA: TokenAgreement,
-    calendarB: TokenAgreement
+    calendarA: Token,
+    calendarB: Token
 )

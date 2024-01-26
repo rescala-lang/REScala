@@ -1,6 +1,6 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.{Bottom, Lattice, Orderings}
 import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
@@ -27,11 +27,9 @@ object LastWriterWins {
   given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
   given lattice[A]: Lattice[LastWriterWins[A]] =
+    given Ordering[A] = MultiVersionRegister.assertEqualsOrdering
     Lattice.fromOrdering:
-      CausalTime.ordering.on[LastWriterWins[A]](_.timestamp).orElse:
-        // Technically, this is not necessary, as equal timestamps are assumed to have equal values by precondition.
-        // But it is a heck of a lot easier to debug when this throws a proper exception instead of producing inconsistencies due to the violated assumptions.
-        MultiVersionRegister.assertEqualsOrdering.on(_.payload)
+      Orderings.lexicographic
 
   inline def generalizedLattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom {
     case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)

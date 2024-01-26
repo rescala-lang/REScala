@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.Lattice
+import kofre.base.{Lattice, Orderings}
 
 import java.util.concurrent.atomic.AtomicLong
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -20,10 +20,7 @@ case class CausalTime(time: Time, causal: Long, random: Long):
     else now
 
 object CausalTime:
-  given ordering: Ordering[CausalTime] =
-    Ordering.by[CausalTime, Long](_.time)
-      .orElseBy(_.causal)
-      .orElseBy(_.random)
+  given ordering: Ordering[CausalTime] = Orderings.lexicographic
 
   given lattice: Lattice[CausalTime] = Lattice.fromOrdering(ordering)
 
