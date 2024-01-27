@@ -1,16 +1,16 @@
 package copl
 
-import loci.communicator.experimental.webrtc.WebRTC
-import loci.communicator.experimental.webrtc.WebRTC.ConnectorFactory
 import loci.registry.Registry
 import org.scalajs.dom.UIEvent
-import scalatags.JsDom.all._
+import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import loci.communicator.experimental.webrtc
+import loci.communicator.webrtc
+import loci.communicator.webrtc.WebRTC
+import loci.communicator.webrtc.WebRTC.ConnectorFactory
 
 import scala.concurrent.{Future, Promise}
 
@@ -38,7 +38,7 @@ case class WebRTCHandling(registry: Registry) {
 
     val hb = button(
       "host",
-      onclick := { uie: UIEvent =>
+      onclick := { (uie: UIEvent) =>
         val res = webrtcIntermediate(WebRTC.offer())
         res.session.foreach(showSession)
         pendingServer = Some(res)
@@ -48,7 +48,7 @@ case class WebRTCHandling(registry: Registry) {
 
     val cb = button(
       "connect",
-      onclick := { uie: UIEvent =>
+      onclick := { (uie: UIEvent) =>
         val cs = readFromString(renderedTa.value)(codec)
         val connector = pendingServer match {
           case None => // we are client

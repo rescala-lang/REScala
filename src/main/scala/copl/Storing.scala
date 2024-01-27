@@ -16,7 +16,7 @@ object Storing {
       }
     val sig = create(init)
     sig.observe(
-      { ft: A =>
+      { (ft: A) =>
         dom.window.localStorage.setItem(key, writeToString(ft))
       },
       fireImmediately = false

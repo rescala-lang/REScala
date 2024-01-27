@@ -8,11 +8,11 @@ import scalatags.JsDom.{Attr, TypedTag}
 
 object RenderUtil {
     def inputFieldHandler(tag: TypedTag[Input], attr: Attr, clear: Boolean = true): (Event[String], Input) = {
-    val handler = Events.fromCallback[UIEvent](cb => tag(attr := cb))
-    val todoInputField: Input = handler.value.render
+    val handler = Event.fromCallback[TypedTag[Input], UIEvent](tag(attr := Event.handle))
+    val todoInputField: Input = handler.data.render
 
     // observer to prevent form submit and empty content
-    handler.event.observe { e: UIEvent =>
+    handler.event.observe { (e: UIEvent) =>
       e.preventDefault()
       if (clear) todoInputField.value = ""
     }
