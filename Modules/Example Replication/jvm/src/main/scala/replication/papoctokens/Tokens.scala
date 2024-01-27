@@ -19,7 +19,7 @@ object Ownership {
   def unchanged: Ownership = bottom.empty
 }
 
-case class Token(owner: Ownership, wants: ReplicatedSet[Uid])
+case class Token(os: Ownership, wants: ReplicatedSet[Uid])
 object Token {
 
   val unchanged: Token = Token(Ownership.unchanged, ReplicatedSet.empty)
@@ -48,14 +48,14 @@ object Token {
         // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
         current.wants.elements.maxOption match
           case Some(head) if head != replicaId =>
-            Token(Ownership(current.owner.epoche + 1, head), ReplicatedSet.empty)
+            Token(Ownership(current.os.epoche + 1, head), ReplicatedSet.empty)
           case _ => unchanged
 
-    def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.owner.owner
+    def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.os.owner
   }
 }
 
 case class ExampleTokens(
-    calendarA: Token,
-    calendarB: Token
+    calendarAinteractionA: Token,
+    calendarBinteractionA: Token
 )
