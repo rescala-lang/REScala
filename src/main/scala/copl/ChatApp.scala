@@ -64,8 +64,8 @@ object ChatApp {
     val history: Signal[Epoche[Dotted[ReplicatedList[Chatline]]]] =
       Storing.storedAs("history", Epoche(0, Dotted(ReplicatedList.empty[Chatline]))) { initial =>
         Fold(initial)(
-          chatline act { line => current.copy(payload = current.payload.prepend(line)) },
-          deleteAll act { arg => Epoche(number = current.number + 1, Dotted(ReplicatedList.empty[Chatline])) }
+          chatline act { line => current merge current.copy(payload = current.payload.prepend(line)) },
+          deleteAll act { arg => current merge Epoche(number = current.number + 1, Dotted(ReplicatedList.empty[Chatline])) }
         )
       }
 
