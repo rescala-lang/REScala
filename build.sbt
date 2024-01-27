@@ -6,6 +6,7 @@ lazy val chat = project.in(file("."))
     resolvers += "jitpack" at "https://jitpack.io",
     libraryDependencies ++= Seq(
       "com.github.rescala-lang.rescala" %%% "rescala"     % "71e3cee000",
+      "com.github.rescala-lang.rescala" %%% "kofre"     % "71e3cee000",
       "org.scala-js"                    %%% "scalajs-dom" % "2.8.0",
       "com.lihaoyi"                     %%% "scalatags"   % "0.12.0",
       // NOTE: everything below was added after the first half of the video, so is not shown in the setup.
