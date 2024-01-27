@@ -25,7 +25,7 @@ object Network {
     registry.bindSbj(binding) { (remoteRef: RemoteRef, newValue: A) =>
       val signal: Signal[A] = signalFun(remoteRef)
       val signalName        = signal.info.description
-      //println(s"received value for $signalName: ${newValue.hashCode()}")
+      // println(s"received value for $signalName: ${newValue.hashCode()}")
       scheduler.forceNewTransaction(signal) { admissionTicket =>
         admissionTicket.recordChange(new InitialChange {
           override val source: signal.type = signal
@@ -50,11 +50,14 @@ object Network {
         println(s"calling lookup on »${binding.name}«")
         registry.lookup(binding, remoteRef)
       }
-      observers = observers.updated(remoteRef, signal.observe { s =>
-        //println(s"calling remote observer on $remoteRef for $signalName")
-        if (remoteRef.connected) remoteUpdate(s)
-        else observers(remoteRef).disconnect()
-      })
+      observers = observers.updated(
+        remoteRef,
+        signal.observe { s =>
+          // println(s"calling remote observer on $remoteRef for $signalName")
+          if (remoteRef.connected) remoteUpdate(s)
+          else observers(remoteRef).disconnect()
+        }
+      )
     }
 
     registry.remotes.foreach(registerRemote)
