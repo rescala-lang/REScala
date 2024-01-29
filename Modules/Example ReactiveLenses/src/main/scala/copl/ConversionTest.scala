@@ -27,9 +27,13 @@ object ConversionTest {
     ()
   }
 
-  //TODO: Non-determenistic lens behaviour problematic due to simplified propagation
-  //TODO: Exceptions "disconnect" fields
+  enum TempConversion(val lens: BijectiveLens[Double, Double]):
+    case C extends TempConversion(new NeutralLens)
+    case K extends TempConversion(new AddLens(274.15))
+    case L extends TempConversion(new AddLens(253))
+  end TempConversion
 
+  def conversionLens(from : TempConversion, to : TempConversion): BijectiveLens[Double, Double] = from.lens.inverse.compose(to.lens)
 
   def signalTest() = {
 
@@ -126,23 +130,31 @@ object ConversionTest {
 
   def unitConverter() = {
 
-    val leftUnitInput: TypedTag[Select] = select(option("m"), option("km"))
+    val leftUnitInput: TypedTag[Select] = select(TempConversion.values.map{ unit => option(unit.toString) })
     val (leftUnitEvent: Event[String], renderedLeftUnit: Select) = RenderUtil.dropDownHandler(leftUnitInput, oninput, clear = false)
-    //val leftUnitSignal: Signal[String] = leftUnitEvent.hold(init = renderedLeftUnit.value)
+    val leftUnitSignal: Signal[TempConversion] = leftUnitEvent.hold(init = renderedLeftUnit.value).map{TempConversion.valueOf(_)}
 
-    val rightUnitInput: TypedTag[Select] = select(option("m"), option("km"))
+    val rightUnitInput: TypedTag[Select] = select(TempConversion.values.map { unit => option(unit.toString) })
     val (rightUnitEvent: Event[String], renderedRightUnit: Select) = RenderUtil.dropDownHandler(rightUnitInput, oninput, clear = false)
-    //val rightUnitSignal: Signal[String] = rightUnitEvent.hold(init = renderedRightUnit.value)
+    val rightUnitSignal: Signal[TempConversion] = rightUnitEvent.hold(init = renderedRightUnit.value).map{TempConversion.valueOf(_)}
 
-    val leftValueVar = LVar(1.0)
-    val leftValueInput: TypedTag[Input] = input(value := leftValueVar.now)
+    val leftVar = LVar(0.0)
+    val rightVar = leftVar.applyLens(BijectiveSigLens(Signal{conversionLens(leftUnitSignal.value, rightUnitSignal.value)}))
+
+    val leftValueInput: TypedTag[Input] = input(value := leftVar.now)
     val (leftValueEvent: Event[String], renderedLeftValue: Input) = RenderUtil.inputFieldHandler(leftValueInput, oninput, clear = false)
 
-    val rightValueVar = LVar(1.0)
-    val rightValueInput: TypedTag[Input] = input(value := rightValueVar.now)
+    val rightValueInput: TypedTag[Input] = input(value := rightVar.now)
     val (rightValueEvent: Event[String], renderedRightValue: Input) = RenderUtil.inputFieldHandler(rightValueInput, oninput, clear = false)
 
-    div(p("Unit Conversion with Lenses"), renderedLeftUnit, renderedRightUnit, br, renderedLeftValue, renderedRightValue)
+    leftVar.fire(leftValueEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
+    rightVar.fire(rightValueEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
+
+    rightVar.observe{value => ;renderedRightValue.value = value.toString}
+    leftVar.observe{value => ;renderedLeftValue.value = value.toString}
+
+    div(p("Unit Conversion with Lenses"), renderedLeftUnit, renderedRightUnit, br , renderedLeftValue, renderedRightValue)
+
   }
 
   def testSignalLens() = {
