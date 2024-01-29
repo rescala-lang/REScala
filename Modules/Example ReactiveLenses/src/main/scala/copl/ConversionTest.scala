@@ -27,10 +27,12 @@ object ConversionTest {
     ()
   }
 
+
   enum TempConversion(val lens: BijectiveLens[Double, Double]):
     case C extends TempConversion(new NeutralLens)
     case K extends TempConversion(new AddLens(274.15))
     case L extends TempConversion(new AddLens(253))
+    case F extends TempConversion(new MulLens(1.8).compose(new AddLens(32)))
   end TempConversion
 
   def conversionLens(from : TempConversion, to : TempConversion): BijectiveLens[Double, Double] = from.lens.inverse.compose(to.lens)
@@ -110,8 +112,8 @@ object ConversionTest {
     rightVar.fire(rightEvent.map{toDoubleOr0(_)})
 
     //TODO This is ugly
-    leftVar.observe { value => ; renderedLeft.value = value.toString }
-    rightVar.observe { value => ; renderedRight.value = value.toString }
+    leftVar.observe { value => RenderUtil.setInputDisplay(renderedLeft, value.toString) }
+    rightVar.observe { value => RenderUtil.setInputDisplay(renderedLeft, value.toString) }
 
     div(p("A simple Calculator"), renderedLeft, renderedOperation, renderedValue, " = ", renderedRight)
   }
@@ -147,11 +149,11 @@ object ConversionTest {
     val rightValueInput: TypedTag[Input] = input(value := rightVar.now)
     val (rightValueEvent: Event[String], renderedRightValue: Input) = RenderUtil.inputFieldHandler(rightValueInput, oninput, clear = false)
 
-    leftVar.fire(leftValueEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
-    rightVar.fire(rightValueEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
+    leftVar.fire(leftValueEvent.map{toDoubleOr0(_)})
+    rightVar.fire(rightValueEvent.map{toDoubleOr0(_)})
 
-    rightVar.observe{value => ;renderedRightValue.value = value.toString}
-    leftVar.observe{value => ;renderedLeftValue.value = value.toString}
+    leftVar.observe{ value => RenderUtil.setInputDisplay(renderedLeftValue, value.toString) }
+    rightVar.observe{ value => RenderUtil.setInputDisplay(renderedRightValue, value.toString) }
 
     div(p("Unit Conversion with Lenses"), renderedLeftUnit, renderedRightUnit, br , renderedLeftValue, renderedRightValue)
 

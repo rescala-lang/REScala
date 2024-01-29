@@ -38,4 +38,8 @@ object RenderUtil {
 
     (inputFieldText, todoInputField)
   }
+
+  def setInputDisplay(in : Input, text : String): Unit = {
+    in.value = text
+  }
 }
