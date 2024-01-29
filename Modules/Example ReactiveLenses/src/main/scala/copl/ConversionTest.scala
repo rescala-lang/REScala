@@ -9,6 +9,7 @@ import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.TypedTag
 
+import scala.annotation.switch
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object TopoTags extends Tags[rescala.interfaces.toposort.type](rescala.interfaces.toposort, true)
@@ -21,7 +22,7 @@ object ConversionTest {
 
   def main(args: Array[String]): Unit = {
 //    signalTest()
-    val temperatureConverter = basicCalculator()
+    val temperatureConverter = unitConverter()
     document.body.replaceChild(temperatureConverter.render, document.body.firstChild)
     ()
   }
@@ -74,23 +75,23 @@ object ConversionTest {
     val leftVar = LVar(0.0)
 
     //Handle operation dropdown
-    val operationInput: TypedTag[Select] = select(option("ADD"), option("SUB"))
+    val operationInput: TypedTag[Select] = select(option("+"), option("-"), option("*"), option("/"))
     val (operationEvent: Event[String], renderedOperation: Select) = RenderUtil.dropDownHandler(operationInput, oninput, clear = false)
     val operationSignal: Signal[String] = operationEvent.hold(init = renderedOperation.value)
 
     //Handle value input
-    val sigInput: TypedTag[Input] = input(value := 0.0)
-    val (sigEvent: Event[String], renderedSig: Input) = RenderUtil.inputFieldHandler(sigInput, oninput, clear = false)
-    val valueSignal: Signal[Double] = sigEvent.hold(init = renderedSig.value).map { (str: String) => (str.toDouble: Double) }
+    val valueInput: TypedTag[Input] = input(value := 0.0)
+    val (valueEvent: Event[String], renderedValue: Input) = RenderUtil.inputFieldHandler(valueInput, oninput, clear = false)
+    val valueSignal: Signal[Double] = valueEvent.hold(init = renderedValue.value).map{toDoubleOr0(_)}
 
     val lens : BijectiveSigLens[Double, Double] = new BijectiveSigLens[Double, Double](Signal{
-      if (operationSignal.value == "ADD") {
-        new AddLens[Double](valueSignal.value)
-      } else if (operationSignal.value == "SUB") {
-        new AddLens[Double](valueSignal.value).inverse
-      } else {
-        new NeutralLens[Double]
-      }
+        (operationSignal.value: @switch) match {
+          case "+" => new AddLens(valueSignal.value)
+          case "-" => new AddLens(valueSignal.value).inverse
+          case "*" => new MulLens(valueSignal.value)
+          case "/" => new MulLens(valueSignal.value).inverse
+          case _ => new NeutralLens
+        }
     })
 
     val rightVar = leftVar.applyLens(lens)
@@ -101,13 +102,14 @@ object ConversionTest {
     val rightInput: TypedTag[Input] = input(value := rightVar.now)
     val (rightEvent: Event[String], renderedRight: Input) = RenderUtil.inputFieldHandler(rightInput, oninput, clear = false)
 
-    leftVar.fire(leftEvent.map(str => str.toDouble))
-    rightVar.fire(rightEvent.map(str => str.toDouble))
+    leftVar.fire(leftEvent.map{toDoubleOr0(_)})
+    rightVar.fire(rightEvent.map{toDoubleOr0(_)})
 
+    //TODO This is ugly
     leftVar.observe { value => ; renderedLeft.value = value.toString }
     rightVar.observe { value => ; renderedRight.value = value.toString }
 
-    div(p("A simple Calculator"), renderedLeft, renderedOperation, renderedSig, renderedRight)
+    div(p("A simple Calculator"), renderedLeft, renderedOperation, renderedValue, " = ", renderedRight)
   }
 
   def getOneWayConverter() = {
@@ -122,24 +124,25 @@ object ConversionTest {
     div(p("One way conversion using Signal"), renderedMeter, yardParagraph.asModifier)
   }
 
-  def getTemperatureConverter() = {
+  def unitConverter() = {
 
-    val celsiusVar = LVar(0.0)
-    val kelvinVar = celsiusVar.applyLens(new AddLens(273.15).compose(new AddLens(273.15).inverse))
+    val leftUnitInput: TypedTag[Select] = select(option("m"), option("km"))
+    val (leftUnitEvent: Event[String], renderedLeftUnit: Select) = RenderUtil.dropDownHandler(leftUnitInput, oninput, clear = false)
+    //val leftUnitSignal: Signal[String] = leftUnitEvent.hold(init = renderedLeftUnit.value)
 
-    val celsiusInput: TypedTag[Input] = input(value := celsiusVar.now)
-    val (celsiusEvent: Event[String], renderedCelsius: Input) = RenderUtil.inputFieldHandler(celsiusInput, oninput, clear = false)
+    val rightUnitInput: TypedTag[Select] = select(option("m"), option("km"))
+    val (rightUnitEvent: Event[String], renderedRightUnit: Select) = RenderUtil.dropDownHandler(rightUnitInput, oninput, clear = false)
+    //val rightUnitSignal: Signal[String] = rightUnitEvent.hold(init = renderedRightUnit.value)
 
-    val kelvinInput: TypedTag[Input] = input(value := kelvinVar.now)
-    val (kelvinEvent: Event[String], renderedKelvin: Input) = RenderUtil.inputFieldHandler(kelvinInput, oninput, clear = false)
+    val leftValueVar = LVar(1.0)
+    val leftValueInput: TypedTag[Input] = input(value := leftValueVar.now)
+    val (leftValueEvent: Event[String], renderedLeftValue: Input) = RenderUtil.inputFieldHandler(leftValueInput, oninput, clear = false)
 
-    celsiusVar.fire(celsiusEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
-    kelvinVar.fire(kelvinEvent.map {str => if (str.toDoubleOption.isDefined) str.toDouble else 0.0 })
+    val rightValueVar = LVar(1.0)
+    val rightValueInput: TypedTag[Input] = input(value := rightValueVar.now)
+    val (rightValueEvent: Event[String], renderedRightValue: Input) = RenderUtil.inputFieldHandler(rightValueInput, oninput, clear = false)
 
-    kelvinVar.observe{value => ;renderedKelvin.value = value.toString}
-    celsiusVar.observe{value => ;renderedCelsius.value = value.toString}
-
-    div(p("Unit Conversion with Lenses :D"), renderedCelsius, renderedKelvin)
+    div(p("Unit Conversion with Lenses"), renderedLeftUnit, renderedRightUnit, br, renderedLeftValue, renderedRightValue)
   }
 
   def testSignalLens() = {
@@ -158,8 +161,8 @@ object ConversionTest {
     val rightInput: TypedTag[Input] = input(value := rightVar.now)
     val (rightEvent: Event[String], renderedRight: Input) = RenderUtil.inputFieldHandler(rightInput, oninput, clear = false)
 
-    leftVar.fire(leftEvent.map(str => str.toDouble))
-    rightVar.fire(rightEvent.map(str => str.toDouble))
+    leftVar.fire(leftEvent.map{toDoubleOr0(_)})
+    rightVar.fire(rightEvent.map{toDoubleOr0(_)})
 
     leftVar.observe{value =>; renderedLeft.value = value.toString}
     rightVar.observe{value =>; renderedRight.value = value.toString}
@@ -193,6 +196,14 @@ object ConversionTest {
       Option.empty[Double]
     else
       Option[Double](meter.get * 0.9144)
+  }
+
+  def toDoubleOr0(str : String): Double = {
+    try {
+      {str.toDouble}
+    } catch {
+      case _ => {0.0}
+    }
   }
 
 }

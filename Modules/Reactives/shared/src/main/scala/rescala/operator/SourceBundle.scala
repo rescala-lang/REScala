@@ -3,7 +3,6 @@ package rescala.operator
 import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
 import rescala.structure.Pulse
 
-//import scala.language.implicitConversions
 import scala.util.Random
 
 trait SourceBundle {
@@ -212,7 +211,7 @@ trait SourceBundle {
   }
 
   /**
-   * TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses _now_ instead!
+   * TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
    * @param lensSig
    * @tparam M
    * @tparam V
@@ -229,11 +228,27 @@ trait SourceBundle {
   implicit def toSignalLens[M, V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState],
                                                              sched: Scheduler[BundleState]): BijectiveSigLens[M, V] = BijectiveSigLens(Signal {lens})
 
+  /**
+   * A simple lens for addition
+   * @param k The summand
+   */
   class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
     def toView(m: A): A = num.plus(m, k)
     def toModel(v: A): A = num.minus(v, k)
   }
 
+  /**
+   * A simple lens for multiplication
+   * @param k The summand
+   */
+  class MulLens[A](k: A)(implicit frac: Fractional[A]) extends BijectiveLens[A, A] {
+    def toView(m: A): A = frac.times(m, k)
+    def toModel(v: A): A = frac.div(v, k)
+  }
+
+  /**
+   * A simple lens with returns the identity
+   */
   class NeutralLens[A] extends BijectiveLens[A, A] {
     def toView(m: A): A = m
     def toModel(v: A): A = v
