@@ -3,7 +3,7 @@ package loreDSL
 import lore.DSL.*
 
 object additionExample:
-  @main def main: Unit =
+  @main def main(): Unit =
     val firstRealVariable: Source[Int] = Source(0)
     val secondRealVariable: Derived[Int] = Derived { firstRealVariable() + firstRealVariable() }
     val thirdRealVariable = Interaction[Int, Int]

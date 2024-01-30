@@ -10,8 +10,6 @@ import dotty.tools.dotc.core.Symbols.*
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Pickler, Staging}
-import lore.AST.*
-import lore.DSL.*
 
 class DSL extends StandardPlugin:
   val name: String = "DSL"
@@ -44,17 +42,26 @@ class DSLPhase extends PluginPhase:
           // Structure of InteractionWithTypes also seems different, it doesn't have a denotation,
           // is using a generic TypeTree and then an AppliedType, instead of an AppliedTypeTree.
           // Unsure how to match that part for type name / type parameters.
+          // Try testing: tpt.tpe.argTypes and copying over the AST file into this project instead of importing lore
           case AppliedTypeTree(typeName: Ident, typeParameters: List[Ident]) =>
             report.warning(s"${typeName.name.toString} definition detected", tree.sourcePos)
+            println("-------------")
             println(s"typeName: $typeName")
             println(s"typeParameters: ${typeParameters.mkString(", ")}")
+            println(s"argTypes: ${tpt.tpe.argTypes.mkString(", ")}")
+            loreTerms = loreTerms :+ TAbs(name.toString, SimpleType(typeName.name.toString, typeParameters.map(t => SimpleType(t.name.toString, List()))), TNum(39))
+            println("-------")
+            println(s"loreTerms:\n${loreTerms.mkString("\n")}")
+            println("-------")
           case _ =>
             ()
       case ValDef(name, tpt, rhs) if name.toString.equals("thirdRealVariable") =>
+        println("----------")
         println(s"name: $name")
         println("----------------")
         println(s"tpt: $tpt")
         println(s"tpt.tpe: ${tpt.tpe}")
+        println(s"tpt.tpe.argTypes: ${tpt.tpe.argTypes.mkString(", ")}")
         println("----------------")
         println(s"rhs: $rhs")
 
