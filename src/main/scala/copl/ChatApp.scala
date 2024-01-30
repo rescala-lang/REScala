@@ -1,45 +1,47 @@
 package copl
 
-import org.scalajs.dom.{UIEvent, document, window}
-import org.scalajs.dom.html.{Div, Input, Paragraph}
-import rescala.default
-import rescala.default.*
-import rescala.extra.Tags.*
-import scalatags.JsDom.all.*
-import scalatags.JsDom.{Attr, TypedTag}
-import copl.Codecs.*
+import copl.Codecs.given
 import kofre.base.Lattice
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.syntax.ReplicaId
 import loci.registry.{Binding, Registry}
-import rescala.extra.distribution.Network
 import loci.serializer.jsoniterScala.*
+import org.scalajs.dom.html.{Div, Input, Paragraph}
+import org.scalajs.dom.{UIEvent, document, window}
+import rescala.default
+import rescala.default.*
+import rescala.extra.Tags.*
+import rescala.extra.distribution.Network
+import scalatags.JsDom.all.*
+import scalatags.JsDom.{Attr, TypedTag}
+
+import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 case class Chatline(author: String, message: String)
 
 case class Epoche[T](number: Int, payload: T)
 
+@JSExportTopLevel("ChatApp")
 object ChatApp {
 
   val registry = new Registry
 
   given ReplicaId = ReplicaId.gen()
 
-  implicit def makeEpocheInstance[T: Lattice]: Lattice[Epoche[T]] = new Lattice[Epoche[T]] {
-    override def merge(left: Epoche[T], right: Epoche[T]): Epoche[T] = {
+  given epocheInstance[T: Lattice]: Lattice[Epoche[T]] = new Lattice[Epoche[T]] {
+    override def merge(left: Epoche[T], right: Epoche[T]): Epoche[T] =
       if (left.number > right.number) left
       else if (left.number < right.number) right
       else Epoche(number = left.number, payload = Lattice[T].merge(left.payload, right.payload))
-    }
   }
 
-  def main(args: Array[String]): Unit = {
+  @JSExport("start")
+  def start(): Unit = {
     val contents = getContents()
     document.body.replaceChild(contents.render, document.body.firstChild)
     document.body.appendChild(p(style := "height: 3em").render)
     document.body.appendChild(WebRTCHandling(registry).webrtcHandlingArea.render)
-
   }
 
   def getContents(): TypedTag[Div] = {
@@ -65,7 +67,9 @@ object ChatApp {
       Storing.storedAs("history", Epoche(0, Dotted(ReplicatedList.empty[Chatline]))) { initial =>
         Fold(initial)(
           chatline act { line => current merge current.copy(payload = current.payload.prepend(line)) },
-          deleteAll act { arg => current merge Epoche(number = current.number + 1, Dotted(ReplicatedList.empty[Chatline])) }
+          deleteAll act { arg =>
+            current merge Epoche(number = current.number + 1, Dotted(ReplicatedList.empty[Chatline]))
+          }
         )
       }
 

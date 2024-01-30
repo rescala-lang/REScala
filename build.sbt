@@ -2,7 +2,6 @@ lazy val chat = project.in(file("."))
   .enablePlugins(ScalaJSPlugin)
   .settings(
     scalaVersion                    := "3.3.1",
-    scalaJSUseMainModuleInitializer := true,
     resolvers += "jitpack" at "https://jitpack.io",
     libraryDependencies ++= Seq(
       "com.github.rescala-lang.rescala" %%% "rescala"     % "71e3cee000",

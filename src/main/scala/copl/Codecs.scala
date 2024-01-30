@@ -11,15 +11,18 @@ import loci.transmitter.IdenticallyTransmittable
 
 object Codecs {
 
-  implicit val stringCodec: JsonValueCodec[String]       = JsonCodecMaker.make[String]
-  implicit val listCodec: JsonValueCodec[List[Chatline]] = JsonCodecMaker.make[List[Chatline]]
+  given stringCodec: JsonValueCodec[String]       = JsonCodecMaker.make[String]
+  given listCodec: JsonValueCodec[List[Chatline]] = JsonCodecMaker.make[List[Chatline]]
 
-  implicit val rgaTransmittable: IdenticallyTransmittable[Epoche[Dotted[ReplicatedList[Chatline]]]] =
+  given rgaTransmittable: IdenticallyTransmittable[Epoche[Dotted[ReplicatedList[Chatline]]]] =
     IdenticallyTransmittable[Epoche[Dotted[ReplicatedList[Chatline]]]]()
 
-  implicit val uidCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf[JsonValueCodec[Uid]]
+  // The cast here is because Uid actually is a string … but it is an opaque type so we should not be able to know that.
+  // We do need to know what the actual datatype is for the codec though
+  given uidCodec: JsonValueCodec[Uid] = stringCodec.asInstanceOf[JsonValueCodec[Uid]]
 
-  implicit val epocheCodec: JsonValueCodec[Epoche[Dotted[ReplicatedList[Chatline]]]] =
+
+  given epocheCodec: JsonValueCodec[Epoche[Dotted[ReplicatedList[Chatline]]]] =
     JsonCodecMaker.make[Epoche[Dotted[ReplicatedList[Chatline]]]](CodecMakerConfig.withMapAsArray(true))
 
 }
