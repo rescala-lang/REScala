@@ -2,67 +2,49 @@ package loci
 package communicator
 package tcp
 
+import de.rmgk.delay.Async
+
 import java.io.IOException
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, SocketException}
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
-private class TCPListener(
-  port: Int, interface: String, properties: TCP.Properties)
-    extends Listener[TCP] {
+trait TCPListener {
+  def channels: Async[Unit, Bidirectional]
+  def close: Async[Unit, Unit]
+}
 
-  protected def startListening(connectionEstablished: Connected[TCP]): Try[Listening] =
-    try {
-      val running = new AtomicBoolean(true)
-      val executor = Executors.newCachedThreadPool()
-      val socket = new ServerSocket
+def startListening(port: Int, interface: String): TCPListener = {
 
-      try socket.setReuseAddress(true) catch {
-        case _: SocketException =>
-          // some implementations may not allow SO_REUSEADDR to be set
-      }
+  new TCPListener {
+
+    val socket = new ServerSocket
+
+    try socket.setReuseAddress(true)
+    catch {
+      case _: SocketException =>
+      // some implementations may not allow SO_REUSEADDR to be set
+    }
+
+    override def close: Async[Unit, Unit] = Async {
+      socket.close()
+    }
+
+    override def channels: Async[Unit, Bidirectional] = Async.fromCallback {
 
       socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
 
-      def terminate() = {
-        try socket.close()
-        catch { case _: IOException => }
-        executor.shutdown()
+      try
+        while (true) {
+          val connection = socket.accept()
+          if connection != null then Async.handler.succeed(makeConnection(connection))
+        }
+      catch {
+        case exception: SocketException =>
+          Async.handler.fail(exception)
       }
-
-      new Thread() {
-        override def run() =
-          try
-            while (true) {
-              val connection = socket.accept()
-              if (connection != null)
-                executor.execute(new Runnable {
-                  def run() = TCPHandler.handleConnection(
-                    connection, properties, TCPListener.this, { connection =>
-                      connectionEstablished.fire(Success(connection))
-                    })
-                })
-            }
-          catch {
-            case exception: SocketException =>
-              if (running.getAndSet(false)) {
-                terminate()
-                connectionEstablished.fire(Failure(exception))
-              }
-          }
-      }.start()
-
-      Success(new Listening {
-        def stopListening(): Unit =
-          if (running.getAndSet(false))
-            terminate()
-      })
     }
-    catch {
-      case NonFatal(exception) =>
-        Failure(exception)
-    }
+  }
 }

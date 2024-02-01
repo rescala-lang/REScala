@@ -5,176 +5,147 @@ package tcp
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
 import java.net.{Socket, SocketException}
 import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
-
 import scala.collection.mutable
+import scala.util.{Failure, Success}
+import scala.util.control.NonFatal
 
-private object TCPHandler {
-  locally(TCPHandler)
+import de.rmgk.delay.Async
 
-  private val executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
-    override def newThread(runnable: Runnable) = {
-      val thread = Executors.defaultThreadFactory.newThread(runnable)
-      thread.setDaemon(true)
-      thread
+trait MessageBuffer {
+  def asArray: Array[Byte]
+  def length: Int
+}
+
+case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
+  override def asArray: Array[Byte] = inner
+  override def length: Int          = inner.length
+}
+
+trait Channel {
+  def close(): Async[Unit, Unit]
+  def closed: Async[Unit, Boolean]
+}
+
+trait InChan extends Channel {
+  def receive: Async[Unit, MessageBuffer]
+}
+
+trait OutChan extends Channel {
+  def send(message: MessageBuffer): Async[Unit, Unit]
+
+}
+
+case class Bidirectional(in: InChan, out: OutChan)
+
+def connect(host: String, port: Int): Async[Unit, Bidirectional] = Async.fromCallback {
+  try
+    Async.handler.succeed:
+      makeConnection(new Socket(host, port))
+  catch
+    case NonFatal(exception) =>
+      Async.handler.fail(exception)
+}
+
+def makeConnection(socket: Socket): Bidirectional =
+  val conn = new TCPConnection(socket)
+  Bidirectional(conn, conn)
+
+class TCPConnection(socket: Socket) extends InChan with OutChan {
+
+  // socket streams
+
+  val inputStream  = new BufferedInputStream(socket.getInputStream)
+  val outputStream = new BufferedOutputStream(socket.getOutputStream)
+
+  // control codes
+
+  val head: Byte    = 1
+  val payload: Byte = 2
+
+  // connection interface
+
+  def send(data: MessageBuffer): Async[Unit, Unit] = Async.fromCallback {
+    try {
+      val size = data.length
+      outputStream.write(
+        Array(
+          head,
+          (size >> 24).toByte,
+          (size >> 16).toByte,
+          (size >> 8).toByte,
+          size.toByte,
+          payload
+        )
+      )
+      outputStream.write(data.asArray)
+      outputStream.flush()
+      Async.handler.succeed(())
+    } catch {
+      case ioe: IOException => Async.handler.fail(ioe)
     }
-  })
+  }
 
-  def handleConnection(
-      socket: Socket,
-      properties: TCP.Properties,
-      connectionSetup: ConnectionSetup[TCP],
-      connectionEstablished: Connection[TCP] => Unit) = {
+  def close(): Async[Unit, Unit] = Async { doClose() }
 
-    // enable/disable Nagle's algorithm
+  def doClose(): Unit = {
+    def ignoreIOException(body: => Unit) =
+      try body
+      catch { case _: IOException => }
 
-    try socket.setTcpNoDelay(properties.noDelay) catch {
-      case _: SocketException =>
-        // some implementations may not allow TCP_NODELAY to be set, in which
-        // case we just ignore the issue (there are, however, performance
-        // implications for certain communication patterns)
-    }
+    ignoreIOException { socket.shutdownOutput() }
+    ignoreIOException { while (inputStream.read != -1) {} }
+    ignoreIOException { socket.close() }
+  }
 
+  override def closed: Async[Unit, Boolean] = Async(socket.isClosed)
 
-    // socket streams
+  // heartbeat
 
-    val inputStream = new BufferedInputStream(socket.getInputStream)
-    val outputStream = new BufferedOutputStream(socket.getOutputStream)
+  // socket.setSoTimeout(timeout)
 
+  // frame parsing
 
-    // heartbeat
-
-    val delay = properties.heartbeatDelay.toMillis
-    val timeout = properties.heartbeatTimeout.toMillis.toInt
-    var heartbeatTask: ScheduledFuture[_] = null
-
-    // control codes
-
-    val head: Byte = 1
-    val payload: Byte = 2
-    val heartbeat: Byte = 6
-
-
-    // connection interface
-
-    var isOpen = true
-    val doClosed = Notice.Steady[Unit]
-    val doReceive = Notice.Stream[MessageBuffer]
-
-    val connection = new Connection[TCP] {
-      val protocol = new TCP {
-        val host = socket.getInetAddress.getHostName
-        val port = socket.getPort
-        val setup = connectionSetup
-        val authenticated = false
-        val encrypted = false
-        val integrityProtected = false
-      }
-
-      val closed = doClosed.notice
-      val receive = doReceive.notice
-
-      def open: Boolean = synchronized { isOpen }
-
-      def send(data: MessageBuffer) = synchronized {
-        if (isOpen)
-          try {
-            val size = data.length
-            outputStream.write(
-              Array(
-                head,
-                (size >> 24).toByte,
-                (size >> 16).toByte,
-                (size >> 8).toByte,
-                size.toByte,
-                payload))
-            outputStream.write(data.backingArray)
-            outputStream.flush()
-          }
-          catch { case _: IOException => close() }
-        }
-
-      def close() = {
-        synchronized {
-          if (isOpen) {
-            def ignoreIOException(body: => Unit) =
-              try body catch { case _: IOException => }
-
-            isOpen = false
-
-            if (heartbeatTask != null)
-              heartbeatTask.cancel(true)
-
-            ignoreIOException { socket.shutdownOutput() }
-            ignoreIOException { while (inputStream.read != -1) { } }
-            ignoreIOException { socket.close() }
-          }
-        }
-
-        doClosed.trySet()
-      }
-    }
-
-    // heartbeat
-
-    socket.setSoTimeout(timeout)
-
-    heartbeatTask = executor.scheduleWithFixedDelay(new Runnable {
-      def run() = connection synchronized {
-        if (isOpen)
-          try {
-            outputStream.write(heartbeat)
-            outputStream.flush()
-          }
-          catch { case _: IOException => connection.close() }
-      }
-    }, delay, delay, TimeUnit.MILLISECONDS)
-
-
-    connectionEstablished(connection)
-
-
-    // frame parsing
+  override def receive: Async[Unit, MessageBuffer] = Async.fromCallback {
 
     def read = {
       val byte = inputStream.read
-      if (byte == -1) throw new IOException("end of connection stream")
+      if byte == -1
+      then throw new IOException("end of connection stream")
       else byte.toByte
     }
 
     val arrayBuilder = mutable.ArrayBuilder.make[Byte]
 
     try while (true) {
-      read match {
-        case `heartbeat` =>
-          // heartbeat
+        read match {
+          case `head` =>
+            var size =
+              ((read & 0xff) << 24) |
+              ((read & 0xff) << 16) |
+              ((read & 0xff) << 8) |
+              (read & 0xff)
 
-        case `head` =>
-          var size =
-            ((read & 0xff) << 24) |
-            ((read & 0xff) << 16) |
-            ((read & 0xff) << 8) |
-            (read & 0xff)
+            if (read == payload && size >= 0) {
+              arrayBuilder.clear()
+              arrayBuilder.sizeHint(size)
+              while (size > 0) {
+                arrayBuilder += read
+                size -= 1
+              }
 
-          if (read == payload && size >= 0) {
-            arrayBuilder.clear()
-            arrayBuilder.sizeHint(size)
-            while (size > 0) {
-              arrayBuilder += read
-              size -= 1
-            }
+              Async.handler.succeed(ArrayMessageBuffer(arrayBuilder.result()))
+            } else
+              throw IOException("unexpected read")
 
-            doReceive.fire(MessageBuffer wrapArray arrayBuilder.result())
-          }
-          else
-            connection.close()
-
-        case _ =>
-          connection.close()
+          case _ =>
+            throw IOException("unexpected read")
+        }
       }
-    }
     catch {
-      case _: IOException =>
-        connection.close()
+      case ioe: IOException =>
+        doClose()
+        Async.handler.fail(ioe)
     }
   }
+
 }
