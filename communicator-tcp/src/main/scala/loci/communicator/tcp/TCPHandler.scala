@@ -22,22 +22,22 @@ case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
 }
 
 trait Channel {
-  def close(): Async[Unit, Unit]
-  def closed: Async[Unit, Boolean]
+  def close(): Async[Any, Unit]
+  def closed: Async[Any, Boolean]
 }
 
 trait InChan extends Channel {
-  def receive: Async[Unit, MessageBuffer]
+  def receive: Async[Any, MessageBuffer]
 }
 
 trait OutChan extends Channel {
-  def send(message: MessageBuffer): Async[Unit, Unit]
+  def send(message: MessageBuffer): Async[Any, Unit]
 
 }
 
 case class Bidirectional(in: InChan, out: OutChan)
 
-def connect(host: String, port: Int): Async[Unit, Bidirectional] = Async.fromCallback {
+def connect(host: String, port: Int): Async[Any, Bidirectional] = Async.fromCallback {
   try
     Async.handler.succeed:
       makeConnection(new Socket(host, port))
@@ -64,7 +64,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 
   // connection interface
 
-  def send(data: MessageBuffer): Async[Unit, Unit] = Async.fromCallback {
+  def send(data: MessageBuffer): Async[Any, Unit] = Async.fromCallback {
     try {
       val size = data.length
       outputStream.write(
@@ -85,7 +85,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
     }
   }
 
-  def close(): Async[Unit, Unit] = Async { doClose() }
+  def close(): Async[Any, Unit] = Async { doClose() }
 
   def doClose(): Unit = {
     def ignoreIOException(body: => Unit) =
@@ -97,7 +97,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
     ignoreIOException { socket.close() }
   }
 
-  override def closed: Async[Unit, Boolean] = Async(socket.isClosed)
+  override def closed: Async[Any, Boolean] = Async(socket.isClosed)
 
   // heartbeat
 
@@ -105,7 +105,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 
   // frame parsing
 
-  override def receive: Async[Unit, MessageBuffer] = Async.fromCallback {
+  override def receive: Async[Any, MessageBuffer] = Async.fromCallback {
 
     def read = {
       val byte = inputStream.read

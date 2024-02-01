@@ -12,8 +12,8 @@ import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 trait TCPListener {
-  def channels: Async[Unit, Bidirectional]
-  def close: Async[Unit, Unit]
+  def channels: Async[Any, Bidirectional]
+  def close: Async[Any, Unit]
 }
 
 def startListening(port: Int, interface: String): TCPListener = {
@@ -28,11 +28,11 @@ def startListening(port: Int, interface: String): TCPListener = {
       // some implementations may not allow SO_REUSEADDR to be set
     }
 
-    override def close: Async[Unit, Unit] = Async {
+    override def close: Async[Any, Unit] = Async {
       socket.close()
     }
 
-    override def channels: Async[Unit, Bidirectional] = Async.fromCallback {
+    override def channels: Async[Any, Bidirectional] = Async.fromCallback {
 
       socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
 
