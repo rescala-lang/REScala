@@ -1,7 +1,7 @@
 package channel
 
+import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
-import channel.tcp.{ArrayMessageBuffer, Bidirectional}
 
 import java.text.Bidi
 import java.util.concurrent.TimeUnit
