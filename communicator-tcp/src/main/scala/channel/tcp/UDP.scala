@@ -23,8 +23,7 @@ class UDPOutChan(address: SocketAddress) extends OutChan {
     // Send the packet to the server
     clientSocket.send(sendPacket)
   }
-  override def close(): Async[Any, Unit]   = Async(clientSocket.close())
-  override def closed: Async[Any, Boolean] = Async(clientSocket.isClosed)
+  override def close(): Unit = clientSocket.close()
 }
 
 class UdpInChan(port: Int) extends InChan {
@@ -45,6 +44,5 @@ class UdpInChan(port: Int) extends InChan {
         serverSocket.close()
         Async.handler.fail(e)
   }
-  override def close(): Async[Any, Unit]   = Async(serverSocket.close())
-  override def closed: Async[Any, Boolean] = Async(serverSocket.isClosed)
+  override def close(): Unit = serverSocket.close()
 }

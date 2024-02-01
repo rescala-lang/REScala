@@ -72,9 +72,8 @@ object EchoServerTestTCP {
 
     println(s"done sleeping!")
 
-    listener.close.runToAsync
+    listener.close()
     bidi.out.close()
 
   }
 }
-
