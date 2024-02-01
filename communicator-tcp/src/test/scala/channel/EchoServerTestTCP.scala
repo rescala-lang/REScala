@@ -9,7 +9,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.util.{Failure, Success}
 
-object EchoServerTest {
+object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {
     val port = 54467
 
@@ -78,8 +78,3 @@ object EchoServerTest {
   }
 }
 
-class TCPTest extends munit.FunSuite {
-
-  test("basic") {}
-
-}
