@@ -60,15 +60,13 @@ object EchoServerTest {
         receiving.bind
         bidiA.bind
 
-
-
     var bidi: Bidirectional = null
 
     echoServer.run: res =>
       println(s"echo res: $res")
     client.run:
       case Success(res) => bidi = res
-      case Failure(e) => throw e
+      case Failure(e)   => throw e
 
     Thread.sleep(1000)
 
