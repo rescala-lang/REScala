@@ -1,16 +1,14 @@
 package channel.udp
 
 import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutChan}
+import de.rmgk.delay.Async
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
-import java.net.{
-  DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException
-}
+import java.net.{DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException}
 import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
 import scala.collection.mutable
-import scala.util.{Failure, Success}
 import scala.util.control.NonFatal
-import de.rmgk.delay.Async
+import scala.util.{Failure, Success}
 
 class UDPOutChan(address: SocketAddress) extends OutChan {
 
