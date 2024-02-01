@@ -1,5 +1,6 @@
 package channel
 
+import channel.udp.{Ctx, Prod}
 import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
 
@@ -8,6 +9,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.util.{Failure, Success}
+import de.rmgk.delay.syntax.run
 
 object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {
@@ -23,7 +25,7 @@ object EchoServerTestTCP {
       println(s"starting thread")
       t.start()
 
-    val echoServer: Async[Any, Unit] = Async:
+    val echoServer: Prod[Unit] = Async[Ctx]:
       fork.bind
       println(s"serving")
       val channel = listener.channels.bind
@@ -34,7 +36,7 @@ object EchoServerTestTCP {
       channel.out.send(msg).bind
       println(s"done")
 
-    val client: Async[Any, Bidirectional] =
+    val client: Prod[Bidirectional] =
       val bidiA = Async:
         fork.bind
         println(s"connecting")
@@ -48,23 +50,23 @@ object EchoServerTestTCP {
         bidi.out.send(ArrayMessageBuffer(Array(1, 2, 3, 4))).bind
         bidi.out.send(ArrayMessageBuffer(Array(5, 6, 7, 8))).bind
 
-      val receiving = Async:
+      val receiving = Async[Ctx]:
         val bidi = bidiA.bind
         fork.bind
         println(s"receiving")
         val response = bidi.in.receive.bind
         println(response.asArray.mkString("[", ", ", "]"))
 
-      Async:
+      Async[Ctx]:
         sending.bind
         receiving.bind
         bidiA.bind
 
     var bidi: Bidirectional = null
 
-    echoServer.run: res =>
+    echoServer.run(using udp.Ctx()): res =>
       println(s"echo res: $res")
-    client.run:
+    client.run(using udp.Ctx()):
       case Success(res) => bidi = res
       case Failure(e)   => throw e
 

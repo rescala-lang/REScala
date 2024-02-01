@@ -1,5 +1,6 @@
 package channel
 
+import channel.udp.{Ctx, Prod}
 import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
 import munit.internal.io.PlatformIO.Files
@@ -27,7 +28,7 @@ object EchoServerTestUDP {
       println(s"starting thread")
       t.start()
 
-    val echoServer: Async[Any, Unit] = Async:
+    val echoServer: Prod[Unit] = Async[Ctx]:
       fork.bind
       println(s"serving")
       val channel =
@@ -43,7 +44,7 @@ object EchoServerTestUDP {
       sender.send(ArrayMessageBuffer("hello world!".getBytes)).bind
       sender.send(ArrayMessageBuffer(("X" * 65000).getBytes())).bind
 
-    echoServer.run: res =>
+    echoServer.run(using udp.Ctx()): res =>
       println(s"echo res: $res")
     client.run: res =>
       println(s"client res: $res")

@@ -10,6 +10,11 @@ import scala.collection.mutable
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
+
+class Ctx(@volatile var closeRequest: Boolean = false)
+
+type Prod[A] = Async[Ctx, A]
+
 class UDPOutChan(address: SocketAddress) extends OutChan {
 
   val clientSocket: DatagramSocket = new DatagramSocket()
@@ -28,7 +33,7 @@ class UdpInChan(port: Int) extends InChan {
 
   val serverSocket = new DatagramSocket(port)
 
-  override def receive: Async[Any, MessageBuffer] = Async.fromCallback {
+  override def receive: Prod[MessageBuffer] = Async.fromCallback {
 
     val receiveBuffer = new Array[Byte](1 << 20)
 

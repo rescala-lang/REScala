@@ -1,5 +1,6 @@
 package channel
 
+import channel.udp.Prod
 import channel.{InChan, OutChan}
 import de.rmgk.delay.Async
 
@@ -14,7 +15,7 @@ case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
 }
 
 trait InChan extends AutoCloseable {
-  def receive: Async[Any, MessageBuffer]
+  def receive: Prod[MessageBuffer]
 }
 
 trait OutChan extends AutoCloseable {
