@@ -1,6 +1,4 @@
-package loci
-package communicator
-package tcp
+package channel.tcp
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
 import java.net.{DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}

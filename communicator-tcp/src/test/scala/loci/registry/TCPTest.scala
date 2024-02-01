@@ -1,7 +1,7 @@
-package loci.registry
+package channel
 
 import de.rmgk.delay.Async
-import loci.communicator.tcp.{ArrayMessageBuffer, Bidirectional}
+import channel.tcp.{ArrayMessageBuffer, Bidirectional}
 
 import java.text.Bidi
 import java.util.concurrent.TimeUnit
@@ -13,7 +13,7 @@ object EchoServerTest {
   def main(args: Array[String]): Unit = {
     val port = 54467
 
-    val listener = loci.communicator.tcp.startListening(port, "0")
+    val listener = channel.tcp.startListening(port, "0")
 
     def fork: Async[Any, Unit] = Async.fromCallback:
       val t = new Thread(() =>
@@ -38,7 +38,7 @@ object EchoServerTest {
       val bidiA = Async:
         fork.bind
         println(s"connecting")
-        loci.communicator.tcp.connect("localhost", port).bind
+        channel.tcp.connect("localhost", port).bind
       .runToAsync
 
       val sending = Async: (_: Any) ?=>
