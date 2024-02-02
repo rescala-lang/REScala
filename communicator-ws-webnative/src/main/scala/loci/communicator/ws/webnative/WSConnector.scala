@@ -49,7 +49,7 @@ class WebsocketConnect(socket: dom.WebSocket) extends InChan with OutChan {
 
     socket.onerror = (event: dom.Event) =>
       socket.close()
-      Async.handler.fail(new WebsocketException("Websocket failed to connect"))
+      Async.handler.fail(new WebsocketException("Error during websocket communication"))
   }
 
 }
