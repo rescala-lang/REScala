@@ -1,128 +1,71 @@
-package loci
-package communicator
-package ws.webnative
+package channel.webnative
 
+import channel.MesageBufferExtensions.asArrayBuffer
+import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
+import org.scalajs.dom.Blob
 
+import java.io.IOException
+import java.nio.ByteBuffer
 import scala.scalajs.js
-import scala.scalajs.js.timers._
+import scala.scalajs.js.timers.*
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success}
+import scala.scalajs.js.typedarray.TypedArrayBufferOps.*
+import scala.scalajs.js.typedarray.given
+import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer, Uint8Array}
 
-private class WSConnector[P <: WS: WSProtocolFactory](
-  url: String, properties: WS.Properties)
-    extends Connector[P] {
+class WebsocketException(msg: String) extends IOException(msg)
 
-  protected def connect(connectionEstablished: Connected[P]) = {
+class WebsocketConnect(socket: dom.WebSocket) extends InChan with OutChan {
+
+  def open(): Boolean = socket.readyState == dom.WebSocket.OPEN
+
+  def send(data: MessageBuffer): Async[Any, Unit] = Sync {
+    socket.send(data.asArrayBuffer)
+  }
+
+  def close() = socket.close()
+
+  override def receive: Prod[MessageBuffer] = Async.fromCallback {
+
+    socket.onmessage = { (event: dom.MessageEvent) =>
+      event.data match {
+        case data: ArrayBuffer =>
+          Async.handler.succeed(JsArrayBufferMessageBuffer(data))
+
+        case data: dom.Blob =>
+          val reader = new dom.FileReader
+          reader.onload = { (event: dom.Event) =>
+            val buffer = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
+            Async.handler.succeed(JsArrayBufferMessageBuffer(buffer))
+          }
+          reader.readAsArrayBuffer(data)
+
+        case _ =>
+      }
+    }
+
+    socket.onerror = (event: dom.Event) =>
+      socket.close()
+      Async.handler.fail(new WebsocketException("Websocket failed to connect"))
+  }
+
+}
+
+object WebsocketConnect {
+
+  def connect(url: String): Async[Any, WebsocketConnect] = Async.fromCallback {
 
     val socket = new dom.WebSocket(url)
 
-    socket.onopen = { (_: dom.Event) =>
+    socket.onopen = (_: dom.Event) =>
+      Async.handler.succeed:
+        new WebsocketConnect(socket)
 
-      // protocol properties
-
-      val (tls, host, port) = dom.document.createElement("a") match {
-        case parser: dom.html.Anchor =>
-          parser.href = url
-          val tls = (parser.protocol compareToIgnoreCase "wss:") == 0
-          val host = Some(parser.hostname)
-          val port =
-            try Some(parser.port.toInt)
-            catch { case _: NumberFormatException => None }
-          (tls, host, port)
-        case _ =>
-          (false, None, None)
-      }
-
-      implicitly[WSProtocolFactory[P]].make(url, host, port, this, tls, tls, tls) match {
-        case Failure(exception) =>
-          connectionEstablished.set(Failure(exception))
-
-        case Success(ws) =>
-
-          // heartbeat
-
-          var timeoutHandle: SetTimeoutHandle = null
-          var intervalHandle: SetIntervalHandle = null
-
-          val resetTimeout = Notice.Stream[Unit]
-          val resetInterval = Notice.Stream[Unit]
-
-
-          // connection interface
-
-          val doClosed = Notice.Steady[Unit]
-          val doReceive = Notice.Stream[MessageBuffer]
-
-          val connection = new Connection[P] {
-            val protocol = ws
-            val closed = doClosed.notice
-            val receive = doReceive.notice
-
-            def open = socket.readyState == dom.WebSocket.OPEN
-            def send(data: MessageBuffer) = {
-              socket.send(data.backingArrayBuffer)
-              resetInterval.fire()
-            }
-            def close() = socket.close()
-          }
-
-          connectionEstablished.set(Success(connection))
-
-
-          // heartbeat
-
-          resetTimeout.notice foreach { _ =>
-            if (timeoutHandle != null)
-              clearTimeout(timeoutHandle)
-            timeoutHandle = setTimeout(properties.heartbeatTimeout) {
-              connection.close()
-            }
-          }
-
-          resetInterval.notice foreach { _ =>
-            if (intervalHandle != null)
-              clearInterval(intervalHandle)
-            intervalHandle = setInterval(properties.heartbeatDelay) {
-              socket.send("\uD83D\uDC93")
-            }
-          }
-
-          resetTimeout.fire()
-          resetInterval.fire()
-
-
-          // socket listeners
-
-          socket.onmessage = { (event: dom.MessageEvent) =>
-            event.data match {
-              case data: ArrayBuffer =>
-                doReceive.fire(MessageBuffer wrapArrayBuffer data)
-
-              case data: dom.Blob =>
-                val reader = new dom.FileReader
-                reader.onload = { (event: dom.Event) =>
-                  doReceive.fire(MessageBuffer wrapArrayBuffer
-                    event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer])
-                }
-                reader.readAsArrayBuffer(data)
-
-              case _ =>
-            }
-            resetTimeout.fire()
-          }
-
-          socket.onclose = { (event: dom.CloseEvent) =>
-            clearInterval(intervalHandle)
-            clearTimeout(timeoutHandle)
-            doClosed.set()
-          }
-      }
-    }
-
-    socket.onerror = { (event: dom.Event) =>
-      connectionEstablished.trySet(Failure(new ConnectionException("Websocket failed to connect")))
+    socket.onerror = (event: dom.Event) =>
       socket.close()
-    }
+      Async.handler.fail(new WebsocketException("Websocket failed to connect"))
   }
 }

@@ -14,12 +14,6 @@ import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-class Ctx(@volatile var closeRequest: Boolean = false)
-
-inline def context(using ctx: Ctx): Ctx = ctx
-
-type Prod[A] = Async[Ctx, A]
-
 class UDPOutChan(address: SocketAddress) extends OutChan {
 
   val clientSocket: DatagramSocket = new DatagramSocket()

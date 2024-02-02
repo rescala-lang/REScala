@@ -1,18 +1,21 @@
 package channel
 
-import channel.udp.Prod
 import channel.{InChan, OutChan}
 import de.rmgk.delay.Async
 
 trait MessageBuffer {
   def asArray: Array[Byte]
-  def length: Int
 }
 
 case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
   override def asArray: Array[Byte] = inner
-  override def length: Int          = inner.length
 }
+
+class Ctx(@volatile var closeRequest: Boolean = false)
+
+inline def context(using ctx: Ctx): Ctx = ctx
+
+type Prod[A] = Async[Ctx, A]
 
 trait InChan extends AutoCloseable {
   def receive: Prod[MessageBuffer]
