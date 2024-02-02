@@ -9,6 +9,7 @@ lazy val nativewebsockets = project.in(file("communicator-ws-webnative"))
     Settings.scalaVersion_3,
     Dependencies.munit,
     Dependencies.scalajsDom,
+    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   ).dependsOn(interfaces.js)
 
 lazy val interfaces = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
