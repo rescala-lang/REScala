@@ -1,6 +1,5 @@
 package channel
 
-import channel.udp.{Ctx, Prod}
 import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
 import munit.internal.io.PlatformIO.Files
@@ -41,7 +40,7 @@ object EchoServerTestUDP {
       sender.send(ArrayMessageBuffer("hello world!".getBytes)).bind
       sender.send(ArrayMessageBuffer(("X" * 65000).getBytes())).bind
 
-    given ctx: Ctx = udp.Ctx()
+    given ctx: Ctx = Ctx()
 
     echoServer.run: res =>
       println(s"echo res: $res")

@@ -40,10 +40,10 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 
   def send(data: MessageBuffer): Async[Any, Unit] = Async.fromCallback {
     try {
-      val size = data.length
+      val outArray = data.asArray
       outputStream.write(sizedContent)
-      outputStream.writeInt(size)
-      outputStream.write(data.asArray)
+      outputStream.writeInt(outArray.size)
+      outputStream.write(outArray)
       outputStream.flush()
       Async.handler.succeed(())
     } catch {

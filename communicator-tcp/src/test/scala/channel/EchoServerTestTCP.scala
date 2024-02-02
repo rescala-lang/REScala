@@ -1,6 +1,5 @@
 package channel
 
-import channel.udp.{Ctx, Prod}
 import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
 
@@ -64,9 +63,9 @@ object EchoServerTestTCP {
 
     var bidi: Bidirectional = null
 
-    echoServer.run(using udp.Ctx()): res =>
+    echoServer.run(using Ctx()): res =>
       println(s"echo res: $res")
-    client.run(using udp.Ctx()):
+    client.run(using Ctx()):
       case Success(res) => bidi = res
       case Failure(e)   => throw e
 

@@ -1,13 +1,10 @@
 package channel.udp
 
-import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutChan}
+import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutChan, Prod, context}
 import de.rmgk.delay.Async
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
-import java.net.{
-  DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException,
-  SocketTimeoutException
-}
+import java.net.{DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException, SocketTimeoutException}
 import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
@@ -20,7 +17,9 @@ class UDPOutChan(address: SocketAddress) extends OutChan {
 
   override def send(message: MessageBuffer): Async[Any, Unit] = Async {
     // Create a packet with the message, server address, and port
-    val sendPacket: DatagramPacket = new DatagramPacket(message.asArray, message.length, address)
+    val sendPacket: DatagramPacket =
+      val outArray = message.asArray
+      new DatagramPacket(outArray, outArray.length, address)
 
     // Send the packet to the server
     clientSocket.send(sendPacket)
