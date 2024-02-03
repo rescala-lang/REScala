@@ -44,12 +44,15 @@ object Token {
     def grant(using ReplicaId): Mutate = mutate:
       if !isOwner then unchanged
       else
-        // We find the “largest” ID that wants the token.
-        // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
-        current.wants.elements.maxOption match
-          case Some(head) if head != replicaId =>
-            Token(Ownership(current.os.epoche + 1, head), ReplicatedSet.empty)
-          case _ => unchanged
+        selectNewOwner match
+          case None => unchanged
+          case Some(nextOwner) =>
+            Token(Ownership(current.os.epoche + 1, nextOwner), ReplicatedSet.empty)
+
+    def selectNewOwner(using ReplicaId, PermQuery): Option[Uid] =
+      // We find the “largest” ID that wants the token.
+      // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
+      current.wants.elements.maxOption.filter(id => id != replicaId)
 
     def isOwner(using ReplicaId, PermQuery): Boolean = replicaId == current.os.owner
   }
