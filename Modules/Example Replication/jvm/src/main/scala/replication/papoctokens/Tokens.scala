@@ -60,7 +60,39 @@ case class ExampleTokens(
 )
 
 case class Vote(owner: Uid, voter: Uid)
-case class Voting(rounds: Epoche[ReplicatedSet[Vote]])
+case class Voting(rounds: Epoche[ReplicatedSet[Vote]]) {
+
+  def request(using ReplicaId, Dots): Dotted[Voting] =
+    if !rounds.value.isEmpty then Voting.unchanged
+    else voteFor(replicaId)
+
+  def voteFor(replica: Uid)(using ReplicaId, Dots): Dotted[Voting] =
+    val newVote = rounds.value.addElem(Vote(replicaId, replicaId))
+    newVote.map(rs => Voting(rounds.write(rs)))
+
+  def release(using ReplicaId): Voting =
+    Voting(Epoche(rounds.counter + 1, ReplicatedSet.empty))
+
+  def vote(using ReplicaId, Dots): Dotted[Voting] =
+    val (id, count) = leadingCount
+    if checkIfMajorityPossible(count)
+    then voteFor(id)
+    else Dotted(release)
+
+  def checkIfMajorityPossible(count: Int): Boolean =
+    val totalVotes     = rounds.value.elements.size
+    val remainingVotes = Voting.participants - totalVotes
+    (count + remainingVotes) > Voting.threshold
+
+  def leadingCount(using ReplicaId): (Uid, Int) =
+    val votes: Set[Vote] = rounds.value.elements
+    votes.groupBy(_.owner).map((o, elems) => (o, elems.size)).maxBy((o, size) => size)
+
+  def isOwner(using ReplicaId): Boolean =
+    val (id, count) = leadingCount
+    id == replicaId && count >= Voting.threshold
+
+}
 
 object Voting {
 
@@ -71,40 +103,4 @@ object Voting {
   val participants = 5
   val threshold    = (participants / 2) + 1
 
-  extension [C, E](container: C)
-    def voting: syntax[C] = syntax(container)
-
-  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, Voting](container) {
-
-    def request(using ReplicaId): CausalMutator = delta:
-      if !current.rounds.value.isEmpty then unchanged
-      else voteFor(replicaId)
-
-    def voteFor(replica: Uid)(using ReplicaId, IsCausalMutator): Dotted[Voting] =
-      val newVote = current.rounds.value.inheritContext.add(Vote(replicaId, replicaId))
-      newVote.map(rs => Voting(current.rounds.write(rs)))
-
-    def release(using ReplicaId): Mutator = delta:
-      Voting(Epoche(current.rounds.counter + 1, ReplicatedSet.empty))
-
-    def vote(using ReplicaId): CausalMutator = delta:
-      val (id, count) = leadingCount
-      if checkIfMajorityPossible(count)
-      then voteFor(id)
-      else current.inheritContext.release
-
-    def checkIfMajorityPossible(count: Int)(using IsQuery): Boolean =
-      val totalVotes     = current.rounds.value.elements.size
-      val remainingVotes = participants - totalVotes
-      (count + remainingVotes) > threshold
-
-    def leadingCount(using ReplicaId, IsQuery): (Uid, Int) =
-      val votes: Set[Vote] = current.rounds.value.elements
-      votes.groupBy(_.owner).map((o, elems) => (o, elems.size)).maxBy((o, size) => size)
-
-    def isOwner(using ReplicaId, IsQuery): Boolean =
-      val (id, count) = leadingCount
-      id == replicaId && count >= threshold
-
-  }
 }
