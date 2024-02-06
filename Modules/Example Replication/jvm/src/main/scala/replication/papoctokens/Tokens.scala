@@ -23,15 +23,12 @@ object Ownership {
 }
 
 case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
-  def updateWants(dottedWant: Dotted[ReplicatedSet[Uid]]): Dotted[Token] =
-    dottedWant.map: wants =>
-      Token(Ownership.unchanged, wants)
 
-  def request(using ReplicaId, Dots): Dotted[Token] = updateWants:
-    wants.addElem(replicaId)
+  def request(using ReplicaId, Dots): Dotted[Token] =
+    wants.addElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
-  def release(using ReplicaId, Dots): Dotted[Token] = updateWants:
-    wants.removeElem(replicaId)
+  def release(using ReplicaId, Dots): Dotted[Token] =
+    wants.removeElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
   def grant(using ReplicaId): Token =
     if !isOwner then Token.unchanged
@@ -66,18 +63,22 @@ case class Voting(rounds: Epoche[ReplicatedSet[Vote]]) {
     if !rounds.value.isEmpty then Voting.unchanged
     else voteFor(replicaId)
 
-  def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
-    val newVote = rounds.value.addElem(Vote(uid, replicaId))
-    newVote.map(rs => Voting(rounds.write(rs)))
+  def isOwner(using ReplicaId): Boolean =
+    val (id, count) = leadingCount
+    id == replicaId && count >= Voting.threshold
 
   def release(using ReplicaId): Voting =
     Voting(Epoche(rounds.counter + 1, ReplicatedSet.empty))
 
-  def vote(using ReplicaId, Dots): Dotted[Voting] =
+  def upkeep(using ReplicaId, Dots): Dotted[Voting] =
     val (id, count) = leadingCount
     if checkIfMajorityPossible(count)
     then voteFor(id)
     else Dotted(release)
+
+  def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
+    val newVote = rounds.value.addElem(Vote(uid, replicaId))
+    newVote.map(rs => Voting(rounds.write(rs)))
 
   def checkIfMajorityPossible(count: Int): Boolean =
     val totalVotes     = rounds.value.elements.size
@@ -87,10 +88,6 @@ case class Voting(rounds: Epoche[ReplicatedSet[Vote]]) {
   def leadingCount(using ReplicaId): (Uid, Int) =
     val votes: Set[Vote] = rounds.value.elements
     votes.groupBy(_.owner).map((o, elems) => (o, elems.size)).maxBy((o, size) => size)
-
-  def isOwner(using ReplicaId): Boolean =
-    val (id, count) = leadingCount
-    id == replicaId && count >= Voting.threshold
 
 }
 
