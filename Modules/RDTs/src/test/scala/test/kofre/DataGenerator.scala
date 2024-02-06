@@ -12,6 +12,7 @@ import kofre.dotted.*
 import kofre.syntax.ReplicaId
 import kofre.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
+import HasDots.mapInstance
 
 import scala.annotation.nowarn
 import scala.collection.immutable.Queue
@@ -158,11 +159,11 @@ object DataGenerator {
       elem <- arb.arbitrary
     yield Dotted(elem, dots union elem.dots)
 
-  given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[DotMap[K, V]] =
+  given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[Map[K, V]] =
     Arbitrary:
       Gen.listOf(Gen.zip[K, V](arbElem.arbitrary, arbKey.arbitrary)).map: pairs =>
         // remove dots happens to normalize the structure to remove empty inner elements
-        DotMap(pairs.toMap).removeDots(Dots.empty).getOrElse(DotMap(Map.empty))
+        pairs.toMap.removeDots(Dots.empty).getOrElse(Map.empty)
 
   @nowarn
   given shrinkDotted[A: HasDots]: Shrink[Dotted[A]] = Shrink: dotted =>

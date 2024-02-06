@@ -1,23 +1,24 @@
 package test.kofre.corestructs
 
 import kofre.base.Lattice
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted}
+import kofre.dotted.{DotFun, DotSet, Dotted}
 import kofre.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{given, *}
+import kofre.dotted.HasDots.mapInstance
 
 import scala.annotation.tailrec
 
 class DotMapTest extends munit.ScalaCheckSuite {
 
-  type TestedMap = DotMap[Int, DotSet]
+  type TestedMap = Map[Int, DotSet]
 
   property("dots") {
     forAll { (dm: TestedMap) =>
       assertEquals(
         dm.dots.toSet,
-        clue(dm).repr.values.flatMap(
+        clue(dm).values.flatMap(
           _.dots.iterator
         ).toSet,
         s"DotMap.dots should return the keys of the DotMap itself,"
@@ -70,14 +71,14 @@ class DotMapTest extends munit.ScalaCheckSuite {
 
         // ignore cases where the dots intersect, as this check does not seem to handle such cases correcly
         if (dotsA.intersect(dotsB).isEmpty) {
-          (dmA.repr.keySet union dmB.repr.keySet).foreach { k =>
+          (dmA.keySet union dmB.keySet).foreach { k =>
             val vMerged =
-              Dotted(dmA.repr.getOrElse(k, DotSet.empty), (ccA)) merge
-              Dotted(dmB.repr.getOrElse(k, DotSet.empty), (ccB))
+              Dotted(dmA.getOrElse(k, DotSet.empty), (ccA)) merge
+              Dotted(dmB.getOrElse(k, DotSet.empty), (ccB))
 
             assert(
-              vMerged.data.isEmpty || dmMerged.repr(k) == vMerged.data,
-              s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.repr.get(k)} does not equal $vMerged"
+              vMerged.data.isEmpty || dmMerged(k) == vMerged.data,
+              s"For all keys that are in both DotMaps the result of DotMap.merge should map these to the merged values, but ${dmMerged.get(k)} does not equal $vMerged"
             )
           }
         }
@@ -129,19 +130,19 @@ class DotMapTest extends munit.ScalaCheckSuite {
   ): TestedMap =
     start match
       case Nil         => acc
-      case (i, c) :: t => removeDuplicates(t, DotMap(acc.repr + (i -> DotSet(c.repr.subtract(con)))), con union c.dots)
+      case (i, c) :: t => removeDuplicates(t, acc.updated(i, DotSet(c.repr.subtract(con))), con union c.dots)
 
   property("decompose") {
     forAll { (dmdup: TestedMap, deleted: Dots) =>
 
-      val dm: TestedMap = removeDuplicates(dmdup.repr.toList, DotMap.empty, Dots.empty)
+      val dm: TestedMap = removeDuplicates(dmdup.toList, Map.empty, Dots.empty)
 
       val cc = dm.dots union deleted
 
       val decomposed: Iterable[Dotted[TestedMap]] =
         Lattice[Dotted[TestedMap]].decompose(Dotted(dm, (cc)))
       val wc: Dotted[TestedMap] =
-        decomposed.foldLeft(Dotted(DotMap.empty[Int, DotSet], Dots.empty)) {
+        decomposed.foldLeft(Dotted(Map.empty[Int, DotSet], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>
             Lattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
         }
@@ -154,10 +155,10 @@ class DotMapTest extends munit.ScalaCheckSuite {
         cc,
         s"Merging the list of atoms returned by DotMap.decompose should produce an equal DotMap, but $dmMerged does not equal $dm"
       )
-      dm.repr.keys.foreach { k =>
+      dm.keys.foreach { k =>
         assertEquals(
-          dm.repr(k),
-          dmMerged.repr.getOrElse(k, DotSet.empty),
+          dm(k),
+          dmMerged.getOrElse(k, DotSet.empty),
           s"Merging the list of atoms returned by DotMap.decompose should produce an equal Causal Context, but on key $k the $ccMerged does not equal $cc"
         )
       }

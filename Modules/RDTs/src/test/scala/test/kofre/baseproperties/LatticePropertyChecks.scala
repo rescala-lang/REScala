@@ -8,7 +8,7 @@ import kofre.datatypes.experiments.CausalStore
 import kofre.datatypes.{
   GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
 }
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
+import kofre.dotted.{DotFun, DotSet, Dotted, HasDots}
 import kofre.time.{Dots, Time, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -25,7 +25,7 @@ class EnableWinsFlagChecks    extends LatticePropertyChecks[Dotted[contextual.En
 class DotFunChecks            extends LatticePropertyChecks[Dotted[DotFun[Int]]]
 class DotFunExampleChecks     extends LatticePropertyChecks[Dotted[DotFun[ExampleData]]]
 class ConMultiVersionChecks   extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
-class DotMapChecks            extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]](expensive = true)
+class DotMapChecks            extends LatticePropertyChecks[Dotted[Map[kofre.base.Uid, DotSet]]](expensive = true)
 class GrowOnlyCounterChecks   extends LatticePropertyChecks[GrowOnlyCounter]
 class GrowOnlyMapChecks       extends LatticePropertyChecks[GrowOnlyMap[String, Int]]
 class TwoPhaseSetChecks       extends LatticePropertyChecks[TwoPhaseSet[Int]]
