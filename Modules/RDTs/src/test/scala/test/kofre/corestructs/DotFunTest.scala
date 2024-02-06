@@ -1,7 +1,7 @@
 package test.kofre.corestructs
 
 import kofre.base.{Lattice, Uid}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.{given, *}
@@ -12,7 +12,7 @@ import HasDots.mapInstance
 class DotFunTest extends munit.ScalaCheckSuite {
 
   property("dots") {
-    forAll { (df: DotFun[Int]) =>
+    forAll { (df: Map[Dot, Int]) =>
       assert(
         df.dots.toSet == df.keySet,
         s"DotFun.dots should return the keys of the DotFun itself, but ${df.dots} does not equal $df"
@@ -28,14 +28,14 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("merge") {
-    forAll { (dfA: DotFun[Int], deletedA: Dots, dfB: DotFun[Int], deletedB: Dots) =>
+    forAll { (dfA: Map[Dot, Int], deletedA: Dots, dfB: Map[Dot, Int], deletedB: Dots) =>
       val dotsA = dfA.dots
       val dotsB = dfB.dots
       val ccA   = dotsA union deletedA
       val ccB   = dotsB union deletedB
 
       val Dotted(dfMerged, ccMerged) =
-        Lattice[Dotted[DotFun[Int]]].merge(
+        Lattice[Dotted[Map[Dot, Int]]].merge(
           Dotted(dfA, ccA),
           Dotted(dfB, ccB)
         )
@@ -84,27 +84,27 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("leq") {
-    forAll { (dfA: DotFun[Int], deletedA: Dots, dfB: DotFun[Int], deletedB: Dots) =>
+    forAll { (dfA: Map[Dot, Int], deletedA: Dots, dfB: Map[Dot, Int], deletedB: Dots) =>
       val ccA = dfA.dots union deletedA
       val ccB = dfB.dots union deletedB
 
       assert(
-        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
+        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
       )
 
       val Dotted(dfMerged, ccMerged) =
-        Lattice[Dotted[DotFun[Int]]].merge(
+        Lattice[Dotted[Map[Dot, Int]]].merge(
           Dotted(dfA, (ccA)),
           Dotted(dfB, (ccB))
         )
 
       assert(
-        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
+        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
       )
       assert(
-        Lattice[Dotted[DotFun[Int]]].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
+        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
       )
     }
@@ -122,13 +122,13 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   test("decompose") {
-    type D = Dotted[DotFun[Set[Int]]]
+    type D = Dotted[Map[Dot, Set[Int]]]
 
     val dot = Dot("a", 0)
     val cc  = Dots.from(Set(dot))
 
     val data =
-      Dotted[DotFun[Set[Int]]](Map(dot -> Set(1, 2, 3)), cc)
+      Dotted[Map[Dot, Set[Int]]](Map(dot -> Set(1, 2, 3)), cc)
     val dec: Iterable[D] = data.decomposed
     val rec              = dec.reduceLeft(_ merge _)
 
@@ -136,12 +136,12 @@ class DotFunTest extends munit.ScalaCheckSuite {
   }
 
   property("decompose recompose") {
-    forAll { (df: DotFun[Int], deleted: Dots) =>
+    forAll { (df: Map[Dot, Int], deleted: Dots) =>
       val cc = df.dots union deleted
 
       val withContext = Dotted(df, cc)
 
-      val decomposed: Iterable[Dotted[DotFun[Int]]] = Lattice.decompose(withContext)
+      val decomposed: Iterable[Dotted[Map[Dot, Int]]] = Lattice.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)
@@ -150,7 +150,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val Dotted(dfMerged, ccMerged) =
         decomposed.foldLeft(Dotted(Map.empty[Dot, Int], Dots.empty)) {
           case (Dotted(dfA, ccA), Dotted(dfB, ccB)) =>
-            Lattice[Dotted[DotFun[Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
+            Lattice[Dotted[Map[Dot, Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
         }
 
       assertEquals(dfMerged, df)

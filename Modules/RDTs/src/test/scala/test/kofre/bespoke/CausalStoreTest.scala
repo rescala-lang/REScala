@@ -2,7 +2,7 @@ package test.kofre.bespoke
 
 import kofre.base.Uid
 import kofre.datatypes.experiments.{BoundedCounter, CausalDelta, CausalStore}
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.syntax.TestReplica
 import kofre.time.{ArrayRanges, Dot, Dots}
 import test.kofre.DataGenerator.ExampleData
@@ -12,7 +12,7 @@ class CausalStoreTest extends munit.FunSuite {
 
   test("basic usage") {
 
-    val a: Dotted[CausalStore[DotFun[ExampleData]]] =
+    val a: Dotted[CausalStore[Map[Dot, ExampleData]]] =
       Dotted(
         CausalStore(
           CausalDelta(
@@ -25,7 +25,7 @@ class CausalStoreTest extends munit.FunSuite {
         Dots.empty
       )
 
-    val b: Dotted[CausalStore[DotFun[ExampleData]]] = Dotted(
+    val b: Dotted[CausalStore[Map[Dot, ExampleData]]] = Dotted(
       CausalStore(
         CausalDelta(
           Dots(Map(Uid.predefined("d") -> ArrayRanges.elems(3))),
@@ -37,7 +37,7 @@ class CausalStoreTest extends munit.FunSuite {
       Dots(Map(Uid.predefined("d") -> ArrayRanges.elems(3), Uid.predefined("g") -> ArrayRanges.elems(4)))
     )
 
-    val c: Dotted[CausalStore[DotFun[ExampleData]]] = Dotted(
+    val c: Dotted[CausalStore[Map[Dot, ExampleData]]] = Dotted(
       CausalStore(
         CausalDelta(
           Dots.empty,

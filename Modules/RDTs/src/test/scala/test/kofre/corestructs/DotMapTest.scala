@@ -1,7 +1,7 @@
 package test.kofre.corestructs
 
 import kofre.base.Lattice
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.Dotted
 import kofre.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}

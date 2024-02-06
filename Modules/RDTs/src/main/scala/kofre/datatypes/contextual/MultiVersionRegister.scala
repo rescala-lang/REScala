@@ -1,7 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -10,7 +10,7 @@ import kofre.time.{Dot, Dots}
   * In the absence of concurrent writes, the MultiVersionRegister is either empty or holds one value.
   * When multiple values are written concurrently, reading the MultiVersionRegister returns a set holding all these values.
   */
-case class MultiVersionRegister[A](repr: DotFun[A])
+case class MultiVersionRegister[A](repr: Map[Dot, A])
 
 object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(Map.empty)

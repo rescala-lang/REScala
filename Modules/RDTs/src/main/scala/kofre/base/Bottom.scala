@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.time.Dots
 
 import scala.collection.immutable.Queue

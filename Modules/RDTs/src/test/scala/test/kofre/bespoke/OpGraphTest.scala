@@ -3,7 +3,7 @@ package test.kofre.bespoke
 import kofre.base.Uid
 import kofre.datatypes.experiments.AutomergyOpGraphLWW.{Entry, OpGraph}
 import kofre.datatypes.experiments.{BoundedCounter, CausalDelta, CausalStore}
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.syntax.TestReplica
 import kofre.time.{ArrayRanges, Dot, Dots}
 import test.kofre.DataGenerator.ExampleData
