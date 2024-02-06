@@ -37,8 +37,7 @@ object ReplicatedSet {
 
     def add(using ReplicaId)(e: E): CausalMutator = {
       val dm        = current.inner
-      val cc        = context
-      val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
+      val nextDot   = context.nextDot(replicaId)
       val v: DotSet = dm.repr.getOrElse(e, DotSet.empty)
 
       deltaState(
