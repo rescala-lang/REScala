@@ -35,9 +35,9 @@ object MultiVersionRegister {
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
-    def read(using PermQuery): Set[A] = current.repr.repr.values.toSet
+    def read(using IsQuery): Set[A] = current.repr.repr.values.toSet
 
-    def write(using ReplicaId)(v: A): CausalMutate = {
+    def write(using ReplicaId)(v: A): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
 
       Dotted(
@@ -46,7 +46,7 @@ object MultiVersionRegister {
       ).mutator
     }
 
-    def clear(using PermCausalMutate)(): C =
+    def clear(using IsCausalMutator)(): C =
       Dotted(
         MultiVersionRegister.empty,
         Dots.from(current.repr.repr.keySet)

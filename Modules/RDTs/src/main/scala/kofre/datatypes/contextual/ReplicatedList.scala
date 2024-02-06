@@ -62,19 +62,19 @@ object ReplicatedList {
   implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
 
-    def read(using PermQuery)(i: Int): Option[E] = {
+    def read(using IsQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.toLazyList.flatMap(df.repr.get).map(_.payload).lift(i)
     }
 
-    def size(using PermQuery): Int = current.meta.repr.size
+    def size(using IsQuery): Int = current.meta.repr.size
 
-    def toList(using PermQuery): List[E] = {
+    def toList(using IsQuery): List[E] = {
       val ReplicatedList(fw, df) = current
       fw.value.growOnlyList.toList.flatMap(df.repr.get).map(_.payload)
     }
 
-    def sequence(using PermQuery): Long = {
+    def sequence(using IsQuery): Long = {
       val ReplicatedList(fw, _) = current
       fw.counter
     }
@@ -86,7 +86,7 @@ object ReplicatedList {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(using ReplicaId, PermCausalMutate)(i: Int, e: E): C = {
+    def insert(using ReplicaId, IsCausalMutator)(i: Int, e: E): C = {
       val ReplicatedList(order, entries) = current
       val nextDot                        = context.nextDot(replicaId)
 
@@ -106,7 +106,7 @@ object ReplicatedList {
       }
     }.mutator
 
-    def insertAll(using ReplicaId, PermCausalMutate)(i: Int, elems: Iterable[E]): C = {
+    def insertAll(using ReplicaId, IsCausalMutator)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaId)
 
@@ -146,10 +146,10 @@ object ReplicatedList {
       }
     }
 
-    def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
+    def update(using ReplicaId, IsCausalMutator)(i: Int, e: E): C =
       updateRGANode(current, i, Some(e)).mutator
 
-    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, None).mutator
+    def delete(using ReplicaId, IsCausalMutator)(i: Int): C = updateRGANode(current, i, None).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
@@ -168,13 +168,13 @@ object ReplicatedList {
       deltaState[E].make(df = updates, cc = Dots.from(touched))
     }
 
-    def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
+    def updateBy(using ReplicaId, IsCausalMutator)(cond: E => Boolean, e: E): C =
       updateRGANodeBy(current, cond, old => Some(old.write(e))).mutator
 
-    def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
+    def deleteBy(using ReplicaId, IsCausalMutator)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, _ => None).mutator
 
-    def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
+    def purgeTombstones(using ReplicaId, IsCausalMutator)(): C = {
       val ReplicatedList(epoche, df) = current
 
       val known: List[Dot] = epoche.value.growOnlyList.toList
@@ -191,19 +191,19 @@ object ReplicatedList {
       ).mutator
     }
 
-    def clear(using PermCausalMutate)(): C = {
+    def clear(using IsCausalMutator)(): C = {
       deltaState[E].make(
         cc = context
       ).mutator
     }
 
-    def prepend(using ReplicaId, PermCausalMutate)(e: E): C = insert(0, e)
+    def prepend(using ReplicaId, IsCausalMutator)(e: E): C = insert(0, e)
 
-    def append(using ReplicaId, PermCausalMutate)(e: E): C = insert(size, e)
+    def append(using ReplicaId, IsCausalMutator)(e: E): C = insert(size, e)
 
-    def prependAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(0, elems)
+    def prependAll(using ReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(0, elems)
 
-    def appendAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(size, elems)
+    def appendAll(using ReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(size, elems)
 
   }
 }

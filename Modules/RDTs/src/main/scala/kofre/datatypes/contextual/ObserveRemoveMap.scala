@@ -36,21 +36,21 @@ object ObserveRemoveMap {
   implicit class syntax[C, K, V](container: C)
       extends OpsSyntaxHelper[C, ObserveRemoveMap[K, V]](container) {
 
-    def contains(using PermQuery)(k: K): Boolean = current.inner.repr.contains(k)
+    def contains(using IsQuery)(k: K): Boolean = current.inner.repr.contains(k)
 
-    def queryKey[A](using PermQuery, Bottom[V])(k: K): V = {
+    def queryKey[A](using IsQuery, Bottom[V])(k: K): V = {
       current.inner.repr.getOrElse(k, Bottom[V].empty)
     }
 
-    def queryAllEntries(using PermQuery): Iterable[V] = current.inner.repr.values
-    def entries(using PermQuery): Iterable[(K, V)]    = current.inner.repr.view
+    def queryAllEntries(using IsQuery): Iterable[V] = current.inner.repr.values
+    def entries(using IsQuery): Iterable[(K, V)]    = current.inner.repr.view
 
-    def update(using ReplicaId, PermCausalMutate, Bottom[V])(k: K, v: V): C = {
+    def update(using ReplicaId, IsCausalMutator, Bottom[V])(k: K, v: V): C = {
       transform(k)(_ => Dotted(v, Dots.single(context.nextDot(replicaId))))
     }
 
     def transform(using
-        pcm: PermCausalMutate,
+        pcm: IsCausalMutator,
         bot: Bottom[V]
     )(k: K)(m: Dotted[V] => Dotted[V]): C = {
       val v                           = current.inner.repr.getOrElse(k, Bottom[V].empty)
@@ -61,7 +61,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def remove(using PermCausalMutate, HasDots[V])(k: K): C = {
+    def remove(using IsCausalMutator, HasDots[V])(k: K): C = {
       current.inner.repr.get(k) match
         case Some(value) => make[K, V](
             cc = HasDots[V].dots(value)
@@ -70,7 +70,7 @@ object ObserveRemoveMap {
 
     }
 
-    def removeAll(using PermCausalMutate, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {
+    def removeAll(using IsCausalMutator, Bottom[V], HasDots[V])(keys: Iterable[K]): C = {
       val values = keys.map(k => current.inner.repr.getOrElse(k, Bottom[V].empty))
       val dots = values.foldLeft(Dots.empty) {
         case (set, v) => set union HasDots[V].dots(v)
@@ -81,7 +81,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def removeByValue(using PermCausalMutate, HasDots[V])(cond: Dotted[V] => Boolean): C = {
+    def removeByValue(using IsCausalMutator, HasDots[V])(cond: Dotted[V] => Boolean): C = {
       val toRemove = current.inner.repr.values.collect {
         case v if cond(Dotted(v, context)) => v.dots
       }.fold(Dots.empty)(_ union _)
@@ -91,7 +91,7 @@ object ObserveRemoveMap {
       ).mutator
     }
 
-    def clear(using PermCausalMutate, HasDots[V])(): C = {
+    def clear(using IsCausalMutator, HasDots[V])(): C = {
       make(
         cc = current.inner.dots
       ).mutator

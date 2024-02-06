@@ -36,24 +36,24 @@ object CausalQueue:
   implicit class syntax[C, T](container: C)
       extends OpsSyntaxHelper[C, CausalQueue[T]](container) {
 
-    def enqueue(using ReplicaId, PermCausalMutate)(e: T): C =
+    def enqueue(using ReplicaId, IsCausalMutator)(e: T): C =
       val time = context.clock.inc(replicaId)
       val dot  = time.dotOf(replicaId)
       Dotted(CausalQueue(Queue(QueueElement(e, dot, time))), Dots.single(dot)).mutator
 
-    def head(using PermQuery) =
+    def head(using IsQuery) =
       val QueueElement(e, _, _) = current.values.head
       e
 
-    def dequeue(using PermCausalMutate)(): C =
+    def dequeue(using IsCausalMutator)(): C =
       val QueueElement(_, dot, _) = current.values.head
       Dotted(CausalQueue.empty, Dots.single(dot)).mutator
 
-    def removeBy(using PermCausalMutate)(p: T => Boolean) =
+    def removeBy(using IsCausalMutator)(p: T => Boolean) =
       val toRemove = current.values.filter(e => p(e.value)).map(_.dot)
       Dotted(CausalQueue.empty, Dots.from(toRemove)).mutator
 
-    def elements(using PermQuery): Queue[T] =
+    def elements(using IsQuery): Queue[T] =
       current.values.map(_.value)
 
   }

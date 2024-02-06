@@ -25,11 +25,17 @@ object ReplicatedSet {
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, ReplicatedSet[E]](container) {
 
-    def elements(using PermQuery): Set[E] = current.inner.repr.keySet
+    def elements(using IsQuery): Set[E] = current.inner.repr.keySet
 
-    def contains(using PermQuery)(elem: E): Boolean = current.inner.repr.contains(elem)
+    def contains(using IsQuery)(elem: E): Boolean = current.inner.repr.contains(elem)
 
-    def add(using ReplicaId)(e: E): CausalMutate = {
+    def addElem(using rid: ReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
+      Dotted(current, dots).add(using rid)(e)(using Dotted.syntaxPermissions)
+
+    def removeElem(using rid: ReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
+        Dotted(current, dots).remove(using Dotted.syntaxPermissions, Dotted.syntaxPermissions)(e)
+
+    def add(using ReplicaId)(e: E): CausalMutator = {
       val dm        = current.inner
       val cc        = context
       val nextDot   = cc.max(replicaId).fold(Dot(replicaId, 0))(_.advance)
@@ -41,7 +47,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def addAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = {
+    def addAll(using ReplicaId, IsCausalMutator)(elems: Iterable[E]): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaId)
@@ -60,7 +66,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def remove(using PermQuery, PermCausalMutate)(e: E): C = {
+    def remove(using IsQuery, IsCausalMutator)(e: E): C = {
       val dm = current.inner
       val v  = dm.repr.getOrElse(e, DotSet.empty)
 
@@ -69,7 +75,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def removeAll(elems: Iterable[E])(using PermQuery, PermCausalMutate): C = {
+    def removeAll(elems: Iterable[E])(using IsQuery, IsCausalMutator): C = {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(Dots.empty) {
         case (dots, e) => dm.repr.get(e) match {
@@ -83,7 +89,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def removeBy(cond: E => Boolean)(using PermQuery, PermCausalMutate): C = {
+    def removeBy(cond: E => Boolean)(using IsQuery, IsCausalMutator): C = {
       val dm = current.inner
       val removedDots = dm.repr.collect {
         case (k, v) if cond(k) => v
@@ -94,7 +100,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def clear()(using PermQuery, PermCausalMutate): C = {
+    def clear()(using IsQuery, IsCausalMutator): C = {
       val dm = current.inner
       deltaState(
         dm.dots

@@ -26,16 +26,16 @@ object EnableWinsFlag {
     * It relies on the external context to track removals.
     */
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
-    def read(using PermQuery): Boolean = !current.inner.dots.isEmpty
+    def read(using IsQuery): Boolean = !current.inner.dots.isEmpty
 
-    def enable(using ReplicaId)(): CausalMutate = {
+    def enable(using ReplicaId)(): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(DotSet(Dots.single(nextDot))),
         current.inner.dots add nextDot
       ).mutator
     }
-    def disable(using PermCausalMutate)(): C = {
+    def disable(using IsCausalMutator)(): C = {
       Dotted(
         EnableWinsFlag(DotSet(Dots.empty)),
         current.inner.dots

@@ -28,14 +28,14 @@ object GrowOnlyMap {
   implicit class syntax[C, K, V](container: C)
       extends OpsSyntaxHelper[C, GrowOnlyMap[K, V]](container) {
 
-    def contains(using PermQuery)(k: K): Boolean = current.contains(k)
+    def contains(using IsQuery)(k: K): Boolean = current.contains(k)
 
-    def queryKey(using PermQuery)(k: K): Option[V] = current.get(k)
+    def queryKey(using IsQuery)(k: K): Option[V] = current.get(k)
 
-    def queryAllEntries(using PermQuery)(): Iterable[V] = current.values
+    def queryAllEntries(using IsQuery)(): Iterable[V] = current.values
 
     def mutateKeyNamedCtx(k: K, default: => V)(m: Dotted[V] => Dotted[V])(using
-        PermCausalMutate,
+        IsCausalMutator,
     ): C = {
       m(
         container.queryKey(k).getOrElse(default).inheritContext

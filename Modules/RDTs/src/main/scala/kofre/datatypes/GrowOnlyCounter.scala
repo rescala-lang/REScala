@@ -22,11 +22,11 @@ object GrowOnlyCounter {
 
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
-    def value(using PermQuery): Int = current.inner.valuesIterator.sum
+    def value(using IsQuery): Int = current.inner.valuesIterator.sum
 
-    def inc(): IdMutate =
+    def inc(): IdMutator =
       GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + 1))).mutator
-    def add(amount: Int): IdMutate =
+    def add(amount: Int): IdMutator =
       require(amount >= 0, "may not decrease counter")
       GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + amount))).mutator
   }

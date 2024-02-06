@@ -25,12 +25,12 @@ object Epoche {
 
   implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, Epoche[E]](container) {
-    def read(using PermQuery): E = current.value
+    def read(using IsQuery): E = current.value
 
-    def write(using PermMutate)(value: E): C       = current.copy(value = value).mutator
-    def epocheWrite(using PermMutate)(value: E): C = Epoche(current.counter + 1, value).mutator
+    def write(using IsMutator)(value: E): C       = current.copy(value = value).mutator
+    def epocheWrite(using IsMutator)(value: E): C = Epoche(current.counter + 1, value).mutator
 
-    def map(using PermMutate)(f: E => E): C = write(f(current.value))
+    def map(using IsMutator)(f: E => E): C = write(f(current.value))
   }
 
   given latticeInstance[E: Lattice]: Lattice[Epoche[E]] = new Lattice[Epoche[E]] {

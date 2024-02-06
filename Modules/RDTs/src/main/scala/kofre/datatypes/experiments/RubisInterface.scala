@@ -35,7 +35,7 @@ object RubisInterface {
 
   implicit class RubisSyntax[C](container: C) extends OpsSyntaxHelper[C, State](container) {
 
-    def placeBid(auctionId: AID, userId: User, price: Int): IdMutate = {
+    def placeBid(auctionId: AID, userId: User, price: Int): IdMutator = {
       val (_, users, m) = current
       val newMap =
         if (users.get(userId).contains(replicaId) && m.contains(auctionId)) {
@@ -45,7 +45,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def closeAuction(auctionId: AID)(using PermMutate): C = {
+    def closeAuction(auctionId: AID)(using IsMutator): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
@@ -55,7 +55,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def openAuction(auctionId: AID)(using PermMutate): C = {
+    def openAuction(auctionId: AID)(using IsMutator): C = {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) Map.empty[AID, AuctionInterface.AuctionData]
@@ -64,7 +64,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def requestRegisterUser(using ReplicaId)(userId: User): CausalMutate = {
+    def requestRegisterUser(using ReplicaId)(userId: User): CausalMutator = {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else
@@ -72,7 +72,7 @@ object RubisInterface {
         Dotted(deltaState.make(userRequests = merged.data), merged.context).mutator
     }
 
-    def resolveRegisterUser()(using PermCausalMutate): C = {
+    def resolveRegisterUser()(using IsCausalMutator): C = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, Uid]) {
         case (newlyRegistered, (uid, rid)) =>

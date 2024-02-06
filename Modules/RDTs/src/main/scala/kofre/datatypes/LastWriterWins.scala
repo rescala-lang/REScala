@@ -59,12 +59,12 @@ object LastWriterWins {
   implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, LastWriterWins[A]](container) {
 
-    def read(using PermQuery): A = current.payload
+    def read(using IsQuery): A = current.payload
 
-    def write(v: A): Mutate =
+    def write(v: A): Mutator =
       LastWriterWins(current.timestamp.advance, v).mutator
 
-    def map[B](using PermMutate)(using ev: A =:= Option[B])(f: B => B): C =
+    def map[B](using IsMutator)(using ev: A =:= Option[B])(f: B => B): C =
       read.map(f) match {
         case None => container
         case res  => write(ev.flip(res))

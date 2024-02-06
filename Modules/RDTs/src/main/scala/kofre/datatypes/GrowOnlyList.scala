@@ -108,13 +108,13 @@ object GrowOnlyList {
       }
     }
 
-    def read(using PermQuery)(i: Int): Option[E] =
+    def read(using IsQuery)(i: Int): Option[E] =
       findNth(current, Head, i + 1).flatMap {
         case Head    => None
         case Elem(e) => Some(e.payload)
       }
 
-    def toList(using PermQuery): List[E] =
+    def toList(using IsQuery): List[E] =
       val state = current
       @tailrec
       def toListRec(current: Node[LastWriterWins[E]], acc: List[E]): List[E] =
@@ -125,7 +125,7 @@ object GrowOnlyList {
 
       toListRec(Head, Nil)
 
-    def toLazyList(using PermQuery): LazyList[E] =
+    def toLazyList(using IsQuery): LazyList[E] =
       LazyList.unfold[E, Node[LastWriterWins[E]]](Head) { node =>
         current.inner.get(node) match {
           case None                  => None
@@ -133,9 +133,9 @@ object GrowOnlyList {
         }
       }
 
-    def size(using PermQuery): Int = current.inner.size
+    def size(using IsQuery): Int = current.inner.size
 
-    def insertGL(i: Int, e: E): Mutate = {
+    def insertGL(i: Int, e: E): Mutator = {
       GrowOnlyList(findNth(current, Head, i) match {
         case None => Map.empty
         case Some(pred) =>
@@ -143,7 +143,7 @@ object GrowOnlyList {
       })
     }.mutator
 
-    def insertAllGL(i: Int, elems: Iterable[E]): Mutate = {
+    def insertAllGL(i: Int, elems: Iterable[E]): Mutator = {
       if (elems.isEmpty)
         GrowOnlyList.empty[E]
       else
@@ -169,7 +169,7 @@ object GrowOnlyList {
         case Some(next) => withoutRec(state, next, elems)
       }
 
-    def without(elems: Set[E])(using PermMutate): C = withoutRec(current, Head, elems).mutator
+    def without(elems: Set[E])(using IsMutator): C = withoutRec(current, Head, elems).mutator
   }
 
 }

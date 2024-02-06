@@ -50,7 +50,7 @@ object DeltaSequence {
   implicit class DeltaSequenceOps[C, A](container: C)
       extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
 
-    def successor(v: Vertex)(using PermQuery): Option[Vertex] = {
+    def successor(v: Vertex)(using IsQuery): Option[Vertex] = {
       current.edges.inner.get(v) match {
         case None => None
         case Some(u) =>
@@ -58,20 +58,20 @@ object DeltaSequence {
       }
     }
 
-    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using PermCausalMutate): C = {
+    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using IsCausalMutator): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
       val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues)).mutator
     }
 
-    def prependDelta(replica: Uid, value: A)(using PermCausalMutate): C =
+    def prependDelta(replica: Uid, value: A)(using IsCausalMutator): C =
       addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
 
-    def removeDelta(v: Vertex)(using PermCausalMutate): C =
+    def removeDelta(v: Vertex)(using IsCausalMutator): C =
       context.wrap(current.vertices).remove(v).map(vert => current.copy(vertices = vert)).mutator
 
-    def filterDelta(keep: A => Boolean)(using PermCausalMutate): C = {
+    def filterDelta(keep: A => Boolean)(using IsCausalMutator): C = {
       val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }
       removed.foldLeft(context.wrap(current: DeltaSequence[A])) {
         case (curr, toRemove) =>
@@ -80,11 +80,11 @@ object DeltaSequence {
       }.mutator
     }
 
-    def toList(using PermQuery): List[A] = iterator.toList
+    def toList(using IsQuery): List[A] = iterator.toList
 
-    def iterator(using PermQuery): Iterator[A] = vertexIterator.map(v => current.values(v))
+    def iterator(using IsQuery): Iterator[A] = vertexIterator.map(v => current.values(v))
 
-    def vertexIterator(using PermQuery): Iterator[Vertex] =
+    def vertexIterator(using IsQuery): Iterator[Vertex] =
       new AbstractIterator[Vertex] {
         var lastVertex: Vertex = Vertex.start
 
