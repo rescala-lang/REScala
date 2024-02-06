@@ -66,8 +66,8 @@ case class Voting(rounds: Epoche[ReplicatedSet[Vote]]) {
     if !rounds.value.isEmpty then Voting.unchanged
     else voteFor(replicaId)
 
-  def voteFor(replica: Uid)(using ReplicaId, Dots): Dotted[Voting] =
-    val newVote = rounds.value.addElem(Vote(replicaId, replicaId))
+  def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
+    val newVote = rounds.value.addElem(Vote(uid, replicaId))
     newVote.map(rs => Voting(rounds.write(rs)))
 
   def release(using ReplicaId): Voting =
