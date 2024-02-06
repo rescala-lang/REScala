@@ -4,16 +4,17 @@ import kofre.base.{Bottom, Lattice}
 import kofre.dotted.*
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
+import kofre.dotted.HasDots.mapInstance
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
-case class ReplicatedSet[E](inner: DotMap[E, DotSet])
+case class ReplicatedSet[E](inner: Map[E, DotSet])
 
 object ReplicatedSet {
 
-  def empty[E]: ReplicatedSet[E] = ReplicatedSet(DotMap.empty)
+  def empty[E]: ReplicatedSet[E] = ReplicatedSet(Map.empty)
 
   given bottom[E]: Bottom[ReplicatedSet[E]] with { override def empty: ReplicatedSet[E] = ReplicatedSet.empty }
 
@@ -25,9 +26,9 @@ object ReplicatedSet {
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, ReplicatedSet[E]](container) {
 
-    def elements(using IsQuery): Set[E] = current.inner.repr.keySet
+    def elements(using IsQuery): Set[E] = current.inner.keySet
 
-    def contains(using IsQuery)(elem: E): Boolean = current.inner.repr.contains(elem)
+    def contains(using IsQuery)(elem: E): Boolean = current.inner.contains(elem)
 
     def addElem(using rid: ReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
       Dotted(current, dots).add(using rid)(e)(using Dotted.syntaxPermissions)
@@ -38,10 +39,10 @@ object ReplicatedSet {
     def add(using ReplicaId)(e: E): CausalMutator = {
       val dm        = current.inner
       val nextDot   = context.nextDot(replicaId)
-      val v: DotSet = dm.repr.getOrElse(e, DotSet.empty)
+      val v: DotSet = dm.getOrElse(e, DotSet.empty)
 
       deltaState(
-        dm = DotMap(Map(e -> DotSet(Dots.single(nextDot)))),
+        dm = Map(e -> DotSet(Dots.single(nextDot))),
         cc = v.dots add nextDot
       ).mutator
     }
@@ -53,21 +54,21 @@ object ReplicatedSet {
       val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(replicaId, _)))
 
       val ccontextSet = elems.foldLeft(nextDots) {
-        case (dots, e) => dm.repr.get(e) match {
+        case (dots, e) => dm.get(e) match {
             case Some(ds) => dots union ds.dots
             case None     => dots
           }
       }
 
       deltaState(
-        dm = DotMap((elems zip nextDots.iterator.map(dot => DotSet(Dots.single(dot)))).toMap),
+        dm = (elems zip nextDots.iterator.map(dot => DotSet(Dots.single(dot)))).toMap,
         cc = ccontextSet
       ).mutator
     }
 
     def remove(using IsQuery, IsCausalMutator)(e: E): C = {
       val dm = current.inner
-      val v  = dm.repr.getOrElse(e, DotSet.empty)
+      val v  = dm.getOrElse(e, DotSet.empty)
 
       deltaState(
         v.dots
@@ -77,7 +78,7 @@ object ReplicatedSet {
     def removeAll(elems: Iterable[E])(using IsQuery, IsCausalMutator): C = {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(Dots.empty) {
-        case (dots, e) => dm.repr.get(e) match {
+        case (dots, e) => dm.get(e) match {
             case Some(ds) => dots union ds.dots
             case None     => dots
           }
@@ -90,7 +91,7 @@ object ReplicatedSet {
 
     def removeBy(cond: E => Boolean)(using IsQuery, IsCausalMutator): C = {
       val dm = current.inner
-      val removedDots = dm.repr.collect {
+      val removedDots = dm.collect {
         case (k, v) if cond(k) => v
       }.foldLeft(Dots.empty)(_ union _.dots)
 
@@ -109,10 +110,10 @@ object ReplicatedSet {
   }
 
   private def deltaState[E](
-      dm: DotMap[E, DotSet],
+      dm: Map[E, DotSet],
       cc: Dots
   ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
 
-  private def deltaState[E](cc: Dots): Dotted[ReplicatedSet[E]] = deltaState(DotMap.empty, cc)
+  private def deltaState[E](cc: Dots): Dotted[ReplicatedSet[E]] = deltaState(Map.empty, cc)
 
 }
