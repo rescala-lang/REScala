@@ -1,7 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
+import kofre.datatypes.{Epoch, GrowOnlyList, LastWriterWins}
 import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermQuery, ReplicaId}
 import kofre.time.{Dot, Dots}
@@ -27,10 +27,10 @@ import HasDots.mapInstance
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
   * However, since then the implementation was changed significantly, thus it may be a different or even a novel strategy by now.
   */
-case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: Map[Dot, LastWriterWins[E]])
+case class ReplicatedList[E](order: Epoch[GrowOnlyList[Dot]], meta: Map[Dot, LastWriterWins[E]])
 object ReplicatedList {
 
-  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, Map.empty)
+  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoch.empty, Map.empty)
 
   given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
@@ -49,7 +49,7 @@ object ReplicatedList {
   private class DeltaStateFactory[E] {
 
     def make(
-        epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
+        epoche: Epoch[GrowOnlyList[Dot]] = empty._1,
         df: Map[Dot, LastWriterWins[E]] = Map.empty,
         cc: Dots = Dots.empty
     ): Dotted[ReplicatedList[E]] = Dotted(ReplicatedList(epoche, df), cc)
