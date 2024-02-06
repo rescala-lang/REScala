@@ -18,9 +18,9 @@ class CausalStoreTest extends munit.FunSuite {
           CausalDelta(
             Dots(Map(Uid.predefined("c") -> ArrayRanges.elems(1))),
             Dots(Map()),
-            DotFun(Map(Dot("c", 1) -> "A pen Chris"))
+            Map(Dot("c", 1) -> "A pen Chris")
           ),
-          DotFun(Map(Dot("a", 2) -> "A in Anne"))
+          Map(Dot("a", 2) -> "A in Anne")
         ),
         Dots.empty
       )
@@ -30,9 +30,9 @@ class CausalStoreTest extends munit.FunSuite {
         CausalDelta(
           Dots(Map(Uid.predefined("d") -> ArrayRanges.elems(3))),
           Dots(Map()),
-          DotFun(Map(Dot("d", 3) -> "B pen Erin"))
+          Map(Dot("d", 3) -> "B pen Erin")
         ),
-        DotFun(Map(Dot("g", 4) -> "B in Taylor"))
+        Map(Dot("g", 4) -> "B in Taylor")
       ),
       Dots(Map(Uid.predefined("d") -> ArrayRanges.elems(3), Uid.predefined("g") -> ArrayRanges.elems(4)))
     )
@@ -42,9 +42,9 @@ class CausalStoreTest extends munit.FunSuite {
         CausalDelta(
           Dots.empty,
           Dots.empty,
-          DotFun.empty
+          Map.empty
         ),
-        DotFun(Map())
+        Map()
       ),
       Dots(Map(
         Uid.predefined("d") -> ArrayRanges.elems(3),

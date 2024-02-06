@@ -7,13 +7,14 @@ import org.scalacheck.Prop.*
 import test.kofre.DataGenerator.{given, *}
 import test.kofre.bespoke.given
 import test.kofre.given
+import HasDots.mapInstance
 
 class DotFunTest extends munit.ScalaCheckSuite {
 
   property("dots") {
     forAll { (df: DotFun[Int]) =>
       assert(
-        df.dots.toSet == df.repr.keySet,
+        df.dots.toSet == df.keySet,
         s"DotFun.dots should return the keys of the DotFun itself, but ${df.dots} does not equal $df"
       )
     }
@@ -21,8 +22,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   test("empty") {
     assert(
-      DotFun.empty[Int].repr.isEmpty,
-      s"DotFun.empty should be empty, but ${DotFun.empty[Int]} is not empty"
+      Map.empty[Dot, Int].isEmpty,
+      s"DotFun.empty should be empty, but ${Map.empty[Dot, Int]} is not empty"
     )
   }
 
@@ -59,24 +60,24 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       (dotsA intersect dotsB).iterator.foreach { d =>
         assert(
-          dfMerged.repr(d) == Lattice[Int].merge(dfA.repr(d), dfB.repr(d)),
-          s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged.repr(
+          dfMerged(d) == Lattice[Int].merge(dfA(d), dfB(d)),
+          s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
               d
-            )} does not equal ${Lattice[Int].merge(dfA.repr(d), dfB.repr(d))}"
+            )} does not equal ${Lattice[Int].merge(dfA(d), dfB(d))}"
         )
       }
 
       (dotsA diff ccB).iterator.foreach { d =>
         assert(
-          dfMerged.repr(d) == dfA.repr(d),
-          s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged.repr(d)} does not equal ${dfA.repr(d)}"
+          dfMerged(d) == dfA(d),
+          s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged(d)} does not equal ${dfA(d)}"
         )
       }
 
       (dotsB diff ccA).iterator.foreach { d =>
         assert(
-          dfMerged.repr(d) == dfB.repr(d),
-          s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged.repr(d)} does not equal ${dfB.repr(d)}"
+          dfMerged(d) == dfB(d),
+          s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged(d)} does not equal ${dfB(d)}"
         )
       }
     }
@@ -113,8 +114,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
     val ia      = Uid.gen()
     val ib      = Uid.gen()
     val someDot = Dot(ia, 1)
-    val left    = Dotted(DotFun(Map(someDot -> 10)), Dots.single(someDot))
-    val right   = Dotted(DotFun.empty[Int], Dots.single(someDot))
+    val left    = Dotted(Map(someDot -> 10), Dots.single(someDot))
+    val right   = Dotted(Map.empty[Dot, Int], Dots.single(someDot))
 
     assert(left <= right)
 
@@ -127,7 +128,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
     val cc  = Dots.from(Set(dot))
 
     val data =
-      Dotted[DotFun[Set[Int]]](DotFun(Map(dot -> Set(1, 2, 3))), cc)
+      Dotted[DotFun[Set[Int]]](Map(dot -> Set(1, 2, 3)), cc)
     val dec: Iterable[D] = data.decomposed
     val rec              = dec.reduceLeft(_ merge _)
 
@@ -147,7 +148,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       }
 
       val Dotted(dfMerged, ccMerged) =
-        decomposed.foldLeft(Dotted(DotFun.empty[Int], Dots.empty)) {
+        decomposed.foldLeft(Dotted(Map.empty[Dot, Int], Dots.empty)) {
           case (Dotted(dfA, ccA), Dotted(dfB, ccB)) =>
             Lattice[Dotted[DotFun[Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
         }

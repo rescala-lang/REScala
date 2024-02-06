@@ -17,7 +17,7 @@ case class ResettableCounter(inner: DotFun[(Int, Int)]) derives Bottom
 
 object ResettableCounter {
 
-  val zero: ResettableCounter = ResettableCounter(DotFun.empty)
+  val zero: ResettableCounter = ResettableCounter(Map.empty)
 
   given lattice: Lattice[ResettableCounter] =
     given Lattice[Int] = math.max _
@@ -41,7 +41,7 @@ object ResettableCounter {
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, ResettableCounter](container) {
 
     def value(using IsQuery): Int = {
-      current.inner.repr.values.foldLeft(0) {
+      current.inner.values.foldLeft(0) {
         case (counter, (inc, dec)) => counter + inc - dec
       }
     }
@@ -53,27 +53,27 @@ object ResettableCounter {
       val nextDot = context.nextDot(replicaId)
 
       deltaState(
-        df = Some(ResettableCounter(DotFun(Map(nextDot -> ((0, 0)))))),
+        df = Some(ResettableCounter(Map(nextDot -> ((0, 0))))),
         cc = Dots.single(nextDot)
       ).mutator
     }
 
     private def update(using ReplicaId, IsCausalMutator)(u: (Int, Int)): C = {
       context.max(replicaId) match {
-        case Some(currentDot) if current.inner.repr.contains(currentDot) =>
-          val newCounter = (current.inner.repr(currentDot), u) match {
+        case Some(currentDot) if current.inner.contains(currentDot) =>
+          val newCounter = (current.inner(currentDot), u) match {
             case ((linc, ldec), (rinc, rdec)) => (linc + rinc, ldec + rdec)
           }
 
           deltaState(
-            df = Some(ResettableCounter(DotFun(Map(currentDot -> newCounter)))),
+            df = Some(ResettableCounter(Map(currentDot -> newCounter))),
             cc = Dots.single(currentDot)
           ).mutator
         case _ =>
           val nextDot = context.nextDot(replicaId)
 
           deltaState(
-            df = Some(ResettableCounter(DotFun(Map((nextDot -> u))))),
+            df = Some(ResettableCounter(Map((nextDot -> u)))),
             cc = Dots.single(nextDot)
           ).mutator
       }
@@ -85,7 +85,7 @@ object ResettableCounter {
 
     def reset()(using IsCausalMutator): C = {
       deltaState(
-        cc = Dots.from(current.inner.repr.keySet)
+        cc = Dots.from(current.inner.keySet)
       ).mutator
     }
   }

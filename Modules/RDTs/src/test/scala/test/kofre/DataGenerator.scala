@@ -116,7 +116,7 @@ object DataGenerator {
     n      <- Gen.choose(0, 10)
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g.arbitrary)
-  } yield DotFun((dots zip values).toMap)
+  } yield (dots zip values).toMap
 
   implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
 
@@ -169,7 +169,7 @@ object DataGenerator {
 
   given arbCMultiVersion[E](using arb: Arbitrary[E]): Arbitrary[contextual.MultiVersionRegister[E]] = Arbitrary:
     Gen.listOf(Gen.zip(uniqueDot, arb.arbitrary)).map: pairs =>
-      MultiVersionRegister(DotFun(pairs.toMap))
+      MultiVersionRegister(pairs.toMap)
 
   given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
     arbDots.arbitrary.map(EnableWinsFlag.apply)

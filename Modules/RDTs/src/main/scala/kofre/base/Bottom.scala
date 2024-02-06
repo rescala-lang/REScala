@@ -57,7 +57,6 @@ object Bottom {
 
   }
 
-  given dotFun[V]: Bottom[DotFun[V]]         = Bottom.derived
   given dots: Bottom[Dots]                   = Bottom.derived
   given dotted[A: Bottom]: Bottom[Dotted[A]] = Bottom.derived
 

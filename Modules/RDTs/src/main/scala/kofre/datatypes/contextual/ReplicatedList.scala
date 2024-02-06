@@ -5,6 +5,7 @@ import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
 import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermQuery, ReplicaId}
 import kofre.time.{Dot, Dots}
+import HasDots.mapInstance
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *
@@ -29,17 +30,17 @@ import kofre.time.{Dot, Dots}
 case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[LastWriterWins[E]])
 object ReplicatedList {
 
-  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
+  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, Map.empty)
 
   given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
       def dots: Dots = dotted.meta.dots
       def removeDots(dots: Dots): Option[ReplicatedList[E]] =
-        val nmeta = dotted.meta.repr.filter((k, _) => !dots.contains(k))
+        val nmeta = dotted.meta.filter((k, _) => !dots.contains(k))
 
         if nmeta.isEmpty && dotted.order.isEmpty then None
-        else Some(dotted.copy(meta = DotFun(nmeta)))
+        else Some(dotted.copy(meta = nmeta))
   }
 
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
@@ -49,7 +50,7 @@ object ReplicatedList {
 
     def make(
         epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
-        df: DotFun[LastWriterWins[E]] = DotFun.empty,
+        df: DotFun[LastWriterWins[E]] = Map.empty,
         cc: Dots = Dots.empty
     ): Dotted[ReplicatedList[E]] = Dotted(ReplicatedList(epoche, df), cc)
   }
@@ -64,14 +65,14 @@ object ReplicatedList {
 
     def read(using IsQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.toLazyList.flatMap(df.repr.get).map(_.payload).lift(i)
+      fw.value.toLazyList.flatMap(df.get).map(_.payload).lift(i)
     }
 
-    def size(using IsQuery): Int = current.meta.repr.size
+    def size(using IsQuery): Int = current.meta.size
 
     def toList(using IsQuery): List[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.growOnlyList.toList.flatMap(df.repr.get).map(_.payload)
+      fw.value.growOnlyList.toList.flatMap(df.get).map(_.payload)
     }
 
     def sequence(using IsQuery): Long = {
@@ -82,7 +83,7 @@ object ReplicatedList {
     private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
       case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
-          case (dot, _) => df.repr.contains(dot)
+          case (dot, _) => df.contains(dot)
         }.map(_._2).prepended(0).lift(n)
     }
 
@@ -96,7 +97,7 @@ object ReplicatedList {
           val glistDelta = order.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.single(nextDot, LastWriterWins.now(e))
+          val dfDelta = Map(nextDot -> LastWriterWins.now(e))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -121,11 +122,11 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[LastWriterWins[E]].repr ++ (nextDots zip elems.map(e => LastWriterWins.now(e)))
+          val dfDelta = Map.empty[Dot, LastWriterWins[E]] ++ (nextDots zip elems.map(e => LastWriterWins.now(e)))
 
           deltaState[E].make(
             epoche = glistDelta,
-            df = DotFun(dfDelta),
+            df = dfDelta,
             cc = Dots.from(nextDots.toSet)
           )
       }
@@ -136,13 +137,13 @@ object ReplicatedList {
       fw.value.toLazyList.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
         case Some(d) =>
-          df.repr.get(d) match
+          df.get(d) match
             case None => Dotted(ReplicatedList.empty)
             case Some(current) =>
               newNode match
                 case None => deltaState[E].make(cc = Dots.single(d))
                 case Some(value) =>
-                  deltaState[E].make(df = DotFun.single(d, current.write(value)), cc = Dots.single(d))
+                  deltaState[E].make(df = Map(d -> current.write(value)), cc = Dots.single(d))
       }
     }
 
@@ -156,12 +157,12 @@ object ReplicatedList {
         cond: E => Boolean,
         transform: LastWriterWins[E] => Option[LastWriterWins[E]]
     ): Dotted[ReplicatedList[E]] = {
-      val touched: Iterable[Dot] = state.meta.repr.flatMap: (k, v) =>
+      val touched: Iterable[Dot] = state.meta.flatMap: (k, v) =>
         Option.when(cond(v.payload))(k)
 
-      val updates = DotFun:
+      val updates =
         touched.flatMap: dot =>
-          val value = state.meta.repr(dot)
+          val value = state.meta(dot)
           transform(value).map(nv => dot -> nv)
         .toMap
 

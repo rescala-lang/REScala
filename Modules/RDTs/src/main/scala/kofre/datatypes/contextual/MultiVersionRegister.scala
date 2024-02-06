@@ -13,7 +13,7 @@ import kofre.time.{Dot, Dots}
 case class MultiVersionRegister[A](repr: DotFun[A])
 
 object MultiVersionRegister {
-  def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
+  def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(Map.empty)
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
 
@@ -35,21 +35,21 @@ object MultiVersionRegister {
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
-    def read(using IsQuery): Set[A] = current.repr.repr.values.toSet
+    def read(using IsQuery): Set[A] = current.repr.values.toSet
 
     def write(using ReplicaId)(v: A): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
 
       Dotted(
-        MultiVersionRegister(DotFun(Map(nextDot -> v))),
-        Dots.from(current.repr.repr.keySet).add(nextDot)
+        MultiVersionRegister(Map(nextDot -> v)),
+        Dots.from(current.repr.keySet).add(nextDot)
       ).mutator
     }
 
     def clear(using IsCausalMutator)(): C =
       Dotted(
         MultiVersionRegister.empty,
-        Dots.from(current.repr.repr.keySet)
+        Dots.from(current.repr.keySet)
       ).mutator
   }
 }
