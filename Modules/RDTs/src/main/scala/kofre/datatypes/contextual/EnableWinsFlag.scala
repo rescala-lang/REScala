@@ -2,7 +2,7 @@ package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
 
-import kofre.dotted.{DotSet, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.Dots
 
@@ -10,14 +10,14 @@ import kofre.time.Dots
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: DotSet) derives Bottom
+case class EnableWinsFlag(inner: Dots) derives Bottom
 
 object EnableWinsFlag {
 
   given lattice: Lattice[EnableWinsFlag]    = Lattice.derived
   given hasDotsEWF: HasDots[EnableWinsFlag] = HasDots.derived
 
-  val empty: EnableWinsFlag = EnableWinsFlag(DotSet.empty)
+  val empty: EnableWinsFlag = EnableWinsFlag(Dots.empty)
 
   extension [C](container: C)
     def enableWinsFlag: syntax[C] = syntax(container)
@@ -26,19 +26,19 @@ object EnableWinsFlag {
     * It relies on the external context to track removals.
     */
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
-    def read(using IsQuery): Boolean = !current.inner.dots.isEmpty
+    def read(using IsQuery): Boolean = !current.dots.isEmpty
 
     def enable(using ReplicaId)(): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
-        EnableWinsFlag(DotSet(Dots.single(nextDot))),
-        current.inner.dots add nextDot
+        EnableWinsFlag(Dots.single(nextDot)),
+        current.dots add nextDot
       ).mutator
     }
     def disable(using IsCausalMutator)(): C = {
       Dotted(
-        EnableWinsFlag(DotSet(Dots.empty)),
-        current.inner.dots
+        EnableWinsFlag(Dots.empty),
+        current.dots
       ).mutator
     }
   }

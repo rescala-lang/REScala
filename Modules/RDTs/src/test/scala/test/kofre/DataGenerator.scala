@@ -125,9 +125,6 @@ object DataGenerator {
       case Nil    => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
 
-  given arbDotSet: Arbitrary[DotSet] = Arbitrary:
-    arbDots.arbitrary.map(DotSet.apply)
-
   case class SmallTimeSet(s: Set[Time])
 
   given Arbitrary[SmallTimeSet] = Arbitrary(for {
@@ -175,7 +172,7 @@ object DataGenerator {
       MultiVersionRegister(DotFun(pairs.toMap))
 
   given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
-    arbDotSet.arbitrary.map(EnableWinsFlag.apply)
+    arbDots.arbitrary.map(EnableWinsFlag.apply)
 
   given arbCausalDelta[A: Arbitrary: HasDots]: Arbitrary[CausalDelta[A]] = Arbitrary:
     for

@@ -1,7 +1,7 @@
 package kofre.time
 
 import kofre.base.{Lattice, Uid}
-import kofre.dotted.Dotted
+import kofre.dotted.{Dotted, HasDots}
 
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
@@ -123,6 +123,19 @@ object Dots {
       ArrayRanges.leftRightToOrder(leftLTE, rightLTE)
 
     override def lteq(x: Dots, y: Dots): Boolean = x <= y
+  }
+
+
+  given HasDots[Dots] with {
+    extension (dotted: Dots)
+      def dots: Dots = dotted
+
+      /** Removes dots and anything associated to them from the value.
+       * In case the value becomes fully “empty” returns None
+       */
+      def removeDots(dots: Dots): Option[Dots] =
+        val res = dotted.diff(dots)
+        if res.isEmpty then None else Some(res)
   }
 
 }

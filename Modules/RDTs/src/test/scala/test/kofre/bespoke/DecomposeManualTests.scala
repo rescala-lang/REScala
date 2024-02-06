@@ -114,7 +114,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
 
     val decomposed: Seq[Dotted[EnableWinsFlag]] =
-      Lattice[Dotted[EnableWinsFlag]].decompose(merged).toSeq.sortBy(_.data.inner.repr.internal.keys.headOption)
+      Lattice[Dotted[EnableWinsFlag]].decompose(merged).toSeq.sortBy(_.data.inner.internal.keys.headOption)
     // EnableWinsFlag does not decompose, only returns the value.
     // Dotted decomposes context and value. As context is completely covered by EnableWinsFlag, no additional entry for context.
     assertEquals(decomposed.size, 1)
@@ -159,7 +159,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(val_3.data.read, true)
 
     val decomposed: Seq[Dotted[EnableWinsFlag]] =
-      Lattice[Dotted[EnableWinsFlag]].decompose(val_3).toSeq.sortBy(_.data.inner.repr.internal.keys.headOption)
+      Lattice[Dotted[EnableWinsFlag]].decompose(val_3).toSeq.sortBy(_.data.inner.internal.keys.headOption)
     // Dotted decomposes context and value - one entry for EnableWinsFlag with their Dot and one entry with remaining context
     assertEquals(decomposed.size, 2)
 

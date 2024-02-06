@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.dotted.{DotFun, DotSet, Dotted}
+import kofre.dotted.{DotFun, Dotted}
 import kofre.time.Dots
 
 import scala.collection.immutable.Queue
@@ -58,7 +58,6 @@ object Bottom {
   }
 
   given dotFun[V]: Bottom[DotFun[V]]         = Bottom.derived
-  given dotSet[K, V]: Bottom[DotSet]         = Bottom.derived
   given dots: Bottom[Dots]                   = Bottom.derived
   given dotted[A: Bottom]: Bottom[Dotted[A]] = Bottom.derived
 

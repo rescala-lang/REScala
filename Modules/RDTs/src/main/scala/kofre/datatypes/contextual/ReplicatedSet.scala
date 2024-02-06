@@ -10,7 +10,7 @@ import kofre.dotted.HasDots.mapInstance
   *
   * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
   */
-case class ReplicatedSet[E](inner: Map[E, DotSet])
+case class ReplicatedSet[E](inner: Map[E, Dots])
 
 object ReplicatedSet {
 
@@ -39,11 +39,11 @@ object ReplicatedSet {
     def add(using ReplicaId)(e: E): CausalMutator = {
       val dm        = current.inner
       val nextDot   = context.nextDot(replicaId)
-      val v: DotSet = dm.getOrElse(e, DotSet.empty)
+      val v: Dots = dm.getOrElse(e, Dots.empty)
 
       deltaState(
-        dm = Map(e -> DotSet(Dots.single(nextDot))),
-        cc = v.dots add nextDot
+        dm = Map(e -> Dots.single(nextDot)),
+        cc = v add nextDot
       ).mutator
     }
 
@@ -55,23 +55,23 @@ object ReplicatedSet {
 
       val ccontextSet = elems.foldLeft(nextDots) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds.dots
+            case Some(ds) => dots union ds
             case None     => dots
           }
       }
 
       deltaState(
-        dm = (elems zip nextDots.iterator.map(dot => DotSet(Dots.single(dot)))).toMap,
+        dm = (elems zip nextDots.iterator.map(dot => Dots.single(dot))).toMap,
         cc = ccontextSet
       ).mutator
     }
 
     def remove(using IsQuery, IsCausalMutator)(e: E): C = {
       val dm = current.inner
-      val v  = dm.getOrElse(e, DotSet.empty)
+      val v  = dm.getOrElse(e, Dots.empty)
 
       deltaState(
-        v.dots
+        v
       ).mutator
     }
 
@@ -79,7 +79,7 @@ object ReplicatedSet {
       val dm = current.inner
       val dotsToRemove = elems.foldLeft(Dots.empty) {
         case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds.dots
+            case Some(ds) => dots union ds
             case None     => dots
           }
       }
@@ -93,7 +93,7 @@ object ReplicatedSet {
       val dm = current.inner
       val removedDots = dm.collect {
         case (k, v) if cond(k) => v
-      }.foldLeft(Dots.empty)(_ union _.dots)
+      }.foldLeft(Dots.empty)(_ union _)
 
       deltaState(
         removedDots
@@ -110,7 +110,7 @@ object ReplicatedSet {
   }
 
   private def deltaState[E](
-      dm: Map[E, DotSet],
+      dm: Map[E, Dots],
       cc: Dots
   ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
 

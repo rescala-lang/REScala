@@ -3,7 +3,7 @@ package test.kofre.baseproperties
 import kofre.base.Uid
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.datatypes.experiments.CausalStore
-import kofre.dotted.{DotFun, DotSet, Dotted, HasDots}
+import kofre.dotted.{DotFun, Dotted, HasDots}
 import kofre.time.{ArrayRanges, Dots, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -13,7 +13,7 @@ import test.kofre.DataGenerator.RGAGen.given
 import scala.collection.immutable.Queue
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-class DotSetHDChecks         extends HasDotsChecks[DotSet]
+class DotSetHDChecks         extends HasDotsChecks[Dots]
 class CausalStoreHDChecks    extends HasDotsChecks[CausalStore[DotFun[ExampleData]]]
 class ReplicatedListHDChecks extends HasDotsChecks[ReplicatedList[ExampleData]]
 
