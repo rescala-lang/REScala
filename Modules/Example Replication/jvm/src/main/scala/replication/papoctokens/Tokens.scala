@@ -69,17 +69,25 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]]) {
     else voteFor(replicaId)
 
   def release(using ReplicaId): Voting =
-    Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
+    if !isOwner
+    then Voting.unchanged.data
+    else Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
 
   def upkeep(using ReplicaId, Dots): Dotted[Voting] =
     val (id, count) = leadingCount
     if checkIfMajorityPossible(count)
     then voteFor(id)
-    else Dotted(release)
+    else Dotted(forceRlease)
+
+  def forceRlease(using ReplicaId): Voting =
+    Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
 
   def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
-    val newVote = rounds.value.addElem(Vote(uid, replicaId))
-    newVote.map(rs => Voting(rounds.write(rs)))
+    if rounds.value.elements.exists { case Vote(id, _) => id == replicaId }
+    then Voting.unchanged // already voted!
+    else
+      val newVote = rounds.value.addElem(Vote(uid, replicaId))
+      newVote.map(rs => Voting(rounds.write(rs)))
 
   def checkIfMajorityPossible(count: Int): Boolean =
     val totalVotes     = rounds.value.elements.size
@@ -89,7 +97,6 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]]) {
   def leadingCount(using ReplicaId): (Uid, Int) =
     val votes: Set[Vote] = rounds.value.elements
     votes.groupBy(_.owner).map((o, elems) => (o, elems.size)).maxBy((o, size) => size)
-
 }
 
 object Voting {
