@@ -77,9 +77,9 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]]) {
     val (id, count) = leadingCount
     if checkIfMajorityPossible(count)
     then voteFor(id)
-    else Dotted(forceRlease)
+    else Dotted(forceRelease)
 
-  def forceRlease(using ReplicaId): Voting =
+  def forceRelease(using ReplicaId): Voting =
     Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
 
   def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
