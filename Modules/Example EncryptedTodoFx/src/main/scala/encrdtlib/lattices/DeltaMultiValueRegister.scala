@@ -1,11 +1,11 @@
 package encrdtlib.lattices
 
 import kofre.base.{Uid, Lattice}
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.time.{Dot, Dots}
 
 object DeltaMultiValueRegister {
-  type DeltaMultiValueRegisterLattice[V] = Dotted[DotFun[V]]
+  type DeltaMultiValueRegisterLattice[V] = Dotted[Map[Dot, V]]
 
   def deltaWrite[V](
       value: V,
@@ -15,18 +15,18 @@ object DeltaMultiValueRegister {
 
     val dot = register.context.nextDot(replicaId)
     Dotted(
-      DotFun(Map(dot -> value)),
-      Dots.from(register.data.repr.keySet + dot)
+      Map(dot -> value),
+      Dots.from(register.data.keySet + dot)
     )
   }
 
   def deltaClear[V: Lattice](register: DeltaMultiValueRegisterLattice[V]): DeltaMultiValueRegisterLattice[V] =
     Dotted(
-      DotFun.empty,
-      Dots.from(register.data.repr.keySet)
+      Map.empty,
+      Dots.from(register.data.keySet)
     )
 
   def read[V](register: DeltaMultiValueRegisterLattice[V]): Set[V] = {
-    register.data.repr.values.toSet
+    register.data.values.toSet
   }
 }
