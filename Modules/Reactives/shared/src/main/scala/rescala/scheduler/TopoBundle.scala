@@ -39,7 +39,7 @@ trait TopoBundle {
 
   class TopoInitializer(afterCommitObservers: ListBuffer[Observation]) extends Initializer[State] {
 
-    override protected[this] def makeDerivedStructState[V](initialValue: V): State[V] =
+    override protected def makeDerivedStructState[V](initialValue: V): State[V] =
       makeDerivedStructStateBundle(initialValue)
 
     private var createdReactives: Seq[Derived] = Seq.empty
@@ -50,7 +50,7 @@ trait TopoBundle {
       tmp
     }
 
-    override protected[this] def initialize(
+    override protected def initialize(
         reactive: Derived,
         incoming: Set[ReSource],
         needsReevaluation: Boolean

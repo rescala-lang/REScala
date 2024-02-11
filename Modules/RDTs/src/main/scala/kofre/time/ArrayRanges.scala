@@ -36,7 +36,7 @@ class ArrayRanges(
       if s == einc then s"$s" else s"$s:$einc"
   }.mkString("[", ", ", "]")
 
-  def disjunct(right: ArrayRanges): Boolean = {
+  infix def disjunct(right: ArrayRanges): Boolean = {
     if this.isEmpty then return true
     if right.isEmpty then return true
 
@@ -80,7 +80,7 @@ class ArrayRanges(
     return true
   }
 
-  def contains(x: Time): Boolean = {
+  infix def contains(x: Time): Boolean = {
     val index =
       // binary search returns either the index of x, or the position where x should be inserted (but shifted into negative numbers)
       val res = java.util.Arrays.binarySearch(inner, 0, used, x)
@@ -95,7 +95,7 @@ class ArrayRanges(
 
   def isEmpty: Boolean = used == 0
 
-  def add(x: Time): ArrayRanges =
+  infix def add(x: Time): ArrayRanges =
     union(new ArrayRanges(Array(x, x + 1), 2))
 
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
@@ -119,7 +119,7 @@ class ArrayRanges(
     * Only allocates a single result array (size is the sum of the used size),
     * and traverses each input once fully.
     */
-  def union(other: ArrayRanges): ArrayRanges = {
+  infix def union(other: ArrayRanges): ArrayRanges = {
     var leftPos   = 0
     var rightPos  = 0
     var mergedPos = 0
@@ -166,7 +166,7 @@ class ArrayRanges(
 
   }
 
-  def intersect(right: ArrayRanges): ArrayRanges = {
+  infix def intersect(right: ArrayRanges): ArrayRanges = {
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
 
@@ -199,7 +199,7 @@ class ArrayRanges(
     new ArrayRanges(newInner, newInnerNextIndex)
   }
 
-  def subtract(right: ArrayRanges): ArrayRanges = {
+  infix def subtract(right: ArrayRanges): ArrayRanges = {
     if (right.isEmpty) return this
     if (isEmpty) return this
 

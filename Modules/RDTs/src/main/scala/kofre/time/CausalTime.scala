@@ -22,7 +22,7 @@ case class CausalTime(time: Time, causal: Long, random: Long):
 object CausalTime:
   given ordering: Ordering[CausalTime] = Orderings.lexicographic
 
-  given lattice: Lattice[CausalTime] = Lattice.fromOrdering(ordering)
+  given lattice: Lattice[CausalTime] = Lattice.fromOrdering(using ordering)
 
   // originally used `System.nanoTime` for the third component, but the Web does not offer high precision timers, so a counter it is!
   private val timeCounter = AtomicLong(Random.nextLong())

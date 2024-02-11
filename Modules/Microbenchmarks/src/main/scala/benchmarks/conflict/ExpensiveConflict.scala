@@ -10,8 +10,8 @@ import rescala.operator.Interface
 @AuxCounters
 @State(Scope.Thread)
 class EvaluationCounter {
-  var tried: Int     = _
-  var succeeded: Int = _
+  var tried: Int     = scala.compiletime.uninitialized
+  var succeeded: Int = scala.compiletime.uninitialized
 
   @Setup(Level.Iteration)
   def reset() = {
@@ -32,14 +32,14 @@ class ExpensiveConflict {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var cheapSource: Var[Int]     = _
-  var expensiveSource: Var[Int] = _
-  var result: Signal[Int]       = _
-  var tried: Int                = _
+  var cheapSource: Var[Int]     = scala.compiletime.uninitialized
+  var expensiveSource: Var[Int] = scala.compiletime.uninitialized
+  var result: Signal[Int]       = scala.compiletime.uninitialized
+  var tried: Int                = scala.compiletime.uninitialized
 
   @Setup(Level.Iteration)
   def setup(engineParam: EngineParam, work: Workload) = {

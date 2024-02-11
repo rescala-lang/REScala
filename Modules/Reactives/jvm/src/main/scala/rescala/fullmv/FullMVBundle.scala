@@ -17,7 +17,7 @@ import scala.concurrent.duration.*
 import scala.util.Try
 
 trait FullMVBundle {
-  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
+  selfType: Mirror & TurnImplBundle & TaskBundle & FullMvStateBundle & SubsumableLockBundle =>
 
   type State[V] = FullMVState[V, FullMVTurn]
 

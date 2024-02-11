@@ -114,7 +114,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
         edittextStr act { v => current.clearDeltas().map(_.edit(v)) },
         deltaEvt act { delta => current.clearDeltas().applyDelta(delta) }
       )
-    }(Codecs.codecLww)
+    }(using Codecs.codecLww)
 
     TaskReferences.taskReplicator.distributeDeltaRDT(taskID, crdt, deltaEvt)
 

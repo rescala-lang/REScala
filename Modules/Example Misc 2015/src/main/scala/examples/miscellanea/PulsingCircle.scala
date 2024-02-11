@@ -18,7 +18,7 @@ object PulsingCircle extends SimpleSwingApplication {
         application.base.transform(_ + 1)
         application.frame.repaint()
       }
-      Thread sleep 20
+      Thread `sleep` 20
     }
   }
 }

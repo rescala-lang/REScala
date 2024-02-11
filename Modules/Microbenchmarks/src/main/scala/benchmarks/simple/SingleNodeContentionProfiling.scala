@@ -15,18 +15,18 @@ import rescala.operator.Interface
 @Threads(1)
 @State(Scope.Benchmark)
 class SingleNodeContentionProfiling extends BusyThreads {
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var sources: Array[Var[Int]] = _
-  var node: Signal[Unit]       = _
+  var sources: Array[Var[Int]] = scala.compiletime.uninitialized
+  var node: Signal[Unit]       = scala.compiletime.uninitialized
 
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, step: Step, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     sources = Array.fill(params.getThreads)(Var(step.run()))
-    node = Signal.static(sources.toSeq: _*)(_ => work.consume())
+    node = Signal.static(sources.toSeq*)(_ => work.consume())
   }
 
   @Benchmark

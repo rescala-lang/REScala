@@ -4,8 +4,8 @@ package reswing
   * value, i.e. if they have already been accessed
   */
 final class Lazy[+T](init: => T) {
-  private[this] var defined    = false
-  private[this] lazy val value = init
+  private var defined    = false
+  private lazy val value = init
 
   def isDefined  = defined
   def apply(): T = { defined = true; value }

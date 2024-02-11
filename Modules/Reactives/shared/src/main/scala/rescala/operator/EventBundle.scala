@@ -46,7 +46,7 @@ trait EventBundle extends FoldBundle {
       * @return the resulting [[rescala.structure.Observe]] can be used to remove the observer.
       * @group accessor
       */
-    final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
+    final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(implicit
         ticket: CreationTicket[State]
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
@@ -98,7 +98,7 @@ trait EventBundle extends FoldBundle {
     /** Propagates the event only when the other event `exception` does not fire.
       * @group operator
       */
-    final def except(exception: Event[Any])(implicit ticket: CreationTicket[State]): Event[T] = {
+    final infix def except(exception: Event[Any])(implicit ticket: CreationTicket[State]): Event[T] = {
       Events.staticNamed(s"(except $this  $exception)", this, exception) { st =>
         st.collectStatic(exception) match {
           case NoChange            => st.collectStatic(this)
@@ -179,7 +179,7 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    final inline def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
+    final inline infix def filter(inline expression: T => Boolean)(implicit ticket: CreationTicket[State]): Event[T] =
       Event.dynamic {
         this.value.filter(expression)
       }
@@ -206,7 +206,7 @@ trait EventBundle extends FoldBundle {
       *
       * @group operator
       */
-    final inline def map[B](inline expression: T => B)(implicit ticket: CreationTicket[State]): Event[B] =
+    final inline infix def map[B](inline expression: T => B)(implicit ticket: CreationTicket[State]): Event[B] =
       Event.dynamic {
         this.value.map(expression)
       }
@@ -242,13 +242,13 @@ trait EventBundle extends FoldBundle {
     inline def static[T](inline expr: Option[T])(using ct: CreationTicket[BundleState]): Event[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[Option[T], ReSource.of[BundleState], StaticTicket[BundleState], true](expr)
-      Events.static(sources: _*)(fun)
+      Events.static(sources*)(fun)
     }
 
     inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket[BundleState]): Event[T] = {
       val (sources, fun, isStatic) =
         rescala.macros.getDependencies[Option[T], ReSource.of[BundleState], DynamicTicket[BundleState], false](expr)
-      Events.dynamic(sources: _*)(fun)
+      Events.dynamic(sources*)(fun)
     }
 
     /** Allows to call some API that requires a callback.
@@ -281,7 +281,7 @@ trait EventBundle extends FoldBundle {
     )(expr: StaticTicket[BundleState] => Pulse[T])(implicit
         ticket: CreationTicket[BundleState]
     ): Event[T] = {
-      ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](
+      ticket.create[Pulse[T], EventImpl[BundleState, T] & Event[T]](
         dependencies.toSet,
         Pulse.NoChange,
         needsReevaluation = false
@@ -294,14 +294,14 @@ trait EventBundle extends FoldBundle {
     def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => Option[T])(implicit
         ticket: CreationTicket[BundleState]
     ): Event[T] =
-      staticNamed(ticket.info.description, dependencies: _*)(st => Pulse.fromOption(expr(st)))
+      staticNamed(ticket.info.description, dependencies*)(st => Pulse.fromOption(expr(st)))
 
     /** Creates dynamic events */
     def dynamic[T](dependencies: ReSource.of[BundleState]*)(expr: DynamicTicket[BundleState] => Option[T])(implicit
         ticket: CreationTicket[BundleState]
     ): Event[T] = {
       val staticDeps = dependencies.toSet
-      ticket.create[Pulse[T], EventImpl[BundleState, T] with Event[T]](
+      ticket.create[Pulse[T], EventImpl[BundleState, T] & Event[T]](
         staticDeps,
         Pulse.NoChange,
         needsReevaluation = true
@@ -315,7 +315,7 @@ trait EventBundle extends FoldBundle {
     def change[T](signal: Signal[T])(implicit ticket: CreationTicket[BundleState]): Event[Diff[T]] =
       ticket.scope.embedTransaction { tx =>
         val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[BundleState, T]
-          with Event[Diff[T]]](
+          & Event[Diff[T]]](
           Set[ReSource.of[BundleState]](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true

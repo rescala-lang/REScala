@@ -60,7 +60,7 @@ class TodoAppUI(val storagePrefix: String) {
           },
           taskOps.handleDelta(deltaEvt)
         )
-      }(Codecs.codecRGA)
+      }(using Codecs.codecRGA)
 
     tasklistReplicator.distributeDeltaRDT("tasklist", tasksRDT, deltaEvt)
 

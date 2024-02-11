@@ -5,7 +5,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val opt = new OptionsBuilder().jvmArgs(args: _*)
+    val opt = new OptionsBuilder().jvmArgs(args*)
 //      .include(".*")
 //      .param("engineName", "parrp")
 //      .jvmArgsAppend("-Djmh.stack.lines=1")

@@ -293,7 +293,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
 
     given stringOrdering: Ordering[String] = scala.math.Ordering.String
 
-    given stringLattice: Lattice[String] = Lattice.fromOrdering(stringOrdering)
+    given stringLattice: Lattice[String] = Lattice.fromOrdering(using stringOrdering)
 
     given HasDots[String] = HasDots.noDots
 

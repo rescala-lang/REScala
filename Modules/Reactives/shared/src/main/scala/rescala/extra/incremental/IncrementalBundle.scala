@@ -7,7 +7,7 @@ import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
 trait IncrementalBundle {
-  self: EventBundle with SignalBundle with Interface =>
+  self: EventBundle & SignalBundle & Interface =>
 
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source
@@ -473,7 +473,7 @@ trait IncrementalBundle {
 
     def empty[T](implicit ticket: CreationTicket[BundleState]): IncSeq[T] = fromDelta(Delta.noChange[T])
 
-    private[this] def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[BundleState]): IncSeq[T] =
+    private def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[BundleState]): IncSeq[T] =
       ticket.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
         _,
         ticket.info

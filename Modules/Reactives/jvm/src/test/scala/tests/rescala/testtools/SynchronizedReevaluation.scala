@@ -52,7 +52,7 @@ class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
   }
 
   def autoSyncNextReevaluation(syncs: SynchronizedReevaluation*): CountDownLatch = {
-    val latch = manuallySyncNextReevaluation(syncs: _*)
+    val latch = manuallySyncNextReevaluation(syncs*)
     latch.countDown()
     latch
   }

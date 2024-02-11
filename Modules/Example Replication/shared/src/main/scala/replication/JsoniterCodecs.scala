@@ -110,7 +110,7 @@ object JsoniterCodecs {
   implicit def withContextWrapper[E: JsonValueCodec]: JsonValueCodec[Dotted[E]] = JsonCodecMaker.make
 
   implicit def twoPSetContext[E: JsonValueCodec]: JsonValueCodec[Dotted[TwoPhaseSet[E]]] =
-    withContextWrapper(TwoPSetStateCodec)
+    withContextWrapper(using TwoPSetStateCodec)
 
   implicit def spcecificCodec: JsonValueCodec[Dotted[GrowOnlyMap[Int, ReplicatedSet[Int]]]] =
     JsonCodecMaker.make[Dotted[Map[Int, ReplicatedSet[Int]]]].asInstanceOf

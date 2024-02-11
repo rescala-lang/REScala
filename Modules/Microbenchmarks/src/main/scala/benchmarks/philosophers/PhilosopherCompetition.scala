@@ -88,23 +88,23 @@ class PhilosopherCompetition {
 class Competition extends BusyThreads {
 
   @Param(Array("16", "32"))
-  var philosophers: Int = _
+  var philosophers: Int = scala.compiletime.uninitialized
 
   @Param(Array("noconflict", "alternating"))
-  var layout: String = _
+  var layout: String = scala.compiletime.uninitialized
 
   @Param(Array("static", "dynamic"))
-  var tableType: String = _
+  var tableType: String = scala.compiletime.uninitialized
 
-  var table: PhilosopherTable = _
+  var table: PhilosopherTable = scala.compiletime.uninitialized
 
   final lazy val stableTable = table
   import stableTable.Seating
 
-  var blocks: Array[Array[Seating]] = _
+  var blocks: Array[Array[Seating]] = scala.compiletime.uninitialized
 
-  var manualLocking: Boolean = _
-  var locks: Array[Lock]     = _
+  var manualLocking: Boolean = scala.compiletime.uninitialized
+  var locks: Array[Lock]     = scala.compiletime.uninitialized
 
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {

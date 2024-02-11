@@ -13,7 +13,7 @@ class ReMenuBar(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
     with ReSequentialContainer {
-  override protected lazy val peer: MenuBar with ComponentMixin = new MenuBar with ComponentMixin
+  override protected lazy val peer: MenuBar & ComponentMixin = new MenuBar with ComponentMixin
 }
 
 object ReMenuBar {

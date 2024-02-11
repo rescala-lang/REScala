@@ -33,7 +33,7 @@ object Bottom {
   def empty[A](using bottom: Bottom[A]): A         = bottom.empty
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
-  private[this] object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
+  private object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
     override def empty: Map[Nothing, Nothing]                              = Map.empty
     extension (value: Map[Nothing, Nothing]) override def isEmpty: Boolean = value.isEmpty
   }
@@ -44,7 +44,7 @@ object Bottom {
     extension (value: Option[V]) override def isEmpty: Boolean = value.isEmpty
   }
 
-  private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
+  private object setBottomInstance extends Bottom[Set[Nothing]] {
     override val empty: Set[Nothing]                              = Set.empty
     extension (value: Set[Nothing]) override def isEmpty: Boolean = value.isEmpty
 

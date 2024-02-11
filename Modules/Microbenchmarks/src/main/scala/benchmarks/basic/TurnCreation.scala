@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class TurnCreation {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
 
   @Setup

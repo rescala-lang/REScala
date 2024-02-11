@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit
 class AWSetDeltaMergeBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var size: Long = _
+  var size: Long = scala.compiletime.uninitialized
 
-  var fullState: Dotted[ReplicatedSet[Long]]         = _
-  var plusOneState: Dotted[ReplicatedSet[Long]]      = _
-  var plusOneDeltaState: Dotted[ReplicatedSet[Long]] = _
+  var fullState: Dotted[ReplicatedSet[Long]]         = scala.compiletime.uninitialized
+  var plusOneState: Dotted[ReplicatedSet[Long]]      = scala.compiletime.uninitialized
+  var plusOneDeltaState: Dotted[ReplicatedSet[Long]] = scala.compiletime.uninitialized
 
   def makeCContext(replicaID: Uid): Dots = {
     val dots = (0L until size).map(Dot(replicaID, _)).toSet

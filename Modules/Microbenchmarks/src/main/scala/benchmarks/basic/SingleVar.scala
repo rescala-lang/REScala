@@ -17,13 +17,13 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 @State(Scope.Benchmark)
 class SingleVar {
 
-  var engine: Interface                                  = _
+  var engine: Interface                                  = scala.compiletime.uninitialized
   final lazy val engineT                                 = engine
   implicit def scheduler: Scheduler[engineT.BundleState] = engineT.scheduler
 
-  var source: engineT.Var[Boolean] = _
-  var current: Boolean             = _
-  var lock: ReadWriteLock          = _
+  var source: engineT.Var[Boolean] = scala.compiletime.uninitialized
+  var current: Boolean             = scala.compiletime.uninitialized
+  var lock: ReadWriteLock          = scala.compiletime.uninitialized
 
   @Setup
   def setup(engineParam: EngineParam): Unit = {

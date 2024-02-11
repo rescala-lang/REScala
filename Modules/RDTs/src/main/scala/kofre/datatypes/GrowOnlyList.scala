@@ -151,7 +151,7 @@ object GrowOnlyList {
           case None => Map.empty
           case Some(after) =>
             val order = elems.map(e => Elem(LastWriterWins.now(e)): Elem[LastWriterWins[E]])
-            Map((List(after) ++ order.init) zip order: _*)
+            Map((List(after) ++ order.init) zip order*)
         })
     }.mutator
 

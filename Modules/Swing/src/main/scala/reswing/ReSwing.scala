@@ -10,7 +10,7 @@ package object reswing {
 
   type CompList = Seq[CompItem]
   object CompList {
-    def apply(elems: CompItem*) = Seq(elems: _*)
+    def apply(elems: CompItem*) = Seq(elems*)
   }
 
   def inSyncEDT(op: => Unit) =

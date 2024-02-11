@@ -18,7 +18,7 @@ case object Unwritten                                     extends MaybeWritten[N
 case class Written[V](valueForSelf: V, valueForFuture: V) extends MaybeWritten[V]
 
 trait FullMvStateBundle extends FullMVBundle {
-  selfType: Mirror with TurnImplBundle with TaskBundle with SubsumableLockBundle =>
+  selfType: Mirror & TurnImplBundle & TaskBundle & SubsumableLockBundle =>
 
   /** A node version history datastructure
     *

@@ -41,12 +41,12 @@ class ChatBench {
 @State(Scope.Benchmark)
 class BenchState {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var cs: ChatServer[stableEngine.type] = _
-  var clients: Array[Evt[String]]       = _
+  var cs: ChatServer[stableEngine.type] = scala.compiletime.uninitialized
+  var clients: Array[Evt[String]]       = scala.compiletime.uninitialized
   var locks: Array[Lock]                = null
 
   @Setup

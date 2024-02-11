@@ -6,125 +6,72 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 import sbt.*
 import sbt.Keys.*
 
-import scala.math.Ordering.Implicits.infixOrderingOps
-
 object Settings {
 
   object Versions {
-    val scala211 = "2.11.12"
-    val scala212 = "2.12.17"
-    val scala213 = "2.13.10"
-    val scala3   = "3.3.1"
+    val scala3 = "3.4.0-RC4"
   }
 
   val commonCrossBuildVersions =
-    crossScalaVersions := Seq(Versions.scala211, Versions.scala212, Versions.scala213, Versions.scala3)
+    crossScalaVersions := Seq(Versions.scala3)
 
   private def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
   val fatalWarnings = Seq(Compile / compile, Test / compile).map(s =>
-    s / scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      List(
-        cond(version >= (2, 13), "-Werror"),
-        cond(version < (2, 13), "-Xfatal-warnings"),
-      ).flatten
-    }
+    s / scalacOptions ++= List("-Werror")
   )
 
   val featureOptions = Seq(
-    scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      List(
-        List("-feature", "-language:higherKinds", "-language:implicitConversions", "-language:existentials"),
-        cond(version == (2, 13), "-Ytasty-reader"),
-        cond(version < (3, 0), "-language:experimental.macros", "-Xsource:3"),
-        cond(version >= (3, 0), "-deprecation"),
-      ).flatten
-    }
+    scalacOptions ++= List(
+      "-feature",
+      "-language:higherKinds",
+      "-language:implicitConversions",
+      "-language:existentials",
+      "-deprecation",
+      "-source",
+      "3.4",
+    )
   )
 
-  def unusedWarnings(conf: TaskKey[_]*) = conf.map { c =>
-    c / scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      cond(
-        version._1 == 3,
-        "-Wunused:imports",
-        "-Wunused:privates",
-        "-Wunused:locals",
-        "-Wunused:explicits",
-        "-Wunused:implicits",
-        "-Wunused:params",
-        "-Wunused:all"
-      )
-    }
+  def unusedWarnings(conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions ++= List(
+      "-Wunused:imports",
+      "-Wunused:privates",
+      "-Wunused:locals",
+      "-Wunused:explicits",
+      "-Wunused:implicits",
+      "-Wunused:params",
+      "-Wunused:all"
+    )
   }
 
-  def valueDiscard(conf: TaskKey[_]*) = conf.map { c =>
-    c / scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      cond(version._1 == 3, "-Wvalue-discard")
-    }
+  // seems generally unobstrusive (just add some explicit ()) and otherwise helpful
+  def valueDiscard(conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions += "-Wvalue-discard"
   }
 
-  def nonunitStatements(conf: TaskKey[_]*) = conf.map { c =>
-    c / scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      cond(version._1 == 3, "-Wnonunit-statement")
-    }
+  // can be annoying with methods that have optional results, can also help with methods that have non optional resuts …
+  def nonunitStatement(conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions += "-Wnonunit-statement"
   }
 
-  def explicitNulls(conf: Configuration*) = conf.map { c =>
-    c / scalacOptions ++= {
-      val version = CrossVersion.partialVersion(scalaVersion.value).get
-      cond(version._1 == 3, "-Yexplicit-nulls")
-    }
+  // super hard with java interop
+  def explicitNulls(conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions += "-Yexplicit-nulls"
+  }
+
+  // seems to produce compiler crashes in some cases
+  def safeInit(conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions += "-Ysafe-init"
   }
 
   val commonScalacOptions =
     fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
 
-  // see https://www.scala-js.org/news/2021/12/10/announcing-scalajs-1.8.0/#the-default-executioncontextglobal-is-now-deprecated
-  val jsAcceptUnfairGlobalTasks =
-    Seq(scalacOptions, Test / scalacOptions).map(s =>
-      s ++= cond(!`is 3`(scalaVersion.value), "-P:scalajs:nowarnGlobalExecutionContext")
-    )
-
-  val scalaVersion_211 = Def.settings(
-    scalaVersion := Versions.scala211,
-    commonScalacOptions
-  )
-  val scalaVersion_212 = Def.settings(
-    scalaVersion := Versions.scala212,
-    commonScalacOptions
-  )
-  val scalaVersion_213 = Def.settings(
-    scalaVersion := Versions.scala213,
-    commonScalacOptions
-  )
-  val scalaVersion_3 = Def.settings(
+  val scala3defaults = Def.settings(
     scalaVersion := Versions.scala3,
     commonScalacOptions
-  )
-
-  val scalaVersionFromEnv = scala.sys.env.get("SCALA_VERSION") match {
-    case Some("2.11") => scalaVersion_211
-    case Some("2.12") => scalaVersion_212
-    case Some("2.13") => scalaVersion_213
-    case _            => scalaVersion_3
-  }
-
-  def `is 2.11`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion).contains((2, 11))
-  def `is 2.13`(scalaVersion: String): Boolean =
-    CrossVersion.partialVersion(scalaVersion).contains((2, 13))
-  def `is 3`(scalaVersion: String) =
-    CrossVersion.partialVersion(scalaVersion) collect { case (3, _) => true } getOrElse false
-
-  val dottyMigration = List(
-    Compile / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration"),
-    Test / compile / scalacOptions ++= List("-rewrite", "-source", "3.0-migration")
   )
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
@@ -150,19 +97,16 @@ object Settings {
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
   def sourcemapFromEnv() = {
-    val customSourcePrefix = scala.sys.env.get("RESCALA_SOURCE_MAP_PREFIX")
+    val customSourcePrefix = scala.sys.env.get("CUSTOM_SCALAJS_SOURCE_MAP_PREFIX")
     customSourcePrefix match {
       case Some(targetUrl) if !targetUrl.isEmpty =>
         Def.settings(
           scalacOptions += {
 
-            def gitHash = sys.process.Process("git rev-parse HEAD").lineStream_!.head
-            def baseUrl = (LocalRootProject / baseDirectory).value.toURI.toString
+            def gitHash: String = sys.process.Process("git rev-parse HEAD").lineStream_!.head
+            def baseUrl: String = (LocalRootProject / baseDirectory).value.toURI.toString
 
-            if (`is 3`(scalaVersion.value))
-              s"-scalajs-mapSourceURI:$baseUrl->$targetUrl$gitHash/"
-            else
-              s"-P:scalajs:mapSourceURI:$baseUrl->$targetUrl$gitHash/"
+            s"-scalajs-mapSourceURI:$baseUrl->$targetUrl$gitHash/"
           }
         )
       case _ => Def.settings()

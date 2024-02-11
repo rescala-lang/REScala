@@ -8,10 +8,10 @@ import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
 @State(Scope.Benchmark)
 class BusyThreads {
   @Param(Array("false"))
-  var runBusyThreads: Boolean = _
+  var runBusyThreads: Boolean = scala.compiletime.uninitialized
 
   @volatile var running: Boolean = false
-  var threads: Array[Thread]     = _
+  var threads: Array[Thread]     = scala.compiletime.uninitialized
   @Setup(Level.Iteration)
   def bootBusyThreads(params: BenchmarkParams): Unit = {
     if (runBusyThreads) {

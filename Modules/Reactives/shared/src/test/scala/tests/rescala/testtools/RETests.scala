@@ -12,17 +12,17 @@ abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
       text: String,
       tags: List[Tag] = Nil
   )(testCase: Interface => Any)(implicit pos: source.Position): Unit = {
-    forAll(Table("engine", es: _*)) { e =>
+    forAll(Table("engine", es*)) { e =>
       val testEngine = e
       s"Testing $testEngine" - (tags match {
         case Nil          => text in testCase(testEngine)
-        case head :: tail => text.taggedAs(head, tail: _*) in testCase(testEngine)
+        case head :: tail => text.taggedAs(head, tail*) in testCase(testEngine)
       })
     }
   }
 
   def allEngines(text: String)(testCase: Interface => Any)(implicit pos: source.Position): Unit = {
-    engines(tests.rescala.testtools.TestEngines.all: _*)(text)(testCase)(pos)
+    engines(tests.rescala.testtools.TestEngines.all*)(text)(testCase)(pos)
   }
 
   def multiEngined(block: Interface => Any): Unit = {

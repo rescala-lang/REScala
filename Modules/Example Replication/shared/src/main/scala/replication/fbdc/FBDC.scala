@@ -44,9 +44,9 @@ class Focus[Inner: DottedLattice, Outer](dm: DataManager[Outer])(extract: Outer 
 type RespValue = Option[LastWriterWins[Res]]
 given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
 
+given HasDots[RespValue] = HasDots.noDots
 given DottedLattice[RespValue] = Dotted.lattice
 
-given HasDots[RespValue] = HasDots.noDots
 
 case class State(
     requests: CausalQueue[Req],

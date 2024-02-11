@@ -40,7 +40,7 @@ private[reswing] trait ReSwingEventConnection {
 
   final protected implicit class EventConnector[T] private[ReSwingEventConnection] (value: ReSwingEvent[T]) {
     def using(setter: T => Unit): ReSwingEvent[T] = {
-      if (value.isInstanceOf[ReSwingEventIn[_]])
+      if (value.isInstanceOf[ReSwingEventIn[?]])
         delayedInitEvents += { () =>
           value observe { v => inSyncEDT { setter(v) } }
           ()
@@ -48,7 +48,7 @@ private[reswing] trait ReSwingEventConnection {
       value
     }
     def using(setter: () => Unit): ReSwingEvent[T] = {
-      if (value.isInstanceOf[ReSwingEventIn[_]])
+      if (value.isInstanceOf[ReSwingEventIn[?]])
         delayedInitEvents += { () =>
           value observe { _ => inSyncEDT { setter() } }
           ()
@@ -67,7 +67,7 @@ private[reswing] trait ReSwingEventConnection {
           reactor listenTo publisher
           reactor.reactions += {
             case e =>
-              if (reaction isInstance e)
+              if (reaction `isInstance` e)
                 event(e.asInstanceOf[T])
           }
           ()

@@ -14,7 +14,7 @@ import rescala.structure.Pulse
 import java.util.concurrent.RecursiveAction
 
 trait TaskBundle extends FullMVBundle {
-  selfType: Mirror with TurnImplBundle with FullMvStateBundle with SubsumableLockBundle =>
+  selfType: Mirror & TurnImplBundle & FullMvStateBundle & SubsumableLockBundle =>
 
   trait FramingTask extends FullMVAction {
     override def doCompute(): Unit = {

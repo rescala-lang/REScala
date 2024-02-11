@@ -16,15 +16,15 @@ import scala.util.Try
 @State(Scope.Thread)
 class MonadicErrors {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var fire: Int => Unit       = _
-  var finalresult: Event[Any] = _
+  var fire: Int => Unit       = scala.compiletime.uninitialized
+  var finalresult: Event[Any] = scala.compiletime.uninitialized
 
   @Param(Array("true", "false"))
-  var isMonadic: Boolean = _
+  var isMonadic: Boolean = scala.compiletime.uninitialized
 
   @Setup
   def setup(size: Size, engineParam: EngineParam, work: Workload) = {

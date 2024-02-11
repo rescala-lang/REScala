@@ -23,7 +23,7 @@ type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
 class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])
 
-case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
+case class HMap(keys: Map[String, Key[?]], values: Map[String, Any])
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val replicaId: Uid,

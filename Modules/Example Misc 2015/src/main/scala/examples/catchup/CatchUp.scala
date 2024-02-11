@@ -16,7 +16,7 @@ object CatchUp extends SimpleSwingApplication {
     super.main(args)
     while (true) {
       Swing onEDTWait { application.tick.fire() }
-      Thread sleep 50
+      Thread `sleep` 50
     }
   }
 }

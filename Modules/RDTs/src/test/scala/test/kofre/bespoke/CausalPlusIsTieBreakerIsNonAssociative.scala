@@ -24,7 +24,7 @@ class CausalPlusIsTieBreakerIsNonAssociative extends munit.FunSuite {
         case Some(value) => value
         case None =>
           Integer.compare(x.tieBreaker, y.tieBreaker)
-  given Lattice[CausalPlus] = Lattice.fromOrdering(summon)
+  given Lattice[CausalPlus] = Lattice.fromOrdering(using summon)
 
   test("basic usage") {
 

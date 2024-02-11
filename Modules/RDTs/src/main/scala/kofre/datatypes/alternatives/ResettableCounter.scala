@@ -20,7 +20,7 @@ object ResettableCounter {
   val zero: ResettableCounter = ResettableCounter(Map.empty)
 
   given lattice: Lattice[ResettableCounter] =
-    given Lattice[Int] = math.max _
+    given Lattice[Int] = math.max
     Lattice.derived
 
   given hasDots: HasDots[ResettableCounter] = HasDots.derived

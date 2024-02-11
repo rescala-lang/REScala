@@ -17,9 +17,9 @@ import java.util.concurrent.TimeUnit
 class RCounterBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var numReplicas: Int = _
+  var numReplicas: Int = scala.compiletime.uninitialized
 
-  var counter: DeltaBufferDotted[ResettableCounter] = _
+  var counter: DeltaBufferDotted[ResettableCounter] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

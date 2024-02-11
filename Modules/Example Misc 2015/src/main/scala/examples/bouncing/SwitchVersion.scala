@@ -14,7 +14,7 @@ object SwitchVersion extends SimpleSwingApplication {
     super.main(args)
     while (true) {
       Swing onEDTWait { application.tick.fire() }
-      Thread sleep 20
+      Thread `sleep` 20
     }
   }
 }

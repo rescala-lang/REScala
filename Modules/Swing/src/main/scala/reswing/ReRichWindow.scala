@@ -7,7 +7,7 @@ trait ReRichWindow extends ReWindow {
 
   def title: ReSwingValue[String]
 
-  title.using({ () => peer.title }, peer.title_= _, "title")
+  title.using({ () => peer.title }, peer.title_=, "title")
 
   size.force("resizable", peer.resizable_=, false)
   bounds.force("resizable", peer.resizable_=, false)

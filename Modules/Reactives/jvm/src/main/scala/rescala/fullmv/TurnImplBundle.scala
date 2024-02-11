@@ -11,7 +11,7 @@ import scala.annotation.tailrec
 import scala.concurrent.Future
 
 trait TurnImplBundle extends FullMVBundle {
-  selfType: Mirror with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
+  selfType: Mirror & TaskBundle & FullMvStateBundle & SubsumableLockBundle =>
 
   class FullMVTurnImpl(
       override val host: FullMVEngine,
@@ -19,7 +19,7 @@ trait TurnImplBundle extends FullMVBundle {
       val userlandThread: Thread,
       initialLock: SubsumableLock
   ) extends FullMVTurn {
-    var initialChanges: collection.Map[ReSource.of[State], InitialChange[State]] = _
+    var initialChanges: collection.Map[ReSource.of[State], InitialChange[State]] = scala.compiletime.uninitialized
 
     // read and write order between the various volatiles:
     // phase is written after activeBranches and selfNode is read (phase switches only occur once no tasks remain or can be spawned by predecessors)

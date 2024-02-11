@@ -94,7 +94,7 @@ trait Initializer[S[_]] {
   }
 
   /** hook for schedulers to globally collect all created resources, usually does nothing */
-  protected[this] def register[V](reactive: ReSource.of[S], inputs: Set[ReSource.of[S]], initValue: V): Unit = {
+  protected def register[V](reactive: ReSource.of[S], inputs: Set[ReSource.of[S]], initValue: V): Unit = {
     Tracing.observe(Tracing.Create(reactive, inputs.toSet, Tracing.ValueWrapper(initValue)))
   }
 
@@ -108,10 +108,10 @@ trait Initializer[S[_]] {
   }
 
   /** Creates the internal state of [[rescala.core.Derived]]s */
-  protected[this] def makeDerivedStructState[V](initialValue: V): S[V]
+  protected def makeDerivedStructState[V](initialValue: V): S[V]
 
   /** Creates the internal state of [[ReSource]]s */
-  protected[this] def makeSourceStructState[V](initialValue: V): S[V] =
+  protected def makeSourceStructState[V](initialValue: V): S[V] =
     makeDerivedStructState[V](initialValue)
 
   /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
@@ -120,7 +120,7 @@ trait Initializer[S[_]] {
     * @param incoming          a set of incoming dependencies
     * @param needsReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
     */
-  protected[this] def initialize(
+  protected def initialize(
       reactive: Derived.of[S],
       incoming: Set[ReSource.of[S]],
       needsReevaluation: Boolean
@@ -177,7 +177,7 @@ final class ReevTicket[S[_], V](tx: Transaction[S], private var _before: V, acce
 
   // inline result into ticket, to reduce the amount of garbage during reevaluation
   private var _propagate          = false
-  private var value: V            = _
+  private var value: V            = scala.compiletime.uninitialized
   private var effect: Observation = null
   override def toString: String =
     s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"

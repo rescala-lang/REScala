@@ -15,7 +15,7 @@ import scala.util.Random
 case class Ownership(epoch: Long, owner: Uid)
 
 object Ownership {
-  given Lattice[Ownership] = Lattice.fromOrdering(Orderings.lexicographic)
+  given Lattice[Ownership] = Lattice.fromOrdering(using Orderings.lexicographic)
 
   given bottom: Bottom[Ownership] = Bottom.provide(Ownership(Long.MinValue, Uid.zero))
 

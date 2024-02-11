@@ -34,14 +34,14 @@ final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
 }
 
 final case class ReSwingValueValue[T](private val value: T) extends ReSwingValue[T] {
-  protected val signal                        = Lazy { event() hold latestValue }
+  protected val signal                        = Lazy { event() `hold` latestValue }
   private[reswing] def fixed                  = false
   private[reswing] def get                    = latestValue
   private[reswing] def use(setter: T => Unit) = setter(value)
 }
 
 final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends ReSwingValue[T] {
-  protected val signal       = Lazy { (value() || event()) hold latestValue }
+  protected val signal       = Lazy { (value() || event()) `hold` latestValue }
   private[reswing] def fixed = false
   private[reswing] def get   = latestValue
   private[reswing] def use(setter: T => Unit) = {
@@ -51,10 +51,10 @@ final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends
 }
 
 final case class ReSwingSignalValue[T](private val value: Lazy[Signal[T]]) extends ReSwingValue[T] {
-  protected val signal                              = Lazy { (value().changed || event()) hold value().readValueOnce }
+  protected val signal                              = Lazy { (value().changed || event()) `hold` value().readValueOnce }
   private[reswing] def fixed                        = true
   private[reswing] def get                          = value().readValueOnce
-  private[reswing] def use(setter: T => Unit): Unit = { value().changed observe setter; setter(value().readValueOnce) }
+  private[reswing] def use(setter: T => Unit): Unit = { value().changed `observe` setter; setter(value().readValueOnce) }
 }
 
 object ReSwingValue {

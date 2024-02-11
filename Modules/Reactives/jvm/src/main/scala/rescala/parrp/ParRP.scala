@@ -52,7 +52,7 @@ trait ParRP extends Levelbased {
 
     final val key: Key[ParRPInterTurn] = new Key(this)
 
-    override protected[this] def makeDerivedStructState[V](initialValue: V): ParRPState[V] = {
+    override protected def makeDerivedStructState[V](initialValue: V): ParRPState[V] = {
       val lock  = new ReLock[ParRPInterTurn]
       val owner = lock.tryLock(key)
       assert(owner eq key, s"$this failed to acquire lock on newly created reactive")

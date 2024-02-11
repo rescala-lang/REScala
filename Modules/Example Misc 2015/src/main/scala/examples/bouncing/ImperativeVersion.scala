@@ -12,7 +12,7 @@ object ImperativeVersion extends SimpleSwingApplication {
     super.main(args)
     while (true) {
       Swing onEDTWait { application.tick() }
-      Thread sleep 20
+      Thread `sleep` 20
     }
   }
 }

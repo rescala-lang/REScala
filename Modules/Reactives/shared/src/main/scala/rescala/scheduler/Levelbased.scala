@@ -68,7 +68,7 @@ trait Levelbased extends Twoversion {
     /** Store a single resettable ticket for the whole evaluation.
       * This optimization drastically reduces garbage generation of a relatively expensive object
       */
-    private val reevaluationTicket: ReevTicket[State, _] = makeDynamicReevaluationTicket(null)
+    private val reevaluationTicket: ReevTicket[State, ?] = makeDynamicReevaluationTicket(null)
 
     /** Overrides the evaluator, this is essentially an inlined callback */
     override def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))

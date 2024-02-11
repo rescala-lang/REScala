@@ -68,7 +68,7 @@ class PessimisticTest extends RETests {
     threads.foreach(_.await(math.max(0, timeout - System.currentTimeMillis())))
     assert(latch.getCount == 0)
 
-    sumTracker.assert((0 to size).reverse: _*)
+    sumTracker.assert((0 to size).reverse*)
     assert(sum.readValueOnce === size)
   }
 

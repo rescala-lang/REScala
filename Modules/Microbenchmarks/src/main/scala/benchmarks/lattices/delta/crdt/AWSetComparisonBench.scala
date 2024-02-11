@@ -18,14 +18,14 @@ import java.util.concurrent.TimeUnit
 class AWSetComparisonBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var setSize: Int = _
+  var setSize: Int = scala.compiletime.uninitialized
 
   type State = Dotted[ReplicatedSet[String]]
 
-  var setAState: State        = _
-  var setBState: State        = _
-  var plusOneDelta: State     = _
-  var setAStatePlusOne: State = _
+  var setAState: State        = scala.compiletime.uninitialized
+  var setBState: State        = scala.compiletime.uninitialized
+  var plusOneDelta: State     = scala.compiletime.uninitialized
+  var setAStatePlusOne: State = scala.compiletime.uninitialized
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(Dotted(ReplicatedSet.empty[String])) { (s, i) =>

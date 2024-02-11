@@ -23,11 +23,11 @@ class ReListView[A](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  final override protected lazy val peer: ListView[A] with ComponentMixin = new ListView[A] with ComponentMixin
+  final override protected lazy val peer: ListView[A] & ComponentMixin = new ListView[A] with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JList[A]]
 
-  private var model: javax.swing.ListModel[A] = _
+  private var model: javax.swing.ListModel[A] = scala.compiletime.uninitialized
 
   private val modelListener = new javax.swing.event.ListDataListener {
     def contentsChanged(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListChanged(peer) }
@@ -41,13 +41,13 @@ class ReListView[A](
 
   def modelChanged(): Unit = {
     if (model != null)
-      model removeListDataListener modelListener
+      model `removeListDataListener` modelListener
     if (javaPeer.getModel != null)
-      javaPeer.getModel addListDataListener modelListener
+      javaPeer.getModel `addListDataListener` modelListener
     model = javaPeer.getModel
   }
 
-  javaPeer setModel new ReListView.ReListModel[A]
+  javaPeer `setModel` new ReListView.ReListModel[A]
   modelChanged()
 
   listData.using(
@@ -61,29 +61,29 @@ class ReListView[A](
         case model: ReListView.ReListModel[A] => model
         case _ =>
           val model = new ReListView.ReListModel[A]
-          javaPeer setModel model
+          javaPeer `setModel` model
           modelChanged()
           model
       })() = listData
 
       if (selected != null)
-        javaPeer setSelectedIndices (listData.zipWithIndex collect {
+        javaPeer `setSelectedIndices` (listData.zipWithIndex collect {
           case (el, index) if selected contains el => index
         }).toArray
     },
-    classOf[ListChanged[_]]
+    classOf[ListChanged[?]]
   )
 
-  visibleRowCount.using({ () => peer.visibleRowCount }, peer.visibleRowCount_= _, "visibleRowCount")
-  selectionForeground.using({ () => peer.selectionForeground }, peer.selectionForeground_= _, "selectionForeground")
-  selectionBackground.using({ () => peer.selectionBackground }, peer.selectionBackground_= _, "selectionBackground")
+  visibleRowCount.using({ () => peer.visibleRowCount }, peer.visibleRowCount_=, "visibleRowCount")
+  selectionForeground.using({ () => peer.selectionForeground }, peer.selectionForeground_=, "selectionForeground")
+  selectionBackground.using({ () => peer.selectionBackground }, peer.selectionBackground_=, "selectionBackground")
 
   selectIndices using { () => peer.selectIndices() }
-  ensureIndexIsVisible using { peer.ensureIndexIsVisible _ }
+  ensureIndexIsVisible using { peer.ensureIndexIsVisible }
 
-  val contentsChanged = ReSwingEvent using classOf[ListChanged[A]]
-  val intervalRemoved = ReSwingEvent using classOf[ListElementsRemoved[A]]
-  val intervalAdded   = ReSwingEvent using classOf[ListElementsAdded[A]]
+  val contentsChanged = ReSwingEvent `using` classOf[ListChanged[A]]
+  val intervalRemoved = ReSwingEvent `using` classOf[ListElementsRemoved[A]]
+  val intervalAdded   = ReSwingEvent `using` classOf[ListElementsAdded[A]]
 
   class ReSelection(
       val intervalMode: ReSwingValue[IntervalMode.Value],
@@ -93,29 +93,29 @@ class ReListView[A](
 
     private[ReListView] var listDataSyncVar = false
 
-    val leadIndex   = ReSwingValue.using({ () => peer.leadIndex }, (peer, classOf[ListSelectionChanged[_]]))
-    val anchorIndex = ReSwingValue.using({ () => peer.anchorIndex }, (peer, classOf[ListSelectionChanged[_]]))
+    val leadIndex   = ReSwingValue.using({ () => peer.leadIndex }, (peer, classOf[ListSelectionChanged[?]]))
+    val anchorIndex = ReSwingValue.using({ () => peer.anchorIndex }, (peer, classOf[ListSelectionChanged[?]]))
     val indices = ReSwingValue.using(
       { () => javaPeer.getSelectedIndices.toSet },
-      (peer, classOf[ListSelectionChanged[_]])
+      (peer, classOf[ListSelectionChanged[?]])
     )
     val items = ReSwingValue.using(
       { () => javaPeer.getSelectedValuesList.asScala.toSeq },
-      (peer, classOf[ListSelectionChanged[_]]),
-      classOf[ListChanged[_]]
+      (peer, classOf[ListSelectionChanged[?]]),
+      classOf[ListChanged[?]]
     )
 
     val index = ReSwingValue.using(
       { () => javaPeer.getSelectedIndex },
-      (peer, classOf[ListSelectionChanged[_]])
+      (peer, classOf[ListSelectionChanged[?]])
     )
     val item = ReSwingValue.using(
       { () => Option(javaPeer.getSelectedValue) },
-      (peer, classOf[ListSelectionChanged[_]]),
-      classOf[ListChanged[_]]
+      (peer, classOf[ListSelectionChanged[?]]),
+      classOf[ListChanged[?]]
     )
 
-    intervalMode.using({ () => peer.intervalMode }, peer.intervalMode_= _)
+    intervalMode.using({ () => peer.intervalMode }, peer.intervalMode_=)
     listDataSync.using({ () => listDataSyncVar }, listDataSyncVar = _)
 
     val changed = ReSwingEvent.using(peer, classOf[ListSelectionChanged[A]])

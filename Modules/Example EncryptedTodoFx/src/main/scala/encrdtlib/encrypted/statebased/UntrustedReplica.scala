@@ -8,7 +8,7 @@ import kofre.base.Lattice
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates
 
-  protected var versionVector: VectorClock = _
+  protected var versionVector: VectorClock = scala.compiletime.uninitialized
   versionVector = {
     if (initialStates.isEmpty) VectorClock.zero
     else initialStates.map(_.versionVector).reduce((l, r) => l.merge(r))

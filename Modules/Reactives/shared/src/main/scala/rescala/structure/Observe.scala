@@ -16,7 +16,7 @@ object Observe {
       dependency: ReSource,
       fireImmediately: Boolean
   )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket[dependency.State]): Disconnectable = {
-    ct.create[Pulse[Nothing], Disconnectable with Derived.of[dependency.State]](
+    ct.create[Pulse[Nothing], Disconnectable & Derived.of[dependency.State]](
       Set(dependency),
       Pulse.NoChange,
       fireImmediately

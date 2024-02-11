@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit
 class AWSetBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
-  var set: DeltaBufferDotted[ReplicatedSet[Int]] = _
+  var set: DeltaBufferDotted[ReplicatedSet[Int]] = scala.compiletime.uninitialized
 
   def createBySize(size: Int): DeltaBufferDotted[ReplicatedSet[Int]] =
     (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])) {

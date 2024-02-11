@@ -17,14 +17,14 @@ import kofre.base.Uid
 class ContextBench {
 
   @Param(Array("1", "1000"))
-  var size: Long = _
+  var size: Long = scala.compiletime.uninitialized
 
-  var rep1Set: Dots        = _
-  var rep1SetPlusOne: Dots = _
-  var rep2Set: Dots        = _
+  var rep1Set: Dots        = scala.compiletime.uninitialized
+  var rep1SetPlusOne: Dots = scala.compiletime.uninitialized
+  var rep2Set: Dots        = scala.compiletime.uninitialized
   val rep1id               = Uid.gen()
   val rep2id               = Uid.gen()
-  var rep1single: Dots     = _
+  var rep1single: Dots     = scala.compiletime.uninitialized
 
   private def makeRep(rep: Uid, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))

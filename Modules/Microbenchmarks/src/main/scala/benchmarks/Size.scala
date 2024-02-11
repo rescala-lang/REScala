@@ -5,5 +5,5 @@ import org.openjdk.jmh.annotations._
 @State(Scope.Thread)
 class Size {
   @Param(Array("2"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 }

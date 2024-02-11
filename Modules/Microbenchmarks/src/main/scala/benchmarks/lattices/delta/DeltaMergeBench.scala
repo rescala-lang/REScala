@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit
 class DeltaMergeBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var size: Long = _
+  var size: Long = scala.compiletime.uninitialized
 
-  var fullState: Dotted[ReplicatedList[Long]]         = _
-  var plusOneState: Dotted[ReplicatedList[Long]]      = _
-  var plusOneDeltaState: Dotted[ReplicatedList[Long]] = _
+  var fullState: Dotted[ReplicatedList[Long]]         = scala.compiletime.uninitialized
+  var plusOneState: Dotted[ReplicatedList[Long]]      = scala.compiletime.uninitialized
+  var plusOneDeltaState: Dotted[ReplicatedList[Long]] = scala.compiletime.uninitialized
 
   def makeCContext(replicaID: String): Dots = {
     val dots = (0L until size).map(Dot(replicaID.asId, _)).toSet

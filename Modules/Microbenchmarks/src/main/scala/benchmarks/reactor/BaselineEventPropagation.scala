@@ -14,12 +14,12 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class BaselineEventPropagation {
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var event: Evt[Int]     = _
-  var signal: Signal[Int] = _
+  var event: Evt[Int]     = scala.compiletime.uninitialized
+  var signal: Signal[Int] = scala.compiletime.uninitialized
 
   @Setup
   def setup(engineParam: EngineParam) = {

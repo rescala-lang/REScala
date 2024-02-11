@@ -44,7 +44,7 @@ trait Interface extends Operators {
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
   def transaction[R](initialWrites: ReSource.of[BundleState]*)(admissionPhase: AdmissionTicket[BundleState] => R): R = {
-    scheduler.forceNewTransaction(initialWrites: _*)(admissionPhase)
+    scheduler.forceNewTransaction(initialWrites*)(admissionPhase)
   }
 
   /** Executes a transaction with WrapUpPhase.
@@ -56,7 +56,7 @@ trait Interface extends Operators {
       Transaction[BundleState]
   ) => R): R = {
     var res: Option[R] = None
-    transaction(iw: _*)(at => {
+    transaction(iw*)(at => {
       val apr: I = ap(at)
       at.wrapUp = wut => { res = Some(wrapUp(apr, wut)) }
     })

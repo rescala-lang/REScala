@@ -16,19 +16,19 @@ import java.util.concurrent.locks.ReadWriteLock
 @State(Scope.Thread)
 class StaticVsDynamic {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
   @Param(Array("true", "false"))
-  var static: Boolean = _
+  var static: Boolean = scala.compiletime.uninitialized
 
-  var source: Var[Boolean] = _
-  var current: Boolean     = _
-  var lock: ReadWriteLock  = _
-  var a: Var[Int]          = _
-  var b: Var[Int]          = _
-  var res: Signal[Int]     = _
+  var source: Var[Boolean] = scala.compiletime.uninitialized
+  var current: Boolean     = scala.compiletime.uninitialized
+  var lock: ReadWriteLock  = scala.compiletime.uninitialized
+  var a: Var[Int]          = scala.compiletime.uninitialized
+  var b: Var[Int]          = scala.compiletime.uninitialized
+  var res: Signal[Int]     = scala.compiletime.uninitialized
 
   @Setup
   def setup(engineParam: EngineParam): Unit = {

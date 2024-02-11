@@ -11,7 +11,7 @@ object ObjectSizes {
 
   def measure(name: String, roots: Any*): Unit = {
     println(s"======= $name")
-    println(GraphLayout.parseInstance(roots: _*).toFootprint)
+    println(GraphLayout.parseInstance(roots*).toFootprint)
   }
 
   def main(args: Array[String]): Unit = {

@@ -17,7 +17,7 @@ trait MacroCompilerCode {
 
   protected def createTranslationContext(): CTX
 
-  def compileTreeCode(t: Expr[_])(using Quotes): Expr[WithContext[CASTNode]] = {
+  def compileTreeCode(t: Expr[?])(using Quotes): Expr[WithContext[CASTNode]] = {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()
@@ -25,7 +25,7 @@ trait MacroCompilerCode {
     WithContext(dispatch[TreeIFFragment](_.compileTree)(t.asTerm), ctx).toExpr
   }
 
-  def compileExprCode(e: Expr[_])(using Quotes): Expr[WithContext[CExpr]] = {
+  def compileExprCode(e: Expr[?])(using Quotes): Expr[WithContext[CExpr]] = {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()
@@ -33,7 +33,7 @@ trait MacroCompilerCode {
     WithContext(dispatch[TermIFFragment](_.compileTermToCExpr)(e.asTerm), ctx).toExpr
   }
 
-  def compileFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
+  def compileFunCode(f: Expr[?])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()
@@ -49,7 +49,7 @@ trait MacroCompilerCode {
     ).toExpr
   }
 
-  def compileAnonFunCode(f: Expr[_])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
+  def compileAnonFunCode(f: Expr[?])(using Quotes): Expr[WithContext[CFunctionDecl]] = {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()

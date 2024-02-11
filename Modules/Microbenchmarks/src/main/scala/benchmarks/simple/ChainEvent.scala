@@ -15,12 +15,12 @@ import rescala.operator.Interface
 @State(Scope.Thread)
 class ChainEvent {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var source: Evt[Int]   = _
-  var result: Event[Int] = _
+  var source: Evt[Int]   = scala.compiletime.uninitialized
+  var result: Event[Int] = scala.compiletime.uninitialized
 
   @Setup
   def setup(size: Size, engineParam: EngineParam, work: Workload) = {

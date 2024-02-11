@@ -7,7 +7,7 @@ import rescala.fullmv.tasks.TaskBundle
 import rescala.fullmv.{FullMVBundle, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase}
 
 trait Mirror extends FullMVBundle {
-  selfType: TurnImplBundle with TaskBundle with SubsumableLockBundle with FullMvStateBundle =>
+  selfType: TurnImplBundle & TaskBundle & SubsumableLockBundle & FullMvStateBundle =>
 
   trait FullMVTurnHost extends Host[FullMVTurn] {
     val lockHost: SubsumableLockHost

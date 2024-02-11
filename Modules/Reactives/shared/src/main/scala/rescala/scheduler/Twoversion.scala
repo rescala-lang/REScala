@@ -21,7 +21,7 @@ trait Twoversion {
   abstract class TwoVersionState[V](protected[rescala] var current: V) {
 
     private var owner: Token = null
-    private var update: V    = _
+    private var update: V    = scala.compiletime.uninitialized
 
     def write(value: V, token: Token): Unit = {
       assert(owner == null, s"buffer owned by $owner written by $token")

@@ -27,7 +27,7 @@ class PaperPhilosopherCompetition {
 @State(Scope.Benchmark)
 class PaperCompetition extends BusyThreads {
   @Param(Array("dynamic", "semi-static", "static"))
-  var dynamicity: String = _
+  var dynamicity: String = scala.compiletime.uninitialized
 
   /** philosophers > 0 mean that the table has this many philosophers, and they are distributed to threads round robin, each thread picks one assigned philosophers for each iteration.
     * philosophers = 0 means that all threads update the same philosopher on a table with 3 seats
@@ -35,10 +35,10 @@ class PaperCompetition extends BusyThreads {
     * philosophers < -4 should be pointless (on -4 there are no more interactions, less than that just increases dead space between active philosophers)
     */
   @Param(Array("-4", "-3", "-2", "-1", "0", "16", "32", "64", "128"))
-  var philosophers: Int = _
+  var philosophers: Int = scala.compiletime.uninitialized
   @Param(Array("event", "signal", "none", "singleFold"))
-  var topper: String           = _
-  var table: PaperPhilosophers = _
+  var topper: String           = scala.compiletime.uninitialized
+  var table: PaperPhilosophers = scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def printSystemStats() = {
@@ -53,7 +53,7 @@ class PaperCompetition extends BusyThreads {
                                                                                                     else "disabled."))
   }
 
-//  var stream: PrintStream = _
+//  var stream: PrintStream = scala.compiletime.uninitialized
   @Setup(Level.Iteration)
   def setup(params: BenchmarkParams, engineParam: EngineParam) = {
     val dynamic = dynamicity match {

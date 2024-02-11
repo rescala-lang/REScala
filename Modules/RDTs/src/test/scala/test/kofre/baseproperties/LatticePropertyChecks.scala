@@ -86,7 +86,7 @@ abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using
       val decomposed = theValue.decomposed
       val normalized = Lattice.normalize(theValue)
 
-      val isDotted = theValue.isInstanceOf[Dotted[_]]
+      val isDotted = theValue.isInstanceOf[Dotted[?]]
 
       decomposed.foreach { d =>
         assertEquals(
@@ -105,8 +105,8 @@ abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using
           decomposed.foreach: other =>
             if d != other
             then
-              val thisCtx  = d.asInstanceOf[Dotted[_]].context
-              val otherCtx = other.asInstanceOf[Dotted[_]].context
+              val thisCtx  = d.asInstanceOf[Dotted[?]].context
+              val otherCtx = other.asInstanceOf[Dotted[?]].context
               assert(thisCtx disjunct otherCtx, s"overlapping context\n  ${d}\n  ${other}")
       }
 

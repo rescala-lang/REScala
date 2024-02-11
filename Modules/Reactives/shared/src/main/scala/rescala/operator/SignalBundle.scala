@@ -51,7 +51,7 @@ trait SignalBundle {
       *
       * @group accessor
       */
-    final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(implicit
+    final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(implicit
         ticket: CreationTicket[State]
     ): Disconnectable =
       Observe.strong(this, fireImmediately) { reevalVal =>
@@ -131,7 +131,7 @@ trait SignalBundle {
       *
       * @group operator
       */
-    final inline def map[B](using CreationTicket[State])(inline expression: T => B): Signal[B] =
+    final inline infix def map[B](using CreationTicket[State])(inline expression: T => B): Signal[B] =
       Signal.dynamic(expression(this.value))
   }
 
@@ -152,7 +152,7 @@ trait SignalBundle {
     inline def static[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = {
       val (inputs, fun, isStatic) =
         rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true](expr)
-      Signal.static(inputs: _*)(fun)
+      Signal.static(inputs*)(fun)
     }
 
     inline def dynamic[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = {
@@ -160,14 +160,14 @@ trait SignalBundle {
         rescala.macros.getDependencies[T, ReSource.of[BundleState], rescala.core.DynamicTicket[BundleState], false](
           expr
         )
-      Signal.dynamic(sources: _*)(fun)
+      Signal.dynamic(sources*)(fun)
     }
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
     def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => T)(implicit
         ct: CreationTicket[BundleState]
     ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[BundleState, T] with Signal[T]](
+      ct.create[Pulse[T], SignalImpl[BundleState, T] & Signal[T]](
         dependencies.toSet,
         Pulse.empty,
         needsReevaluation = true
@@ -181,7 +181,7 @@ trait SignalBundle {
         ct: CreationTicket[BundleState]
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
-      ct.create[Pulse[T], SignalImpl[BundleState, T] with Signal[T]](
+      ct.create[Pulse[T], SignalImpl[BundleState, T] & Signal[T]](
         staticDeps,
         Pulse.empty,
         needsReevaluation = true
@@ -222,7 +222,7 @@ trait SignalBundle {
     }
 
     def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[BundleState]): Signal[R] = {
-      Signal.static(los: _*) { t => fun(los.map(s => t.dependStatic(s))) }
+      Signal.static(los*) { t => fun(los.map(s => t.dependStatic(s))) }
     }
 
     def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[BundleState]): Signal[B] =

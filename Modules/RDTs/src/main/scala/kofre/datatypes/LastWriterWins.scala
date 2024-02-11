@@ -28,8 +28,7 @@ object LastWriterWins {
 
   given lattice[A]: Lattice[LastWriterWins[A]] =
     given Ordering[A] = MultiVersionRegister.assertEqualsOrdering
-    Lattice.fromOrdering:
-      Orderings.lexicographic
+    Lattice.fromOrdering(using Orderings.lexicographic)
 
   inline def generalizedLattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom {
     case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)

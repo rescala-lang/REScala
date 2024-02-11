@@ -138,7 +138,7 @@ object HTML {
             case None => Nil
             case Some(res) =>
               val keys = res.result.head.keys.toList.sorted
-              thead(keys.map(th(_)).toList: _*) ::
+              thead(keys.map(th(_)).toList*) ::
               res.result.map { row =>
                 tr(keys.map(k => td(row(k))))
               }

@@ -15,15 +15,15 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class ReadBenchmark {
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   final lazy val reactorApi   = new ReactorBundle[stableEngine.type](stableEngine)
 
   import reactorApi._
   import stableEngine._
 
-  var reactor: Reactor[Int] = _
-  var trigger: Evt[Unit]    = _
+  var reactor: Reactor[Int] = scala.compiletime.uninitialized
+  var trigger: Evt[Unit]    = scala.compiletime.uninitialized
 
   @Setup
   def setup(engineParam: EngineParam) = {

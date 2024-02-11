@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Benchmark)
 class LowContentionSerialOrder extends BusyThreads {
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
-  var sources: Array[Var[Int]]        = _
-  var grid: Array[Array[Signal[Int]]] = _
+  var sources: Array[Var[Int]]        = scala.compiletime.uninitialized
+  var grid: Array[Array[Signal[Int]]] = scala.compiletime.uninitialized
   @Param(Array("16"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
   @Setup(Level.Iteration)
   def setup(engineParam: EngineParam, work: Workload) = {

@@ -15,9 +15,9 @@ abstract class ReWindow(
     with ReRootPanel {
   protected def peer: Window
 
-  size.using({ () => peer.size }, peer.size_= _, classOf[UIElementResized])
-  location.using({ () => peer.location }, peer.location_= _, classOf[UIElementMoved])
-  bounds.using({ () => peer.bounds }, peer.bounds_= _, classOf[UIElementResized], classOf[UIElementMoved])
+  size.using({ () => peer.size }, peer.size_=, classOf[UIElementResized])
+  location.using({ () => peer.location }, peer.location_=, classOf[UIElementMoved])
+  bounds.using({ () => peer.bounds }, peer.bounds_=, classOf[UIElementResized], classOf[UIElementMoved])
 
   val windowActivated   = ReSwingEvent.using(peer, classOf[WindowActivated])
   val windowClosed      = ReSwingEvent.using(peer, classOf[WindowClosed])

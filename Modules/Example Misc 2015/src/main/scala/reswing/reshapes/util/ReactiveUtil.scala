@@ -24,7 +24,7 @@ object ReactiveUtil {
         s.observe(ev.fire)
         ev.fire(s.now)
       }
-      ev hold init
+      ev `hold` init
     }
   }
 

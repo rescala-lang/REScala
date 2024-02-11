@@ -28,9 +28,9 @@ object ToDoAppBenchmark extends App {
 
   private val clientCrdt = new DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry]("client")
 
-  private var intermediarySizeInfo: IntermediarySizeInfo = _
-  private var aead: Aead                                 = _
-  private var clientReplica: ToDoListClient              = _
+  private var intermediarySizeInfo: IntermediarySizeInfo = scala.compiletime.uninitialized
+  private var aead: Aead                                 = scala.compiletime.uninitialized
+  private var clientReplica: ToDoListClient              = scala.compiletime.uninitialized
 
   if (USE_ENCRYPTION) {
     aead = Helper.setupAead("AES128_GCM")

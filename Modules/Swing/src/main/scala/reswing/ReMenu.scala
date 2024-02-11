@@ -51,7 +51,7 @@ class ReMenu(
       preferredSize
     )
     with ReSequentialContainer {
-  override protected lazy val peer: Menu with ComponentMixin = new Menu(null) with ComponentMixin
+  override protected lazy val peer: Menu & ComponentMixin = new Menu(null) with ComponentMixin
 }
 
 object ReMenu {

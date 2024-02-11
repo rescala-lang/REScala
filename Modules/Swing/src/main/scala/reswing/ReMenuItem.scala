@@ -48,7 +48,7 @@ class ReMenuItem(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer: MenuItem with ComponentMixin = new MenuItem(null: String) with ComponentMixin
+  override protected lazy val peer: MenuItem & ComponentMixin = new MenuItem(null: String) with ComponentMixin
 
   if (action != null)
     peer.action = action

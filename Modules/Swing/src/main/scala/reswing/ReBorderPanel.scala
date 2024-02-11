@@ -14,7 +14,7 @@ class ReBorderPanel(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends RePanel(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
     with ReLayoutContainer[Position.Value] {
-  override protected lazy val peer: BorderPanel with ComponentMixin = new BorderPanel with ComponentMixin
+  override protected lazy val peer: BorderPanel & ComponentMixin = new BorderPanel with ComponentMixin
 }
 
 object ReBorderPanel {
