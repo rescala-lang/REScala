@@ -17,7 +17,7 @@ object EchoServerTestUDP {
     val port = 54468
 
     val listener = channel.udp.UdpInChan.listen(port, Duration(1, SECONDS))
-    val sender   = channel.udp.UDPOutChan.establish(InetSocketAddress("localhost", port))
+    val sender   = channel.udp.UDPOutChan.establish(InetSocketAddress("ip6-localhost", port))
 
     def fork: Async[Any, Unit] = Async.fromCallback:
       val t = new Thread(() =>
@@ -38,7 +38,13 @@ object EchoServerTestUDP {
 
     val client: Async[Any, Unit] = Async:
       sender.send(ArrayMessageBuffer("hello world!".getBytes)).bind
-      sender.send(ArrayMessageBuffer(("X" * 65000).getBytes())).bind
+      // 65507 bytes seems to be the maximum for IPv4, 8 byte udp header 20 byte IP header, but what about the 4 byte of length we also send?
+      sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 29)).getBytes())).bind
+      sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 28)).getBytes())).bind
+
+      // ipv6 allows larger packets, and this here then seems to overflow the UDP header size, again, not sure where the 4 byte of length vanish to …
+      sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 9)).getBytes())).bind
+      sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 8)).getBytes())).bind
 
     given ctx: Ctx = Ctx()
 
