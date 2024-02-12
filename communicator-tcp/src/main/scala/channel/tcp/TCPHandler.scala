@@ -12,18 +12,15 @@ import de.rmgk.delay.Async
 
 import java.nio.ByteBuffer
 
-def connect(host: String, port: Int): Async[Any, Bidirectional] = Async.fromCallback {
+def connect(host: String, port: Int): Async[Any, TCPConnection] = Async.fromCallback {
   try
     Async.handler.succeed:
-      makeConnection(new Socket(host, port))
+      new TCPConnection(new Socket(host, port))
   catch
     case NonFatal(exception) =>
       Async.handler.fail(exception)
 }
 
-def makeConnection(socket: Socket): Bidirectional =
-  val conn = new TCPConnection(socket)
-  Bidirectional(conn, conn)
 
 class TCPConnection(socket: Socket) extends InChan with OutChan {
 
@@ -92,7 +89,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 }
 
 trait TCPListener extends AutoCloseable {
-  def channels: Async[Any, Bidirectional]
+  def channels: Async[Any, TCPConnection]
 }
 
 def startListening(port: Int, interface: String): TCPListener = {
@@ -109,14 +106,14 @@ def startListening(port: Int, interface: String): TCPListener = {
 
     override def close: Unit = socket.close()
 
-    override def channels: Async[Any, Bidirectional] = Async.fromCallback {
+    override def channels: Async[Any, TCPConnection] = Async.fromCallback {
 
       socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
 
       try
         while (true) {
           val connection = socket.accept()
-          if connection != null then Async.handler.succeed(makeConnection(connection))
+          if connection != null then Async.handler.succeed(new TCPConnection(connection))
         }
       catch {
         case exception: SocketException =>

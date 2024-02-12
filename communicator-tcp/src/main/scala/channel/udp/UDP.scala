@@ -4,16 +4,17 @@ import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutCha
 import de.rmgk.delay.Async
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
-import java.net.{DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException, SocketTimeoutException}
+import java.net.{
+  DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException,
+  SocketTimeoutException
+}
 import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-class UDPOutChan(address: SocketAddress) extends OutChan {
-
-  val clientSocket: DatagramSocket = new DatagramSocket()
+class UDPOutChan(address: SocketAddress, val clientSocket: DatagramSocket) extends OutChan {
 
   override def send(message: MessageBuffer): Async[Any, Unit] = Async {
     // Create a packet with the message, server address, and port
@@ -24,13 +25,14 @@ class UDPOutChan(address: SocketAddress) extends OutChan {
     // Send the packet to the server
     clientSocket.send(sendPacket)
   }
-  override def close(): Unit = clientSocket.close()
 }
 
-class UdpInChan(port: Int, timeout: Duration) extends InChan {
+object UDPOutChan {
+  def establish(address: SocketAddress) =
+    new UDPOutChan(address, new DatagramSocket())
+}
 
-  val serverSocket = new DatagramSocket(port)
-  if timeout.isFinite then serverSocket.setSoTimeout(timeout.toMillis.toInt)
+class UdpInChan(serverSocket: DatagramSocket) extends InChan {
 
   override def receive: Prod[MessageBuffer] = Async.fromCallback {
 
@@ -50,6 +52,12 @@ class UdpInChan(port: Int, timeout: Duration) extends InChan {
       case NonFatal(e) =>
         Async.handler.fail(e)
   }
+}
 
-  override def close(): Unit = serverSocket.close()
+object UdpInChan {
+  def listen(port: Int, timeout: Duration) = {
+    val serverSocket = new DatagramSocket(port)
+    if timeout.isFinite then serverSocket.setSoTimeout(timeout.toMillis.toInt)
+    new UdpInChan(serverSocket)
+  }
 }

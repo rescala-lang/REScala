@@ -16,8 +16,8 @@ object EchoServerTestUDP {
   def main(args: Array[String]): Unit = {
     val port = 54468
 
-    val listener = channel.udp.UdpInChan(port, Duration(1, SECONDS))
-    val sender   = channel.udp.UDPOutChan(InetSocketAddress("localhost", port))
+    val listener = channel.udp.UdpInChan.listen(port, Duration(1, SECONDS))
+    val sender   = channel.udp.UDPOutChan.establish(InetSocketAddress("localhost", port))
 
     def fork: Async[Any, Unit] = Async.fromCallback:
       val t = new Thread(() =>

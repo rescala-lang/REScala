@@ -17,11 +17,11 @@ inline def context(using ctx: Ctx): Ctx = ctx
 
 type Prod[A] = Async[Ctx, A]
 
-trait InChan extends AutoCloseable {
+trait InChan {
   def receive: Prod[MessageBuffer]
 }
 
-trait OutChan extends AutoCloseable {
+trait OutChan {
   def send(message: MessageBuffer): Async[Any, Unit]
 
 }
