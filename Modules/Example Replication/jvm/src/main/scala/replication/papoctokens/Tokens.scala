@@ -5,7 +5,7 @@ import kofre.datatypes.Epoch
 import kofre.datatypes.contextual.ReplicatedSet
 import kofre.datatypes.contextual.ReplicatedSet.syntax
 import kofre.datatypes.experiments.RaftState
-import kofre.dotted.Dotted
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.ReplicaId.replicaId
 import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
 import kofre.time.Dots
@@ -108,4 +108,18 @@ object Voting {
   val participants = 5
   val threshold    = (participants / 2) + 1
 
+}
+
+
+case class Exclusive[T: Lattice: Bottom](token: Token, value: T) {
+  def transform(f: T => T)(using ReplicaId) =
+    if token.isOwner then f(value) else Bottom.empty
+}
+
+
+/** totally not incredibly inefficient */
+case class Causal[T: Lattice: HasDots: Bottom](deltas: Set[Dotted[T]]) {
+  def value: T =
+    val causalPrefix = deltas.map(_.context).reduceOption(_ union _).map(_.causalPrefix).getOrElse(Dots.empty)
+    deltas.filter(delta => delta.context <= causalPrefix).reduceOption(Dotted.lattice.merge).map(_.data).getOrElse(Bottom.empty)
 }

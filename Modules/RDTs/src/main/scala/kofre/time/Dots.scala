@@ -19,6 +19,8 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def clockOf(replicaId: Uid): Option[Dot] = max(replicaId)
 
+  def causalPrefix: Dots = Dots(internal.view.mapValues(_.causalPrefix).toMap)
+
   def clock: VectorClock = VectorClock(internal.view.mapValues(_.next.fold(0L)(_ - 1)).toMap)
 
   infix def add(dot: Dot): Dots = add(dot.place, dot.time)

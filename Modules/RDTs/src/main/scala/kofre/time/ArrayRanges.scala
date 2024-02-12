@@ -57,6 +57,9 @@ class ArrayRanges(
     return true
   }
 
+  /** Returns the causal prefix of this range, i.e., the first contiguous range */
+  def causalPrefix: ArrayRanges = if isEmpty then this else new ArrayRanges(inner.slice(0, 2), 2)
+
   @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
     if (isEmpty) return true
