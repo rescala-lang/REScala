@@ -88,37 +88,5 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 
 }
 
-trait TCPListener extends AutoCloseable {
-  def channels: Async[Any, TCPConnection]
-}
 
-def startListening(port: Int, interface: String): TCPListener = {
 
-  new TCPListener {
-
-    val socket = new ServerSocket
-
-    try socket.setReuseAddress(true)
-    catch {
-      case _: SocketException =>
-      // some implementations may not allow SO_REUSEADDR to be set
-    }
-
-    override def close: Unit = socket.close()
-
-    override def channels: Async[Any, TCPConnection] = Async.fromCallback {
-
-      socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
-
-      try
-        while (true) {
-          val connection = socket.accept()
-          if connection != null then Async.handler.succeed(new TCPConnection(connection))
-        }
-      catch {
-        case exception: SocketException =>
-          Async.handler.fail(exception)
-      }
-    }
-  }
-}

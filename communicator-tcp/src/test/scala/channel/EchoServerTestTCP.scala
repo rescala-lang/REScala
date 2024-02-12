@@ -1,6 +1,6 @@
 package channel
 
-import channel.tcp.TCPConnection
+import channel.tcp.{TCPConnection, TCPListener}
 import channel.{ArrayMessageBuffer, Bidirectional}
 import de.rmgk.delay.Async
 
@@ -15,7 +15,7 @@ object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {
     val port = 54467
 
-    val listener = channel.tcp.startListening(port, "0")
+    var listening: TCPListener = null
 
     def fork: Async[Any, Unit] = Async.fromCallback:
       val t = new Thread(() =>
@@ -28,7 +28,8 @@ object EchoServerTestTCP {
     val echoServer: Prod[Unit] = Async[Ctx]:
       fork.bind
       println(s"serving")
-      val channel = listener.channels.bind
+      listening = tcp.TCPListener.startListening(port, "0").run
+      val channel = listening.connections.bind
       println(s"new connection")
       fork.bind
       val msg = channel.receive.bind
@@ -74,7 +75,7 @@ object EchoServerTestTCP {
 
     println(s"done sleeping!")
 
-    listener.close()
+    listening.socket.close()
     bidi.close()
 
   }
