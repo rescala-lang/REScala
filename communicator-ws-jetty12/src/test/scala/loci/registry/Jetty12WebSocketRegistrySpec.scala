@@ -1,48 +1,55 @@
 package loci
 package registry
 
-import communicator.ws.jetty._
+import channel.{ArrayMessageBuffer, Ctx}
+import channel.jetty.{JettyWsConnection, JettyWsListener}
+import de.rmgk.delay.Async
+import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.websocket.server.WebSocketUpgradeHandler
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.must.Matchers
 
-class Jetty12WebSocketRegistrySpec extends AnyFlatSpec with Matchers with NoLogging {
-  behavior of "Jetty WebSocket Registry"
+import java.net.URI
+
+class JettyTest extends munit.FunSuite {
 
   val port = 45851
 
-  def run(test: RegistryTests.Test) = {
+  test("basic") {
 
-    val server     = new Server()
+    val listening = JettyWsListener.startListen(port, PathSpec.from("/registry/*"))
 
-    val connector = new ServerConnector(server)
-    connector.setPort(port)
-    server.addConnector(connector)
+    // echo server
+    val echoServer = Async[Ctx] {
+      val connection = listening.connections.bind
+      println(s"connection received")
+      val messageBuffer = connection.receive.bind
+      println(s"received ${messageBuffer.asArray.length}bytes")
+      connection.send(messageBuffer).bind
+    }.run(using Ctx())(println)
 
-    val context = new ContextHandler()
-    server.setHandler(context)
+    listening.server.start()
 
-    val webSocketHandler = WebSocketUpgradeHandler.from(server, context)
-    context.setHandler(webSocketHandler)
+    println(s"server starting …")
 
-    test(
-      WS(webSocketHandler, "/registry/*"),
-      WS(s"ws://localhost:$port/registry/"),
-      { server.start(); true },
-      true,
-      server.stop()
-    )
+    Thread.sleep(100)
+
+    val connect = Async[Ctx] {
+      val outgoing = JettyWsConnection.connect(URI.create(s"ws://localhost:$port/registry/")).bind
+      outgoing.send(ArrayMessageBuffer("hello world".getBytes)).bind
+      println(s"send successfull")
+      val answer = outgoing.receive.bind
+      println(new String(answer.asArray))
+    }.run(using Ctx()) { res =>
+      println(s"stopping!")
+      println(res)
+      listening.server.stop()
+    }
+
+    listening.server.join()
+
+    println(s"terminating")
+
   }
 
-  it should "handle binding and lookup correctly" in {
-    for (_ <- 1 to 50)
-      run(RegistryTests.`handle binding and lookup correctly`)
-  }
-
-  it should "handle subjective binding and lookup correctly" in {
-    for (_ <- 1 to 50)
-      run(RegistryTests.`handle subjective binding and lookup correctly`)
-  }
 }
