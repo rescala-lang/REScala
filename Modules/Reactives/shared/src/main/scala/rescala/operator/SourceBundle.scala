@@ -3,8 +3,6 @@ package rescala.operator
 import rescala.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
 import rescala.structure.Pulse
 
-import scala.util.Random
-
 trait SourceBundle {
   self: Operators =>
 
@@ -110,6 +108,12 @@ trait SourceBundle {
   }
 
   /**
+   * TODO Check chained compose & inverse wrt other lens functions
+   * TODO Inversion of LensSig
+   * TODO Other example
+   */
+
+  /**
    * LVars serve as the basis for reactive lenses. TODO: Link Documentation
    * @param state The state of the LVar
    * @param events TODO How to explain this?
@@ -117,13 +121,14 @@ trait SourceBundle {
   class LVar[M] private[rescala](state : Signal[M], events : Evt[Event[M]]) {
 
     /**
+     * TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
      * Creates a new LVar which is connected to this LVar via the given Lens.
      * @param lens The lens which connects the LVars. Can use implicit conversion from BijectiveLens if the Lens does not need to change later
      */
 
-    def applyLens[V](lens: BijectiveSigLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
+    def applyLens[V](lens: LensSig[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
       val newVar = new LVar[V](state.map { model => lens.toView(model) }.flatten, Evt())
-      events.fire(newVar.getEvent().map { e => lens.toModel(e) })
+      events.fire(newVar.getEvent().map { e => lens.toModel(e, this.state.now) })
       return newVar
     }
 
@@ -145,7 +150,7 @@ trait SourceBundle {
     /**
      * Function to access the current value of the lens. Simple wrapper for internal.now
      */
-    def now(implicit sched: Scheduler[BundleState]) : M = state.now
+    inline def now(implicit sched: Scheduler[BundleState]) : M = state.now
 
     /**
      * Function to access state of LVar in reactives. Simple wrapper for internal.value.
@@ -167,10 +172,35 @@ trait SourceBundle {
 
   }
 
-  //TODO: Note that non-bijective lenses are not supported due to the chosen propagation. Only keep for demonstration
+  /**
+   * The base type for all lenses. If possible, use BijectiveLens instead as it provides more performance and additional functionality
+   * @tparam M
+   * @tparam V
+   */
   trait Lens[M, V] {
+
+    /**
+     * Transforms the model to the view
+     */
     def toView(m: M): V
+
+    /**
+     * Transforms the view to the model using the old model state
+     */
     def toModel(v: V, m: M): M
+
+    /**
+     * Concatenates this lens with another lens and returns the resulting lens.
+     * Internally, a LensVar is created, meaning that this function is just for convenience and not for performance
+     * @param other The other lens
+     */
+    def compose[W](other: Lens[V, W]): Lens[M, W] = new Lens[M, W] {
+      override def toView(m: M): W = other.toView(Lens.this.toView(m))
+      override def toModel(w: W, m : M): M = {
+        val viewOfA = Lens.this.toView(m)
+        Lens.this.toModel(other.toModel(w, viewOfA), m)
+      }
+    }
   }
 
   /**
@@ -178,47 +208,41 @@ trait SourceBundle {
    * @tparam M The type of the model
    * @tparam V The type of the view
    */
-  trait BijectiveLens[M, V] {
-    /**
-     * Transforms the model to the view
-     */
-    def toView(m: M): V
+  trait BijectiveLens[M, V] extends Lens[M, V]{
 
     /**
-     * Transforms the view to the model
+     * Override the toModel function to make the lens bijective
      */
     def toModel(v: V): M
-
-    //TODO: Better way to pass this than via implicit?
+    override def toModel(v: V, m: M) = toModel(v)
 
     /**
      * Inverts the lens such that e.g. an AddLens functions like a SubLens. Note that this does not change the model-view relationship,
      * i.e. the asymmetry is not inverted.
      */
-    def inverse(implicit lens: BijectiveLens[M, V] = this): BijectiveLens[V, M] = new BijectiveLens[V, M] {
-      override def toView(m: V): M = lens.toModel(m)
-      override def toModel(v: M): V = lens.toView(v)
+    def inverse: BijectiveLens[V, M] = new BijectiveLens[V, M] {
+      override def toView(m: V): M = BijectiveLens.this.toModel(m)
+      override def toModel(v: M): V = BijectiveLens.this.toView(v)
     }
 
     /**
-     * Concatenates this lens with another lens and returns the resulting lens.
+     * Overloads the compose function to return a bijective lens
+     * This version does not use an LVar internally, making it more efficient
      * @param other The other lens
      */
-    def compose[W](other: BijectiveLens[V, W])(implicit lens: BijectiveLens[M, V] = this): BijectiveLens[M, W] = new BijectiveLens[M, W] {
-      override def toView(m: M) : W = other.toView(lens.toView(m))
-      override def toModel(w: W): M = lens.toModel(other.toModel(w))
+    def compose[W](other: BijectiveLens[V, W]): BijectiveLens[M, W] = new BijectiveLens[M, W] {
+      override def toView(m: M) : W = other.toView(BijectiveLens.this.toView(m))
+      override def toModel(w: W): M = BijectiveLens.this.toModel(other.toModel(w))
     }
   }
 
   /**
-   * TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
-   * @param lensSig
-   * @tparam M
-   * @tparam V
+   * TODO: The LensSig requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
+   * @param lensSig A Signal of a Lens
    */
-  class BijectiveSigLens[M, V](lensSig : Signal[BijectiveLens[M, V]])(implicit sched: Scheduler[BundleState]){
-    def toView(m: M) : Signal[V] = lensSig.map { model => model.toView(m) }
-    def toModel(v: V) : M = lensSig.now.toModel(v)
+  class LensSig[M, V](lensSig: Signal[Lens[M, V]])(implicit sched: Scheduler[BundleState]) {
+    def toView(m: M): Signal[V] = lensSig.map { model => model.toView(m) }
+    def toModel(v: V, m :M): M = lensSig.now.toModel(v, m)
   }
 
   /**
@@ -226,7 +250,7 @@ trait SourceBundle {
    * Could instead also be handled by method overloading (currently only LVar.applyLens(..)) for slightly more efficiency.
    */
   implicit def toSignalLens[M, V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState],
-                                                             sched: Scheduler[BundleState]): BijectiveSigLens[M, V] = BijectiveSigLens(Signal {lens})
+                                                             sched: Scheduler[BundleState]): LensSig[M, V] = LensSig(Signal {lens})
 
   /**
    * A simple lens for addition
@@ -252,19 +276,5 @@ trait SourceBundle {
   class NeutralLens[A] extends BijectiveLens[A, A] {
     def toView(m: A): A = m
     def toModel(v: A): A = v
-  }
-
-  //IS NOT BIJECTIVE
-  class NonDeterministicCharCountLens extends BijectiveLens[Int, String] {
-    // Lens that converts an int to a sequence of chars, eg. 5 => "aaaaa"
-    def toView(m: Int): String = Random.alphanumeric.take(m).mkString
-    def toModel(v: String): Int = v.length
-  }
-
-  class UpperCharLens extends BijectiveLens[String, String]{
-    //shift up a char's letters to all caps
-    //würde aber eh noch so "if-checks" benötigen, dass man vorher überprüft obs schon upperCase ist or not
-    def toView(m: String): String = m.toUpperCase()
-    def toModel(v: String): String = v.toLowerCase()
   }
 }
