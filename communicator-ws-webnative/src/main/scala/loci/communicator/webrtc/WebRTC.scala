@@ -6,18 +6,12 @@ import org.scalajs.dom
 
 import scala.scalajs.js.Array
 
-trait WebRTC
-    extends Protocol
-    with SetupInfo
-    with SecurityInfo with Secure
-    with SymmetryInfo with Bidirectional {
-  override def toString = "WebRTC()"
-}
+
 
 object WebRTC extends WebRTCUpdate {
   def unapply(webRTC: WebRTC) = true
 
-  trait Connector extends communicator.Connector[WebRTC] {
+  trait Connector  {
     def use(update: IncrementalUpdate): Unit
     def set(update: CompleteUpdate): Unit
     def connection : dom.RTCPeerConnection
@@ -28,7 +22,7 @@ object WebRTC extends WebRTCUpdate {
     def complete(update: CompleteSession => Unit): Connector
   }
 
-  def apply(channel: dom.RTCDataChannel): communicator.Connector[WebRTC] =
+  def apply(channel: dom.RTCDataChannel): Connector =
     new WebRTCChannelConnector(channel, None)
 
   def offer(
