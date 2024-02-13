@@ -11,7 +11,7 @@ protected[webrtc] trait WebRTCUpdate {
 
   sealed case class InitialSession(
     descType: String, sdp: String)
-      extends IncrementalUpdate {
+    extends IncrementalUpdate {
     def sessionDescription = new dom.RTCSessionDescription(
       new dom.RTCSessionDescriptionInit {
         this.`type` = InitialSession.this.descType.asInstanceOf[dom.RTCSdpType]
@@ -26,7 +26,7 @@ protected[webrtc] trait WebRTCUpdate {
 
   sealed case class SessionUpdate(
     candidate: String, sdpMid: String, sdpMLineIndex: Double)
-      extends IncrementalUpdate {
+    extends IncrementalUpdate {
     def iceCandidate = new dom.RTCIceCandidate(
       new dom.RTCIceCandidateInit {
         this.candidate = SessionUpdate.this.candidate
@@ -42,7 +42,7 @@ protected[webrtc] trait WebRTCUpdate {
 
   sealed case class CompleteSession(
     descType: String, sdp: String)
-      extends CompleteUpdate {
+    extends CompleteUpdate {
     def sessionDescription = new dom.RTCSessionDescription(
       new dom.RTCSessionDescriptionInit {
         this.`type` = CompleteSession.this.descType.asInstanceOf[dom.RTCSdpType]
