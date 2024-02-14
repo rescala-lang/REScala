@@ -11,6 +11,8 @@ lazy val nativewebsockets = project.in(file("communicator-ws-webnative"))
     Settings.scala3defaults,
     Dependencies.munit,
     Dependencies.scalajsDom,
+    Dependencies.scalatags,
+    Dependencies.jsoniterScala,
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
   ).dependsOn(interfaces.js)
 

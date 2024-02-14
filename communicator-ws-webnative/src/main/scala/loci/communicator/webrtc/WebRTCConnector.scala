@@ -2,11 +2,12 @@ package loci
 package communicator
 package webrtc
 
-import WebRTC.{CompleteSession, CompleteUpdate, IncrementalUpdate, InitialSession, SessionUpdate}
-
+import WebRTC.{CompleteSession, CompleteUpdate, Connector, IncrementalUpdate, InitialSession, SessionUpdate}
+import channel.JsArrayBufferMessageBuffer
 import org.scalajs.dom
 
-import scala.concurrent.duration._
+import scala.annotation.nowarn
+import scala.concurrent.duration.*
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
@@ -17,9 +18,9 @@ private object WebRTCConnector {
 }
 
 private abstract class WebRTCConnector(
-  configuration: dom.RTCConfiguration,
-  update: Either[IncrementalUpdate => Unit, CompleteSession => Unit])
-    extends WebRTC.Connector {
+    configuration: dom.RTCConfiguration,
+    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+) extends WebRTC.Connector {
 
   val peerConnection = new dom.RTCPeerConnection(configuration)
 
@@ -29,23 +30,23 @@ private abstract class WebRTCConnector(
         _(SessionUpdate(event.candidate))
       }
     else
-      compatibility.either.foreach(update) {
+      update.foreach {
         _(CompleteSession(peerConnection.localDescription))
       }
   }
 
-  private var connectionCount = 0
-
-  protected def handleConnectionClosing(connection: Try[Connection[WebRTC]]) = {
-    connection foreach { connection =>
-      connectionCount += 1
-      connection.closed foreach { _ =>
-        connectionCount -= 1
-        if (connectionCount < 1)
-          peerConnection.close()
-      }
-    }
-  }
+//  private var connectionCount = 0
+//
+//  protected def handleConnectionClosing(connection: Try[Connection[WebRTC]]) = {
+//    connection foreach { connection =>
+//      connectionCount += 1
+//      connection.closed foreach { _ =>
+//        connectionCount -= 1
+//        if (connectionCount < 1)
+//          peerConnection.close()
+//      }
+//    }
+//  }
 
   private var remoteDescriptionSet = false
 
@@ -59,6 +60,7 @@ private abstract class WebRTCConnector(
       }
     case update: SessionUpdate =>
       peerConnection.addIceCandidate(update.iceCandidate)
+      ()
   }
 
   def set(update: CompleteUpdate) = update match {
@@ -74,17 +76,18 @@ private abstract class WebRTCConnector(
   protected def setRemoteDescription(description: dom.RTCSessionDescription): Unit
 }
 
-private class WebRTCOffer(
-  configuration: dom.RTCConfiguration,
-  options: dom.RTCOfferOptions,
-  update: Either[IncrementalUpdate => Unit, CompleteSession => Unit])
-    extends WebRTCConnector(configuration, update) {
+class WebRTCOffer(
+    configuration: dom.RTCConfiguration,
+    options: dom.RTCOfferOptions,
+    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+) extends WebRTCConnector(configuration, update) {
 
-  protected def connect(connectionEstablished: Connected[WebRTC]) =
+  protected def connect( /*connectionEstablished: Connected[WebRTC]*/ ) =
     try {
       val channel = peerConnection.createDataChannel(
         WebRTCConnector.channelLabel,
-        new dom.RTCDataChannelInit { })
+        new dom.RTCDataChannelInit {}
+      )
 
       peerConnection.createOffer(options) `then` { (description: dom.RTCSessionDescription) =>
         peerConnection.setLocalDescription(description) `then` { (_: Unit) =>
@@ -94,50 +97,52 @@ private class WebRTCOffer(
         unit
       }
 
-      new WebRTCChannelConnector(channel, Some(this)).connect() { connection =>
-        handleConnectionClosing(connection)
-        connectionEstablished.trySet(connection)
-      }
-    }
-    catch {
+      new WebRTCChannelConnector(channel).connect()
+//      { connection =>
+//        handleConnectionClosing(connection)
+//        /*connectionEstablished.trySet(connection)*/
+//      }
+    } catch {
       case NonFatal(exception) =>
-        connectionEstablished.set(Failure(exception))
+      /*connectionEstablished.set(Failure(exception))*/
     }
 
   protected def setRemoteDescription(description: dom.RTCSessionDescription) =
     peerConnection.setRemoteDescription(description)
+    ()
 }
 
 private class WebRTCAnswer(
-  configuration: dom.RTCConfiguration,
-  update: Either[IncrementalUpdate => Unit, CompleteSession => Unit])
-    extends WebRTCConnector(configuration, update) {
+    configuration: dom.RTCConfiguration,
+    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+) extends WebRTCConnector(configuration, update) {
 
-  private val connectorQueue = new js.Array[Connector[WebRTC]](0)
-  private val connectedQueue = new js.Array[Connected[WebRTC]](0)
+  private val connectorQueue = new js.Array[WebRTCChannelConnector](0)
+  private val connectedQueue = new js.Array[WebRTCChannelConnector](0)
 
-  private def connect() = 
+  private def connect() =
     if (connectorQueue.length != 0 && connectedQueue.length != 0) {
       val connector = connectorQueue.shift()
       val connected = connectedQueue.shift()
-      connector.connect() { connection =>
-        handleConnectionClosing(connection)
-        connected.trySet(connection)
-      }
+      connector.connect()
+//      { connection =>
+//        handleConnectionClosing(connection)
+//        connected.trySet(connection)
+//      }
     }
 
-  protected def connect(connectionEstablished: Connected[WebRTC]) = {
-    connectedQueue.push(connectionEstablished)
-    connect()
-  }
+//  protected def connect() = {
+//    //connectedQueue.push(connectionEstablished)
+//  }
 
   peerConnection.ondatachannel = { (event: dom.RTCDataChannelEvent) =>
     if (event.channel.label == WebRTCConnector.channelLabel) {
-      connectorQueue.push(new WebRTCChannelConnector(event.channel, Some(this)))
+      connectorQueue.push(new WebRTCChannelConnector(event.channel))
       connect()
     }
   }
 
+  @nowarn("msg=discarded non-Unit value")
   protected def setRemoteDescription(description: dom.RTCSessionDescription) =
     peerConnection.setRemoteDescription(description) `then` { (_: Unit) =>
       peerConnection.createAnswer() `then` { (description: dom.RTCSessionDescription) =>
@@ -151,94 +156,57 @@ private class WebRTCAnswer(
     }
 }
 
-private class WebRTCChannelConnector(
-  channel: dom.RTCDataChannel,
-  optionalConnectionSetup: Option[ConnectionSetup[WebRTC]])
-    extends Connector[WebRTC] {
+// def send(data: MessageBuffer) = channel.send(data.backingArrayBuffer)
 
-  protected def connect(connectionEstablished: Connected[WebRTC]) = {
-    val legacyReliable = {
-      val rel = channel.asInstanceOf[js.Dynamic].reliable
-      !js.isUndefined(rel) && rel.asInstanceOf[Boolean]
+class WebRTCChannelConnector(
+    channel: dom.RTCDataChannel
+) {
+
+  def connect( /*connectionEstablished: Connected[WebRTC]*/ ) = {
+
+    channel.onclose = { (_: dom.Event) =>
     }
-    val reliable = (
-      legacyReliable
-        || channel.ordered
-        || (js.isUndefined(channel.maxPacketLifeTime)
-          && js.isUndefined(channel.maxRetransmits))
-      )
 
-    if (reliable) {
-      val connection = {
-        val doClosed = Notice.Steady[Unit]
-        val doReceive = Notice.Stream[MessageBuffer]
+    channel.onerror = { (_: dom.Event) =>
+    }
 
-        val connection = new Connection[WebRTC] {
-          val protocol = new WebRTC {
-            val setup = optionalConnectionSetup getOrElse WebRTCChannelConnector.this
-            val authenticated = false
+    channel.onmessage = { (event: dom.MessageEvent) =>
+      event.data match {
+        case data: ArrayBuffer =>
+          // TODO notify someone
+          new JsArrayBufferMessageBuffer(data)
+
+        case data: dom.Blob =>
+          val reader = new dom.FileReader
+          reader.onerror = { (event) =>
+            println(s"reading message from blob returned error, event: $event")
           }
-
-          val closed = doClosed.notice
-          val receive = doReceive.notice
-
-          var open = true
-          def send(data: MessageBuffer) = channel.send(data.backingArrayBuffer)
-          def close() = if (open) {
-            open = false
-            channel.close()
-            doClosed.set()
+          reader.onload = { (event: dom.Event) =>
+            val data = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
+            new JsArrayBufferMessageBuffer(data)
           }
-        }
+          reader.readAsArrayBuffer(data)
 
-        channel.onclose = { (_: dom.Event) =>
-          connectionEstablished.trySet(Failure(new ConnectionException("channel closed")))
-          connection.close()
-        }
-
-        channel.onerror = { (_: dom.Event) =>
-          connectionEstablished.trySet(Failure(new ConnectionException("channel closed")))
-          connection.close()
-        }
-
-        channel.onmessage = { (event: dom.MessageEvent) =>
-          event.data match {
-            case data: ArrayBuffer =>
-              doReceive.fire(MessageBuffer wrapArrayBuffer data)
-
-            case data: dom.Blob =>
-              val reader = new dom.FileReader
-              reader.onload = { (event: dom.Event) =>
-                doReceive.fire(MessageBuffer wrapArrayBuffer
-                  event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer])
-              }
-              reader.readAsArrayBuffer(data)
-
-            case _ =>
-          }
-        }
-
-        connection
-      }
-
-      (channel.readyState: @unchecked) match {
-        case dom.RTCDataChannelState.connecting =>
-          // strange fix for strange issue with Chromium
-          val handle = js.timers.setTimeout(1.day) { channel.readyState }
-  
-          channel.onopen = { (_: dom.Event) =>
-            js.timers.clearTimeout(handle)
-            connectionEstablished.trySet(Success(connection))
-          }
-  
-        case dom.RTCDataChannelState.open =>
-          connectionEstablished.trySet(Success(connection))
-
-        case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
-          connectionEstablished.trySet(Failure(new ConnectionException("channel closed")))
+        case _ =>
       }
     }
-    else
-      connectionEstablished.trySet(Failure(new ConnectionException("channel unreliable")))
+
+    (channel.readyState) match {
+      case dom.RTCDataChannelState.connecting =>
+        // strange fix for strange issue with Chromium
+        val handle = js.timers.setTimeout(1.day) { channel.readyState; () }
+
+        channel.onopen = { (_: dom.Event) =>
+          js.timers.clearTimeout(handle)
+          // connectionEstablished.trySet(Success(connection))
+        }
+
+      case dom.RTCDataChannelState.open =>
+      // connectionEstablished.trySet(Success(connection))
+
+      case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
+      // connectionEstablished.trySet(Failure(new ConnectionException("channel closed")))
+    }
+
   }
 }

@@ -6,15 +6,12 @@ import org.scalajs.dom
 
 import scala.scalajs.js.Array
 
-
-
 object WebRTC extends WebRTCUpdate {
-  def unapply(webRTC: WebRTC) = true
 
-  trait Connector  {
+  trait Connector {
     def use(update: IncrementalUpdate): Unit
     def set(update: CompleteUpdate): Unit
-    def connection : dom.RTCPeerConnection
+    def connection: dom.RTCPeerConnection
   }
 
   trait ConnectorFactory {
@@ -22,14 +19,15 @@ object WebRTC extends WebRTCUpdate {
     def complete(update: CompleteSession => Unit): Connector
   }
 
-  def apply(channel: dom.RTCDataChannel): Connector =
-    new WebRTCChannelConnector(channel, None)
+  def apply(channel: dom.RTCDataChannel): WebRTCChannelConnector =
+    new WebRTCChannelConnector(channel)
 
   def offer(
       configuration: dom.RTCConfiguration =
         new dom.RTCConfiguration { iceServers = Array[dom.RTCIceServer]() },
       options: dom.RTCOfferOptions =
-        new dom.RTCOfferOptions { }): ConnectorFactory =
+        new dom.RTCOfferOptions {}
+  ): ConnectorFactory =
     new ConnectorFactory {
       def incremental(update: IncrementalUpdate => Unit) =
         new WebRTCOffer(configuration, options, Left(update))
@@ -39,7 +37,8 @@ object WebRTC extends WebRTCUpdate {
 
   def answer(
       configuration: dom.RTCConfiguration =
-        new dom.RTCConfiguration { iceServers = Array[dom.RTCIceServer]() }): ConnectorFactory =
+        new dom.RTCConfiguration { iceServers = Array[dom.RTCIceServer]() }
+  ): ConnectorFactory =
     new ConnectorFactory {
       def incremental(update: IncrementalUpdate => Unit) =
         new WebRTCAnswer(configuration, Left(update))

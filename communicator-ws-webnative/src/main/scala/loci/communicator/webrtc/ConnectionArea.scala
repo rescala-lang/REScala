@@ -6,15 +6,14 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import loci.communicator.webrtc
 import loci.communicator.webrtc.WebRTC
 import loci.communicator.webrtc.WebRTC.ConnectorFactory
-import loci.registry.Registry
 import org.scalajs.dom.UIEvent
-import scalatags.JsDom.all._
+import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 
-case class WebRTCHandling(registry: Registry) {
+case class WebRTCHandling() {
 
   val codec: JsonValueCodec[webrtc.WebRTC.CompleteSession] = JsonCodecMaker.make
 
@@ -42,7 +41,7 @@ case class WebRTCHandling(registry: Registry) {
         val res = webrtcIntermediate(WebRTC.offer())
         res.session.foreach(showSession)
         pendingServer = Some(res)
-        registry.connect(res.connector).foreach(_ => connected())
+        //registry.connect(res.connector).foreach(_ => connected())
       }
     )
 
@@ -54,7 +53,7 @@ case class WebRTCHandling(registry: Registry) {
           case None => // we are client
             val res = webrtcIntermediate(WebRTC.answer())
             res.session.foreach(showSession)
-            registry.connect(res.connector).foreach(_ => connected())
+            //registry.connect(res.connector).foreach(_ => connected())
             res.connector
           case Some(ss) => // we are server
             pendingServer = None
@@ -71,7 +70,7 @@ case class WebRTCHandling(registry: Registry) {
 
   def webrtcIntermediate(cf: ConnectorFactory) = {
     val p      = Promise[WebRTC.CompleteSession]()
-    val answer = cf complete p.success
+    val answer = cf.complete(p.success)
     PendingConnection(answer, p.future)
   }
 
