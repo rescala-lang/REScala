@@ -155,13 +155,53 @@ class DSLPhase extends PluginPhase:
                                 if (rhs) TTrue() else TFalse()
                               ))
                             )
-                          case _ => // Unsupported binary operator
+                          case _ => // Unsupported binary boolean operator
                             report.error(s"Unsupported binary boolean operator used: $op", tree.sourcePos)
+                      case Apply(_, List(Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))))) => // E.g. "Source(3 ◯ 9")
+                        op match
+                          case nme.LT => // E.g. "Source(1 < 2)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TLt(TNum(lhs), TNum(rhs))) // Source(lhs < rhs)
+                            )
+                          case nme.GT => // E.g. "Source(2 > 1)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TGt(TNum(lhs), TNum(rhs))) // Source(lhs > rhs)
+                            )
+                          case nme.LE => // E.g. "Source(2 <= 1)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TLeq(TNum(lhs), TNum(rhs))) // Source(lhs <= rhs)
+                            )
+                          case nme.GE => // E.g. "Source(2 >= 1)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TGeq(TNum(lhs), TNum(rhs))) // Source(lhs >= rhs)
+                            )
+                          case nme.EQ => // E.g. "Source(2 == 1)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TEq(TNum(lhs), TNum(rhs))) // Source(lhs == rhs)
+                            )
+                          case nme.NE => // E.g. "Source(2 != 1)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TIneq(TNum(lhs), TNum(rhs))) // Source(lhs != rhs)
+                            )
+                          case _ => // Unsupported binary numerical operator with bool outcome
+                            report.error(s"Unsupported binary numerical operator with bool outcome used: $op", tree.sourcePos)
                       case _ => // Unsupported type of boolean RHS
                         report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
                   case _ => () // Non-Inlined RHS (i.e. non-Source) can't happen because it would be caught by the type checker
               case _ => // Unsupported LHS type argument
-                report.error(s"Unsupported LHS type used: $typeArg", tree.sourcePos)
+                report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
           case reactiveDerivedPattern(typeArg) =>
             println(s"Detected Derived definition with $typeArg type parameter")
             // todo
