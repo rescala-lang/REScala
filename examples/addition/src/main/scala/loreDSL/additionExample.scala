@@ -5,6 +5,10 @@ import lore.DSL.*
 object additionExample:
   @main def main(): Unit =
     val integerSource: Source[Int] = Source(0)
+    val integerAdditionSource: Source[Int] = Source(4 + 2)
+    val integerSubtractionSource: Source[Int] = Source(4 - 2)
+    val integerMultiplicationSource: Source[Int] = Source(4 * 2)
+    val integerDivisionSource: Source[Int] = Source(4 / 2)
     val stringSource: Source[String] = Source("abc")
     val boolSource: Source[Boolean] = Source(true)
 //    val secondRealVariable: Derived[Int] = Derived { integerSource() + integerSource() }
