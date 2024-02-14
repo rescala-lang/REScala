@@ -158,6 +158,7 @@ class DSLPhase extends PluginPhase:
                           case _ => // Unsupported binary boolean operator
                             report.error(s"Unsupported binary boolean operator used: $op", tree.sourcePos)
                       case Apply(_, List(Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))))) => // E.g. "Source(3 ◯ 9")
+                        println(s"Adding Source reactive with boolean value $lhs $op $rhs to term list")
                         op match
                           case nme.LT => // E.g. "Source(1 < 2)"
                             loreTerms = loreTerms :+ TAbs(
