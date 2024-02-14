@@ -242,14 +242,14 @@ trait SourceBundle {
    */
   class LensSig[M, V](lensSig: Signal[Lens[M, V]])(implicit sched: Scheduler[BundleState]) {
     def toView(m: M): Signal[V] = lensSig.map { model => model.toView(m) }
-    def toModel(v: V, m :M): M = lensSig.now.toModel(v, m)
+    def toModel(v: V, m : M): M = lensSig.now.toModel(v, m)
   }
 
   /**
    * Implicit conversion of a BijectiveLens to a BijectiveSigLens for uniform handling.
    * Could instead also be handled by method overloading (currently only LVar.applyLens(..)) for slightly more efficiency.
    */
-  implicit def toSignalLens[M, V](lens: BijectiveLens[M, V])(implicit ticket: CreationTicket[BundleState],
+  implicit def toSignalLens[M, V](lens: Lens[M, V])(implicit ticket: CreationTicket[BundleState],
                                                              sched: Scheduler[BundleState]): LensSig[M, V] = LensSig(Signal {lens})
 
   /**
