@@ -24,12 +24,12 @@ lazy val jetty12 = project.in(file("communicator-ws-jetty12")).settings(
   Settings.scala3defaults,
   Dependencies.munit,
   libraryDependencies ++= {
-    val jettyVersion = "12.0.5"
+    val jettyVersion = "12.0.6"
     Seq(
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
-      "org.slf4j"                   % "slf4j-nop"                    % "2.0.11" % TestInternal
+      "org.slf4j"                   % "slf4j-nop"                    % "2.0.12" % TestInternal
     )
   }
 ).dependsOn(interfaces.jvm)
