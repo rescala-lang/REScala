@@ -28,7 +28,7 @@ class DSLPhase extends PluginPhase:
   override val runsAfter: Set[String] = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Staging.name)
 
-  var loreTerms: List[Term] = List()
+  private var loreTerms: List[Term] = List()
   private val loreReactives: List[String] = List(
     "rescala.default.Var", // Source
     "rescala.default.Signal", // Derived
@@ -49,33 +49,119 @@ class DSLPhase extends PluginPhase:
           case reactiveSourcePattern(typeArg) =>
             println(s"Detected Source definition with $typeArg type parameter")
             // Process the RHS of the definition
-            rhs match
-              case Inlined(call, _, _) =>
-                // Match for different kinds of RHS, like literals or math operators
-                // fun value of the (outer) Apply will be the type application for Source ("Source(x)"), so it can be ignored
-                call match
-                  case Apply(_, List(Literal(Constant(value: Number)))) => // E.g. "Source(0)"
-                    println(s"Adding Source reactive with number value $value to term list")
-                    loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TNum(value))
-                  case Apply(_, List(Literal(Constant(value: String)))) => // E.g. "Source("foo")"
-                    println(s"Adding Source reactive with string value $value to term list")
-                    loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TString(value))
-                  case Apply(_, List(Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))))) => // E.g. "Source(4 ◯ 2")
-                    println(s"Adding Source reactive with value $lhs $op $rhs to term list")
-                    op match
-                      case nme.ADD => // E.g. "Source(2 + 3)"
-                        loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TAdd(TNum(lhs), TNum(rhs)))
-                      case nme.SUB => // E.g. "Source(2 - 3)"
-                        loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TSub(TNum(lhs), TNum(rhs)))
-                      case nme.MUL => // E.g. "Source(2 * 3)"
-                        loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TMul(TNum(lhs), TNum(rhs)))
-                      case nme.DIV => // E.g. "Source(2 / 3)"
-                        loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType(typeArg, List()))), TDiv(TNum(lhs), TNum(rhs)))
-                  case Apply(fun, args) =>
-                    println(s"fun: $fun")
-                    println(s"args: $args")
-                  // todo: other cases
-              case _ => println(s"Source rhs: $rhs")
+            typeArg match
+              case "Int" =>
+                rhs match
+                  case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
+                    // Match for different kinds of RHS, like value literals or operator applications
+                    // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
+                    call match
+                      case Apply(_, List(Literal(Constant(value: Number)))) => // E.g. "Source(0)"
+                        println(s"Adding Source reactive with number value $value to term list")
+                        loreTerms = loreTerms :+ TAbs(
+                          name.toString,
+                          SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                          TSource(TNum(value)) // Source(value)
+                        )
+                      case Apply(_, List(Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))))) => // E.g. "Source(4 ◯ 2")
+                        println(s"Adding Source reactive with integer value $lhs $op $rhs to term list")
+                        op match
+                          case nme.ADD => // E.g. "Source(2 + 3)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                              TSource(TAdd(TNum(lhs), TNum(rhs))) // Source(lhs + rhs)
+                            )
+                          case nme.SUB => // E.g. "Source(2 - 3)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                              TSource(TSub(TNum(lhs), TNum(rhs))) // Source(lhs - rhs)
+                            )
+                          case nme.MUL => // E.g. "Source(2 * 3)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                              TSource(TMul(TNum(lhs), TNum(rhs))) // Source(lhs * rhs)
+                            )
+                          case nme.DIV => // E.g. "Source(2 / 3)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                              TSource(TDiv(TNum(lhs), TNum(rhs))) // Source(lhs / rhs)
+                            )
+                          case _ => // Unsupported binary operator
+                            report.error(s"Unsupported binary operator used: $op", tree.sourcePos)
+                      case _ => // Unsupported type of integer RHS
+                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
+                  case _ => () // Non-Inlined RHS (i.e. non-Source) can't happen because it would be caught by the type checker
+              case "String" =>
+                rhs match
+                  case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
+                    // Match for different kinds of RHS, like value literals or string operators
+                    // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
+                    call match
+                      case Apply(_, List(Literal(Constant(value: String)))) => // E.g. "Source("abc")"
+                        println(s"Adding Source reactive with string value $value to term list")
+                        loreTerms = loreTerms :+ TAbs(name.toString, SimpleType("Source", List(SimpleType("String", List()))), TSource(TString(value)))
+                      case _ => // Unsupported type of string RHS
+                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
+                  case _ => () // Non-Inlined RHS (i.e. non-Source) can't happen because it would be caught by the type checker
+              case "Boolean" =>
+                rhs match
+                  case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
+                    // Match for different kinds of RHS, like literals or boolean operators
+                    // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
+                    call match
+                      case Apply(_, List(Literal(Constant(value: Boolean)))) => // E.g. "Source(true)"
+                        println(s"Adding Source reactive with boolean value $value to term list")
+                        loreTerms = loreTerms :+ TAbs(
+                          name.toString,
+                          SimpleType("Source", List(SimpleType("Boolean", List()))),
+                          TSource(if (value) TTrue() else TFalse())
+                        )
+                      case Apply(_, List(Select(Literal(Constant(value: Boolean)), op))) => // E.g. "Source(◯true)" (unary operator)
+                        println(s"Adding source reactive with boolean value $op$value to term list")
+                        op match
+                          // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
+                          case nme.UNARY_! => // E.g. "Source(!false)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TNeg(if (value) TTrue() else TFalse())) // Source(!value)
+                            )
+                          case _ => // Unsupported unary operator
+                            report.error(s"Unsupported unary boolean operator used: $op", tree.sourcePos)
+                      case Apply(_, List(Apply(Select(Literal(Constant(lhs: Boolean)), op), List(Literal(Constant(rhs: Boolean)))))) => // E.g. "Source(true ◯ false")
+                        println(s"Adding Source reactive with boolean value $lhs $op $rhs to term list")
+                        op match
+                          // Important: nme.AND is & and nme.And is &&
+                          case nme.And => // E.g. "Source(true && true)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TConj( // Source(lhs && rhs)
+                                if (lhs) TTrue() else TFalse(),
+                                if (rhs) TTrue() else TFalse()
+                              ))
+                            )
+                          // Important: nme.OR is | and nme.Or is ||
+                          case nme.Or => // E.g. "Source(true || false)"
+                            loreTerms = loreTerms :+ TAbs(
+                              name.toString,
+                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
+                              TSource(TDisj( // Source(lhs || rhs)
+                                if (lhs) TTrue() else TFalse(),
+                                if (rhs) TTrue() else TFalse()
+                              ))
+                            )
+                          case _ => // Unsupported binary operator
+                            report.error(s"Unsupported binary boolean operator used: $op", tree.sourcePos)
+                      case _ => // Unsupported type of boolean RHS
+                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
+                  case _ => () // Non-Inlined RHS (i.e. non-Source) can't happen because it would be caught by the type checker
+              case _ => // Unsupported LHS type argument
+                report.error(s"Unsupported LHS type used: $typeArg", tree.sourcePos)
           case reactiveDerivedPattern(typeArg) =>
             println(s"Detected Derived definition with $typeArg type parameter")
             // todo
@@ -94,8 +180,8 @@ class DSLPhase extends PluginPhase:
         println(s"rhs: $rhs")
 
         report.warning("Third variable", tree.sourcePos)
-      case _ =>
-        ()
+      case _ => // ValDefs of non-reactives (i.e. not Source, Derived or Interaction) are ignored
+        () // Do nothing
       tree
   end transformValDef
 end DSLPhase

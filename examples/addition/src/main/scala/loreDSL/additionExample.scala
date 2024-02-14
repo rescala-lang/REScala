@@ -10,26 +10,28 @@ object additionExample:
     val integerMultiplicationSource: Source[Int] = Source(4 * 2)
     val integerDivisionSource: Source[Int] = Source(4 / 2)
     val stringSource: Source[String] = Source("abc")
-    val boolSource: Source[Boolean] = Source(true)
-//    val secondRealVariable: Derived[Int] = Derived { integerSource() + integerSource() }
-//    val thirdRealVariable = Interaction[Int, Int]
+    val boolTrueSource: Source[Boolean] = Source(true)
+    val boolFalseSource: Source[Boolean] = Source(false)
+    val boolNotSource: Source[Boolean] = Source(!false)
+    val boolAndSource1: Source[Boolean] = Source(true && true)
+    val boolAndSource2: Source[Boolean] = Source(true && false)
+    val boolOrSource1: Source[Boolean] = Source(true || false)
+    val boolOrSource2: Source[Boolean] = Source(false || false)
+//    val integerDerived: Derived[Int] = Derived { integerSource() + integerSource() }
+//    val integerInteraction = Interaction[Int, Int]
 //      .requires((curr, _) => curr < 20)
 //      .modifies(integerSource)
 //      .executes((curr, _) => curr + 10)
-//      .requires((curr, _) => curr < 20)
-//      .modifies(integerSource)
-//      .requires(() => false)
-//      .executes((curr) => curr + 10)
 
-//    println(s"integerSource: ${integerSource.now}, secondRealVariable: ${secondRealVariable.now}")
+//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
 
-//    add10(0)
-//    println(s"integerSource: ${integerSource.now}, secondRealVariable: ${secondRealVariable.now}")
+//    integerInteraction(0)
+//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
 
-//    add10(0)
-//    println(s"integerSource: ${integerSource.now}, secondRealVariable: ${secondRealVariable.now}")
+//    integerInteraction(0)
+//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
 
-//    add10(0)
-//    println(s"integerSource: ${integerSource.now}, secondRealVariable: ${secondRealVariable.now}")
+//    integerInteraction(0)
+//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
   end main
 end additionExample
