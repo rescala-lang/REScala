@@ -19,7 +19,7 @@ private object WebRTCConnector {
 
 private abstract class WebRTCConnector(
     configuration: dom.RTCConfiguration,
-    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+    update: CompleteSession => Unit
 ) extends WebRTC.Connector {
 
   println(s"starting new peer connection")
@@ -27,43 +27,13 @@ private abstract class WebRTCConnector(
 
   peerConnection.onicecandidate = { (event: dom.RTCPeerConnectionIceEvent) =>
     println(s"received ICE candidate")
-    if (event.candidate != null)
-      update.left foreach {
-        _(SessionUpdate(event.candidate))
-      }
+    if (event.candidate != null) then
+      println(s"uhh … unknown event candidate, dont know what to do")
     else
-      update.foreach {
-        _(CompleteSession(peerConnection.localDescription))
-      }
+      update(CompleteSession(peerConnection.localDescription))
   }
-
-//  private var connectionCount = 0
-//
-//  protected def handleConnectionClosing(connection: Try[Connection[WebRTC]]) = {
-//    connection foreach { connection =>
-//      connectionCount += 1
-//      connection.closed foreach { _ =>
-//        connectionCount -= 1
-//        if (connectionCount < 1)
-//          peerConnection.close()
-//      }
-//    }
-//  }
 
   private var remoteDescriptionSet = false
-
-  def connection = peerConnection
-
-  def use(update: IncrementalUpdate) = update match {
-    case session: InitialSession =>
-      if (!remoteDescriptionSet) {
-        remoteDescriptionSet = true
-        setRemoteDescription(session.sessionDescription)
-      }
-    case update: SessionUpdate =>
-      peerConnection.addIceCandidate(update.iceCandidate)
-      ()
-  }
 
   def set(update: CompleteUpdate) =
     println(s"setting update ")
@@ -85,7 +55,7 @@ private abstract class WebRTCConnector(
 class WebRTCOffer(
     configuration: dom.RTCConfiguration,
     options: dom.RTCOfferOptions,
-    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+    update: CompleteSession => Unit
 ) extends WebRTCConnector(configuration, update) {
 
   println(s"creating offer")
@@ -102,8 +72,7 @@ class WebRTCOffer(
       peerConnection.createOffer(options) `then` { (description: dom.RTCSessionDescription) =>
         // todo is this needed?
         peerConnection.setLocalDescription(description) `then` { (_: Unit) =>
-          println(s"applying initial session to incremental")
-          update.left foreach { incremental => incremental(InitialSession(description)) }
+          println(s"applying initial session to incremental, but incremental was removed")
           unit
         }
         unit
@@ -126,7 +95,7 @@ class WebRTCOffer(
 
 private class WebRTCAnswer(
     configuration: dom.RTCConfiguration,
-    update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
+    update: CompleteSession => Unit
 ) extends WebRTCConnector(configuration, update) {
 
   private val connectorQueue = new js.Array[WebRTCChannelConnector](0)
@@ -159,7 +128,8 @@ private class WebRTCAnswer(
     peerConnection.setRemoteDescription(description) `then` { (_: Unit) =>
       peerConnection.createAnswer() `then` { (description: dom.RTCSessionDescription) =>
         peerConnection.setLocalDescription(description) `then` { (_: Unit) =>
-          update.left foreach { _(InitialSession(description)) }
+          println(s"remote session description arrived, but nothing happens")
+          //update.left foreach { _(InitialSession(description)) }
           unit
         }
         unit
