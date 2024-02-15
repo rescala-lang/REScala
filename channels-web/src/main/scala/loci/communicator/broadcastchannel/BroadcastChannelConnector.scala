@@ -2,7 +2,8 @@ package loci
 package communicator
 package broadcastchannel
 
-import channel.{InChan, MessageBuffer, OutChan, Prod}
+import channel.MesageBufferExtensions.asArrayBuffer
+import channel.{ArrayMessageBuffer, InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
@@ -21,9 +22,10 @@ class BroadcastChannelConnector(name: String) extends InChan with OutChan {
 
   override def receive: Prod[MessageBuffer] = Async.fromCallback {
     bc.onmessage = (event: dom.MessageEvent) =>
+      println(js.typeOf(event.data))
       event.data match
-        case data: MessageBuffer =>
-          Async.handler.succeed(data)
+        case data: ArrayBuffer =>
+          Async.handler.succeed(JsArrayBufferMessageBuffer(data))
         case other =>
           throw BroadcastException(
             s"someone put something weird on the broadcast channel ($name):\n${event.data}",
@@ -34,6 +36,8 @@ class BroadcastChannelConnector(name: String) extends InChan with OutChan {
       Async.handler.fail(BroadcastException(s"broadcast error ($name):\n${event.data}", event))
   }
 
-  override def send(message: MessageBuffer): delay.Async[Any, Unit] = Sync(bc.postMessage(message))
+  override def send(message: MessageBuffer): delay.Async[Any, Unit] =
+    println(s"sending stuff")
+    Sync(bc.postMessage(message.asArrayBuffer))
 
 }
