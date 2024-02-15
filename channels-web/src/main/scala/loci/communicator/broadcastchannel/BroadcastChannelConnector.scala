@@ -37,7 +37,6 @@ class BroadcastChannelConnector(name: String) extends InChan with OutChan {
   }
 
   override def send(message: MessageBuffer): delay.Async[Any, Unit] =
-    println(s"sending stuff")
     Sync(bc.postMessage(message.asArrayBuffer))
 
 }
