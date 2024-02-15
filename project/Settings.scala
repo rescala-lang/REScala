@@ -9,7 +9,7 @@ import sbt.Keys.*
 object Settings {
 
   object Versions {
-    val scala3 = "3.4.0-RC4"
+    val scala3 = "3.4.0"
   }
 
   val commonCrossBuildVersions =
