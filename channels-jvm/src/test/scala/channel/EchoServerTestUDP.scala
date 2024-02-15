@@ -38,7 +38,7 @@ object EchoServerTestUDP {
 
     val client: Async[Any, Unit] = Async:
       sender.send(ArrayMessageBuffer("hello world!".getBytes)).bind
-      // 65507 bytes seems to be the maximum for IPv4, 8 byte udp header 20 byte IP header, but what about the 4 byte of length we also send?
+      // 65507 bytes seems to be the maximum for IPv4, 8 byte udp header 20 byte IP header, but what about the 4 byte of length we also sent?
       sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 29)).getBytes())).bind
       sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 28)).getBytes())).bind
 
