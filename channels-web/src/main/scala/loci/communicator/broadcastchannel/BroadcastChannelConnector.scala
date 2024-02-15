@@ -2,78 +2,38 @@ package loci
 package communicator
 package broadcastchannel
 
+import channel.{InChan, MessageBuffer, OutChan, Prod}
+import de.rmgk.delay
+import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success}
-import scala.scalajs.js.annotation._
+import scala.scalajs.js.annotation.*
+import dom.{BroadcastChannel, MessageEvent}
 
-@js.native
-@JSGlobal("BroadcastChannel")
-class JSBroadcastChannel(name: String) extends js.Object {
-  def postMessage(value: js.Any): Unit = js.native
+class BroadcastException(message: String, event: MessageEvent) extends Exception(message)
 
-  def addEventListener(`type`: String, callback: js.Function1[dom.MessageEvent, _]): Unit = js.native
+class BroadcastChannelConnector(name: String) extends InChan with OutChan {
 
-  def close(): Unit = js.native
-}
+  val bc = new BroadcastChannel(name)
 
-private class BroadcastChannelConnector[P <: BroadcastChannel: BroadcastChannelProtocolFactory](
-  name: String, properties: BroadcastChannel.Properties)
-    extends Connector[P] {
+  override def receive: Prod[MessageBuffer] = Async.fromCallback {
+    bc.onmessage = (event: dom.MessageEvent) =>
+      event.data match
+        case data: MessageBuffer =>
+          Async.handler.succeed(data)
+        case other =>
+          throw BroadcastException(
+            s"someone put something weird on the broadcast channel ($name):\n${event.data}",
+            event
+          )
 
-  protected def connect(connectionEstablished: Connected[P]) = {
-    val bc = new JSBroadcastChannel(name)
-    
-    implicitly[BroadcastChannelProtocolFactory[P]].make(name, this) match {
-      case Failure(exception) =>
-        connectionEstablished.set(Failure(exception))
-
-      case Success(p) =>
-
-        val doClosed = Notice.Steady[Unit]
-        val doReceive = Notice.Stream[MessageBuffer]
-
-        val connection = new Connection[P] {
-          val protocol = p
-          val closed = doClosed.notice
-          val receive = doReceive.notice
-
-          def open = true
-          def send(data: MessageBuffer) = {
-            bc.postMessage(data.backingArrayBuffer)
-          }
-          def close() = {
-            bc.close()
-            doClosed.set()
-          }
-        }
-
-        connectionEstablished.set(Success(connection))
-
-        bc.addEventListener("message", { (event: dom.MessageEvent) =>
-          event.data match {
-            case data: ArrayBuffer =>
-              doReceive.fire(MessageBuffer wrapArrayBuffer data)
-
-            case data: dom.Blob =>
-              val reader = new dom.FileReader
-              reader.onload = { (event: dom.Event) =>
-                doReceive.fire(MessageBuffer wrapArrayBuffer
-                  event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer])
-              }
-              reader.readAsArrayBuffer(data)
-
-            case _ =>
-          }
-        })
-
-        bc.addEventListener("messageerror", { (event: dom.MessageEvent) =>
-          connectionEstablished.trySet(Failure(new ConnectionException("BroadcastChannel failed to receive message")))
-          bc.close()
-          doClosed.set()
-        })
-    }
+    bc.onmessageerror = (event: dom.MessageEvent) =>
+      Async.handler.fail(BroadcastException(s"broadcast error ($name):\n${event.data}", event))
   }
+
+  override def send(message: MessageBuffer): delay.Async[Any, Unit] = Sync(bc.postMessage(message))
+
 }
