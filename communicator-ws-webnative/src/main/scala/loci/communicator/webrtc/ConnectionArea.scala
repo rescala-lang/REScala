@@ -3,28 +3,64 @@ package loci.communicator.webrtc
 import channel.{ArrayMessageBuffer, Ctx}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import de.rmgk.delay.syntax.toAsync
 import de.rmgk.delay.{Async, Callback}
 import loci.communicator.webrtc
 import org.scalajs.dom
-import org.scalajs.dom.{RTCIceConnectionState, UIEvent, document, window}
+import org.scalajs.dom.{MouseEvent, RTCIceConnectionState, RTCIceServer, UIEvent, document, window}
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.Array
+import scala.scalajs.js.{Array, Date}
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.util.{Failure, Success}
 
 object Example {
   @JSExportTopLevel("example")
   def example() = {
-    val handling = WebRTCHandling()
-
     val messages = div().render
 
     val stuff = input().render
+
+    val renderedConnectionTable = table(
+      tr(
+        th("local session description"),
+        th("remote session description"),
+        th("iceGatheringState"),
+        th("iceConnectionState"),
+        th("signalingState"),
+        th("trickle"),
+      )
+    ).render
+
+    val renderedAddConnectionButton = button("new peerConnection").render
+
+    Async.fromCallback {
+      renderedAddConnectionButton.onclick = (ev: MouseEvent) =>
+        Async.handler.succeed(())
+    }.map: _ =>
+      val handling = WebRTCHandling()
+      renderedConnectionTable.appendChild(handling.controlRow().render)
+      addDataChannel(messages, stuff, handling)
+    .run(using ExecutionContext.global)(errorReporter)
+
+    val para =
+      section(
+        p("some example text"),
+        stuff,
+        hr(),
+        messages,
+        hr(),
+        renderedConnectionTable,
+        renderedAddConnectionButton
+      )
+
+    document.body.replaceChild(para.render, document.body.firstChild)
+  }
+
+  def addDataChannel(messages: dom.html.Div, input: dom.html.Input, handling: WebRTCHandling) = {
 
     def handleConnection: Callback[WebRTCConnection] =
       case Success(connection) =>
@@ -41,9 +77,9 @@ object Example {
             handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
             ()
 
-        stuff.onchange = { _ =>
+        input.onchange = { _ =>
           println(s"trying to send stuff")
-          connection.send(ArrayMessageBuffer(stuff.value.getBytes())).run(using ()):
+          connection.send(ArrayMessageBuffer(input.value.getBytes())).run(using ()):
             case Success(_) => println("sent")
             case Failure(ex) =>
               println(s"sending failed")
@@ -58,6 +94,9 @@ object Example {
         handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
         ()
 
+    // there is also a listener for non negotiated channels
+    // handling.peer.peerConnection.ondatachannel
+
     val channel = handling.peer.peerConnection.createDataChannel(
       WebRTCConnector.channelLabel,
       new dom.RTCDataChannelInit {
@@ -67,29 +106,27 @@ object Example {
     )
     WebRTCConnection.open(channel).run(using ())(handleConnection)
 
-    // handling.peer.incomingDataChannel.run(using ())(handleConnection)
-
-    val area = handling.webrtcHandlingArea()
-
-    val para = section(p("some example text"), stuff, p(), messages, area)
-
-    document.body.replaceChild(para.render, document.body.firstChild)
   }
+
 }
+
+def errorReporter: Callback[Any] =
+  case Success(_) =>
+  case Failure(ex) =>
+    println(s"creating offer failed weirdly?")
+    ex.printStackTrace()
 
 case class WebRTCHandling() {
 
   val codec: JsonValueCodec[webrtc.SessionDescription] = JsonCodecMaker.make
 
-  val peer = WebRTCConnector(new dom.RTCConfiguration { iceServers = js.Array[dom.RTCIceServer]() })
+  val peer = WebRTCConnector(new dom.RTCConfiguration {
+    iceServers = js.Array[dom.RTCIceServer](new RTCIceServer {
+      urls = js.Array[String]("stun:stun.t-online.de:3478")
+    })
+  })
 
-  def webrtcHandlingArea(): Tag = {
-
-    def errorReporter: Callback[Any] =
-      case Success(_) =>
-      case Failure(ex) =>
-        println(s"creating offer failed weirdly?")
-        ex.printStackTrace()
+  def controlRow(): ConcreteHtmlTag[dom.html.TableRow] = {
 
     val offerButton = button(
       "offer",
@@ -118,6 +155,8 @@ case class WebRTCHandling() {
     val connectionState = td().render
     val signalingState  = td().render
 
+    val iceTrickle = textarea(readonly := true).render
+
     def sessionDisplay(sessionDescription: SessionDescription): dom.html.TextArea = {
       textarea(
         readonly := true,
@@ -143,18 +182,13 @@ case class WebRTCHandling() {
       signalingState.innerText = lifecycle.signalingState
     }.run(using ())(errorReporter)
 
-    val res = table(
-      tr(
-        th("local session description"),
-        th("remote session description"),
-        th("iceGatheringState"),
-        th("iceConnectionState"),
-        th("signalingState")
-      ),
-      tr(localSession, remoteSession, gatheringState, connectionState, signalingState)
-    )
+    Async {
+      val dateOffset = Date.now()
+      val candidate  = peer.iceCandidates.bind
+      iceTrickle.value = s"${iceTrickle.value}${Date.now() - dateOffset}: ${candidate.candidate}\n\n"
+    }.run(using ())(errorReporter)
 
-    res
+    tr(localSession, remoteSession, gatheringState, connectionState, signalingState, td(iceTrickle))
 
   }
 

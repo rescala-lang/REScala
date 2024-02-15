@@ -7,7 +7,9 @@ import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}
 import org.scalajs.dom
-import org.scalajs.dom.{RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription, RTCSignalingState}
+import org.scalajs.dom.{
+  RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription, RTCSignalingState
+}
 
 import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -59,19 +61,15 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
     smartLocalDescription.bind
   }
 
-  private var remoteDescriptionSet = false
-
   def accept(session: SessionDescription): Async[Any, SessionDescription] = Async {
     println(s"setting complete session")
-    (if !remoteDescriptionSet then
-       remoteDescriptionSet = true
-       peerConnection.setRemoteDescription(session.sessionDescription).toFuture
-     else
-       Future.successful(())
-    )
-    .toAsync.bind
+    peerConnection.setRemoteDescription(session.sessionDescription).toFuture.toAsync.bind
     smartLocalDescription.bind
   }
+
+  def restartIce(): Unit =
+    peerConnection.asInstanceOf[js.Dynamic].restartIce()
+    ()
 
   def smartLocalDescription: Async[Any, SessionDescription] = Async {
     // the `setLocalDescription()` seems to be a newer API that does not yet exists in the scala wrapper :(
@@ -82,6 +80,14 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
     SessionDescription(peerConnection.localDescription).get
   }
 
+  def iceCandidates: Async[Any, RTCIceCandidate] = Async.fromCallback:
+    peerConnection.addEventListener(
+      "icecandidate",
+      (event: dom.RTCPeerConnectionIceEvent) =>
+        if !js.isUndefined(event.candidate) && event.candidate != null && event.candidate.candidate != "" then
+          Async.handler.succeed(event.candidate)
+    )
+
   def readLifecycle =
     ConnectorLifecycle(
       SessionDescription(peerConnection.localDescription),
@@ -91,21 +97,30 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
       peerConnection.signalingState
     )
 
+  /** For reasons that are unclear to me, a data channel MUST be created before looking at the lifecycle, otherwise ICE gathering does not happen */
   def lifecycle: Async[Any, ConnectorLifecycle] = Async {
 
     Async.fromCallback {
-      peerConnection.onicecandidate = (event: dom.RTCPeerConnectionIceEvent) =>
-        if event.candidate != null then
-          // we could do incremental ice, here, but seems fast enough, so eh
-          ()
-        else // I guess this means we are done?
-          println(s"ice gathering done")
-          Async.handler.succeed(())
+      peerConnection.addEventListener(
+        "icecandidate",
+        (event: dom.RTCPeerConnectionIceEvent) =>
+          println(s"lifecycle ice tricke")
+          if event.candidate != null then
+            // we could do incremental ice, here, but seems fast enough, so eh
+            println(s"incremental ice ${event.candidate}")
+            Async.handler.succeed(())
+          else // I guess this means we are done?
+            println(s"ice gathering done")
+            Async.handler.succeed(())
+      )
 
       peerConnection.oniceconnectionstatechange = (_: dom.Event) =>
         Async.handler.succeed(())
 
       peerConnection.onsignalingstatechange = (_: dom.Event) =>
+        Async.handler.succeed(())
+
+      peerConnection.onnegotiationneeded = (_: dom.Event) =>
         Async.handler.succeed(())
 
       // directly succeed to produce a first value
