@@ -92,9 +92,7 @@ object Example {
 
     Async[Ctx] {
       val msg = broadcast.receive.bind
-      println(s"received some communication")
       val communication: BroadcastCommunication = msg.convert
-      println(communication)
       Async[Ctx].bind:
         Async[Ctx].fromCallback:
           communication match
