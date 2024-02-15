@@ -22,9 +22,11 @@ private abstract class WebRTCConnector(
     update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
 ) extends WebRTC.Connector {
 
+  println(s"starting new peer connection")
   val peerConnection = new dom.RTCPeerConnection(configuration)
 
   peerConnection.onicecandidate = { (event: dom.RTCPeerConnectionIceEvent) =>
+    println(s"received ICE candidate")
     if (event.candidate != null)
       update.left foreach {
         _(SessionUpdate(event.candidate))
@@ -63,13 +65,17 @@ private abstract class WebRTCConnector(
       ()
   }
 
-  def set(update: CompleteUpdate) = update match {
-    case session: CompleteSession =>
-      if (!remoteDescriptionSet) {
-        remoteDescriptionSet = true
-        setRemoteDescription(session.sessionDescription)
-      }
-  }
+  def set(update: CompleteUpdate) =
+    println(s"setting update ")
+    update match {
+      case session: CompleteSession =>
+        println(s"setting complete session")
+        if (!remoteDescriptionSet) {
+          println(s"new remote description")
+          remoteDescriptionSet = true
+          setRemoteDescription(session.sessionDescription)
+        }
+    }
 
   protected val unit = js.|.from[Unit, Unit, js.Thenable[Unit]](())
 
@@ -82,16 +88,22 @@ class WebRTCOffer(
     update: Either[IncrementalUpdate => Unit, CompleteSession => Unit]
 ) extends WebRTCConnector(configuration, update) {
 
-  protected def connect( /*connectionEstablished: Connected[WebRTC]*/ ) =
+  println(s"creating offer")
+
+  def connect( /*connectionEstablished: Connected[WebRTC]*/ ) =
+    println(s"trying to connect")
     try {
+      // as far as I understand, this will try to autonegotiate the data the data connection … ?
       val channel = peerConnection.createDataChannel(
         WebRTCConnector.channelLabel,
         new dom.RTCDataChannelInit {}
       )
 
       peerConnection.createOffer(options) `then` { (description: dom.RTCSessionDescription) =>
+        // todo is this needed?
         peerConnection.setLocalDescription(description) `then` { (_: Unit) =>
-          update.left foreach { _(InitialSession(description)) }
+          println(s"applying initial session to incremental")
+          update.left foreach { incremental => incremental(InitialSession(description)) }
           unit
         }
         unit
@@ -198,6 +210,7 @@ class WebRTCChannelConnector(
 
         channel.onopen = { (_: dom.Event) =>
           js.timers.clearTimeout(handle)
+          println(s"connected!")
           // connectionEstablished.trySet(Success(connection))
         }
 
