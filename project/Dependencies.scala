@@ -23,7 +23,7 @@ object Dependencies {
   def scribeSlf4j   = libraryDependencies += "com.outr"                    %% "scribe-slf4j"     % "3.10.7"
   def scribeSlf4j2  = libraryDependencies += "com.outr"                    %% "scribe-slf4j2"    % "3.10.7"
   def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.3.1"
-  def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.44.1.0"
+  def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.45.1.0"
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.4"
   def jsoniterScala =
     libraryDependencies ++= Seq(
@@ -33,10 +33,10 @@ object Dependencies {
 
   object slips {
     def chain   = libraryDependencies += "de.rmgk.slips" %%% "chain"   % "0.5.0"
-    def delay   = libraryDependencies += "de.rmgk.slips" %%% "delay"   % "0.5.0-SNAPSHOT"
+    def delay   = libraryDependencies += "de.rmgk.slips" %%% "delay"   % "0.8.0"
     def logging = libraryDependencies += "de.rmgk.slips" %%% "logging" % "0.5.0"
     def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.7.0"
-    def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.5.1-SNAPSHOT"
+    def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.8.0"
     def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.8.0"
   }
 
