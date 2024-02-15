@@ -8,7 +8,8 @@ import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}
 import org.scalajs.dom
 import org.scalajs.dom.{
-  RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription, RTCSignalingState
+  RTCConfiguration, RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription,
+  RTCSignalingState
 }
 
 import scala.annotation.nowarn
@@ -36,7 +37,7 @@ object SessionDescription {
       SessionDescription(value.`type`.asInstanceOf[String], value.sdp)
 }
 
-case class ConnectorLifecycle(
+case class ConnectorOverview(
     localSession: Option[SessionDescription],
     remoteSession: Option[SessionDescription],
     iceGatheringState: RTCIceGatheringState,
@@ -45,33 +46,46 @@ case class ConnectorLifecycle(
 )
 
 object WebRTCConnector {
-  // label seems mostly for auto negotiation
-  val channelLabel = "loci-webrtc-channel"
-  // id is used for pre negotiated channels
-  val channelId: Double = 4
+  def apply(): WebRTCConnector                                = new WebRTCConnector(new RTCConfiguration {})
+  def apply(configuration: RTCConfiguration): WebRTCConnector = new WebRTCConnector(configuration)
 }
 
+/** First listen to [[lifecycle]] and optionally [[iceCandidates]].
+  * Then create a channel directly on peer connection, which will trigger the connection initiation process.
+  * Somehow transfer the local session description to a remote peer, and [[updateRemoteDescription]] there.
+  * Accepting a remote description will update the local description,
+  * which then needs to be transferred back to the original peer and [[updateLocalDescription]] there should complete the connection.
+  */
 class WebRTCConnector(configuration: dom.RTCConfiguration) {
 
-  println(s"starting new peer connection")
   val peerConnection = new dom.RTCPeerConnection(configuration)
 
-  def offer(): Async[Any, SessionDescription] = Async {
-    println(s"creating offer")
-    smartLocalDescription.bind
-  }
+  peerConnection.addEventListener(
+    "negotiationneeded",
+    (_: dom.Event) =>
+      smartUpdateLocalDescription.run(using ()) {
+        case Failure(ex) =>
+          throw ex
+        case _ =>
+      }
+  )
 
-  def accept(session: SessionDescription): Async[Any, SessionDescription] = Async {
-    println(s"setting complete session")
+  /** Might yell at you if called multiple times with incompatible sessions.
+    * Better just throw away the whole peer connection on retry.
+    */
+  def updateRemoteDescription(session: SessionDescription): Async[Any, ConnectorOverview] = Async {
     peerConnection.setRemoteDescription(session.sessionDescription).toFuture.toAsync.bind
-    smartLocalDescription.bind
+    smartUpdateLocalDescription.bind
+    readOverview
   }
 
+  /** this exists, but unclear how it could be used to restart the connection */
   def restartIce(): Unit =
     peerConnection.asInstanceOf[js.Dynamic].restartIce()
     ()
 
-  def smartLocalDescription: Async[Any, SessionDescription] = Async {
+  /** This just generates a local description that automatically figures out if it should be an offer or an answer based on the current state. */
+  def smartUpdateLocalDescription: Async[Any, SessionDescription] = Async {
     // the `setLocalDescription()` seems to be a newer API that does not yet exists in the scala wrapper :(
     // it should automagically figure out the local description we should have in the current state
     val res = peerConnection.asInstanceOf[js.Dynamic].setLocalDescription().asInstanceOf[
@@ -80,6 +94,9 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
     SessionDescription(peerConnection.localDescription).get
   }
 
+  /** Use [[peerConnection.addIceCandidate]] to apply on remote.
+    * Once an ICE candidate exists it is also automatically included in the local description, so this is not necessary.
+    */
   def iceCandidates: Async[Any, RTCIceCandidate] = Async.fromCallback:
     peerConnection.addEventListener(
       "icecandidate",
@@ -88,8 +105,9 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
           Async.handler.succeed(event.candidate)
     )
 
-  def readLifecycle =
-    ConnectorLifecycle(
+  /** Mostly to wrap the session descriptions, but having the rest is also convenient */
+  def readOverview =
+    ConnectorOverview(
       SessionDescription(peerConnection.localDescription),
       SessionDescription(peerConnection.remoteDescription),
       peerConnection.iceGatheringState,
@@ -97,21 +115,26 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
       peerConnection.signalingState
     )
 
-  /** For reasons that are unclear to me, a data channel MUST be created before looking at the lifecycle, otherwise ICE gathering does not happen */
-  def lifecycle: Async[Any, ConnectorLifecycle] = Async {
+  /** This is triggered by [[smartUpdateLocalDescription]], which in turn is automatically triggered when adding a channel.
+    * For reasons that are unclear to me, a data channel MUST be created before looking at the lifecycle, otherwise ICE gathering does not happen
+    */
+  def lifecycle: Async[Any, ConnectorOverview] = Async {
 
     Async.fromCallback {
       peerConnection.addEventListener(
         "icecandidate",
         (event: dom.RTCPeerConnectionIceEvent) =>
-          println(s"lifecycle ice tricke")
           if event.candidate != null then
             // we could do incremental ice, here, but seems fast enough, so eh
-            println(s"incremental ice ${event.candidate}")
             Async.handler.succeed(())
           else // I guess this means we are done?
-            println(s"ice gathering done")
             Async.handler.succeed(())
+      )
+
+      peerConnection.addEventListener(
+        "negotiationneeded",
+        (_: dom.Event) =>
+          Async.handler.succeed(())
       )
 
       peerConnection.oniceconnectionstatechange = (_: dom.Event) =>
@@ -120,13 +143,10 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
       peerConnection.onsignalingstatechange = (_: dom.Event) =>
         Async.handler.succeed(())
 
-      peerConnection.onnegotiationneeded = (_: dom.Event) =>
-        Async.handler.succeed(())
-
       // directly succeed to produce a first value
       Async.handler.succeed(())
     }.bind
 
-    readLifecycle
+    readOverview
   }
 }

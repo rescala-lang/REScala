@@ -18,6 +18,12 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.util.{Failure, Success}
 
 object Example {
+
+  // label seems mostly for auto negotiation
+  val channelLabel = "loci-webrtc-channel"
+  // id is used for pre negotiated channels
+  val channelId: Double = 4
+
   @JSExportTopLevel("example")
   def example() = {
     val messages = div().render
@@ -98,10 +104,10 @@ object Example {
     // handling.peer.peerConnection.ondatachannel
 
     val channel = handling.peer.peerConnection.createDataChannel(
-      WebRTCConnector.channelLabel,
+      Example.channelLabel,
       new dom.RTCDataChannelInit {
         negotiated = true
-        id = WebRTCConnector.channelId
+        id = Example.channelId
       }
     )
     WebRTCConnection.open(channel).run(using ())(handleConnection)
@@ -128,13 +134,6 @@ case class WebRTCHandling() {
 
   def controlRow(): ConcreteHtmlTag[dom.html.TableRow] = {
 
-    val offerButton = button(
-      "offer",
-      onclick := { (_: UIEvent) =>
-        peer.offer().run(using ())(errorReporter)
-      }
-    ).render
-
     val answerArea =
       textarea(
         placeholder := "remote session description",
@@ -142,7 +141,7 @@ case class WebRTCHandling() {
           try
             val cs = readFromString(ev.target.asInstanceOf[dom.html.TextArea].value)(codec)
             println(s"pending resolved, setting connector")
-            peer.accept(cs).run(using ())(errorReporter)
+            peer.updateRemoteDescription(cs).run(using ())(errorReporter)
           catch
             case _: JsonReaderException =>
               println(s"input is not a valid session description")
@@ -168,14 +167,14 @@ case class WebRTCHandling() {
     }
 
     Async[Any] {
-      val lifecycle: ConnectorLifecycle = peer.lifecycle.bind
+      val lifecycle: ConnectorOverview = peer.lifecycle.bind
       lifecycle.localSession match
         case Some(s) => localSession.replaceChildren(sessionDisplay(s))
-        case None    => localSession.replaceChildren(offerButton)
+        case None    => localSession.replaceChildren(span("no local session info").render)
 
       lifecycle.remoteSession match
         case Some(s) => remoteSession.replaceChildren(sessionDisplay(s))
-        case None    => remoteSession.replaceChildren(answerArea.render)
+        case None    => remoteSession.replaceChildren(answerArea)
 
       gatheringState.innerText = lifecycle.iceGatheringState
       connectionState.innerText = lifecycle.iceConnectionState
