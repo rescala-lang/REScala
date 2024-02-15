@@ -1,11 +1,11 @@
 import sbt.librarymanagement.Configurations.TestInternal
 
-lazy val tcp = project.in(file("communicator-tcp")).settings(
+lazy val channelsjvm = project.in(file("channels-jvm")).settings(
   Settings.scala3defaults,
   Dependencies.munit
 ).dependsOn(interfaces.jvm)
 
-lazy val nativewebsockets = project.in(file("communicator-ws-webnative"))
+lazy val channelsweb = project.in(file("channels-web"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
     Settings.scala3defaults,
@@ -22,7 +22,7 @@ lazy val interfaces = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.
     Dependencies.slips.delay,
   )
 
-lazy val jetty12 = project.in(file("communicator-ws-jetty12")).settings(
+lazy val channelsjetty = project.in(file("channels-jetty")).settings(
   Settings.scala3defaults,
   Dependencies.munit,
   libraryDependencies ++= {
