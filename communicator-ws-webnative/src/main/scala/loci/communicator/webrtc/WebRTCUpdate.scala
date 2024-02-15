@@ -4,26 +4,16 @@ package webrtc
 
 import org.scalajs.dom
 
-protected[webrtc] trait WebRTCUpdate {
-  sealed abstract class Update
-  sealed abstract class IncrementalUpdate extends Update
-  sealed abstract class CompleteUpdate    extends Update
+case class CompleteSession(descType: String, sdp: String) {
+  def sessionDescription = new dom.RTCSessionDescription(
+    new dom.RTCSessionDescriptionInit {
+      this.`type` = CompleteSession.this.descType.asInstanceOf[dom.RTCSdpType]
+      this.sdp = CompleteSession.this.sdp
+    }
+  )
+}
 
-
-  sealed case class CompleteSession(
-      descType: String,
-      sdp: String
-  ) extends CompleteUpdate {
-    def sessionDescription = new dom.RTCSessionDescription(
-      new dom.RTCSessionDescriptionInit {
-        this.`type` = CompleteSession.this.descType.asInstanceOf[dom.RTCSdpType]
-        this.sdp = CompleteSession.this.sdp
-      }
-    )
-  }
-
-  object CompleteSession {
-    def apply(value: dom.RTCSessionDescription): CompleteSession =
-      CompleteSession(value.`type`.asInstanceOf[String], value.sdp)
-  }
+object CompleteSession {
+  def apply(value: dom.RTCSessionDescription): CompleteSession =
+    CompleteSession(value.`type`.asInstanceOf[String], value.sdp)
 }

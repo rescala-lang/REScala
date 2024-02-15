@@ -1,16 +1,19 @@
 package loci.communicator.webrtc
 
+import channel.{ArrayMessageBuffer, Ctx}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import de.rmgk.delay.Callback
 import loci.communicator.webrtc
-import loci.communicator.webrtc.WebRTC
-import loci.communicator.webrtc.WebRTC.ConnectorFactory
-import org.scalajs.dom.{UIEvent, document}
+import org.scalajs.dom
+import org.scalajs.dom.{UIEvent, document, window}
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
+import scala.scalajs.js.Array
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.util.{Failure, Success}
 
@@ -18,10 +21,41 @@ object Example {
   @JSExportTopLevel("example")
   def example() = {
     val handling = WebRTCHandling()
-    val area     = handling.webrtcHandlingArea()
 
-    val para = section(p("some example text"), input(), area)
+    val messages = div().render
 
+    val stuff = input().render
+
+    def handleConnection: Callback[WebRTCConnection] =
+      case Success(connection) =>
+        connection.receive.run(using Ctx()):
+          case Success(msg) =>
+            val res = new String(msg.asArray)
+            println(s"received $res")
+            messages.appendChild(p(res).render)
+            ()
+          case Failure(err) =>
+            println(s"oh noes")
+            err.printStackTrace()
+
+        stuff.onchange = { _ =>
+          println(s"trying to send stuff")
+          connection.send(ArrayMessageBuffer(stuff.value.getBytes())).run(using ()):
+            case Success(_) => println("sent")
+            case Failure(ex) =>
+              println(s"sending failed")
+              ex.printStackTrace()
+        }
+
+      case Failure(err) =>
+        println(s"oh noes")
+        err.printStackTrace()
+
+    handling.peer.incomingDataChannel.run(using ())(handleConnection)
+
+    val area = handling.webrtcHandlingArea(handleConnection)
+
+    val para = section(p("some example text"), stuff, messages, area)
 
     document.body.replaceChild(para.render, document.body.firstChild)
   }
@@ -29,39 +63,39 @@ object Example {
 
 case class WebRTCHandling() {
 
-  val codec: JsonValueCodec[webrtc.WebRTC.CompleteSession] = JsonCodecMaker.make
+  val codec: JsonValueCodec[webrtc.CompleteSession] = JsonCodecMaker.make
 
-  def webrtcHandlingArea: Tag = {
+  val peer = WebRTCConnector(new dom.RTCConfiguration { iceServers = js.Array[dom.RTCIceServer]() })
+
+  def webrtcHandlingArea(callback: Callback[WebRTCConnection]): Tag = {
 
     val renderedTa  = textarea().render
     val renderedPre = pre().render
 
-    var pendingServer: Option[PendingConnection] = None
+    var pendingServer: Boolean = false
 
     def connected() = {
       renderedPre.textContent = ""
       renderedTa.value = ""
     }
 
-    def showSession(s: WebRTC.CompleteSession) = {
+    def showSession(s: CompleteSession) = {
       val message = writeToString(s)(codec)
       println(s"completed offer $message")
       renderedPre.textContent = message
       org.scalajs.dom.window.getSelection().selectAllChildren(renderedPre)
     }
 
+    peer.iceCandidates.run(using ()):
+      case Success(session) => showSession(session)
+      case Failure(ex) =>
+        println("failed ICE, should not be possible")
+        ex.printStackTrace()
+
     val hb = button(
       "host",
       onclick := { (_: UIEvent) =>
-        val res = webrtcIntermediate(WebRTC.offer())
-        println(s"generated offer $res")
-        res.session.onComplete:
-          case Success(session) => showSession(session)
-          case Failure(ex) =>
-            println(s"received: ")
-            ex.printStackTrace()
-        pendingServer = Some(res)
-        // registry.connect(res.connector).foreach(_ => connected())
+        peer.connect(new dom.RTCOfferOptions {}).run(using ())(callback)
       }
     )
 
@@ -69,30 +103,12 @@ case class WebRTCHandling() {
       "connect",
       onclick := { (_: UIEvent) =>
         val cs = readFromString(renderedTa.value)(codec)
-        val connector = pendingServer match {
-          case None => // we are client
-            val res = webrtcIntermediate(WebRTC.answer())
-            res.session.foreach(showSession)
-            // registry.connect(res.connector).foreach(_ => connected())
-            res.connector
-          case Some(ss) => // we are server
-            pendingServer = None
-            ss.connector
-        }
         println(s"pending resolved, setting connector")
-        connector.set(cs)
+        peer.set(cs)
       }
     )
 
     section(hb, cb, renderedPre, renderedTa)
-  }
-
-  case class PendingConnection(connector: WebRTC.Connector, session: Future[WebRTC.CompleteSession])
-
-  def webrtcIntermediate(cf: ConnectorFactory) = {
-    val p      = Promise[WebRTC.CompleteSession]()
-    val answer = cf.complete(p.success)
-    PendingConnection(answer, p.future)
   }
 
 }
