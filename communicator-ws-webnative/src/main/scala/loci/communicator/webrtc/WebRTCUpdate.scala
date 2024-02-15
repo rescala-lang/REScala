@@ -9,25 +9,6 @@ protected[webrtc] trait WebRTCUpdate {
   sealed abstract class IncrementalUpdate extends Update
   sealed abstract class CompleteUpdate    extends Update
 
-  final case class InitialSession(
-      descType: String,
-      sdp: String
-  ) extends IncrementalUpdate {
-    def sessionDescription = new dom.RTCSessionDescription(
-      new dom.RTCSessionDescriptionInit {
-        this.`type` = InitialSession.this.descType.asInstanceOf[dom.RTCSdpType]
-        this.sdp = InitialSession.this.sdp
-      }
-    )
-  }
-
-  object InitialSession {
-    def apply(value: dom.RTCSessionDescription): InitialSession =
-      InitialSession(value.`type`.asInstanceOf[String], value.sdp)
-  }
-
-
-
 
   sealed case class CompleteSession(
       descType: String,
