@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.Callback
 import loci.communicator.webrtc
 import org.scalajs.dom
-import org.scalajs.dom.{UIEvent, document, window}
+import org.scalajs.dom.{RTCIceConnectionState, UIEvent, document, window}
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 
@@ -28,6 +28,7 @@ object Example {
 
     def handleConnection: Callback[WebRTCConnection] =
       case Success(connection) =>
+        println("adding connection!!!!")
         connection.receive.run(using Ctx()):
           case Success(msg) =>
             val res = new String(msg.asArray)
@@ -37,6 +38,8 @@ object Example {
           case Failure(err) =>
             println(s"oh noes")
             err.printStackTrace()
+            handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
+            ()
 
         stuff.onchange = { _ =>
           println(s"trying to send stuff")
@@ -45,17 +48,30 @@ object Example {
             case Failure(ex) =>
               println(s"sending failed")
               ex.printStackTrace()
+              handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
+              ()
         }
 
       case Failure(err) =>
         println(s"oh noes")
         err.printStackTrace()
+        handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
+        ()
 
-    handling.peer.incomingDataChannel.run(using ())(handleConnection)
+    val channel = handling.peer.peerConnection.createDataChannel(
+      WebRTCConnector.channelLabel,
+      new dom.RTCDataChannelInit {
+        negotiated = true
+        id = WebRTCConnector.channelId
+      }
+    )
+    WebRTCConnection.open(channel).run(using ())(handleConnection)
 
-    val area = handling.webrtcHandlingArea(handleConnection)
+    // handling.peer.incomingDataChannel.run(using ())(handleConnection)
 
-    val para = section(p("some example text"), stuff, messages, area)
+    val area = handling.webrtcHandlingArea()
+
+    val para = section(p("some example text"), stuff, p(), messages, area)
 
     document.body.replaceChild(para.render, document.body.firstChild)
   }
@@ -63,52 +79,68 @@ object Example {
 
 case class WebRTCHandling() {
 
-  val codec: JsonValueCodec[webrtc.CompleteSession] = JsonCodecMaker.make
+  val codec: JsonValueCodec[webrtc.SessionDescription] = JsonCodecMaker.make
 
   val peer = WebRTCConnector(new dom.RTCConfiguration { iceServers = js.Array[dom.RTCIceServer]() })
 
-  def webrtcHandlingArea(callback: Callback[WebRTCConnection]): Tag = {
+  def webrtcHandlingArea(): Tag = {
 
-    val renderedTa  = textarea().render
-    val renderedPre = pre().render
+    val renderedTa    = textarea().render
+    val renderedPre   = pre().render
+    val renderedState = p().render
+    val iceThings     = p().render
 
-    var pendingServer: Boolean = false
+    renderedState.innerText = peer.peerConnection.signalingState
+    peer.peerConnection.onsignalingstatechange = { _ =>
+      renderedState.innerText = peer.peerConnection.signalingState
+    }
+
+    iceThings.innerText = peer.peerConnection.iceConnectionState
+    peer.peerConnection.oniceconnectionstatechange = { ev =>
+      iceThings.innerText = peer.peerConnection.iceConnectionState
+      if (peer.peerConnection.iceConnectionState == RTCIceConnectionState.failed) {
+        peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
+        ()
+      }
+      if (peer.peerConnection.iceConnectionState == RTCIceConnectionState.connected) then
+        connected()
+    }
 
     def connected() = {
       renderedPre.textContent = ""
       renderedTa.value = ""
     }
 
-    def showSession(s: CompleteSession) = {
+    def showSession(s: SessionDescription) = {
       val message = writeToString(s)(codec)
       println(s"completed offer $message")
       renderedPre.textContent = message
       org.scalajs.dom.window.getSelection().selectAllChildren(renderedPre)
     }
 
-    peer.iceCandidates.run(using ()):
+    def handleSession: Callback[SessionDescription] =
       case Success(session) => showSession(session)
       case Failure(ex) =>
         println("failed ICE, should not be possible")
         ex.printStackTrace()
 
     val hb = button(
-      "host",
+      "offer",
       onclick := { (_: UIEvent) =>
-        peer.connect(new dom.RTCOfferOptions {}).run(using ())(callback)
+        peer.offer(new dom.RTCOfferOptions {}).run(using ())(handleSession)
       }
     )
 
     val cb = button(
-      "connect",
+      "accept",
       onclick := { (_: UIEvent) =>
         val cs = readFromString(renderedTa.value)(codec)
         println(s"pending resolved, setting connector")
-        peer.set(cs)
+        peer.accept(cs).run(using ())(handleSession)
       }
     )
 
-    section(hb, cb, renderedPre, renderedTa)
+    section(renderedState, iceThings, hb, cb, renderedPre, renderedTa)
   }
 
 }
