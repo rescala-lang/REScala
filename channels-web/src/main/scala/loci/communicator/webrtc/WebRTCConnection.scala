@@ -58,19 +58,17 @@ class WebRTCConnection(channel: dom.RTCDataChannel) extends InChan with OutChan 
 
 object WebRTCConnection {
   def open(channel: dom.RTCDataChannel): Async[Any, WebRTCConnection] = Async.fromCallback {
-    (channel.readyState) match {
+    channel.readyState match {
       case dom.RTCDataChannelState.connecting =>
         // strange fix for strange issue with Chromium
-        val handle = js.timers.setTimeout(1.day) { channel.readyState; () }
+        // val handle = js.timers.setTimeout(1.day) { channel.readyState; () }
 
         channel.onopen = { (_: dom.Event) =>
-          js.timers.clearTimeout(handle)
-          println(s"connected!")
+          // js.timers.clearTimeout(handle)
           Async.handler.succeed(new WebRTCConnection(channel))
         }
 
       case dom.RTCDataChannelState.open =>
-        println(s"connected the other way")
         Async.handler.succeed(new WebRTCConnection(channel))
 
       case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
