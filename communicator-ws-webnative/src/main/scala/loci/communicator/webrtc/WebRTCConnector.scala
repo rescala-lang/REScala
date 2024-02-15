@@ -2,7 +2,7 @@ package loci
 package communicator
 package webrtc
 
-import WebRTC.{CompleteSession, CompleteUpdate, Connector, IncrementalUpdate, InitialSession, SessionUpdate}
+import WebRTC.{CompleteSession, CompleteUpdate, Connector, IncrementalUpdate, InitialSession}
 import channel.JsArrayBufferMessageBuffer
 import org.scalajs.dom
 
