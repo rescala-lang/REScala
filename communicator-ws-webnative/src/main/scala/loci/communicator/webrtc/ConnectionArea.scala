@@ -3,7 +3,7 @@ package loci.communicator.webrtc
 import channel.{ArrayMessageBuffer, Ctx}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import de.rmgk.delay.Callback
+import de.rmgk.delay.{Async, Callback}
 import loci.communicator.webrtc
 import org.scalajs.dom
 import org.scalajs.dom.{RTCIceConnectionState, UIEvent, document, window}
@@ -85,62 +85,77 @@ case class WebRTCHandling() {
 
   def webrtcHandlingArea(): Tag = {
 
-    val renderedTa    = textarea().render
-    val renderedPre   = pre().render
-    val renderedState = p().render
-    val iceThings     = p().render
-
-    renderedState.innerText = peer.peerConnection.signalingState
-    peer.peerConnection.onsignalingstatechange = { _ =>
-      renderedState.innerText = peer.peerConnection.signalingState
-    }
-
-    iceThings.innerText = peer.peerConnection.iceConnectionState
-    peer.peerConnection.oniceconnectionstatechange = { ev =>
-      iceThings.innerText = peer.peerConnection.iceConnectionState
-      if (peer.peerConnection.iceConnectionState == RTCIceConnectionState.failed) {
-        peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
-        ()
-      }
-      if (peer.peerConnection.iceConnectionState == RTCIceConnectionState.connected) then
-        connected()
-    }
-
-    def connected() = {
-      renderedPre.textContent = ""
-      renderedTa.value = ""
-    }
-
-    def showSession(s: SessionDescription) = {
-      val message = writeToString(s)(codec)
-      println(s"completed offer $message")
-      renderedPre.textContent = message
-      org.scalajs.dom.window.getSelection().selectAllChildren(renderedPre)
-    }
-
-    def handleSession: Callback[SessionDescription] =
-      case Success(session) => showSession(session)
+    def errorReporter: Callback[Any] =
+      case Success(_) =>
       case Failure(ex) =>
-        println("failed ICE, should not be possible")
+        println(s"creating offer failed weirdly?")
         ex.printStackTrace()
 
-    val hb = button(
+    val offerButton = button(
       "offer",
       onclick := { (_: UIEvent) =>
-        peer.offer(new dom.RTCOfferOptions {}).run(using ())(handleSession)
+        peer.offer().run(using ())(errorReporter)
       }
+    ).render
+
+    val answerArea =
+      textarea(
+        placeholder := "remote session description",
+        oninput := { (ev: UIEvent) =>
+          try
+            val cs = readFromString(ev.target.asInstanceOf[dom.html.TextArea].value)(codec)
+            println(s"pending resolved, setting connector")
+            peer.accept(cs).run(using ())(errorReporter)
+          catch
+            case _: JsonReaderException =>
+              println(s"input is not a valid session description")
+        }
+      ).render
+
+    val localSession    = td().render
+    val remoteSession   = td().render
+    val gatheringState  = td().render
+    val connectionState = td().render
+    val signalingState  = td().render
+
+    def sessionDisplay(sessionDescription: SessionDescription): dom.html.TextArea = {
+      textarea(
+        readonly := true,
+        onfocus := { (ev: UIEvent) =>
+          ev.target.asInstanceOf[dom.html.TextArea].select()
+        },
+        writeToString(sessionDescription)(codec)
+      ).render
+    }
+
+    Async[Any] {
+      val lifecycle: ConnectorLifecycle = peer.lifecycle.bind
+      lifecycle.localSession match
+        case Some(s) => localSession.replaceChildren(sessionDisplay(s))
+        case None    => localSession.replaceChildren(offerButton)
+
+      lifecycle.remoteSession match
+        case Some(s) => remoteSession.replaceChildren(sessionDisplay(s))
+        case None    => remoteSession.replaceChildren(answerArea.render)
+
+      gatheringState.innerText = lifecycle.iceGatheringState
+      connectionState.innerText = lifecycle.iceConnectionState
+      signalingState.innerText = lifecycle.signalingState
+    }.run(using ())(errorReporter)
+
+    val res = table(
+      tr(
+        th("local session description"),
+        th("remote session description"),
+        th("iceGatheringState"),
+        th("iceConnectionState"),
+        th("signalingState")
+      ),
+      tr(localSession, remoteSession, gatheringState, connectionState, signalingState)
     )
 
-    val cb = button(
-      "accept",
-      onclick := { (_: UIEvent) =>
-        val cs = readFromString(renderedTa.value)(codec)
-        println(s"pending resolved, setting connector")
-        peer.accept(cs).run(using ())(handleSession)
-      }
-    )
+    res
 
-    section(renderedState, iceThings, hb, cb, renderedPre, renderedTa)
   }
 
 }
