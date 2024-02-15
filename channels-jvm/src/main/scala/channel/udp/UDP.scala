@@ -36,7 +36,8 @@ class UdpInChan(serverSocket: DatagramSocket) extends InChan {
 
   override def receive: Prod[MessageBuffer] = Async.fromCallback {
 
-    val receiveBuffer = new Array[Byte](1 << 20)
+    // 1 << 16 should be slighly larger than the max UDP/IP packets
+    val receiveBuffer = new Array[Byte](1 << 16)
 
     try { // scalafmt does not understand this without braces
       try
