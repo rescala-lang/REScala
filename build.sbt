@@ -11,10 +11,20 @@ lazy val channelsweb = project.in(file("channels-web"))
     Settings.scala3defaults,
     Dependencies.munit,
     Dependencies.scalajsDom,
+    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
+  ).dependsOn(interfaces.js)
+
+
+lazy val integrationweb = project.in(file("integration-web"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    Settings.scala3defaults,
+    Dependencies.munit,
+    Dependencies.scalajsDom,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
     jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
-  ).dependsOn(interfaces.js)
+  ).dependsOn(interfaces.js, channelsweb)
 
 lazy val interfaces = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .in(file("interfaces")).settings(
