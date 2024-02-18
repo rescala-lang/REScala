@@ -18,6 +18,7 @@ class ArrayRanges(
 
   override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges =>
+      if inner == ar.inner && used == ar.used then return true
       // would be nice to use the following, but does not exists on JS
       // util.Arrays.equals(inner, 0, used, ar.inner, 0, ar.used)
       val left  = inner.iterator.take(used)
