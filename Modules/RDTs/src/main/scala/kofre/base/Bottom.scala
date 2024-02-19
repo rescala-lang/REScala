@@ -83,9 +83,9 @@ object Bottom {
 
     class ProductBottom[T](pm: Mirror.ProductOf[T], bottoms: Tuple) extends Bottom[T] {
       override def empty: T =
-        type Unbottom[A] = A match { case Bottom[b] => b }
         pm.fromProduct(
-          bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
+          Tuple.fromArray:
+            bottoms.toArray.map[AnyRef](_.asInstanceOf[Bottom[AnyRef]].empty)
         )
       extension (value: T)
         override def isEmpty: Boolean =
