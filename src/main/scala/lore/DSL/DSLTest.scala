@@ -1,10 +1,12 @@
+package lore.DSL
+
 import lore.DSL._
 
 import rescala.default
 
 object DSLTest:
   @main
-  def main =
+  def main(): Unit =
     val a: Source[Int] = Source(0)
     val b: Derived[Int] = Derived { a() + a() }
     val add10 =
