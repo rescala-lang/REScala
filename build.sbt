@@ -1,4 +1,4 @@
-val circeVersion = "0.14.4"
+val circeVersion = "0.14.5"
 
 lazy val root = (project in file("."))
   .settings(
