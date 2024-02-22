@@ -6,7 +6,7 @@ import kofre.dotted.{Dotted, DottedLattice}
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.given
-import org.scalajs.dom.UIEvent
+import org.scalajs.dom
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default.*
 import rescala.extra.Tags.*
@@ -34,13 +34,13 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
-  def tag: TypedTag[LI]                                                   = cached.tag
+  def tag: LI                                                   = cached.tag
   def removed: Event[String]                                              = cached.removed
 }
 
 final class TaskRefData(
     val task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]],
-    val tag: TypedTag[LI],
+    val tag: dom.html.LI,
     val removed: Event[String],
     val id: String,
 ) {
@@ -60,7 +60,7 @@ object TaskReferences {
     TaskReferences.taskRefMap.getOrElseUpdate(id, { taskrefObj.createTaskRef(id, task) })
   }
 
-  def apply(toggleAll: Event[UIEvent], storePrefix: String): TaskReferences = {
+  def apply(toggleAll: Event[dom.Event], storePrefix: String): TaskReferences = {
     val taskrefs = new TaskReferences(toggleAll, storePrefix)
     TaskReferences.taskrefObj = taskrefs
     taskrefs
@@ -74,7 +74,7 @@ object TaskReferences {
     ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
-class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
+class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
   given fixedId: ReplicaId = replicaId
 
   def createTaskRef(
@@ -86,11 +86,11 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
       then DeltaBuffer(Dotted(LastWriterWins.fallback(task)))
       else DeltaBuffer(Dotted(LastWriterWins.now(task)))
 
-    val edittext: Event.CBR[UIEvent, HtmlTag] = Event.fromCallback {
-      input(`class` := "edit", `type` := "text", onchange := Event.handle[UIEvent], onblur := Event.handle[UIEvent])
+    val edittext: Event.CBR[dom.Event, HtmlTag] = Event.fromCallback {
+      input(`class` := "edit", `type` := "text", onchange := Event.handle[dom.Event], onblur := Event.handle[dom.Event])
     }
 
-    val edittextStr = edittext.event.map { (e: UIEvent) =>
+    val edittextStr = edittext.event.map { (e: dom.Event) =>
       val myinput = e.target.asInstanceOf[Input]
       myinput.value.trim
     }
@@ -142,7 +142,7 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
         removeButton.data
       ),
       editInput
-    )
+    ).render
 
     new TaskRefData(crdt, listItem, removeButton.event.map(_ => taskID), taskID)
   }

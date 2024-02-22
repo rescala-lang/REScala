@@ -198,12 +198,7 @@ class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
   implicit def signalStyleValue[T: StyleValue](implicit ds: DynamicScope[BundleState]): StyleValue[Signal[T]] =
     genericReactiveStyleValue[T, ({ type λ[T2] = Signal[T2] })#λ](ds, implicitly)
 
-  implicit def bindEvt[T]: generic.AttrValue[Element, Evt[T]] =
-    new generic.AttrValue[dom.Element, Evt[T]] {
-      def apply(t: dom.Element, a: generic.Attr, v: Evt[T]): Unit = {
-        t.asInstanceOf[js.Dynamic].updateDynamic(a.name)((e: T) => v.fire(e))
-      }
-    }
+
 
   implicit def optionAttrValue[T](implicit ev: AttrValue[T]): generic.AttrValue[Element, Option[T]] =
     new AttrValue[Option[T]] {

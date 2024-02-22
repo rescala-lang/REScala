@@ -25,7 +25,7 @@ object Todolist {
 
     val webrtc = WebRTCHandling(registry)
 
-    document.body.replaceChild(div.render, document.body.firstElementChild)
+    document.body.replaceChild(div, document.body.firstElementChild)
     document.body.appendChild(webrtc.webrtcHandlingArea.render)
     ()
   }

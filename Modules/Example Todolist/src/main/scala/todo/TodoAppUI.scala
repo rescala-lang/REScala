@@ -3,7 +3,8 @@ package todo
 import kofre.datatypes.contextual.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
-import org.scalajs.dom.{UIEvent, window}
+import org.scalajs.dom
+import org.scalajs.dom.{HTMLDivElement, KeyboardEvent, UIEvent, document, window}
 import rescala.default.*
 import rescala.extra.Tags.*
 import rescala.extra.replication.{DeltaFor, ReplicationGroup}
@@ -16,22 +17,26 @@ import todo.Todolist.replicaId
 import kofre.dotted.Dotted
 import kofre.syntax.DeltaBuffer
 import loci.serializer.jsoniterScala.given
+import rescala.structure.Pulse
+
+import scala.annotation.targetName
 
 class TodoAppUI(val storagePrefix: String) {
 
   val tasklistBinding    = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
   val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
 
-  def getContents(): TypedTag[Div] = {
+  def getContents(): Div = {
 
-    val todoInputTag: JsDom.TypedTag[Input] = input(
+    val todoInputTag: Input = input(
       id          := "newtodo",
       `class`     := "new-todo",
       placeholder := "What needs to be done?",
-      autofocus   := "autofocus"
-    )
+      autofocus   := "autofocus",
+      `type`      := "text"
+    ).render
 
-    val createTodo = inputFieldHandler(todoInputTag, onchange)
+    val createTodo = todoInputTag.inputEntered
 
     val removeAll = Event.fromCallback(button("remove all done todos", onclick := Event.handle))
 
@@ -41,7 +46,7 @@ class TodoAppUI(val storagePrefix: String) {
         name     := "toggle-all",
         `class`  := "toggle-all",
         `type`   := "checkbox",
-        onchange := Event.handle[UIEvent]
+        onchange := Event.handle[dom.Event]
       )
     }
 
@@ -53,21 +58,21 @@ class TodoAppUI(val storagePrefix: String) {
     val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
       Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
         Fold(init)(
-          taskOps.handleCreateTodo(createTodo.event),
+          taskOps.handleCreateTodo(createTodo),
           taskOps.handleRemoveAll(removeAll.event),
           Fold.branch {
             current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
           },
           taskOps.handleDelta(deltaEvt)
         )
-      }(using Codecs.codecRGA)
+      }
 
     tasklistReplicator.distributeDeltaRDT("tasklist", tasksRDT, deltaEvt)
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
       Signal.dynamic { tasksList.value.flatMap(l => l.task.value.read) }
-    val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
+    val taskTags: Signal[List[LI]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.drop(1)
 
@@ -76,7 +81,7 @@ class TodoAppUI(val storagePrefix: String) {
       header(
         `class` := "header",
         h1(if (largeheader.nonEmpty) largeheader else "todos"),
-        createTodo.data
+        todoInputTag
       ),
       section(
         `class` := "main",
@@ -85,12 +90,12 @@ class TodoAppUI(val storagePrefix: String) {
         label(`for` := "toggle-all", "Mark all as complete"),
         ul(
           `class` := "todo-list",
-          taskTags.asModifierL
-        )
+        ).render.reattach(taskTags)
       ),
       div(
         `class` := "footer",
         `style` := Signal { if (tasksData.value.isEmpty) "display:none" else "" },
+      ).render.reattach {
         Signal {
           val remainingTasks = tasksData.value.count(!_.done)
           span(
@@ -99,29 +104,53 @@ class TodoAppUI(val storagePrefix: String) {
             span(if (remainingTasks == 1)
               " item left"
             else " items left")
-          )
-        }.asModifier,
+          ).render
+        }
+      }.reattach {
         Signal {
-          removeAll.data(`class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}")
-        }.asModifier
-      )
-    )
-  }
-
-  def inputFieldHandler(tag: TypedTag[Input], attr: Attr): Event.CBR[String, Input] = {
-    val handler = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
-
-    val todoInputField: Input = handler.data.render
-
-    val handlerEvent =
-      handler.event.map { (e: UIEvent) =>
-        e.preventDefault()
-        val res = todoInputField.value.trim
-        todoInputField.value = ""
-        res
+          removeAll.data(`class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}").render
+        }
       }
-
-    Event.CBR(handlerEvent, todoInputField)
+    ).render
   }
+
+  extension (outer: dom.Element)
+    @targetName("reattachList")
+    def reattach(signal: Signal[Seq[dom.Element]]): outer.type = {
+      val range = document.createRange()
+      range.selectNodeContents(outer)
+      range.collapse(toStart = false)
+      signal.observe: v =>
+        range.deleteContents()
+        v.reverseIterator.foreach(range.insertNode)
+      outer
+    }
+
+    def reattach(signal: Signal[dom.Element]): outer.type = {
+      val range = document.createRange()
+      range.selectNodeContents(outer)
+      range.collapse(toStart = false)
+      signal.observe: v =>
+        range.deleteContents()
+        range.insertNode(v)
+      outer
+    }
+
+  extension (input: Input)
+    def inputEntered: Event[String] = {
+      val handler: Event.CBR[KeyboardEvent, Unit] = Event.fromCallback(input.onkeyup = Event.handle(_))
+
+      handler.event
+        .map { (e: KeyboardEvent) =>
+          if e.key == "Enter" then
+            val res = input.value.trim
+            if res.nonEmpty then
+              e.preventDefault()
+              input.value = ""
+              Some(res)
+            else None
+          else None
+        }.flatten
+    }
 
 }
