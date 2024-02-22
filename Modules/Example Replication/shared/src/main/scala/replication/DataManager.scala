@@ -94,7 +94,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     View(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def requestMissingBinding[PushBinding[Dots]] =
+  def requestMissingBinding: PushBinding[Dots] =
     @unused // this is a lie, but sometimes the compiler is confused
     given IdenticallyTransmittable[Dots] = IdenticallyTransmittable[Dots]()
     Binding[Dots => Unit]("requestMissing")
