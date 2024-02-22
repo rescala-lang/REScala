@@ -101,11 +101,10 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .jvmSettings(
     RescalaDependencies.tink
   )
-  .jsConfigure(_.enablePlugins(ScalablyTypedConverterPlugin))
+  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
     Compile / npmDependencies ++= Seq(
       "libsodium-wrappers"        -> "0.7.13",
-      "@types/libsodium-wrappers" -> "0.7.13"
     )
   )
 

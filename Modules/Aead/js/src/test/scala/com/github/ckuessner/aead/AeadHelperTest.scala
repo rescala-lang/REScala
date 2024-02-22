@@ -3,7 +3,6 @@ package com.github.ckuessner.aead
 import com.github.ckuessner.aead.AeadHelper
 import org.scalatest.BeforeAndAfter
 import org.scalatest.flatspec.AsyncFlatSpec
-import typings.libsodiumWrappers.mod as sodium
 
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js.typedarray.Uint8Array
@@ -27,8 +26,8 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       otherKey = AeadHelper.generateRawKey
       expectedCiphertextLength =
         testMessage.getBytes.length
-        + sodium.cryptoAeadXchacha20poly1305IetfABYTES.intValue()
-        + sodium.cryptoAeadXchacha20poly1305IetfNPUBBYTES.intValue()
+        + sodium.crypto_aead_xchacha20poly1305_ietf_ABYTES.intValue()
+        + sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES.intValue()
     }
   }
 
@@ -42,7 +41,7 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
     AeadHelper
       .ready()
       .map(_ => {
-        assert(key.length == sodium.cryptoAeadXchacha20poly1305IetfKEYBYTES)
+        assert(key.length == sodium.crypto_aead_xchacha20poly1305_ietf_KEYBYTES)
       })
   }
 

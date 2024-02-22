@@ -1,8 +1,5 @@
 package com.github.ckuessner.aead
 
-import typings.libsodiumWrappers.mod as sodium
-import typings.libsodiumWrappers.mod.StringOutputFormat
-
 import scala.concurrent.Future
 import scala.scalajs.js.typedarray.Uint8Array
 import scala.scalajs.js.undefined
@@ -23,9 +20,9 @@ object AeadHelper {
     sodium.ready.toFuture
   }
 
-  def toBase64(bytes: Uint8Array): String = sodium.toBase64(bytes, sodium.base64Variants.ORIGINAL)
+  def toBase64(bytes: Uint8Array): String = sodium.to_base64(bytes, base64Variants.ORIGINAL)
 
-  def fromBase64(bytes: String): Uint8Array = sodium.fromBase64(bytes, sodium.base64Variants.ORIGINAL)
+  def fromBase64(bytes: String): Uint8Array = sodium.from_base64(bytes, base64Variants.ORIGINAL)
 
   /** Generates a new AeadKey.
     *
@@ -42,7 +39,7 @@ object AeadHelper {
     *   The new key
     */
   def generateRawKey: Uint8Array = {
-    sodium.cryptoAeadXchacha20poly1305IetfKeygen()
+    sodium.crypto_aead_xchacha20poly1305_ietf_keygen()
   }
 
   /** Instantiates an AeadKey instance for the provided raw key material
@@ -65,7 +62,7 @@ object AeadHelper {
     */
   def aeadKeyFromBase64(rawKey: String): LibsodiumJsAeadKey = {
     LibsodiumJsAeadKey(
-      sodium.fromBase64(rawKey, sodium.base64Variants.ORIGINAL)
+      sodium.from_base64(rawKey, base64Variants.ORIGINAL)
     )
   }
 
@@ -75,7 +72,7 @@ object AeadHelper {
     *   A random nonce
     */
   private inline def generateRandomNonce(): Uint8Array = {
-    sodium.randombytesBuf(sodium.cryptoAeadXchacha20poly1305IetfNPUBBYTES)
+    sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)
   }
 
   /** Encrypts and authenticates a message along the authenticated non-confidential associated data.
@@ -93,7 +90,7 @@ object AeadHelper {
     */
   def encrypt(message: String, associatedData: String, key: Uint8Array): Try[Uint8Array] = Try {
     val nonce: Uint8Array = generateRandomNonce()
-    val cipherText = sodium.cryptoAeadXchacha20poly1305IetfEncrypt(message, associatedData, null, nonce, key, undefined)
+    val cipherText = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
     concatenateArrays(nonce, cipherText)
   }
 
@@ -112,7 +109,7 @@ object AeadHelper {
     */
   def encrypt(message: Uint8Array, associatedData: Uint8Array, key: Uint8Array): Try[Uint8Array] = Try {
     val nonce: Uint8Array = generateRandomNonce()
-    val cipherText = sodium.cryptoAeadXchacha20poly1305IetfEncrypt(message, associatedData, null, nonce, key, undefined)
+    val cipherText = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
     concatenateArrays(nonce, cipherText)
   }
 
@@ -131,7 +128,7 @@ object AeadHelper {
   def decrypt(encryptedMessage: Uint8Array, associatedData: Uint8Array, key: Uint8Array): Try[Uint8Array] = {
     val (usedNonce, cipherText) = extractNonceAndCiphertext(encryptedMessage)
     Try {
-      sodium.cryptoAeadXchacha20poly1305IetfDecrypt(null, cipherText, associatedData, usedNonce, key, undefined)
+      sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(null, cipherText, associatedData, usedNonce, key, undefined)
     }
   }
 
@@ -148,9 +145,9 @@ object AeadHelper {
     *   The plaintext of the encrypted message if the encryption was successful, or a Failure
     */
   def decrypt(encryptedMessage: Uint8Array, associatedData: String, key: Uint8Array): Try[String] = {
-    val (usedNonce, cipherText) = extractNonceAndCiphertext(encryptedMessage)
+    val (usedNonce: Uint8Array, cipherText: Uint8Array) = extractNonceAndCiphertext(encryptedMessage)
     Try {
-      sodium.cryptoAeadXchacha20poly1305IetfDecrypt(
+      sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
         null,
         cipherText,
         associatedData,
@@ -169,7 +166,7 @@ object AeadHelper {
   }
 
   private inline def extractNonceAndCiphertext(combinedCipherText: Uint8Array): (Uint8Array, Uint8Array) = {
-    val nonceLength: Int       = sodium.cryptoAeadXchacha20poly1305IetfNPUBBYTES.toInt
+    val nonceLength: Int       = sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES.toInt
     val usedNonce: Uint8Array  = combinedCipherText.subarray(0, nonceLength)
     val cipherText: Uint8Array = combinedCipherText.subarray(nonceLength, combinedCipherText.length)
     (usedNonce, cipherText)
