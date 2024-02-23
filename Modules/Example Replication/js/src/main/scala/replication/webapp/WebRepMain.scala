@@ -15,6 +15,7 @@ import scalatags.JsDom.implicits.{stringAttr, stringFrag}
 import scalatags.JsDom.tags.{SeqFrag, body}
 import scalatags.JsDom.tags2
 import scalatags.JsDom.tags2.{main}
+import scalatags.JsDom.all.bindNode
 
 import scala.annotation.nowarn
 import scala.concurrent.Future
@@ -61,19 +62,16 @@ object WebRepMain {
 
     val ccm = new ContentConnectionManager(exData.registry)
 
-    val bodySig = Signal {
-      body(
-        id := "index",
-        tags2.main(
-          HTML.providers(exData),
-          HTML.connectionManagement(ccm, exData),
-        )
-      )
-    }
-
     val bodyParent = dom.document.body.parentElement
     bodyParent.removeChild(dom.document.body)
-    bodySig.asModifier.applyTo(bodyParent)
+    bodyParent.appendChild(body(
+      id := "index",
+      tags2.main(
+        HTML.providers(exData),
+        HTML.connectionManagement(ccm, exData),
+      )
+    ).render)
+    ()
 
   }
 }
