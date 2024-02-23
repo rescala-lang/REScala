@@ -4,7 +4,7 @@ import rescala.core.*
 
 import rescala.core.Observation
 
-/** observers are normale reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
+/** observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
 object Observe {
 
   trait ObserveInteract extends Observation {
