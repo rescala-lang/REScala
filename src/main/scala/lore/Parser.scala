@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import java.nio.file.Path
 import cats.syntax.all._
 
-object Parser:
+object Parser {
   final case class ParsingException(message: String) extends Exception(message)
 
   // helper functions
@@ -21,9 +21,10 @@ object Parser:
     * first and last term are already known.
     */
   private def calcSourcePos(l: Term, r: Term): Option[SourcePos] =
-    for
+    for {
       sl <- l.sourcePos
       sr <- r.sourcePos
+    }
     yield sl.copy(end = sr.end)
   // helper definition for parsing sequences of expressions with operators as strings
   private def parseSeq(factor: P[Term], separator: P[String]) =
@@ -107,18 +108,20 @@ object Parser:
     P.defer(
       parens | fieldAcc | functionCall | number.backtrack | _var
     )
-  def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match
+  def evalArithm(seq: (Term, List[(String, Term)])): Term = seq match {
     case (x, Nil) => x
     case (l, (op, x) :: xs) if List("-", "+", "*", "/").contains(op) =>
       val r = evalArithm(x, xs)
       val s = calcSourcePos(l, r)
-      op match
+      op match {
         case "*" => TMul(left = l, right = r, sourcePos = s)
         case "/" => TDiv(left = l, right = r, sourcePos = s)
         case "+" => TAdd(left = l, right = r, sourcePos = s)
         case "-" => TSub(left = l, right = r, sourcePos = s)
+      }
     case sth =>
       throw new ParsingException(s"Not an arithmetic expression: $sth")
+  }
 
   // boolean expressions
   val booleanExpr: P[Term] = P
@@ -205,16 +208,18 @@ object Parser:
   val boolSeq = (factor: P[Term], separator: String) =>
     parseSeq(factor, P.string(separator).as(separator)).map(evalBoolSeq)
   def evalBoolSeq(seq: (Term, Seq[(String, Term)])): Term =
-    seq match
+    seq match {
       case (root, Nil) => root
       case (root, (op, x) :: xs) if List("||", "&&").contains(op) =>
         val r = evalBoolSeq(x, xs)
         val s = calcSourcePos(root, r)
-        op match
+        op match {
           case "||" => TDisj(left = root, right = r, sourcePos = s)
           case "&&" => TConj(left = root, right = r, sourcePos = s)
+        }
       case sth =>
         throw new ParsingException(s"Not a boolean expression: $sth")
+    }
 
   // set expressions
   val inSetFactor: P[Term] =
@@ -241,11 +246,12 @@ object Parser:
   )
     .map { case ((l, op), r) =>
       val s = calcSourcePos(l, r)
-      op match
+      op match {
         case "<=" => TLeq(left = l, right = r, sourcePos = s)
         case ">=" => TGeq(left = l, right = r, sourcePos = s)
         case "<"  => TLt(left = l, right = r, sourcePos = s)
         case ">"  => TGt(left = l, right = r, sourcePos = s)
+      }
     }
 
   // quantifiers
@@ -337,8 +343,9 @@ object Parser:
     ).map { case (obj, calls) => evalFieldAcc(obj, calls.toList) }
 
   // field accesses
-  private enum callType:
+  private enum callType {
     case round, curly, field
+  }
   private inline def callBuilder[A](
       open: P[Char],
       close: P[Unit],
@@ -362,7 +369,7 @@ object Parser:
       obj: Term,
       calls: List[((callType, ID, List[Term]), SourcePos)]
   ): TFAcc =
-    (obj, calls) match
+    (obj, calls) match {
       case (o: TFAcc, Nil) => o
       case (o, ((callType.curly, field, b :: Nil), s) :: rest) =>
         val pos = Some(SourcePos(start = o.sourcePos.get.start, end = s.end))
@@ -378,6 +385,7 @@ object Parser:
         )
       case x =>
         throw new ParsingException(s"Not a valid field access: $x")
+    }
 
   // functions
   val functionCall: P[TFunC] =
@@ -413,12 +421,13 @@ object Parser:
       P.defer(term))
       .map((args, r) => rewriteLambda(args.flatten.toList.reverse, r))
   def rewriteLambda(params: List[TVar], right: Term): TArrow =
-    (params, right) match
+    (params, right) match {
       case (Nil, r: TArrow) => r
       case (x :: xs, r) =>
         val s = calcSourcePos(params.head, right)
         rewriteLambda(xs, TArrow(x, r, sourcePos = s))
       case (Nil, r) => throw ParsingException(s"Not a valid lambda term: $r")
+    }
 
   // type aliases
   val typeAlias: P[TTypeAl] =
@@ -476,3 +485,4 @@ object Parser:
     term.repSep(wsOrNl).surroundedBy(wsOrNl) <* P.end
 
   def parse(p: String) = prog.parseAll(p)
+}

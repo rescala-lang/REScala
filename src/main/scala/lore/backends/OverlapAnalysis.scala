@@ -1,11 +1,11 @@
 package lore.backends
 import lore.AST._
 
-object OverlapAnalysis:
+object OverlapAnalysis {
 
   def overlappingInvariants(interaction: TInteraction)(using
       ctx: CompilationContext
-  ): Set[TInvariant] =
+  ): Set[TInvariant] = {
     val subgraph = reaches(interaction)
 
     return ctx.invariants
@@ -13,6 +13,7 @@ object OverlapAnalysis:
       .filter((_, reactives) => !(subgraph intersect reactives).isEmpty)
       .map((interaction, _) => interaction)
       .toSet
+  }
 
   /** Consumes an interaction and a compilation context and returns all
     * reactives that are affected by this interaction.
@@ -23,7 +24,7 @@ object OverlapAnalysis:
     */
   def reaches(interaction: TInteraction)(using
       ctx: CompilationContext
-  ): Set[ID] =
+  ): Set[ID] = {
     val graph = ctx.graph.view.mapValues((r, _) => r).toMap
     val dependencies: Map[String, Set[ID]] =
       ctx.graph.keys.map(name => (name, getSubgraph(name, graph))).toMap
@@ -37,3 +38,5 @@ object OverlapAnalysis:
         .toSet
 
     return interaction.modifies.flatMap(children).toSet
+  }
+}

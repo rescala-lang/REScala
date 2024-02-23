@@ -7,13 +7,15 @@ import lore.Parser
 type Source[A] = Var[A]
 type Derived[A] = Signal[A]
 
-object Source:
+object Source {
   inline def apply[A](inline expr: A): Var[A] = Var(expr)
+}
 
-object Derived:
+object Derived {
   inline def apply[A](inline expr: A): Signal[A] = Signal {
     expr
   }
+}
 
 // S = source type, A = argument type
 // case class Interaction(
@@ -25,14 +27,16 @@ object Derived:
 //     modifies: List[Source[A]],
 //     executes: () => List[A]
 // )
-private class InteractionWithTypes[S, A]:
+private class InteractionWithTypes[S, A] {
   inline def requires(inline expr: (S, A) => Boolean): InteractionWithRequires[S, A] = InteractionWithRequires(
     expr
   )
+}
 
-private class InteractionWithRequires[S, A](requires: (S, A) => Boolean):
+private class InteractionWithRequires[S, A](requires: (S, A) => Boolean) {
   inline def modifies(inline expr: Source[S]): InteractionWithRequiresAndModifies[S, A] =
     InteractionWithRequiresAndModifies(requires, expr)
+}
 
 // private class InteractionWithModifies[A](modifies: Source[A]):
 //   inline def executes(inline expr: A => A) =
@@ -43,27 +47,32 @@ private class InteractionWithRequires[S, A](requires: (S, A) => Boolean):
 private class InteractionWithRequiresAndModifies[S, A](
                                                         requires: (S, A) => Boolean,
                                                         modifies: Source[S]
-                                                      ):
+                                                      ) {
   inline def executes(inline expr: (S, A) => S)(using invariantManager: InvariantManager): A => Unit =
     (arg: A) =>
       modifies.transform(currVal =>
-        if !requires(currVal, arg) then
+        if !requires(currVal, arg) then {
           println(s"Requirement $requires evaluated to false!")
           currVal
+        }
         else
-          if !invariantManager.checkInvariants() then
+          if !invariantManager.checkInvariants() then {
             print(s"Invariants pre failed")
             currVal
-          else
+          }
+          else {
             val res = expr(currVal, arg)
 
-            if !invariantManager.checkInvariants() then
+            if !invariantManager.checkInvariants() then {
               print("Invariants post failed")
               currVal
+            }
             else
               res
+          }
 
       )
+}
 
 trait Invariant {
 
@@ -109,7 +118,7 @@ given defaultInvariantManager: InvariantManager = new InvariantManager {
   override def registeredInvariants: Seq[Invariant] = invariants
 }
 
-object Interaction:
+object Interaction {
   inline def apply[S, A](using invariantManager: InvariantManager): InteractionWithTypes[S, A] = InteractionWithTypes[S, A]
 
   // inline def modifies[A](source: Source[A]) = InteractionWithModifies(source)
@@ -117,10 +126,13 @@ object Interaction:
     ${
       makeFromRequires('b)
     }
+}
 
-def makeFromRequires(b: Expr[Boolean])(using Quotes) =
+def makeFromRequires(b: Expr[Boolean])(using Quotes) = {
   println(b.show)
-  Parser.parse(b.toString) match
+  Parser.parse(b.toString) match {
     case Left(err) => println(err)
     case Right(value) => println(value)
+  }
   b
+}

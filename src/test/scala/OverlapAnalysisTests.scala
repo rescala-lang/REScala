@@ -23,9 +23,10 @@ class OverlapAnalysisTests extends FunSuite {
                   |val j: Unit = Interaction[Int][Int]
                   |  .executes{0}
                   |  .modifies(b)""".stripMargin
-    val ast: NonEmptyList[Term] = Parser.parse(prog) match
+    val ast: NonEmptyList[Term] = Parser.parse(prog) match {
       case Left(e)      => throw Exception(e.show)
       case Right(value) => value
+    }
     val ctx: CompilationContext =
       flattenInteractions(CompilationContext(ast.toList))
 

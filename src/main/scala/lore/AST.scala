@@ -17,13 +17,15 @@ case class SourcePos(start: Caret, end: Caret, _type: SourceType = Unknown)
 
 /** The abstract syntax of the LoRe language.
   */
-sealed trait Term derives Codec.AsObject:
+sealed trait Term derives Codec.AsObject {
   def sourcePos: Option[SourcePos]
+}
 
 // helper trait for expressions with two sides
-sealed trait BinaryOp:
+sealed trait BinaryOp {
   def left: Term
   def right: Term
+}
 
 // imports
 case class TViperImport(path: Path, sourcePos: Option[SourcePos] = None)
@@ -84,18 +86,21 @@ case class TArrow( // anonymous functions
     right: Term,
     sourcePos: Option[SourcePos] = None
 ) extends Term
-    with BinaryOp:
-  private def findBody: Term => Term =
+    with BinaryOp {
+  private def findBody: Term => Term = {
     case t: TArrow => findBody(t.right)
     case t         => t
+  }
   def body: Term = findBody(right)
-  private def collectArgNames: (acc: List[ID], term: Term) => List[ID] =
+  private def collectArgNames: (acc: List[ID], term: Term) => List[ID] = {
     case (acc, TArrow(TVar(name, _), t: TArrow, _)) =>
       collectArgNames(acc :+ name, t)
     case (acc, TArrow(TVar(name, _), _, _)) =>
       acc :+ name
     case (acc, t) => acc
+  }
   def args: List[ID] = collectArgNames(List(), this)
+}
 
 case class TTypeAl(
     name: ID,
@@ -116,8 +121,9 @@ case class TAssume(body: Term, sourcePos: Option[SourcePos] = None)
     with TViper
 
 // reactives
-sealed trait TReactive extends Term:
+sealed trait TReactive extends Term {
   def body: Term
+}
 case class TSource(body: Term, sourcePos: Option[SourcePos] = None)
     extends TReactive
 case class TDerived(body: Term, sourcePos: Option[SourcePos] = None)
@@ -221,9 +227,10 @@ case class TInSet(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
     extends TBoolean
     with BinaryOp
 
-sealed trait TQuantifier extends TBoolean:
+sealed trait TQuantifier extends TBoolean {
   def vars: NonEmptyList[TArgT]
   def body: Term
+}
 case class TForall(
     vars: NonEmptyList[TArgT],
     triggers: List[NonEmptyList[Term]],
@@ -247,9 +254,10 @@ case class TString(value: String, sourcePos: Option[SourcePos] = None)
 
 // Scala stuff
 // field access
-sealed trait TFAcc extends Term:
+sealed trait TFAcc extends Term {
   def parent: Term
   def field: ID
+}
 case class TFCall( // field call
     parent: Term,
     field: ID,

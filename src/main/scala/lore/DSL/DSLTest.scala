@@ -4,9 +4,9 @@ import lore.DSL._
 
 import rescala.default
 
-object DSLTest:
+object DSLTest {
   @main
-  def main(): Unit =
+  def main(): Unit = {
     val a: Source[Int] = Source(0)
     val b: Derived[Int] = Derived { a() + a() }
     
@@ -30,3 +30,5 @@ object DSLTest:
     println(s"a: ${a.now}, b: ${b.now}")
     add10(0)
     println(s"a: ${a.now}, b: ${b.now}")
+  }
+}

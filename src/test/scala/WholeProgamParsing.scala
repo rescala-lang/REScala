@@ -7,7 +7,7 @@ import cats.implicits._
 import java.nio.charset.StandardCharsets
 import cats.data.NonEmptyList
 
-class WholeProgramParsing extends FunSuite:
+class WholeProgramParsing extends FunSuite {
   def readResource(name: String): String =
     String(
       getClass.getClassLoader.getResourceAsStream(name).readAllBytes,
@@ -25,15 +25,16 @@ class WholeProgramParsing extends FunSuite:
       |val work: Source[Calendar] = Source(AWSet())
       |5 + 24 * 10 > 0 ==> true
       |""".stripMargin
-    Parser.prog.parseAll(prog) match
+    Parser.prog.parseAll(prog) match {
       case Left(e)  => fail(e.show)
       case Right(e) => ()
+    }
   }
 
-  test("imports"):
+  test("imports") {
     val prog = "//> viperimport deps/calendar_header.vpr"
     val astStr = readResource("viperimport.ast")
-    Parser.prog.parseAll(prog) match
+    Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
@@ -43,16 +44,19 @@ class WholeProgramParsing extends FunSuite:
         //   Path.of("src/test/resources/viperimport.ast"),
         //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
         // )
-        decode[NonEmptyList[Term]](astStr) match
+        decode[NonEmptyList[Term]](astStr) match {
           // check if AST matches expectation
           case Right(ast) =>
             assertEquals(parsed, ast);
           case Left(err) => fail(err.show)
+        }
+    }
+  }
 
   test("calendar new") {
     val prog = readResource("calendar_new.lore")
     val astStr = readResource("calendar_new.ast")
-    Parser.prog.parseAll(prog) match
+    Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
@@ -62,18 +66,20 @@ class WholeProgramParsing extends FunSuite:
         //   Path.of("src/test/resources/calendar_new.ast"),
         //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
         // )
-        decode[NonEmptyList[Term]](astStr) match
+        decode[NonEmptyList[Term]](astStr) match {
           // check if AST matches expectation
           case Right(ast) =>
             assertEquals(parsed, ast);
 
           case Left(err) => fail(err.show)
+        }
+    }
   }
 
   test("calendar advanced") {
     val prog = readResource("calendar_advanced.lore")
     val astStr = readResource("calendar_advanced.ast")
-    Parser.prog.parseAll(prog) match
+    Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
@@ -81,10 +87,13 @@ class WholeProgramParsing extends FunSuite:
         //   Path.of("examples/calendar_advanced.ast"),
         //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
         // )
-        decode[NonEmptyList[Term]](astStr) match
+        decode[NonEmptyList[Term]](astStr) match {
           // check if AST matches expectation
           case Right(ast) =>
             assertEquals(parsed, ast);
 
           case Left(err) => fail(err.show)
+        }
+    }
   }
+}

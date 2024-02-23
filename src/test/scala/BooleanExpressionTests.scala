@@ -220,9 +220,10 @@ class BooleanExpressionParsing extends ParserSuite {
     )
 
     // this should fail
-    p.parseAll("false != (true ==> false") match
+    p.parseAll("false != (true ==> false") match {
       case Left(e: cats.parse.Parser.Error) => ()
       case _                                => fail("This should fail!")
+    }
   }
 
   test("number comparison") {
