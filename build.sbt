@@ -22,8 +22,8 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   examples,
   todolist,
   encryptedTodo,
-  // replicationExamples.js,
-  // replicationExamples.jvm,
+  replicationExamples.js,
+  replicationExamples.jvm,
 )
 
 lazy val rescalaAggregate =
