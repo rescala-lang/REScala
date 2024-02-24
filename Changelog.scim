@@ -1,5 +1,20 @@
 = Changelog
 
+== v0.35.0
+date = 2024-02-24
+
+This is a smaller release meant to mark a stable point before incompatible changes
+
+
+reactives:
+
+• allow .value inside fold
+
+replicated data types:
+
+• remove dotset/map/fun, now generically generated from maps
+
+
 == v0.34.0
 date = 2023-11-10
 
