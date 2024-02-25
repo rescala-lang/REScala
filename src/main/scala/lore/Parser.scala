@@ -1,6 +1,6 @@
 package lore
 
-import AST._
+import ast._
 import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
 import cats.parse.Rfc5234.{alpha, crlf, digit, lf, wsp}
 import cats.data.NonEmptyList
@@ -64,7 +64,7 @@ object Parser {
     (t: P[Type]) => P.char('(') *> innerType(t) <* P.char(')')
   // val underscore: P[ID] = P.char('_').as("_")
 
-  // begin AST Nodes
+  // begin ast Nodes
   val number: P[TNum] =
     withSourcePos(digit.rep.string)
       .map((i, s) => TNum(Integer.parseInt(i), sourcePos = Some(s)))

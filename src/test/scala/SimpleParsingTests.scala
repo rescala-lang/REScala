@@ -1,6 +1,6 @@
 package lore
 import cats.implicits._
-import lore.AST._
+import lore.ast._
 import lore.test.util.ParserSuite
 import java.nio.file.Path
 import cats.data.NonEmptyList

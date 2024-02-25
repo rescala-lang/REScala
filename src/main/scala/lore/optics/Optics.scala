@@ -2,7 +2,7 @@ package lore.optics
 
 import monocle.{Traversal}
 import cats.implicits._
-import lore.AST._
+import lore.ast._
 import cats.Applicative
 import monocle.Lens
 import monocle.Fold
@@ -280,7 +280,7 @@ val children: Fold[Term, Term] =
 //         // case t: TForall(vars, triggers, body, sourcePos) =>
 //         // case t: TExists(vars, body, sourcePos)           =>
 //         // case t: TParens(inner, sourcePos)                =>
-//         // case t: TString(value, sourcePos)                =>
+//         // case t: TString(arg, sourcePos)                =>
 //         // case t: TFCall(parent, field, args, sourcePos)   =>
 //         // case t: TFCurly(parent, field, body, sourcePos)  =>
 //         // case t: TFunC(name, args, sourcePos)             =>

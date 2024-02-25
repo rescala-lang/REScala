@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path, Paths}
 import com.monovore.decline._
 import cats.implicits._
 import cats.data.NonEmptyList
-import lore.AST.Term
+import lore.ast.Term
 import java.nio.file.NoSuchFileException
 import lore.Parser.ParsingException
 import lore.backends.ViperBackend
@@ -26,7 +26,7 @@ object Compiler extends IOApp {
   }
   yield ()
 
-  def toScala(ast: NonEmptyList[AST.Term], options: Options): IO[Unit] = {
+  def toScala(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
     ???
     // for
     //   result <- IO(ScalaBackend.toAmm(ast))
@@ -36,7 +36,7 @@ object Compiler extends IOApp {
     // yield result
   }
 
-  def toViper(ast: NonEmptyList[AST.Term], options: Options): IO[Unit] = {
+  def toViper(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
     ViperBackend.compileAsSingleFile(ast.toList)
     options.outputOptions match {
       case OutputOptions.SplitMode(outDir) =>

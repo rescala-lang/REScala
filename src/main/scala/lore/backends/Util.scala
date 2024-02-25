@@ -1,6 +1,6 @@
 package lore.backends
 
-import lore.AST.*
+import lore.ast.*
 import lore.optics.given
 
 import scala.annotation.tailrec

@@ -1,6 +1,6 @@
-package lore.DSL
+package lore.dsl
 
-import lore.DSL._
+import lore.dsl._
 
 import rescala.default
 
@@ -17,18 +17,14 @@ object DSLTest {
         .requires((curr, _) => curr < 20)
         .modifies(a)
         .executes((curr, _) => curr + 10)
-    //   .requires((curr, _) => curr < 20)
-    //   .modifies(a)
-    //   .requires(() => false)
-    //   .executes((curr) => curr + 10)
     
     Invariant("two")
-    
+
+    a observe(v => println(s"a: $v"))
+    b observe(v => println(s"b: $v"))
+
     add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
     add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
     add10(0)
-    println(s"a: ${a.now}, b: ${b.now}")
   }
 }

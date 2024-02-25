@@ -1,5 +1,5 @@
 package lore.backends
-import lore.AST._
+import lore.ast._
 import munit.FunSuite
 import lore.backends._
 import cats.implicits._

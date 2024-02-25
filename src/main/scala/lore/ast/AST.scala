@@ -1,4 +1,4 @@
-package lore.AST
+package lore.ast
 
 import io.circe._
 import cats.data.NonEmptyList

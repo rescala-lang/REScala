@@ -1,6 +1,6 @@
 package lore.backends
 
-import lore.AST._
+import lore.ast._
 import cats.implicits._
 
 object ViperBackend {
@@ -284,7 +284,7 @@ object ViperBackend {
         case t =>
           if interaction.modifies.length != 1 then
             throw ViperCompilationException(
-              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only a simple value was given: $t"
+              s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only a simple arg was given: $t"
             )
           s"graph.${interaction.modifies.head} := ${expressionToViper(t)}"
       }

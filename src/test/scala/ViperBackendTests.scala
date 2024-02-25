@@ -1,6 +1,6 @@
 package lore
 import munit.FunSuite
-import lore.AST.*
+import lore.ast.*
 import lore.backends.ViperBackend
 
 class ViperBackendSuite extends FunSuite {

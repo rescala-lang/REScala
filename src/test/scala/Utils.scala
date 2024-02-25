@@ -2,7 +2,7 @@ package lore.test.util
 import munit.FunSuite
 import cats.parse.{Parser => P}
 import cats.implicits._
-import lore.AST.Term
+import lore.ast.Term
 import lore.backends.traverseFromNode
 import lore.optics._
 

@@ -1,6 +1,6 @@
 package lore
 import munit.FunSuite
-import lore.AST._
+import lore.ast._
 import io.circe.parser.decode
 import cats.parse
 import cats.implicits._

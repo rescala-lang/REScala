@@ -1,5 +1,5 @@
 package lore
-import lore.AST._
+import lore.ast._
 import munit.FunSuite
 import cats.data.NonEmptyList
 import lore.backends.traverseFromNode

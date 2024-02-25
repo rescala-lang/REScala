@@ -1,5 +1,5 @@
 package lore
-import lore.AST._
+import lore.ast._
 import cats.parse.Parser.Expectation
 import cats.data.NonEmptyList
 import lore.test.util.ParserSuite
