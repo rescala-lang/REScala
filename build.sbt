@@ -1,5 +1,5 @@
-import LocalDependencies.*
-import Settings.*
+import LocalDependencies._
+import Settings._
 
 lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   // core
