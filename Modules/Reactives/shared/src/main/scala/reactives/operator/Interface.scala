@@ -28,6 +28,7 @@ trait Interface {
 
   export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
 
+  // TODO: remove once no more references are present
   type BundleState[V] = State[V]
 
   /** @group internal */
