@@ -72,7 +72,7 @@ date = 2021-12-07
 • drop checked macro support, use snapshot helpers instead
 • promote fullMV scheduler to published artifact
 • add experimental reactor syntax
-• internal refactoring for scala 3 support (-macros)
+• internal refactoring for Scala 3 support (-macros)
 
 
 == v0.30.0
@@ -152,7 +152,7 @@ date = 2018-01-28
 
 * Reactive expressions are now static by default,
 and complain if any dynamic access happens.
-* Event.map is now also a macro and allows to access reactives.
+* Event.map is now also a macro and allows accessing reactives.
 * Internal interface cleanups and performance improvements.
 
 
@@ -220,7 +220,7 @@ date = 2015-06-20
 date = 2015-06-15
 
 AtomicReferences instead of synchronized for lock implementation
-ParRP turn refectaring
+ParRP turn refactoring
 remove cyclic reference between turns and engines
 experimental GC starting from unused sources
 
@@ -228,8 +228,8 @@ experimental GC starting from unused sources
 date = 2015-03-12
 
 disabled assertions
-added exponetial backoff as a combined waiting strategy
-bugfixes and code cleanups
+added exponential back-off as a combined waiting strategy
+bug fixes and code cleanups
 
 == v0.10.0
 date = 2015-02-11
@@ -252,7 +252,7 @@ reactives with a single static dependency now reuse the lock of their predecesso
 date = 2014-12-19
 
 added STM turns
-added yielidng turns
+added yielding turns
 philosophers are back! and eating!
 
 == v0.6.0
