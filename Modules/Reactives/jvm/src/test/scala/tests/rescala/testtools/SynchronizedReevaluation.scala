@@ -2,6 +2,7 @@ package tests.rescala.testtools
 
 import reactives.core.CreationTicket
 import reactives.operator.Interface
+import reactives.operator.Interface.State
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
@@ -39,13 +40,13 @@ class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
   import api._
 
   def SynchronizedReevaluation[A](sig: Signal[A])(implicit
-      turnSource: CreationTicket[BundleState]
+      turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
   def SynchronizedReevaluation[A](evt: Event[A])(implicit
-      turnSource: CreationTicket[BundleState]
+      turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, evt.map(sync.reev))

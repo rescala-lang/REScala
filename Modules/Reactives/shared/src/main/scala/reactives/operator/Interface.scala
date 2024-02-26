@@ -1,6 +1,8 @@
 package reactives.operator
 
 import reactives.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
+import reactives.scheduler.LevelbasedVariants
+import reactives.operator.Interface.State
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -24,11 +26,13 @@ import reactives.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
   */
 trait Interface extends Operators {
 
-  /** @group internal */
-  val scheduler: Scheduler[BundleState]
+  type BundleState[V] = State[V]
 
   /** @group internal */
-  implicit def implicitScheduler: Scheduler[BundleState] = scheduler
+  val scheduler: Scheduler[State]
+
+  /** @group internal */
+  implicit def implicitScheduler: Scheduler[State] = scheduler
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
@@ -43,7 +47,7 @@ trait Interface extends Operators {
     * @group update
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
-  def transaction[R](initialWrites: ReSource.of[BundleState]*)(admissionPhase: AdmissionTicket[BundleState] => R): R = {
+  def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
     scheduler.forceNewTransaction(initialWrites*)(admissionPhase)
   }
 
@@ -51,9 +55,9 @@ trait Interface extends Operators {
     * @see transaction
     * @group update
     */
-  def transactionWithWrapup[I, R](iw: ReSource.of[BundleState]*)(ap: AdmissionTicket[BundleState] => I)(wrapUp: (
+  def transactionWithWrapup[I, R](iw: ReSource.of[State]*)(ap: AdmissionTicket[State] => I)(wrapUp: (
       I,
-      Transaction[BundleState]
+      Transaction[State]
   ) => R): R = {
     var res: Option[R] = None
     transaction(iw*)(at => {
@@ -65,10 +69,11 @@ trait Interface extends Operators {
 }
 
 object Interface {
-  class FromScheduler[S[_]](override val scheduler: Scheduler[S]) extends Interface {
-    override type BundleState[V] = S[V]
-  }
-  def from[S[_]](sched: Scheduler[S]): FromScheduler[S] =
+  class FromScheduler(override val scheduler: Scheduler[State]) extends Interface
+  def from(sched: Scheduler[State]): FromScheduler =
     FromScheduler(sched)
+
+  type State[V] = LevelbasedVariants.State[V]
+  val default: Scheduler[State] = LevelbasedVariants.synchron
 
 }

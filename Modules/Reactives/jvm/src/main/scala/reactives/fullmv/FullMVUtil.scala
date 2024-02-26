@@ -9,10 +9,10 @@ import java.util.concurrent.ForkJoinPool
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class FullMVApi(val timeout: Duration, val schedulerName: String) extends Interface with FullMVBundle with Mirror
+class FullMVApi(val timeout: Duration, val schedulerName: String) extends FullMVBundle with Mirror
     with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
-  override type BundleState[V] = State[V]
-  override val scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
+  type BundleState[V] = State[V]
+  val scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
 }
 
 object FullMVUtil {

@@ -2,6 +2,8 @@ package reactives.core.reactor
 
 import reactives.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import reactives.macros.MacroAccess
+import reactives.operator.Interface
+import reactives.operator.Interface.State
 import tests.rescala.testtools.RETests
 
 class ReactorWithoutAPITest extends RETests {
@@ -10,13 +12,13 @@ class ReactorWithoutAPITest extends RETests {
   import reactives.default._
 
   class Reactor[T](
-      initState: BundleState[ReactorStage[T]]
+      initState: State[ReactorStage[T]]
   ) extends reactives.core.Derived
       with ReadAs[T]
       with MacroAccess[T] {
 
     override type Value    = ReactorStage[T]
-    override type State[V] = reactives.default.BundleState[V]
+    override type State[V] = Interface.State[V]
 
     override protected[reactives] def state: State[ReactorStage[T]] = initState
     override def info: ReInfo                                     = ReInfo.create.derive("Custom Reactor")
@@ -124,13 +126,13 @@ class ReactorWithoutAPITest extends RETests {
       */
     def once[T](
         initialValue: T,
-        dependencies: Set[ReSource.of[BundleState]]
-    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[BundleState]): Reactor[T] = {
+        dependencies: Set[ReSource.of[State]]
+    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
       ct.create(
         dependencies,
         new ReactorStage[T](initialValue, stageBuilder),
         needsReevaluation = true
-      ) { (createdState: BundleState[ReactorStage[T]]) =>
+      ) { (createdState: State[ReactorStage[T]]) =>
         new Reactor[T](createdState)
       }
     }

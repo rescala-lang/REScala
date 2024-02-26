@@ -1,8 +1,7 @@
 package reactives.operator
 
-import reactives.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
-}
+import reactives.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch}
+import reactives.operator.Interface.State
 import reactives.structure.Pulse
 
 trait SourceBundle {
@@ -19,8 +18,8 @@ trait SourceBundle {
     * @tparam T Type returned when the event fires
     * @tparam S Struct type used for the propagation of the event
     */
-  class Evt[T] private[reactives] (initialState: BundleState[Pulse[T]], name: ReInfo)
-      extends Base[BundleState, Pulse[T]](initialState, name)
+  class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
+      extends Base[State, Pulse[T]](initialState, name)
       with Source[T]
       with Event[T] {
     override type Value = Pulse[T]
@@ -52,7 +51,7 @@ trait SourceBundle {
   }
 
   /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket[BundleState]): Evt[A] = {
+  final def Evt[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
     ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.info) }: Evt[A])
   }
 
@@ -60,8 +59,8 @@ trait SourceBundle {
     *
     * @tparam A Type stored by the signal
     */
-  class Var[A] private[reactives] (initialState: BundleState[Pulse[A]], name: ReInfo)
-      extends Base[BundleState, Pulse[A]](initialState, name)
+  class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
+      extends Base[State, Pulse[A]](initialState, name)
       with Source[A] with Signal[A] {
     override type Value = Pulse[A]
 
@@ -102,9 +101,9 @@ trait SourceBundle {
     * @group create
     */
   object Var {
-    def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): Var[T] = fromChange(Pulse.Value(initval))
-    def empty[T](implicit ticket: CreationTicket[BundleState]): Var[T]             = fromChange(Pulse.empty)
-    private def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): Var[T] = {
+    def apply[T](initval: T)(implicit ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
+    def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty)
+    private def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[State]): Var[T] = {
       ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.info))
     }
   }

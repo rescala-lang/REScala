@@ -7,7 +7,7 @@ class CreationTicketTest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    if (engine != reactives.interfaces.toposort) {
+    //if (engine != reactives.interfaces.toposort) {
       /* this test uses some shady planned()(identity) to get the turn object out of the transaction
        * you should not do this. */
       def getTurn(implicit engine: Scheduler[BundleState]): Transaction[BundleState] =
@@ -60,6 +60,6 @@ class CreationTicketTest extends RETests {
         }
       }
 
-    }
+    //}
   }
 }

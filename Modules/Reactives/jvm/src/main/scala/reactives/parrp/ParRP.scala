@@ -5,9 +5,9 @@ import reactives.locking.*
 import reactives.operator.Interface
 import reactives.scheduler.Levelbased
 
-object ParRPDefault extends Interface with ParRP {
-  override val scheduler = parrpWithBackoff(() => new Backoff())
-  override type BundleState[V] = State[V]
+object ParRPDefault extends ParRP {
+  val scheduler = parrpWithBackoff(() => new Backoff())
+  type BundleState[V] = State[V]
 }
 trait ParRP extends Levelbased {
 

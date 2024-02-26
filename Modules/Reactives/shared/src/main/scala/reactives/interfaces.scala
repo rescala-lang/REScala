@@ -9,16 +9,16 @@ object interfaces extends PlatformInterfaces {
 
   val synchron: Interface = Interface.from(LevelbasedVariants.synchron)
 
-  val toposort: Interface = Interface.from(TopbundleImpl.TopoScheduler)
-
-  val sidup: Interface = Interface.from(SynchronizedSidup.scheduler)
+//  val toposort: Interface = Interface.from(TopbundleImpl.TopoScheduler)
+//
+//  val sidup: Interface = Interface.from(SynchronizedSidup.scheduler)
 
   override def byName(name: String): Interface =
     name match {
       case "synchron"  => synchron
       case "unmanaged" => unmanaged
-      case "toposort"  => toposort
-      case "sidup"     => sidup
+//      case "toposort"  => toposort
+//      case "sidup"     => sidup
       case other       => super.byName(name)
     }
 }

@@ -2,15 +2,17 @@ package reactives.core.tests
 
 import reactives.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
 import tests.rescala.testtools.RETests
+import reactives.operator.Interface
+import reactives.operator.Interface.State
 
 class WithoutAPITest extends RETests {
   multiEngined { engine =>
     import engine._
 
-    class CustomSource[T](initState: BundleState[T]) extends reactives.core.ReSource with ReadAs[T] {
+    class CustomSource[T](initState: State[T]) extends reactives.core.ReSource with ReadAs[T] {
       outer =>
 
-      override type State[V] = engine.BundleState[V]
+      override type State[V] = Interface.State[V]
 
       override type Value = T
       override protected[reactives] def state: State[T]            = initState
@@ -31,12 +33,12 @@ class WithoutAPITest extends RETests {
     }
 
     class CustomDerivedString(
-        initState: BundleState[String],
-        inputSource: ReadAs.of[BundleState, String]
+        initState: State[String],
+        inputSource: ReadAs.of[State, String]
     ) extends Derived
         with ReadAs[String] {
       override type Value    = String
-      override type State[V] = engine.BundleState[V]
+      override type State[V] = Interface.State[V]
       override protected[reactives] def state: State[Value]        = initState
       override val info: ReInfo                                  = ReInfo.create
       override protected[reactives] def commit(base: Value): Value = base
@@ -52,15 +54,15 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        implicitly[CreationTicket[BundleState]]
+        implicitly[CreationTicket[State]]
           .createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
       assert(transaction(customSource) { _.now(customSource) } === "Hi!")
 
-      val customDerived: ReadAs.of[BundleState, String] =
-        implicitly[CreationTicket[BundleState]]
+      val customDerived: ReadAs.of[State, String] =
+        implicitly[CreationTicket[State]]
           .create(
             Set(customSource),
             "Well, this is an initial value",

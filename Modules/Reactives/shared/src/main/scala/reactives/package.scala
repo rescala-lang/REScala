@@ -9,5 +9,5 @@ package object reactives {
     * Events and signals can be created from other reactives by using combinators,
     * signals additionally can be created using [[reactives.default.Signal]] expressions.
     */
-  object default extends Interface.FromScheduler(reactives.interfaces.defaultPlatformScheduler)
+  object default extends Interface.FromScheduler(Interface.default)
 }

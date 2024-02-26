@@ -2,6 +2,7 @@ package reactives.operator
 
 import reactives.core.*
 import reactives.macros.MacroAccess
+import reactives.operator.Interface.State
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 
@@ -23,7 +24,7 @@ trait SignalBundle {
     * @groupprio accessor 5
     */
   trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
-    override type State[V] = selfType.BundleState[V]
+    override type State[V] = Interface.State[V]
     override type Value <: Pulse[T]
     override def read(v: Value): T                             = v.get
     override protected[reactives] def commit(base: Value): Value = base
@@ -147,27 +148,27 @@ trait SignalBundle {
     */
   object Signal {
 
-    inline def apply[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = static(expr)
+    inline def apply[T](using CreationTicket[State])(inline expr: T): Signal[T] = static(expr)
 
-    inline def static[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = {
+    inline def static[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
       val (inputs, fun, isStatic) =
-        reactives.macros.getDependencies[T, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true](expr)
+        reactives.macros.getDependencies[T, ReSource.of[State], reactives.core.StaticTicket[State], true](expr)
       Signal.static(inputs*)(fun)
     }
 
-    inline def dynamic[T](using CreationTicket[BundleState])(inline expr: T): Signal[T] = {
+    inline def dynamic[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
       val (sources, fun, isStatic) =
-        reactives.macros.getDependencies[T, ReSource.of[BundleState], reactives.core.DynamicTicket[BundleState], false](
+        reactives.macros.getDependencies[T, ReSource.of[State], reactives.core.DynamicTicket[State], false](
           expr
         )
       Signal.dynamic(sources*)(fun)
     }
 
     /** creates a new static signal depending on the dependencies, reevaluating the function */
-    def static[T](dependencies: ReSource.of[BundleState]*)(expr: StaticTicket[BundleState] => T)(implicit
-        ct: CreationTicket[BundleState]
+    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
+        ct: CreationTicket[State]
     ): Signal[T] = {
-      ct.create[Pulse[T], SignalImpl[BundleState, T] & Signal[T]](
+      ct.create[Pulse[T], SignalImpl[State, T] & Signal[T]](
         dependencies.toSet,
         Pulse.empty,
         needsReevaluation = true
@@ -177,11 +178,11 @@ trait SignalBundle {
     }
 
     /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-    def dynamic[T](dependencies: ReSource.of[BundleState]*)(expr: DynamicTicket[BundleState] => T)(implicit
-        ct: CreationTicket[BundleState]
+    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(implicit
+        ct: CreationTicket[State]
     ): Signal[T] = {
       val staticDeps = dependencies.toSet
-      ct.create[Pulse[T], SignalImpl[BundleState, T] & Signal[T]](
+      ct.create[Pulse[T], SignalImpl[State, T] & Signal[T]](
         staticDeps,
         Pulse.empty,
         needsReevaluation = true
@@ -192,12 +193,12 @@ trait SignalBundle {
 
     /** converts a future to a signal */
     def fromFuture[A](fut: Future[A])(implicit
-        scheduler: Scheduler[BundleState],
+        scheduler: Scheduler[State],
         ec: ExecutionContext,
         name: ReInfo
     ): Signal[A] = {
       val creationTicket =
-        new CreationTicket[BundleState](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
+        new CreationTicket[State](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
       fut.value match {
         case Some(Success(value)) =>
           Var(value)(creationTicket)
@@ -221,15 +222,15 @@ trait SignalBundle {
       }
     }
 
-    def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[BundleState]): Signal[R] = {
+    def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[State]): Signal[R] = {
       Signal.static(los*) { t => fun(los.map(s => t.dependStatic(s))) }
     }
 
-    def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[BundleState]): Signal[B] =
+    def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[State]): Signal[B] =
       Signal { fun(n1.value) }
 
     def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(using
-        CreationTicket[BundleState]
+        CreationTicket[State]
     ): Signal[B] = {
       Signal { fun(n1.value, n2.value) }
     }

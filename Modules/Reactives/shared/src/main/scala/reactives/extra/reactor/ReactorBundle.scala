@@ -3,15 +3,16 @@ package reactives.extra.reactor
 import reactives.core.{CreationTicket, Derived, ReInfo, Scheduler}
 import reactives.macros.MacroAccess
 import reactives.operator.Interface
+import reactives.operator.Interface.State
 
 class ReactorBundle[Api <: Interface](val api: Api) {
   import api._
   class Reactor[T](
-      initState: BundleState[ReactorState[T]]
+      initState: State[ReactorState[T]]
   ) extends Derived with MacroAccess[T] {
 
     override type Value    = ReactorState[T]
-    override type State[V] = ReactorBundle.this.api.BundleState[V]
+    override type State[V] = Interface.State[V]
 
     override protected[reactives] def state: State[ReactorState[T]] = initState
     override protected[reactives] def commit(base: Value): Value    = base
@@ -137,13 +138,13 @@ class ReactorBundle[Api <: Interface](val api: Api) {
     }
 
     private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit
-        ct: CreationTicket[BundleState]
+        ct: CreationTicket[State]
     ): Reactor[T] = {
       ct.create(
         Set(),
         new ReactorState[T](initialValue, initialStage),
         needsReevaluation = true
-      ) { (createdState: BundleState[ReactorState[T]]) =>
+      ) { (createdState: State[ReactorState[T]]) =>
         new Reactor[T](createdState)
       }
     }

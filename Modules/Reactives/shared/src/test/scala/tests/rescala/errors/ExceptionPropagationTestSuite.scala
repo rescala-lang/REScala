@@ -139,9 +139,9 @@ class ExceptionPropagationTestSuite extends RETests {
 
       intercept[ObservedException] { v.set(0) }
       assert(res === 100 / 42, "observers are not triggered on failure")
-      if (engine != reactives.interfaces.toposort) {
+      //if (engine != reactives.interfaces.toposort) {
         assert(v.readValueOnce === 42, "transaction is aborted on failure")
-      }
+      //}
     }
 
     test("do not observe emptiness") {
@@ -162,7 +162,7 @@ class ExceptionPropagationTestSuite extends RETests {
     }
 
     test("abort combinator") {
-      if (engine != reactives.interfaces.toposort) {
+      //if (engine != reactives.interfaces.toposort) {
         val v  = Var(0)
         val ds = Signal { div(v.value) }
 
@@ -175,7 +175,7 @@ class ExceptionPropagationTestSuite extends RETests {
         intercept[ObservedException] { v.set(0) }
         assert(ds.readValueOnce === 100 / 42, "observers are not triggered on failure")
         assert(v.readValueOnce === 42, "transaction is aborted on failure")
-      }
+      //}
     }
 
     test("partial recovery") {

@@ -68,6 +68,8 @@ trait InvariantBundle extends TopoBundle {
     override protected def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
   }
 
+  extension (res: reactives.core.ReSource) def ustate: InvariantState[res.Value] = res.state.asInstanceOf[InvariantState[res.Value]]
+
   object InvariantScheduler extends TopoSchedulerInterface {
 
     override def schedulerName: String = "SimpleWithInvariantSupport"
@@ -78,12 +80,12 @@ trait InvariantBundle extends TopoBundle {
     implicit class SignalWithInvariants[T](val signal: Signal[T]) {
 
       def specify(inv: Invariant[T]*): Unit = {
-        signal.state.invariants =
+        signal.ustate.invariants =
           inv.map(inv => new Invariant[signal.Value](inv.description, (invp: Pulse[T]) => inv.inv(invp.get: T)))
       }
 
       def setValueGenerator(gen: Gen[T]): Unit = {
-        this.signal.state.gen = gen
+        this.signal.ustate.gen = gen
       }
 
       def test(): Unit = {
@@ -117,7 +119,7 @@ trait InvariantBundle extends TopoBundle {
         }
 
       private def findGenerators(): List[(ReSource.of[State], Gen[?])] = {
-        def findGeneratorsRecursive(resource: ReSource.of[State]): List[(ReSource.of[State], Gen[?])] = {
+        def findGeneratorsRecursive(resource: ReSource): List[(ReSource.of[State], Gen[?])] = {
           if (resource.state.gen != null) {
             List((resource, resource.state.gen))
           } else if (resource.state.incoming == Set.empty) {
