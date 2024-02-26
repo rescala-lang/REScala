@@ -55,20 +55,20 @@ class OR_EventTest extends RETests {
 
       val log = e3.list()
 
-      assert(log.readValueOnce === Nil)
+      assertEquals(log.readValueOnce, Nil)
 
       e1.fire("one")
-      assert(log.readValueOnce === List("one"))
+      assertEquals(log.readValueOnce, List("one"))
 
       e2.fire("two")
-      assert(log.readValueOnce === List("two", "one"))
+      assertEquals(log.readValueOnce, List("two", "one"))
 
       transaction(e1, e2) { implicit turn =>
         e1.admit("three a")
         e2.admit("three b")
       }
 
-      assert(log.readValueOnce === List("three a", "two", "one"))
+      assertEquals(log.readValueOnce, List("three a", "two", "one"))
 
       transaction(e1, e2) { turn =>
         e1.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(turn)

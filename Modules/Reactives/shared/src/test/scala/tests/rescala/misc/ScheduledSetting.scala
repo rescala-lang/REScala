@@ -23,7 +23,7 @@ class ScheduledSetting extends RETests {
 
       evt.fire()
 
-      assert(flat.now === "inner")
+      assertEquals(flat.now, "inner")
 
       assert(changes.now == List(("outer", "outer")))
 

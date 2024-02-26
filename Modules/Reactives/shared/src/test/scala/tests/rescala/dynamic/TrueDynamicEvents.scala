@@ -14,11 +14,11 @@ class TrueDynamicEvents extends RETests {
       val res = event.hold()
 
       e1.fire(Signal(1))
-      assert(res.readValueOnce === 1)
+      assertEquals(res.readValueOnce, 1)
       e1.fire(Signal(2))
-      assert(res.readValueOnce === 2)
+      assertEquals(res.readValueOnce, 2)
       e1.fire(Signal(3))
-      assert(res.readValueOnce === 3)
+      assertEquals(res.readValueOnce, 3)
 
     }
   }

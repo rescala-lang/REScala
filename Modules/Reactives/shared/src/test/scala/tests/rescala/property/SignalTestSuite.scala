@@ -12,16 +12,19 @@ import scala.util.Random
 import reactives.operator.Interface
 import reactives.scheduler.Levelbased
 
-class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
-  multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
-    import ie.api._
-    import ie.assertLevel
+import org.scalacheck.Prop.*
 
-    implicit val shortlists: Arbitrary[Seq[Int]]  = Arbitrary(Gen.someOf(0 to 1000))
-    implicit val positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])
+class SignalTestSuite extends munit.ScalaCheckSuite {
+  import reactives.default as engine
+  val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
+  import ie.api._
+  import ie.assertLevel
 
-    "get last n signals" in forAll { (fireValues: Seq[Int], lastN: Int) =>
+  implicit val shortlists: Arbitrary[Seq[Int]]  = Arbitrary(Gen.someOf(0 to 1000))
+  implicit val positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])
+
+  property("get last n signals") {
+    forAll { (fireValues: Seq[Int], lastN: Int) =>
       val e                                          = Evt[Int]()
       val s: Signal[scala.collection.LinearSeq[Int]] = e.list(lastN)
 
@@ -44,29 +47,33 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
       // make sure that the event was fired for every item in `fireValues`
       assert(fireCount == fireValues.length)
     }
+  }
 
-    implicit val signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
-      for {
-        i <- Gen.oneOf(0 to 1000)
-      } yield {
-        val root    = Var(0)
-        val signals = new ListBuffer[Signal[Int]]()
-        signals += root
-        0 to i foreach { _ =>
-          val randomSignal = signals(Random.nextInt(signals.length))
-          signals += Signal { 1 + randomSignal.value }
-        }
-        signals.toList
+  implicit val signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
+    for {
+      i <- Gen.oneOf(0 to 1000)
+    } yield {
+      val root    = Var(0)
+      val signals = new ListBuffer[Signal[Int]]()
+      signals += root
+      0 to i foreach { _ =>
+        val randomSignal = signals(Random.nextInt(signals.length))
+        signals += Signal { 1 + randomSignal.value }
       }
-    )
+      signals.toList
+    }
+  )
 
-    "level Is Correctly Computed" in forAll { (signals: List[Signal[Int]]) =>
+  test("level Is Correctly Computed") {
+    forAll { (signals: List[Signal[Int]]) =>
       for (signal <- signals) {
         assertLevel(signal, signal.readValueOnce)
       }
     }
+  }
 
-    "count Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
+  test("count Is Correctly Computed") {
+    forAll(Gen.posNum[Int]) { (n: Int) =>
       val e              = Evt[Int]()
       val s: Signal[Int] = e.count()
 
@@ -80,8 +87,10 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
       1 to n foreach { i => e.fire(i) }
       assert(s.now == n)
     }
+  }
 
-    "latestOption Is Correctly Computed" in forAll(Gen.posNum[Int]) { (n: Int) =>
+  test("latestOption Is Correctly Computed") {
+    forAll(Gen.posNum[Int]) { (n: Int) =>
       val e                      = Evt[Int]()
       val s: Signal[Option[Int]] = e.holdOption()
 
@@ -96,8 +105,10 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
         e.fire(i)
       }
     }
+  }
 
-    "iterate only depends on init value" in forAll(Arbitrary.arbitrary[Array[Int]], Arbitrary.arbInt.arbitrary) {
+  test("iterate only depends on init value") {
+    forAll(Arbitrary.arbitrary[Array[Int]], Arbitrary.arbInt.arbitrary) {
       (values: Array[Int], initial: Int) =>
         var t   = 0;
         val evt = Evt[Int]()
@@ -109,10 +120,10 @@ class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with M
         values.indices foreach {
           i =>
             evt.fire(values(i))
-            t should be(initial + i)
-            sig.now should be(initial + 1 + i)
+            assertEquals((initial + i), t)
+            assertEquals((initial + 1 + i), sig.now)
         }
     }
-
   }
+
 }

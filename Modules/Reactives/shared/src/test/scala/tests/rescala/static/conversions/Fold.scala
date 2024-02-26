@@ -59,7 +59,7 @@ class FoldTests extends RETests {
       assert(test == 2)
       e.fire(1)
       assert(test == 3)
-      assert(s.readValueOnce === 10)
+      assertEquals(s.readValueOnce, 10)
     }
 
     // TODO: does it make sense ?
@@ -74,7 +74,7 @@ class FoldTests extends RETests {
       assert(test == 11)
       e.fire(1)
       assert(test == 12)
-      assert(s.readValueOnce === 13)
+      assertEquals(s.readValueOnce, 13)
     }
 
     test("iterate the result signal does not depend on the event value") {

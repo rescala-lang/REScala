@@ -15,13 +15,13 @@ class MacroEventTestSuite extends RETests {
 
       val res = snapshotEvent.hold(0)
 
-      assert(res.readValueOnce === 0)
+      assertEquals(res.readValueOnce, 0)
       ev1.fire(10)
-      assert(res.readValueOnce === 18)
+      assertEquals(res.readValueOnce, 18)
       v1.set(7)
-      assert(res.readValueOnce === 18)
+      assertEquals(res.readValueOnce, 18)
       ev1.fire(10)
-      assert(res.readValueOnce === 17)
+      assertEquals(res.readValueOnce, 17)
 
     }
 
@@ -32,13 +32,13 @@ class MacroEventTestSuite extends RETests {
 
       val res = snapshotEvent.hold(0)
 
-      assert(res.readValueOnce === 0)
+      assertEquals(res.readValueOnce, 0)
       ev1.fire(10)
-      assert(res.readValueOnce === 18)
+      assertEquals(res.readValueOnce, 18)
       v1.set(7)
-      assert(res.readValueOnce === 18)
+      assertEquals(res.readValueOnce, 18)
       ev1.fire(10)
-      assert(res.readValueOnce === 17)
+      assertEquals(res.readValueOnce, 17)
 
     }
 
@@ -48,13 +48,13 @@ class MacroEventTestSuite extends RETests {
 
       val res = snapshotEvent.hold(0)
 
-      assert(res.readValueOnce === 0)
+      assertEquals(res.readValueOnce, 0)
       ev1.fire(10)
-      assert(res.readValueOnce === 11)
+      assertEquals(res.readValueOnce, 11)
       ev1.fire(20)
-      assert(res.readValueOnce === 21)
+      assertEquals(res.readValueOnce, 21)
       ev1.fire(10)
-      assert(res.readValueOnce === 11)
+      assertEquals(res.readValueOnce, 11)
 
     }
 
@@ -63,16 +63,16 @@ class MacroEventTestSuite extends RETests {
       val e2  = Evt[Int]()
       val res = Signal { List(e1.value, e2.value).flatten.sum }
 
-      assert(res.readValueOnce === 0)
+      assertEquals(res.readValueOnce, 0)
       e1.fire(10)
-      assert(res.readValueOnce === 10)
+      assertEquals(res.readValueOnce, 10)
       e2.fire(11)
-      assert(res.readValueOnce === 11)
+      assertEquals(res.readValueOnce, 11)
       transaction(e1, e2) { implicit at =>
         e1.admit(10)
         e2.admit(10)
       }
-      assert(res.readValueOnce === 20)
+      assertEquals(res.readValueOnce, 20)
 
     }
 
@@ -82,16 +82,16 @@ class MacroEventTestSuite extends RETests {
       val event = Event { Some(List(e1.value, e2.value).flatten) }
       val res   = event.hold(Nil)
 
-      assert(res.readValueOnce === Nil)
+      assertEquals(res.readValueOnce, Nil)
       e1.fire(9)
-      assert(res.readValueOnce === List(9))
+      assertEquals(res.readValueOnce, List(9))
       e2.fire(10)
-      assert(res.readValueOnce === List(10))
+      assertEquals(res.readValueOnce, List(10))
       transaction(e1, e2) { implicit at =>
         e1.admit(11)
         e2.admit(12)
       }
-      assert(res.readValueOnce === List(11, 12))
+      assertEquals(res.readValueOnce, List(11, 12))
     }
 
     test("cut out created signals") {
@@ -101,11 +101,11 @@ class MacroEventTestSuite extends RETests {
       val res = event.hold()
 
       e1.fire(1)
-      assert(res.readValueOnce === 1)
+      assertEquals(res.readValueOnce, 1)
       e1.fire(2)
-      assert(res.readValueOnce === 2)
+      assertEquals(res.readValueOnce, 2)
       e1.fire(3)
-      assert(res.readValueOnce === 3)
+      assertEquals(res.readValueOnce, 3)
 
     }
 

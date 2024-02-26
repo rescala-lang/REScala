@@ -9,7 +9,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
   import api._
 
   class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[BundleState])
-      extends Matchers {
+      extends munit.FunSuite {
 
     var results: List[A] = Nil
     /* should be private but is unused */
@@ -23,7 +23,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
       v1
     }
     def assert(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
-      Assertions.assert(results === elements.toList)
+      assertEquals(results, elements.toList)
       ()
     }
     def assertClear(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {

@@ -21,11 +21,11 @@ class LightImplicitSyntaxTest extends RETests {
         quantity * (price + tax)
       }
 
-      assert(total.readValueOnce === 4)
+      assertEquals(total.readValueOnce, 4)
       price.set(6)
-      assert(total.readValueOnce === 8)
+      assertEquals(total.readValueOnce, 8)
       quantity.set(2)
-      assert(total.readValueOnce === 16)
+      assertEquals(total.readValueOnce, 16)
 
     }
 

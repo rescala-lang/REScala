@@ -59,7 +59,7 @@ class WithoutAPITest extends RETests {
             new CustomSource[String](createdState)
           }
 
-      assert(transaction(customSource) { _.now(customSource) } === "Hi!")
+      assertEquals(transaction(customSource) { _.now(customSource) }, "Hi!")
 
       val customDerived: ReadAs.of[State, String] =
         implicitly[CreationTicket[State]]
@@ -71,13 +71,13 @@ class WithoutAPITest extends RETests {
             new CustomDerivedString(createdState, customSource)
           }
 
-      assert(transaction(customSource) { _.now(customSource) } === "Hi!")
-      assert(transaction(customDerived) { _.now(customDerived) } === "Well, this is an initial value")
+      assertEquals(transaction(customSource) { _.now(customSource) }, "Hi!")
+      assertEquals(transaction(customDerived) { _.now(customDerived) }, "Well, this is an initial value")
 
       transaction(customSource) { _.recordChange(customSource.makeChange("Hello!")) }
 
-      assert(transaction(customSource) { _.now(customSource) } === "Hello!")
-      assert(transaction(customDerived) { _.now(customDerived) } === "Hello! :D")
+      assertEquals(transaction(customSource) { _.now(customSource) }, "Hello!")
+      assertEquals(transaction(customDerived) { _.now(customDerived) }, "Hello! :D")
     }
   }
 }

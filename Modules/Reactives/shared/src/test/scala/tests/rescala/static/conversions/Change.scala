@@ -87,14 +87,14 @@ class Change extends RETests {
       val e    = s1.change
       e observe { _ => test += 1 }
 
-      assert(test === 0)
-      assert(s1.readValueOnce === 2)
+      assertEquals(test, 0)
+      assertEquals(s1.readValueOnce, 2)
       v1 set 2
-      assert(s1.readValueOnce === 3)
-      assert(test === 1)
+      assertEquals(s1.readValueOnce, 3)
+      assertEquals(test, 1)
       v1 set 3
-      assert(s1.readValueOnce === 4)
-      assert(test === 2)
+      assertEquals(s1.readValueOnce, 4)
+      assertEquals(test, 2)
     }
 
     test("change the Value Of The Event Reflects The Change In The Signal") {
@@ -105,9 +105,9 @@ class Change extends RETests {
       e observe { x => test = x.pair }
 
       v1 set 2
-      assert(test === ((2, 3)))
+      assertEquals(test, ((2, 3)))
       v1 set 3
-      assert(test === ((3, 4)))
+      assertEquals(test, ((3, 4)))
     }
 
     /* with empty signals */
@@ -121,13 +121,13 @@ class Change extends RETests {
 
       val log = ored.list()
 
-      assert(log.readValueOnce === Nil)
+      assertEquals(log.readValueOnce, Nil)
 
       v2.set("two")
-      assert(log.readValueOnce === List())
+      assertEquals(log.readValueOnce, List())
 
       v2.set("three")
-      assert(log.readValueOnce === List("two" -> "three"))
+      assertEquals(log.readValueOnce, List("two" -> "three"))
     }
 
     test("folding changing and emptiness") {
@@ -141,30 +141,30 @@ class Change extends RETests {
 
       val log = ored.list()
 
-      assert(log.readValueOnce === Nil)
+      assertEquals(log.readValueOnce, Nil)
 
       v1.set("one")
-      assert(log.readValueOnce === List("constant" -> "one"))
+      assertEquals(log.readValueOnce, List("constant" -> "one"))
 
       v2.set("two")
-      assert(log.readValueOnce === List("constant" -> "one"))
+      assertEquals(log.readValueOnce, List("constant" -> "one"))
 
       v2.set("three")
-      assert(log.readValueOnce === List("two" -> "three", "constant" -> "one"))
+      assertEquals(log.readValueOnce, List("two" -> "three", "constant" -> "one"))
 
       transaction(v1, v2) { at =>
         v1.admit("four a")(at)
         v2.admit("four b")(at)
       }
 
-      assert(log.readValueOnce === List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
+      assertEquals(log.readValueOnce, List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
       transaction(v1, v2) { turn =>
         v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
         v2.admit("five b")(turn)
       }
 
-      assert(log.readValueOnce === List(
+      assertEquals(log.readValueOnce, List(
         "four b"   -> "five b",
         "constant" -> "four a",
         "two"      -> "three",

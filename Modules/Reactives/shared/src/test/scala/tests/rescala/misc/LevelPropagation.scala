@@ -16,41 +16,41 @@ class LevelPropagation extends RETests {
       val l1     = level0.map(_ + 1)
       val l2     = l1.map(_ + 1)
       val level3 = l2.map(_ + 1)
-      assert(level0.readValueOnce === 0)
-      assert(l1.readValueOnce === 1)
-      assert(l2.readValueOnce === 2)
-      assert(level3.readValueOnce === 3)
+      assertEquals(level0.readValueOnce, 0)
+      assertEquals(l1.readValueOnce, 1)
+      assertEquals(l2.readValueOnce, 2)
+      assertEquals(level3.readValueOnce, 3)
       val level_1_to_4 = Signal.dynamic(level0) { t =>
         if (t.depend(level0) == 10) t.depend(level3) else 42
       }
-      assert(level_1_to_4.readValueOnce === 42)
+      assertEquals(level_1_to_4.readValueOnce, 42)
       var evaluatesOnlyOncePerTurn = 0
       val level_2_to_5 = Signal.lift(level0, level_1_to_4) { (x, y) =>
         evaluatesOnlyOncePerTurn += 1; x + y
       }
-      assert(level_2_to_5.readValueOnce === 0 + 42)
+      assertEquals(level_2_to_5.readValueOnce, 0 + 42)
 
       assertLevel(level3, 3)
       assertLevel(level_1_to_4, 1)
       assertLevel(level_2_to_5, 2)
-      assert(level_2_to_5.readValueOnce === 42)
-      assert(evaluatesOnlyOncePerTurn === 1)
+      assertEquals(level_2_to_5.readValueOnce, 42)
+      assertEquals(evaluatesOnlyOncePerTurn, 1)
 
       level0.set(5)
 
       assertLevel(level3, 3)
       assertLevel(level_1_to_4, 1)
       assertLevel(level_2_to_5, 2)
-      assert(level_2_to_5.readValueOnce === 47)
-      assert(evaluatesOnlyOncePerTurn === 2)
+      assertEquals(level_2_to_5.readValueOnce, 47)
+      assertEquals(evaluatesOnlyOncePerTurn, 2)
 
       level0.set(10)
 
       assertLevel(level3, 3)
       assertLevel(level_1_to_4, 4)
       assertLevel(level_2_to_5, 5)
-      assert(level_2_to_5.readValueOnce === 23)
-      assert(evaluatesOnlyOncePerTurn === 3)
+      assertEquals(level_2_to_5.readValueOnce, 23)
+      assertEquals(evaluatesOnlyOncePerTurn, 3)
 
     }
 
@@ -67,16 +67,16 @@ class LevelPropagation extends RETests {
       assertLevel(l3, 3)
       assertLevel(l1t4, 1)
       assertLevel(l2t5, 2)
-      assert(l1t4.readValueOnce === 3)
-      assert(l2t5.readValueOnce === 4)
+      assertEquals(l1t4.readValueOnce, 3)
+      assertEquals(l2t5.readValueOnce, 4)
 
       l0.set(10)
 
       assertLevel(l3, 3)
       assertLevel(l1t4, 4)
       assertLevel(l2t5, 5)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 14)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 14)
 
     }
 
@@ -97,24 +97,24 @@ class LevelPropagation extends RETests {
       assertLevel(l3, 3)
       assertLevel(l1t4, 1)
       assertLevel(l2t5, 2)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 14)
-      assert(reevals === 1)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 14)
+      assertEquals(reevals, 1)
 
       // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
       // as before, so the map is not executed again.
 
       l0.set(10)
-      assert(reevals === 1)
+      assertEquals(reevals, 1)
       assertLevel(l3, 3)
       assertLevel(l1t4, 4)
       assertLevel(l2t5, 5)
-      assert(l0.readValueOnce === 10)
-      assert(l1.readValueOnce === 11)
-      assert(l2.readValueOnce === 12)
-      assert(l3.readValueOnce === 13)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 14)
+      assertEquals(l0.readValueOnce, 10)
+      assertEquals(l1.readValueOnce, 11)
+      assertEquals(l2.readValueOnce, 12)
+      assertEquals(l3.readValueOnce, 13)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 14)
 
     }
 
@@ -139,20 +139,20 @@ class LevelPropagation extends RETests {
       assertLevel(l1t4, 1)
       assertLevel(l2t5, 2)
       assertLevel(l3t6, 3)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 14)
-      assert(reevals === 1)
-      assert(reevals2 === 1)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 14)
+      assertEquals(reevals, 1)
+      assertEquals(reevals2, 1)
 
       l0.set(10)
 
       assertLevel(l3, 3)
       assertLevel(l1t4, 4)
       assertLevel(l2t5, 5)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 24)
-      assert(reevals === 2)
-      assert(reevals2 === 2)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 24)
+      assertEquals(reevals, 2)
+      assertEquals(reevals2, 2)
 
     }
 
@@ -174,24 +174,24 @@ class LevelPropagation extends RETests {
       assertLevel(l3, 3)
       assertLevel(l1t4, 1)
       assertLevel(l2t5, 2)
-      assert(l1t4.readValueOnce === 3)
-      assert(l2t5.readValueOnce === 4)
-      assert(reevals === 1)
+      assertEquals(l1t4.readValueOnce, 3)
+      assertEquals(l2t5.readValueOnce, 4)
+      assertEquals(reevals, 1)
 
       // changing l0 to 10 will update the dependencies of l1t4 to include l3, but that is 13 which is the same value
       // as before, so the map is not executed again.
 
       l0.set(10)
-      assert(reevals === 2)
+      assertEquals(reevals, 2)
       assertLevel(l3, 3)
       assertLevel(l1t4, 4)
       assertLevel(l2t5, 5)
-      assert(l0.readValueOnce === 10)
-      assert(l1.readValueOnce === 11)
-      assert(l2.readValueOnce === 12)
-      assert(l3.readValueOnce === 13)
-      assert(l1t4.readValueOnce === 13)
-      assert(l2t5.readValueOnce === 14)
+      assertEquals(l0.readValueOnce, 10)
+      assertEquals(l1.readValueOnce, 11)
+      assertEquals(l2.readValueOnce, 12)
+      assertEquals(l3.readValueOnce, 13)
+      assertEquals(l1t4.readValueOnce, 13)
+      assertEquals(l2t5.readValueOnce, 14)
 
     }
 

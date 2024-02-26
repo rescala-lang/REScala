@@ -14,7 +14,7 @@ class ObserverCreation extends RETests {
       e1.map(_ => inner)("creatingMap")
       e0.fire(10)
 
-      assert(res === 11)
+      assertEquals(res, 11)
 
     }
 

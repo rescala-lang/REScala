@@ -66,7 +66,7 @@ class EventTest extends RETests {
         res.event.hold("none")
       }
 
-      assert(res.readValueOnce === "some!")
+      assertEquals(res.readValueOnce, "some!")
 
     }
 

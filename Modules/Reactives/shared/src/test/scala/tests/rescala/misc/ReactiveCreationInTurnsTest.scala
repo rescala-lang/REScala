@@ -17,11 +17,11 @@ class ReactiveCreationInTurnsTest extends RETests {
         res
       }
 
-      assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on creation")
+      assertEquals(v2.readValueOnce, 1, "unrelated signal should only be evaluated once on creation")
 
       v1.set(100)
 
-      assert(v2.readValueOnce === 1, "unrelated signal should only be evaluated once on change")
+      assertEquals(v2.readValueOnce, 1, "unrelated signal should only be evaluated once on change")
 
     }
 
@@ -35,15 +35,15 @@ class ReactiveCreationInTurnsTest extends RETests {
         res
       }
 
-      assert(
-        v2.readValueOnce === 1,
+      assertEquals(
+        1, v2.readValueOnce ,
         "related signal is only be evaluated once on creation (this behaviour is actually undefined)"
       )
 
       v1.set(100)
 
-      assert(
-        v2.readValueOnce === 1,
+      assertEquals(
+        1, v2.readValueOnce ,
         "related signal should be evaluated once on change (this behaviour is actually undefined)"
       )
 

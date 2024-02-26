@@ -44,23 +44,23 @@
 //  test("tryLock works"){
 //    // we can lock
 //    val a = new SubsumableLockImpl()
-//    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = true, a, a.gUID))
 //
 //    // lock is exclusive
-//    assert(a.tryLock() === TryLockResult(success = false, a, a.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = false, a, a.gUID))
 //
 //    // unlock works
 //    a.unlock()
-//    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = true, a, a.gUID))
 //  }
 //
 //  test("lock works") {
 //    // we can lock
 //    val a = new SubsumableLockImpl()
-//    assert(Spawn{a.lock()}.join(101) === TryLockResult(success = true, a, a.gUID))
+//    assertEquals(Spawn{a.lock()}.join(101), TryLockResult(success = true, a, a.gUID))
 //
 //    // lock is exclusive
-//    assert(a.tryLock() === TryLockResult(success = false, a, a.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = false, a, a.gUID))
 //    // and blocks..
 //    val blockedB = Spawn{a.lock()}
 //    intercept[TimeoutException] {
@@ -69,16 +69,16 @@
 //
 //    // unlock unblocks
 //    a.unlock()
-//    assert(blockedB.join(104) === TryLockResult(success = true, a, a.gUID))
+//    assertEquals(blockedB.join(104), TryLockResult(success = true, a, a.gUID))
 //  }
 //
 //  test("union works") {
 //    val a = new SubsumableLockImpl
 //    val b = new SubsumableLockImpl
 //
-//    assert(a.tryLock() === TryLockResult(success = true, a, a.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = true, a, a.gUID))
 //    val resB = b.tryLock()
-//    assert(resB === TryLockResult(success = true, b, b.gUID))
+//    assertEquals(resB, TryLockResult(success = true, b, b.gUID))
 //
 //    a.subsume(resB)
 //
@@ -87,15 +87,15 @@
 //
 //    b.unlock()
 //
-//    assert(a.tryLock() === TryLockResult(success = true, b, b.gUID))
-//    assert(a.tryLock() === TryLockResult(success = false, b, b.gUID))
-//    assert(b.tryLock() === TryLockResult(success = false, b, b.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = true, b, b.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = false, b, b.gUID))
+//    assertEquals(b.tryLock(), TryLockResult(success = false, b, b.gUID))
 //
 //    b.unlock()
 //
-//    assert(b.tryLock() === TryLockResult(success = true, b, b.gUID))
-//    assert(b.tryLock() === TryLockResult(success = false, b, b.gUID))
-//    assert(a.tryLock() === TryLockResult(success = false, b, b.gUID))
+//    assertEquals(b.tryLock(), TryLockResult(success = true, b, b.gUID))
+//    assertEquals(b.tryLock(), TryLockResult(success = false, b, b.gUID))
+//    assertEquals(a.tryLock(), TryLockResult(success = false, b, b.gUID))
 //  }
 //
 //  test("subsume correctly wakes all threads") {
@@ -128,6 +128,6 @@
 //    a.subsume(resB)
 //    resB.newParent.unlock()
 //
-//    assert(queued.map(_.join(50)).toSet === (0 until 10).map(_ -> resB.globalRoot).toSet)
+//    assertEquals(queued.map(_.join(50)).toSet, (0 until 10).map(_ -> resB.globalRoot).toSet)
 //  }
 //}

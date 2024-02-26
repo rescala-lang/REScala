@@ -13,9 +13,9 @@ class MacrosInteractingWithLanguageFeatures extends RETests {
       val s2 = Signal.dynamic {
         s1.value collect { case Some(n) => n.value }
       }
-      assert(s2.readValueOnce === List(1, 2))
+      assertEquals(s2.readValueOnce, List(1, 2))
       v1.set(10)
-      assert(s2.readValueOnce === List(10, 2))
+      assertEquals(s2.readValueOnce, List(10, 2))
     }
 
     test("pattern Matching Anonymous Function") {

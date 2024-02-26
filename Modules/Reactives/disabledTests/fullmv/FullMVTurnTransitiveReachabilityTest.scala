@@ -34,7 +34,7 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
     trees.values.foreach(_.beginExecuting())
     trees.values.reduce { (tA, tB) =>
       val locked = Await.result(tA.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
-      assert(Await.result(tB.trySubsume(locked), Duration.Zero) === Successful)
+      assertEquals(Await.result(tB.trySubsume(locked), Duration.Zero), Successful)
       locked.asyncUnlock()
       tA
     }

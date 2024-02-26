@@ -25,8 +25,8 @@ class DeframeTest extends AnyFunSuite {
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
-    assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
-    assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
+    assertEquals(new Framing(turnLeftOne, middle).doFraming(), FramingBranchResult.Frame(Set(top), turnLeftOne))
+    assertEquals(new Framing(turnLeftOne, top).doFraming(), FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
     assert(new Notification(
       turnLeftOne,
@@ -37,16 +37,16 @@ class DeframeTest extends AnyFunSuite {
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
     turnRightOne.activeBranches.incrementAndGet()
-    assert(new Framing(turnRightOne, dummy).doFraming() === FramingBranchResult.Frame(Set(), turnRightOne))
+    assertEquals(new Framing(turnRightOne, dummy).doFraming(), FramingBranchResult.Frame(Set(), turnRightOne))
     val turnRightTwo = engine.newTurn()
     turnRightTwo.beginFraming()
     turnRightTwo.activeBranches.incrementAndGet()
-    assert(new Framing(turnRightTwo, dummy).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assertEquals(new Framing(turnRightTwo, dummy).doFraming(), FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightTwo, right).doFraming() === FramingBranchResult.Frame(Set(middle), turnRightTwo))
-    assert(new Framing(turnRightTwo, middle).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assertEquals(new Framing(turnRightTwo, right).doFraming(), FramingBranchResult.Frame(Set(middle), turnRightTwo))
+    assertEquals(new Framing(turnRightTwo, middle).doFraming(), FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(
+    assertEquals(new Framing(turnRightOne, right).doFraming(), FramingBranchResult.FrameSupersede(
       Set(middle),
       turnRightOne,
       turnRightTwo
@@ -57,21 +57,21 @@ class DeframeTest extends AnyFunSuite {
     assert(reevMiddle.processReevaluationResult(
       Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])
     ) === PureNotifyOnly(Set(top)))
-    //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
+    //    assertEquals(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])), FollowFraming(Set(top), turnRightTwo))
     assert(new Notification(
       turnLeftOne,
       top,
       changed = true
     ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
-    //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    //    assertEquals(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification(), NotificationResultAction.GlitchFreeReady)
 
     assert(new SupersedeFraming(
       turnRightOne,
       middle,
       turnRightTwo
     ).doFraming() === FramingBranchResult.FramingBranchEnd)
-    //    assert(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Deframe(Set(top), turnRightTwo))
-    //    assert(Deframing(turnRightTwo, top).doFraming() === FramingBranchResult.FramingBranchEnd)
+    //    assertEquals(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming(), FramingBranchResult.Deframe(Set(top), turnRightTwo))
+    //    assertEquals(Deframing(turnRightTwo, top).doFraming(), FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
     assert(reevTop.processReevaluationResult(
@@ -95,8 +95,8 @@ class DeframeTest extends AnyFunSuite {
 
     val turnLeftOne = engine.newTurn()
     turnLeftOne.beginFraming()
-    assert(new Framing(turnLeftOne, middle).doFraming() === FramingBranchResult.Frame(Set(top), turnLeftOne))
-    assert(new Framing(turnLeftOne, top).doFraming() === FramingBranchResult.Frame(Set(), turnLeftOne))
+    assertEquals(new Framing(turnLeftOne, middle).doFraming(), FramingBranchResult.Frame(Set(top), turnLeftOne))
+    assertEquals(new Framing(turnLeftOne, top).doFraming(), FramingBranchResult.Frame(Set(), turnLeftOne))
     turnLeftOne.completeFraming()
     assert(new Notification(
       turnLeftOne,
@@ -107,20 +107,20 @@ class DeframeTest extends AnyFunSuite {
     val turnRightOne = engine.newTurn()
     turnRightOne.beginFraming()
     turnRightOne.activeBranches.incrementAndGet()
-    assert(new Framing(turnRightOne, dummy).doFraming() === FramingBranchResult.Frame(Set(), turnRightOne))
+    assertEquals(new Framing(turnRightOne, dummy).doFraming(), FramingBranchResult.Frame(Set(), turnRightOne))
     val turnRightTwo = engine.newTurn()
     turnRightTwo.beginFraming()
     turnRightTwo.activeBranches.incrementAndGet()
-    assert(new Framing(turnRightTwo, dummy).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assertEquals(new Framing(turnRightTwo, dummy).doFraming(), FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightTwo, right).doFraming() === FramingBranchResult.Frame(Set(middle), turnRightTwo))
-    assert(new Framing(turnRightTwo, middle).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assertEquals(new Framing(turnRightTwo, right).doFraming(), FramingBranchResult.Frame(Set(middle), turnRightTwo))
+    assertEquals(new Framing(turnRightTwo, middle).doFraming(), FramingBranchResult.FramingBranchEnd)
 
     val turnLeftTwo = engine.newTurn()
     turnLeftTwo.beginFraming()
-    assert(new Framing(turnLeftTwo, middle).doFraming() === FramingBranchResult.FramingBranchEnd)
+    assertEquals(new Framing(turnLeftTwo, middle).doFraming(), FramingBranchResult.FramingBranchEnd)
 
-    assert(new Framing(turnRightOne, right).doFraming() === FramingBranchResult.FrameSupersede(
+    assertEquals(new Framing(turnRightOne, right).doFraming(), FramingBranchResult.FrameSupersede(
       Set(middle),
       turnRightOne,
       turnRightTwo
@@ -131,21 +131,21 @@ class DeframeTest extends AnyFunSuite {
     assert(reevMiddle.processReevaluationResult(
       Some(Pulse.Value(123).asInstanceOf[reevMiddle.node.Value])
     ) === PureNotifyOnly(Set(top)))
-    //    assert(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])) === FollowFraming(Set(top), turnRightTwo))
+    //    assertEquals(reevMiddle.processReevaluationResult(Some(123.asInstanceOf[reevMiddle.node.Value])), FollowFraming(Set(top), turnRightTwo))
     assert(new Notification(
       turnLeftOne,
       top,
       changed = true
     ).deliverNotification() === true -> NotificationBranchResult.ReevaluationReady)
-    //    assert(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification() === NotificationResultAction.GlitchFreeReady)
+    //    assertEquals(NotificationWithFollowFrame(turnLeftOne, top, changed = true, turnRightTwo).deliverNotification(), NotificationResultAction.GlitchFreeReady)
 
-    assert(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.Frame(
+    assertEquals(new SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming(), FramingBranchResult.Frame(
       Set(top),
       turnLeftTwo
     ))
-    //    assert(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming() === FramingBranchResult.DeframeReframe(Set(top), turnRightTwo, turnLeftTwo))
-    assert(new Framing(turnLeftTwo, top).doFraming() === FramingBranchResult.FramingBranchEnd)
-    //    assert(DeframeReframing(turnRightTwo, top, turnLeftTwo).doFraming() === FramingBranchResult.FramingBranchEnd)
+    //    assertEquals(SupersedeFraming(turnRightOne, middle, turnRightTwo).doFraming(), FramingBranchResult.DeframeReframe(Set(top), turnRightTwo, turnLeftTwo))
+    assertEquals(new Framing(turnLeftTwo, top).doFraming(), FramingBranchResult.FramingBranchEnd)
+    //    assertEquals(DeframeReframing(turnRightTwo, top, turnLeftTwo).doFraming(), FramingBranchResult.FramingBranchEnd)
 
     val reevTop = new Reevaluation(turnLeftOne, top)
     assert(reevTop.processReevaluationResult(

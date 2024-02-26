@@ -33,7 +33,7 @@ class PipeliningTest extends AnyFunSuite {
     spawned.foreach(_.await(math.max(0, timeout - System.currentTimeMillis())))
     val endTime = System.currentTimeMillis()
 
-    assert(all === (pipelineLength to (pipelineLength + numberOfUpdates)))
+    assertEquals(all, (pipelineLength to (pipelineLength + numberOfUpdates)))
     assert(endTime - startTime < leastPossibleMillisecondsWithoutPipelining)
   }
 }

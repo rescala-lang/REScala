@@ -13,10 +13,10 @@ class FlattenTest extends RETests {
       val vv = Var(Var(10)).flatten
       val vs = Var(Signal { 10 }).flatten
       val ss = Signal(Signal(10)).flatten
-      assert(sv.readValueOnce === 10)
-      assert(vv.readValueOnce === 10)
-      assert(vs.readValueOnce === 10)
-      assert(ss.readValueOnce === 10)
+      assertEquals(sv.readValueOnce, 10)
+      assertEquals(vv.readValueOnce, 10)
+      assertEquals(vs.readValueOnce, 10)
+      assertEquals(ss.readValueOnce, 10)
     }
 
     test("flatten array") {
@@ -32,9 +32,9 @@ class FlattenTest extends RETests {
       val dynsig: Signal[Signal[Int]] = Signal { Signal { outside.value } }
       val testsig                     = dynsig.flatten
 
-      assert(testsig.readValueOnce === 1)
+      assertEquals(testsig.readValueOnce, 1)
       outside set 2
-      assert(testsig.readValueOnce === 2)
+      assertEquals(testsig.readValueOnce, 2)
     }
 
     test("flatten Signal Seq") {
@@ -45,15 +45,15 @@ class FlattenTest extends RETests {
 
       val flat = v.flatten
 
-      assert(flat.readValueOnce === Seq(1, 2, 3), "flatten fails")
+      assertEquals(flat.readValueOnce, Seq(1, 2, 3), "flatten fails")
 
       v2.set(100)
 
-      assert(flat.readValueOnce === Seq(1, 100, 3), "flatten fails 2")
+      assertEquals(flat.readValueOnce, Seq(1, 100, 3), "flatten fails 2")
 
       v.set(List(v3, v2))
 
-      assert(flat.readValueOnce === Seq(3, 100), "flatten fails 3")
+      assertEquals(flat.readValueOnce, Seq(3, 100), "flatten fails 3")
     }
 
     test("flatten Signal Set") {
@@ -64,15 +64,15 @@ class FlattenTest extends RETests {
 
       val flat = v.flatten
 
-      assert(flat.readValueOnce === Set(1, 2, 3), "flatten fails")
+      assertEquals(flat.readValueOnce, Set(1, 2, 3), "flatten fails")
 
       v2.set(100)
 
-      assert(flat.readValueOnce === Set(1, 100, 3), "flatten fails 2")
+      assertEquals(flat.readValueOnce, Set(1, 100, 3), "flatten fails 2")
 
       v.set(Set(v3, v2))
 
-      assert(flat.readValueOnce === Set(3, 100), "flatten fails 3")
+      assertEquals(flat.readValueOnce, Set(3, 100), "flatten fails 3")
     }
 
     test("flatten Signal Array") {
@@ -83,15 +83,15 @@ class FlattenTest extends RETests {
 
       val flat = v.flatten
 
-      assert(flat.readValueOnce === Array(1, 2, 3), "flatten fails")
+      assertEquals(Array(1, 2, 3).toSeq, flat.readValueOnce.toSeq, "flatten fails")
 
       v2.set(100)
 
-      assert(flat.readValueOnce === Array(1, 100, 3), "flatten fails 2")
+      assertEquals(Array(1, 100, 3).toSeq, flat.readValueOnce.toSeq, "flatten fails 2")
 
       v.set(Array(v3, v2))
 
-      assert(flat.readValueOnce === Array(3, 100), "flatten fails 3")
+      assertEquals(Array(3, 100).toSeq, flat.readValueOnce.toSeq, "flatten fails 3")
     }
 
     test("flatten Signal Option") {
@@ -100,15 +100,15 @@ class FlattenTest extends RETests {
 
       val flat: Signal[Option[Int]] = v.flatten
 
-      assert(flat.readValueOnce === None, "flatten fails")
+      assertEquals(flat.readValueOnce, None, "flatten fails")
 
       v.set(Some(w))
 
-      assert(flat.readValueOnce === Some(1), "flatten fails 2")
+      assertEquals(flat.readValueOnce, Some(1), "flatten fails 2")
 
       w.set(100)
 
-      assert(flat.readValueOnce === Some(100), "flatten fails 3")
+      assertEquals(flat.readValueOnce, Some(100), "flatten fails 3")
     }
 
     test("flatten Event") {

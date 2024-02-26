@@ -13,8 +13,8 @@ class SignalMacro extends RETests {
       val s1: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
       val s2: Signal[List[Int]] = Signal { v.value.map(_ + 2) }
 
-      assert(s1.readValueOnce === List(3, 4, 5))
-      assert(s2.readValueOnce === List(3, 4, 5))
+      assertEquals(s1.readValueOnce, List(3, 4, 5))
+      assertEquals(s2.readValueOnce, List(3, 4, 5))
 
     }
 
@@ -40,11 +40,11 @@ class SignalMacro extends RETests {
       val r = s map { event => event map { _ + 1 } }
 
       r.readValueOnce observe { test = _ }
-      assert(test === 0)
+      assertEquals(test, 0)
       e.fire(2)
-      assert(test === 3)
+      assertEquals(test, 3)
       e.fire(4)
-      assert(test === 5)
+      assertEquals(test, 5)
     }
 
     test("conversion Function With Argument In Signal") {
@@ -54,12 +54,12 @@ class SignalMacro extends RETests {
       val s: Signal[Int] = Signal { 2 * e.hold(0).value }
 
       s.changed observe { _ => test += 1 }
-      assert(s.readValueOnce === 0)
+      assertEquals(s.readValueOnce, 0)
       e.fire(2)
-      assert(s.readValueOnce === 4)
+      assertEquals(s.readValueOnce, 4)
       e.fire(3)
-      assert(s.readValueOnce === 6)
-      assert(test === 2)
+      assertEquals(s.readValueOnce, 6)
+      assertEquals(test, 2)
     }
 
     test("conversion Function Without Argument In Signal") {
@@ -69,12 +69,12 @@ class SignalMacro extends RETests {
       val s: Signal[Option[Int]] = Signal { e.holdOption().value }
 
       s.changed observe { _ => test += 1 }
-      assert(s.readValueOnce === None)
+      assertEquals(s.readValueOnce, None)
       e.fire(2)
-      assert(s.readValueOnce === Some(2))
+      assertEquals(s.readValueOnce, Some(2))
       e.fire(3)
-      assert(s.readValueOnce === Some(3))
-      assert(test === 2)
+      assertEquals(s.readValueOnce, Some(3))
+      assertEquals(test, 2)
     }
 
     test("conversion Functions Work In Signals In Object Construction In Overridden Def") {
@@ -101,12 +101,12 @@ class SignalMacro extends RETests {
 
       a.obj()
       s.changed observe { _ => test += 1 }
-      assert(s.readValueOnce === 0)
+      assertEquals(s.readValueOnce, 0)
       e.fire(2)
-      assert(s.readValueOnce === 4)
+      assertEquals(s.readValueOnce, 4)
       e.fire(3)
-      assert(s.readValueOnce === 6)
-      assert(test === 2)
+      assertEquals(s.readValueOnce, 6)
+      assertEquals(test, 2)
     }
 
     test("lazy Values") {
@@ -178,9 +178,9 @@ class SignalMacro extends RETests {
     //
     //  val sig = Signal.dynamic { getSignal(o)() }
     //
-    //  assert(sig.readValueOnce === 20)
+    //  assertEquals(sig.readValueOnce, 20)
     //  v set 30
-    //  assert(sig.readValueOnce === 30)
+    //  assertEquals(sig.readValueOnce, 30)
     // }
 
     // test("function As Getter For Event And Conversion Function") {
@@ -194,9 +194,9 @@ class SignalMacro extends RETests {
     //
     //  val sig = Signal { getSignal(o).holdOption().apply() }
     //
-    //  assert(sig.readValueOnce === None)
+    //  assertEquals(sig.readValueOnce, None)
     //  e.fire(30)
-    //  assert(sig.readValueOnce === Some(30))
+    //  assertEquals(sig.readValueOnce, Some(30))
     // }
 
     test("correctly replace ticket during macro expansion") {
@@ -210,7 +210,7 @@ class SignalMacro extends RETests {
 
       val s = Signal { wantsTicket }
 
-      assert(s.readValueOnce === ((true, true, true)))
+      assertEquals(s.readValueOnce, ((true, true, true)))
 
     }
 
@@ -225,11 +225,11 @@ class SignalMacro extends RETests {
         (myMap.ms).value
       }
 
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
       myMap.ms = Var("Something else")
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
       source.set("Welt")
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
     }
 
     test("define force cut out at definition time with def") {
@@ -244,11 +244,11 @@ class SignalMacro extends RETests {
         (myMap.ms).value
       }
 
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
       indirectSource = Var("Something else")
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
       source.set("Welt")
-      assert(greeting.readValueOnce === source.readValueOnce)
+      assertEquals(greeting.readValueOnce, source.readValueOnce)
     }
 
     test("can generate signals in map") {
@@ -260,7 +260,7 @@ class SignalMacro extends RETests {
 
       source.fire("Hallo")
 
-      assert(selected.readValueOnce === "Welt")
+      assertEquals(selected.readValueOnce, "Welt")
 
     }
 

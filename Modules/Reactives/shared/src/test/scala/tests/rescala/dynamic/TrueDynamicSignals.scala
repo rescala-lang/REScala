@@ -18,11 +18,11 @@ class TrueDynamicSignals extends RETests {
       val b = Var(Signal(a.value))
       val c = Signal.dynamic(b.value.value)
 
-      assert(c.readValueOnce === 3)
+      assertEquals(c.readValueOnce, 3)
       a set 4
-      assert(c.readValueOnce === 4)
+      assertEquals(c.readValueOnce, 4)
       b set Signal(5)
-      assert(c.readValueOnce === 5)
+      assertEquals(c.readValueOnce, 5)
 
     }
 
@@ -33,11 +33,11 @@ class TrueDynamicSignals extends RETests {
         c.value
       }
 
-      assert(b.readValueOnce === 3)
+      assertEquals(b.readValueOnce, 3)
       a set 4
-      assert(b.readValueOnce === 4)
+      assertEquals(b.readValueOnce, 4)
       a set 5
-      assert(b.readValueOnce === 5)
+      assertEquals(b.readValueOnce, 5)
     }
 
     test("use Of Inside Signal") {
@@ -51,11 +51,11 @@ class TrueDynamicSignals extends RETests {
         sig.value
       }
 
-      assert(testsig.readValueOnce === 10)
+      assertEquals(testsig.readValueOnce, 10)
       outside set 2
       inside set 11
-      assert(testsig.readValueOnce === 11)
-      assert(sig.readValueOnce === 2)
+      assertEquals(testsig.readValueOnce, 11)
+      assertEquals(sig.readValueOnce, 2)
     }
 
     test("use Of Outside Signal") {
@@ -72,10 +72,10 @@ class TrueDynamicSignals extends RETests {
         sig().value
       }
 
-      assert(testsig.readValueOnce === 1)
+      assertEquals(testsig.readValueOnce, 1)
       outside set 2
       inside set 11
-      assert(testsig.readValueOnce === 2)
+      assertEquals(testsig.readValueOnce, 2)
     }
 
     test("outer And Inner Values") {
@@ -89,17 +89,17 @@ class TrueDynamicSignals extends RETests {
         obj.sig.value + (evt `hold` -1).value
       }
 
-      assert(testsig.readValueOnce === -1)
+      assertEquals(testsig.readValueOnce, -1)
       evt.fire(100)
-      assert(testsig.readValueOnce === 100)
+      assertEquals(testsig.readValueOnce, 100)
       v set 10
-      assert(testsig.readValueOnce === 110)
+      assertEquals(testsig.readValueOnce, 110)
       evt.fire(10)
-      assert(testsig.readValueOnce === 20)
+      assertEquals(testsig.readValueOnce, 20)
       evt.fire(5)
-      assert(testsig.readValueOnce === 15)
+      assertEquals(testsig.readValueOnce, 15)
       v set 50
-      assert(testsig.readValueOnce === 55)
+      assertEquals(testsig.readValueOnce, 55)
     }
 
     // test("chained Signals2") {
@@ -114,19 +114,19 @@ class TrueDynamicSignals extends RETests {
     //
     //  val sig = Signal.dynamic { s().signal().signal.value }
     //
-    //  assert(sig.readValueOnce === 20)
+    //  assertEquals(sig.readValueOnce, 20)
     //  v1 set 30
-    //  assert(sig.readValueOnce === 30)
+    //  assertEquals(sig.readValueOnce, 30)
     //  v2 set new { def signal(implicit ct: CreationTicket[REState]) = Signal { 7 + v1() } }
-    //  assert(sig.readValueOnce === 37)
+    //  assertEquals(sig.readValueOnce, 37)
     //  v1 set 10
-    //  assert(sig.readValueOnce === 17)
+    //  assertEquals(sig.readValueOnce, 17)
     //  v3 set new { val signal = Signal { new { def signal(implicit ct: CreationTicket[REState]) = Signal { v1() } } } }
-    //  assert(sig.readValueOnce === 10)
+    //  assertEquals(sig.readValueOnce, 10)
     //  v2 set new { def signal(implicit ct: CreationTicket[REState]) = Signal { 10 + v1() } }
-    //  assert(sig.readValueOnce === 10)
+    //  assertEquals(sig.readValueOnce, 10)
     //  v1 set 80
-    //  assert(sig.readValueOnce === 80)
+    //  assertEquals(sig.readValueOnce, 80)
     // }
 
     test("extracting Signal Side Effects") {
@@ -139,14 +139,14 @@ class TrueDynamicSignals extends RETests {
       val normalRes = Signal.dynamic() { implicit t: DynamicTicket[BundleState] =>
         t.depend(newSignal())
       }
-      assert(macroRes.readValueOnce === 0, "before, macro")
-      assert(normalRes.readValueOnce === 0, "before, normal")
+      assertEquals(macroRes.readValueOnce, 0, "before, macro")
+      assertEquals(normalRes.readValueOnce, 0, "before, normal")
       e1.fire(1)
-      assert(macroRes.readValueOnce === 1, "after, macro")
-      assert(normalRes.readValueOnce === 1, "after, normal")
+      assertEquals(macroRes.readValueOnce, 1, "after, macro")
+      assertEquals(normalRes.readValueOnce, 1, "after, normal")
       e1.fire(1)
-      assert(macroRes.readValueOnce === 2, "end, macro")
-      assert(normalRes.readValueOnce === 1, "end, normal")
+      assertEquals(macroRes.readValueOnce, 2, "end, macro")
+      assertEquals(normalRes.readValueOnce, 1, "end, normal")
     }
 
     // test("chained Signals1") {
@@ -159,13 +159,13 @@ class TrueDynamicSignals extends RETests {
     //
     //  val sig = Signal.dynamic { v() map (_.s()) }
     //
-    //  assert(sig.readValueOnce === List(1, 2))
+    //  assertEquals(sig.readValueOnce, List(1, 2))
     //  v1 set 5
-    //  assert(sig.readValueOnce === List(5, 2))
+    //  assertEquals(sig.readValueOnce, List(5, 2))
     //  v2 set 7
-    //  assert(sig.readValueOnce === List(5, 7))
+    //  assertEquals(sig.readValueOnce, List(5, 7))
     //  v set v.readValueOnce.reverse
-    //  assert(sig.readValueOnce === List(7, 5))
+    //  assertEquals(sig.readValueOnce, List(7, 5))
     // }
 
     test("signal Does Not Reevaluate The Expression If Depends On IsUpdated That Is Not In Current Dependencies") {
@@ -219,9 +219,9 @@ class TrueDynamicSignals extends RETests {
         to.depend(Signal.dynamic(outside) { ti => ti.depend(outside) })
       }
 
-      assert(testsig.readValueOnce === 1)
+      assertEquals(testsig.readValueOnce, 1)
       outside set 2
-      assert(testsig.readValueOnce === 2)
+      assertEquals(testsig.readValueOnce, 2)
     }
 
     test("dynamic dependency changes on top of stuff that is not changing") {

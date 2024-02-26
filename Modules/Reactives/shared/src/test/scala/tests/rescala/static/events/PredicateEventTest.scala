@@ -50,13 +50,13 @@ class PredicateEventTest extends RETests {
 
       val count  = e2.count()
       val result = e2.hold(false)
-      assert(count.readValueOnce === 0)
+      assertEquals(count.readValueOnce, 0)
       assert(!result.readValueOnce)
       e1.fire("reject")
-      assert(count.readValueOnce === 0)
+      assertEquals(count.readValueOnce, 0)
       assert(!result.readValueOnce)
       e1.fire("accept")
-      assert(count.readValueOnce === 1)
+      assertEquals(count.readValueOnce, 1)
       assert(result.readValueOnce)
 
     }

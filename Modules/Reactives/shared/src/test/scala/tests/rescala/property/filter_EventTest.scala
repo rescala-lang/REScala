@@ -2,12 +2,13 @@ package tests.rescala.property
 
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
+import org.scalacheck.Prop.*
+import reactives.default.*
 
-class filter_EventTest extends RETests with ScalaCheckDrivenPropertyChecks {
-  multiEngined { engine =>
-    import engine._
+class filter_EventTest extends munit.ScalaCheckSuite {
 
-    "filter Is Correctly Applied" in forAll { (nums: List[Int]) =>
+  property("filter Is Correctly Applied") {
+    forAll { (nums: List[Int]) =>
       val e = Evt[Int]()
       val f = e filter { _ % 2 == 0 }
       val s = f.list()

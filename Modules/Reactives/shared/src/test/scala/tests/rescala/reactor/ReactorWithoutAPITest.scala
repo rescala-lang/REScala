@@ -11,7 +11,7 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor has initial value") {
       val reactor = Reactor.once("Initial Value") { Stage() }
 
-      assert(transaction(reactor) { _.now(reactor) } === "Initial Value")
+      assertEquals(transaction(reactor) { _.now(reactor) }, "Initial Value")
     }
 
     test("Reactor executes body instantly") {
@@ -19,7 +19,7 @@ class ReactorWithoutAPITest extends RETests {
         S.set("Value Set!")
       }
 
-      assert(transaction(reactor) { _.now(reactor) } === "Value Set!")
+      assertEquals(transaction(reactor) { _.now(reactor) }, "Value Set!")
     }
 
     test("Reactor waits for event when using next") {
@@ -30,9 +30,9 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(transaction(reactor) { _.now(reactor) } === 42)
+      assertEquals(transaction(reactor) { _.now(reactor) }, 42)
       e1.fire()
-      assert(transaction(reactor) { _.now(reactor) } === 1)
+      assertEquals(transaction(reactor) { _.now(reactor) }, 1)
     }
 
     test("ReactorStage callback passes event value") {
@@ -44,9 +44,9 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(transaction(reactor) { _.now(reactor) } === 0)
+      assertEquals(transaction(reactor) { _.now(reactor) }, 0)
       e1.fire(1)
-      assert(transaction(reactor) { _.now(reactor) } === 1)
+      assertEquals(transaction(reactor) { _.now(reactor) }, 1)
     }
 
     test("ReactorStages can be nested") {
@@ -61,11 +61,11 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(reactor.now === 0)
+      assertEquals(reactor.now, 0)
       e1.fire()
-      assert(reactor.now === 1)
+      assertEquals(reactor.now, 1)
       e1.fire()
-      assert(reactor.now === 2)
+      assertEquals(reactor.now, 2)
     }
 
     test("Reactor has no glitches") {
@@ -81,13 +81,13 @@ class ReactorWithoutAPITest extends RETests {
       val tuple   = Signal { (e1.hold("Init").value, reactor.value) }
       val history = tuple.changed.list(5)
 
-      assert(tuple.now === (("Init", "Not Reacted")))
-      assert(history.now === Nil)
+      assertEquals(tuple.now, (("Init", "Not Reacted")))
+      assertEquals(history.now, Nil)
 
       e1.fire("Fire")
 
-      assert(tuple.now === (("Fire", "Reacted")))
-      assert(history.now === List(("Fire", "Reacted")))
+      assertEquals(tuple.now, (("Fire", "Reacted")))
+      assertEquals(history.now, List(("Fire", "Reacted")))
     }
 
     test("Rector can loop") {
@@ -98,13 +98,13 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(reactor.now === "First Stage")
+      assertEquals(reactor.now, "First Stage")
       e1.fire()
-      assert(reactor.now === "Second Stage")
+      assertEquals(reactor.now, "Second Stage")
       e1.fire()
-      assert(reactor.now === "First Stage")
+      assertEquals(reactor.now, "First Stage")
       e1.fire()
-      assert(reactor.now === "Second Stage")
+      assertEquals(reactor.now, "Second Stage")
     }
 
     test("Reactor read") {
@@ -114,7 +114,7 @@ class ReactorWithoutAPITest extends RETests {
         )
       }
 
-      assert(reactor.now === 50)
+      assertEquals(reactor.now, 50)
     }
 
     test("Reactor read can branch") {
@@ -131,11 +131,11 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(reactor.now === "")
+      assertEquals(reactor.now, "")
       e1.fire(42)
-      assert(reactor.now === "Greater 10")
+      assertEquals(reactor.now, "Greater 10")
       e1.fire(9)
-      assert(reactor.now === "Smaller 10")
+      assertEquals(reactor.now, "Smaller 10")
     }
 
     test("Reactor stage loop") {
@@ -148,11 +148,11 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(reactor.now === 42)
+      assertEquals(reactor.now, 42)
       e1.fire(1)
-      assert(reactor.now === 43)
+      assertEquals(reactor.now, 43)
       e1.fire(7)
-      assert(reactor.now === 50)
+      assertEquals(reactor.now, 50)
     }
 
     test("Reactor complex stage loop") {
@@ -168,15 +168,15 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assert(reactor.now === 42)
+      assertEquals(reactor.now, 42)
       e1.fire(1)
-      assert(reactor.now === 43)
+      assertEquals(reactor.now, 43)
       e1.fire(3)
-      assert(reactor.now === 40)
+      assertEquals(reactor.now, 40)
       e1.fire(10)
-      assert(reactor.now === 50)
+      assertEquals(reactor.now, 50)
       e1.fire(50)
-      assert(reactor.now === 0)
+      assertEquals(reactor.now, 0)
     }
 
     test("Reactor until works") {
@@ -193,9 +193,9 @@ class ReactorWithoutAPITest extends RETests {
         )
       }
 
-      assert(reactor.now === "Body value")
+      assertEquals(reactor.now, "Body value")
       e1.fire()
-      assert(reactor.now === "Interrupt value")
+      assertEquals(reactor.now, "Interrupt value")
     }
 
     test("Reactor until passes event value") {
@@ -212,9 +212,9 @@ class ReactorWithoutAPITest extends RETests {
         )
       }
 
-      assert(reactor.now === "Body value")
+      assertEquals(reactor.now, "Body value")
       e1.fire("Event value")
-      assert(reactor.now === "Event value")
+      assertEquals(reactor.now, "Event value")
     }
 
     test("Reactor until can contain loops") {
@@ -236,13 +236,13 @@ class ReactorWithoutAPITest extends RETests {
         )
       }
 
-      assert(reactor.now === "Initial Value")
+      assertEquals(reactor.now, "Initial Value")
       modifyEvent.fire("First Value")
-      assert(reactor.now === "First Value")
+      assertEquals(reactor.now, "First Value")
       modifyEvent.fire("Second Value")
-      assert(reactor.now === "Second Value")
+      assertEquals(reactor.now, "Second Value")
       interrupt.fire()
-      assert(reactor.now === "Interrupted")
+      assertEquals(reactor.now, "Interrupted")
     }
 
     test("Reactor until works without interruptHandler") {
@@ -261,12 +261,12 @@ class ReactorWithoutAPITest extends RETests {
         )
       }
 
-      assert(reactor.now === 0)
+      assertEquals(reactor.now, 0)
       modifier.fire(42)
-      assert(reactor.now === 42)
+      assertEquals(reactor.now, 42)
       interrupt.fire()
       modifier.fire(50)
-      assert(reactor.now === 42)
+      assertEquals(reactor.now, 42)
     }
 
     test("Reactor multiple changes in a single stage") {
@@ -282,7 +282,7 @@ class ReactorWithoutAPITest extends RETests {
 
       val counter = reactorChanged.count()
       start.fire()
-      assert(counter.now === 1)
+      assertEquals(counter.now, 1)
     }
   }
 }

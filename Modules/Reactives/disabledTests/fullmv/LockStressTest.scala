@@ -97,7 +97,7 @@ class LockStressTest extends AnyFunSuite {
         println(
           s"garbage stats: ${host.scheduler.instances.size()} orphan turn instances and ${host.scheduler.lockHost.instances.size()} orphan lock instances"
         )
-        assert(host.scheduler.instances.size() + host.scheduler.lockHost.instances.size() === 0)
+        assertEquals(host.scheduler.instances.size() + host.scheduler.lockHost.instances.size(), 0)
     }
   }
 }

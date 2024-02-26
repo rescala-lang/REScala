@@ -19,9 +19,9 @@ class GlitchFreedomTestSuite extends RETests {
 
       v1.set(3)
 
-      assert(s1List.readValueOnce === List(6))
-      assert(s2List.readValueOnce === List(9))
-      assert(s3List.readValueOnce === List(15))
+      assertEquals(s1List.readValueOnce, List(6))
+      assertEquals(s2List.readValueOnce, List(9))
+      assertEquals(s3List.readValueOnce, List(15))
 
     }
 

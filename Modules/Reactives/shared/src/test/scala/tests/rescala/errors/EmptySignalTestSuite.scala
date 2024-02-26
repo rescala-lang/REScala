@@ -67,14 +67,14 @@ class EmptySignalTestSuite extends RETests {
 
       e.observe(res = _)
 
-      assert(res === -100, "sanity")
+      assertEquals(res, -100, "sanity")
 
       val evt = Evt[Int]()
       v.set(evt)
 
       evt.fire(20)
 
-      assert(res === 20, "could unwrap after Val was empty")
+      assertEquals(res, 20, "could unwrap after Val was empty")
 
     }
 
@@ -85,21 +85,21 @@ class EmptySignalTestSuite extends RETests {
       val e      = sig.changed
       val folded = e.fold(0)(_ - _)
 
-      assert(v.readValueOnce === 6)
-      assert(sig.readValueOnce === v.readValueOnce + v2.readValueOnce)
-      assert(folded.readValueOnce === 0)
+      assertEquals(v.readValueOnce, 6)
+      assertEquals(sig.readValueOnce, v.readValueOnce + v2.readValueOnce)
+      assertEquals(folded.readValueOnce, 0)
 
       v.setEmpty()
       intercept[NoSuchElementException](v.readValueOnce)
       intercept[NoSuchElementException](sig.readValueOnce)
-      assert(v2.readValueOnce === 6)
-      assert(folded.readValueOnce === 0)
+      assertEquals(v2.readValueOnce, 6)
+      assertEquals(folded.readValueOnce, 0)
 
       v.set(10)
-      assert(v.readValueOnce === 10)
-      assert(v2.readValueOnce === 6)
-      assert(sig.readValueOnce === v.readValueOnce + v2.readValueOnce)
-      assert(folded.readValueOnce === -16)
+      assertEquals(v.readValueOnce, 10)
+      assertEquals(v2.readValueOnce, 6)
+      assertEquals(sig.readValueOnce, v.readValueOnce + v2.readValueOnce)
+      assertEquals(folded.readValueOnce, -16)
 
     }
 

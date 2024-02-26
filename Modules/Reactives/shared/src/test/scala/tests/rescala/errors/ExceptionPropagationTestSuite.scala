@@ -43,8 +43,8 @@ class ExceptionPropagationTestSuite extends RETests {
 
       e.fire(42)
 
-      assert(dres === Success(100 / 42), "dynamic arithmetic error")
-      assert(sres === Success(100 / 42), "static arithmetic error")
+      assertEquals(dres, Success(100 / 42), "dynamic arithmetic error")
+      assertEquals(sres, Success(100 / 42), "static arithmetic error")
 
       e.fire(0)
 
@@ -63,15 +63,15 @@ class ExceptionPropagationTestSuite extends RETests {
       var res: Diff[Int] = null
       `change'd`.observe(res = _)
 
-      assert(folded.readValueOnce === 100)
+      assertEquals(folded.readValueOnce, 100)
 
       input.fire("10")
-      assert(folded.readValueOnce === 10, "successful fold")
-      assert(res.pair === (100 -> 10), "successful changed")
+      assertEquals(folded.readValueOnce, 10, "successful fold")
+      assertEquals(res.pair, (100 -> 10), "successful changed")
 
       input.fire(" 2  ")
-      assert(folded.readValueOnce === 5, "successful fold 2")
-      assert(res.pair === (10 -> 5), "successful changed 2")
+      assertEquals(folded.readValueOnce, 5, "successful fold 2")
+      assertEquals(res.pair, (10 -> 5), "successful changed 2")
 
       input.fire(" 0  ")
       intercept[ObservedException](folded.readValueOnce)
@@ -97,30 +97,30 @@ class ExceptionPropagationTestSuite extends RETests {
 
       `change'd`.observe(res = _)
 
-      assert(folded.readValueOnce === 100)
+      assertEquals(folded.readValueOnce, 100)
 
       input.set("10")
-      assert(folded.readValueOnce === 10, "successful fold")
-      assert(res.pair === (100 -> 10), "successful changed")
+      assertEquals(folded.readValueOnce, 10, "successful fold")
+      assertEquals(res.pair, (100 -> 10), "successful changed")
 
       input.set(" 2  ")
-      assert(folded.readValueOnce === 2, "successful fold 2")
-      assert(res.pair === (10 -> 2), "successful changed2")
+      assertEquals(folded.readValueOnce, 2, "successful fold 2")
+      assertEquals(res.pair, (10 -> 2), "successful changed2")
 
       input.set(" 0  ")
-      assert(folded.readValueOnce === 0, "successful fold 3")
-      assert(res.pair === (2 -> 0), "successful changed3")
+      assertEquals(folded.readValueOnce, 0, "successful fold 3")
+      assertEquals(res.pair, (2 -> 0), "successful changed3")
 
       input.set(" aet ")
       intercept[ObservedException](folded.readValueOnce)
       intercept[NumberFormatException](res.pair)
 
       input.set("100")
-      assert(folded.readValueOnce === 100, "successful fold 5")
+      assertEquals(folded.readValueOnce, 100, "successful fold 5")
       intercept[NumberFormatException](res.pair) // TODO: should maybe change?
 
       input.set("200")
-      assert(res.pair === (100 -> 200), "successful changed3")
+      assertEquals(res.pair, (100 -> 200), "successful changed3")
 
     }
 
@@ -131,16 +131,16 @@ class ExceptionPropagationTestSuite extends RETests {
       var res = 100
 
       intercept[ObservedException] { ds.observe(res = _) }
-      assert(res === 100, "can not add observers to exceptional signals")
+      assertEquals(res, 100, "can not add observers to exceptional signals")
 
       v.set(42)
       ds.observe(res = _)
-      assert(res === 100 / 42, "can add observers if no longer failed")
+      assertEquals(res, 100 / 42, "can add observers if no longer failed")
 
       intercept[ObservedException] { v.set(0) }
-      assert(res === 100 / 42, "observers are not triggered on failure")
+      assertEquals(res, 100 / 42, "observers are not triggered on failure")
       //if (engine != reactives.interfaces.toposort) {
-        assert(v.readValueOnce === 42, "transaction is aborted on failure")
+        assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
       //}
     }
 
@@ -151,13 +151,13 @@ class ExceptionPropagationTestSuite extends RETests {
       var res = 100
 
       ds.observe(res = _)
-      assert(res === 100, "adding observers to empty signal does nothing")
+      assertEquals(res, 100, "adding observers to empty signal does nothing")
 
       v.set(42)
-      assert(res === 100 / 42, "making signal non empty triggers observer")
+      assertEquals(res, 100 / 42, "making signal non empty triggers observer")
 
       engine.transaction(v)(t => v.admitPulse(Pulse.empty)(t))
-      assert(res === 100 / 42, "observers are not triggered when empty")
+      assertEquals(res, 100 / 42, "observers are not triggered when empty")
       intercept[NoSuchElementException] { v.readValueOnce }
     }
 
@@ -170,11 +170,11 @@ class ExceptionPropagationTestSuite extends RETests {
 
         v.set(42)
         ds.abortOnError("abort later")
-        assert(ds.readValueOnce === 100 / 42, "can add observers if no longer failed")
+        assertEquals(ds.readValueOnce, 100 / 42, "can add observers if no longer failed")
 
         intercept[ObservedException] { v.set(0) }
-        assert(ds.readValueOnce === 100 / 42, "observers are not triggered on failure")
-        assert(v.readValueOnce === 42, "transaction is aborted on failure")
+        assertEquals(ds.readValueOnce, 100 / 42, "observers are not triggered on failure")
+        assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
       //}
     }
 
@@ -184,11 +184,11 @@ class ExceptionPropagationTestSuite extends RETests {
       val ds2: Signal[Int] = Signal { if (ds.value == 10) throw new IndexOutOfBoundsException else ds.value }
       val recovered        = ds2.recover { case _: IndexOutOfBoundsException => 9000 }
 
-      assert(recovered.readValueOnce === 50)
+      assertEquals(recovered.readValueOnce, 50)
       v.set(0)
       intercept[ObservedException](recovered.readValueOnce)
       v.set(10)
-      assert(recovered.readValueOnce === 9000)
+      assertEquals(recovered.readValueOnce, 9000)
       intercept[ObservedException](ds2.readValueOnce)
 
     }

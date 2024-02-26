@@ -48,7 +48,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
     }
   }
 
-  allEngines("dont set")(run(_, DontSet))
-  allEngines("set unchanged")(run(_, SetUnchanged))
-  allEngines("set changed")(run(_, SetChanged))
+  test("dont set")(run(reactives.default, DontSet))
+  test("set unchanged")(run(reactives.default, SetUnchanged))
+  test("set changed")(run(reactives.default, SetChanged))
 }

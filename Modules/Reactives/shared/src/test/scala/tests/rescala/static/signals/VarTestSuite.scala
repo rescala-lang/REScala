@@ -64,16 +64,16 @@ class VarTestSuite extends RETests {
       val v1    = Var(0)
       def inc() = v1.transform(1.+)
 
-      assert(v1.readValueOnce === 0)
+      assertEquals(v1.readValueOnce, 0)
       inc()
-      assert(v1.readValueOnce === 1)
+      assertEquals(v1.readValueOnce, 1)
 
       val s1 = v1.map(identity)
 
-      assert(s1.readValueOnce === 1)
+      assertEquals(s1.readValueOnce, 1)
       inc()
-      assert(v1.readValueOnce === 2)
-      assert(s1.readValueOnce === 2)
+      assertEquals(v1.readValueOnce, 2)
+      assertEquals(s1.readValueOnce, 2)
 
     }
 

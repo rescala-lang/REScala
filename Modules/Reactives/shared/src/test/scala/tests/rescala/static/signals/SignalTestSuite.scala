@@ -47,9 +47,9 @@ class SignalTestSuite extends RETests {
     test("the Expression Is Not Evaluated Every Time now Is Called") {
       var a = 10
       val s = Signal(1 + 1 + a)
-      assert(s.readValueOnce === 12)
+      assertEquals(s.readValueOnce, 12)
       a = 11
-      assert(s.readValueOnce === 12)
+      assertEquals(s.readValueOnce, 12)
     }
 
     test("level Is Correctly Computed") {
@@ -73,13 +73,13 @@ class SignalTestSuite extends RETests {
       val s = Signal {
         changes += 1; v.value + 1
       }
-      assert(changes === 1)
-      assert(s.readValueOnce === 2)
+      assertEquals(changes, 1)
+      assertEquals(s.readValueOnce, 2)
       v.set(2)
-      assert(s.readValueOnce === 3)
-      assert(changes === 2)
+      assertEquals(s.readValueOnce, 3)
+      assertEquals(changes, 2)
       v.set(2)
-      assert(changes === 2) // is actually 3
+      assertEquals(changes, 2) // is actually 3
     }
 
     test("creating signals in signals based on changing signals") {
@@ -115,14 +115,14 @@ class SignalTestSuite extends RETests {
     test("the Expression Is Note Evaluated Every Time Get Val Is Called") {
       var a              = 10
       val s: Signal[Int] = Signal.static()(_ => 1 + 1 + a)
-      assert(s.readValueOnce === 12)
+      assertEquals(s.readValueOnce, 12)
       a = 11
-      assert(s.readValueOnce === 12)
+      assertEquals(s.readValueOnce, 12)
     }
 
     test("simple Signal Returns Correct Expressions") {
       val s: Signal[Int] = Signal.static()(_ => 1 + 1 + 1)
-      assert(s.readValueOnce === 3)
+      assertEquals(s.readValueOnce, 3)
     }
 
     test("the Expression Is Evaluated Only Once") {
@@ -139,7 +139,7 @@ class SignalTestSuite extends RETests {
       assert(a == 2)
       v.set(21)
       assert(a == 3)
-      assert(s1.readValueOnce === 1)
+      assertEquals(s1.readValueOnce, 1)
     }
 
     test("handlers Are Executed") {
@@ -186,20 +186,20 @@ class SignalTestSuite extends RETests {
       val s  = v.map(_ => 1)
       val s2 = Signal { s.value }
 
-      assert(s2.readValueOnce === 1)
-      assert(s.readValueOnce === 1)
+      assertEquals(s2.readValueOnce, 1)
+      assertEquals(s.readValueOnce, 1)
 
       v.set(2)
-      assert(s.readValueOnce === 1)
-      assert(s2.readValueOnce === 1)
+      assertEquals(s.readValueOnce, 1)
+      assertEquals(s2.readValueOnce, 1)
 
       v.set(2)
-      assert(s2.readValueOnce === 1)
-      assert(s.readValueOnce === 1)
+      assertEquals(s2.readValueOnce, 1)
+      assertEquals(s.readValueOnce, 1)
 
       v.set(3)
-      assert(s2.readValueOnce === 1)
-      assert(s.readValueOnce === 1)
+      assertEquals(s2.readValueOnce, 1)
+      assertEquals(s.readValueOnce, 1)
 
     }
   }
