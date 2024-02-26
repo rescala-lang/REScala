@@ -1,23 +1,23 @@
 import LocalDependencies.*
 import Settings.*
 
-lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
+lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   // core
-  rescala.js,
-  rescala.jvm,
-  rescala.native,
+  reactives.js,
+  reactives.jvm,
+  reactives.native,
   rescalafx,
   reswing,
-  kofre.js,
-  kofre.jvm,
-  kofre.native,
+  rdts.js,
+  rdts.jvm,
+  rdts.native,
   aead.js,
   aead.jvm,
   // research & eval
   compileMacros.js,
   compileMacros.jvm,
   // compileMacros.native,
-  microbench,
+  microbenchmarks,
   // examples & case studies
   examples,
   todolist,
@@ -26,18 +26,18 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   replicationExamples.jvm,
 )
 
-lazy val rescalaAggregate =
-  project.in(file("target/PhonyBuilds/rescalaAggregate")).settings(
+lazy val reactivesAggregate =
+  project.in(file("target/PhonyBuilds/reactives")).settings(
     crossScalaVersions := Nil,
     noPublish,
     scala3defaults
   ).aggregate(
-    rescala.js,
-    rescala.jvm,
-    rescala.native,
+    reactives.js,
+    reactives.jvm,
+    reactives.native,
   )
 
-lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
+lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     scala3defaults,
     // scaladoc
@@ -61,24 +61,24 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
 
 lazy val reswing = project.in(file("Modules/Swing"))
   .settings(scala3defaults, noPublish, LocalDependencies.scalaSwing)
-  .dependsOn(rescala.jvm)
+  .dependsOn(reactives.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
-  .dependsOn(rescala.jvm)
+  .dependsOn(reactives.jvm)
   .settings(scala3defaults, noPublish, scalaFxDependencies, fork := true)
 
-lazy val kofreAggregate =
+lazy val rdtsAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
     crossScalaVersions := Nil,
     noPublish,
     scala3defaults
   ).aggregate(
-    kofre.js,
-    kofre.jvm,
-    kofre.native,
+    rdts.js,
+    rdts.jvm,
+    rdts.native,
   )
 
-lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
+lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
@@ -119,9 +119,9 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).c
     noPublish,
     Dependencies.jsoniterScala,
   )
-  .dependsOn(rescala)
+  .dependsOn(reactives)
 
-lazy val microbench = project.in(file("Modules/Microbenchmarks"))
+lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     scala3defaults,
@@ -131,13 +131,13 @@ lazy val microbench = project.in(file("Modules/Microbenchmarks"))
     Dependencies.jsoniterScala,
     jolSettings,
   )
-  .dependsOn(rescala.jvm, kofre.jvm)
+  .dependsOn(reactives.jvm, rdts.jvm)
 
 // =====================================================================================
 // Examples
 
 lazy val examples = project.in(file("Modules/Example Misc 2015"))
-  .dependsOn(rescala.jvm, reswing)
+  .dependsOn(reactives.jvm, reswing)
   .settings(
     scala3defaults,
     noPublish,
@@ -150,7 +150,7 @@ lazy val examples = project.in(file("Modules/Example Misc 2015"))
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(kofre.js, rescala.js)
+  .dependsOn(rdts.js, reactives.js)
   .settings(
     scala3defaults,
     noPublish,
@@ -174,7 +174,7 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
 
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(kofre.jvm)
+  .dependsOn(rdts.jvm)
   .settings(
     scala3defaults,
     noPublish,
@@ -188,7 +188,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
 
 lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(rescala, kofre, aead, kofre % "compile->compile;test->test")
+    .dependsOn(reactives, rdts, aead, rdts % "compile->compile;test->test")
     .settings(
       scala3defaults,
       noPublish,
