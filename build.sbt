@@ -1,4 +1,4 @@
-import RescalaDependencies.*
+import LocalDependencies.*
 import Settings.*
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
@@ -49,8 +49,8 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     publishSonatype,
     resolverJitpack,
     Dependencies.sourcecode,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
+    LocalDependencies.scalatest,
+    LocalDependencies.scalatestpluscheck,
   )
   .jsSettings(
     Dependencies.scalajsDom,
@@ -60,7 +60,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, RescalaDependencies.scalaSwing)
+  .settings(scala3defaults, noPublish, LocalDependencies.scalaSwing)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
@@ -94,13 +94,13 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scala3defaults,
     noPublish,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
+    LocalDependencies.scalatest,
+    LocalDependencies.scalatestpluscheck,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
   .jvmSettings(
-    RescalaDependencies.tink
+    LocalDependencies.tink
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
@@ -181,8 +181,8 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     scalaFxDependencies,
     fork := true,
     Dependencies.jsoniterScala,
-    RescalaDependencies.jetty11,
-    RescalaDependencies.tink,
+    LocalDependencies.jetty11,
+    LocalDependencies.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 

@@ -2,9 +2,9 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import sbt.*
 import sbt.Keys.*
 
-object RescalaDependencies {
+object LocalDependencies {
 
-  val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test
+  val scalatest          = libraryDependencies += "org.scalatest"     %%% "scalatest"       % "3.2.18"   % Test
   val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test"
   val circe = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
 
