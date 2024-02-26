@@ -24,7 +24,9 @@ import reactives.operator.Interface.State
   * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
   *           over multiple scheduler implementations.
   */
-trait Interface extends Operators {
+trait Interface {
+
+  export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
 
   type BundleState[V] = State[V]
 

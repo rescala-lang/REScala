@@ -10,9 +10,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
 
-trait SignalBundle {
-  selfType: Operators =>
-
   /** Time changing value derived from the dependencies.
     *
     * @tparam T Type stored by the signal
@@ -152,13 +149,13 @@ trait SignalBundle {
 
     inline def static[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
       val (inputs, fun, isStatic) =
-        reactives.macros.getDependencies[T, ReSource.of[State], reactives.core.StaticTicket[State], true](expr)
+        reactives.macros.MacroLegos.getDependencies[T, ReSource.of[State], reactives.core.StaticTicket[State], true](expr)
       Signal.static(inputs*)(fun)
     }
 
     inline def dynamic[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
       val (sources, fun, isStatic) =
-        reactives.macros.getDependencies[T, ReSource.of[State], reactives.core.DynamicTicket[State], false](
+        reactives.macros.MacroLegos.getDependencies[T, ReSource.of[State], reactives.core.DynamicTicket[State], false](
           expr
         )
       Signal.dynamic(sources*)(fun)
@@ -237,4 +234,3 @@ trait SignalBundle {
 
   }
 
-}

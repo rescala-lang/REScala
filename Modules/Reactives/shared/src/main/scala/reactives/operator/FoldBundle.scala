@@ -4,8 +4,6 @@ import reactives.core.{CreationTicket, DynamicTicket, ReSource}
 import reactives.operator.Interface.State
 import reactives.structure.{Pulse, SignalImpl}
 
-trait FoldBundle {
-  bundle: Operators =>
 
   /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.
     *
@@ -17,12 +15,12 @@ trait FoldBundle {
     *   )
     * }}}
     */
-  object Fold {
+  implicit object Fold {
 
     /** Fold branches allow to define more complex fold logic */
     inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {
       val (sources, fun, isStatic) =
-        reactives.macros.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](
+        reactives.macros.MacroLegos.getDependencies[FoldState[T] ?=> T, ReSource.of[State], DynamicTicket[State], false](
           expr
         )
       Branch(sources, isStatic, fun)
@@ -55,15 +53,16 @@ trait FoldBundle {
         new SignalImpl(state, operator, ticket.info, if isStatic then None else Some(staticDeps)) with Signal[T]
       }
     }
+
+
+    inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
+
+    extension [T](e: Event[T]) {
+      infix def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
+    }
   }
 
-  inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
 
-  extension [T](e: Event[T]) {
-    inline infix def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
-  }
-
-}
 
 opaque type FoldState[T] = () => T
 object FoldState {

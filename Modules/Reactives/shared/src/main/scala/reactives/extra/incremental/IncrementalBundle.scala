@@ -2,13 +2,11 @@ package reactives.extra.incremental
 
 import reactives.core._
 import reactives.operator.Interface.State
-import reactives.operator.{EventBundle, Interface, SignalBundle}
+import reactives.operator.*
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
-trait IncrementalBundle {
-  self: EventBundle & SignalBundle & Interface =>
 
   /** @tparam T Type of values inside Deltas
     * @tparam S Structure of Reactive Sequence source
@@ -58,13 +56,14 @@ trait IncrementalBundle {
       // Than we fold the event by applying the fold- or unfold-function respectively
       // In case Nothing Changed we return the old value of fold
       // This will automatically create a Signal whose value is updated each time the event fires
-      event.fold(initial)((x: A, y: Delta[T]) => {
-        y match {
-          case Addition(_) => fold(x, y)
-          case Removal(_)  => unfold(x, y)
-          case NoChange()  => x
-        }
-      })
+//      event.fold(initial)((x: A, y: Delta[T]) => {
+//        y match {
+//          case Addition(_) => fold(x, y)
+//          case Removal(_)  => unfold(x, y)
+//          case NoChange()  => x
+//        }
+//      })
+      ???
     }
 
     //  /**
@@ -480,4 +479,3 @@ trait IncrementalBundle {
         ticket.info
       ))
   }
-}

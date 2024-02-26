@@ -8,14 +8,14 @@ import scala.annotation.implicitNotFound
 import scala.collection.IterableOps
 import scala.reflect.ClassTag
 
-trait FlattenBundle {
-  self: Operators =>
   @implicitNotFound(msg =
     "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten."
   )
   trait Flatten[-A, R] {
     def apply(sig: A): R
   }
+
+object Flatten {
 
   /** Flatten a Signal[Signal[B]\] into a Signal[B] that changes whenever the outer or inner signal changes. */
   implicit def flattenImplicitForsignal[B](using CreationTicket[State]): Flatten[

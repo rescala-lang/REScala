@@ -2,15 +2,13 @@ package reactives.extra.reactivestreams
 
 import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import reactives.core.{Base, Derived, ReInfo, ReadAs, Scheduler, ScopeSearch}
-import reactives.operator.Interface
+import reactives.operator.*
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
 
+
 import java.util.Objects
 import scala.util.{Failure, Success}
-
-class ReactiveStreamsApi(val api: Interface) {
-  import api._
 
   class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] {
 
@@ -122,5 +120,4 @@ class ReactiveStreamsApi(val api: Interface) {
       }
     }
 
-  }
 }

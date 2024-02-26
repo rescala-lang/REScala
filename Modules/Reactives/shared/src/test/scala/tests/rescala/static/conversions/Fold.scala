@@ -201,7 +201,7 @@ class FoldTests extends RETests {
       val res = Fold("")(
         reset act (_ => ""),
         word act identity,
-        count act (current * _)
+        count act (Fold.current * _)
       )
 
       assert(res.readValueOnce == "")

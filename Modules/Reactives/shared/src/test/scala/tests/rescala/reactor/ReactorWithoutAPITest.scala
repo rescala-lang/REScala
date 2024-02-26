@@ -1,14 +1,12 @@
 package tests.rescala.reactor
 
 import _root_.tests.rescala.testtools.RETests
-import reactives.extra.reactor.ReactorBundle
+import reactives.extra.reactor.*
 
 class ReactorWithoutAPITest extends RETests {
 
   multiEngined { engine =>
-    val reactorApi = new ReactorBundle[engine.type](engine)
     import engine._
-    import reactorApi._
 
     test("Reactor has initial value") {
       val reactor = Reactor.once("Initial Value") { Stage() }

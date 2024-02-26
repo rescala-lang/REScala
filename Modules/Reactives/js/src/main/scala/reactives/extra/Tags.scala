@@ -3,18 +3,19 @@ package reactives.extra
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, document}
-import reactives.core.{CreationTicket, Disconnectable, DynamicScope, Tracing}
+import reactives.core.{CreationTicket, Disconnectable, DynamicScope, Scheduler, Tracing}
 import reactives.operator.Interface
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
+import reactives.operator.*
+import reactives.operator.Interface.State
 
 import scala.annotation.targetName
 import scala.scalajs.js
 
-object Tags extends Tags[reactives.default.type](reactives.default, true)
+object Tags extends Tags(true)
 
-class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
-  import api.*
+class Tags(val addDebuggingIds: Boolean) {
 
   trait RangeSplice[-T]:
     def splice(range: dom.Range, value: T): Unit
@@ -33,7 +34,7 @@ class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
     }
 
   extension (outer: dom.Element)
-    def reattach[T](signal: Signal[T])(using splicer: RangeSplice[T]): outer.type = {
+    def reattach[T](signal: Signal[T])(using splicer: RangeSplice[T], creationTicket: CreationTicket[Interface.State]): outer.type = {
       val range = document.createRange()
       range.selectNodeContents(outer)
       range.collapse(toStart = false)
@@ -47,7 +48,7 @@ class Tags[Api <: Interface](val api: Api, val addDebuggingIds: Boolean) {
     }
 
   extension (input: Input)
-    def inputEntered: Event[String] = {
+    def inputEntered(using creationTicket: CreationTicket[State], scheduler: Scheduler[State]): Event[String] = {
       val handler: Event.CBR[KeyboardEvent, Unit] = Event.fromCallback(input.onkeyup = Event.handle(_))
 
       handler.event

@@ -256,7 +256,7 @@ class SignalMacro extends RETests {
       val source  = Evt[String]()
       val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
-      val selected = source.map(mapping.get).flatten.hold().flatten(flattenImplicitForsignal)
+      val selected = source.map(mapping.get).flatten.hold().flatten(Flatten.flattenImplicitForsignal)
 
       source.fire("Hallo")
 

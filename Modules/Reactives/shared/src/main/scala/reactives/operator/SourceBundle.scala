@@ -4,8 +4,6 @@ import reactives.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Obs
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
 
-trait SourceBundle {
-  self: Operators =>
 
   trait Source[T] extends reactives.core.ReSource {
     final def admit(value: T)(implicit ticket: AdmissionTicket[State]): Unit = admitPulse(Pulse.Value(value))
@@ -51,8 +49,10 @@ trait SourceBundle {
   }
 
   /** @group create */
-  final def Evt[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
-    ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.info) }: Evt[A])
+  object Evt {
+    def apply[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
+      ticket.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.info) }: Evt[A])
+    }
   }
 
   /** Source signals with imperatively updates.
@@ -108,4 +108,3 @@ trait SourceBundle {
     }
   }
 
-}

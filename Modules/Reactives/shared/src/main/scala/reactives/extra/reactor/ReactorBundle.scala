@@ -2,11 +2,9 @@ package reactives.extra.reactor
 
 import reactives.core.{CreationTicket, Derived, ReInfo, Scheduler}
 import reactives.macros.MacroAccess
-import reactives.operator.Interface
+import reactives.operator.*
 import reactives.operator.Interface.State
 
-class ReactorBundle[Api <: Interface](val api: Api) {
-  import api._
   class Reactor[T](
       initState: State[ReactorState[T]]
   ) extends Derived with MacroAccess[T] {
@@ -119,7 +117,7 @@ class ReactorBundle[Api <: Interface](val api: Api) {
       */
     def once[T](
         initialValue: T
-    )(initialStage: Stage[T]): Reactor[T] = {
+    )(initialStage: Stage[T])(using creationTicket: CreationTicket[State]) = {
       createReactor(initialValue, initialStage)
     }
 
@@ -132,7 +130,7 @@ class ReactorBundle[Api <: Interface](val api: Api) {
       */
     def loop[T](
         initialValue: T
-    )(initialStage: Stage[T]): Reactor[T] = {
+    )(initialStage: Stage[T])(using creationTicket: CreationTicket[State]) = {
       val loopingStage = initialStage.copy(List(ReactorAction.LoopAction(initialStage, initialStage)))
       createReactor(initialValue, loopingStage)
     }
@@ -150,7 +148,7 @@ class ReactorBundle[Api <: Interface](val api: Api) {
     }
   }
 
-  sealed trait ReactorAction[T]
+  sealed trait ReactorAction[T] {}
 
   object ReactorAction {
     case class SetAction[T](res: T) extends ReactorAction[T]
@@ -168,7 +166,7 @@ class ReactorBundle[Api <: Interface](val api: Api) {
         extends ReactorAction[T]
   }
 
-  case class ReactorState[T](currentValue: T, currentStage: Stage[T])
+  case class ReactorState[T](currentValue: T, currentStage: Stage[T]) {}
 
   case class Stage[T](actions: List[ReactorAction[T]] = Nil) {
 
@@ -328,4 +326,3 @@ class ReactorBundle[Api <: Interface](val api: Api) {
       Stage()
     }
   }
-}

@@ -2,6 +2,7 @@ package tests.rescala.testtools
 
 import reactives.core.{Initializer, Scheduler}
 import reactives.operator.Interface
+import reactives.operator.Source
 
 class SetAndExtractTransactionHandle[Api <: Interface](val api: Api) {
   import api._
