@@ -1,22 +1,20 @@
 package tests.rescala.fullmv
 
-import org.scalatest.funsuite.AnyFunSuite
 import reactives.fullmv._
 import reactives.fullmv.sgt.synchronization._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class LockUnionFindTest extends AnyFunSuite {
-  object FullMv extends FullMVApi(Duration.Zero, "LockUnionFindTest")
-  val engine = FullMv.scheduler
+class LockUnionFindTest extends munit.FunSuite {
+  val engine = new FullMVEngine(Duration.Zero, "LockUnionFindTest")
 
   test("single lock gc works") {
     val turn = engine.newTurn()
     turn.beginFraming()
     val lock = turn.subsumableLock.get
 
-    if (FullMv.SubsumableLock.DEBUG) println(s"single lock gc with $turn using $lock")
+    if (SubsumableLockImpl.DEBUG) println(s"single lock gc with $turn using $lock")
 
     assertEquals(lock.refCount.get, 1)
     assertEquals(engine.getInstance(turn.guid), Some(turn))
@@ -60,7 +58,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (FullMv.SubsumableLock.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if (SubsumableLockImpl.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
@@ -152,8 +150,8 @@ class LockUnionFindTest extends AnyFunSuite {
     for (i <- 6 until maxIdx) {
       assertEquals(locks(i).refCount.get, 1) // turn(i-1)
     }
-    assert(
-      locks(maxIdx).refCount.get === maxIdx - 6 + 4
+    assertEquals(
+      locks(maxIdx).refCount.get, maxIdx - 6 + 4
     ) // lock(4), lock(6) to lock(maxIdx - 1), turn(0), turn(count-1), turn(count)
   }
 
@@ -169,13 +167,13 @@ class LockUnionFindTest extends AnyFunSuite {
     assertEquals(lock1.refCount.get, 1)
     assertEquals(lock2.refCount.get, 1)
 
-    val locked = FullMv.SerializationGraphTracking.tryLock(turn1, turn2, UnlockedUnknown).asInstanceOf[LockedSameSCC]
+    val locked = SerializationGraphTracking.tryLock(turn1, turn2, UnlockedUnknown).asInstanceOf[LockedSameSCC]
     locked.unlock()
 
     assert(
-      (lock1.refCount.get === 2 && lock2.refCount.get <= 0)
+      (lock1.refCount.get == 2 && lock2.refCount.get <= 0)
       ||
-      (lock1.refCount.get <= 0 && lock2.refCount.get === 2)
+      (lock1.refCount.get <= 0 && lock2.refCount.get == 2)
     )
   }
 
@@ -243,7 +241,7 @@ class LockUnionFindTest extends AnyFunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (FullMv.SubsumableLock.DEBUG)
+    if (SubsumableLockImpl.DEBUG)
       println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock

@@ -1,15 +1,15 @@
 package tests.rescala.fullmv
 
-import org.scalatest.funsuite.AnyFunSuite
+
+import reactives.fullmv.{FullMVTurnImpl, FullMVUtil}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import reactives.fullmv.FullMVUtil.default._
 import reactives.fullmv.sgt.synchronization.{Locked, Successful}
 
 import scala.util.Random
 
-class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
+class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
 
   private def findDisagreements[T](nodes: Set[T], trees: Map[T, FullMVTurnImpl], transitiveClosure: Map[T, Set[T]]) = {
@@ -29,7 +29,7 @@ class FullMVTurnTransitiveReachabilityTest extends AnyFunSuite {
   }
 
   private def makeTreesUnderSingleLockedLock(nodes: Set[Int]) = {
-    val trees: Map[Int, FullMVTurnImpl] = nodes.map(e => (e, scheduler.newTurn())).toMap
+    val trees: Map[Int, FullMVTurnImpl] = nodes.map(e => (e, FullMVUtil.defaultScheduler.newTurn())).toMap
     // put all transactions under a common locked lock, so that all locking assertions hold
     trees.values.foreach(_.beginExecuting())
     trees.values.reduce { (tA, tB) =>

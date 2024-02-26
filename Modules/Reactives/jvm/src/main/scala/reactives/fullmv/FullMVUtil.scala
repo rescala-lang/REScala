@@ -1,24 +1,21 @@
 package reactives.fullmv
 
-import reactives.fullmv.mirrors.Mirror
-import reactives.fullmv.sgt.synchronization.SubsumableLockBundle
-import reactives.fullmv.tasks.TaskBundle
 import reactives.operator.Interface
 
 import java.util.concurrent.ForkJoinPool
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-class FullMVApi(val timeout: Duration, val schedulerName: String) extends FullMVBundle with Mirror
-    with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
-  type BundleState[V] = State[V]
-  val scheduler: FullMVEngine = new FullMVEngine(timeout, schedulerName)
-}
+//class FullMVApi(val timeout: Duration, val schedulerName: String) extends FullMVBundle with Mirror
+//    with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle {
+//  type BundleState[V] = State[V]
+//  val scheduler: FullMVEngine =
+//}
 
 object FullMVUtil {
   val DEBUG = false
 
-  object default extends FullMVApi(Duration.Zero, "FullMV-default-engine")
+  val defaultScheduler: FullMVEngine = new FullMVEngine(Duration.Zero, "FullMV-default-engine")
 
   object notWorthToMoveToTaskpool extends ExecutionContext {
     override def execute(runnable: Runnable): Unit =

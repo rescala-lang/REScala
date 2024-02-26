@@ -1,13 +1,8 @@
 package reactives.fullmv.mirrors
 
-import reactives.fullmv.sgt.synchronization.{
-  LockStateResult, SubsumableLock, SubsumableLockBundle, TryLockResult, TrySubsumeResult
-}
-import reactives.fullmv.tasks.TaskBundle
-import reactives.fullmv.{FullMVBundle, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase}
+import reactives.fullmv.sgt.synchronization.{LockStateResult, SubsumableLock, TryLockResult, TrySubsumeResult}
+import reactives.fullmv.{FullMVTurn, TransactionSpanningTreeNode, TurnPhase}
 
-trait Mirror extends FullMVBundle {
-  selfType: TurnImplBundle & TaskBundle & SubsumableLockBundle & FullMvStateBundle =>
 
   trait FullMVTurnHost extends Host[FullMVTurn] {
     val lockHost: SubsumableLockHost
@@ -59,4 +54,3 @@ trait Mirror extends FullMVBundle {
     def asyncNewValueFollowFrame(turn: FullMVTurn, value: P, followFrame: FullMVTurn): Unit
   }
 
-}

@@ -6,15 +6,11 @@ import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{
   NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
 }
 import reactives.fullmv.NotificationBranchResult.*
-import reactives.fullmv.mirrors.Mirror
-import reactives.fullmv.sgt.synchronization.SubsumableLockBundle
 import reactives.fullmv.*
 import reactives.structure.Pulse
 
 import java.util.concurrent.RecursiveAction
 
-trait TaskBundle extends FullMVBundle {
-  selfType: Mirror & TurnImplBundle & FullMvStateBundle & SubsumableLockBundle =>
 
   trait FramingTask extends FullMVAction {
     override def doCompute(): Unit = {
@@ -271,4 +267,3 @@ trait TaskBundle extends FullMVBundle {
     }
   }
 
-}

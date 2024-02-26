@@ -1,6 +1,5 @@
 package tests.rescala.fullmv
 
-import org.scalatest.funsuite.AnyFunSuite
 import reactives.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
 import reactives.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
 import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
@@ -8,11 +7,9 @@ import reactives.fullmv._
 
 import scala.concurrent.duration.Duration
 
-class NodeVersionHistoryTest extends AnyFunSuite {
+class NodeVersionHistoryTest extends munit.FunSuite {
   test("Frame Notify Reevout") {
-    val api    = new FullMVApi(Duration.Zero, "fnr")
-    val engine = api.scheduler
-    import api._
+    val engine = new FullMVEngine(Duration.Zero, "fnr")
 
     val createN = engine.newTurn()
     createN.beginExecuting()
@@ -41,9 +38,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
   }
 
   test("Unchanged") {
-    object api extends FullMVApi(Duration.Zero, "nochange")
-    val engine = api.scheduler
-    import api._
+    val engine = new FullMVEngine(Duration.Zero, "fnr")
 
     val createN = engine.newTurn()
     createN.beginExecuting()
@@ -75,9 +70,7 @@ class NodeVersionHistoryTest extends AnyFunSuite {
   }
 
   test("SupersedeFraming into double marker trailer") {
-    object api extends FullMVApi(Duration.Zero, "asd")
-    val engine = api.scheduler
-    import api._
+    val engine = new FullMVEngine(Duration.Zero, "asd")
 
     val createN = engine.newTurn()
     createN.beginExecuting()
