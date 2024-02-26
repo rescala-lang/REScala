@@ -63,7 +63,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
 def schedulerSelection = Compile / sourceGenerators += Def.task {
   val file = (Compile / sourceManaged).value / "scheduler_selection_generated.scala"
   crossVersion.value
-  val scheduler = sys.env.getOrElse("REACTIVES_SCHEDULER", "default") match {
+  val scheduler = sys.env.getOrElse("REACTIVE_SCHEDULER", "default") match {
     case "fullmv"   => "reactives.fullmv.FullMVUtil.default"
     case "parrp"    => "reactives.parrp.ParRPDefault.scheduler"
     case "toposort" => "reactives.scheduler.TopoBundle.TopoScheduler"
