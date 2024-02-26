@@ -27,6 +27,7 @@ import reactives.operator.Interface.State
 trait Interface {
 
   export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
+  export Fold.current
 
   // TODO: remove once no more references are present
   type BundleState[V] = State[V]
