@@ -14,7 +14,7 @@ import reactives.structure.{Pulse, SignalImpl}
   *   )
   * }}}
   */
-implicit object Fold {
+object Fold {
 
   /** Fold branches allow to define more complex fold logic */
   inline def branch[T](inline expr: FoldState[T] ?=> T): Branch[T] = {

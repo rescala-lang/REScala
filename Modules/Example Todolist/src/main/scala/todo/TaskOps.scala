@@ -24,13 +24,16 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
     current.clearDeltas().prepend(taskref)
   }
 
-  def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] = removeAll.act { _ =>
-    current.clearDeltas().deleteBy { (taskref: TaskRef) =>
-      val isDone = taskref.task.value.read.exists(_.done)
-      // todo, move to observer, disconnect during transaction does not respect rollbacks
-      if (isDone) taskref.task.disconnect()
-      isDone
-    }
+  def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] = Fold.branch {
+    removeAll.value match
+      case None => Fold.current
+      case Some(_) =>
+        current.clearDeltas().deleteBy { (taskref: TaskRef) =>
+          val isDone = taskref.task.value.read.exists(_.done)
+          // todo, move to observer, disconnect during transaction does not respect rollbacks
+          if (isDone) taskref.task.disconnect()
+          isDone
+        }
   }
 
   def handleRemove(state: State)(id: String): State = {

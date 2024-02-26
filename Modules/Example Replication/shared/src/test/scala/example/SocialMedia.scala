@@ -56,7 +56,11 @@ object SocialMediaTest {
   val socialMedia: Signal[SocialMedia] =
     Fold(SocialMedia())(
       likeEvent act { id => Fold.current.like(id) },
-      commentEvent act { text => Fold.current.comment(UI.currentPostID.value, text) },
+      Fold.branch {
+        commentEvent.value match
+          case None => Fold.current
+          case Some(text) =>  Fold.current.comment(UI.currentPostID.value, text)
+      },
       postEvent act { text => Fold.current.post(text) }
     )
 

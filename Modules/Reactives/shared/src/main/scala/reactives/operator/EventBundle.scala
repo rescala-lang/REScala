@@ -6,6 +6,7 @@ import reactives.operator.Interface.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
+import Fold.act
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
@@ -222,8 +223,12 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     * @inheritdoc
     */
-  final def fold[A](init: A)(op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    Fold(init)(this act { v => op(Fold.current, v) })
+  final inline def fold[A](init: A)(inline op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
+    Fold(init)(Fold.branch {
+      this.value match
+        case None => Fold.current
+        case Some(v) => op(Fold.current, v)
+    })
 
 }
 
