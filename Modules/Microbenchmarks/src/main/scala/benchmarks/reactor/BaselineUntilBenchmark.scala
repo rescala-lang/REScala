@@ -1,8 +1,8 @@
 package benchmarks.reactor
 
 import benchmarks.EngineParam
-import org.openjdk.jmh.annotations._
-import reactives.extra.reactor.ReactorBundle
+import org.openjdk.jmh.annotations.*
+import reactives.extra.reactor.{Reactor, S, Stage}
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -17,9 +17,7 @@ import java.util.concurrent.TimeUnit
 class BaselineUntilBenchmark {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  final lazy val reactorApi   = new ReactorBundle[stableEngine.type](stableEngine)
 
-  import reactorApi._
   import stableEngine._
 
   var reactor: Reactor[Int] = scala.compiletime.uninitialized

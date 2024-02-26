@@ -7,6 +7,7 @@ import reactives.operator.*
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
 
+
 /** @tparam T Type of values inside Deltas
   * @tparam S Structure of Reactive Sequence source
   */

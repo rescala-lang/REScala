@@ -1,8 +1,9 @@
 package benchmarks.incremental
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import reactives.extra.incremental.IncrementalApi._
 
+import reactives.default.*
+import reactives.extra.incremental.*
 import java.util.concurrent.TimeUnit
 
 /** @author gerizuna
@@ -23,7 +24,7 @@ class MinBenchmarkWithRemoveWorstCase {
   var removeEvent: Evt[Int] = scala.compiletime.uninitialized
   var minOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]           = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]           = scala.compiletime.uninitialized
   var reactMinOfSeq: Signal[Option[Int]] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
@@ -36,7 +37,7 @@ class MinBenchmarkWithRemoveWorstCase {
       seq.value.min
     }
 
-    reactSeq = SeqSource.empty[Int]
+    reactSeq = IncSeq.empty[Int]
     reactMinOfSeq = reactSeq.min
     seq.now.foreach(x => reactSeq.add(x))
 

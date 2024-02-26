@@ -27,7 +27,7 @@ class StackState {
   def setup(params: BenchmarkParams, eParam: EngineParam, work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
     val threads = params.getThreads
-    if (scheduler == reactives.interfaces.unmanaged.scheduler) { isManual = true }
+    if (scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int] = source

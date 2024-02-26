@@ -6,6 +6,7 @@ import reactives.core.{AccessHandler, ReSource, ReevTicket}
 import reactives.default
 import reactives.parrp.ParRPDefault
 import reactives.scheduler.LevelbasedVariants
+import reactives.default.implicitScheduler
 
 object ObjectSizes {
 
@@ -21,10 +22,7 @@ object ObjectSizes {
     measure("var 5", reactives.default.Var(5))
     measure("default empty signal", reactives.default.Signal {})
     measure("default empty signal x 10", List.fill(100)(reactives.default.Signal {}))
-    measure(
-      "synchron empty signal",
-      reactives.interfaces.synchron.Signal(using reactives.interfaces.synchron.implicitScheduler) {}
-    )
+
 
     def ptx = new ParRPDefault.ParRPTransaction(new reactives.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))

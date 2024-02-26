@@ -33,7 +33,7 @@ class ReverseFan {
     result = Signal.lift(intermediate.toSeq) { values =>
       work.consumeSecondary(); values.sum
     }
-    if (engine == reactives.interfaces.unmanaged) isManual = true
+    if (engine.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) isManual = true
 
   }
 

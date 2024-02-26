@@ -18,7 +18,7 @@ class ChatBench {
   @Benchmark
   def chat(benchState: BenchState, threadParams: ThreadParams) = {
     import benchState.stableEngine._
-    if (scheduler != reactives.interfaces.unmanaged.scheduler) {
+    if (scheduler != reactives.scheduler.LevelbasedVariants.unmanaged) {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
     } else {
       val ti    = threadParams.getThreadIndex
@@ -68,7 +68,7 @@ class BenchState {
       cs.histories.get(room2).observe(v => work.consume())
     }
 
-    if (engine == reactives.interfaces.unmanaged) {
+    if (engine.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) {
       locks = Array.fill(size.size)(new ReentrantLock())
     }
 

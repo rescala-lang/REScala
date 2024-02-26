@@ -1,7 +1,10 @@
 package benchmarks.incremental
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import reactives.extra.incremental.IncrementalApi._
+
+
+import reactives.default.*
+import reactives.extra.incremental.*
 
 import java.util.concurrent.TimeUnit
 import scala.util.Random
@@ -23,7 +26,7 @@ class MapBenchmarkWithRemove {
   var removeEvent: Evt[Int]       = scala.compiletime.uninitialized
   var mappedSeq: Signal[Seq[Int]] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]              = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]              = scala.compiletime.uninitialized
   var reactMappedSeq: ReactiveDeltaSeq[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
@@ -38,7 +41,7 @@ class MapBenchmarkWithRemove {
       })
     }
 
-    reactSeq = SeqSource.empty[Int]
+    reactSeq = IncSeq.empty[Int]
     reactMappedSeq = reactSeq.map(x => x * x)
     seq.now.foreach(x => reactSeq.add(x))
   }

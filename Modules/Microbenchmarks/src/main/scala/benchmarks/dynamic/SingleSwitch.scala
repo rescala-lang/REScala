@@ -33,7 +33,7 @@ class SingleSwitch {
       if (step.test(source.value)) d1.value else d2.value
     }
 
-    if (engine == reactives.interfaces.unmanaged) isManual = true
+    if (engine.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) isManual = true
 
   }
 

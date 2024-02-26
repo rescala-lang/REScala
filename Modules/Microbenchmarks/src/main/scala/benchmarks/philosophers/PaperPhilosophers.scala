@@ -216,7 +216,7 @@ trait SingleFoldTopper {
   self: PaperPhilosophers =>
   import engine.*
 
-  val successCount: Signal[Int] = Fold(0)(successes.map(s => s act { v => current[Int] + 1 })*)
+  val successCount: Signal[Int] = Fold(0)(successes.map(s => s act { v => Fold.current[Int] + 1 })*)
   override def total: Int       = successCount.readValueOnce
 }
 
@@ -240,9 +240,9 @@ object PaperPhilosophers {
     val threadCount = if (args.length >= 2) Integer.parseInt(args(1)) else tableSize
     val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
 
-    object engine extends reactives.fullmv.FullMVApi(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
+    object engine extends reactives.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
     val table =
-      new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper
+      new PaperPhilosophers(tableSize, reactives.default, Dynamicity.Dynamic) with SignalPyramidTopper
 //    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
 //    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Static) with NoTopper[rescala.levelbased.SimpleStruct] with ManualLocking[rescala.levelbased.SimpleStruct]
 

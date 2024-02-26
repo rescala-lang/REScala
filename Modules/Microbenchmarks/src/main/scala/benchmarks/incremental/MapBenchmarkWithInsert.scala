@@ -1,7 +1,9 @@
 package benchmarks.incremental
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
-import reactives.extra.incremental.IncrementalApi.*
+
+import reactives.default.*
+import reactives.extra.incremental.*
 
 import java.util.concurrent.TimeUnit
 
@@ -22,7 +24,7 @@ class MapBenchmarkWithInsert {
   var addEvent: Evt[Int]          = scala.compiletime.uninitialized
   var mappedSeq: Signal[Seq[Int]] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]              = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]              = scala.compiletime.uninitialized
   var reactMappedSeq: ReactiveDeltaSeq[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
@@ -37,7 +39,7 @@ class MapBenchmarkWithInsert {
       })
     }
 
-    reactSeq = SeqSource.empty[Int]
+    reactSeq = IncSeq.empty[Int]
     reactMappedSeq = reactSeq.map(x => x * x)
     seq.now.foreach(x => reactSeq.add(x))
   }

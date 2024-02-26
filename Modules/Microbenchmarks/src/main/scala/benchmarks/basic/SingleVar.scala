@@ -30,7 +30,7 @@ class SingleVar {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)
-    if (engineParam.engine == reactives.interfaces.unmanaged) lock = new ReentrantReadWriteLock()
+    if (engineParam.engine.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark
