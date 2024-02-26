@@ -46,7 +46,9 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     resolverJitpack,
     Dependencies.sourcecode,
     Dependencies.munit,
-    Dependencies.munitCheck
+    Dependencies.munitCheck,
+    // libraryDependencies += "org.scalatest"     %%% "scalatest"       % "3.2.18"   % Test,
+    // libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test",
   )
   .jsSettings(
     Dependencies.scalajsDom,
