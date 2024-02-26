@@ -360,6 +360,8 @@ trait Transaction[State[_]] {
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
 trait Scheduler[S[_]] extends DynamicScope[S] {
 
+  type SchedulerState[T] = S[T]
+
   final def forceNewTransaction[R](initialWrites: ReSource.of[S]*)(admissionPhase: AdmissionTicket[S] => R): R = {
     forceNewTransaction(initialWrites.toSet, admissionPhase)
   }

@@ -2,7 +2,6 @@ package tests.rescala.concurrency
 
 import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
 
-import org.scalatest.funsuite.AnyFunSuite
 import tests.rescala.testtools.Spawn
 
 // change here for FUN
@@ -10,7 +9,7 @@ import reactives.default._
 
 import scala.util.Random
 
-class PaperGlitchTest extends AnyFunSuite {
+class PaperGlitchTest extends munit.FunSuite {
 
   test("execute paper glitch test") {
     /*val lnOf2 = scala.math.log(2) // natural log of 2*/
