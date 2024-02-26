@@ -1,10 +1,10 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
-import rescala.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
-import rescala.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
-import rescala.fullmv._
+import reactives.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
+import reactives.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
+import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
+import reactives.fullmv._
 
 import scala.concurrent.duration.Duration
 

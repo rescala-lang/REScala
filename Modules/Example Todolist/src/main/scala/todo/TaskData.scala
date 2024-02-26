@@ -9,9 +9,9 @@ import loci.serializer.jsoniterScala.given
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
-import rescala.default.*
-import rescala.extra.Tags.*
-import rescala.extra.replication.{DeltaFor, ReplicationGroup}
+import reactives.default.*
+import reactives.extra.Tags.*
+import reactives.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Codecs.given
@@ -72,7 +72,7 @@ object TaskReferences {
     given Bottom[LastWriterWins[Option[TaskData]]] with {
       override def empty: LastWriterWins[Option[TaskData]] = null
     }
-    ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
+    ReplicationGroup(reactives.default, Todolist.registry, taskBinding)
 }
 
 class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {

@@ -6,8 +6,8 @@ import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui.{Shape, ShapesPanel}
-import rescala.default._
-import rescala.structure.Pulse
+import reactives.default._
+import reactives.structure.Pulse
 
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
 import scala.util.Try

@@ -1,6 +1,6 @@
 package reswing.reader.gui
 
-import rescala.default._
+import reactives.default._
 import reswing.ReListView
 import reswing.ReSwingValue
 

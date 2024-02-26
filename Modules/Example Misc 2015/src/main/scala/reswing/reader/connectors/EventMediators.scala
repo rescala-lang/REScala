@@ -5,7 +5,7 @@ import reswing.reader.data.XmlParser
 import reswing.reader.network.Fetcher
 import reswing.reader.network.UrlChecker
 
-import rescala.default._
+import reactives.default._
 
 trait EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit

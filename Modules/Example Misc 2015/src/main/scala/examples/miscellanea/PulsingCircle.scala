@@ -2,7 +2,7 @@ package examples.miscellanea
 
 import java.awt.{Dimension, Graphics2D, Point}
 
-import rescala.default._
+import reactives.default._
 
 import scala.collection.mutable.ListBuffer
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}

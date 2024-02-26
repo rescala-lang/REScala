@@ -9,7 +9,7 @@ import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import rdts.time.Dot
 import loci.transmitter.IdenticallyTransmittable
-import rescala.extra.replication.DeltaFor
+import reactives.extra.replication.DeltaFor
 
 object Codecs {
 

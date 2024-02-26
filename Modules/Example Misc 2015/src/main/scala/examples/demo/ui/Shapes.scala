@@ -2,8 +2,8 @@ package examples.demo.ui
 
 import java.awt.{Color, Graphics2D}
 import examples.demo.Pos
-import rescala.core.AdmissionTicket
-import rescala.default.*
+import reactives.core.AdmissionTicket
+import reactives.default.*
 
 trait Shape extends Serializable {
   val changed: Event[Any]

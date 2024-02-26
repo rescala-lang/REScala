@@ -1,6 +1,6 @@
-package rescala.meta.optimization
+package reactives.meta.optimization
 
-import rescala.meta.{DataFlowGraph, DataFlowNode, ReactiveNode}
+import reactives.meta.{DataFlowGraph, DataFlowNode, ReactiveNode}
 
 case class RedundantNodes(original: DataFlowNode[_], redundant: DataFlowNode[_])
 

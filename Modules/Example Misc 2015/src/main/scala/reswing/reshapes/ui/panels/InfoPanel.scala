@@ -2,7 +2,7 @@ package reswing.reshapes.ui.panels
 
 import scala.swing.FlowPanel
 
-import rescala.default._
+import reactives.default._
 import reswing.reshapes.ReShapes
 import reswing.ReLabel
 

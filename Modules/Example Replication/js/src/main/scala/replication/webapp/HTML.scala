@@ -4,8 +4,8 @@ import org.scalajs.dom
 import org.scalajs.dom.html.Element
 import org.scalajs.dom.{MouseEvent}
 import replication.DataManager
-import rescala.default.*
-import rescala.extra.Tags.*
+import reactives.default.*
+import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.{aside, section}

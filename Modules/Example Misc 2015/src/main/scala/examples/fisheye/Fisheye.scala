@@ -3,7 +3,7 @@ package examples.fisheye
 import java.awt.{Color, Dimension, Graphics2D, Rectangle}
 
 import examples.Mouse
-import rescala.default._
+import reactives.default._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 

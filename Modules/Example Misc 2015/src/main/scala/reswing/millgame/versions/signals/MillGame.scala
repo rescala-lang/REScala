@@ -1,7 +1,7 @@
 package reswing.millgame.versions.signals
 
 import reswing.millgame.types._
-import rescala.default._
+import reactives.default._
 
 sealed abstract class Gamestate {
   def getPlayer: Slot

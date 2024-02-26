@@ -1,6 +1,6 @@
 package reswing.reader
 
-import rescala.default._
+import reactives.default._
 /*
  * Implementation of an observable method
  */

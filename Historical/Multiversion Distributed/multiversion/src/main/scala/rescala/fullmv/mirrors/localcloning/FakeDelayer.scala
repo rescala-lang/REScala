@@ -1,10 +1,10 @@
-package rescala.fullmv.mirrors.localcloning
+package reactives.fullmv.mirrors.localcloning
 
-import rescala.fullmv.FullMVUtil
+import reactives.fullmv.FullMVUtil
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
-import rescala.fullmv.mirrors.Host
+import reactives.fullmv.mirrors.Host
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Future, Promise}

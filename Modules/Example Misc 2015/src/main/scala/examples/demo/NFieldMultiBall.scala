@@ -3,7 +3,7 @@ package examples.demo
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui.{Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** Because we implemented the collision events inside a method, with each
   * derived from parameters to the method, this method implements a blueprint

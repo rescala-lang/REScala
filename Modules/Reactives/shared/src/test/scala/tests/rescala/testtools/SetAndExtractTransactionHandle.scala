@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
-import rescala.core.{Initializer, Scheduler}
-import rescala.operator.Interface
+import reactives.core.{Initializer, Scheduler}
+import reactives.operator.Interface
 
 class SetAndExtractTransactionHandle[Api <: Interface](val api: Api) {
   import api._

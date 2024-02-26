@@ -1,10 +1,10 @@
-package rescala.fullmv.mirrors
+package reactives.fullmv.mirrors
 
 import java.util.concurrent.ConcurrentHashMap
-import rescala.core._
-import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
-import rescala.fullmv.{FullMVBundle, FullMvStateBundle, TurnImplBundle, TurnPhase}
-import rescala.fullmv.tasks._
+import reactives.core._
+import reactives.fullmv.sgt.synchronization.SubsumableLockBundle
+import reactives.fullmv.{FullMVBundle, FullMvStateBundle, TurnImplBundle, TurnPhase}
+import reactives.fullmv.tasks._
 
 trait ReactiveReflectionBundle extends FullMVBundle {
   self: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
@@ -89,11 +89,11 @@ trait ReactiveReflectionBundle extends FullMVBundle {
     override def buffer(turn: FullMVTurn, value: P): Unit = { _buffer.put(turn, value); () }
     override def submit(action: FullMVAction): Unit       = { host.threadPool.submit(action); () }
 
-    override protected[rescala] def commit(base: Value): Value = throw new IllegalStateException(
+    override protected[reactives] def commit(base: Value): Value = throw new IllegalStateException(
       "TODO: this is not implemented, commit is a new method that enables reactives to change their value on commit (such as events dropping back to no value). Not sure how to map that to reactive reflections?"
     )
 
-    override protected[rescala] def reevaluate(input: ReIn): ReevTicket[State, P] = {
+    override protected[reactives] def reevaluate(input: ReIn): ReevTicket[State, P] = {
       val turn  = input.tx
       val value = _buffer.remove(turn)
       if (value == null) {

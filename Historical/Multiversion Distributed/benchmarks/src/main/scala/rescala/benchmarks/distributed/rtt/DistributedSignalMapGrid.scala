@@ -1,12 +1,12 @@
-package rescala.benchmarks.distributed.rtt
+package reactives.benchmarks.distributed.rtt
 
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
-import rescala.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal, Var}
-import rescala.core.ReInfo
-import rescala.fullmv.mirrors.localcloning.FakeDelayer
+import reactives.fullmv.DistributedFullMVApi.{CreationTicket, ReactiveLocalClone, FullMVEngine, Signal, Var}
+import reactives.core.ReInfo
+import reactives.fullmv.mirrors.localcloning.FakeDelayer
 
 import scala.concurrent.duration._
 

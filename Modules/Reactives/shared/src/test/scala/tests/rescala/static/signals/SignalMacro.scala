@@ -1,6 +1,6 @@
 package tests.rescala.static.signals
 
-import rescala.core.CreationTicket
+import reactives.core.CreationTicket
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests {

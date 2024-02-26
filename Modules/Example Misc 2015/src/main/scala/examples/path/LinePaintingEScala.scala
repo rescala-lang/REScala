@@ -2,7 +2,7 @@ package examples.path
 
 import java.awt.{Color, Graphics2D, Point, geom}
 
-import rescala.default._
+import reactives.default._
 
 import scala.swing.Swing._
 import scala.swing.event._

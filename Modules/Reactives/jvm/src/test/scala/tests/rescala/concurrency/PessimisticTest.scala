@@ -1,10 +1,10 @@
 package tests.rescala.concurrency
 
-import rescala.core.{Initializer, ScopeSearch}
-import rescala.core.infiltration.JVMInfiltrator
-import rescala.parrp.Backoff
-import rescala.scheduler
-import tests.rescala.testtools.{RETests, *}
+import reactives.core.{Initializer, ScopeSearch}
+import reactives.core.infiltration.JVMInfiltrator
+import reactives.parrp.Backoff
+import reactives.scheduler
+import tests.rescala.testtools.*
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -12,7 +12,7 @@ import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future}
 
 class PessimisticTest extends RETests {
-  engines(rescala.interfaces.parrp)("SynchronizedReevaluation should synchronize reevaluations") { engine =>
+  engines(reactives.interfaces.parrp)("SynchronizedReevaluation should synchronize reevaluations") { engine =>
     val sra = new SynchronizedReevaluationApi(engine)
     val rta = new ReevaluationBundle[sra.api.type](sra.api)
     import rta._
@@ -42,7 +42,7 @@ class PessimisticTest extends RETests {
     assert(s2.readValueOnce === true)
   }
 
-  engines(rescala.interfaces.parrp)(
+  engines(reactives.interfaces.parrp)(
     "Pessimistic Engines should safely execute concurrently admitted updates to summed signals"
   ) { engine =>
     val rta = new ReevaluationBundle[engine.type](engine)
@@ -74,7 +74,7 @@ class PessimisticTest extends RETests {
 
   "Pessimistic Engines should correctly execute crossed dynamic discoveries" in {
     for (_ <- 1 to 1000) {
-      val interface = rescala.interfaces.parrp
+      val interface = reactives.interfaces.parrp
       val sra       = new SynchronizedReevaluationApi[interface.type](interface)
       val rta       = new ReevaluationBundle[sra.api.type](sra.api)
       import interface._
@@ -131,7 +131,7 @@ class PessimisticTest extends RETests {
   }
 
   "ParRP should (not?) Add And Remove Dependency In One Turn" in {
-    import rescala.parrp.ParRPDefault.*
+    import reactives.parrp.ParRPDefault.*
     import JVMInfiltrator.unsafeNow
 
     // this behavior is not necessary for correctness; adding and removing the edge (i.e. regs and unregs +=1)
@@ -193,7 +193,7 @@ class PessimisticTest extends RETests {
     assert(unregs === 0)
   }
 
-  engines(rescala.interfaces.parrp)(
+  engines(reactives.interfaces.parrp)(
     "Pessimistic Engines should not retrofit a reevaluation for t2, after a dependency might have been added and removed again inside a single t1 While Owned By t2"
   ) { engine =>
     import engine._
@@ -275,7 +275,7 @@ class PessimisticTest extends RETests {
     assert(Set(List(turn1, turn1), List(turn1)).contains(reeval), " -- for reference, turn2 was " + turn2)
   }
 
-  engines(rescala.interfaces.parrp)(
+  engines(reactives.interfaces.parrp)(
     "pessimistic engines should add two dynamic dependencies and remove only one",
     List(IgnoreOnGithubCiBecause("test failes sometimes …"))
   ) { engine =>

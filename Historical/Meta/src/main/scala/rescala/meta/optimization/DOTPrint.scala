@@ -1,5 +1,5 @@
-package rescala.meta.optimization
-import rescala.meta.DataFlowGraph
+package reactives.meta.optimization
+import reactives.meta.DataFlowGraph
 
 class DOTPrint(
     val graphName: String = "graph",

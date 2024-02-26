@@ -2,8 +2,8 @@ package benchmarks.simple
 
 import benchmarks.*
 import org.openjdk.jmh.annotations.*
-import rescala.core.{CreationTicket, ReInfo}
-import rescala.operator.Interface
+import reactives.core.{CreationTicket, ReInfo}
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 

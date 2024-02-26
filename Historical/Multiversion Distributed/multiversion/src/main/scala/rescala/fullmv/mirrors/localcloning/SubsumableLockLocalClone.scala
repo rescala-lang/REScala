@@ -1,8 +1,8 @@
-package rescala.fullmv.mirrors.localcloning
+package reactives.fullmv.mirrors.localcloning
 
-import rescala.fullmv.FullMVUtil
-import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization.{LockStateResult0, SubsumableLock}
+import reactives.fullmv.FullMVUtil
+import reactives.fullmv.mirrors._
+import reactives.fullmv.sgt.synchronization.{LockStateResult0, SubsumableLock}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

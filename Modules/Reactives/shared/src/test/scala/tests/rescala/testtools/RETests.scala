@@ -4,7 +4,7 @@ import org.scalactic.source
 import org.scalatest.Tag
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.prop.TableDrivenPropertyChecks
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 abstract class RETests extends AnyFreeSpec with TableDrivenPropertyChecks {
 

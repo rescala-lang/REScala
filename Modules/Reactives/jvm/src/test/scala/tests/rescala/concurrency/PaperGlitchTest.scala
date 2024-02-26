@@ -6,7 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import tests.rescala.testtools.Spawn
 
 // change here for FUN
-import rescala.default._
+import reactives.default._
 
 import scala.util.Random
 

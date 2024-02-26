@@ -3,7 +3,7 @@ package reswing.reader.network
 import java.io.FileNotFoundException
 import java.net.{MalformedURLException, URI, URL, UnknownHostException}
 import reswing.reader.Observable
-import rescala.default.*
+import reactives.default.*
 
 class UrlChecker {
   type CheckArg    = String

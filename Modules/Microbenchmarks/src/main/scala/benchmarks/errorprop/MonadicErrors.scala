@@ -2,7 +2,7 @@ package benchmarks.errorprop
 
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import scala.util.Try

@@ -1,6 +1,6 @@
 package tests.rescala.misc
 
-import rescala.core.{CreationTicket, DynamicTicket}
+import reactives.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
 
 class LightImplicitSyntaxTest extends RETests {

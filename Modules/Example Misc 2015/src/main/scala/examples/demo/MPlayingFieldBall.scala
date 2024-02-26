@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** We now add a playing field to our game. We begin implementing this
   * as a separate module from the beginning. It implements a rectangle

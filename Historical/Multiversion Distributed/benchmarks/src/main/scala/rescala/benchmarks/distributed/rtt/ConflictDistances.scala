@@ -1,12 +1,12 @@
-package rescala.benchmarks.distributed.rtt
+package reactives.benchmarks.distributed.rtt
 
 import java.util.concurrent._
 import org.openjdk.jmh.annotations._
-import rescala.core.ReInfo
-import rescala.fullmv.DistributedFullMVApi.{
+import reactives.core.ReInfo
+import reactives.fullmv.DistributedFullMVApi.{
   FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup
 }
-import rescala.fullmv.mirrors.localcloning.FakeDelayer
+import reactives.fullmv.mirrors.localcloning.FakeDelayer
 
 import scala.concurrent.duration._
 import scala.concurrent._

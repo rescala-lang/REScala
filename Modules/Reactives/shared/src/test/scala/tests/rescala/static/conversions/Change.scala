@@ -1,7 +1,7 @@
 package tests.rescala.static.conversions
 
-import rescala.structure.RExceptions.EmptySignalControlThrowable
-import rescala.structure.Pulse
+import reactives.structure.RExceptions.EmptySignalControlThrowable
+import reactives.structure.Pulse
 import tests.rescala.testtools.RETests
 
 class Change extends RETests {

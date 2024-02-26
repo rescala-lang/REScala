@@ -1,7 +1,7 @@
 package tests.rescala.jvm
 
-import rescala.core.ScopeSearch
-import rescala.operator.Interface
+import reactives.core.ScopeSearch
+import reactives.operator.Interface
 import tests.rescala.testtools.RETests
 
 sealed trait ChangeX

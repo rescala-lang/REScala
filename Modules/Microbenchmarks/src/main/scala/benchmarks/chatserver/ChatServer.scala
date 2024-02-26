@@ -1,6 +1,6 @@
 package benchmarks.chatserver
 
-import rescala.operator.Interface
+import reactives.operator.Interface
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 

@@ -3,8 +3,8 @@ package examples.demo
 import java.awt.Dimension
 
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
-import rescala.default._
-import rescala.structure.Diff
+import reactives.default._
+import reactives.structure.Diff
 
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 

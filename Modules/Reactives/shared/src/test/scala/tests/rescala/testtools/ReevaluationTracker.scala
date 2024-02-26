@@ -2,8 +2,8 @@ package tests.rescala.testtools
 
 import org.scalatest.Assertions
 import org.scalatest.matchers.should.Matchers
-import rescala.core.CreationTicket
-import rescala.operator.Interface
+import reactives.core.CreationTicket
+import reactives.operator.Interface
 
 class ReevaluationBundle[T <: Interface](val api: T) {
   import api._

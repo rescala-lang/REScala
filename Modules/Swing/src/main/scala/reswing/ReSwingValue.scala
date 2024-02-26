@@ -1,6 +1,6 @@
 package reswing
 
-import rescala.default._
+import reactives.default._
 
 /** Combines reactive values from the application and from the `Swing` library */
 sealed abstract class ReSwingValue[T] {

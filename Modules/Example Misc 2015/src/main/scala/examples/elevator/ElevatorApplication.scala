@@ -2,7 +2,7 @@ package examples.elevator
 
 import java.awt.Color
 
-import rescala.default._
+import reactives.default._
 
 import scala.swing._
 

@@ -1,9 +1,9 @@
-package rescala.api
+package reactives.api
 
-import rescala.core.{CreationTicket, Engine, Struct}
+import reactives.core.{CreationTicket, Engine, Struct}
 
-import rescala.meta._
-import rescala.reactives.Signals
+import reactives.meta._
+import reactives.reactives.Signals
 
 import scala.language.higherKinds
 
@@ -43,7 +43,7 @@ trait Api {
 object Api {
   object synchronApi extends Api {
 
-    import rescala.Schedulers.synchron
+    import reactives.Schedulers.synchron
 
     override type Signal[+A] = synchron.Signal[A]
     override type Event[+A]  = synchron.Event[A]

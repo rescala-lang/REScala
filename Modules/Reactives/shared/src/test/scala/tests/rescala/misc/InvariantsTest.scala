@@ -3,12 +3,12 @@ package tests.rescala.misc
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.extra.invariant.{Invariant, InvariantApi}
+import reactives.extra.invariant.{Invariant, InvariantApi}
 import tests.rescala.testtools.RETests
 
 class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
 
-  import rescala.extra.invariant.InvariantApi.*
+  import reactives.extra.invariant.InvariantApi.*
   val sched = InvariantApi.scheduler
   import sched.*
 

@@ -4,7 +4,7 @@ import loci.communicator.ws.webnative.WS
 import loci.registry.Registry
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
-import rescala.default.*
+import reactives.default.*
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue

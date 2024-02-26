@@ -7,7 +7,7 @@ import scala.swing.EditorPane
 
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
-import rescala.default._
+import reactives.default._
 import reswing.reader.data.RSSItem
 
 /** Displays the content of an single RSS Item */

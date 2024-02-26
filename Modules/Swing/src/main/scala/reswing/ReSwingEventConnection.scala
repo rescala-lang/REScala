@@ -2,7 +2,7 @@ package reswing
 
 import java.awt.event.{HierarchyEvent, HierarchyListener}
 
-import rescala.default._
+import reactives.default._
 import scala.collection.mutable.ListBuffer
 import scala.swing.{Publisher, Reactor, UIElement}
 

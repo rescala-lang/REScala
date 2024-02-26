@@ -2,7 +2,7 @@ package examples
 
 import java.awt.Point
 
-import rescala.default._
+import reactives.default._
 
 import scala.swing.event._
 

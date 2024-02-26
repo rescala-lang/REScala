@@ -1,6 +1,6 @@
 package tests.rescala.testtools
 
-import rescala.interfaces.*
+import reactives.interfaces.*
 
 object TestEngines {
   val all = Seq(toposort, synchron, sidup)

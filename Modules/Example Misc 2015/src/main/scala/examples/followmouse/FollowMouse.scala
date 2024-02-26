@@ -3,7 +3,7 @@ package examples.followmouse
 import java.awt.{Dimension, Graphics2D}
 
 import examples.Mouse
-import rescala.default._
+import reactives.default._
 
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 

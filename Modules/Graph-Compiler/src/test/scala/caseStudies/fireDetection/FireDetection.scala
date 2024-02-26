@@ -2,7 +2,7 @@ package caseStudies.fireDetection
 
 import api2.*
 import api2.given
-import rescala.default.*
+import reactives.default.*
 
 import scala.io.StdIn.readLine
 

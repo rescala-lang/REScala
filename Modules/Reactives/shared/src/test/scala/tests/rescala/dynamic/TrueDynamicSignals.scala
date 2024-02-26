@@ -1,10 +1,10 @@
 package tests.rescala.dynamic
 
-import rescala.core.{CreationTicket, DynamicTicket}
+import reactives.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
-import rescala.core.infiltration.Infiltrator
-import rescala.operator.Interface
-import rescala.scheduler.Levelbased
+import reactives.core.infiltration.Infiltrator
+import reactives.operator.Interface
+import reactives.scheduler.Levelbased
 
 class TrueDynamicSignals extends RETests {
   multiEngined { engine =>

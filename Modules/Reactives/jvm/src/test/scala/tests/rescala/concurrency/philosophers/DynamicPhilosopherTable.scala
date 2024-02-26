@@ -1,7 +1,7 @@
 package tests.rescala.concurrency.philosophers
 
-import rescala.core.ReInfo
-import rescala.operator.Interface
+import reactives.core.ReInfo
+import reactives.operator.Interface
 import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)

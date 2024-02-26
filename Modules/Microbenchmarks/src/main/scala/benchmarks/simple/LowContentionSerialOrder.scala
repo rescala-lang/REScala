@@ -3,7 +3,7 @@ package benchmarks.simple
 import benchmarks._
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.ThreadParams
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 

@@ -1,11 +1,11 @@
-package rescala.fullmv.mirrors
+package reactives.fullmv.mirrors
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
-import rescala.fullmv._
-import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.sgt.synchronization._
-import rescala.fullmv.tasks.TaskBundle
+import reactives.fullmv._
+import reactives.fullmv.TurnPhase.Type
+import reactives.fullmv.sgt.synchronization._
+import reactives.fullmv.tasks.TaskBundle
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -53,7 +53,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
       if (
         before == null && predecessorIndex.compareAndSet(
           null,
-          (rescala.fullmv.mirrors.FullMVTurnReflection.buildIndex(startAt), startAt, clock)
+          (reactives.fullmv.mirrors.FullMVTurnReflection.buildIndex(startAt), startAt, clock)
         )
       ) {
         proxy.asyncAddPredecessorReplicator(this, startAt, clock)
@@ -99,7 +99,7 @@ trait FullMVTurnReflectionBundle extends FullMVBundle {
     override def newPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Future[Unit] = {
       //  override def asyncNewPredecessors(predecessors: TransactionSpanningTreeNode[FullMVTurn]): Unit = {
       if (phase < TurnPhase.Completed) {
-        val newPreds = rescala.fullmv.mirrors.FullMVTurnReflection.buildIndex(predecessors)
+        val newPreds = reactives.fullmv.mirrors.FullMVTurnReflection.buildIndex(predecessors)
 
         @inline
         @tailrec def retryCommitWhileNewer(): Future[Unit] = {

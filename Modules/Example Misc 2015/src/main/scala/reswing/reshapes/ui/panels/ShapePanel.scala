@@ -6,7 +6,7 @@ import scala.swing.Component
 import scala.swing.Label
 import scala.swing.Orientation
 import scala.swing.ScrollPane
-import rescala.default._
+import reactives.default._
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.DeleteShape
 import reswing.reshapes.drawing.DrawingSpaceState

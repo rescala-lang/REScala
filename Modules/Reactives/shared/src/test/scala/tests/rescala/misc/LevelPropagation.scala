@@ -1,9 +1,9 @@
 package tests.rescala.misc
 
-import rescala.core.infiltration.Infiltrator
+import reactives.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
-import rescala.operator.Interface
-import rescala.scheduler.Levelbased
+import reactives.operator.Interface
+import reactives.scheduler.Levelbased
 
 class LevelPropagation extends RETests {
   multiEngined { engine =>

@@ -3,14 +3,14 @@ package tests.rescala.property
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-import rescala.core.infiltration.Infiltrator
+import reactives.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
 
 import scala.collection.Seq
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
-import rescala.operator.Interface
-import rescala.scheduler.Levelbased
+import reactives.operator.Interface
+import reactives.scheduler.Levelbased
 
 class SignalTestSuite extends RETests with ScalaCheckDrivenPropertyChecks with Matchers {
   multiEngined { engine =>

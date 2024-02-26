@@ -9,7 +9,7 @@ import scala.xml.XML
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.CreateShape
 import reswing.reshapes.figures.Shape
-import rescala.default._
+import reactives.default._
 
 /** Serializes all currently drawn shapes to a chosen file */
 class SaveAction extends Action("Save") {

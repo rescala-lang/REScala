@@ -1,6 +1,6 @@
 package reswing.dropdown
 
-import rescala.default._
+import reactives.default._
 import reswing.ReTextField._
 import reswing._
 

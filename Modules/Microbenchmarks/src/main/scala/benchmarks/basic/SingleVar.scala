@@ -2,8 +2,8 @@ package benchmarks.basic
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
-import rescala.core.Scheduler
-import rescala.operator.Interface
+import reactives.core.Scheduler
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
@@ -30,7 +30,7 @@ class SingleVar {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)
-    if (engineParam.engine == rescala.interfaces.unmanaged) lock = new ReentrantReadWriteLock()
+    if (engineParam.engine == reactives.interfaces.unmanaged) lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark

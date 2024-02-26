@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** As Clock is now a closed module, we can move it to an external
   * file and simply use it externally. Unlike purely object-oriented

@@ -5,7 +5,7 @@ import java.awt.Color
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** Lastly, we implement a Racket module, that implements a Rectangle
   * positioned on either the left or right side of the field, and moving

@@ -4,8 +4,8 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
-import rescala.core.ScopeSearch
-import rescala.operator.Interface
+import reactives.core.ScopeSearch
+import reactives.operator.Interface
 
 @AuxCounters
 @State(Scope.Thread)

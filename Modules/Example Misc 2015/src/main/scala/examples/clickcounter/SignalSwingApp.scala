@@ -1,6 +1,6 @@
 package examples.clickcounter
 
-import rescala.default._
+import reactives.default._
 
 import scala.swing._
 import scala.swing.event._

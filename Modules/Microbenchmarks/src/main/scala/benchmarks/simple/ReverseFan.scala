@@ -3,8 +3,8 @@ package benchmarks.simple
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.ThreadParams
-import rescala.core.ScopeSearch
-import rescala.operator.Interface
+import reactives.core.ScopeSearch
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 
@@ -33,7 +33,7 @@ class ReverseFan {
     result = Signal.lift(intermediate.toSeq) { values =>
       work.consumeSecondary(); values.sum
     }
-    if (engine == rescala.interfaces.unmanaged) isManual = true
+    if (engine == reactives.interfaces.unmanaged) isManual = true
 
   }
 

@@ -1,8 +1,8 @@
-package rescala.meta
+package reactives.meta
 
-import rescala.core.{CreationTicket, Engine, ReactiV, Struct}
+import reactives.core.{CreationTicket, Engine, ReactiV, Struct}
 
-import rescala.reactives.{Evt, _}
+import reactives.reactives.{Evt, _}
 
 import scala.annotation.tailrec
 import scala.collection.mutable

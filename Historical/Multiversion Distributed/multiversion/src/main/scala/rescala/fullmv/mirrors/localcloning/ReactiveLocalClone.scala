@@ -1,13 +1,13 @@
-package rescala.fullmv.mirrors.localcloning
+package reactives.fullmv.mirrors.localcloning
 
-import rescala.compat.SignalCompatBundle
-import rescala.core._
-import rescala.fullmv._
-import rescala.fullmv.mirrors.{Mirror, ReactiveMirrorBundle, ReactiveReflectionBundle}
-import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
-import rescala.fullmv.tasks.TaskBundle
-import rescala.operator.Interface
-import rescala.operator.{EventBundle, ObserveBundle, Pulse, SignalBundle}
+import reactives.compat.SignalCompatBundle
+import reactives.core._
+import reactives.fullmv._
+import reactives.fullmv.mirrors.{Mirror, ReactiveMirrorBundle, ReactiveReflectionBundle}
+import reactives.fullmv.sgt.synchronization.SubsumableLockBundle
+import reactives.fullmv.tasks.TaskBundle
+import reactives.operator.Interface
+import reactives.operator.{EventBundle, ObserveBundle, Pulse, SignalBundle}
 
 import scala.concurrent.duration.Duration
 

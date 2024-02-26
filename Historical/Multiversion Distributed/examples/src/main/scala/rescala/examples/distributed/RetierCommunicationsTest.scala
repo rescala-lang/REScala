@@ -1,6 +1,6 @@
-package rescala.examples.distributed
+package reactives.examples.distributed
 
-import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, Signal, scheduler, Var, Signals}
+import reactives.fullmv.DistributedFullMVApi.{FullMVEngine, Signal, scheduler, Var, Signals}
 import loci.communicator.tcp._
 import loci.registry.{Binding, Registry}
 
@@ -20,9 +20,9 @@ object Bindings {
       scala.collection.immutable.List[scala.Tuple4[
         scala.Long,
         scala.Int,
-        scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
-          rescala.fullmv.mirrors.Host.GUID,
-          rescala.fullmv.TurnPhase.Type
+        scala.Option[scala.Tuple2[reactives.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
+          reactives.fullmv.mirrors.Host.GUID,
+          reactives.fullmv.TurnPhase.Type
         ]], scala.Int]],
         scala.Option[scala.Tuple2[scala.Option[scala.Int], scala.Option[scala.Array[scala.Byte]]]]
       ]],
@@ -31,7 +31,7 @@ object Bindings {
   ]] = JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
 
   given JsonValueCodec[Int] = JsonCodecMaker.make
-  import rescala.fullmv.DistributedFullMVApi.ReactiveTransmittable._
+  import reactives.fullmv.DistributedFullMVApi.ReactiveTransmittable._
   implicit val host: FullMVEngine = scheduler
 
   val testBinding                                                    = Binding[Int => Int]("test")

@@ -1,8 +1,8 @@
-package rescala.meta
+package reactives.meta
 
-import rescala.core.{CreationTicket, Engine, Struct}
+import reactives.core.{CreationTicket, Engine, Struct}
 
-import rescala.reactives._
+import reactives.reactives._
 
 trait DataFlowRef[+T] {
   protected[meta] var graph: DataFlowGraph

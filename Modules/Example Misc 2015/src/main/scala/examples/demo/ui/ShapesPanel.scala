@@ -1,6 +1,6 @@
 package examples.demo.ui
 
-import rescala.default.*
+import reactives.default.*
 
 import java.awt.event.*
 import java.awt.{Event as _, Shape as _, *}

@@ -1,8 +1,8 @@
 package benchmarks.philosophers
 
-import rescala.core.{CreationTicket, ReInfo, ReSource}
-import rescala.operator.Interface
-import rescala.parrp.Backoff
+import reactives.core.{CreationTicket, ReInfo, ReSource}
+import reactives.operator.Interface
+import reactives.parrp.Backoff
 
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
@@ -240,7 +240,7 @@ object PaperPhilosophers {
     val threadCount = if (args.length >= 2) Integer.parseInt(args(1)) else tableSize
     val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
 
-    object engine extends rescala.fullmv.FullMVApi(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
+    object engine extends reactives.fullmv.FullMVApi(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
     val table =
       new PaperPhilosophers(tableSize, engine, Dynamicity.Dynamic) with SignalPyramidTopper
 //    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged

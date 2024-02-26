@@ -1,9 +1,9 @@
-package rescala.meta
+package reactives.meta
 
-import rescala.core.{CreationTicket, Engine, Pulse, ReactiV, Struct}
+import reactives.core.{CreationTicket, Engine, Pulse, ReactiV, Struct}
 
-import rescala.reactives._
-import rescala.util.Globals
+import reactives.reactives._
+import reactives.util.Globals
 
 trait DataFlowNode[+T] {
   // Prevent structural equality check for case-classes

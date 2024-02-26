@@ -3,7 +3,7 @@ package examples.catchup
 import java.awt._
 
 import examples.Mouse
-import rescala.default._
+import reactives.default._
 
 import scala.swing.event._
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}

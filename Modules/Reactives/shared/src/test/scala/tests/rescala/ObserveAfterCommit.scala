@@ -2,7 +2,7 @@ package tests.rescala.misc
 
 import org.scalatest.freespec.AnyFreeSpec
 
-import rescala.default._
+import reactives.default._
 
 class ObserveAfterCommit extends AnyFreeSpec {
 

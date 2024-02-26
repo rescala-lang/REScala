@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** To resolve this circular initialization order, we introduce
   * higher-order reactives. Higher-order reactives are Signals

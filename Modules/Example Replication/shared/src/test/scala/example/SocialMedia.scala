@@ -9,7 +9,7 @@ import rdts.syntax.DeltaBuffer
 import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
 import rdts.syntax.ReplicaId
 
-import rescala.default.*
+import reactives.default.*
 
 type ID = String
 

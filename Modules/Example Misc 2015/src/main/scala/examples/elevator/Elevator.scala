@@ -1,7 +1,7 @@
 package examples.elevator
 
 import examples.datastructures._
-import rescala.default._
+import reactives.default._
 
 class Elevator(val nFloors: Int) {
   // some constants

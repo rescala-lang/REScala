@@ -1,6 +1,6 @@
 package api2
 
-import rescala.default.*
+import reactives.default.*
 
 import scala.annotation.unused
 import scala.io.StdIn.readLine

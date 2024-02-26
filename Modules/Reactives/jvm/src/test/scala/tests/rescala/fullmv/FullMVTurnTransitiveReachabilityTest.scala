@@ -4,8 +4,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import rescala.fullmv.FullMVUtil.default._
-import rescala.fullmv.sgt.synchronization.{Locked, Successful}
+import reactives.fullmv.FullMVUtil.default._
+import reactives.fullmv.sgt.synchronization.{Locked, Successful}
 
 import scala.util.Random
 

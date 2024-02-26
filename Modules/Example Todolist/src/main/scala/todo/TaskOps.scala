@@ -4,7 +4,7 @@ import rdts.dotted.Dotted
 import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.syntax.{DeltaBuffer, ReplicaId}
-import rescala.default.*
+import reactives.default.*
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.unused

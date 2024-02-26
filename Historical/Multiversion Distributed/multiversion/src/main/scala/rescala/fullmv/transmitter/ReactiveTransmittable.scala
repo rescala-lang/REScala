@@ -1,14 +1,14 @@
-package rescala.fullmv.transmitter
+package reactives.fullmv.transmitter
 
 import loci.transmitter.*
-import rescala.compat.SignalCompatBundle
-import rescala.core.ReInfo
-import rescala.fullmv.TurnPhase.Type
-import rescala.fullmv.*
-import rescala.fullmv.mirrors.*
-import rescala.fullmv.sgt.synchronization.*
-import rescala.fullmv.tasks.TaskBundle
-import rescala.operator.{EventBundle, Pulse, SignalBundle}
+import reactives.compat.SignalCompatBundle
+import reactives.core.ReInfo
+import reactives.fullmv.TurnPhase.Type
+import reactives.fullmv.*
+import reactives.fullmv.mirrors.*
+import reactives.fullmv.sgt.synchronization.*
+import reactives.fullmv.tasks.TaskBundle
+import reactives.operator.{EventBundle, Pulse, SignalBundle}
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import java.util.concurrent.{ConcurrentHashMap, ThreadLocalRandom}
@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
 trait ReactiveTransmittableBundle extends FullMVBundle {
   selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle
     with SignalCompatBundle with EventBundle with SignalBundle with ReactiveReflectionBundle
-    with ReactiveMirrorBundle with rescala.operator.Operators =>
+    with ReactiveMirrorBundle with reactives.operator.Operators =>
 
   object ReactiveTransmittable {
     val DEBUG: Boolean = FullMVUtil.DEBUG || SubsumableLock.DEBUG
@@ -454,7 +454,7 @@ trait ReactiveTransmittableBundle extends FullMVBundle {
       )
 
     implicit def fullvmCaseClassTransactionSpanningTreeNodeTransmittable
-        : IdenticallyTransmittable[rescala.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
+        : IdenticallyTransmittable[reactives.fullmv.CaseClassTransactionSpanningTreeNode[(Long, Int)]] =
       IdenticallyTransmittable()
 
     implicit def fullmvSignalTransmittable[T, I](implicit

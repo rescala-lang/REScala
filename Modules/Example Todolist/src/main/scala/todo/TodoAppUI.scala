@@ -5,9 +5,9 @@ import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, KeyboardEvent, UIEvent, document, window}
-import rescala.default.*
-import rescala.extra.Tags.*
-import rescala.extra.replication.{DeltaFor, ReplicationGroup}
+import reactives.default.*
+import reactives.extra.Tags.*
+import reactives.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
@@ -17,14 +17,14 @@ import todo.Todolist.replicaId
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import loci.serializer.jsoniterScala.given
-import rescala.structure.Pulse
+import reactives.structure.Pulse
 
 import scala.annotation.targetName
 
 class TodoAppUI(val storagePrefix: String) {
 
   val tasklistBinding    = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
-  val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
+  val tasklistReplicator = new ReplicationGroup(reactives.default, Todolist.registry, tasklistBinding)
 
   def getContents(): Div = {
 

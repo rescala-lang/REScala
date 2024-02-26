@@ -1,9 +1,9 @@
-package rescala.fullmv.mirrors.localcloning
+package reactives.fullmv.mirrors.localcloning
 
-import rescala.fullmv.mirrors._
-import rescala.fullmv.sgt.synchronization._
-import rescala.fullmv.tasks.TaskBundle
-import rescala.fullmv.{
+import reactives.fullmv.mirrors._
+import reactives.fullmv.sgt.synchronization._
+import reactives.fullmv.tasks.TaskBundle
+import reactives.fullmv.{
   FullMVBundle, FullMVUtil, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase
 }
 

@@ -7,8 +7,8 @@ import benchmarks.philosophers.PhilosopherTable.{Philosopher, Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import rescala.core.ScopeSearch
-import rescala.parrp.Backoff
+import reactives.core.ScopeSearch
+import reactives.parrp.Backoff
 
 import scala.annotation.tailrec
 

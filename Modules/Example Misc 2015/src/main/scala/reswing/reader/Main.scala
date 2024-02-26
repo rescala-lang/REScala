@@ -8,7 +8,7 @@ import scala.swing.Dialog.Message
 import scala.swing.Swing
 import scala.swing.Swing.EmptyIcon
 
-import rescala.default._
+import reactives.default._
 import reswing.reader.connectors.CentralizedEvents
 import reswing.reader.connectors.SimpleReporter
 import reswing.reader.data.FeedStore

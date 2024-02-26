@@ -8,13 +8,13 @@ import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
 import replication.JsoniterCodecs.given
 import replication.fbdc.FbdcExampleData
-import rescala.default.*
-import rescala.extra.Tags.*
+import reactives.default.*
+import reactives.extra.Tags.*
 import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
 import scalatags.JsDom.tags.{SeqFrag, body}
 import scalatags.JsDom.tags2
-import scalatags.JsDom.tags2.{main}
+import scalatags.JsDom.tags2.main
 import scalatags.JsDom.all.bindNode
 
 import scala.annotation.nowarn

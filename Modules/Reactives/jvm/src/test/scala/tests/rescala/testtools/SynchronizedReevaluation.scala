@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
-import rescala.core.CreationTicket
-import rescala.operator.Interface
+import reactives.core.CreationTicket
+import reactives.operator.Interface
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}

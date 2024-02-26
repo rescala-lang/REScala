@@ -1,6 +1,6 @@
-package rescala.meta
+package reactives.meta
 
-import rescala.core.{CreationTicket, Struct}
+import reactives.core.{CreationTicket, Struct}
 
 case class ObserverData[S <: Struct](
     onSuccess: Nothing => Unit,

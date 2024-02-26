@@ -1,8 +1,8 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization._
+import reactives.fullmv._
+import reactives.fullmv.sgt.synchronization._
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

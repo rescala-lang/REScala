@@ -1,8 +1,8 @@
 package api2
 
-import rescala.default.*
+import reactives.default.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-import rescala.core.ReSource
+import reactives.core.ReSource
 
 trait RemoteGraph {
   protected var connector: Option[RemoteGraphConnector] = None

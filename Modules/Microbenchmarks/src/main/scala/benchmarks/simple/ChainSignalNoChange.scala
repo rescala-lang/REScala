@@ -2,7 +2,7 @@ package benchmarks.simple
 
 import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations._
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 

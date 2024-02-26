@@ -1,6 +1,6 @@
-package rescala.examples.distributed
+package reactives.examples.distributed
 
-import rescala.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, ReactiveTransmittable, Signal, Var}
+import reactives.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, ReactiveTransmittable, Signal, Var}
 import loci.communicator.tcp.TCP
 import loci.registry.{Binding, Registry}
 import tests.rescala.fullmv.transmitter.TransmitterTestsPortManagement
@@ -49,9 +49,9 @@ object CostAssessment {
           scala.collection.immutable.List[scala.Tuple4[
             scala.Long,
             scala.Int,
-            scala.Option[scala.Tuple2[rescala.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
-              rescala.fullmv.mirrors.Host.GUID,
-              rescala.fullmv.TurnPhase.Type
+            scala.Option[scala.Tuple2[reactives.fullmv.CaseClassTransactionSpanningTreeNode[scala.Tuple2[
+              reactives.fullmv.mirrors.Host.GUID,
+              reactives.fullmv.TurnPhase.Type
             ]], scala.Int]],
             scala.Option[scala.Tuple2[
               scala.Option[scala.collection.immutable.Map[java.lang.String, scala.collection.immutable.Set[scala.Int]]],

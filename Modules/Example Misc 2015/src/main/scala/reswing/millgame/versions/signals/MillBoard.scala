@@ -3,7 +3,7 @@ package reswing.millgame.versions.signals
 import reswing.millgame._
 import reswing.millgame.types._
 
-import rescala.default._
+import reactives.default._
 
 class MillBoard {
   /* wrap stones Var, to have the same interface as other versions */

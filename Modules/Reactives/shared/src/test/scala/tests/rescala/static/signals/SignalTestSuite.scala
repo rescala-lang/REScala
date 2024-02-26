@@ -1,10 +1,10 @@
 package tests.rescala.static.signals
 
 import java.util.concurrent.atomic.AtomicInteger
-import rescala.core.infiltration.Infiltrator
+import reactives.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
-import rescala.operator.Interface
-import rescala.scheduler.Levelbased
+import reactives.operator.Interface
+import reactives.scheduler.Levelbased
 
 class SignalTestSuite extends RETests {
   multiEngined { engine =>

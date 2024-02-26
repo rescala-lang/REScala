@@ -2,7 +2,7 @@ package reswing.texteditor.signalsAndEventsFromImperative
 
 import javax.swing
 
-import rescala.default._
+import reactives.default._
 
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {

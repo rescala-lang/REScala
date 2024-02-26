@@ -2,8 +2,8 @@ package benchmarks.reactor
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations._
-import rescala.extra.reactor.ReactorBundle
-import rescala.operator.Interface
+import reactives.extra.reactor.ReactorBundle
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 

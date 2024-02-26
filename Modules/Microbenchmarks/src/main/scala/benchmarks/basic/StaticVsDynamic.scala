@@ -2,7 +2,7 @@ package benchmarks.basic
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReadWriteLock

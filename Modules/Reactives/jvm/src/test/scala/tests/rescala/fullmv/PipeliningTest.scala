@@ -1,8 +1,8 @@
 package tests.rescala.fullmv
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.core.ReInfo
-import rescala.fullmv.FullMVUtil.default._
+import reactives.core.ReInfo
+import reactives.fullmv.FullMVUtil.default._
 import tests.rescala.testtools.{IgnoreOnGithubCiBecause, Spawn}
 
 class PipeliningTest extends AnyFunSuite {

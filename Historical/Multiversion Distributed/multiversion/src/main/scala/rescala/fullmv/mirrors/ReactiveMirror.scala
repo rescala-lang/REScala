@@ -1,9 +1,9 @@
-package rescala.fullmv.mirrors
+package reactives.fullmv.mirrors
 
-import rescala.core._
-import rescala.fullmv._
-import rescala.fullmv.sgt.synchronization.SubsumableLockBundle
-import rescala.fullmv.tasks.TaskBundle
+import reactives.core._
+import reactives.fullmv._
+import reactives.fullmv.sgt.synchronization.SubsumableLockBundle
+import reactives.fullmv.tasks.TaskBundle
 
 import scala.annotation.nowarn
 import scala.concurrent.duration.Duration
@@ -46,7 +46,7 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
       with FullMVState[Nothing, FullMVTurn] {
     type State[V]       = self.State[V]
     override type Value = Nothing
-    override protected[rescala] val state = this
+    override protected[reactives] val state = this
     override def toString: String         = s"Mirror${info.description}"
     override val host: FullMVEngine       = null
     override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived.of[State]] = {
@@ -109,6 +109,6 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
 
     override def commit(base: Value): Value = ???
 
-    override protected[rescala] def reevaluate(input: ReIn) = ???
+    override protected[reactives] def reevaluate(input: ReIn) = ???
   }
 }

@@ -9,7 +9,7 @@ import reswing.reader.Observable
 
 import scala.xml.Node
 import scala.xml.NodeSeq
-import rescala.default.*
+import reactives.default.*
 
 /** The XMLParser is responsible for the translation of xml to the
   * internal represantation of the RSS Feed

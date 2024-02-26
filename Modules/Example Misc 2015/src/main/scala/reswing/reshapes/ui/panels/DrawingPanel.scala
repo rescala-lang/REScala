@@ -11,7 +11,7 @@ import scala.swing.event.MouseDragged
 import scala.swing.event.MousePressed
 import scala.swing.event.MouseReleased
 
-import rescala.default._
+import reactives.default._
 import reswing.reshapes.drawing.Command
 import reswing.reshapes.drawing.CreateShape
 import reswing.reshapes.drawing.DrawingSpaceState

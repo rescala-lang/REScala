@@ -1,7 +1,7 @@
 package api2
 
-import rescala.core.StaticTicket
-import rescala.default.*
+import reactives.core.StaticTicket
+import reactives.default.*
 
 type CEventsFromEvents[T <: Tuple] <: Tuple = T match
   case EmptyTuple     => EmptyTuple

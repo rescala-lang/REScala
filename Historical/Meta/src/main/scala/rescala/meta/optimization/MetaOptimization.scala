@@ -1,6 +1,6 @@
-package rescala.meta.optimization
+package reactives.meta.optimization
 
-import rescala.meta.DataFlowGraph
+import reactives.meta.DataFlowGraph
 
 trait MetaOptimization[T] {
   val name: String

@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import rescala.default._
+import reactives.default._
 
 /** We now convert our BouncingBall into an external Module, similar
   * to Clock earlier. We begin by wrapping the movement code into

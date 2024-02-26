@@ -1,6 +1,6 @@
 package replication.calendar
 
-import rescala.default.*
+import reactives.default.*
 import rdts.base.{Bottom, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted

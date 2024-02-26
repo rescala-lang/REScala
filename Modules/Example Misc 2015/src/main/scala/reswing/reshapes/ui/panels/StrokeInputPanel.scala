@@ -11,7 +11,7 @@ import scala.swing.Frame
 import scala.swing.Label
 import scala.swing.Orientation
 import javax.swing.JColorChooser
-import rescala.default._
+import reactives.default._
 import reswing.{ReButton, ReSlider, ReSwingValue}
 
 /** Panel for various customization of the stroke. */

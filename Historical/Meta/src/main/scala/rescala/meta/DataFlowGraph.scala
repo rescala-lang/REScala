@@ -1,6 +1,6 @@
-package rescala.meta
+package reactives.meta
 
-import rescala.core.Struct
+import reactives.core.Struct
 
 import scala.collection.mutable
 

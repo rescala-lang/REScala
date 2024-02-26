@@ -1,7 +1,7 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable.*
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: Interface)
     extends PhilosopherTable(philosopherCount, work)(engine) {

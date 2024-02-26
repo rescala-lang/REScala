@@ -1,6 +1,6 @@
-package rescala.meta.optimization
+package reactives.meta.optimization
 
-import rescala.meta._
+import reactives.meta._
 
 case class NodeTriple(
     nOuter: DataFlowNode[_],

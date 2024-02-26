@@ -3,7 +3,7 @@ package tests.rescala.fullmv
 import java.util.concurrent.atomic.AtomicReference
 
 import org.scalatest.funsuite.AnyFunSuite
-import rescala.fullmv._
+import reactives.fullmv._
 import tests.rescala.testtools.{IgnoreOnWindowsBecause, Spawn}
 
 import scala.annotation.tailrec

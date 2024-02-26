@@ -2,7 +2,7 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core._
 import org.scalajs.dom
-import rescala.default.{Signal, implicitScheduler}
+import reactives.default.{Signal, implicitScheduler}
 
 object Storing {
 

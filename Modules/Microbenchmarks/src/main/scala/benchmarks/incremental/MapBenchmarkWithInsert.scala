@@ -1,7 +1,7 @@
 package benchmarks.incremental
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
-import rescala.extra.incremental.IncrementalApi.*
+import reactives.extra.incremental.IncrementalApi.*
 
 import java.util.concurrent.TimeUnit
 

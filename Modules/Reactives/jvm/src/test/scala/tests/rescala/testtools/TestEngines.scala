@@ -1,8 +1,8 @@
 package tests.rescala.testtools
 
-import rescala.interfaces.*
-import rescala.fullmv.FullMVApi
-import rescala.operator.Interface
+import reactives.interfaces.*
+import reactives.fullmv.FullMVApi
+import reactives.operator.Interface
 
 import scala.concurrent.duration.DurationInt
 

@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations._
-import rescala.operator.Interface
+import reactives.operator.Interface
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -33,7 +33,7 @@ class SingleSwitch {
       if (step.test(source.value)) d1.value else d2.value
     }
 
-    if (engine == rescala.interfaces.unmanaged) isManual = true
+    if (engine == reactives.interfaces.unmanaged) isManual = true
 
   }
 

@@ -1,7 +1,7 @@
 package extra2023
 
-import rescala.default.*
-import rescala.structure.Diff
+import reactives.default.*
+import reactives.structure.Diff
 
 object MLTest {
 

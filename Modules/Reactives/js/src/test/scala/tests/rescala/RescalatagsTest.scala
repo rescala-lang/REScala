@@ -3,7 +3,7 @@ package tests.rescala
 import org.scalajs.dom
 import org.scalajs.dom.html.Span
 import org.scalajs.dom.{Element, Node}
-import rescala.extra.Tags
+import reactives.extra.Tags
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.generic.StylePair

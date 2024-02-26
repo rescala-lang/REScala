@@ -1,6 +1,6 @@
 package reswing.millgame.versions.signals
 
-import rescala.default.*
+import reactives.default.*
 import reswing.*
 import reswing.millgame.*
 import reswing.millgame.types.*

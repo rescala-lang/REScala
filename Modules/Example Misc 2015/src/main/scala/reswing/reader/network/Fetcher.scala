@@ -9,7 +9,7 @@ import reswing.reader.Observable
 
 import scala.xml.NodeSeq
 import scala.xml.XML
-import rescala.default._
+import reactives.default._
 
 /** The Fetcher is responsible to fetch the xml data
   * After fetching the data an event is triggered

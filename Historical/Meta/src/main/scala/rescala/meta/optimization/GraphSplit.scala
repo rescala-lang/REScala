@@ -1,6 +1,6 @@
-package rescala.meta.optimization
+package reactives.meta.optimization
 
-import rescala.meta.{DataFlowGraph, DataFlowNode}
+import reactives.meta.{DataFlowGraph, DataFlowNode}
 
 class GraphSplit(override val verbose: Boolean = false, override val protocol: String => Unit = println)
     extends MetaOptimization[Set[Set[DataFlowNode[_]]]] {

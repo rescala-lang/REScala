@@ -1,6 +1,6 @@
 package reswing.reshapes.util
 
-import rescala.default._
+import reactives.default._
 import scala.collection.mutable.ListBuffer
 
 object ReactiveUtil {
@@ -82,9 +82,9 @@ object ReactiveUtil {
     res
   }
 
-  /** Creates an [[rescala.default.Event]] that fires whenever
+  /** Creates an [[reactives.default.Event]] that fires whenever
     * any event in the given event list fires, where the list itself
-    * is wrapped in a [[rescala.default.Signal]].
+    * is wrapped in a [[reactives.default.Signal]].
     */
   object UnionEvent {
     def apply[T, E[T] <: Event[T], L[E] <: Iterable[E]](signal: Signal[L[E[T]]]): Event[T] = {

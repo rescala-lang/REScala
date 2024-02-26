@@ -1,7 +1,7 @@
 package tests.rescala.jvm
 
 import org.scalatest.freespec.AnyFreeSpec
-import rescala.default._
+import reactives.default._
 
 import java.time.temporal.ChronoField
 import java.time.{Clock, LocalDate => Date}
