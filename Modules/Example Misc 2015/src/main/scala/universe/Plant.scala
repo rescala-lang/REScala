@@ -1,6 +1,6 @@
 package universe
 
-import universe.Globals.engine._
+import reactives.default.*
 
 class Plant(implicit world: World) extends BoardElement {
 

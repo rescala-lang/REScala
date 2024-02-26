@@ -13,9 +13,9 @@ object Universe {
 
     val genCsv = !args.headOption.contains("nocsv")
 
-    println(s"profiling ${Globals.engineName}")
+    println(s"profiling ${reactives.default.scheduler.schedulerName}")
 
-    val outfile = s"universe-${Globals.engineName}.csv"
+    val outfile = s"universe-${reactives.default.scheduler.schedulerName}.csv"
 
     if genCsv then
       Files.write(
@@ -36,7 +36,7 @@ object Universe {
       world.batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      while (world.time.week.readValueOnce(Globals.engine.scheduler) < 2) {
+      while (world.time.week.readValueOnce < 2) {
         world.tick()
         world.runPlan()
       }
@@ -45,7 +45,7 @@ object Universe {
       if (repetition > 0 && genCsv) {
         Files.write(
           Paths.get(outfile),
-          s"""$repetition,$duration,"${Globals.engineName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
+          s"""$repetition,$duration,"${reactives.default.scheduler.schedulerName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
           StandardOpenOption.APPEND
         )
         ()

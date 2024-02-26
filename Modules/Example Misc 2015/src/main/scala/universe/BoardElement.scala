@@ -1,6 +1,6 @@
 package universe
 
-import universe.Globals.engine._
+import reactives.default.*
 
 abstract class BoardElement(implicit val world: World) {
 

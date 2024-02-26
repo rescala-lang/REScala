@@ -61,9 +61,9 @@ object LFullyModularBall extends Main {
 
     val velocity = Signal {
       Pos(
-        x = horizontalBounceSources.flatten[Event[Any]](firstFiringEvent)
+        x = horizontalBounceSources.flatten[Event[Any]](Flatten.firstFiringEvent)
           .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-        y = verticalBounceSources.flatten[Event[Any]](firstFiringEvent)
+        y = verticalBounceSources.flatten[Event[Any]](Flatten.firstFiringEvent)
           .fold(initVy / Clock.NanoSecond) { (old, _) => -old }.value
       )
     }
@@ -73,7 +73,7 @@ object LFullyModularBall extends Main {
 
     val pos = Fold(Pos(0, 0))(
       reset act { case Point(x, y) => Pos(x.toDouble, y.toDouble) },
-      inc act { inc => current + inc }
+      inc act { inc => Fold.current + inc }
     )
 
     val shape = new Circle(pos, diameter)

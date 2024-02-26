@@ -2,7 +2,8 @@ package universe
 
 import universe.Animal._
 
-import universe.Globals.engine._
+import reactives.default.*
+
 
 class Carnivore(implicit world: World) extends Animal {
 
@@ -50,7 +51,7 @@ trait Female extends Animal {
   private val becomePregnant: Event[Any] = isPregnant.changed.filter(_ == true) // #EVT //#IF
   private val pregnancyTime: Signal[Int] = Fold(Animal.PregnancyTime)(
     becomePregnant act { _ => Animal.PregnancyTime },
-    world.time.hour.changed act { _ => current - (if (isPregnant.readValueOnce) 1 else 0) }
+    world.time.hour.changed act { _ => Fold.current - (if (isPregnant.readValueOnce) 1 else 0) }
   )
   private val giveBirth: Event[Any] = pregnancyTime.changed.filter(_ == 0)         // #EVT //#IF
   final override val isFertile      = Signal.lift(isAdult, isPregnant) { _ && !_ } // #SIG

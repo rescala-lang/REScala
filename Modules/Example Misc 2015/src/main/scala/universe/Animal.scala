@@ -1,7 +1,7 @@
 package universe
 
 import universe.Animal._
-import universe.Globals.engine._
+import reactives.default.*
 
 object Animal {
   val StartEnergy = 200

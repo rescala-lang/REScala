@@ -56,7 +56,7 @@ implicit object Fold {
   inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
 
   extension [T](e: Event[T]) {
-    infix inline def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
+    inline def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
   }
 }
 

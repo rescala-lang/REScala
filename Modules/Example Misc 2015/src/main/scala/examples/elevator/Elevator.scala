@@ -54,7 +54,7 @@ class Elevator(val nFloors: Int) {
 
   val waitingTime = Fold(0)(
     reachedFloor act { _ => WaitingTime },
-    tick act { _ => if (isWaiting.now) current - 1 else current }
+    tick act { _ => if (isWaiting.now) Fold.current - 1 else Fold.current }
   )
 
   val stoppedWaiting = waitingTime.changed.filter(_ == 0)

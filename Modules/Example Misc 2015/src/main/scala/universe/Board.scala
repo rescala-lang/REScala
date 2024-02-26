@@ -1,6 +1,6 @@
 package universe
 
-import universe.Globals.engine._
+import reactives.default.*
 
 import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable.Map
