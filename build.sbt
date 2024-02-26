@@ -49,7 +49,8 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Dependencies.sourcecode,
     Dependencies.munitCheck,
     Dependencies.munit,
-    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test,
+    // sometimes it does not find tests (I have no clue why) but adding scalatest dependency seems to help …
+    // libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test,
     // libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test",
     schedulerSelection
   )
