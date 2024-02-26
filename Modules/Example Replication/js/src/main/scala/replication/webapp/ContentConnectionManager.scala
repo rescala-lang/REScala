@@ -30,8 +30,8 @@ class ContentConnectionManager(registry: Registry) {
   }.event
 
   val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])(
-    joined act { rr => current.updated(rr, true) },
-    left act { rr => current.updated(rr, false) }
+    joined act { rr => Fold.current.updated(rr, true) },
+    left act { rr => Fold.current.updated(rr, false) }
   )
 
   val connectionStatusChanged = joined || left

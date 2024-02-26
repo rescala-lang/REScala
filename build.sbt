@@ -42,9 +42,6 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-    // dotty seems to be currently unable to compile the docs … ?
-    // Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
-    Test / scalacOptions ~= (old => old.filter(_ != "-Xfatal-warnings")),
     LocalSetting.publishSonatype,
     resolverJitpack,
     Dependencies.sourcecode,
@@ -93,8 +90,6 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scala3defaults,
     noPublish,
-    LocalSetting.scalatest,
-    LocalSetting.scalatestpluscheck,
     Dependencies.munit,
     Dependencies.munitCheck,
   )

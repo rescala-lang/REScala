@@ -1,8 +1,6 @@
 package tests.rescala.property
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalatest.matchers.should.Matchers
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import reactives.core.infiltration.Infiltrator
 import tests.rescala.testtools.RETests
 

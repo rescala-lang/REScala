@@ -1,7 +1,5 @@
 package tests.rescala.testtools
 
-import org.scalatest.Assertions
-import org.scalatest.matchers.should.Matchers
 import reactives.core.CreationTicket
 import reactives.operator.Interface
 
@@ -26,7 +24,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
       assertEquals(results, elements.toList)
       ()
     }
-    def assertClear(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
+    def assertClear(elements: A*)(implicit pos: munit.Location): Unit = {
       assert(elements*)
       results = Nil
     }

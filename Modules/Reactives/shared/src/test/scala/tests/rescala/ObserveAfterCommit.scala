@@ -1,12 +1,11 @@
 package tests.rescala.misc
 
-import org.scalatest.freespec.AnyFreeSpec
 
 import reactives.default._
 
-class ObserveAfterCommit extends AnyFreeSpec {
+class ObserveAfterCommit extends munit.FunSuite {
 
-  "observe after TX throws" in {
+  test("observe after TX throws") {
 
     val v1 = Var(1)
 
@@ -14,7 +13,7 @@ class ObserveAfterCommit extends AnyFreeSpec {
 
     val callback = next.now
 
-    assertThrows[IllegalStateException] { callback() }
+    intercept[IllegalStateException] { callback() }
 
   }
 

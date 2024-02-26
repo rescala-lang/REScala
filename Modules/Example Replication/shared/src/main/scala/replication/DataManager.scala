@@ -11,7 +11,7 @@ import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
 import replication.JsoniterCodecs.given
-import reactives.default.{Event, Evt, Signal, Var}
+import reactives.default.{Event, Evt, Signal, Var, implicitScheduler}
 
 import java.util.Timer
 import scala.annotation.unused

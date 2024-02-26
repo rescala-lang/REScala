@@ -2,7 +2,6 @@ package tests.rescala.jvm
 
 import java.lang.ref.{PhantomReference, ReferenceQueue}
 
-import org.scalatest.prop.Whenever
 import reactives.structure.Pulse
 import tests.rescala.testtools.RETests
 

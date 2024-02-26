@@ -1,6 +1,5 @@
 package tests.rescala.property
 
-import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import tests.rescala.testtools.RETests
 import org.scalacheck.Prop.*
 import reactives.default.*

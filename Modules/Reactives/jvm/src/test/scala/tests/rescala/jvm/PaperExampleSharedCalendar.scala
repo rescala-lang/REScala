@@ -1,12 +1,11 @@
 package tests.rescala.jvm
 
-import org.scalatest.freespec.AnyFreeSpec
 import reactives.default._
 
 import java.time.temporal.ChronoField
 import java.time.{Clock, LocalDate => Date}
 
-class PaperExampleSharedCalendar extends AnyFreeSpec {
+class PaperExampleSharedCalendar extends munit.FunSuite {
 
   object Date { def today(): Date = java.time.LocalDate.now(Clock.systemUTC()) }
   object Week {
@@ -30,7 +29,7 @@ class PaperExampleSharedCalendar extends AnyFreeSpec {
     override def toString: String = s"Entry(${title.readValueOnce}, ${date.readValueOnce})"
   }
 
-  "the paper shared calendar example" in {
+  test("the paper shared calendar example") {
     val newEntry                       = Evt[Entry]()
     val automaticEntries: Event[Entry] = App.nationalHolidays()
     val allEntries                     = newEntry || automaticEntries

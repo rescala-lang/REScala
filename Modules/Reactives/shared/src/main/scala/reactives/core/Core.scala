@@ -1,5 +1,6 @@
 package reactives.core
 
+import reactives.operator.Interface
 import reactives.structure.RExceptions
 
 import scala.annotation.implicitNotFound
@@ -370,6 +371,9 @@ trait Scheduler[S[_]] extends DynamicScope[S] {
   override def toString: String = s"Scheduler($schedulerName)"
 
   def maybeTransaction: Option[Transaction[S]]
+}
+object Scheduler {
+  given defaultScheduler: Scheduler[Interface.State] = Interface.default
 }
 
 /** Provides the capability to look up transactions in the dynamic scope. */
