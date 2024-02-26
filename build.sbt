@@ -50,7 +50,8 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Dependencies.sourcecode,
     LocalSetting.scalatest,
     LocalSetting.scalatestpluscheck,
-    Dependencies.munit
+    Dependencies.munit,
+    Dependencies.munitCheck
   )
   .jsSettings(
     Dependencies.scalajsDom,
@@ -105,7 +106,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
     Compile / npmDependencies ++= Seq(
-      "libsodium-wrappers"        -> "0.7.13",
+      "libsodium-wrappers" -> "0.7.13",
     )
   )
 

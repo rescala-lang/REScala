@@ -2,7 +2,7 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import sbt.*
 import sbt.Keys.*
 
-object LocalDependencies {
+object LocalSetting {
 
   val scalatest          = libraryDependencies += "org.scalatest"     %%% "scalatest"       % "3.2.18"   % Test
   val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test"
