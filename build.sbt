@@ -48,8 +48,6 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     LocalSetting.publishSonatype,
     resolverJitpack,
     Dependencies.sourcecode,
-    LocalSetting.scalatest,
-    LocalSetting.scalatestpluscheck,
     Dependencies.munit,
     Dependencies.munitCheck
   )
