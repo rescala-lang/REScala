@@ -18,7 +18,7 @@ trait Source[T] extends reactives.core.ReSource {
   * @tparam S Struct type used for the propagation of the event
   */
 class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
-    extends Base[State, Pulse[T]](initialState, name)
+    extends Base[Pulse[T]](initialState, name)
     with Source[T]
     with Event[T] {
   override type Value = Pulse[T]
@@ -61,7 +61,7 @@ object Evt {
   * @tparam A Type stored by the signal
   */
 class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
-    extends Base[State, Pulse[A]](initialState, name)
+    extends Base[Pulse[A]](initialState, name)
     with Source[A] with Signal[A] {
   override type Value = Pulse[A]
 

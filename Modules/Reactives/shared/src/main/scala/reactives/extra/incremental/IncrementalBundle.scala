@@ -308,7 +308,7 @@ import scala.util.control.Breaks.{break, breakable}
   class ConcatenateDeltaSeq[T](left: ReactiveDeltaSeq[T], right: ReactiveDeltaSeq[T])(
       initialState: IncSeq.SeqState[T],
       name: ReInfo
-  ) extends Base[State, Delta[T]](initialState, name)
+  ) extends Base[Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] with DisconnectableImpl {
 
     /** @param input
@@ -341,7 +341,7 @@ import scala.util.control.Breaks.{break, breakable}
   class FilterDeltaSeq[T](in: ReactiveDeltaSeq[T], expression: T => Boolean)(
       initialState: IncSeq.SeqState[T],
       name: ReInfo
-  ) extends Base[State, Delta[T]](initialState, name) with Derived
+  ) extends Base[Delta[T]](initialState, name) with Derived
       with ReactiveDeltaSeq[T] {
 
     /** @param input Basing ReIn Ticket filters the ReactiveDeltaSeq using the filterExpression define above. That it uses withValue to write the new Sequence
@@ -366,7 +366,7 @@ import scala.util.control.Breaks.{break, breakable}
   class MapDeltaSeq[T, A](in: ReactiveDeltaSeq[T], op: T => A)(
       initialState: IncSeq.SeqState[A],
       name: ReInfo
-  ) extends Base[State, Delta[A]](initialState, name)
+  ) extends Base[Delta[A]](initialState, name)
       with ReactiveDeltaSeq[A] {
 
     /** @param input Basing ReIn Ticket maps the ReactiveDeltaSeq using the fold defined above. That it uses withValue to write the new Sequence
@@ -414,7 +414,7 @@ import scala.util.control.Breaks.{break, breakable}
     * @tparam S Struct type used for the propagation of the event
     */
   class IncSeq[T] private[reactives] (initialState: IncSeq.SeqState[T], name: ReInfo)
-      extends Base[State, Delta[T]](initialState, name)
+      extends Base[Delta[T]](initialState, name)
       with ReactiveDeltaSeq[T] {
 
     private val elements: mutable.Map[T, Int] = mutable.HashMap()

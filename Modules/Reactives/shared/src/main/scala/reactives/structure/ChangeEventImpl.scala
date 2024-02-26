@@ -2,11 +2,13 @@ package reactives.structure
 
 import reactives.core.*
 
-class ChangeEventImpl[S[_], T](
-    initial: S[(Pulse[T], Pulse[Diff[T]])],
-    signal: ReSource.of[S] { type Value <: Pulse[T] },
+import reactives.operator.Interface.State
+
+class ChangeEventImpl[T](
+    initial: State[(Pulse[T], Pulse[Diff[T]])],
+    signal: ReSource.of[State] { type Value <: Pulse[T] },
     name: ReInfo
-) extends Base[S, (Pulse[T], Pulse[Diff[T]])](initial, name)
+) extends Base[(Pulse[T], Pulse[Diff[T]])](initial, name)
     with Derived
     with DisconnectableImpl {
 

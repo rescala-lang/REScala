@@ -47,7 +47,7 @@ import scala.util.{Failure, Success}
       dependency: ReadAs.of[State, Pulse[T]],
       subscriber: Subscriber[? >: T],
       name: ReInfo
-  ) extends Base[State, Pulse[T]](bud, name)
+  ) extends Base[Pulse[T]](bud, name)
       with Derived
       with Subscription {
 

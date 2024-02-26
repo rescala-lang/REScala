@@ -1,8 +1,8 @@
 package reactives.structure
 
 import reactives.core.*
-
 import reactives.core.Observation
+import reactives.operator.Interface.State
 
 /** observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
 object Observe {
@@ -13,16 +13,16 @@ object Observe {
   }
 
   def strong[T](
-      dependency: ReSource,
+      dependency: ReSource.of[State],
       fireImmediately: Boolean
   )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket[dependency.State]): Disconnectable = {
-    ct.create[Pulse[Nothing], Disconnectable & Derived.of[dependency.State]](
+    ct.create[Pulse[Nothing], Disconnectable & Derived.of[State]](
       Set(dependency),
       Pulse.NoChange,
       fireImmediately
     ) {
       state =>
-        class Obs extends Base[dependency.State, Pulse[Nothing]](state, ct.info) with Derived
+        class Obs extends Base[Pulse[Nothing]](state, ct.info) with Derived
             with DisconnectableImpl {
 
           override protected[reactives] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange

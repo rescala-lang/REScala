@@ -165,7 +165,7 @@ object Signal {
   def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
       ct: CreationTicket[State]
   ): Signal[T] = {
-    ct.create[Pulse[T], SignalImpl[State, T] & Signal[T]](
+    ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
       dependencies.toSet,
       Pulse.empty,
       needsReevaluation = true
@@ -179,7 +179,7 @@ object Signal {
       ct: CreationTicket[State]
   ): Signal[T] = {
     val staticDeps = dependencies.toSet
-    ct.create[Pulse[T], SignalImpl[State, T] & Signal[T]](
+    ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
       staticDeps,
       Pulse.empty,
       needsReevaluation = true

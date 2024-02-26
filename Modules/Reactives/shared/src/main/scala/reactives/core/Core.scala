@@ -38,10 +38,10 @@ object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
   * @param state the state passed by the scheduler
   * @param info  the name of the reactive, useful for debugging as it often contains positional information
   */
-abstract class Base[S[_], V](override protected[reactives] val state: S[V], override val info: ReInfo)
+abstract class Base[V](override protected[reactives] val state: reactives.operator.Interface.State[V], override val info: ReInfo)
     extends ReSource {
 
-  override type State[V] = S[V]
+  override type State[V] = reactives.operator.Interface.State[V]
   override type Value    = V
   override def toString: String = s"${info.description}($state)"
 }
