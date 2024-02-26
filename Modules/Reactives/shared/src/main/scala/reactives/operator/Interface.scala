@@ -77,23 +77,5 @@ object Interface {
     FromScheduler(sched)
 
   type State[V] = default.SchedulerState[V]
-  val default = LevelbasedVariants.synchron
-
-//  type State[V] = reactives.fullmv.State[V]
-//  val default: Scheduler[State] = reactives.fullmv.FullMVUtil.defaultScheduler
-
-  //  val parrp: Interface = Interface.from(ParRPDefault.scheduler)
-
-  //  val fullmv: FullMVUtil.default.type = FullMVUtil.default
-
-  //  def defaultPlatformScheduler: parrp.scheduler.type = parrp.scheduler
-
-
-//  val unmanaged: Interface = Interface.from(LevelbasedVariants.unmanaged)
-//
-//  val synchron: Interface = Interface.from(LevelbasedVariants.synchron)
-
-  //  val toposort: Interface = Interface.from(TopbundleImpl.TopoScheduler)
-  //
-  //  val sidup: Interface = Interface.from(SynchronizedSidup.scheduler)
+  val default = reactives.generated.Scheduler.selection
 }

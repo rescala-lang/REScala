@@ -21,10 +21,8 @@ class Invariant[T](val description: String, val inv: T => Boolean) {
 }
 
 trait InvariantBundle extends TopoBundle {
-  selfType: Interface =>
 
   override type State[V]       = InvariantState[V]
-  override type BundleState[V] = State[V]
 
   sealed trait InvariantException extends RuntimeException
 

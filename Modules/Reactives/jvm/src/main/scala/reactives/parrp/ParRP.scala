@@ -7,7 +7,6 @@ import reactives.scheduler.Levelbased
 
 object ParRPDefault extends ParRP {
   val scheduler = parrpWithBackoff(() => new Backoff())
-  type BundleState[V] = State[V]
 }
 trait ParRP extends Levelbased {
 

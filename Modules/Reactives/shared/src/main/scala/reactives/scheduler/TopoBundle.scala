@@ -6,12 +6,13 @@ import reactives.core.{
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-object TopbundleImpl extends TopoBundle {
+object TopoBundle extends TopoBundle {
   override def makeDerivedStructStateBundle[V](ip: V): TopoState[V] = new TopoState[V](ip)
   override type State[V] = TopoState[V]
 }
 
 trait TopoBundle {
+
   type State[V] <: TopoState[V]
 
   type Derived  = reactives.core.Derived.of[State]
@@ -83,7 +84,7 @@ trait TopoBundle {
   case class TopoTransaction(override val initializer: TopoInitializer) extends Transaction[State] {
 
     override private[reactives] def access(reactive: ReSource): reactive.Value = reactive.state.value
-    override def observe(obs: Observation): Unit                             = initializer.observe(obs)
+    override def observe(obs: Observation): Unit                               = initializer.observe(obs)
   }
 
   object TopoScheduler extends TopoSchedulerInterface

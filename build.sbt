@@ -1,4 +1,6 @@
-import Settings._
+import Settings.*
+
+import java.nio.charset.StandardCharsets
 
 lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   // core
@@ -47,8 +49,9 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Dependencies.sourcecode,
     Dependencies.munitCheck,
     Dependencies.munit,
-    //libraryDependencies += "org.scalatest"     %%% "scalatest"       % "3.2.18"   % Test,
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test,
     // libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test",
+    schedulerSelection
   )
   .jsSettings(
     Dependencies.scalajsDom,
@@ -56,6 +59,26 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     jsEnvDom,
     sourcemapFromEnv(),
   )
+
+def schedulerSelection = Compile / sourceGenerators += Def.task {
+  val file = (Compile / sourceManaged).value / "scheduler_selection_generated.scala"
+  crossVersion.value
+  val scheduler = sys.env.getOrElse("REACTIVES_SCHEDULER", "default") match {
+    case "fullmv"   => "reactives.fullmv.FullMVUtil.default"
+    case "parrp"    => "reactives.parrp.ParRPDefault.scheduler"
+    case "toposort" => "reactives.scheduler.TopoBundle.TopoScheduler"
+    case "sidup"    => "reactives.scheduler.SynchronizedSidup.scheduler"
+    case "calculus" => "reactives.scheduler.CalculusLike.FScheduler"
+    case _          => "reactives.scheduler.LevelbasedVariants.synchron"
+  }
+  IO.write(
+    file,
+    s"package reactives.generated { object Scheduler { val selection = $scheduler } }",
+    StandardCharsets.UTF_8,
+    false
+  )
+  Seq(file)
+}.taskValue
 
 lazy val reswing = project.in(file("Modules/Swing"))
   .settings(scala3defaults, noPublish, LocalSetting.scalaSwing)

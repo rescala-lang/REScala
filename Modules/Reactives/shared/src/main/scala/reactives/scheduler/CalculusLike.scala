@@ -8,7 +8,7 @@ import reactives.core.{
   Transaction
 }
 
-trait CalculusLike {
+object CalculusLike {
 
   type State[V] = StoreValue[V]
 
