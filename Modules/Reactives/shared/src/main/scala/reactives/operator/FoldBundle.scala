@@ -55,9 +55,7 @@ object Fold {
 
   inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
 
-  extension [T](e: Event[T]) {
-    inline def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
-  }
+
 }
 
 opaque type FoldState[T] = () => T

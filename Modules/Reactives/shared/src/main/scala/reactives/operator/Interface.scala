@@ -27,7 +27,11 @@ import reactives.operator.Interface.State
 trait Interface {
 
   export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
-  export Fold.{current, act}
+  export Fold.{current}
+
+  extension [T](e: Event[T]) {
+    inline infix def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
+  }
 
   // TODO: remove once no more references are present
   type BundleState[V] = State[V]

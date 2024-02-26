@@ -6,7 +6,8 @@ import reactives.operator.Interface.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
-import Fold.act
+import reactives.default.act
+
 
 import scala.collection.immutable.{LinearSeq, Queue}
 
