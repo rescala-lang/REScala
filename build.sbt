@@ -1,4 +1,3 @@
-import LocalDependencies._
 import Settings._
 
 lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
@@ -46,11 +45,12 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     // dotty seems to be currently unable to compile the docs … ?
     // Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
     Test / scalacOptions ~= (old => old.filter(_ != "-Xfatal-warnings")),
-    publishSonatype,
+    LocalSetting.publishSonatype,
     resolverJitpack,
     Dependencies.sourcecode,
-    LocalDependencies.scalatest,
-    LocalDependencies.scalatestpluscheck,
+    LocalSetting.scalatest,
+    LocalSetting.scalatestpluscheck,
+    Dependencies.munit
   )
   .jsSettings(
     Dependencies.scalajsDom,
@@ -60,12 +60,12 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, LocalDependencies.scalaSwing)
+  .settings(scala3defaults, noPublish, LocalSetting.scalaSwing)
   .dependsOn(reactives.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, noPublish, scalaFxDependencies, fork := true)
+  .settings(scala3defaults, noPublish, LocalSetting.scalaFxDependencies, fork := true)
 
 lazy val rdtsAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
@@ -82,7 +82,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
-    publishSonatype,
+    LocalSetting.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
@@ -94,13 +94,13 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scala3defaults,
     noPublish,
-    LocalDependencies.scalatest,
-    LocalDependencies.scalatestpluscheck,
+    LocalSetting.scalatest,
+    LocalSetting.scalatestpluscheck,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
   .jvmSettings(
-    LocalDependencies.tink
+    LocalSetting.tink
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
@@ -178,11 +178,11 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .settings(
     scala3defaults,
     noPublish,
-    scalaFxDependencies,
+    LocalSetting.scalaFxDependencies,
     fork := true,
     Dependencies.jsoniterScala,
-    LocalDependencies.jetty11,
-    LocalDependencies.tink,
+    LocalSetting.jetty11,
+    LocalSetting.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
