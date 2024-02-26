@@ -9,7 +9,7 @@ import rescala.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.{aside, section}
-import kofre.base.Uid
+import rdts.base.Uid
 import loci.transmitter.RemoteRef
 import replication.fbdc.{FbdcExampleData, Req}
 
@@ -80,7 +80,7 @@ object HTML {
     )
   }
 
-  def dotsToRows(dots: kofre.time.Dots) =
+  def dotsToRows(dots: rdts.time.Dots) =
     dots.internal.toList.sortBy(t => Uid.unwrap(t._1)).map { (k, v) =>
       tr(td(Uid.unwrap(k)), td(v.toString)).render
     }.toSeq

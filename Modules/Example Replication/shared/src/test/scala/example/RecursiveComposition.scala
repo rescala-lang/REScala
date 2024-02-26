@@ -2,10 +2,10 @@ package example
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Uid
-import kofre.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
+import rdts.base.Uid
+import rdts.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
 
 import java.awt.Component
 
@@ -42,7 +42,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
     val rlist = DeltaBuffer(Dotted(ReplicatedList.empty[Component]))
 
     // some operations on replicated data types require a unique ID per replica, here we just generate one randomly that is then used in the call to `append` below
-    given myId: kofre.syntax.ReplicaId = Uid.gen()
+    given myId: rdts.syntax.ReplicaId = Uid.gen()
 
     // okay, this is cheating, this just adds complex components to a replicated list, and would not be sufficient for fine grained editing of replicated UIs … however, it should be sufficient for a very simple usecase
     rlist.append(exampleComposition)

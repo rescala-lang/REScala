@@ -2,7 +2,7 @@ package todolist
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.time.Dot
+import rdts.time.Dot
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
 import benchmarks.encrdt.Codecs.*
@@ -17,7 +17,7 @@ import scala.util.Try
 import benchmarks.encrdt.idFromString
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.sync.ConnectionManager
-import kofre.datatypes.LastWriterWins
+import rdts.datatypes.LastWriterWins
 
 class SyncedTodoListCrdt(val replicaId: String) {
 

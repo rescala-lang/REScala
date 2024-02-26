@@ -1,8 +1,8 @@
 package encrdtlib.lattices
 
-import kofre.base.{Lattice, Uid}
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.dotted.Dotted
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
 
 case class AddWinsMapLattice[K, V](
     keys: Dotted[ReplicatedSet[K]] = Dotted(ReplicatedSet.empty[K]),

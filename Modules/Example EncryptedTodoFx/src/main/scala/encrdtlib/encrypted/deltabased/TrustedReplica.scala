@@ -2,7 +2,7 @@ package encrdtlib.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import kofre.time.{Dots, Dot}
+import rdts.time.{Dots, Dot}
 import benchmarks.encrdt.idFromString
 abstract class TrustedReplica[T](val replicaId: String, mutate: T => Unit, private val aead: Aead)(
     implicit

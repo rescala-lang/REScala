@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations._
-import kofre.time.{Dots, Dot}
-import kofre.base.Uid.asId
+import rdts.time.{Dots, Dot}
+import rdts.base.Uid.asId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

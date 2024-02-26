@@ -1,7 +1,7 @@
 package replication.fbdc
 
-import kofre.base.Bottom
-import kofre.datatypes.LastWriterWins
+import rdts.base.Bottom
+import rdts.datatypes.LastWriterWins
 
 import java.nio.file.{Files, Path}
 import java.sql.*

@@ -1,13 +1,13 @@
 package benchmarks.lattices.delta
 
-import kofre.base.{Lattice, Uid}
-import kofre.dotted.{Dotted, DottedLattice}
-import kofre.time.{Dot, Dots}
+import rdts.base.{Lattice, Uid}
+import rdts.dotted.{Dotted, DottedLattice}
+import rdts.time.{Dot, Dots}
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations._
 
-import kofre.base.Uid.asId
-import kofre.datatypes.contextual.ReplicatedSet
+import rdts.base.Uid.asId
+import rdts.datatypes.contextual.ReplicatedSet
 
 import java.util.concurrent.TimeUnit
 

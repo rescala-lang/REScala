@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.TwoPhaseSet
+import rdts.datatypes.TwoPhaseSet
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

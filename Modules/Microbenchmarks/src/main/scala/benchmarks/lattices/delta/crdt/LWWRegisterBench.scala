@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.LastWriterWins
+import rdts.datatypes.LastWriterWins
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

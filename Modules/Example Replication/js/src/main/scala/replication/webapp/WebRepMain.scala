@@ -2,8 +2,8 @@ package replication.webapp
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Uid
-import kofre.datatypes.contextual.ReplicatedList
+import rdts.base.Uid
+import rdts.datatypes.contextual.ReplicatedList
 import org.scalajs.dom
 import org.scalajs.dom.{Fetch, HttpMethod, RequestInit}
 import replication.JsoniterCodecs.given

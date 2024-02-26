@@ -1,10 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.Lattice
-import kofre.dotted.Dotted
+import rdts.base.Lattice
+import rdts.dotted.Dotted
 import org.openjdk.jmh.annotations._
-import kofre.base.Uid.asId
-import kofre.datatypes.contextual.ReplicatedSet
+import rdts.base.Uid.asId
+import rdts.datatypes.contextual.ReplicatedSet
 
 import java.util.concurrent.TimeUnit
 

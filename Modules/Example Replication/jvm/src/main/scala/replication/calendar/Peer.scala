@@ -2,9 +2,9 @@ package replication.calendar
 
 import Bindings._
 import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import kofre.base.{Lattice, Uid}
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.dotted.{DottedLattice, Dotted}
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.{DottedLattice, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}

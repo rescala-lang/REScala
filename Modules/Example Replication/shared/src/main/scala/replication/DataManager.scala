@@ -2,11 +2,11 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.base.Lattice.optionLattice
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{PermCausalMutate, ReplicaId}
-import kofre.time.Dots
+import rdts.base.Lattice.optionLattice
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.dotted.{Dotted, DottedLattice, HasDots}
+import rdts.syntax.{PermCausalMutate, ReplicaId}
+import rdts.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}

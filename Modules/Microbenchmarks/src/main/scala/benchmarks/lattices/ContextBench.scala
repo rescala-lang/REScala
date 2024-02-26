@@ -1,11 +1,11 @@
 package benchmarks.lattices
 
-import kofre.time.{Dots, Dot}
+import rdts.time.{Dots, Dot}
 
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import kofre.base.Lattice
-import kofre.base.Uid
+import rdts.base.Lattice
+import rdts.base.Uid
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

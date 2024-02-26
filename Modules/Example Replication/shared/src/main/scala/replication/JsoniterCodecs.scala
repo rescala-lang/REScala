@@ -2,15 +2,15 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Uid
-import kofre.datatypes.alternatives.ResettableCounter
-import kofre.datatypes.contextual.{ReplicatedSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
-import kofre.datatypes.{
+import rdts.base.Uid
+import rdts.datatypes.alternatives.ResettableCounter
+import rdts.datatypes.contextual.{ReplicatedSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
+import rdts.datatypes.{
   Epoch, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet
 }
-import kofre.dotted.Dotted
-import kofre.datatypes.experiments.AuctionInterface.AuctionData
-import kofre.time.{ArrayRanges, Dot, Dots, Time}
+import rdts.dotted.Dotted
+import rdts.datatypes.experiments.AuctionInterface.AuctionData
+import rdts.time.{ArrayRanges, Dot, Dots, Time}
 
 object JsoniterCodecs {
 
@@ -28,7 +28,7 @@ object JsoniterCodecs {
     x => x.inner.slice(0, x.used)
   )
 
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+  implicit val idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
     override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
     override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
   implicit val CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make

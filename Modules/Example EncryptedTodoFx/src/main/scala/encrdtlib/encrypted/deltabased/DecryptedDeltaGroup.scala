@@ -2,8 +2,8 @@ package encrdtlib.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.google.crypto.tink.Aead
-import kofre.time.Dots
-import kofre.base.Lattice
+import rdts.time.Dots
+import rdts.base.Lattice
 
 case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: Dots) {
   def encrypt(aead: Aead)(implicit

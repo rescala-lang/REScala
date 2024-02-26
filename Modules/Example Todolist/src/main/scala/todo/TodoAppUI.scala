@@ -1,6 +1,6 @@
 package todo
 
-import kofre.datatypes.contextual.ReplicatedList
+import rdts.datatypes.contextual.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom
@@ -14,8 +14,8 @@ import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
 import loci.serializer.jsoniterScala.given
 import rescala.structure.Pulse
 

@@ -3,10 +3,10 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.datatypes.GrowOnlyMap
+import rdts.datatypes.GrowOnlyMap
 import replication.JsoniterCodecs.given
-import kofre.datatypes.GrowOnlyMap.{syntax, bottom}
-import kofre.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.GrowOnlyMap.{syntax, bottom}
+import rdts.datatypes.contextual.ReplicatedSet
 import org.scalacheck.Prop.forAll
 
 import scala.collection.mutable

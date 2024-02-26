@@ -1,8 +1,8 @@
 package encrdtlib.lattices
 
-import kofre.base.{Uid, Lattice}
-import kofre.dotted.{Dotted}
-import kofre.time.{Dot, Dots}
+import rdts.base.{Uid, Lattice}
+import rdts.dotted.{Dotted}
+import rdts.time.{Dot, Dots}
 
 object DeltaMultiValueRegister {
   type DeltaMultiValueRegisterLattice[V] = Dotted[Map[Dot, V]]

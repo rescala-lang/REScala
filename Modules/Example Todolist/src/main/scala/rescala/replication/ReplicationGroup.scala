@@ -1,14 +1,14 @@
 package rescala.extra.replication
 
-import kofre.base.{Bottom, Lattice}
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
+import rdts.base.{Bottom, Lattice}
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
 import loci.registry.{Binding, Registry}
 import loci.transmitter.RemoteRef
 import rescala.core.Disconnectable
 import rescala.operator.Interface
 import scribe.Execution.global
-import kofre.base.Lattice.syntax
+import rdts.base.Lattice.syntax
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

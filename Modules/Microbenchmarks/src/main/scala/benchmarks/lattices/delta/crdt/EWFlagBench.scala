@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import kofre.base.Uid.asId
-import kofre.datatypes.contextual.EnableWinsFlag
+import rdts.base.Uid.asId
+import rdts.datatypes.contextual.EnableWinsFlag
 
 import java.util.concurrent.TimeUnit
 

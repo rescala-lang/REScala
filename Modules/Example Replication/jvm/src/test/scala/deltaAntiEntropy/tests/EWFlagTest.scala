@@ -2,7 +2,7 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.datatypes.contextual.EnableWinsFlag
+import rdts.datatypes.contextual.EnableWinsFlag
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
@@ -22,7 +22,7 @@ object EWFlagGenerators {
 
     ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
       case (f, 0) => f.disable()
-      case (f, 1) => f.enable(using kofre.base.Uid.predefined(ae.replicaID))()
+      case (f, 1) => f.enable(using rdts.base.Uid.predefined(ae.replicaID))()
       // default case is only needed to stop the compiler from complaining about non-exhaustive match
       case (f, _) => f
     }

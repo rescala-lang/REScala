@@ -3,12 +3,12 @@ package benchmarks.encrdt.mock
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import kofre.time.Dots
+import rdts.time.Dots
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import benchmarks.encrdt.Codecs._
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
-import kofre.dotted.{Dotted}
+import rdts.dotted.{Dotted}
 
 import java.util.UUID
 import scala.collection.mutable

@@ -4,15 +4,15 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWinsMap}
-import kofre.base.Uid
-import kofre.base.Uid.asId
-import kofre.time.{ArrayRanges, Dot, Dots, Time}
+import rdts.base.Uid
+import rdts.base.Uid.asId
+import rdts.time.{ArrayRanges, Dot, Dots, Time}
 
 import java.util.UUID
 
 object Codecs {
   implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+  implicit val idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
     override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
     override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =

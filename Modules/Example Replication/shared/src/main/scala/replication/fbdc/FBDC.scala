@@ -2,14 +2,14 @@ package replication.fbdc
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Lattice.optionLattice
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.*
-import kofre.datatypes.contextual.CausalQueue.QueueElement
-import kofre.datatypes.contextual.{ReplicatedSet, CausalQueue, ObserveRemoveMap}
-import kofre.dotted.{Dotted, DottedLattice, HasDots}
-import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
-import kofre.time.{Dots, VectorClock}
+import rdts.base.Lattice.optionLattice
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.datatypes.*
+import rdts.datatypes.contextual.CausalQueue.QueueElement
+import rdts.datatypes.contextual.{ReplicatedSet, CausalQueue, ObserveRemoveMap}
+import rdts.dotted.{Dotted, DottedLattice, HasDots}
+import rdts.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
+import rdts.time.{Dots, VectorClock}
 import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given

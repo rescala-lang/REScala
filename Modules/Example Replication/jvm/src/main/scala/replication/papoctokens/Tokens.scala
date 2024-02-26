@@ -1,14 +1,14 @@
 package replication.papoctokens
 
-import kofre.base.{Bottom, Lattice, Orderings, Uid}
-import kofre.datatypes.Epoch
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.datatypes.contextual.ReplicatedSet.syntax
-import kofre.datatypes.experiments.RaftState
-import kofre.dotted.{Dotted, HasDots}
-import kofre.syntax.ReplicaId.replicaId
-import kofre.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
-import kofre.time.Dots
+import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.datatypes.Epoch
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.contextual.ReplicatedSet.syntax
+import rdts.datatypes.experiments.RaftState
+import rdts.dotted.{Dotted, HasDots}
+import rdts.syntax.ReplicaId.replicaId
+import rdts.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
+import rdts.time.Dots
 
 import scala.util.Random
 

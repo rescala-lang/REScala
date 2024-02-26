@@ -1,8 +1,8 @@
 package encrdtlib.encrypted.deltabased
 
-import kofre.base.Lattice._
+import rdts.base.Lattice._
 
-import kofre.time.Dots
+import rdts.time.Dots
 
 import scala.collection.mutable
 

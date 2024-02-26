@@ -3,9 +3,9 @@ package replication.dtn
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.*
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.PosNegCounter
-import kofre.syntax.*
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.datatypes.PosNegCounter
+import rdts.syntax.*
 
 import java.net.URI
 import java.net.http.HttpResponse.BodyHandlers

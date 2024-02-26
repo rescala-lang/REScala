@@ -1,9 +1,9 @@
 package replication.checkpointing.central
 
 import Bindings.*
-import kofre.base.Lattice
-import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, ReplicaId}
+import rdts.base.Lattice
+import rdts.dotted.Dotted
+import rdts.syntax.{DeltaBuffer, ReplicaId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -13,8 +13,8 @@ import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
-import kofre.base.Uid
-import kofre.datatypes.contextual.ReplicatedSet
+import rdts.base.Uid
+import rdts.datatypes.contextual.ReplicatedSet
 
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 

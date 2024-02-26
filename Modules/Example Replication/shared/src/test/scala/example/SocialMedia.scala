@@ -2,12 +2,12 @@ package example
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Uid
-import kofre.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
-import kofre.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
-import kofre.syntax.ReplicaId
+import rdts.base.Uid
+import rdts.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
+import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
+import rdts.syntax.ReplicaId
 
 import rescala.default.*
 

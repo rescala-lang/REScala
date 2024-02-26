@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import kofre.datatypes.GrowOnlySet.*
+import rdts.datatypes.GrowOnlySet.*
 
 import java.util.concurrent.TimeUnit
 

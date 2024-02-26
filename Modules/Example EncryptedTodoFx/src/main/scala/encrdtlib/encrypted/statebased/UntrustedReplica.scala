@@ -2,8 +2,8 @@ package encrdtlib.encrypted.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import kofre.time.VectorClock
-import kofre.base.Lattice
+import rdts.time.VectorClock
+import rdts.base.Lattice
 
 abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
   protected var stateStore: Set[EncryptedState] = initialStates

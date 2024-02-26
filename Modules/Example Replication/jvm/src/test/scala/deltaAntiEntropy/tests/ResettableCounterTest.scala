@@ -2,7 +2,7 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.datatypes.alternatives.ResettableCounter
+import rdts.datatypes.alternatives.ResettableCounter
 import ResettableCounter.syntax
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
@@ -164,7 +164,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       assertEquals(ca0.value, cb0.value, s"${ca0.state}\n${cb0.state}")
 
       val ca1 =
-        given kofre.syntax.ReplicaId = ca0.replicaID
+        given rdts.syntax.ReplicaId = ca0.replicaID
         if (op) ca0.fresh().increment() else ca0.fresh().decrement()
       val cb1 = cb0.reset()
 

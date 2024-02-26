@@ -1,10 +1,10 @@
 package replication.calendar
 
-import kofre.base.{Uid, Lattice}
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.datatypes.experiments.RaftState
-import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, ReplicaId}
+import rdts.base.{Uid, Lattice}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.experiments.RaftState
+import rdts.dotted.Dotted
+import rdts.syntax.{DeltaBuffer, ReplicaId}
 
 import scala.util.Random
 

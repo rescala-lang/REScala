@@ -3,9 +3,9 @@ package deltaAntiEntropy.tests
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import kofre.base.Bottom
-import kofre.datatypes.contextual.{ReplicatedSet, ObserveRemoveMap}
-import kofre.dotted.Dotted
+import rdts.base.Bottom
+import rdts.datatypes.contextual.{ReplicatedSet, ObserveRemoveMap}
+import rdts.dotted.Dotted
 import replication.JsoniterCodecs.*
 import org.scalacheck.Prop.*
 
@@ -15,7 +15,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("contains") {
-    given kofre.syntax.ReplicaId = kofre.syntax.ReplicaId.predefined("test")
+    given rdts.syntax.ReplicaId = rdts.syntax.ReplicaId.predefined("test")
     given Bottom[Int] with
       def empty = Int.MinValue
     forAll{ (entries: List[Int]) =>

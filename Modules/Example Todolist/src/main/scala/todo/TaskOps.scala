@@ -1,9 +1,9 @@
 package todo
 
-import kofre.dotted.Dotted
-import kofre.base.Uid
-import kofre.datatypes.contextual.ReplicatedList
-import kofre.syntax.{DeltaBuffer, ReplicaId}
+import rdts.dotted.Dotted
+import rdts.base.Uid
+import rdts.datatypes.contextual.ReplicatedList
+import rdts.syntax.{DeltaBuffer, ReplicaId}
 import rescala.default.*
 
 import java.util.concurrent.ThreadLocalRandom

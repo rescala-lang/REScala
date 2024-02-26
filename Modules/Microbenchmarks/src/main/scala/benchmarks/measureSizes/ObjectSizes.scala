@@ -1,6 +1,6 @@
 package rescala.benchmarks.measureSizes
 
-import kofre.time.ArrayRanges
+import rdts.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
 import rescala.core.{AccessHandler, ReSource, ReevTicket}
 import rescala.default

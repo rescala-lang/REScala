@@ -3,10 +3,10 @@ package encrdtlib.container
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
-import kofre.base.{Lattice, Uid}
-import kofre.datatypes.LastWriterWins
-import kofre.dotted.{Dotted}
-import kofre.time.Dot
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.LastWriterWins
+import rdts.dotted.{Dotted}
+import rdts.time.Dot
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering.Implicits.infixOrderingOps

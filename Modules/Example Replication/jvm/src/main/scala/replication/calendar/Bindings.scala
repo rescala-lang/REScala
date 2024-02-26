@@ -5,9 +5,9 @@ import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.datatypes.experiments.RaftState
-import kofre.dotted.Dotted
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.experiments.RaftState
+import rdts.dotted.Dotted
 import replication.JsoniterCodecs
 
 import scala.concurrent.Future

@@ -1,12 +1,12 @@
 package benchmarks.lattices
 
 import org.openjdk.jmh.annotations.*
-import kofre.datatypes.alternatives.rga.Sequence.RGA
-import kofre.datatypes.alternatives.rga.Sequence.RGAOps
-import kofre.base.Uid.asId
-import kofre.datatypes.alternatives.rga.Sequence
-import kofre.datatypes.contextual.CausalQueue
-import kofre.dotted.Dotted
+import rdts.datatypes.alternatives.rga.Sequence.RGA
+import rdts.datatypes.alternatives.rga.Sequence.RGAOps
+import rdts.base.Uid.asId
+import rdts.datatypes.alternatives.rga.Sequence
+import rdts.datatypes.contextual.CausalQueue
+import rdts.dotted.Dotted
 
 import java.util.concurrent.TimeUnit
 

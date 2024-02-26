@@ -4,9 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
-import kofre.base.Lattice
-import kofre.datatypes.GrowOnlyList
-import kofre.dotted.{Dotted, HasDots}
+import rdts.base.Lattice
+import rdts.datatypes.GrowOnlyList
+import rdts.dotted.{Dotted, HasDots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*

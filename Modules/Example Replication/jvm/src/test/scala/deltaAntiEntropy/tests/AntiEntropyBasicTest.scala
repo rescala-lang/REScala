@@ -4,17 +4,17 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
-import kofre.base.Uid.asId
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.datatypes.GrowOnlyList.Node.Elem
-import kofre.datatypes.{GrowOnlyList, LastWriterWins}
-import kofre.datatypes.contextual.ReplicatedList
-import kofre.dotted.{Dotted, HasDots}
-import kofre.time.{CausalTime, Dot}
+import rdts.base.Uid.asId
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.datatypes.GrowOnlyList.Node.Elem
+import rdts.datatypes.{GrowOnlyList, LastWriterWins}
+import rdts.datatypes.contextual.ReplicatedList
+import rdts.dotted.{Dotted, HasDots}
+import rdts.time.{CausalTime, Dot}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.*
-import test.kofre.DataGenerator.RGAGen.{makeRGA, given}
+import test.rdts.DataGenerator.RGAGen.{makeRGA, given}
 
 import scala.collection.mutable
 

@@ -3,9 +3,9 @@ package deltaAntiEntropy.tools
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
-import kofre.base.Uid.asId
-import kofre.base.{Bottom, Lattice, Uid}
-import kofre.dotted.{Dotted, DottedLattice}
+import rdts.base.Uid.asId
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.dotted.{Dotted, DottedLattice}
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
@@ -74,7 +74,7 @@ class AntiEntropy[A](
     case DeltaMsg(delta, seqNum) =>
       deltaBufferIn = deltaBufferIn :+ delta
       val msg: Message = Left(AckMsg(replicaID, seqNum))
-      network.sendMessage(kofre.base.Uid.unwrap(delta.replicaId), writeToArray(msg))
+      network.sendMessage(rdts.base.Uid.unwrap(delta.replicaId), writeToArray(msg))
   }
 
   private def receiveAck(msg: AckMsg): Unit = msg match {

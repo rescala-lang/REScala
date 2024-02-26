@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.GrowOnlyList
+import rdts.datatypes.GrowOnlyList
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

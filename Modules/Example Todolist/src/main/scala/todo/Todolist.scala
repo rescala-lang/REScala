@@ -2,7 +2,7 @@ package todo
 
 import loci.registry.Registry
 import org.scalajs.dom.{document, window}
-import kofre.base.Uid
+import rdts.base.Uid
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 

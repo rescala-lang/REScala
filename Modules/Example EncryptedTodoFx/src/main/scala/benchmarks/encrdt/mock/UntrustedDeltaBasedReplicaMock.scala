@@ -3,7 +3,7 @@ package benchmarks.encrdt.mock
 import benchmarks.encrdt.Codecs
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
-import kofre.time.Dots
+import rdts.time.Dots
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path}

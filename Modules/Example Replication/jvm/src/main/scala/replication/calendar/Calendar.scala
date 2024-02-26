@@ -1,10 +1,10 @@
 package replication.calendar
 
 import rescala.default.*
-import kofre.base.{Bottom, Uid}
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.dotted.Dotted
-import kofre.syntax.{DeltaBuffer, ReplicaId}
+import rdts.base.{Bottom, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
+import rdts.syntax.{DeltaBuffer, ReplicaId}
 
 case class Appointment(start: Int, end: Int)
 

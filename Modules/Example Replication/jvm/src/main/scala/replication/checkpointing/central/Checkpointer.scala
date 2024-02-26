@@ -1,9 +1,9 @@
 package replication.checkpointing.central
 
 import Bindings._
-import kofre.base.Lattice
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.dotted.Dotted
+import rdts.base.Lattice
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 

@@ -1,11 +1,11 @@
 package replication
 
 import com.github.ckuessner.aead.{Aead, AeadHelper, ByteArray}
-import kofre.base.Lattice
-import kofre.base.Lattice.merge
-import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.ReplicaId
-import kofre.time.Dots
+import rdts.base.Lattice
+import rdts.base.Lattice.merge
+import rdts.dotted.{Dotted, DottedLattice}
+import rdts.syntax.ReplicaId
+import rdts.time.Dots
 
 type Secret = String
 

@@ -1,9 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.base.{Lattice, Uid}
-import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.*
-import kofre.time.{Dot, Dots}
+import rdts.base.{Lattice, Uid}
+import rdts.dotted.{Dotted, DottedLattice}
+import rdts.syntax.*
+import rdts.time.{Dot, Dots}
 
 type DeltaBufferDotted[State] = NamedDeltaBuffer[Dotted[State]]
 

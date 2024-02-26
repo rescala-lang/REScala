@@ -1,10 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.alternatives.ResettableCounter
+import rdts.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
-import kofre.dotted.Dotted
-import kofre.base.Uid.asId
-import kofre.syntax.ReplicaId
+import rdts.dotted.Dotted
+import rdts.base.Uid.asId
+import rdts.syntax.ReplicaId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

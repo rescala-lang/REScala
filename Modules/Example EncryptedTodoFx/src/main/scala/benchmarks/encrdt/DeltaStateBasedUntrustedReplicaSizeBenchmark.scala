@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.encrypted.deltabased.DecryptedDeltaGroup
-import kofre.time.{Dots, Dot}
+import rdts.time.{Dots, Dot}
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}

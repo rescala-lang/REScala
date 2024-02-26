@@ -1,7 +1,7 @@
 package replication
 
 import de.rmgk.options.*
-import kofre.base.Uid
+import rdts.base.Uid
 import replication.checkpointing.central.Checkpointer
 import replication.fbdc.{CliConnections, FbdcCli}
 

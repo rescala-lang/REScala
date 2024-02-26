@@ -3,12 +3,12 @@ package encrdtlib.encrypted.statebased
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
-import kofre.time.VectorClock
-import kofre.base.Lattice
-import kofre.base.Lattice._
+import rdts.time.VectorClock
+import rdts.base.Lattice
+import rdts.base.Lattice._
 import DecryptedState.vectorClockJsonCodec
 import benchmarks.encrdt.Codecs.{idKeyCodec}
-import kofre.datatypes.alternatives.MultiValueRegister
+import rdts.datatypes.alternatives.MultiValueRegister
 
 import scala.util.{Failure, Success, Try}
 

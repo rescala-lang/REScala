@@ -2,12 +2,12 @@ package todo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import kofre.base.Uid
-import kofre.datatypes.LastWriterWins
-import kofre.datatypes.contextual.ReplicatedList
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
-import kofre.time.Dot
+import rdts.base.Uid
+import rdts.datatypes.LastWriterWins
+import rdts.datatypes.contextual.ReplicatedList
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
+import rdts.time.Dot
 import loci.transmitter.IdenticallyTransmittable
 import rescala.extra.replication.DeltaFor
 
@@ -22,7 +22,7 @@ object Codecs {
     override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.place}")
   }
   implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[kofre.base.Uid] = new JsonKeyCodec[Uid]:
+  implicit val idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
     override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
     override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
 

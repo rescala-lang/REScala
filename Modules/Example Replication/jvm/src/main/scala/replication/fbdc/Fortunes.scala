@@ -1,7 +1,7 @@
 package replication.fbdc
 
 import de.rmgk.script.{process, runOutput}
-import kofre.datatypes.LastWriterWins
+import rdts.datatypes.LastWriterWins
 
 object Fortunes {
 

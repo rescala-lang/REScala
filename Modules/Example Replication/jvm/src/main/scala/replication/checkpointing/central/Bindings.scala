@@ -2,8 +2,8 @@ package replication.checkpointing.central
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import kofre.datatypes.contextual.ReplicatedSet
-import kofre.dotted.Dotted
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._

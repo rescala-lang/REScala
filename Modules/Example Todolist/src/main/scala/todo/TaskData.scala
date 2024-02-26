@@ -1,9 +1,9 @@
 package todo
 
-import kofre.base.Bottom
-import kofre.datatypes.LastWriterWins
-import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, ReplicaId}
+import rdts.base.Bottom
+import rdts.datatypes.LastWriterWins
+import rdts.dotted.{Dotted, DottedLattice}
+import rdts.syntax.{DeltaBuffer, ReplicaId}
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.given
 import org.scalajs.dom
@@ -18,7 +18,7 @@ import todo.Codecs.given
 import todo.Todolist.replicaId
 
 import scala.Function.const
-import scala.collection.{mutable}
+import scala.collection.mutable
 import scala.scalajs.js.timers.setTimeout
 
 case class TaskData(
