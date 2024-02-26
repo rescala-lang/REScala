@@ -3,7 +3,7 @@ package reactives.extra.invariant
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
-import reactives.core.ReSource.of
+import reactives.core.ReSource
 import reactives.core.{InitialChange, Observation, ReSource}
 import reactives.operator.Interface
 import reactives.scheduler.TopoBundle
@@ -18,12 +18,6 @@ object Invariant {
 
 class Invariant[T](val description: String, val inv: T => Boolean) {
   def validate(value: T): Boolean = inv(value)
-}
-
-object InvariantApi extends InvariantBundle with Interface {
-  val scheduler: InvariantScheduler.type = InvariantScheduler
-
-  override def makeDerivedStructStateBundle[V](ip: V): InvariantApi.InvariantState[V] = new InvariantState(ip)
 }
 
 trait InvariantBundle extends TopoBundle {
@@ -68,8 +62,6 @@ trait InvariantBundle extends TopoBundle {
     override protected def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
   }
 
-  extension (res: reactives.core.ReSource) def ustate: InvariantState[res.Value] = res.state.asInstanceOf[InvariantState[res.Value]]
-
   object InvariantScheduler extends TopoSchedulerInterface {
 
     override def schedulerName: String = "SimpleWithInvariantSupport"
@@ -77,15 +69,15 @@ trait InvariantBundle extends TopoBundle {
     override def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit =
       InvariantUtil.evaluateInvariants(all, initialWrites)
 
-    implicit class SignalWithInvariants[T](val signal: Signal[T]) {
+    implicit class SignalWithInvariants[T](val signal: ReSource{type State[V] = InvariantState[V]; type Value = Pulse[T]}) {
 
       def specify(inv: Invariant[T]*): Unit = {
-        signal.ustate.invariants =
+        signal.state.invariants =
           inv.map(inv => new Invariant[signal.Value](inv.description, (invp: Pulse[T]) => inv.inv(invp.get: T)))
       }
 
       def setValueGenerator(gen: Gen[T]): Unit = {
-        this.signal.ustate.gen = gen
+        this.signal.state.gen = gen
       }
 
       def test(): Unit = {
