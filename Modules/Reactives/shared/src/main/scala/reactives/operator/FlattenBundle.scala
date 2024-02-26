@@ -8,12 +8,12 @@ import scala.annotation.implicitNotFound
 import scala.collection.IterableOps
 import scala.reflect.ClassTag
 
-  @implicitNotFound(msg =
-    "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten."
-  )
-  trait Flatten[-A, R] {
-    def apply(sig: A): R
-  }
+@implicitNotFound(msg =
+  "Could not flatten ${A}. Try to select a specific flatten strategy from rescala.reactives.Flatten."
+)
+trait Flatten[-A, R] {
+  def apply(sig: A): R
+}
 
 object Flatten {
 
