@@ -227,11 +227,11 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
 
 }
 
-/** Similar to [[reactives.operator.SignalBundle.Signal]] expressions, but resulting in an event.
+/** Similar to [[reactives.operator.Signal]] expressions, but resulting in an event.
   * Accessed events return options depending on whether they fire or not,
   * and the complete result of the expression is an event as well.
   *
-  * @see [[reactives.operator.SignalBundle.Signal]]
+  * @see [[reactives.operator.Signal]]
   * @group create
   */
 object Event {

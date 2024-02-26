@@ -43,7 +43,7 @@ trait Interface {
     *
     * @param initialWrites  All inputs that might be changed by the transaction
     * @param admissionPhase An admission function that may
-    *                       [[reactives.operator.SourceBundle.Evt.admit]] / [[reactives.operator.SourceBundle.Var.admit]] arbitrary
+    *                       [[reactives.operator.Evt.admit]] / [[reactives.operator.Var.admit]] arbitrary
     *                       input changes that will be applied as an atomic transaction at the end.
     * @tparam R Result type of the admission function
     * @return Result of the admission function

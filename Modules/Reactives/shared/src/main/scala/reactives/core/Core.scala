@@ -47,7 +47,7 @@ abstract class Base[V](override protected[reactives] val state: reactives.operat
   override def toString: String = s"${info.description}($state)"
 }
 
-/** Common macro accessors for [[reactives.operator.SignalBundle.Signal]] and [[reactives.operator.EventBundle.Event]]
+/** Common macro accessors for [[reactives.operator.Signal]] and [[reactives.operator.Event]]
   *
   * @tparam A return type of the accessor
   * @groupname accessor Accessor and observers
