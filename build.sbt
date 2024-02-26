@@ -45,7 +45,6 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
     LocalSetting.publishSonatype,
-    resolverJitpack,
     Dependencies.munitCheck,
     Dependencies.munit,
     // sometimes it does not find tests (I have no clue why) but adding scalatest dependency seems to help …
