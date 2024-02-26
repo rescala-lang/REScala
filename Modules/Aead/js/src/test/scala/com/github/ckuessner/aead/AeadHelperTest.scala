@@ -1,15 +1,14 @@
 package com.github.ckuessner.aead
 
 import com.github.ckuessner.aead.AeadHelper
-import org.scalatest.BeforeAndAfter
-import org.scalatest.flatspec.AsyncFlatSpec
+import munit.AnyFixture
 
 import scala.concurrent.ExecutionContext
 import scala.scalajs.js.typedarray.Uint8Array
 import scala.util.{Failure, Success}
 
-class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
-  implicit override def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+class AeadHelperTest extends munit.FunSuite {
+  implicit def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   private var key: Uint8Array               = null
   private var otherKey: Uint8Array          = null
@@ -20,24 +19,26 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
   def uint8ArrayEquals(a: Uint8Array, b: Uint8Array): Boolean =
     a.toArray[Short].sameElements(b.toArray[Short])
 
-  before {
-    AeadHelper.ready().andThen { _ =>
-      key = AeadHelper.generateRawKey
-      otherKey = AeadHelper.generateRawKey
-      expectedCiphertextLength =
-        testMessage.getBytes.length
-        + sodium.crypto_aead_xchacha20poly1305_ietf_ABYTES.intValue()
-        + sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES.intValue()
+  override def munitFixtures: Seq[AnyFixture[?]] = List(
+    new Fixture[Unit]("ready") {
+      override def apply(): Unit = ()
+      override def beforeAll(): Unit =
+        AeadHelper.ready().andThen { _ =>
+          key = AeadHelper.generateRawKey
+          otherKey = AeadHelper.generateRawKey
+          expectedCiphertextLength =
+            testMessage.getBytes.length
+            + sodium.crypto_aead_xchacha20poly1305_ietf_ABYTES.intValue()
+            + sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES.intValue()
+        }
     }
+  )
+
+  test("initialization should not fail") {
+    AeadHelper.ready().map(_ => ())(executionContext)
   }
 
-  "initialization" should "not fail" in {
-    AeadHelper.ready().map(_ => succeed)(executionContext)
-  }
-
-  behavior of "generateKey"
-
-  it should "not fail" in {
+  test("generateKey should not fail") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -45,7 +46,7 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
   }
 
-  it should "generate different keys" in {
+  test("generateKey should generate different keys") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -53,9 +54,7 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
   }
 
-  behavior of "encrypt"
-
-  it should "produce ciphertext of correct length for strings with associated data" in {
+  test("encrypt should produce ciphertext of correct length for strings with associated data") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -63,11 +62,11 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
       .map {
         case Success(cipherText) => assert(cipherText.length == expectedCiphertextLength)
-        case Failure(exception)  => fail(exception)
+        case Failure(exception)  => fail("fail", exception)
       }
   }
 
-  it should "produce ciphertext of correct length for strings with empty associated data" in {
+  test("encrypt should produce ciphertext of correct length for strings with empty associated data") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -75,11 +74,11 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
       .map {
         case Success(cipherText) => assert(cipherText.length == expectedCiphertextLength)
-        case Failure(exception)  => fail(exception)
+        case Failure(exception)  => fail("fail", exception)
       }
   }
 
-  it should "use different nonces each time" in {
+  test("encrypt should use different nonces each time") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -90,16 +89,14 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
       .map {
         case (Success(l), Success(r)) => (l, r)
-        case _                        => fail()
+        case _                        => fail("fail")
       }
       .map { case (ctLeft, ctRight) =>
         assert(!uint8ArrayEquals(ctLeft, ctRight))
       }
   }
 
-  behavior of "decrypt"
-
-  it should "produce original string given same associated data and correct key" in {
+  test("decrypt should produce original string given same associated data and correct key") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -108,11 +105,11 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
       })
       .map {
         case Success(decrypted) => assert(decrypted.equals(testMessage))
-        case _                  => fail()
+        case _                  => fail("fail")
       }
   }
 
-  it should "fail with wrong key" in {
+  test("decrypt should fail with wrong key") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -120,12 +117,12 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
         AeadHelper.decrypt(encryptedMessage.get, associatedData, otherKey)
       })
       .map {
-        case Failure(_) => succeed
-        case Success(_) => fail()
+        case Failure(_) => ()
+        case Success(_) => fail("")
       }
   }
 
-  it should "fail with wrong associated data" in {
+  test("decrypt should fail with wrong associated data") {
     AeadHelper
       .ready()
       .map(_ => {
@@ -133,8 +130,8 @@ class AeadHelperTest extends AsyncFlatSpec with BeforeAndAfter {
         AeadHelper.decrypt(encryptedMessage.get, "Not the associated data", otherKey)
       })
       .map {
-        case Failure(_) => succeed
-        case Success(_) => fail()
+        case Failure(_) =>
+        case Success(_) => fail("")
       }
   }
 }

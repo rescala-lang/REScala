@@ -3,10 +3,6 @@ package com.github.ckuessner.aead
 import com.github.ckuessner.aead.ByteArray
 import com.github.ckuessner.aead.Generators.byteArrayGen
 import com.sun.net.httpserver.Authenticator.Failure
-import org.scalatest.flatspec.AsyncFlatSpec
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalacheck.Prop.*
 
 import scala.concurrent.{ExecutionContext, Future}
