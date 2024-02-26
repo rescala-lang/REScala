@@ -172,6 +172,7 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .settings(
     scala3defaults,
     noPublish,
+    resolverJitpack,
     Dependencies.scalatags,
     Dependencies.loci.webrtc,
     Dependencies.loci.jsoniterScala,
