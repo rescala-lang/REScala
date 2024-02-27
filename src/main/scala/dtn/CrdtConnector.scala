@@ -5,16 +5,17 @@ import rescala.core.InitialChange
 import rescala.default.scheduler
 import rescala.default.*
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, ObjectOutputStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
+import boopickle.Default._
 
-object ReScalaToDTNConnector {
-  private val ws = Client.createWS
 
-  println(s"connected to DTN node: ${Client.nodeId}")
-  if (Client.nodeId.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
+object CrdtConnector {
+  private val ws = Dtn7RsWsConn()
+
+  println(s"connected to DTN node: ${ws.nodeId}")
+  if (ws.nodeId.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
 
   val cRDTGroupEndpoint = "dtn://global/crdt/~app1"
 
@@ -29,7 +30,7 @@ object ReScalaToDTNConnector {
         // update crdt on signals received through the dtn network
         val bundle: Bundle = Await.result(ws.receiveBundle(), Duration.Inf)
 
-        Serialization.deserialise(bundle.getDataAsBytes)
+        onChangedUpdateFunc(bundle.getDataAsBytes)
       }
     }
   }
@@ -37,7 +38,7 @@ object ReScalaToDTNConnector {
   def connect[A: Lattice](signal: Signal[A]): Unit = {
     // send signal updates through the dtn network
     signal observe ((x: A) => {
-      val payload: Array[Byte] = Serialization.serialise(x)
+      val payload: Array[Byte] = Utility.toByteArray(Pickle.intoBytes(x))
       val bundle: Bundle = Bundle.createWithBytesAsData(
         src = cRDTGroupEndpoint,
         dst = cRDTGroupEndpoint,
@@ -48,7 +49,7 @@ object ReScalaToDTNConnector {
 
     // push received updates into the crdt
     onChangedUpdateFunc = (v: Array[Byte]) => {
-      val newValue: A = Serialization.deserialise(v).asInstanceOf[A]
+      val newValue: A = Unpickle[A].fromBytes(Utility.toByteBuffer(v))
 
       scheduler.forceNewTransaction(signal) {
         admissionTicket => admissionTicket.recordChange(new InitialChange {
@@ -72,24 +73,5 @@ object ReScalaToDTNConnector {
   def disconnect(): Unit = {
     receiverThreadKeepRunning = false
     ws.disconnect()
-  }
-}
-
-
-object Serialization {
-
-  def serialise(value: Any): Array[Byte] = {
-    val stream: ByteArrayOutputStream = new ByteArrayOutputStream()
-    val oos = new ObjectOutputStream(stream)
-    oos.writeObject(value)
-    oos.close()
-    stream.toByteArray
-  }
-
-  def deserialise(bytes: Array[Byte]): Any = {
-    val ois = new ObjectInputStream(new ByteArrayInputStream(bytes))
-    val value = ois.readObject
-    ois.close()
-    value
   }
 }

@@ -16,6 +16,7 @@ lazy val chat = project.in(file("."))
       "com.softwaremill.sttp.client3"          %% "core"                                 % "3.8.13",
       "com.softwaremill.sttp.client3"          %% "okhttp-backend"                       % "3.8.13",
       "com.softwaremill.sttp.client3"          %% "pekko-http-backend"                   % "3.9.3",
-      "org.apache.pekko"                       %% "pekko-stream"                         % "1.0.1"
+      "org.apache.pekko"                       %% "pekko-stream"                         % "1.0.1",
+      "io.suzaku"                              %% "boopickle"                            % "1.4.0"
     ),
   )
