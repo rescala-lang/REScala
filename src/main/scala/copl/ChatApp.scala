@@ -13,6 +13,7 @@ import rescala.default
 import rescala.default.*
 import rescala.extra.Tags.*
 import rescala.extra.distribution.Network
+import dtn.ReScalaToDTNConnector
 import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
@@ -73,7 +74,8 @@ object ChatApp {
         )
       }
 
-    Network.replicate(history, registry)(Binding("history"))
+    //Network.replicate(history, registry)(Binding("history"))
+    ReScalaToDTNConnector.connect(history)
 
     val chatDisplay = Signal.dynamic {
       val reversedHistory = history.value.payload.toList.reverse
