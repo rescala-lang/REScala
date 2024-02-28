@@ -13,11 +13,14 @@ import rescala.default
 import rescala.default.*
 import rescala.extra.Tags.*
 import rescala.extra.distribution.Network
-import dtn.CrdtConnectorJs
+import dtn.CrdtConnector
 import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 case class Chatline(author: String, message: String)
 
@@ -43,8 +46,6 @@ object ChatApp {
     document.body.replaceChild(contents.render, document.body.firstChild)
     document.body.appendChild(p(style := "height: 3em").render)
     document.body.appendChild(WebRTCHandling(registry).webrtcHandlingArea.render)
-    
-    CrdtConnectorJs.runForever()
   }
 
   def getContents(): TypedTag[Div] = {
@@ -77,7 +78,10 @@ object ChatApp {
       }
 
     //Network.replicate(history, registry)(Binding("history"))
-    CrdtConnectorJs.connect(history)
+    CrdtConnector.initializeObj().flatMap(_ => {
+      CrdtConnector.connectGraph(history)
+      CrdtConnector.startReceiving()  // waiting on this future would be infinite
+    })
 
     val chatDisplay = Signal.dynamic {
       val reversedHistory = history.value.payload.toList.reverse

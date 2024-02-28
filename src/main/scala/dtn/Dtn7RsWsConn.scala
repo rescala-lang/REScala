@@ -8,87 +8,58 @@ import sttp.ws.WebSocket
 import sttp.client3.pekkohttp.PekkoHttpBackend
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future, Promise}
-
-import java.util.concurrent.ConcurrentLinkedQueue
+import scala.concurrent.Future
 
 
-/*
-  More sophisticated websocket wrapper class for scala3, where java.lang.Thread is supported.
-  The Interface returns Futures when it is useful and serializes requests internally via a queue with a worker thread.
-*/
-class Dtn7RsWsConn {
+object Dtn7RsWsConn {
   private val backend: SttpBackend[Future, WebSockets] = PekkoHttpBackend()
 
-  // get request wrapper to send an URI to the DTN deamon synchronously and read the response
-  private def uget(uri: Uri): String = Await.result(backend.send(basicRequest.get(uri).response(asStringAlways)), Duration.Inf).body
+  private def uget(uri: Uri): Future[String] = {
+    backend.send(basicRequest.get(uri).response(asStringAlways)).map(x => x.body)
+  }
 
-  val nodeId: String = uget(uri"$Dtn7RsInfo.http_api/status/nodeid")
+  def create(): Future[Dtn7RsWsConn] = {
+    val conn: Dtn7RsWsConn = Dtn7RsWsConn()
+
+    uget(uri"${Dtn7RsInfo.http_api}/status/nodeid").map(x => conn.nodeId = Option(x))
+      .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))
+      .flatMap(_ => conn.command("/json"))  // select json communication
+      .map(_ => conn)
+  }
+}
+class Dtn7RsWsConn {
+  var nodeId: Option[String] = None
+
+  // todo: check if exception on ws internal access is comprehensible, e.g. create() was not used to instantiate the class
+  private var ws: Option[WebSocket[Future]] = None
   
   private var registeredServices: List[String] = List()
 
-  private val ws: WebSocket[Future] = Await.result(backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url}").response(asWebSocketAlwaysUnsafe)), Duration.Inf).body
-
-  private val requestQueue: ConcurrentLinkedQueue[(Future[Any], () => Unit)] = ConcurrentLinkedQueue[(Future[Any], () => Unit)]
-
-  // this background thread serializes concurrent requests to the websocket
-  private var backendThreadKeepRunning: Boolean = true
-  private val backendThread = new Thread {
-    override def run(): Unit = {
-      while (backendThreadKeepRunning) {
-        val tuple = requestQueue.poll()
-        if (tuple != null) {
-          tuple(1)() // execute lambda
-          Await.ready(tuple(0), Duration.Inf) // wait until lambda has set its promise
-        }
-      }
-    }
-  }
-  backendThread.start()
-
-  private def command(text: String): String = {
-    val result = Promise[String]
-    val result_future = result.future
-    requestQueue.add(result_future, () => ws.sendText(text).onComplete(_ => ws.receiveText().onComplete(response => result.success(response.get))))
-    Await.result(result_future, Duration.Inf)
+  private def command(text: String): Future[String] = {
+    ws.get.sendText(text).flatMap(_ => ws.get.receiveText())
   }
 
   def receiveBundle(): Future[Bundle] = {
-    val result = Promise[Bundle]
-    val result_future = result.future
-    requestQueue.add(result_future, () => ws.receiveBinary(true).onComplete(response => result.success((Bundle.createFromDtnWsJson(response.get)))))
-    result_future
+    ws.get.receiveBinary(true).map(Bundle.createFromDtnWsJson)
   }
 
   def sendBundle(bundle: Bundle): Future[String] = {
-    val result = Promise[String]
-    val result_future = result.future
-    requestQueue.add(result_future, () => ws.sendBinary(bundle.toDtnWsJson).onComplete(_ => ws.receiveText().onComplete(response => result.success(response.get))))
-    result_future
+    ws.get.sendBinary(bundle.toDtnWsJson).flatMap(_ => ws.get.receiveText())
   }
 
-  // select json communication
-  println(command("/json"))
-
-  def registerEndpointAndSubscribe(service: String): Unit = {
+  def registerEndpointAndSubscribe(service: String): Future[Unit] = {
     // register the endpoint on the DTN daemon
-    uget(uri"${Dtn7RsInfo.http_api}/register?$service")
-    registeredServices = service :: registeredServices
-
-    // subscribe to the registered endpoint with out websocket
-    println(command(s"/subscribe $service"))
+    Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api}/register?$service").map(_ => {
+      registeredServices = service :: registeredServices
+      // subscribe to the registered endpoint with out websocket
+      command(s"/subscribe $service").map(println)
+    })
   }
 
-  def disconnect(): Unit = {
-    for (service <- registeredServices) {
-      uget(uri"${Dtn7RsInfo.http_api}/unregister?$service")
-    }
+  def disconnect(): Future[Unit] = {
+    registeredServices.foreach(service => Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api}/unregister?$service"))
     registeredServices = List()
-
-    ws.close()
-
-    while (!requestQueue.isEmpty) {}
-    backendThreadKeepRunning = false
+    ws.get.close()
+    // todo: do I need to make sure each uget is done before leaving this method?
   }
 }
