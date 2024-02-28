@@ -14,7 +14,6 @@ lazy val chat = project.in(file("."))
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"                  % "2.27.7",
       "com.github.plokhotnyuk.jsoniter-scala"  %% "jsoniter-scala-macros"                % "2.27.7",
       "com.softwaremill.sttp.client3"          %% "core"                                 % "3.8.13",
-      "com.softwaremill.sttp.client3"          %% "okhttp-backend"                       % "3.8.13",
       "com.softwaremill.sttp.client3"          %% "pekko-http-backend"                   % "3.9.3",
       "org.apache.pekko"                       %% "pekko-stream"                         % "1.0.1"
     ),
