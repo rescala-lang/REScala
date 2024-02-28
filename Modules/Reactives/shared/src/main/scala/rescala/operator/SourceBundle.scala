@@ -108,25 +108,21 @@ trait SourceBundle {
   }
 
   /**
-   * TODO Check chained compose & inverse wrt other lens functions
-   * TODO Inversion of LensSig
-   * TODO Other example
-   */
-
-  /**
-   * LVars serve as the basis for reactive lenses. TODO: Link Documentation
+   * LVars serve as the basis for reactive lenses. To create the root of a new LVar cluster, use the apply() function
+   * of the LVar object. Then, connect additional LVars via Lenses using the applyLens() function of an existing LVar.
+   *
    * @param state The state of the LVar
-   * @param events TODO How to explain this?
+   * @param events Incoming events indicating a change to the LVar cluster
    */
   class LVar[M] private[rescala](state : Signal[M], events : Evt[Event[M]]) {
 
     /**
      * TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
      * Creates a new LVar which is connected to this LVar via the given Lens.
-     * @param lens The lens which connects the LVars. Can use implicit conversion from BijectiveLens if the Lens does not need to change later
+     * @param lens The lens which connects the LVars. Can use implicit conversion from Lens if the Lens does not need to change later
      */
 
-    def applyLens[V](lens: LensSig[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
+    def applyLens[V](lens: SignalLens[M, V])(implicit ticket: CreationTicket[BundleState], sched: Scheduler[BundleState]): LVar[V] = {
       val newVar = new LVar[V](state.map { model => lens.toView(model) }.flatten, Evt())
       events.fire(newVar.getEvent().map { e => lens.toModel(e, this.state.now) })
       return newVar
@@ -144,7 +140,9 @@ trait SourceBundle {
     def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)
                (implicit ticket: CreationTicket[BundleState]) = state.observe(onValue, onError, fireImmediately)
 
-    //TODO Documentation
+    /**
+     * Returns the first firing event of all registered events
+     */
     def getEvent()(implicit ticket: CreationTicket[BundleState]) : Event[M] = events.list().flatten(firstFiringEvent)
 
     /**
@@ -174,8 +172,8 @@ trait SourceBundle {
 
   /**
    * The base type for all lenses. If possible, use BijectiveLens instead as it provides more performance and additional functionality
-   * @tparam M
-   * @tparam V
+   * @tparam M the type of the model
+   * @tparam V the type of the view
    */
   trait Lens[M, V] {
 
@@ -191,7 +189,7 @@ trait SourceBundle {
 
     /**
      * Concatenates this lens with another lens and returns the resulting lens.
-     * Internally, a LensVar is created, meaning that this function is just for convenience and not for performance
+     * Internally, a LensVar is created, meaning that this function is just for convenience and not performance
      * @param other The other lens
      */
     def compose[W](other: Lens[V, W]): Lens[M, W] = new Lens[M, W] {
@@ -227,7 +225,7 @@ trait SourceBundle {
 
     /**
      * Overloads the compose function to return a bijective lens
-     * This version does not use an LVar internally, making it more efficient
+     * This version does not use an LVar internally, making it more efficient than the implementation in Lens
      * @param other The other lens
      */
     def compose[W](other: BijectiveLens[V, W]): BijectiveLens[M, W] = new BijectiveLens[M, W] {
@@ -237,20 +235,19 @@ trait SourceBundle {
   }
 
   /**
-   * TODO: The LensSig requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
-   * @param lensSig A Signal of a Lens
+   * TODO: The SignalLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
+   * @param signalOfLens A Signal of a Lens
    */
-  class LensSig[M, V](lensSig: Signal[Lens[M, V]])(implicit sched: Scheduler[BundleState]) {
-    def toView(m: M): Signal[V] = lensSig.map { model => model.toView(m) }
-    def toModel(v: V, m : M): M = lensSig.now.toModel(v, m)
+  class SignalLens[M, V](signalOfLens: Signal[Lens[M, V]])(implicit sched: Scheduler[BundleState]) {
+    def toView(m: M): Signal[V] = signalOfLens.map { model => model.toView(m) }
+    def toModel(v: V, m : M): M = signalOfLens.now.toModel(v, m)
   }
 
   /**
-   * Implicit conversion of a BijectiveLens to a BijectiveSigLens for uniform handling.
-   * Could instead also be handled by method overloading (currently only LVar.applyLens(..)) for slightly more efficiency.
+   * Implicit conversion of a Lens to a SignalLens for uniform handling.
    */
   implicit def toSignalLens[M, V](lens: Lens[M, V])(implicit ticket: CreationTicket[BundleState],
-                                                             sched: Scheduler[BundleState]): LensSig[M, V] = LensSig(Signal {lens})
+                                                             sched: Scheduler[BundleState]): SignalLens[M, V] = SignalLens(Signal {lens})
 
   /**
    * A simple lens for addition
