@@ -13,8 +13,8 @@ lazy val chat = project.in(file("."))
       "com.github.scala-loci.scala-loci"      %%% "scala-loci-serializer-jsoniter-scala" % "b9809c9c2d",
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"                  % "2.27.7",
       "com.github.plokhotnyuk.jsoniter-scala"  %% "jsoniter-scala-macros"                % "2.27.7",
-      "com.softwaremill.sttp.client3"          %% "core"                                 % "3.8.13",
-      "com.softwaremill.sttp.client3"          %% "pekko-http-backend"                   % "3.9.3",
-      "org.apache.pekko"                       %% "pekko-stream"                         % "1.0.1"
+      "com.softwaremill.sttp.client4"         %%% "core"                                 % "4.0.0-M9",
+      "com.softwaremill.sttp.client4"          %% "pekko-http-backend"                   % "4.0.0-M9",
+      "org.apache.pekko"                       %% "pekko-stream"                         % "1.0.2"
     ),
   )

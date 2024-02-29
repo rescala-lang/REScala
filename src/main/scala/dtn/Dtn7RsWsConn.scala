@@ -1,21 +1,30 @@
 package dtn
 
-import sttp.capabilities
-import sttp.model.Uri
+import sttp.model.{Header, Uri}
 import sttp.capabilities.WebSockets
-import sttp.client3.*
+import sttp.client4.fetch.FetchBackend
+// import sttp.client4.pekkohttp.PekkoHttpBackend
+import sttp.client4.*
 import sttp.ws.WebSocket
-import sttp.client3.pekkohttp.PekkoHttpBackend
+import sttp.client4.ws.async.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
 object Dtn7RsWsConn {
-  private val backend: SttpBackend[Future, WebSockets] = PekkoHttpBackend()
+//  private val backend: GenericBackend[Future, WebSockets] = PekkoHttpBackend()
+  private val backend: GenericBackend[Future, WebSockets] = FetchBackend()
+
+//  private val corsHeader: Header = Header("Access-Control-Allow-Origin", "*")
 
   private def uget(uri: Uri): Future[String] = {
-    backend.send(basicRequest.get(uri).response(asStringAlways)).map(x => x.body)
+    val request = basicRequest.get(uri).response(asStringAlways) // .header(corsHeader)
+
+    // println(request.headers)
+    // backend.send(request).failed.map(println)
+
+    backend.send(request).map(x => x.body)
   }
 
   def create(): Future[Dtn7RsWsConn] = {
