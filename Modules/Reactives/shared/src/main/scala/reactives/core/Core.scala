@@ -383,7 +383,7 @@ trait Scheduler[S[_]] {
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
 
-  given dynamicScope: DynamicScope[S]
+  def dynamicScope: DynamicScope[S]
 }
 object Scheduler {
   given defaultScheduler: Scheduler[Interface.State] = Interface.default
@@ -391,7 +391,7 @@ object Scheduler {
 
 
 trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends Scheduler[State] {
-  override given dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
+  override def dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
 }
 
 

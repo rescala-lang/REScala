@@ -2,7 +2,6 @@ package replication.fbdc
 
 import de.rmgk.script.{process, runOutput}
 import rdts.datatypes.LastWriterWins
-import reactives.default.implicitScheduler
 
 
 object Fortunes {

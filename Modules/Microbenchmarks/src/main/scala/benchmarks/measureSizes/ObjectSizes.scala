@@ -6,7 +6,6 @@ import reactives.core.{AccessHandler, ReSource, ReevTicket}
 import reactives.default
 import reactives.parrp.ParRPDefault
 import reactives.scheduler.LevelbasedVariants
-import reactives.default.implicitScheduler
 
 object ObjectSizes {
 

@@ -13,7 +13,6 @@ import rdts.time.{Dots, VectorClock}
 import loci.registry.Registry
 import replication.DataManager
 import replication.JsoniterCodecs.given
-import reactives.default.implicitScheduler
 
 import scala.reflect.ClassTag
 

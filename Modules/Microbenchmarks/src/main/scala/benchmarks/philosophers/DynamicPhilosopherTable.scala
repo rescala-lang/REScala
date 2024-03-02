@@ -84,7 +84,7 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     override implicit val engine: Interface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine.{Signal, Var, implicitScheduler}
+  import engine.{Signal, Var}
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

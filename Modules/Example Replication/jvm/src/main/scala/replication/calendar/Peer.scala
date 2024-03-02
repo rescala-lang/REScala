@@ -15,8 +15,6 @@ import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
-import reactives.default.implicitScheduler
-
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry

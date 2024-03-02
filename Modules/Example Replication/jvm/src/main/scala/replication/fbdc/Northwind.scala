@@ -8,7 +8,6 @@ import java.sql.*
 import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.chaining.scalaUtilChainingOps
-import reactives.default.implicitScheduler
 
 
 object Northwind {

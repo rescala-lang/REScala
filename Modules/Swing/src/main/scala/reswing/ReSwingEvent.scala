@@ -1,6 +1,6 @@
 package reswing
 
-import reactives.default.{Event, Evt, implicitScheduler}
+import reactives.default.{Event, Evt}
 
 /** Represents `Swing` events that are fired by the library or passed to the
   * library.

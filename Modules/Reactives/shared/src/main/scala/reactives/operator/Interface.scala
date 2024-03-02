@@ -41,12 +41,6 @@ trait Interface {
   /** @group internal */
   val scheduler: Scheduler[State]
 
-  /** @group internal */
-  given implicitScheduler: Scheduler[State] = scheduler
-
-  /** @group internal */
-  given implicitSCope: DynamicScope[State] = scheduler.dynamicScope
-
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
   /** Executes a transaction.
