@@ -1,3 +1,4 @@
+#!/usr/bin/env rt-scala-runner
 //> using scala 3.4.0
 //> using dep de.rmgk.slips::options:0.7.0
 //> using dep de.rmgk.slips::script:0.8.0
@@ -15,7 +16,7 @@ object SelectScheduler {
         .value
 
       val scheduler = selection match {
-        case "fullmv"   => "reactives.fullmv.FullMVUtil.default"
+        case "fullmv"   => "reactives.fullmv.FullMVUtil.defaultScheduler"
         case "parrp"    => "reactives.parrp.ParRPDefault.scheduler"
         case "toposort" => "reactives.scheduler.TopoBundle.TopoScheduler"
         case "sidup"    => "reactives.scheduler.SynchronizedSidup.scheduler"
