@@ -1,8 +1,6 @@
 import Settings.*
 import sbt.librarymanagement.Configurations.TestInternal
 
-import java.nio.charset.StandardCharsets
-
 lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   // core
   reactives.js,
@@ -53,7 +51,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
   .jsSettings(
     Dependencies.scalajsDom,
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % "test",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % Test,
     jsEnvDom,
     sourcemapFromEnv(),
   )
