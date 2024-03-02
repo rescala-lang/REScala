@@ -6,7 +6,7 @@ import tests.rescala.concurrency.philosophers.PhilosopherTable._
 
 class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
     extends PhilosopherTable(philosopherCount)(ri) {
-  import interface.{Var, Signal, implicitScheduler}
+  import interface.{Var, Signal}
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
