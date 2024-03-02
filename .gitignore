@@ -2,6 +2,7 @@
 .bsp/
 .idea/
 .metals/
+.scala-build/
 metals.sbt
 node_modules/
 package-lock.json
