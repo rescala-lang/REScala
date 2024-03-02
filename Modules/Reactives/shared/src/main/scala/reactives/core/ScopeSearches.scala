@@ -64,13 +64,15 @@ object PlanTransactionScope {
     override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
         : Unit =
       ds.maybeTransaction match
-        case Some(tx) => tx.observe: () =>
+        case Some(tx) => tx.observe { () =>
             scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
+          }
         case None =>
           scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
   }
 
-  inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] = ts.static match
-    case None     => DynamicTransactionLookup(Interface.default.dynamicScope, Interface.default)
-    case Some(tx) => StaticInTransaction(tx, Interface.default)
+  inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] =
+    ts.static match
+      case None     => DynamicTransactionLookup(Interface.default.dynamicScope, Interface.default)
+      case Some(tx) => StaticInTransaction(tx, Interface.default)
 }
