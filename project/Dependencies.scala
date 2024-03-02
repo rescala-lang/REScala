@@ -2,7 +2,7 @@
  * and may contain unused dependencies */
 
 import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
-import sbt.*
+import sbt._
 import sbt.Keys.libraryDependencies
 
 object Dependencies {

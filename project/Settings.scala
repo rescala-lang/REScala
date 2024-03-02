@@ -3,8 +3,8 @@
 
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt.*
-import sbt.Keys.*
+import sbt._
+import sbt.Keys._
 
 object Settings {
 
