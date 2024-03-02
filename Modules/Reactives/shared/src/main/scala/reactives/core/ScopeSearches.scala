@@ -1,6 +1,4 @@
 package reactives.core
-import reactives.core.ReSource.of
-import reactives.operator.{Signal}
 
 trait CreationScope[State[_]] {
   def embedCreation[T](f: Transaction[State] => T): T
