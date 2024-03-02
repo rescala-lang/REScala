@@ -8,7 +8,7 @@ import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedExc
 import reactives.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
 import reactives.default.act
 
-
+import scala.annotation.nowarn
 import scala.collection.immutable.{LinearSeq, Queue}
 
 /** Events only propagate a value when they are changing,
@@ -118,7 +118,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    fold(init)((acc, _) => f(acc))
+    fold(init)((acc, _) => f(acc)): @nowarn
 
   /** Counts the occurrences of the event.
     * The argument of the event is discarded.
@@ -133,19 +133,19 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def hold[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    fold(init)((_, v) => v)
+    fold(init)((_, v) => v): @nowarn
 
   /** returns a signal holding the latest value of the event.
     * @group conversion
     */
   final def hold[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
-    Fold(throw EmptySignalControlThrowable(info))(this act { v => v })
+    Fold(throw EmptySignalControlThrowable(info))(this act { v => v }): @nowarn
 
   /** Holds the latest value of an event as an Option, None before the first event occured
     * @group conversion
     */
   final def holdOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
-    fold(Option.empty[A]) { (_, v) => Some(v) }
+    fold(Option.empty[A]) { (_, v) => Some(v) }: @nowarn
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
@@ -157,14 +157,14 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     else
       fold(Queue[A]()) { (queue: Queue[A], v: T) =>
         if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
-      }
+      }: @nowarn
   }
 
   /** collects events resulting in a variable holding a list of all values.
     * @group conversion
     */
   final def list[A >: T]()(implicit ticket: CreationTicket[State]): Signal[List[A]] =
-    fold(List[A]())((acc, v) => v :: acc)
+    fold(List[A]())((acc, v) => v :: acc): @nowarn
 
   /** Switch back and forth between two signals on occurrence of event e
     * @group conversion
@@ -172,7 +172,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket[State]): Signal[A] =
     ticket.scope.embedCreation { ict =>
       val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
-      Signal.dynamic(using ict) { if switched.value then b.value else a.value }
+      Signal.dynamic(using ict) { if switched.value then b.value else a.value }: @nowarn
     }
 
   /** Filters the event, only propagating the value when the filter is true.
@@ -227,7 +227,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final inline def fold[A](init: A)(inline op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
     Fold(init)(Fold.branch {
       this.value match
-        case None => Fold.current
+        case None    => Fold.current
         case Some(v) => op(Fold.current, v)
     })
 

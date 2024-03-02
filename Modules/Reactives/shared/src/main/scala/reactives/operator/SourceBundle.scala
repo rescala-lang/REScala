@@ -1,7 +1,7 @@
 package reactives.operator
 
 import reactives.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, ReInfo, ReSource, Scheduler, ScopeSearch
+  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, PlanTransactionScope, ReInfo, ReSource, Scheduler
 }
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
@@ -29,15 +29,10 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
 
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")
-  def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit              = fire(value)
-  infix def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
-  infix def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
-    scopeSearch.maybeTransaction match {
-      case None => sched.forceNewTransaction(this) { admit(value)(_) }
-      case Some(tx) => tx.observe(new Observation {
-          override def execute(): Unit = sched.forceNewTransaction(Evt.this) { admit(value)(_) }
-        })
-    }
+  def apply(value: T)(using PlanTransactionScope[State]): Unit                = fire(value)
+  infix def fire()(using PlanTransactionScope[State])(using Unit =:= T): Unit = fire(())
+  infix def fire(value: T)(implicit planTransactionScope: PlanTransactionScope[State]): Unit =
+    planTransactionScope.planTransaction(this)(admit(value)(_))
   override def disconnect(): Unit = ()
   def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit = {
     ticket.recordChange(new InitialChange[State] {
@@ -67,21 +62,12 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
 
   override def disconnect(): Unit = ()
 
-  infix def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
-    scopeSearch.maybeTransaction match {
-      case None => sched.forceNewTransaction(this) { admit(value)(_) }
-      case Some(tx) => tx.observe(new Observation {
-          override def execute(): Unit = sched.forceNewTransaction(Var.this) { admit(value)(_) }
-        })
-    }
+  infix def set(value: A)(using planTransactionScope: PlanTransactionScope[State]): Unit =
+    planTransactionScope.planTransaction(this) { admit(value)(_) }
 
-  def transform(f: A => A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit = {
-    def newTx() = sched.forceNewTransaction(this) { t =>
+  def transform(f: A => A)(using planTransactionScope: PlanTransactionScope[State]): Unit = {
+    planTransactionScope.planTransaction(this) { t =>
       admit(f(t.tx.now(this)))(t)
-    }
-    scopeSearch.maybeTransaction match {
-      case None     => newTx()
-      case Some(tx) => tx.observe(new Observation { override def execute(): Unit = newTx() })
     }
   }
 

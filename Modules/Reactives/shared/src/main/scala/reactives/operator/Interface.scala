@@ -1,6 +1,6 @@
 package reactives.operator
 
-import reactives.core.{AdmissionTicket, ReSource, Scheduler, Transaction}
+import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, ReSource, Scheduler, Transaction}
 import reactives.scheduler.LevelbasedVariants
 import reactives.operator.Interface.State
 
@@ -83,4 +83,25 @@ object Interface {
 
   type State[V] = default.SchedulerState[V]
   val default = reactives.generated.Scheduler.selection
+}
+
+object Test {
+
+  import reactives.default.*
+
+  def wantsTicket(implicit
+      ct: CreationTicket[State],
+      ct2: CreationTicket[State]
+  ): (Boolean, Boolean, Boolean) = {
+    (
+      ct.scope == ct2.scope,
+      ct.scope.isInstanceOf[CreationScope.StaticCreationScope[State]],
+      ct2.scope.isInstanceOf[CreationScope.StaticCreationScope[State]]
+    )
+  }
+
+  val s = Signal {
+    val x = 1 + 1
+    wantsTicket
+  }
 }

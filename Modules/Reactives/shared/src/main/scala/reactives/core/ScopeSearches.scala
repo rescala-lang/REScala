@@ -1,5 +1,6 @@
 package reactives.core
 import reactives.core.ReSource.of
+import reactives.operator.Signal
 
 trait CreationScope[State[_]] {
   def embedCreation[T](f: Transaction[State] => T): T
@@ -28,9 +29,13 @@ object CreationScope {
     override def embedCreation[T](f: Transaction[State] => T): T = ds.dynamicTransaction(f)
   }
 
+  def makeDynamicIndirectionForMacroReplacement[State[_]](ds: DynamicScope[State]): DynamicCreationScope[State] =
+    new DynamicCreationScope(ds)
+  def makeFromTicket[State[_]](tick: StaticTicket[State]): StaticCreationScope[State] = new StaticCreationScope(tick.tx)
+
   inline given search[State[_]]: CreationScope[State] = scala.compiletime.summonFrom {
     case tx: Transaction[State]  => StaticCreationScope(tx)
-    case ds: DynamicScope[State] => DynamicCreationScope(ds)
+    case ds: DynamicScope[State] => makeDynamicIndirectionForMacroReplacement(ds)
   }
 }
 
@@ -44,8 +49,9 @@ object PlanTransactionScope {
       extends PlanTransactionScope[State] {
     override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
         : Unit =
-      tx.observe: () =>
+      tx.observe { () =>
         scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
+      }
   }
 
   case class DynamicTransactionLookup[State[_]](ds: DynamicScope[State], scheduler: Scheduler[State])
@@ -69,42 +75,4 @@ object PlanTransactionScope {
       }
 
   }
-}
-
-case class ScopeSearch[State[_]](self: Either[Transaction[State], DynamicScope[State]]) {
-
-  /** Either just use the statically found transaction,
-    * or do a lookup in the dynamic scope.
-    * If the lookup fails, it will start a new transaction.
-    */
-  def embedTransaction[T](f: Transaction[State] => T): T =
-    self match {
-      case Left(integrated) => f(integrated)
-      case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
-    }
-
-  def maybeTransaction: Option[Transaction[State]] = self match {
-    case Left(integrated) => Some(integrated)
-    case Right(ds)        => ds.maybeTransaction
-  }
-
-}
-
-/** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
-object ScopeSearch extends LowPriorityScopeImplicits {
-
-  implicit def fromTicketImplicit[S[_]](implicit ticket: StaticTicket[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(ticket.tx))
-  implicit def fromAdmissionImplicit[S[_]](implicit ticket: AdmissionTicket[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(ticket.tx))
-  implicit def fromTransactionImplicit[S[_]](implicit tx: Transaction[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(tx))
-}
-
-/** If no Fitting Ticket is found, then these implicits will search for a [[DynamicScope]],
-  * creating the reactives outside of any turn.
-  */
-sealed trait LowPriorityScopeImplicits {
-  implicit def fromSchedulerImplicit[S[_]](implicit factory: DynamicScope[S]): ScopeSearch[S] =
-    new ScopeSearch(Right(factory))
 }

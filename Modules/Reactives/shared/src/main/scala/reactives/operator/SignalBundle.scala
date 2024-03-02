@@ -6,6 +6,7 @@ import reactives.operator.Interface.State
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 
+import scala.annotation.nowarn
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 import scala.util.control.NonFatal
@@ -82,7 +83,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
       catch {
         case NonFatal(e) => onFailure.applyOrElse[Throwable, R](e, throw _)
       }
-    }
+    }: @nowarn
 
   /** Adds another error message in case this signal is empty, also disallows handling exceptions in observers */
   final def abortOnError(message: String)(implicit ticket: CreationTicket[State]): Signal[T] =
@@ -97,7 +98,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
       catch {
         case EmptySignalControlThrowable => value
       }
-    }
+    }: @nowarn
 
   /** Flattens the inner value.
     * @group operator
@@ -213,12 +214,12 @@ object Signal {
   }
 
   def lift[A1, B](n1: Signal[A1])(fun: A1 => B)(using CreationTicket[State]): Signal[B] =
-    Signal { fun(n1.value) }
+    Signal { fun(n1.value) }: @nowarn
 
   def lift[A1, A2, B](n1: Signal[A1], n2: Signal[A2])(fun: (A1, A2) => B)(using
       CreationTicket[State]
   ): Signal[B] = {
-    Signal { fun(n1.value, n2.value) }
+    Signal { fun(n1.value, n2.value) }: @nowarn
   }
 
 }

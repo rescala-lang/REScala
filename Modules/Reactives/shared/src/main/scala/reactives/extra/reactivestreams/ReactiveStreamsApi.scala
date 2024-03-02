@@ -1,7 +1,7 @@
 package reactives.extra.reactivestreams
 
 import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
-import reactives.core.{Base, Derived, ReInfo, ReadAs, Scheduler, ScopeSearch}
+import reactives.core.{Base, Derived, ReInfo, ReadAs, Scheduler}
 import reactives.operator.*
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
@@ -29,7 +29,7 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
   override def onNext(value: T): Unit =
     synchronized {
       Objects.requireNonNull(value)
-      evt.fire(value)(fac, ScopeSearch.fromSchedulerImplicit(fac))
+      evt.fire(value)
       subscription.request(1)
     }
 }

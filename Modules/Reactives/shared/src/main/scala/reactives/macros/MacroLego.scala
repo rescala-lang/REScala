@@ -1,6 +1,6 @@
 package reactives.macros
 
-import reactives.core.ScopeSearch
+import reactives.core.{CreationScope, Transaction}
 
 import scala.quoted.*
 
@@ -101,12 +101,10 @@ object MacroLegos {
 
       override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
         tree match
-          // the first case is from a prior encoding of modules in REScala, we keep it just in case …
-          case Apply(Select(ss, "fromSchedulerImplicit"), _) =>
-            Apply(Select.unique(ss, "fromTicketImplicit"), List(ticket))
-          case Apply(TypeApply(Ident("fromSchedulerImplicit"), ta), _) =>
-            Apply(TypeApply(Ident(TermRef(TypeRepr.of[ScopeSearch.type], "fromTicketImplicit")), ta), List(ticket))
-          case other => super.transformTerm(tree)(owner)
+          case Apply(TypeApply(Ident("makeDynamicIndirectionForMacroReplacement"), ta), _) =>
+            Apply(TypeApply(Ident(TermRef(TypeRepr.of[CreationScope.type], "makeFromTicket")), ta), List(ticket))
+          case other =>
+            super.transformTerm(tree)(owner)
       }
     }
 
