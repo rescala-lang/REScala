@@ -81,8 +81,6 @@ class SubscriptionReactive[T](
     }
   }
 
-  override protected[reactives] def commit(base: Pulse[T]): Pulse[T] = base
-
   override def cancel(): Unit = {
     synchronized {
       cancelled = true

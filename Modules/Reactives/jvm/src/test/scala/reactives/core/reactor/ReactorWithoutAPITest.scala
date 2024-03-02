@@ -58,15 +58,6 @@ class ReactorWithoutAPITest extends RETests {
       input.withValue(resStage)
     }
 
-    /** Defines how the state is modified on commit.
-      *
-      * Reactors don't change their state at the end of a transaction.
-      *
-      * @param base the reactor's state at the end of the transaction.
-      * @return the reactor's state after the transaction is finished.
-      */
-    override protected[reactives] def commit(base: ReactorStage[T]): ReactorStage[T] = base
-
     def resource: ReadAs.of[State, T] = this
 
     def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))

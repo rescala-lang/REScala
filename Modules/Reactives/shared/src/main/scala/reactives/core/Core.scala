@@ -8,13 +8,30 @@ import scala.util.DynamicVariable
 
 /** Source of (reactive) values. */
 trait ReSource {
-  type Value
-  type State[_]
-  protected[reactives] def state: State[Value]
-  def info: ReInfo
 
-  /** Converts the `base` value that is used during the transaction, to the value stored outside the transaction */
-  protected[reactives] def commit(base: Value): Value
+  /** The type of the time-changing `Value` contained in this `ReSource` */
+  type Value
+
+  /** Additional structure required by schedulers for their propagation.
+    * For example, outgoing dependencies, multi-versioned values, locks.
+    */
+  type State[_]
+
+  /** The value of a resource is “protected” within the state.
+    * A one of the access tickets available during a transaction is required to access the value.
+    */
+  protected[reactives] def state: State[Value]
+
+  /** Converts the `base` value that is used during the transaction, to the value stored outside the transaction
+    * This default implementation does not modify the value.
+    * This default provides [[reactives.operator.Signal]] like semantics:
+    * The final value during a transaction remains available outside of a transaction.
+    * [[reactives.operator.Event]]s override this to reset to their “no value” state.
+    */
+  protected[reactives] def commit(base: Value): Value = base
+
+  /** Developer friendly information about the resource. */
+  def info: ReInfo
 }
 // we could replace this pattern by just a type operator for all types, but currently does not seem worth it
 // infix type of[R <: ReSource, S[_]] = R {type State[A] = S[A]}
@@ -39,8 +56,10 @@ object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
   * @param state the state passed by the scheduler
   * @param info  the name of the reactive, useful for debugging as it often contains positional information
   */
-abstract class Base[V](override protected[reactives] val state: reactives.operator.Interface.State[V], override val info: ReInfo)
-    extends ReSource {
+abstract class Base[V](
+    override protected[reactives] val state: reactives.operator.Interface.State[V],
+    override val info: ReInfo
+) extends ReSource {
 
   override type State[V] = reactives.operator.Interface.State[V]
   override type Value    = V

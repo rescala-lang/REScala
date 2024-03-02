@@ -13,7 +13,6 @@ import reactives.operator.Interface.State
     override type State[V] = Interface.State[V]
 
     override protected[reactives] def state: State[ReactorState[T]] = initState
-    override protected[reactives] def commit(base: Value): Value    = base
 
     def info: ReInfo = ReInfo.create.derive("Custom Reactor")
 

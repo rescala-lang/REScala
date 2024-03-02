@@ -24,7 +24,6 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   override type State[V] = Interface.State[V]
   override type Value <: Pulse[T]
   override def read(v: Value): T                               = v.get
-  override protected[reactives] def commit(base: Value): Value = base
 
   given Conversion[Value, T] = _.get
 
