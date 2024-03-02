@@ -20,7 +20,7 @@ object Flatten {
   implicit def flattenImplicitForsignal[B](using CreationTicket[State]): Flatten[
     Signal[Signal[B]],
     Signal[B]
-  ] = sig => Signal.dynamic(sig.value.value): @nowarn
+  ] = sig => Signal.dynamic(sig.value.value)
 
   /** Flatten a Signal[Array[Signal[B]\]\] into a Signal[Array[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitForArraySignals[B: ClassTag, Sig[U] <: Signal[U]](using
@@ -28,25 +28,25 @@ object Flatten {
   ): Flatten[
     Signal[Array[Sig[B]]],
     Signal[Array[B]]
-  ] = sig => Signal.dynamic { sig.value.map(_.value) }: @nowarn
+  ] = sig => Signal.dynamic { sig.value.map(_.value) }
 
   /** Flatten a Signal[Option[Signal[B]\]\] into a Signal[Option[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitForOptionSignal[B, Sig[U] <: Signal[U]](using CreationTicket[State]): Flatten[
     Signal[Option[Sig[B]]],
     Signal[Option[B]]
-  ] = sig => Signal.dynamic { sig.value.map { _.value } }: @nowarn
+  ] = sig => Signal.dynamic { sig.value.map { _.value } }
 
   /** Flatten a Signal[Event[B]]\] into a Event[B] where the new Event fires whenever the current inner event fires */
   implicit def flattenImplicitForevent[A, B, Evnt[A1] <: Event[A1]](using CreationTicket[State]): Flatten[
     Signal[Evnt[B]],
     Event[B]
-  ] = sig => Event.dynamic(sig.value.value): @nowarn
+  ] = sig => Event.dynamic(sig.value.value)
 
   /** Flatten a Event[Option[B]\] into a Event[B] that fires whenever the inner option is defined. */
   implicit def flattenImplicitForoption[A, B](using CreationTicket[State]): Flatten[
     Event[Option[B]],
     Event[B]
-  ] = event => Event.static { event.value.flatten }: @nowarn
+  ] = event => Event.static { event.value.flatten }
 
   /** Flatten a Signal[Traversable[Signal[B]\]\] into a Signal[Traversable[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
   implicit def flattenImplicitForIterableSignals[
@@ -56,7 +56,7 @@ object Flatten {
   ](using CreationTicket[State]): Flatten[
     Signal[Iter[Sig[B]]],
     Signal[Iter[B]]
-  ] = sig => Signal.dynamic { sig.value.map { (r: Signal[B]) => r.value } }: @nowarn
+  ] = sig => Signal.dynamic { sig.value.map { (r: Signal[B]) => r.value } }
 
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[B]. The new Event fires the value of any inner firing Event.
     * If multiple inner Events fire, the first one in iteration order is selected.
@@ -72,7 +72,7 @@ object Flatten {
     Event.dynamic {
       val all = sig.value map { _.value }
       all.collectFirst { case Some(e) => e }
-    }: @nowarn
+    }
 
   /** Flatten a Signal[Traversable[Event[B]\]\] into a Event[Traversable[Option[B]\]\] where the new Event fires whenever any of the inner events fire */
   def traversableOfAllOccuringEventValues[
@@ -86,5 +86,5 @@ object Flatten {
     Event.dynamic {
       val all = sig.value map { (r: Event[B]) => r.value }
       if (all.exists(_.isDefined)) Some(all) else None
-    }: @nowarn
+    }
 }

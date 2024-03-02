@@ -118,7 +118,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def iterate[A](init: A)(f: A => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    fold(init)((acc, _) => f(acc)): @nowarn
+    fold(init)((acc, _) => f(acc))
 
   /** Counts the occurrences of the event.
     * The argument of the event is discarded.
@@ -133,19 +133,19 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def hold[A >: T](init: A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    fold(init)((_, v) => v): @nowarn
+    fold(init)((_, v) => v)
 
   /** returns a signal holding the latest value of the event.
     * @group conversion
     */
   final def hold[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
-    Fold(throw EmptySignalControlThrowable(info))(this act { v => v }): @nowarn
+    Fold(throw EmptySignalControlThrowable(info))(this act { v => v })
 
   /** Holds the latest value of an event as an Option, None before the first event occured
     * @group conversion
     */
   final def holdOption[A >: T]()(implicit ticket: CreationTicket[State]): Signal[Option[A]] =
-    fold(Option.empty[A]) { (_, v) => Some(v) }: @nowarn
+    fold(Option.empty[A]) { (_, v) => Some(v) }
 
   /** Returns a signal which holds the last n events in a list. At the beginning the
     * list increases in size up to when n values are available
@@ -157,14 +157,14 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     else
       fold(Queue[A]()) { (queue: Queue[A], v: T) =>
         if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
-      }: @nowarn
+      }
   }
 
   /** collects events resulting in a variable holding a list of all values.
     * @group conversion
     */
   final def list[A >: T]()(implicit ticket: CreationTicket[State]): Signal[List[A]] =
-    fold(List[A]())((acc, v) => v :: acc): @nowarn
+    fold(List[A]())((acc, v) => v :: acc)
 
   /** Switch back and forth between two signals on occurrence of event e
     * @group conversion
@@ -172,7 +172,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket[State]): Signal[A] =
     ticket.scope.embedCreation { ict =>
       val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
-      Signal.dynamic(using ict) { if switched.value then b.value else a.value }: @nowarn
+      Signal.dynamic(using ict) { if switched.value then b.value else a.value }
     }
 
   /** Filters the event, only propagating the value when the filter is true.
