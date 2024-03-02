@@ -53,6 +53,7 @@ class EventImpl[T](
 
   override protected[reactives] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
 
+  /** This implements an abstract method on [[reactives.operator.Event]] */
   def internalAccess(v: Pulse[T]): Pulse[T] = v
 
   override protected def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] =
