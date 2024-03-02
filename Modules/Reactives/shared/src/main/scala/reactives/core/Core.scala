@@ -41,7 +41,7 @@ object ReSource { type of[S[_]] = ReSource { type State[V] = S[V] } }
 trait Derived extends ReSource {
 
   final type ReIn = ReevTicket[State, Value]
-  final type Rout = Result.of[State, Value]
+  final type Rout = Result[State, Value]
 
   /** called if any of the dependencies ([[reactives.core.Core.ReSource]]s) changed in the current update turn,
     * after all (known) dependencies are updated
@@ -50,103 +50,17 @@ trait Derived extends ReSource {
 }
 object Derived { type of[S[_]] = Derived { type State[V] = S[V] } }
 
-/** Base implementation for reactives, with [[Derived]] for scheduling,
-  * together with a [[ReInfo]] and containing a [[State]]
-  *
-  * @param state the state passed by the scheduler
-  * @param info  the name of the reactive, useful for debugging as it often contains positional information
-  */
-abstract class Base[V](
-    override protected[reactives] val state: reactives.operator.Interface.State[V],
-    override val info: ReInfo
-) extends ReSource {
-
-  override type State[V] = reactives.operator.Interface.State[V]
-  override type Value    = V
-  override def toString: String = s"${info.description}($state)"
-}
-
-/** Common macro accessors for [[reactives.operator.Signal]] and [[reactives.operator.Event]]
-  *
-  * @tparam A return type of the accessor
-  * @groupname accessor Accessor and observers
+/** Allows converting the internal [[Value]] of the resource to an external [[A]] meant for consumers.
+  * Generally, everything that reads a reactive, such as macros or .now, will make use of this.
   */
 trait ReadAs[+A] extends ReSource {
 
-  /** Interprets the internal type to the external type
-    *
-    * @group internal
-    */
+  /** Interprets the internal type to the external type */
   def read(v: Value): A
 }
 object ReadAs { type of[S[_], A] = ReadAs[A] { type State[V] = S[V] } }
 
-/** Encapsulates an action changing a single source. */
-trait InitialChange[State[_]] {
 
-  /** The source to be changed. */
-  val source: ReSource.of[State]
-
-  /** @param base         the current (old) value of the source.
-    * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
-    * @return the propagation status of the source (whether or not to reevaluate output reactives).
-    */
-  def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean
-}
-
-/** An initializer is the glue between that binds the creation of the reactive from the operator and scheduler side together.
-  * The operator provides the logic to wrap a state and the scheduler provides the implementation of that state.
-  * This is where the two are joined. After that, the new reactive may have to be initialized.
-  */
-trait Initializer[S[_]] {
-
-  /** Creates and correctly initializes new [[Derived]]s */
-  final private[reactives] def create[V, T <: Derived.of[S]](
-      incoming: Set[ReSource.of[S]],
-      initialValue: V,
-      needsReevaluation: Boolean
-  )(instantiateReactive: S[V] => T): T = {
-    val state    = makeDerivedStructState[V](initialValue)
-    val reactive = instantiateReactive(state)
-    register(reactive, incoming, initialValue)
-    initialize(reactive, incoming, needsReevaluation)
-    reactive
-  }
-
-  /** hook for schedulers to globally collect all created resources, usually does nothing */
-  protected def register[V](reactive: ReSource.of[S], inputs: Set[ReSource.of[S]], initValue: V): Unit = {
-    Tracing.observe(Tracing.Create(reactive, inputs.toSet, Tracing.ValueWrapper(initValue)))
-  }
-
-  /** Correctly initializes [[ReSource]]s */
-  final private[reactives] def createSource[V, T <: ReSource.of[S]](initialValue: V)(instantiateReactive: S[V] => T)
-      : T = {
-    val state    = makeSourceStructState[V](initialValue)
-    val reactive = instantiateReactive(state)
-    register(reactive, Set.empty, initialValue)
-    reactive
-  }
-
-  /** Creates the internal state of [[reactives.core.Derived]]s */
-  protected def makeDerivedStructState[V](initialValue: V): S[V]
-
-  /** Creates the internal state of [[ReSource]]s */
-  protected def makeSourceStructState[V](initialValue: V): S[V] =
-    makeDerivedStructState[V](initialValue)
-
-  /** to be implemented by the propagation algorithm, called when a new reactive has been instantiated and needs to be connected to the graph and potentially reevaluated.
-    *
-    * @param reactive          the newly instantiated reactive
-    * @param incoming          a set of incoming dependencies
-    * @param needsReevaluation true if the reactive must be reevaluated at creation even if none of its dependencies change in the creating turn.
-    */
-  protected def initialize(
-      reactive: Derived.of[S],
-      incoming: Set[ReSource.of[S]],
-      needsReevaluation: Boolean
-  ): Unit
-
-}
 
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[State[_]](val tx: Transaction[State]) {
@@ -166,80 +80,8 @@ trait AccessHandler[State[_]] {
   def dynamicAccess(reactive: ReSource.of[State]): reactive.Value
 }
 
-/** [[ReevTicket]] is given to the [[Derived]] reevaluate method and allows to access other reactives.
-  * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
-  * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
-  */
-final class ReevTicket[S[_], V](tx: Transaction[S], private var _before: V, accessHandler: AccessHandler[S])
-    extends DynamicTicket(tx)
-    with Result[V] {
-
-  override type State[V] = S[V]
-
-  private var collectedDependencies: Set[ReSource.of[State]] = null
-
-  // dependency tracking accesses
-  private[reactives] override def collectStatic(reactive: ReSource.of[State]): reactive.Value = {
-    assert(collectedDependencies == null || collectedDependencies.contains(reactive))
-    accessHandler.staticAccess(reactive)
-  }
-
-  private[reactives] override def collectDynamic(reactive: ReSource.of[State]): reactive.Value = {
-    assert(collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
-    val updatedDeps = collectedDependencies + reactive
-    if (updatedDeps eq collectedDependencies) {
-      accessHandler.staticAccess(reactive)
-    } else {
-      collectedDependencies = updatedDeps
-      accessHandler.dynamicAccess(reactive)
-    }
-  }
-
-  // inline result into ticket, to reduce the amount of garbage during reevaluation
-  private var _propagate          = false
-  private var value: V            = scala.compiletime.uninitialized
-  private var effect: Observation = null
-  override def toString: String =
-    s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
-  def before: V = _before
-
-  /** Advises the ticket to track dynamic dependencies.
-    * The passed initial set of dependencies may be processed as if they were static,
-    * and are also returned in the resulting dependencies.
-    */
-  def trackDependencies(initial: Set[ReSource.of[State]]): ReevTicket[State, V] = {
-    collectedDependencies = initial; this
-  }
-  def trackStatic(): ReevTicket[State, V]             = { collectedDependencies = null; this }
-  def withPropagate(p: Boolean): ReevTicket[State, V] = { _propagate = p; this }
-  def withValue(v: V): ReevTicket[State, V] = {
-    require(v != null, "value must not be null");
-    value = v;
-    _propagate = true;
-    this
-  }
-  def withEffect(v: Observation): ReevTicket[State, V] = { effect = v; this }
-
-  override def activate: Boolean                         = _propagate
-  override def forValue(f: V => Unit): Unit              = if (value != null) f(value)
-  override def forEffect(f: Observation => Unit): Unit   = if (effect != null) f(effect)
-  override def inputs(): Option[Set[ReSource.of[State]]] = Option(collectedDependencies)
-
-  def reset[NT](nb: NT): ReevTicket[State, NT] = {
-    _propagate = false
-    value = null.asInstanceOf[V]
-    effect = null
-    collectedDependencies = null
-    val res = this.asInstanceOf[ReevTicket[State, NT]]
-    res._before = nb
-    res
-  }
-}
-
 /** Result of a reevaluation */
-trait Result[T] {
-
-  type State[_]
+trait Result[S[_], T] {
 
   /** True iff outputs must also be reevaluated, false iff the propagation ends here. */
   def activate: Boolean
@@ -254,35 +96,11 @@ trait Result[T] {
     * None if unchanged.
     * Otherwise a list of all input reactives to react to.
     */
-  def inputs(): Option[Set[ReSource.of[State]]]
+  def inputs(): Option[Set[ReSource.of[S]]]
 }
-object Result { type of[S[_], T] = Result[T] { type State[V] = S[V] } }
 
 /** Records side effects for later execution. */
 trait Observation { def execute(): Unit }
-
-/** Enables reading of the current value during admission.
-  * Keeps track of written sources internally.
-  */
-final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites: Set[ReSource.of[State]]) {
-
-  private var _initialChanges: Map[ReSource.of[State], InitialChange[State]] =
-    Map[ReSource.of[State], InitialChange[State]]()
-  private[reactives] def initialChanges: Map[ReSource.of[State], InitialChange[State]] = _initialChanges
-  def recordChange[T](ic: InitialChange[State]): Unit = {
-    assert(
-      declaredWrites.contains(ic.source),
-      "must not set a source that has not been pre-declared for the transaction"
-    )
-    assert(!_initialChanges.contains(ic.source), "must not admit same source twice in one turn")
-    _initialChanges += ic.source -> ic
-  }
-
-  /** convenience method as many case studies depend on this being available directly on the AT */
-  def now[A](reactive: ReadAs.of[State, A]): A = tx.now(reactive)
-
-  private[reactives] var wrapUp: Transaction[State] => Unit = null
-}
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
@@ -373,8 +191,3 @@ trait Scheduler[S[_]] {
 object Scheduler {
   given implicitScheduler: Scheduler[reactives.default.global.State] = reactives.default.global.scheduler
 }
-
-
-
-
-

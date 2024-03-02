@@ -155,7 +155,7 @@ import java.util.concurrent.RecursiveAction
       val transactionHandle = TransactionHandle(turn)
       val ticket: ReevTicket[State, node.Value] =
         new ReevTicket[State, node.Value](transactionHandle, value, FullAccessHandle)
-      val res: Result.of[State, node.Value] =
+      val res: Result[State, node.Value] =
         try {
           turn.host.dynamicScope.withDynamicInitializer(transactionHandle) {
             node.reevaluate(ticket)
