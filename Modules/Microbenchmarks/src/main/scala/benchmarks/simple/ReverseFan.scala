@@ -32,14 +32,14 @@ class ReverseFan {
     result = Signal.lift(intermediate.toSeq) { values =>
       work.consumeSecondary(); values.sum
     }
-    if (engine.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) isManual = true
+    if (engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) isManual = true
 
   }
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
     if (isManual) synchronized {
-      sources(params.getThreadIndex).set(step.run())(using scheduler)
+      sources(params.getThreadIndex).set(step.run())(using global.scheduler)
     }
-    else sources(params.getThreadIndex).set(step.run())(using scheduler)
+    else sources(params.getThreadIndex).set(step.run())(using global.scheduler)
 }

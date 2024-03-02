@@ -4,6 +4,7 @@ import reactives.default.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import reactives.core.ReSource
 import reactives.operator.Events
+import reactives.default.global.State as BundleState
 
 trait RemoteGraph {
   protected var connector: Option[RemoteGraphConnector] = None

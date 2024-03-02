@@ -2,6 +2,8 @@ package reactives.todo
 
 import reactives.core.{CreationTicket, Derived, DynamicTicket, ReInfo, ReadAs}
 import reactives.default.*
+import reactives.default.global.State as BundleState
+
 
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
@@ -13,7 +15,7 @@ class DeltaStateReactive[Delta, Combined](
     override val info: ReInfo,
 ) extends Derived with ReadAs[DeltaWithState[Delta, Combined]] {
   override type Value    = DeltaWithState[Delta, Combined]
-  override type State[V] = reactives.default.BundleState[V]
+  override type State[V] = BundleState[V]
   override protected[reactives] def state: State[Value]        = initState
   override protected[reactives] def commit(base: Value): Value = base.copy(delta = Nil)
 

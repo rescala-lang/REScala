@@ -46,7 +46,7 @@ object CreationScope {
   }
 
   inline given search(using ts: TransactionScope[Interface.State]): CreationScope[Interface.State] = ts.static match
-    case None     => DynamicCreationScope(Interface.default.dynamicScope)
+    case None     => DynamicCreationScope(reactives.default.global.dynamicScope)
     case Some(tx) => StaticCreationScope(tx)
 }
 
@@ -79,6 +79,6 @@ object PlanTransactionScope {
 
   inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] =
     ts.static match
-      case None     => DynamicTransactionLookup(Interface.default)
-      case Some(tx) => StaticInTransaction(tx, Interface.default)
+      case None     => DynamicTransactionLookup(reactives.default.global.scheduler)
+      case Some(tx) => StaticInTransaction(tx, reactives.default.global.scheduler)
 }

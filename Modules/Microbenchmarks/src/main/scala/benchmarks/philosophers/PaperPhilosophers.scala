@@ -3,6 +3,8 @@ package benchmarks.philosophers
 import reactives.core.{CreationTicket, ReInfo, ReSource}
 import reactives.operator.Interface
 import reactives.parrp.Backoff
+import reactives.default.global.State as BundleState
+
 
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}
@@ -196,7 +198,7 @@ trait NoTopper extends IndividualCounts {
     }
   }
 
-  override def total: Int = individualCounts.map(_.readValueOnce(engine.scheduler)).sum
+  override def total: Int = individualCounts.map(_.readValueOnce(engine.global.scheduler)).sum
 }
 
 trait SignalPyramidTopper extends IndividualCounts {

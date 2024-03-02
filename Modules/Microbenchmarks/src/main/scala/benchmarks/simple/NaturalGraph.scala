@@ -86,6 +86,6 @@ class NaturalGraph {
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.set(step.run())(using scheduler)
+  def run(step: Step): Unit = source.set(step.run())(using global.scheduler)
 
 }

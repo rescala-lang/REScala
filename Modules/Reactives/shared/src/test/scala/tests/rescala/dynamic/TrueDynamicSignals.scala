@@ -5,10 +5,11 @@ import tests.rescala.testtools.RETests
 import reactives.core.infiltration.Infiltrator
 import reactives.operator.Interface
 import reactives.scheduler.Levelbased
+import reactives.default.global.State as BundleState
+
 
 class TrueDynamicSignals extends RETests {
-  multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
+    val ie = new Infiltrator(reactives.default)
     import ie.assertLevel
     import ie.api._
 
@@ -62,7 +63,7 @@ class TrueDynamicSignals extends RETests {
       val outside = Var(1)
       val inside  = Var(10)
 
-      def sig()(implicit turnSource: CreationTicket[BundleState]) = Signal { outside.value }
+      def sig()(implicit turnSource: CreationTicket[global.State]) = Signal { outside.value }
 
       val testsig = Signal.dynamic {
         {
@@ -292,5 +293,4 @@ class TrueDynamicSignals extends RETests {
 
     }
 
-  }
 }

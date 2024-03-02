@@ -60,7 +60,7 @@ class ReactorWithoutAPITest extends RETests {
 
     def resource: ReadAs.of[State, T] = this
 
-    def now: T = scheduler.forceNewTransaction(this)(at => at.now(this))
+    def now: T = global.scheduler.forceNewTransaction(this)(at => at.now(this))
   }
 
   /** A class that manages a single stage of the reactor body.

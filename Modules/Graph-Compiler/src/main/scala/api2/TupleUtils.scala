@@ -2,6 +2,8 @@ package api2
 
 import reactives.core.StaticTicket
 import reactives.default.*
+import reactives.default.global.State as BundleState
+
 
 type CEventsFromEvents[T <: Tuple] <: Tuple = T match
   case EmptyTuple     => EmptyTuple

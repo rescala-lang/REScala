@@ -10,12 +10,12 @@ import reactives.fullmv.tasks.{Framing, Notification, Reevaluation, SupersedeFra
 import reactives.fullmv.State
 
 class DeframeTest extends munit.FunSuite {
-  if reactives.default.scheduler.isInstanceOf[FullMVEngine] then {
+  if reactives.default.global.scheduler.isInstanceOf[FullMVEngine] then {
     import reactives.default.*
 
     implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf
 
-    val engine: FullMVEngine = reactives.default.scheduler.asInstanceOf[FullMVEngine]
+    val engine: FullMVEngine = reactives.default.global.scheduler.asInstanceOf[FullMVEngine]
 
     test("deframe") {
 

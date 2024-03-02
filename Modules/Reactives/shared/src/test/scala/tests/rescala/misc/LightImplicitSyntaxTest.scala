@@ -2,6 +2,8 @@ package tests.rescala.misc
 
 import reactives.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
+import reactives.default.global.State as BundleState
+
 
 class LightImplicitSyntaxTest extends RETests {
   multiEngined { engine =>

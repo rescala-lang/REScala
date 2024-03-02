@@ -100,7 +100,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
       rightFork: Signal[Fork],
       vision: Signal[Vision]
   ) {
-    def inspect(t: Transaction[BundleState]): String =
+    def inspect(t: Transaction[global.State]): String =
       s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 

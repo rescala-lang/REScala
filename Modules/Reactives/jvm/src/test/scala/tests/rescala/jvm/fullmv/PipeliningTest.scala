@@ -5,12 +5,12 @@ import reactives.fullmv.{FullMVEngine, State}
 import tests.rescala.testtools.{IgnoreOnGithubCiBecause, Spawn}
 
 class PipeliningTest extends munit.FunSuite {
-  if reactives.default.scheduler.isInstanceOf[FullMVEngine] then {
+  if reactives.default.global.scheduler.isInstanceOf[FullMVEngine] then {
     import reactives.default.*
 
     implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf
 
-    val engine: FullMVEngine = reactives.default.scheduler.asInstanceOf[FullMVEngine]
+    val engine: FullMVEngine = reactives.default.global.scheduler.asInstanceOf[FullMVEngine]
     // IgnoreOnGithubCiBecause("pipelining does not work")
     test("pipelining works") {
       val millisecondsPerNode = 10L

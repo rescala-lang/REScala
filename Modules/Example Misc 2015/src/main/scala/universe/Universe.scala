@@ -13,9 +13,9 @@ object Universe {
 
     val genCsv = !args.headOption.contains("nocsv")
 
-    println(s"profiling ${reactives.default.scheduler.schedulerName}")
+    println(s"profiling ${reactives.default.global.scheduler.schedulerName}")
 
-    val outfile = s"universe-${reactives.default.scheduler.schedulerName}.csv"
+    val outfile = s"universe-${reactives.default.global.scheduler.schedulerName}.csv"
 
     if genCsv then
       Files.write(
@@ -45,7 +45,7 @@ object Universe {
       if (repetition > 0 && genCsv) {
         Files.write(
           Paths.get(outfile),
-          s"""$repetition,$duration,"${reactives.default.scheduler.schedulerName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
+          s"""$repetition,$duration,"${reactives.default.global.scheduler.schedulerName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),
           StandardOpenOption.APPEND
         )
         ()

@@ -1,6 +1,6 @@
 package examples.demo.ui
 
-import reactives.default.{*}
+import reactives.default.*
 
 import java.awt.event.*
 import java.awt.{Event as _, Shape as _, *}
@@ -16,7 +16,7 @@ class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
   allChanges observe { _ => repaint() }
 
   override def paintComponent(g: Graphics2D): Unit = {
-    scheduler.forceNewTransaction() { implicit turn =>
+    global.scheduler.forceNewTransaction() { implicit turn =>
       g.setColor(Color.WHITE)
       g.fillRect(0, 0, size.width, size.height)
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)

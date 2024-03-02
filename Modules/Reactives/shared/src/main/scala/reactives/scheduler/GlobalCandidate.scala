@@ -19,6 +19,8 @@ object GlobalCandidate {
       case "sidup"    => sidup
       case other      => levelled
 
+  // the type of selected might be expressible with a match type,
+  // but type inference will take care of that for us instead
   val selected = select
 
   object levelled extends GlobalCandidate[LevelbasedVariants.LevelState] {

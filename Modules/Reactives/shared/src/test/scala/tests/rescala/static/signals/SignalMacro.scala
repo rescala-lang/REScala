@@ -2,6 +2,8 @@ package tests.rescala.static.signals
 
 import reactives.core.{CreationScope, CreationTicket}
 import tests.rescala.testtools.RETests
+import reactives.default.global.State as BundleState
+
 
 class SignalMacro extends RETests {
   multiEngined { engine =>

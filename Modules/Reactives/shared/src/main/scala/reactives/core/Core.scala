@@ -361,8 +361,6 @@ trait Transaction[State[_]] {
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
 trait Scheduler[S[_]] {
 
-  type SchedulerState[T] = S[T]
-
   final def forceNewTransaction[R](initialWrites: ReSource.of[S]*)(admissionPhase: AdmissionTicket[S] => R): R = {
     forceNewTransaction(initialWrites.toSet, admissionPhase)
   }
@@ -376,8 +374,9 @@ trait Scheduler[S[_]] {
   def dynamicScope: DynamicScope[S]
 }
 object Scheduler {
-  given defaultScheduler: Scheduler[Interface.State] = Interface.default
+  given implicitScheduler: Scheduler[reactives.default.global.State] = reactives.default.global.scheduler
 }
+
 
 trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends Scheduler[State] {
   override def dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
@@ -390,6 +389,9 @@ trait DynamicScope[State[_]] {
 }
 
 object DynamicScope {
+
+  given implicitDynamicScope: DynamicScope[reactives.default.global.State] = reactives.default.global.dynamicScope
+
   class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerImpl[State, Tx])
       extends DynamicScope[State] {
 

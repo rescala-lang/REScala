@@ -1,30 +1,16 @@
 package reactives.operator
 
 import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScope, ReSource, Scheduler, Transaction}
-import reactives.scheduler.LevelbasedVariants
 import reactives.operator.Interface.State
+import reactives.scheduler.{GlobalCandidate, LevelbasedVariants}
 
 import scala.util.DynamicVariable
 
-/** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
+/** [[Event]] and [[Signal]] represent different time-changing values, commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
   *
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[Signal]] expressions.
-  *
-  * @groupname reactive Type aliases for reactives
-  * @groupprio reactive 50
-  * @groupdesc reactive Rescala has multiple schedulers and each scheduler provides reactives with different internal state.
-  *           To ensure safety, each reactive is parameterized over the type of internal state, represented by the type
-  *           parameter. To make usage more convenient, we provide type aliases which hide these internals.
-  * @groupname create Create new reactives
-  * @groupprio create 100
-  * @groupname update Update multiple reactives
-  * @groupprio update 200
-  * @groupname internal Advanced functions used when extending REScala
-  * @groupprio internal 900
-  * @groupdesc internal Methods and type aliases for advanced usages, these are most relevant to abstract
-  *           over multiple scheduler implementations.
   */
 trait Interface {
 
@@ -35,13 +21,9 @@ trait Interface {
     inline infix def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
   }
 
-  // TODO: remove once no more references are present
-  type BundleState[V] = State[V]
+  val global: GlobalCandidate[GlobalCandidate.selected.State] = GlobalCandidate.selected
 
-  /** @group internal */
-  val scheduler: Scheduler[State]
-
-  override def toString: String = s"Api»${scheduler.schedulerName}«"
+  override def toString: String = s"Api»${global.scheduler.schedulerName}«"
 
   /** Executes a transaction.
     *
@@ -55,7 +37,7 @@ trait Interface {
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
   def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
-    scheduler.forceNewTransaction(initialWrites*)(admissionPhase)
+    global.scheduler.forceNewTransaction(initialWrites*)(admissionPhase)
   }
 
   /** Executes a transaction with WrapUpPhase.
@@ -76,10 +58,5 @@ trait Interface {
 }
 
 object Interface {
-  class FromScheduler(override val scheduler: Scheduler[State]) extends Interface
-  def from(sched: Scheduler[State]): FromScheduler =
-    FromScheduler(sched)
-
-  type State[V] = default.SchedulerState[V]
-  val default = reactives.generated.Scheduler.selection
+  type State[V] = reactives.scheduler.GlobalCandidate.selected.State[V]
 }

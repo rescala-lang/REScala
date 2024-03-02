@@ -4,6 +4,8 @@ import java.awt.{Color, Graphics2D}
 import examples.demo.Pos
 import reactives.core.AdmissionTicket
 import reactives.default.*
+import reactives.default.global.State as BundleState
+
 
 trait Shape extends Serializable {
   val changed: Event[Any]

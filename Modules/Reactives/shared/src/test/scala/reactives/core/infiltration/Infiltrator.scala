@@ -6,7 +6,7 @@ import reactives.scheduler.Levelbased
 import reactives.scheduler.LevelbasedVariants.LevelState
 
 /** Accesses private[rescala] values for some low level tests */
-class Infiltrator(val api: Interface & Levelbased) {
+class Infiltrator(val api: Interface) {
   // final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
   final def assertLevel(
       reactive: ReSource,

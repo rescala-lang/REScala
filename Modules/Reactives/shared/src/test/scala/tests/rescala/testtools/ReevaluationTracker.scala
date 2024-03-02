@@ -2,6 +2,8 @@ package tests.rescala.testtools
 
 import reactives.core.CreationTicket
 import reactives.operator.Interface
+import reactives.default.global.State as BundleState
+
 
 class ReevaluationBundle[T <: Interface](val api: T) {
   import api._
