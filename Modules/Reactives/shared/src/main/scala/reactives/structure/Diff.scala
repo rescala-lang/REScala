@@ -12,7 +12,7 @@ final class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
       val left  = from.get
       left -> right
     } catch {
-      case EmptySignalControlThrowable => throw new NoSuchElementException(s"Can not convert $this to pair")
+      case EmptySignalControlThrowable(info) => throw new NoSuchElementException(s"Can not convert $this to pair (empty propagated from $info)")
     }
   }
 

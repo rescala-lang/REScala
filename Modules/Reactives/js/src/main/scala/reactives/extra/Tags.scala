@@ -88,7 +88,7 @@ class Tags(val addDebuggingIds: Boolean) {
     new Observe.ObserveInteract {
       override def checkExceptionAndRemoval(): Boolean = {
         reevalVal match {
-          case Pulse.empty | Pulse.NoChange => false
+          case Pulse.empty(_) | Pulse.NoChange => false
           case Pulse.Exceptional(f) =>
             throw ObservedException(rendered, s"signal tag attached to $parent observed", f)
           case Pulse.Value(v) =>
@@ -98,7 +98,7 @@ class Tags(val addDebuggingIds: Boolean) {
 
       override def execute(): Unit =
         reevalVal match {
-          case Pulse.empty | Pulse.NoChange => ()
+          case Pulse.empty(_) | Pulse.NoChange => ()
           case Pulse.Value(v) =>
             fun(v)
           case Pulse.Exceptional(f) =>

@@ -56,5 +56,5 @@ class EventImpl[T](
   def internalAccess(v: Pulse[T]): Pulse[T] = v
 
   override protected def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] =
-    Pulse.tryCatch(expr(rein), onEmpty = NoChange)
+    Pulse.tryCatch(expr(rein), onEmpty = _ => NoChange)
 }

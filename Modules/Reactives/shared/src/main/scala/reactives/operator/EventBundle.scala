@@ -72,13 +72,13 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
     */
-  final def recover[R >: T](onFailure: PartialFunction[Throwable, Option[R]])(implicit
+  final def recover[R >: T](onFailure: PartialFunction[Exception, Option[R]])(implicit
       ticket: CreationTicket[State]
   ): Event[R] =
     Events.staticNamed(s"(recover $this)", this) { st =>
       st.collectStatic(this) match {
         case Exceptional(t) =>
-          onFailure.applyOrElse[Throwable, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
+          onFailure.applyOrElse[Exception, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
         case other => other
       }
     }
@@ -139,7 +139,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def hold[A >: T]()(implicit ticket: CreationTicket[State]): Signal[A] =
-    Fold(throw EmptySignalControlThrowable)(this act { v => v })
+    Fold(throw EmptySignalControlThrowable(info))(this act { v => v })
 
   /** Holds the latest value of an event as an Option, None before the first event occured
     * @group conversion

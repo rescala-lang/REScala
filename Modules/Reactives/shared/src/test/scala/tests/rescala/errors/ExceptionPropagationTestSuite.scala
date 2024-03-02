@@ -156,7 +156,7 @@ class ExceptionPropagationTestSuite extends RETests {
       v.set(42)
       assertEquals(res, 100 / 42, "making signal non empty triggers observer")
 
-      engine.transaction(v)(t => v.admitPulse(Pulse.empty)(t))
+      engine.transaction(v)(t => v.admitPulse(Pulse.empty(summon))(t))
       assertEquals(res, 100 / 42, "observers are not triggered when empty")
       intercept[NoSuchElementException] { v.readValueOnce }
     }

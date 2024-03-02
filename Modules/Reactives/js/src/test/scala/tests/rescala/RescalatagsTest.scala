@@ -9,15 +9,12 @@ import scalatags.JsDom.all.*
 import scalatags.generic.StylePair
 import tests.rescala.testtools.RETests
 
+import reactives.default.*
+import reactives.extra.Tags.*
 
 import scala.util.chaining.scalaUtilChainingOps
 
 class RescalatagsTest extends RETests {
-  multiEngined { engine =>
-    val te = new Tags(addDebuggingIds = false)
-    import te.{*, given}
-
-    import engine.*
 
     test("put var into dom") {
 
@@ -100,6 +97,4 @@ class RescalatagsTest extends RETests {
       )
 
     }
-  }
-
 }

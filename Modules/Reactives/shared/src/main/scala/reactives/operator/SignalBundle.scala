@@ -23,7 +23,7 @@ import scala.util.control.NonFatal
 trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   override type State[V] = Interface.State[V]
   override type Value <: Pulse[T]
-  override def read(v: Value): T                               = v.get
+  override def read(v: Value): T = v.get
 
   given Conversion[Value, T] = _.get
 
@@ -55,7 +55,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
       new Observe.ObserveInteract {
         override def checkExceptionAndRemoval(): Boolean = {
           reevalVal match {
-            case Pulse.empty => ()
+            case Pulse.empty(info) => ()
             case Pulse.Exceptional(f) if onError == null =>
               throw ObservedException(Signal.this, "observed", f)
             case _ => ()
@@ -65,7 +65,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
 
         override def execute(): Unit =
           (reevalVal: Pulse[T]) match {
-            case Pulse.empty          => ()
+            case Pulse.empty(info)    => ()
             case Pulse.Value(v)       => onValue(v)
             case Pulse.Exceptional(f) => onError(f)
             case Pulse.NoChange       => ()
@@ -119,8 +119,8 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   final def changed(implicit ticket: CreationTicket[State]): Event[T] =
     Events.staticNamed(s"(changed $this)", this) { st =>
       st.collectStatic(this) match {
-        case Pulse.empty => Pulse.NoChange
-        case other       => other
+        case Pulse.empty(info) => Pulse.NoChange
+        case other             => other
       }
     }
 
@@ -166,7 +166,7 @@ object Signal {
   ): Signal[T] = {
     ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
       dependencies.toSet,
-      Pulse.empty,
+      Pulse.empty(ct.info),
       needsReevaluation = true
     ) {
       state => new SignalImpl(state, (t, _) => expr(t), ct.info, None) with Signal[T]
@@ -180,7 +180,7 @@ object Signal {
     val staticDeps = dependencies.toSet
     ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
       staticDeps,
-      Pulse.empty,
+      Pulse.empty(ct.info),
       needsReevaluation = true
     ) {
       state => new SignalImpl(state, (t, _) => expr(t), ct.info, Some(staticDeps)) with Signal[T]

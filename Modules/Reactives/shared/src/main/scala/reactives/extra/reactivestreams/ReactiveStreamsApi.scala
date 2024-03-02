@@ -16,7 +16,9 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
   override def onError(thrw: Throwable): Unit =
     synchronized {
       Objects.requireNonNull(thrw)
-      fac.forceNewTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(thrw)) }
+      thrw match
+        case ex: Exception => fac.forceNewTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
+        case other => throw other
     }
   override def onSubscribe(s: Subscription): Unit =
     synchronized {
@@ -109,7 +111,7 @@ object REPublisher {
       val name: ReInfo = ReInfo.create.derive(s"forSubscriber($subscriber)")
       ticket.tx.initializer.create[Pulse[T], SubscriptionReactive[T]](
         Set(dependency),
-        Pulse.empty,
+        Pulse.empty(name),
         needsReevaluation = false
       ) {
         state => new SubscriptionReactive[T](state, dependency, subscriber, name)

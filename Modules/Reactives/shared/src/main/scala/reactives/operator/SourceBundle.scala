@@ -86,7 +86,7 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
   }
 
   def setEmpty()(implicit fac: Scheduler[State]): Unit =
-    fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty)(t))
+    fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty(info))(t))
 
   def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[State]): Unit = {
     ticket.recordChange(new InitialChange[State] {
@@ -103,7 +103,7 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
   */
 object Var {
   def apply[T](initval: T)(implicit ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
-  def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty)
+  def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty(ticket.info))
   private def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[State]): Var[T] = {
     ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.info))
   }

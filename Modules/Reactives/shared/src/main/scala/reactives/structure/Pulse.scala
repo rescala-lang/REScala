@@ -1,6 +1,7 @@
 package reactives.structure
 
 import RExceptions.{EmptySignalControlThrowable, ObservedException}
+import reactives.core.ReInfo
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 
 import scala.util.control.NonFatal
@@ -78,10 +79,10 @@ sealed trait Pulse[+P] {
   /** converts the pulse to an option of try */
   def toOptionTry: Option[Try[P]] =
     this match {
-      case Value(up)      => Some(Success(up))
-      case NoChange       => None
-      case Pulse.empty    => None
-      case Exceptional(t) => Some(Failure(t))
+      case Value(up)         => Some(Success(up))
+      case NoChange          => None
+      case Pulse.empty(info) => None
+      case Exceptional(t)    => Some(Failure(t))
     }
 
   def toOption: Option[P] =
@@ -120,8 +121,9 @@ object Pulse {
   /** Transforms a Try into a Value or Exceptional Pulse */
   def fromTry[P](tried: Try[P]): Pulse[P] =
     tried match {
-      case Success(v) => Pulse.Value(v)
-      case Failure(e) => Pulse.Exceptional(e)
+      case Success(v)            => Pulse.Value(v)
+      case Failure(e: Exception) => Pulse.Exceptional(e)
+      case Failure(t: Throwable) => throw t
     }
 
   /** Transforms the given pulse and an updated value into a pulse indicating a change from the pulse's value to
@@ -137,17 +139,23 @@ object Pulse {
     }
 
   /** wrap a pulse generating function to store eventual exceptions into an exceptional pulse */
-  def tryCatch[P](f: => Pulse[P], onEmpty: Pulse[P] = Pulse.empty): Pulse[P] =
+  def tryCatch[P](f: => Pulse[P], onEmpty: ReInfo => Pulse[P] = Pulse.empty.apply): Pulse[P] =
     try f
     catch {
-      case ufe: ObservedException      => throw ufe
-      case npe: NullPointerException   => throw npe
-      case EmptySignalControlThrowable => onEmpty
-      case NonFatal(t)                 => Exceptional(t)
+      case ufe: ObservedException            => throw ufe
+      case npe: NullPointerException         => throw npe
+      case EmptySignalControlThrowable(info) => onEmpty(info)
+      case t: Exception                      => Exceptional(t)
     }
 
   /** the pulse representing an empty signal */
-  val empty: Pulse.Exceptional = Exceptional(EmptySignalControlThrowable)
+  object empty {
+    def apply(info: ReInfo) = Exceptional(EmptySignalControlThrowable(info))
+    def unapply(exceptional: Pulse[?]): Option[ReInfo] = exceptional match
+      case Exceptional(EmptySignalControlThrowable(reSource)) => Some(reSource)
+      case _                                                  => None
+
+  }
 
   /** Pulse indicating no change */
   case object NoChange extends Pulse[Nothing]
@@ -159,5 +167,5 @@ object Pulse {
   final case class Value[+P](update: P) extends Pulse[P]
 
   /** Pulse indicating an exception */
-  final case class Exceptional(throwable: Throwable) extends Pulse[Nothing]
+  final case class Exceptional(throwable: Exception) extends Pulse[Nothing]
 }

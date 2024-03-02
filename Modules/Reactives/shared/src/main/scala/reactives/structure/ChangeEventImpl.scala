@@ -22,7 +22,7 @@ class ChangeEventImpl[T](
   override protected[reactives] def guardedReevaluate(rein: ReIn): Rout = {
     val to: Pulse[T]   = rein.collectStatic(signal)
     val from: Pulse[T] = rein.before._1
-    if (to == Pulse.empty) rein // ignore empty propagations
+    if Pulse.empty.unapply(to).isDefined then rein // ignore empty propagations
     else if (from != Pulse.NoChange) rein.withValue((to, Pulse.Value(Diff(from, to))))
     else rein.withValue((to, Pulse.NoChange)).withPropagate(false)
   }

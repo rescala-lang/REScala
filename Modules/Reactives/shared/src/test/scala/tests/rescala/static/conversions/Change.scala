@@ -4,9 +4,9 @@ import reactives.structure.RExceptions.EmptySignalControlThrowable
 import reactives.structure.Pulse
 import tests.rescala.testtools.RETests
 
+import reactives.default.*
+
 class Change extends RETests {
-  multiEngined { engine =>
-    import engine._
 
     /* changed */
     test("changed is Not Triggered On Creation") {
@@ -160,7 +160,7 @@ class Change extends RETests {
       assertEquals(log.readValueOnce, List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
       transaction(v1, v2) { turn =>
-        v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable))(turn)
+        v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable(summon)))(turn)
         v2.admit("five b")(turn)
       }
 
@@ -173,5 +173,4 @@ class Change extends RETests {
 
     }
 
-  }
 }
