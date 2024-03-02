@@ -225,11 +225,10 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @inheritdoc
     */
   final inline def fold[A](init: A)(inline op: (A, T) => A)(implicit ticket: CreationTicket[State]): Signal[A] =
-    Fold(init)(Fold.branch {
-      this.value match
-        case None    => Fold.current
-        case Some(v) => op(Fold.current, v)
-    })
+    Fold(init)(
+      this.act: v =>
+        op(Fold.current, v)
+    )
 
 }
 

@@ -9,7 +9,7 @@ import reactives.structure.{Pulse, SignalImpl}
   * Example for a counter that can be reset:
   * {{{
   *   Fold(0)(
-  *     add act { x => current + v },
+  *     add act { x => Fold.current + v },
   *     reset act { _ => 0 }
   *   )
   * }}}
