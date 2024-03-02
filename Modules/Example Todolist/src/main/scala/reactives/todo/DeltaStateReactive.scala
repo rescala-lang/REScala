@@ -4,7 +4,6 @@ import reactives.core.{CreationTicket, Derived, DynamicTicket, ReInfo, ReadAs}
 import reactives.default.*
 import reactives.default.global.State as BundleState
 
-
 case class DeltaWithState[Delta, DState](delta: Seq[Delta], state: DState)
 
 class DeltaStateReactive[Delta, Combined](
@@ -42,7 +41,8 @@ object DeltaStateReactive {
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket[BundleState], DState) => Delta]
   )(implicit name: ReInfo, creationTicket: CreationTicket[BundleState]): DeltaStateReactive[Delta, DState] =
-    creationTicket.scope.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
-      new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
+    creationTicket.scope.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(
+      state =>
+        new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )
 }

@@ -34,11 +34,11 @@ object ReplicatedSet {
       Dotted(current, dots).add(using rid)(e)(using Dotted.syntaxPermissions)
 
     def removeElem(using rid: ReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
-        Dotted(current, dots).remove(using Dotted.syntaxPermissions, Dotted.syntaxPermissions)(e)
+      Dotted(current, dots).remove(using Dotted.syntaxPermissions, Dotted.syntaxPermissions)(e)
 
     def add(using ReplicaId)(e: E): CausalMutator = {
-      val dm        = current.inner
-      val nextDot   = context.nextDot(replicaId)
+      val dm      = current.inner
+      val nextDot = context.nextDot(replicaId)
       val v: Dots = dm.getOrElse(e, Dots.empty)
 
       deltaState(

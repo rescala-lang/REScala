@@ -24,7 +24,7 @@ class MapBenchmarkWithInsert {
   var addEvent: Evt[Int]          = scala.compiletime.uninitialized
   var mappedSeq: Signal[Seq[Int]] = scala.compiletime.uninitialized
 
-  var reactSeq: IncSeq[Int]              = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]                 = scala.compiletime.uninitialized
   var reactMappedSeq: ReactiveDeltaSeq[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)

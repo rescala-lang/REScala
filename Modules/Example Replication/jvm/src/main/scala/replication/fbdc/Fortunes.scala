@@ -3,7 +3,6 @@ package replication.fbdc
 import de.rmgk.script.{process, runOutput}
 import rdts.datatypes.LastWriterWins
 
-
 object Fortunes {
 
   def enableConditional(exampleData: FbdcExampleData) = {

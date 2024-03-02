@@ -24,7 +24,7 @@ class MinBenchmarkWithInsertOfNotMin {
   var addEvent: Evt[Int]    = scala.compiletime.uninitialized
   var minOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: IncSeq[Int]           = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]              = scala.compiletime.uninitialized
   var reactMinOfSeq: Signal[Option[Int]] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)

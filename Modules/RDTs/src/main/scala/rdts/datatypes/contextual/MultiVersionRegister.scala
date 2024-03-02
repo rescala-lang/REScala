@@ -22,7 +22,7 @@ object MultiVersionRegister {
     else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
   // we could replace this by casting …
   def assertEqualsOrdering[A]: Ordering[A] = _assertEqualsOrdering.on(identity)
-  def assertEqualsLattice[A]: Lattice[A] = Lattice.fromOrdering(using assertEqualsOrdering)
+  def assertEqualsLattice[A]: Lattice[A]   = Lattice.fromOrdering(using assertEqualsOrdering)
 
   given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
     given Lattice[A] = Lattice.fromOrdering(using assertEqualsOrdering)

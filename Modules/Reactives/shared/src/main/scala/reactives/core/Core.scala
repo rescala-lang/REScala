@@ -60,8 +60,6 @@ trait ReadAs[+A] extends ReSource {
 }
 object ReadAs { type of[S[_], A] = ReadAs[A] { type State[V] = S[V] } }
 
-
-
 /** User facing low level API to access values in a static context. */
 sealed abstract class StaticTicket[State[_]](val tx: Transaction[State]) {
   private[reactives] def collectStatic(reactive: ReSource.of[State]): reactive.Value

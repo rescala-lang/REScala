@@ -90,7 +90,8 @@ object AeadHelper {
     */
   def encrypt(message: String, associatedData: String, key: Uint8Array): Try[Uint8Array] = Try {
     val nonce: Uint8Array = generateRandomNonce()
-    val cipherText = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
+    val cipherText =
+      sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
     concatenateArrays(nonce, cipherText)
   }
 
@@ -109,7 +110,8 @@ object AeadHelper {
     */
   def encrypt(message: Uint8Array, associatedData: Uint8Array, key: Uint8Array): Try[Uint8Array] = Try {
     val nonce: Uint8Array = generateRandomNonce()
-    val cipherText = sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
+    val cipherText =
+      sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, associatedData, null, nonce, key, undefined)
     concatenateArrays(nonce, cipherText)
   }
 

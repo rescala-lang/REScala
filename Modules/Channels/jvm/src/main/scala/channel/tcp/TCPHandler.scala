@@ -21,7 +21,6 @@ def connect(host: String, port: Int): Async[Any, TCPConnection] = Async.fromCall
       Async.handler.fail(exception)
 }
 
-
 class TCPConnection(socket: Socket) extends InChan with OutChan {
 
   // socket streams
@@ -87,6 +86,3 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
   }
 
 }
-
-
-

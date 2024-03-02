@@ -88,7 +88,6 @@ object HTML {
   def providers(exdat: FbdcExampleData) = {
     div(
       h1("make a request"),
-
     ).render.reattach(
       exdat.providers.map { prov =>
         prov.observeRemoveMap.entries.map { (id, provided) =>
@@ -114,7 +113,6 @@ object HTML {
         }
       }
     ),
-
   ).render.reattach(exdat.latestFortune.map(f => p(f.map(_.result).getOrElse("")).render))
 
   def northwindBox(exdat: FbdcExampleData, id: Uid) =

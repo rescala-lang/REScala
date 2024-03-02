@@ -117,7 +117,7 @@ class LockUnionFindTest extends munit.FunSuite {
       t2
     }
 
-    assert(locks(0).refCount.get <= 0)  // gc'd
+    assert(locks(0).refCount.get <= 0)     // gc'd
     assertEquals(locks(1).refCount.get, 1) // turn 0
     for (i <- 2 until maxIdx) {
       assertEquals(locks(i).refCount.get, 2) // lock(i-1), turn(i-1)
@@ -128,7 +128,7 @@ class LockUnionFindTest extends munit.FunSuite {
     turns(2).completeExecuting()
     turns(4).completeExecuting()
 
-    assert(locks(0).refCount.get <= 0)  // gc'd
+    assert(locks(0).refCount.get <= 0)     // gc'd
     assertEquals(locks(1).refCount.get, 1) // turn 0
     assertEquals(locks(2).refCount.get, 1) // lock 1
     assertEquals(locks(3).refCount.get, 1) // lock 2
@@ -141,17 +141,18 @@ class LockUnionFindTest extends munit.FunSuite {
 
     Await.result(turns(0).tryLock(), Duration.Zero).asInstanceOf[Locked].lock.asyncUnlock()
 
-    assert(locks(0).refCount.get <= 0)  // gc'd
-    assert(locks(1).refCount.get <= 0)  // gc'd
-    assert(locks(2).refCount.get <= 0)  // gc'd
-    assert(locks(3).refCount.get <= 0)  // gc'd
+    assert(locks(0).refCount.get <= 0)     // gc'd
+    assert(locks(1).refCount.get <= 0)     // gc'd
+    assert(locks(2).refCount.get <= 0)     // gc'd
+    assert(locks(3).refCount.get <= 0)     // gc'd
     assertEquals(locks(4).refCount.get, 1) // turn 3
-    assert(locks(5).refCount.get <= 0)  // gc'd
+    assert(locks(5).refCount.get <= 0)     // gc'd
     for (i <- 6 until maxIdx) {
       assertEquals(locks(i).refCount.get, 1) // turn(i-1)
     }
     assertEquals(
-      locks(maxIdx).refCount.get, maxIdx - 6 + 4
+      locks(maxIdx).refCount.get,
+      maxIdx - 6 + 4
     ) // lock(4), lock(6) to lock(maxIdx - 1), turn(0), turn(count-1), turn(count)
   }
 
@@ -263,7 +264,7 @@ class LockUnionFindTest extends munit.FunSuite {
     assertEquals(Await.result(turn2.trySubsume(l1), Duration.Zero), Successful)
 
     assertEquals(lock1.refCount.get, 3) // turn2, turn1 and thread
-    assert(lock2.refCount.get <= 0)  // none
+    assert(lock2.refCount.get <= 0)     // none
 
     l1.asyncUnlock()
 

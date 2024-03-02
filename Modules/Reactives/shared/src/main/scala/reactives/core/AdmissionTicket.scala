@@ -1,6 +1,5 @@
 package reactives.core
 
-
 /** Encapsulates an action changing a single source. */
 trait InitialChange[State[_]] {
 
@@ -8,9 +7,9 @@ trait InitialChange[State[_]] {
   val source: ReSource.of[State]
 
   /** @param base         the current (old) value of the source.
-   * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
-   * @return the propagation status of the source (whether or not to reevaluate output reactives).
-   */
+    * @param writeCallback callback to apply the new value, executed only if the action is approved by the source.
+    * @return the propagation status of the source (whether or not to reevaluate output reactives).
+    */
   def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean
 }
 

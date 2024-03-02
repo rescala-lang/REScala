@@ -1,6 +1,5 @@
 package tests.rescala.fullmv
 
-
 import reactives.fullmv.{FullMVTurnImpl, FullMVUtil}
 
 import scala.concurrent.Await

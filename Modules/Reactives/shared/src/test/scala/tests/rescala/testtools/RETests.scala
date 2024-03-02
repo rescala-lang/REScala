@@ -13,7 +13,13 @@ abstract class RETests extends munit.FunSuite {
     new Compare[B, A] {
       override def isEqual(obtained: B, expected: A): Boolean = compare.isEqual(expected, obtained)
 
-      override def failEqualsComparison(obtained: B, expected: A, title: Any, loc: Location, assertions: Assertions): Nothing = compare.failEqualsComparison(expected, obtained, title, loc, assertions)
+      override def failEqualsComparison(
+          obtained: B,
+          expected: A,
+          title: Any,
+          loc: Location,
+          assertions: Assertions
+      ): Nothing = compare.failEqualsComparison(expected, obtained, title, loc, assertions)
     }
   )
 

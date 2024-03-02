@@ -4,7 +4,6 @@ import universe.Animal._
 
 import reactives.default.*
 
-
 class Carnivore(implicit world: World) extends Animal {
 
   private val sleepy  = energy map { _ < Animal.SleepThreshold }

@@ -47,8 +47,8 @@ trait ReactiveMirrorBundle extends FullMVTurnReflectionBundle {
     type State[V]       = self.State[V]
     override type Value = Nothing
     override protected[reactives] val state = this
-    override def toString: String         = s"Mirror${info.description}"
-    override val host: FullMVEngine       = null
+    override def toString: String           = s"Mirror${info.description}"
+    override val host: FullMVEngine         = null
     override def incrementFrame(txn: FullMVTurn): FramingBranchResult[FullMVTurn, Derived.of[State]] = {
       FullMVUtil.myAwait(txn.addRemoteBranch(TurnPhase.Framing), timeout)
       reflectionProxy.asyncIncrementFrame(txn)

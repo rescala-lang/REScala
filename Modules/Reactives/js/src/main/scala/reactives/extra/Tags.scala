@@ -33,7 +33,10 @@ class Tags(val addDebuggingIds: Boolean) {
     }
 
   extension (outer: dom.Element)
-    def reattach[T](signal: Signal[T])(using splicer: RangeSplice[T], creationTicket: CreationTicket[Interface.State]): outer.type = {
+    def reattach[T](signal: Signal[T])(using
+        splicer: RangeSplice[T],
+        creationTicket: CreationTicket[Interface.State]
+    ): outer.type = {
       val range = document.createRange()
       range.selectNodeContents(outer)
       range.collapse(toStart = false)
@@ -47,7 +50,10 @@ class Tags(val addDebuggingIds: Boolean) {
     }
 
   extension (input: Input)
-    def inputEntered(using creationTicket: CreationTicket[Interface.State], scheduler: PlanTransactionScope[Interface.State]): Event[String] = {
+    def inputEntered(using
+        creationTicket: CreationTicket[Interface.State],
+        scheduler: PlanTransactionScope[Interface.State]
+    ): Event[String] = {
       val handler: Event.CBR[KeyboardEvent, Unit] = Event.fromCallback(input.onkeyup = Event.handle(_))
 
       handler.event

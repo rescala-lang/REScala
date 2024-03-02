@@ -33,10 +33,13 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
 
   def put(key: K, value: V): Unit =
     mutate(
-      DeltaAddWinsMap.deltaMutate[K, Map[Dot, (
-          V,
-          LastWriterWins[Uid]
-      )]](
+      DeltaAddWinsMap.deltaMutate[K, Map[
+        Dot,
+        (
+            V,
+            LastWriterWins[Uid]
+        )
+      ]](
         key,
         Map.empty,
         delta =>

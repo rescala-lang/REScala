@@ -81,7 +81,7 @@ object MLTest {
     val backwardsPropagate = Signal(true)
     val groundTruth        = Signal { math.pow(2 * input.value - 3.0, 2) }
     val learn_rate         = Signal { 0.4 }
-    val res = diff_app(input, backwardsPropagate, groundTruth, learn_rate)
+    val res                = diff_app(input, backwardsPropagate, groundTruth, learn_rate)
     println(res.now)
   }
 }

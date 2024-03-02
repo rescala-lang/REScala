@@ -6,7 +6,6 @@ import reactives.core.AdmissionTicket
 import reactives.default.*
 import reactives.default.global.State as BundleState
 
-
 trait Shape extends Serializable {
   val changed: Event[Any]
   val centerX: Signal[Int]

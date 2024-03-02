@@ -188,9 +188,12 @@ class DeframeTest extends munit.FunSuite {
       //    assertEquals(DeframeReframing(turnRightTwo, top, turnLeftTwo).doFraming(), FramingBranchResult.FramingBranchEnd)
 
       val reevTop = new Reevaluation(turnLeftOne, top)
-      assertEquals(reevTop.processReevaluationResult(
-        Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])
-      ), NotifyAndNonReadySuccessor(Set(), turnLeftTwo))
+      assertEquals(
+        reevTop.processReevaluationResult(
+          Some(Pulse.Value(234).asInstanceOf[reevTop.node.Value])
+        ),
+        NotifyAndNonReadySuccessor(Set(), turnLeftTwo)
+      )
     }
   }
 }

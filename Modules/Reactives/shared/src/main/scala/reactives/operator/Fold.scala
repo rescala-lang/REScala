@@ -55,7 +55,6 @@ object Fold {
 
   inline def current[S](using fs: FoldState[S]): S = FoldState.unwrap(fs)
 
-
 }
 
 opaque type FoldState[T] = () => T

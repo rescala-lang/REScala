@@ -35,7 +35,7 @@ case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
   def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
-  def tag: LI                                                   = cached.tag
+  def tag: LI                                                             = cached.tag
   def removed: Event[String]                                              = cached.removed
 }
 
@@ -88,7 +88,12 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
       else DeltaBuffer(Dotted(LastWriterWins.now(task)))
 
     val edittext: Event.CBR[dom.Event, dom.html.Input] = Event.fromCallback {
-      input(`class` := "edit", `type` := "text", onchange := Event.handle[dom.Event], onblur := Event.handle[dom.Event]).render
+      input(
+        `class`  := "edit",
+        `type`   := "text",
+        onchange := Event.handle[dom.Event],
+        onblur   := Event.handle[dom.Event]
+      ).render
     }
 
     val edittextStr = edittext.event.map { (e: dom.Event) =>
@@ -125,7 +130,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
     val removeButton =
       Event.fromCallback(button(`class` := "destroy", onclick := Event.handle))
 
-    val editInput = edittext.data.reattach(Signal{ value := taskData.value.desc})
+    val editInput = edittext.data.reattach(Signal { value := taskData.value.desc })
     editDiv.event.observe { _ =>
       setTimeout(0) { editInput.focus() }; ()
     }
@@ -143,7 +148,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
         removeButton.data
       ),
       editInput
-    ).render.reattach(Signal{
+    ).render.reattach(Signal {
       `class` := (if editingV.value then "editing" else "no-editing")
     })
 
@@ -157,7 +162,6 @@ given RangeSplice[Modifier] with {
     parent match
       case elem: dom.Element => value.applyTo(elem)
 }
-
 
 implicit def optionAttrValue[T](implicit ev: AttrValue[T]): AttrValue[Option[T]] =
   new AttrValue[Option[T]] {

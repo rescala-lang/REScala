@@ -21,7 +21,7 @@ class ReactorWithoutAPITest extends RETests {
     override type State[V] = Interface.State[V]
 
     override protected[reactives] def state: State[ReactorStage[T]] = initState
-    override def info: ReInfo                                     = ReInfo.create.derive("Custom Reactor")
+    override def info: ReInfo                                       = ReInfo.create.derive("Custom Reactor")
 
     /** Interprets the internal type to the external type
       *

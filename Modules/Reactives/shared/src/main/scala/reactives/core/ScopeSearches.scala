@@ -77,6 +77,6 @@ object PlanTransactionScope {
 
   inline given search(using ts: TransactionSearch[Interface.State]): PlanTransactionScope[Interface.State] =
     ts.static match
-      case None     => DynamicTransactionLookup(reactives.default.global.scheduler, reactives.default.global.dynamicScope)
+      case None => DynamicTransactionLookup(reactives.default.global.scheduler, reactives.default.global.dynamicScope)
       case Some(tx) => StaticInTransaction(tx, reactives.default.global.scheduler)
 }

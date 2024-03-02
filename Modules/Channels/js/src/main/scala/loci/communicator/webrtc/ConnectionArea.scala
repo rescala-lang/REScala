@@ -91,7 +91,7 @@ object Example {
     val selfId                                     = Random.nextLong()
 
     Async[Ctx] {
-      val msg = broadcast.receive.bind
+      val msg                                   = broadcast.receive.bind
       val communication: BroadcastCommunication = msg.convert
       Async[Ctx].bind:
         Async[Ctx].fromCallback:

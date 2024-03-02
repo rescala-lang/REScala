@@ -2,7 +2,6 @@ package benchmarks.incremental
 import org.openjdk.jmh.annotations._
 import org.openjdk.jmh.infra.Blackhole
 
-
 import reactives.default.*
 import reactives.extra.incremental.*
 
@@ -26,7 +25,7 @@ class MinBenchmarkWithRemoveBestCase {
   var removeEvent: Evt[Int] = scala.compiletime.uninitialized
   var minOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: IncSeq[Int]           = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]              = scala.compiletime.uninitialized
   var reactMinOfSeq: Signal[Option[Int]] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)

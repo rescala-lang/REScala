@@ -18,9 +18,9 @@ class ORMapTest extends munit.ScalaCheckSuite {
     given rdts.syntax.ReplicaId = rdts.syntax.ReplicaId.predefined("test")
     given Bottom[Int] with
       def empty = Int.MinValue
-    forAll{ (entries: List[Int]) =>
-      val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) {(curr, elem) => curr.update(elem, elem)}
-      orMap.entries.foreach{(k, v) =>
+    forAll { (entries: List[Int]) =>
+      val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) { (curr, elem) => curr.update(elem, elem) }
+      orMap.entries.foreach { (k, v) =>
         assert(orMap.contains(k))
       }
     }

@@ -29,8 +29,10 @@ object Settings {
       "-language:implicitConversions",
       "-language:existentials",
       "-deprecation",
-      "-source", "3.4",
-      "-java-output-version", "11"
+      "-source",
+      "3.4",
+      "-java-output-version",
+      "11"
     )
   )
 

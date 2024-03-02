@@ -127,14 +127,13 @@ object Dots {
     override def lteq(x: Dots, y: Dots): Boolean = x <= y
   }
 
-
   given HasDots[Dots] with {
     extension (dotted: Dots)
       def dots: Dots = dotted
 
       /** Removes dots and anything associated to them from the value.
-       * In case the value becomes fully “empty” returns None
-       */
+        * In case the value becomes fully “empty” returns None
+        */
       def removeDots(dots: Dots): Option[Dots] =
         val res = dotted.diff(dots)
         if res.isEmpty then None else Some(res)

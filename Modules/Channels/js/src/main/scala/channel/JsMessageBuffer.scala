@@ -7,8 +7,9 @@ class JsArrayBufferMessageBuffer(val inner: ArrayBuffer) extends MessageBuffer {
 }
 
 object MesageBufferExtensions {
-  extension (mb: MessageBuffer) def asArrayBuffer: ArrayBuffer =
-    mb match
-      case buf: JsArrayBufferMessageBuffer => buf.inner
-      case other => other.asArray.toTypedArray.buffer
+  extension (mb: MessageBuffer)
+    def asArrayBuffer: ArrayBuffer =
+      mb match
+        case buf: JsArrayBufferMessageBuffer => buf.inner
+        case other                           => other.asArray.toTypedArray.buffer
 }

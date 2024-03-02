@@ -9,7 +9,6 @@ import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.chaining.scalaUtilChainingOps
 
-
 object Northwind {
 
   val dbProperties = new Properties().tap(_.setProperty("immutable", "1"))

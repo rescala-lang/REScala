@@ -24,7 +24,7 @@ class SizeBenchmarkWithRemove {
   var removeEvent: Evt[Int]  = scala.compiletime.uninitialized
   var sizeOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: IncSeq[Int]    = scala.compiletime.uninitialized
+  var reactSeq: IncSeq[Int]       = scala.compiletime.uninitialized
   var sizeOfReactSeq: Signal[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)

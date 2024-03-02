@@ -28,7 +28,7 @@ object Main extends App {
     store,
     (store.itemAdded map { (x: RSSItem) => // #EF
       (x.srcChannel map (_.title) getOrElse "<unknown>") + ": " + x.title
-    }) `hold` "",      // #IF
+    }) `hold` "",    // #IF
     Signal.dynamic { // #SIG
       val itemCount = (store.channels.value map { case (_, items) => items.value.size }).sum
       "Channels: " + store.channels.value.size + " Items: " + itemCount

@@ -33,7 +33,7 @@ final class Key[InterTurn](val turn: InterTurn) {
   }
 
   /** contains a list of all locks owned by us. */
-  private val heldLocks: ArrayBuffer[ReLock[InterTurn]] = ArrayBuffer[ReLock[InterTurn]]()
+  private val heldLocks: ArrayBuffer[ReLock[InterTurn]]       = ArrayBuffer[ReLock[InterTurn]]()
   private[locking] def addLock(lock: ReLock[InterTurn]): Unit = heldLocks.synchronized { heldLocks += lock; () }
   private[locking] def grabLocks()                            = heldLocks.synchronized(heldLocks)
 

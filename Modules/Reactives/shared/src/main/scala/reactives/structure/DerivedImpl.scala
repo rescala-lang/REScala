@@ -5,7 +5,6 @@ import reactives.operator.Interface
 import reactives.structure.Pulse.NoChange
 import reactives.operator.Interface.State
 
-
 abstract class DerivedImpl[T](
     initial: State[Pulse[T]],
     name: ReInfo,

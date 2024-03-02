@@ -139,9 +139,9 @@ class ExceptionPropagationTestSuite extends RETests {
 
       intercept[ObservedException] { v.set(0) }
       assertEquals(res, 100 / 42, "observers are not triggered on failure")
-      //if (engine != reactives.interfaces.toposort) {
-        assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
-      //}
+      // if (engine != reactives.interfaces.toposort) {
+      assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
+      // }
     }
 
     test("do not observe emptiness") {
@@ -162,20 +162,20 @@ class ExceptionPropagationTestSuite extends RETests {
     }
 
     test("abort combinator") {
-      //if (engine != reactives.interfaces.toposort) {
-        val v  = Var(0)
-        val ds = Signal { div(v.value) }
+      // if (engine != reactives.interfaces.toposort) {
+      val v  = Var(0)
+      val ds = Signal { div(v.value) }
 
-        intercept[ObservedException] { ds.abortOnError("abort immediate") }
+      intercept[ObservedException] { ds.abortOnError("abort immediate") }
 
-        v.set(42)
-        ds.abortOnError("abort later")
-        assertEquals(ds.readValueOnce, 100 / 42, "can add observers if no longer failed")
+      v.set(42)
+      ds.abortOnError("abort later")
+      assertEquals(ds.readValueOnce, 100 / 42, "can add observers if no longer failed")
 
-        intercept[ObservedException] { v.set(0) }
-        assertEquals(ds.readValueOnce, 100 / 42, "observers are not triggered on failure")
-        assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
-      //}
+      intercept[ObservedException] { v.set(0) }
+      assertEquals(ds.readValueOnce, 100 / 42, "observers are not triggered on failure")
+      assertEquals(v.readValueOnce, 42, "transaction is aborted on failure")
+      // }
     }
 
     test("partial recovery") {

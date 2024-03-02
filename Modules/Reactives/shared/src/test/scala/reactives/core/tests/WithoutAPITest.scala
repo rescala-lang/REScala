@@ -16,8 +16,8 @@ class WithoutAPITest extends RETests {
 
       override type Value = T
       override protected[reactives] def state: State[T]            = initState
-      override val info: ReInfo                                  = ReInfo.create
-      override def read(v: Value): T                             = v
+      override val info: ReInfo                                    = ReInfo.create
+      override def read(v: Value): T                               = v
       override protected[reactives] def commit(base: Value): Value = base
 
       def makeChange(newValue: T) =
@@ -40,7 +40,7 @@ class WithoutAPITest extends RETests {
       override type Value    = String
       override type State[V] = Interface.State[V]
       override protected[reactives] def state: State[Value]        = initState
-      override val info: ReInfo                                  = ReInfo.create
+      override val info: ReInfo                                    = ReInfo.create
       override protected[reactives] def commit(base: Value): Value = base
 
       override protected[reactives] def reevaluate(input: ReIn): Rout = {

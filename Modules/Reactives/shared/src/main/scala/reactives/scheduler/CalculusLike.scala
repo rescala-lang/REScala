@@ -4,8 +4,8 @@
 package reactives.scheduler
 
 import reactives.core.{
-  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope,
-  Transaction
+  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket,
+  SchedulerWithDynamicScope, Transaction
 }
 
 object CalculusLike {
@@ -70,7 +70,7 @@ object CalculusLike {
   case class FTransaction(override val initializer: Initializer[CalculusLike.this.State])
       extends Transaction[State] {
     override private[reactives] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
-    override def observe(obs: Observation): Unit                                       = obs.execute()
+    override def observe(obs: Observation): Unit                                         = obs.execute()
   }
 
   object FScheduler

@@ -22,7 +22,6 @@ object ObjectSizes {
     measure("default empty signal", reactives.default.Signal {})
     measure("default empty signal x 10", List.fill(100)(reactives.default.Signal {}))
 
-
     def ptx = new ParRPDefault.ParRPTransaction(new reactives.parrp.Backoff(), None)
     measure("transaction", List.fill(100)(ptx))
     measure(

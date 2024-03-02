@@ -22,7 +22,7 @@ class Invariant[T](val description: String, val inv: T => Boolean) {
 
 trait InvariantBundle extends TopoBundle {
 
-  override type State[V]       = InvariantState[V]
+  override type State[V] = InvariantState[V]
 
   sealed trait InvariantException extends RuntimeException
 
@@ -67,7 +67,9 @@ trait InvariantBundle extends TopoBundle {
     override def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit =
       InvariantUtil.evaluateInvariants(all, initialWrites)
 
-    implicit class SignalWithInvariants[T](val signal: ReSource{type State[V] = InvariantState[V]; type Value = Pulse[T]}) {
+    implicit class SignalWithInvariants[T](val signal: ReSource {
+      type State[V] = InvariantState[V]; type Value = Pulse[T]
+    }) {
 
       def specify(inv: Invariant[T]*): Unit = {
         signal.state.invariants =

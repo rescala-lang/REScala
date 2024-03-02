@@ -18,7 +18,8 @@ trait Interface {
   export Fold.current
 
   extension [T](e: Event[T]) {
-    inline infix def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
+    inline infix def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
+      Fold.branch { e.value.fold(current)(f) }
   }
 
   val global: GlobalCandidate[GlobalCandidate.selected.State] = GlobalCandidate.selected

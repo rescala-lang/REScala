@@ -110,16 +110,16 @@ object Voting {
 
 }
 
-
 case class Exclusive[T: Lattice: Bottom](token: Token, value: T) {
   def transform(f: T => T)(using ReplicaId) =
     if token.isOwner then f(value) else Bottom.empty
 }
 
-
 /** totally not incredibly inefficient */
 case class Causal[T: Lattice: HasDots: Bottom](deltas: Set[Dotted[T]]) {
   def value: T =
     val causalPrefix = deltas.map(_.context).reduceOption(_ union _).map(_.causalPrefix).getOrElse(Dots.empty)
-    deltas.filter(delta => delta.context <= causalPrefix).reduceOption(Dotted.lattice.merge).map(_.data).getOrElse(Bottom.empty)
+    deltas.filter(delta => delta.context <= causalPrefix).reduceOption(Dotted.lattice.merge).map(_.data).getOrElse(
+      Bottom.empty
+    )
 }

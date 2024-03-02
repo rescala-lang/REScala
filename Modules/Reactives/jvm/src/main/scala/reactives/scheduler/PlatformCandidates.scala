@@ -7,10 +7,9 @@ object PlatformCandidates {
 
   transparent inline def furtherSelect(inline selection: String) =
     inline selection match
-      case "parrp" => Some(parrp)
+      case "parrp"  => Some(parrp)
       case "fullmv" => Some(fullmv)
-      case other => None
-
+      case other    => None
 
   object parrp extends GlobalCandidate[reactives.parrp.ParRPDefault.ParRPState] {
     override def scheduler: Scheduler[State]       = reactives.parrp.ParRPDefault.scheduler

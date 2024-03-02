@@ -452,7 +452,8 @@ class FullMVTurnImpl(
     }
   }
   override def tryLock(): Future[TryLockResult] = {
-    if (SubsumableLockImpl.DEBUG) println(s"[${Thread.currentThread().getName}] $this dispatching local tryLock request")
+    if (SubsumableLockImpl.DEBUG)
+      println(s"[${Thread.currentThread().getName}] $this dispatching local tryLock request")
     tryLock0(0)
   }
 
@@ -521,7 +522,8 @@ class FullMVTurnImpl(
   }
 
   override def remoteTryLock(): Future[TryLockResult] = {
-    if (SubsumableLockImpl.DEBUG) println(s"[${Thread.currentThread().getName}] $this dispatching remote tryLock request")
+    if (SubsumableLockImpl.DEBUG)
+      println(s"[${Thread.currentThread().getName}] $this dispatching remote tryLock request")
     tryLock0(0).map { res =>
       if (SubsumableLockImpl.DEBUG)
         println(

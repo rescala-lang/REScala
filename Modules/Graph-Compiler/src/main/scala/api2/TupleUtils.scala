@@ -4,7 +4,6 @@ import reactives.core.StaticTicket
 import reactives.default.*
 import reactives.default.global.State as BundleState
 
-
 type CEventsFromEvents[T <: Tuple] <: Tuple = T match
   case EmptyTuple     => EmptyTuple
   case Event[t] *: ts => CEvent[t] *: CEventsFromEvents[ts]

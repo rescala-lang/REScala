@@ -63,9 +63,9 @@ trait OpsTypes[DeltaContainer, Value] {
   final type IdMutator       = ReplicaId ?=> Mutator
 }
 class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
-  final protected[rdts] def current(using perm: IsQuery): L               = perm.query(container)
-  final protected[rdts] def replicaId(using perm: ReplicaId): Uid         = perm.uid
-  final protected[rdts] def context(using perm: IsCausalMutator): Dots    = perm.context(container)
+  final protected[rdts] def current(using perm: IsQuery): L                = perm.query(container)
+  final protected[rdts] def replicaId(using perm: ReplicaId): Uid          = perm.uid
+  final protected[rdts] def context(using perm: IsCausalMutator): Dots     = perm.context(container)
   extension (l: L) def mutator: Mutator                                    = summon[IsMutator].mutate(container, l)
   extension (l: Dotted[L])(using perm: IsCausalMutator) def mutator: C     = perm.mutateContext(container, l)
   extension [A](a: A) def inheritContext(using IsCausalMutator): Dotted[A] = Dotted(a, context)
