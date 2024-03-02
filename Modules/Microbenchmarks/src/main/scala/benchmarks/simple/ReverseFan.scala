@@ -3,7 +3,6 @@ package benchmarks.simple
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.ThreadParams
-import reactives.core.ScopeSearch
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -40,7 +39,7 @@ class ReverseFan {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
     if (isManual) synchronized {
-      sources(params.getThreadIndex).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+      sources(params.getThreadIndex).set(step.run())(using scheduler)
     }
-    else sources(params.getThreadIndex).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+    else sources(params.getThreadIndex).set(step.run())(using scheduler)
 }

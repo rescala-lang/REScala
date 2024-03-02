@@ -50,6 +50,8 @@ trait PlanTransactionScope[State[_]] {
 
 object PlanTransactionScope {
 
+  implicit def fromScheduler[State[_]](scheduler: Scheduler[State]): DynamicTransactionLookup[State] = DynamicTransactionLookup(scheduler)
+
   case class StaticInTransaction[State[_]](tx: Transaction[State], scheduler: Scheduler[State])
       extends PlanTransactionScope[State] {
     override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
@@ -59,11 +61,11 @@ object PlanTransactionScope {
       }
   }
 
-  case class DynamicTransactionLookup[State[_]](ds: DynamicScope[State], scheduler: Scheduler[State])
+  case class DynamicTransactionLookup[State[_]](scheduler: Scheduler[State])
       extends PlanTransactionScope[State] {
     override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
         : Unit =
-      ds.maybeTransaction match
+      scheduler.dynamicScope.maybeTransaction match
         case Some(tx) => tx.observe { () =>
             scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
           }
@@ -73,6 +75,6 @@ object PlanTransactionScope {
 
   inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] =
     ts.static match
-      case None     => DynamicTransactionLookup(Interface.default.dynamicScope, Interface.default)
+      case None     => DynamicTransactionLookup(Interface.default)
       case Some(tx) => StaticInTransaction(tx, Interface.default)
 }

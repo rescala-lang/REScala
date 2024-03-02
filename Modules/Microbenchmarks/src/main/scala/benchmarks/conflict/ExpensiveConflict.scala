@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
-import reactives.core.ScopeSearch
 import reactives.operator.Interface
 
 @AuxCounters
@@ -59,14 +58,14 @@ class ExpensiveConflict {
   @Group("g")
   @GroupThreads(1)
   def cheap() = {
-    cheapSource.set(input.incrementAndGet())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+    cheapSource.set(input.incrementAndGet())
   }
 
   @Benchmark
   @Group("g")
   @GroupThreads(1)
   def expensive(counter: EvaluationCounter) = {
-    expensiveSource.set(input.incrementAndGet())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+    expensiveSource.set(input.incrementAndGet())
     counter.tried += tried
     counter.succeeded += 1
     tried = 0

@@ -5,7 +5,6 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import reactives.core.ScopeSearch
 import reactives.operator.Interface
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -48,11 +47,11 @@ class MultiReverseFan {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if (locks == null) sources(index).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+    if (locks == null) sources(index).set(step.run())(using scheduler)
     else {
       locks(index / groupSize).lock()
       try {
-        sources(index).set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+        sources(index).set(step.run())(using scheduler)
       } finally locks(index / groupSize).unlock()
     }
   }

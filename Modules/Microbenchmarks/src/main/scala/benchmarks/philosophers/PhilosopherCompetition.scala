@@ -7,7 +7,7 @@ import benchmarks.philosophers.PhilosopherTable.{Philosopher, Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import reactives.core.ScopeSearch
+import reactives.core.PlanTransactionScope
 import reactives.parrp.Backoff
 
 import scala.annotation.tailrec
@@ -37,10 +37,7 @@ class PhilosopherCompetition {
 
   def tryUpdateCycle(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
     val res = comp.stableTable.tryEat(seating)
-    if (res) seating.philosopher.set(Thinking)(
-      comp.stableTable.engine.scheduler,
-      ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
-    )
+    if (res) seating.philosopher.set(Thinking)(using comp.stableTable.engine.scheduler)
     !res
   }
 
@@ -73,8 +70,7 @@ class PhilosopherCompetition {
           thirdLock.lock()
           try {
             seating.philosopher.set(Thinking)(
-              comp.stableTable.engine.scheduler,
-              ScopeSearch.fromSchedulerImplicit(comp.stableTable.engine.scheduler)
+              using comp.stableTable.engine.scheduler,
             )
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
@@ -132,8 +128,7 @@ class Competition extends BusyThreads {
     stableTable.seatings.foreach { seat =>
       val phil: stableTable.engine.Var[Philosopher] = seat.philosopher
       phil.set(Thinking)(
-        stableTable.engine.scheduler,
-        ScopeSearch.fromSchedulerImplicit(stableTable.engine.scheduler)
+        using stableTable.engine.scheduler,
       )
     }
   }

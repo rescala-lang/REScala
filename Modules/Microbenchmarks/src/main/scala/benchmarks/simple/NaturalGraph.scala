@@ -2,7 +2,6 @@ package benchmarks.simple
 
 import benchmarks.{EngineParam, Step, Workload}
 import org.openjdk.jmh.annotations.*
-import reactives.core.ScopeSearch
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -87,6 +86,6 @@ class NaturalGraph {
   }
 
   @Benchmark
-  def run(step: Step): Unit = source.set(step.run())(scheduler, ScopeSearch.fromSchedulerImplicit(scheduler))
+  def run(step: Step): Unit = source.set(step.run())(using scheduler)
 
 }
