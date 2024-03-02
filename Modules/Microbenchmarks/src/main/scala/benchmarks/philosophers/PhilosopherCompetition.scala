@@ -37,7 +37,7 @@ class PhilosopherCompetition {
 
   def tryUpdateCycle(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
     val res = comp.stableTable.tryEat(seating)
-    if (res) seating.philosopher.set(Thinking)(using comp.stableTable.engine.global.scheduler)
+    if (res) seating.philosopher.set(Thinking)
     !res
   }
 
@@ -69,9 +69,7 @@ class PhilosopherCompetition {
         try {
           thirdLock.lock()
           try {
-            seating.philosopher.set(Thinking)(
-              using comp.stableTable.engine.global.scheduler,
-            )
+            seating.philosopher.set(Thinking)
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
@@ -127,9 +125,7 @@ class Competition extends BusyThreads {
     table.eaten.set(0)
     stableTable.seatings.foreach { seat =>
       val phil: stableTable.engine.Var[Philosopher] = seat.philosopher
-      phil.set(Thinking)(
-        using stableTable.engine.global.scheduler,
-      )
+      phil.set(Thinking)
     }
   }
 

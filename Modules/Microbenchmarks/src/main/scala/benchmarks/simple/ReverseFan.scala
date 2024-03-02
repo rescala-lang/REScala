@@ -39,7 +39,7 @@ class ReverseFan {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit =
     if (isManual) synchronized {
-      sources(params.getThreadIndex).set(step.run())(using global.scheduler)
+      sources(params.getThreadIndex).set(step.run())
     }
-    else sources(params.getThreadIndex).set(step.run())(using global.scheduler)
+    else sources(params.getThreadIndex).set(step.run())
 }
