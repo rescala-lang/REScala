@@ -48,6 +48,8 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     LocalSetting.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
+    // add random dependency for no reason except build weridness
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test,
   )
   .jsSettings(
     Dependencies.scalajsDom,
@@ -108,7 +110,6 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
       )
     }
   )
-
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
