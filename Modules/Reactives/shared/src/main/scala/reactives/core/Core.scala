@@ -107,12 +107,12 @@ trait Observation { def execute(): Unit }
 final class CreationTicket[State[_]](val scope: CreationScope[State], val info: ReInfo)
 
 object CreationTicket {
-  implicit def fromScope[State[_]](implicit scope: CreationScope[State], line: ReInfo): CreationTicket[State] =
+  given fromScope[State[_]](using scope: CreationScope[State], line: ReInfo): CreationTicket[State] =
     new CreationTicket(scope, line)
   // cases below are when one explicitly passes one of the parameters
-  implicit def fromTransaction[S[_]](tx: Transaction[S])(implicit line: ReInfo): CreationTicket[S] =
+  implicit def fromTransaction[S[_]](tx: Transaction[S])(using line: ReInfo): CreationTicket[S] =
     new CreationTicket(CreationScope.StaticCreationScope(tx), line)
-  implicit def fromName[State[_]](str: String)(implicit
+  implicit def fromName[State[_]](str: String)(using
       scopeSearch: CreationScope[State],
       info: ReInfo
   ): CreationTicket[State] =

@@ -1,6 +1,6 @@
 package reactives.macros
 
-import reactives.core.{CreationScope, Transaction, TransactionScope}
+import reactives.core.{CreationScope, Transaction, TransactionSearch}
 
 import scala.quoted.*
 
@@ -102,7 +102,7 @@ object MacroLegos {
       override def transformTerm(tree: quotes.reflect.Term)(owner: quotes.reflect.Symbol): quotes.reflect.Term = {
         tree match
           case TypeApply(Ident("dynamicTransactionScope"), ta) =>
-            Apply(TypeApply(Ident(TermRef(TypeRepr.of[TransactionScope.type], "fromTicket")), ta), List(ticket))
+            Apply(TypeApply(Ident(TermRef(TypeRepr.of[TransactionSearch.type], "fromTicket")), ta), List(ticket))
           case other =>
             super.transformTerm(tree)(owner)
       }

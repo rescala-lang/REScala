@@ -2,19 +2,19 @@ package reactives.core
 
 import reactives.operator.Interface
 
-case class TransactionScope[State[_]](static: Option[Transaction[State]])
-object TransactionScope extends LowPrioTransactionScope {
-  inline given search[State[_]](using tx: Transaction[State]): TransactionScope[State]     = static(tx)
-  inline given search[State[_]](using at: AdmissionTicket[State]): TransactionScope[State] = static(at.tx)
-  inline given Search[State[_]](using st: StaticTicket[State]): TransactionScope[State]    = static(st.tx)
+case class TransactionSearch[State[_]](static: Option[Transaction[State]])
+object TransactionSearch extends LowPrioTransactionScope {
+  inline given search[State[_]](using tx: Transaction[State]): TransactionSearch[State]     = static(tx)
+  inline given search[State[_]](using at: AdmissionTicket[State]): TransactionSearch[State] = static(at.tx)
+  inline given Search[State[_]](using st: StaticTicket[State]): TransactionSearch[State]    = static(st.tx)
 
-  def static[State[_]](transaction: Transaction[State]): TransactionScope[State] = TransactionScope(Some(transaction))
+  def static[State[_]](transaction: Transaction[State]): TransactionSearch[State] = TransactionSearch(Some(transaction))
 
   // non inline give variant for macro
-  def fromTicket[State[_]](ticket: StaticTicket[State]): TransactionScope[State] = TransactionScope(Some(ticket.tx))
+  def fromTicket[State[_]](ticket: StaticTicket[State]): TransactionSearch[State] = TransactionSearch(Some(ticket.tx))
 }
 trait LowPrioTransactionScope {
-  given dynamicTransactionScope[State[_]]: TransactionScope[State] = TransactionScope(None)
+  given dynamicTransactionScope[State[_]]: TransactionSearch[State] = TransactionSearch(None)
 }
 
 trait CreationScope[State[_]] {
@@ -45,7 +45,7 @@ object CreationScope {
     override def embedCreation[T](f: Transaction[State] => T): T = ds.dynamicTransaction(f)
   }
 
-  inline given search(using ts: TransactionScope[Interface.State]): CreationScope[Interface.State] = ts.static match
+  inline given search(using ts: TransactionSearch[Interface.State]): CreationScope[Interface.State] = ts.static match
     case None     => DynamicCreationScope(reactives.default.global.dynamicScope)
     case Some(tx) => StaticCreationScope(tx)
 }
@@ -75,7 +75,7 @@ object PlanTransactionScope {
           scheduler.forceNewTransaction(inintialWrites*)(admission)
   }
 
-  inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] =
+  inline given search(using ts: TransactionSearch[Interface.State]): PlanTransactionScope[Interface.State] =
     ts.static match
       case None     => DynamicTransactionLookup(reactives.default.global.scheduler, reactives.default.global.dynamicScope)
       case Some(tx) => StaticInTransaction(tx, reactives.default.global.scheduler)
