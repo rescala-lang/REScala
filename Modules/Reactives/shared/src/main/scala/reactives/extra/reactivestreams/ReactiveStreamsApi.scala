@@ -9,7 +9,7 @@ import reactives.structure.Pulse
 import java.util.Objects
 import scala.util.{Failure, Success}
 
-class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] {
+class RESubscriber[T](evt: Evt[T]) extends Subscriber[T] {
 
   var subscription: Subscription = scala.compiletime.uninitialized
 
@@ -18,7 +18,6 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
       Objects.requireNonNull(thrw)
       thrw match
         case ex: Exception =>
-          import fac.dynamicScope
           PlanTransactionScope.search.planTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
         case other => throw other
     }
@@ -31,7 +30,6 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
   override def onNext(value: T): Unit =
     synchronized {
       Objects.requireNonNull(value)
-      import fac.dynamicScope
       evt.fire(value)
       subscription.request(1)
     }

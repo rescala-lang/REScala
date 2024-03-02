@@ -2,7 +2,7 @@ package reactives.scheduler
 
 import reactives.core
 import reactives.core.{
-  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Tracing,
+  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Tracing,
   Transaction
 }
 
@@ -57,7 +57,7 @@ trait Twoversion {
     * @tparam Tx Transaction type used by the scheduler
     */
   trait TwoVersionScheduler[Tx <: TwoVersionTransaction]
-      extends SchedulerImpl[State, Tx] {
+      extends SchedulerWithDynamicScope[State, Tx] {
     private[reactives] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A =
       reactive.read(reactive.state.base(null))
 

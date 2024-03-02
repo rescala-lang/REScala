@@ -4,7 +4,7 @@
 package reactives.scheduler
 
 import reactives.core.{
-  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl,
+  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope,
   Transaction
 }
 
@@ -74,7 +74,7 @@ object CalculusLike {
   }
 
   object FScheduler
-      extends SchedulerImpl[State, FTransaction] {
+      extends SchedulerWithDynamicScope[State, FTransaction] {
 
     override def schedulerName: String = "FormalizationLike"
 

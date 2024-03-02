@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
 
 object SynchronizedSidup extends Sidup {
-  val scheduler: Scheduler[State] = new TwoVersionScheduler[SidupTransaction] {
+  val scheduler: TwoVersionScheduler[SidupTransaction] = new TwoVersionScheduler[SidupTransaction] {
     override protected def makeTransaction(priorTx: Option[SidupTransaction]): SidupTransaction =
       new SidupTransaction
 

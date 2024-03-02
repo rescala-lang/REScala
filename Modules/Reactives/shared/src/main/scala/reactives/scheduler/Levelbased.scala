@@ -18,14 +18,14 @@ object LevelbasedVariants extends Levelbased {
     override def beforeDynamicDependencyInteraction(dependency: ReSource): Unit = {}
   }
 
-  val unmanaged: Scheduler[State] =
+  val unmanaged: TwoVersionScheduler[SimpleNoLock] =
     new TwoVersionScheduler[SimpleNoLock] {
       override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock()
 
       override def schedulerName: String = "Unmanaged"
     }
 
-  val synchron: Scheduler[State] = new TwoVersionScheduler[SimpleNoLock] {
+  val synchron: TwoVersionScheduler[SimpleNoLock] = new TwoVersionScheduler[SimpleNoLock] {
     override protected def makeTransaction(priorTx: Option[SimpleNoLock]): SimpleNoLock = new SimpleNoLock
 
     override def schedulerName: String = "Synchron"

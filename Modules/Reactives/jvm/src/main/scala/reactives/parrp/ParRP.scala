@@ -12,7 +12,7 @@ trait ParRP extends Levelbased {
 
   override type State[V] = ParRPState[V]
 
-  def parrpWithBackoff(backOff: () => Backoff): Scheduler[State] =
+  def parrpWithBackoff(backOff: () => Backoff): TwoVersionScheduler[ParRPTransaction] =
     new TwoVersionScheduler[ParRPTransaction] {
       override protected def makeTransaction(priorTx: Option[ParRPTransaction]): ParRPTransaction =
         new ParRPTransaction(backOff(), priorTx)

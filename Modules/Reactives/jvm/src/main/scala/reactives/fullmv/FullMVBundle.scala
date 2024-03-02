@@ -1,7 +1,7 @@
 package reactives.fullmv
 
 import reactives.core
-import reactives.core.{AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, SchedulerImpl, Transaction}
+import reactives.core.{AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, SchedulerWithDynamicScope, Transaction}
 import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.*
 import reactives.fullmv.NotificationBranchResult.*
 import reactives.fullmv.mirrors.*
@@ -118,7 +118,7 @@ case class TransactionHandle(ti: FullMVTurn) extends Transaction[State] {
 }
 
 class FullMVEngine(val timeout: Duration, val schedulerName: String)
-    extends SchedulerImpl[State, TransactionHandle]
+    extends SchedulerWithDynamicScope[State, TransactionHandle]
     with FullMVTurnHost
     with HostImpl[FullMVTurn] {
 

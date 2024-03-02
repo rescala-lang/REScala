@@ -1,6 +1,5 @@
 package reactives.core
 
-import reactives.core.DynamicScope.DynamicScopeImpl
 import reactives.operator.Interface
 import reactives.structure.RExceptions
 
@@ -370,47 +369,12 @@ trait Scheduler[S[_]] {
   /** Name of the scheduler, used for helpful error messages. */
   def schedulerName: String
   override def toString: String = s"Scheduler($schedulerName)"
-
-  def dynamicScope: DynamicScope[S]
 }
 object Scheduler {
   given implicitScheduler: Scheduler[reactives.default.global.State] = reactives.default.global.scheduler
 }
 
 
-trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends Scheduler[State] {
-  override def dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
-}
 
-/** Provides the capability to look up transactions in the dynamic scope. */
-trait DynamicScope[State[_]] {
-  private[reactives] def dynamicTransaction[T](f: Transaction[State] => T): T
-  def maybeTransaction: Option[Transaction[State]]
-}
 
-object DynamicScope {
 
-  given implicitDynamicScope: DynamicScope[reactives.default.global.State] = reactives.default.global.dynamicScope
-
-  class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerImpl[State, Tx])
-      extends DynamicScope[State] {
-
-    final private[reactives] def dynamicTransaction[T](f: Transaction[State] => T): T = {
-      _currentTransaction.value match {
-        case Some(transaction) => f(transaction)
-        case None              => scheduler.forceNewTransaction(Set.empty, ticket => f(ticket.tx))
-      }
-    }
-
-    final protected val _currentTransaction: DynamicVariable[Option[Tx]] =
-      new DynamicVariable[Option[Tx]](None)
-
-    final private[reactives] def withDynamicInitializer[R](init: Tx)(thunk: => R): R =
-      _currentTransaction.withValue(Some(init))(thunk)
-
-    final override def maybeTransaction: Option[Tx] = {
-      _currentTransaction.value
-    }
-
-  }
-}

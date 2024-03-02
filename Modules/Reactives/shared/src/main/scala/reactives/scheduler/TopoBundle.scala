@@ -1,7 +1,7 @@
 package reactives.scheduler
 
 import reactives.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerImpl, Transaction
+  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Transaction
 }
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -89,7 +89,7 @@ trait TopoBundle {
 
   object TopoScheduler extends TopoSchedulerInterface
 
-  trait TopoSchedulerInterface extends SchedulerImpl[State, TopoTransaction] {
+  trait TopoSchedulerInterface extends SchedulerWithDynamicScope[State, TopoTransaction] {
 
     override def schedulerName: String = "Simple"
 
