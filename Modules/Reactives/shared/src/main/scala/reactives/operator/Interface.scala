@@ -29,7 +29,7 @@ import scala.util.DynamicVariable
 trait Interface {
 
   export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
-  export Fold.{current}
+  export Fold.current
 
   extension [T](e: Event[T]) {
     inline infix def act[S](f: FoldState[S] ?=> T => S): Fold.Branch[S] = Fold.branch { e.value.fold(current)(f) }
@@ -83,4 +83,3 @@ object Interface {
   type State[V] = default.SchedulerState[V]
   val default = reactives.generated.Scheduler.selection
 }
-
