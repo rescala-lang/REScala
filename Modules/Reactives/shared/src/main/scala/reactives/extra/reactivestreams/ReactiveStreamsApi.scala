@@ -19,7 +19,7 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
       thrw match
         case ex: Exception =>
           import fac.dynamicScope
-          PlanTransactionScope.summon.planTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
+          PlanTransactionScope.search.planTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
         case other => throw other
     }
   override def onSubscribe(s: Subscription): Unit =

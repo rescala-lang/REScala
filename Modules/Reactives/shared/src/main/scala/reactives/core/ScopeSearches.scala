@@ -1,5 +1,16 @@
 package reactives.core
 
+import reactives.operator.Interface
+
+case class TransactionScope[State[_]](static: Option[Transaction[State]])
+object TransactionScope extends LowPrioTransactionScope {
+  given static[State[_]](using tx: Transaction[State]): TransactionScope[State]  = TransactionScope(Some(tx))
+  def fromTicket[State[_]](ticket: StaticTicket[State]): TransactionScope[State] = TransactionScope(Some(ticket.tx))
+}
+trait LowPrioTransactionScope {
+  given dynamicTransactionScope[State[_]]: TransactionScope[State] = TransactionScope(None)
+}
+
 trait CreationScope[State[_]] {
   def embedCreation[T](f: Transaction[State] => T): T
 
@@ -18,6 +29,7 @@ trait CreationScope[State[_]] {
     embedCreation(_.initializer.createSource(intv)(instantiateReactive))
   }
 }
+
 object CreationScope {
 
   case class StaticCreationScope[State[_]](tx: Transaction[State]) extends CreationScope[State] {
@@ -27,15 +39,9 @@ object CreationScope {
     override def embedCreation[T](f: Transaction[State] => T): T = ds.dynamicTransaction(f)
   }
 
-  def makeDynamicIndirectionForMacroReplacement[State[_]](ds: DynamicScope[State]): DynamicCreationScope[State] =
-    new DynamicCreationScope(ds)
-  def makeFromTicket[State[_]](tick: StaticTicket[State]): StaticCreationScope[State] = new StaticCreationScope(tick.tx)
-
-  inline given search[State[_]]: CreationScope[State] = scala.compiletime.summonFrom {
-    case tx: Transaction[State]  => StaticCreationScope(tx)
-    case ds: DynamicScope[State] => makeDynamicIndirectionForMacroReplacement(ds)
-    case sched: Scheduler[State] => makeDynamicIndirectionForMacroReplacement(sched.dynamicScope)
-  }
+  inline given search(using ts: TransactionScope[Interface.State]): CreationScope[Interface.State] = ts.static match
+    case None     => DynamicCreationScope(Interface.default.dynamicScope)
+    case Some(tx) => StaticCreationScope(tx)
 }
 
 trait PlanTransactionScope[State[_]] {
@@ -64,16 +70,7 @@ object PlanTransactionScope {
           scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
   }
 
-  inline given summon[State[_]]: PlanTransactionScope[State] = scala.compiletime.summonFrom {
-    case scheduler: Scheduler[State] =>
-      scala.compiletime.summonFrom {
-        case tx: Transaction[State] =>
-          StaticInTransaction(tx, scheduler)
-        case ds: DynamicScope[State] =>
-          DynamicTransactionLookup(ds, scheduler)
-        case _ =>
-          DynamicTransactionLookup(scheduler.dynamicScope, scheduler)
-      }
-
-  }
+  inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] = ts.static match
+    case None     => DynamicTransactionLookup(Interface.default.dynamicScope, Interface.default)
+    case Some(tx) => StaticInTransaction(tx, Interface.default)
 }

@@ -16,9 +16,9 @@ class ObserveAfterCommit extends munit.FunSuite {
 
     assertEquals(v1.now, 1)
 
-    callback()
+    intercept[IllegalStateException](callback())
 
-    assertEquals(v1.now, 2)
+    assertEquals(v1.now, 1)
 
   }
 

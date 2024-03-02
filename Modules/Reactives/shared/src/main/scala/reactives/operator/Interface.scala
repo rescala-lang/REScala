@@ -43,6 +43,7 @@ trait Interface {
 
   /** @group internal */
   given implicitScheduler: Scheduler[State] = scheduler
+
   /** @group internal */
   given implicitSCope: DynamicScope[State] = scheduler.dynamicScope
 
