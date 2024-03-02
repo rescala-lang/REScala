@@ -356,16 +356,8 @@ trait Transaction[State[_]] {
     Tracing.observe(Tracing.Drop(source, sink))
   }
 }
-object Transaction {
-  inline def summon[State[_]]: Transaction[State] = scala.compiletime.summonFrom {
-    case tx: Transaction[State] => tx
-    case at: AdmissionTicket[State] => at.tx
-    case st: StaticTicket[State] => st.tx
-  }
-}
 
-/** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling.
-  */
+/** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling. */
 @implicitNotFound(msg = "Could not find an implicit scheduler. Did you forget an import?")
 trait Scheduler[S[_]] {
 
@@ -387,11 +379,9 @@ object Scheduler {
   given defaultScheduler: Scheduler[Interface.State] = Interface.default
 }
 
-
 trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends Scheduler[State] {
   override def dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
 }
-
 
 /** Provides the capability to look up transactions in the dynamic scope. */
 trait DynamicScope[State[_]] {
@@ -400,7 +390,8 @@ trait DynamicScope[State[_]] {
 }
 
 object DynamicScope {
-  class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerImpl[State, Tx]) extends DynamicScope[State] {
+  class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerImpl[State, Tx])
+      extends DynamicScope[State] {
 
     final private[reactives] def dynamicTransaction[T](f: Transaction[State] => T): T = {
       _currentTransaction.value match {

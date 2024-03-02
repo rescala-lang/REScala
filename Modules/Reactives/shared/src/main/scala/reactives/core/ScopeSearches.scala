@@ -4,7 +4,13 @@ import reactives.operator.Interface
 
 case class TransactionScope[State[_]](static: Option[Transaction[State]])
 object TransactionScope extends LowPrioTransactionScope {
-  given static[State[_]](using tx: Transaction[State]): TransactionScope[State]  = TransactionScope(Some(tx))
+  inline given search[State[_]](using tx: Transaction[State]): TransactionScope[State]     = static(tx)
+  inline given search[State[_]](using at: AdmissionTicket[State]): TransactionScope[State] = static(at.tx)
+  inline given Search[State[_]](using st: StaticTicket[State]): TransactionScope[State]    = static(st.tx)
+
+  def static[State[_]](transaction: Transaction[State]): TransactionScope[State] = TransactionScope(Some(transaction))
+
+  // non inline give variant for macro
   def fromTicket[State[_]](ticket: StaticTicket[State]): TransactionScope[State] = TransactionScope(Some(ticket.tx))
 }
 trait LowPrioTransactionScope {
@@ -50,27 +56,25 @@ trait PlanTransactionScope[State[_]] {
 
 object PlanTransactionScope {
 
-  implicit def fromScheduler[State[_]](scheduler: Scheduler[State]): DynamicTransactionLookup[State] = DynamicTransactionLookup(scheduler)
+  implicit def fromScheduler[State[_]](scheduler: Scheduler[State]): DynamicTransactionLookup[State] =
+    DynamicTransactionLookup(scheduler)
 
   case class StaticInTransaction[State[_]](tx: Transaction[State], scheduler: Scheduler[State])
       extends PlanTransactionScope[State] {
-    override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
-        : Unit =
+    override def planTransaction(inintialWrites: ReSource.of[State]*)(admission: AdmissionTicket[State] => Unit): Unit =
       tx.observe { () =>
-        scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
+        scheduler.forceNewTransaction(inintialWrites*)(admission)
       }
   }
 
-  case class DynamicTransactionLookup[State[_]](scheduler: Scheduler[State])
-      extends PlanTransactionScope[State] {
-    override def planTransaction(inintialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => Unit)
-        : Unit =
+  case class DynamicTransactionLookup[State[_]](scheduler: Scheduler[State]) extends PlanTransactionScope[State] {
+    override def planTransaction(inintialWrites: ReSource.of[State]*)(admission: AdmissionTicket[State] => Unit): Unit =
       scheduler.dynamicScope.maybeTransaction match
         case Some(tx) => tx.observe { () =>
-            scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
+            scheduler.forceNewTransaction(inintialWrites*)(admission)
           }
         case None =>
-          scheduler.forceNewTransaction(inintialWrites*)(admissionPhase)
+          scheduler.forceNewTransaction(inintialWrites*)(admission)
   }
 
   inline given search(using ts: TransactionScope[Interface.State]): PlanTransactionScope[Interface.State] =
