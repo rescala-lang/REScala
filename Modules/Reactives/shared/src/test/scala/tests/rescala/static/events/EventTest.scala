@@ -2,9 +2,9 @@ package tests.rescala.static.events
 
 import tests.rescala.testtools.RETests
 
+import reactives.default.*
+
 class EventTest extends RETests {
-  multiEngined { engine =>
-    import engine._
 
     test("handlers Are Executed") {
       var test = 0
@@ -70,5 +70,4 @@ class EventTest extends RETests {
 
     }
 
-  }
 }

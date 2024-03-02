@@ -257,9 +257,9 @@ object Event {
 
   /** Allows to call some API that requires a callback.
     * {{{
-    * val toggle = Event.fromCallback[UIEvent] {
+    * val toggle = Event.fromCallback {
     *   input(`type` := "checkbox",
-    *         onchange := Event.handle)
+    *         onchange := Event.handle[UIEvent])
     * }
     * }}}
     */

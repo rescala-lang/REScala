@@ -55,7 +55,7 @@ class WithoutAPITest extends RETests {
 
       val customSource: CustomSource[String] =
         implicitly[CreationTicket[State]]
-          .createSource("Hi!") { createdState =>
+          .scope.createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
@@ -63,7 +63,7 @@ class WithoutAPITest extends RETests {
 
       val customDerived: ReadAs.of[State, String] =
         implicitly[CreationTicket[State]]
-          .create(
+          .scope.create(
             Set(customSource),
             "Well, this is an initial value",
             needsReevaluation = false

@@ -119,7 +119,7 @@ class ReactorWithoutAPITest extends RETests {
         initialValue: T,
         dependencies: Set[ReSource.of[State]]
     )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
-      ct.create(
+      ct.scope.create(
         dependencies,
         new ReactorStage[T](initialValue, stageBuilder),
         needsReevaluation = true

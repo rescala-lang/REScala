@@ -40,7 +40,7 @@ object DeltaStateReactive {
       applyDelta: (DState, Delta) => DState,
       handlers: Seq[(DynamicTicket[BundleState], DState) => Delta]
   )(implicit name: ReInfo, creationTicket: CreationTicket[BundleState]): DeltaStateReactive[Delta, DState] =
-    creationTicket.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
+    creationTicket.scope.create(Set(deltaInput), DeltaWithState(List.empty[Delta], init), needsReevaluation = false)(state =>
       new DeltaStateReactive(state, deltaInput, applyDelta, handlers, name)
     )
 }

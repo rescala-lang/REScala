@@ -287,9 +287,7 @@ final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-final class CreationTicket[State[_]](val scope: CreationScope[State], val info: ReInfo) {
-  export scope.{create, createSource}
-}
+final class CreationTicket[State[_]](val scope: CreationScope[State], val info: ReInfo)
 
 object CreationTicket {
   implicit def fromScope[State[_]](implicit scope: CreationScope[State], line: ReInfo): CreationTicket[State] =
