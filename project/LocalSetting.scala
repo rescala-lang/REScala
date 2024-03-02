@@ -14,7 +14,6 @@ object LocalSetting {
     )
   }
 
-  // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
   val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.12.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
