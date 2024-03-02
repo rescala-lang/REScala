@@ -3,7 +3,7 @@ package reactives.extra
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, document}
-import reactives.core.{CreationTicket, Disconnectable, DynamicScope, Scheduler, Tracing}
+import reactives.core.{CreationTicket, Disconnectable, DynamicScope, PlanTransactionScope, Scheduler, Tracing}
 import reactives.operator.Interface
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
@@ -48,7 +48,7 @@ class Tags(val addDebuggingIds: Boolean) {
     }
 
   extension (input: Input)
-    def inputEntered(using creationTicket: CreationTicket[State], scheduler: Scheduler[State]): Event[String] = {
+    def inputEntered(using creationTicket: CreationTicket[State], scheduler: PlanTransactionScope[State]): Event[String] = {
       val handler: Event.CBR[KeyboardEvent, Unit] = Event.fromCallback(input.onkeyup = Event.handle(_))
 
       handler.event

@@ -108,7 +108,7 @@ trait TopoBundle {
           try {
             val creation    = new TopoInitializer(afterCommitObservers)
             val transaction = TopoTransaction(creation)
-            withDynamicInitializer(transaction) {
+            dynamicScope.withDynamicInitializer(transaction) {
               // admission
               val admissionTicket: AdmissionTicket[State] = new AdmissionTicket[State](transaction, initialWrites)
               val admissionResult                         = admissionPhase(admissionTicket)

@@ -149,7 +149,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
   ): R = {
     val turn        = newTurn()
     val transaction = TransactionHandle(turn)
-    withDynamicInitializer(transaction) {
+    dynamicScope.withDynamicInitializer(transaction) {
       if (declaredWrites.nonEmpty) {
         // framing phase
         turn.beginFraming()

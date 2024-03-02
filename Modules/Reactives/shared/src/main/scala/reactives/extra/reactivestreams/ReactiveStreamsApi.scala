@@ -1,7 +1,7 @@
 package reactives.extra.reactivestreams
 
 import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
-import reactives.core.{Base, Derived, ReInfo, ReadAs, Scheduler}
+import reactives.core.{Base, Derived, DynamicScope, PlanTransactionScope, ReInfo, ReadAs, Scheduler}
 import reactives.operator.*
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
@@ -17,7 +17,9 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
     synchronized {
       Objects.requireNonNull(thrw)
       thrw match
-        case ex: Exception => fac.forceNewTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
+        case ex: Exception =>
+          import fac.dynamicScope
+          PlanTransactionScope.summon.planTransaction(evt) { implicit turn => evt.admitPulse(Pulse.Exceptional(ex)) }
         case other => throw other
     }
   override def onSubscribe(s: Subscription): Unit =
@@ -29,6 +31,7 @@ class RESubscriber[T](evt: Evt[T], fac: Scheduler[State]) extends Subscriber[T] 
   override def onNext(value: T): Unit =
     synchronized {
       Objects.requireNonNull(value)
+      import fac.dynamicScope
       evt.fire(value)
       subscription.request(1)
     }

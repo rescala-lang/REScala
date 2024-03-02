@@ -100,7 +100,7 @@ object CalculusLike {
         try {
           println(s"\nexecuting turn from $initialWrites")
           val transaction = FTransaction(new SimpleCreation())
-          withDynamicInitializer(transaction) {
+          dynamicScope.withDynamicInitializer(transaction) {
             // admission
             val admissionTicket = new AdmissionTicket[State](transaction, initialWrites)
 

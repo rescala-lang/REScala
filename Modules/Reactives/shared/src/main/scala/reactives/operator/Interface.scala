@@ -1,8 +1,10 @@
 package reactives.operator
 
-import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, ReSource, Scheduler, Transaction}
+import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScope, ReSource, Scheduler, Transaction}
 import reactives.scheduler.LevelbasedVariants
 import reactives.operator.Interface.State
+
+import scala.util.DynamicVariable
 
 /** Rescala has two main abstractions. [[Event]] and [[Signal]] commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -40,7 +42,9 @@ trait Interface {
   val scheduler: Scheduler[State]
 
   /** @group internal */
-  implicit def implicitScheduler: Scheduler[State] = scheduler
+  given implicitScheduler: Scheduler[State] = scheduler
+  /** @group internal */
+  given implicitSCope: DynamicScope[State] = scheduler.dynamicScope
 
   override def toString: String = s"Api»${scheduler.schedulerName}«"
 
@@ -85,23 +89,3 @@ object Interface {
   val default = reactives.generated.Scheduler.selection
 }
 
-object Test {
-
-  import reactives.default.*
-
-  def wantsTicket(implicit
-      ct: CreationTicket[State],
-      ct2: CreationTicket[State]
-  ): (Boolean, Boolean, Boolean) = {
-    (
-      ct.scope == ct2.scope,
-      ct.scope.isInstanceOf[CreationScope.StaticCreationScope[State]],
-      ct2.scope.isInstanceOf[CreationScope.StaticCreationScope[State]]
-    )
-  }
-
-  val s = Signal {
-    val x = 1 + 1
-    wantsTicket
-  }
-}

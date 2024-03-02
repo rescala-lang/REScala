@@ -272,7 +272,7 @@ object Event {
   opaque type Accepts[T] = Evt[T]
 
   /** The callback available within `fromCallback` */
-  def handle[T](using cbt: Accepts[T], scheduler: Scheduler[State])(v: T): Unit = cbt.fire(v)
+  def handle[T](using cbt: Accepts[T], scope: PlanTransactionScope[State])(v: T): Unit = cbt.fire(v)
 
 }
 

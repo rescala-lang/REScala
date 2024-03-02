@@ -1,6 +1,6 @@
 package reactives.core
 import reactives.core.ReSource.of
-import reactives.operator.Signal
+import reactives.operator.{Signal}
 
 trait CreationScope[State[_]] {
   def embedCreation[T](f: Transaction[State] => T): T
@@ -36,6 +36,7 @@ object CreationScope {
   inline given search[State[_]]: CreationScope[State] = scala.compiletime.summonFrom {
     case tx: Transaction[State]  => StaticCreationScope(tx)
     case ds: DynamicScope[State] => makeDynamicIndirectionForMacroReplacement(ds)
+    case sched: Scheduler[State] => makeDynamicIndirectionForMacroReplacement(sched.dynamicScope)
   }
 }
 
@@ -72,6 +73,8 @@ object PlanTransactionScope {
           StaticInTransaction(tx, scheduler)
         case ds: DynamicScope[State] =>
           DynamicTransactionLookup(ds, scheduler)
+        case _ =>
+          DynamicTransactionLookup(scheduler.dynamicScope, scheduler)
       }
 
   }

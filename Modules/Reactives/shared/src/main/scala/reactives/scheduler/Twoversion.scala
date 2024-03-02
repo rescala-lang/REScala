@@ -82,7 +82,7 @@ trait Twoversion {
         initialWrites: Set[ReSource.of[State]],
         admissionPhase: AdmissionTicket[State] => R
     ): R = {
-      val tx = makeTransaction(_currentTransaction.value)
+      val tx = makeTransaction(dynamicScope.maybeTransaction)
 
       val txhash                    = tx.hashCode()
       def tracePhase(phase: String) = Tracing.observe(Tracing.Transaction(txhash, phase))
@@ -92,7 +92,7 @@ trait Twoversion {
         try {
           tracePhase("preparation")
           tx.preparationPhase(initialWrites)
-          val result = withDynamicInitializer(tx) {
+          val result = dynamicScope.withDynamicInitializer(tx) {
             tracePhase("admission")
             val admissionTicket = tx.makeAdmissionPhaseTicket(initialWrites)
             val admissionResult = admissionPhase(admissionTicket)
