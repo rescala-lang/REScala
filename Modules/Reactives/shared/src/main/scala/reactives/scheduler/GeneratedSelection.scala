@@ -1,1 +1,1 @@
-package reactives.generated { object Scheduler { val selection = reactives.scheduler.LevelbasedVariants.synchron } }
+package reactives.scheduler { object GeneratedSelection { inline val selection: "levelled" = "levelled"} }
