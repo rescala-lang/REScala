@@ -10,7 +10,7 @@ trait GlobalCandidate[S[_]] {
 
 object GlobalCandidate {
 
-  inline val selection: "toposort" = "toposort"
+  inline val selection: "levelled" = "levelled"
 
   transparent inline def select: GlobalCandidate[?] =
     inline selection match
