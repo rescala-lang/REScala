@@ -164,7 +164,7 @@ object Signal {
   def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
       ct: CreationTicket[State]
   ): Signal[T] = {
-    ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
+    ct.scope.create[Pulse[T], SignalImpl[T] & Signal[T]](
       dependencies.toSet,
       Pulse.empty(ct.info),
       needsReevaluation = true
@@ -178,7 +178,7 @@ object Signal {
       ct: CreationTicket[State]
   ): Signal[T] = {
     val staticDeps = dependencies.toSet
-    ct.create[Pulse[T], SignalImpl[T] & Signal[T]](
+    ct.scope.create[Pulse[T], SignalImpl[T] & Signal[T]](
       staticDeps,
       Pulse.empty(ct.info),
       needsReevaluation = true
@@ -189,30 +189,20 @@ object Signal {
 
   /** converts a future to a signal */
   def fromFuture[A](fut: Future[A])(implicit
-      scheduler: Scheduler[State],
+      creationScope: CreationScope[State],
+      planScope: PlanTransactionScope[State],
       ec: ExecutionContext,
       name: ReInfo
   ): Signal[A] = {
     val creationTicket =
-      new CreationTicket[State](ScopeSearch.fromSchedulerImplicit(scheduler), name.derive("fromFuture"))
+      new CreationTicket[State](creationScope, name.derive("fromFuture"))
     fut.value match {
       case Some(Success(value)) =>
         Var(value)(creationTicket)
       case _ =>
         val v: Var[A] = Var.empty[A](creationTicket)
         fut.onComplete { res =>
-          def execTx() =
-            scheduler.forceNewTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
-          // The code below handles the extremely rare case, that the future completes within the currently running transaction.
-          // As far as I can tell, that can only happen if the passed execution context executes the onComplete handler immediately.
-          // There are contexts that do so for efficiency reasons.
-          scheduler.maybeTransaction match {
-            case None => execTx()
-            case Some(tx) =>
-              tx.observe(new Observation {
-                override def execute(): Unit = execTx()
-              })
-          }
+          planScope.planTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
         }
         v
     }

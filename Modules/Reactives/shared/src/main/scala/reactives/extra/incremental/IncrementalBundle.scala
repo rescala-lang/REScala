@@ -108,7 +108,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     // The new created Source will be a FilterDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
     // FilterDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
     // Each time a change on ReactiveDeltaSeq occurs, if it passes the filterOperation, it is automatically added to FilterDeltaSeq
-    ticket.create[Delta[T], FilterDeltaSeq[T]](Set(this), Delta.noChange, needsReevaluation = false) {
+    ticket.scope.create[Delta[T], FilterDeltaSeq[T]](Set(this), Delta.noChange, needsReevaluation = false) {
       state => new FilterDeltaSeq[T](this, filterOperation)(state, ticket.info) with DisconnectableImpl
     }
   }
@@ -126,7 +126,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     // The new created Source will be a MapDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
     // MapDeltaSeq depends on this (ReactiveDeltaSeq). It is initialized as an empty sequence.
     // Each time a change on ReactiveDeltaSeq occurs, it is mapped and automatically added to MapDeltaSeq
-    ticket.create[Delta[A], MapDeltaSeq[T, A]](Set(this), Delta.noChange, needsReevaluation = false) {
+    ticket.scope.create[Delta[A], MapDeltaSeq[T, A]](Set(this), Delta.noChange, needsReevaluation = false) {
       state => new MapDeltaSeq[T, A](this, mapOperation)(state, ticket.info) with DisconnectableImpl
     }
   }
@@ -143,7 +143,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     // The new created Source will be a ConcatenateDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
     // ConcatenateDeltaSeq depends on this (ReactiveDeltaSeq) and the one being concatenated (that). It is initialized as an empty sequence.
     // Each time a change on this or that occurs, it is automatically added to ConcatenateDeltaSeq
-    ticket.create[Delta[T], ConcatenateDeltaSeq[T]](
+    ticket.scope.create[Delta[T], ConcatenateDeltaSeq[T]](
       Set(this, that),
       Delta.noChange,
       needsReevaluation = false
@@ -472,7 +472,7 @@ object IncSeq {
   def empty[T](implicit ticket: CreationTicket[State]): IncSeq[T] = fromDelta(Delta.noChange[T])
 
   private def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[State]): IncSeq[T] =
-    ticket.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
+    ticket.scope.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
       _,
       ticket.info
     ))

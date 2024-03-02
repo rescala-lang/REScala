@@ -137,7 +137,7 @@ import reactives.operator.Interface.State
     private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit
         ct: CreationTicket[State]
     ): Reactor[T] = {
-      ct.create(
+      ct.scope.create(
         Set(),
         new ReactorState[T](initialValue, initialStage),
         needsReevaluation = true

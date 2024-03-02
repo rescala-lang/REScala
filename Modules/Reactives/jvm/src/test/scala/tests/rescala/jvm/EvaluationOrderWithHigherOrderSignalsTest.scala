@@ -21,7 +21,7 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
       val x  = Var(initialX)
       val x4 = x.map(identity).map(identity).map(identity).map(identity)
 
-      val ho                         = Var(x: Signal[String])(scheduler)
+      val ho                         = Var(x: Signal[String])
       var reevaluationRestartTracker = List.empty[String]
       val flatten = Signal.dynamic {
         val res = ho.value.value

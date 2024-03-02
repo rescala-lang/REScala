@@ -286,33 +286,18 @@ final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites
 
 /** Enables the creation of other reactives */
 @implicitNotFound(msg = "Could not find capability to create reactives. Maybe a missing import?")
-final class CreationTicket[State[_]](val scope: ScopeSearch[State], val info: ReInfo) {
-
-  private[reactives] def create[V, T <: Derived.of[State]](
-      incoming: Set[ReSource.of[State]],
-      initValue: V,
-      needsReevaluation: Boolean
-  )(instantiateReactive: State[V] => T): T = {
-    scope.embedTransaction { tx =>
-      val init: Initializer[State] = tx.initializer
-      init.create(incoming, initValue, needsReevaluation)(instantiateReactive)
-    }
-  }
-  private[reactives] def createSource[V, T <: ReSource.of[State]](intv: V)(instantiateReactive: State[V] => T): T = {
-    scope.embedTransaction(_.initializer.createSource(intv)(instantiateReactive))
-  }
+final class CreationTicket[State[_]](val scope: CreationScope[State], val info: ReInfo) {
+  export scope.{create, createSource}
 }
 
 object CreationTicket {
-  implicit def fromScope[State[_]](implicit scope: ScopeSearch[State], line: ReInfo): CreationTicket[State] =
+  implicit def fromScope[State[_]](implicit scope: CreationScope[State], line: ReInfo): CreationTicket[State] =
     new CreationTicket(scope, line)
   // cases below are when one explicitly passes one of the parameters
-  implicit def fromExplicitDynamicScope[S[_]](factory: DynamicScope[S])(implicit line: ReInfo): CreationTicket[S] =
-    new CreationTicket[S](new ScopeSearch(Right(factory)) { type State[V] = S[V] }, line)
   implicit def fromTransaction[S[_]](tx: Transaction[S])(implicit line: ReInfo): CreationTicket[S] =
-    new CreationTicket(new ScopeSearch[S](Left(tx)), line)
+    new CreationTicket(CreationScope.StaticCreationScope(tx), line)
   implicit def fromName[State[_]](str: String)(implicit
-      scopeSearch: ScopeSearch[State],
+      scopeSearch: CreationScope[State],
       info: ReInfo
   ): CreationTicket[State] =
     new CreationTicket(scopeSearch, info.derive(str))
@@ -372,6 +357,13 @@ trait Transaction[State[_]] {
     Tracing.observe(Tracing.Drop(source, sink))
   }
 }
+object Transaction {
+  inline def summon[State[_]]: Transaction[State] = scala.compiletime.summonFrom {
+    case tx: Transaction[State] => tx
+    case at: AdmissionTicket[State] => at.tx
+    case st: StaticTicket[State] => st.tx
+  }
+}
 
 /** Scheduler that defines the basic data-types available to the user and creates turns for propagation handling.
   * Note: This should NOT extend [[DynamicScope]], but did so in the past and there are too many tests that assume so ...
@@ -420,42 +412,4 @@ trait SchedulerImpl[State[_], Tx <: Transaction[State]] extends DynamicScope[Sta
   final override def maybeTransaction: Option[Transaction[State]] = {
     _currentTransaction.value
   }
-}
-
-case class ScopeSearch[State[_]](self: Either[Transaction[State], DynamicScope[State]]) {
-
-  /** Either just use the statically found transaction,
-    * or do a lookup in the dynamic scope.
-    * If the lookup fails, it will start a new transaction.
-    */
-  def embedTransaction[T](f: Transaction[State] => T): T =
-    self match {
-      case Left(integrated) => f(integrated)
-      case Right(ds)        => ds.dynamicTransaction(dt => f(dt))
-    }
-
-  def maybeTransaction: Option[Transaction[State]] = self match {
-    case Left(integrated) => Some(integrated)
-    case Right(ds)        => ds.maybeTransaction
-  }
-
-}
-
-/** As reactives can be created during propagation, any Ticket can be converted to a creation ticket. */
-object ScopeSearch extends LowPriorityScopeImplicits {
-
-  implicit def fromTicketImplicit[S[_]](implicit ticket: StaticTicket[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(ticket.tx))
-  implicit def fromAdmissionImplicit[S[_]](implicit ticket: AdmissionTicket[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(ticket.tx))
-  implicit def fromTransactionImplicit[S[_]](implicit tx: Transaction[S]): ScopeSearch[S] =
-    new ScopeSearch(Left(tx))
-}
-
-/** If no Fitting Ticket is found, then these implicits will search for a [[DynamicScope]],
-  * creating the reactives outside of any turn.
-  */
-sealed trait LowPriorityScopeImplicits {
-  implicit def fromSchedulerImplicit[S[_]](implicit factory: DynamicScope[S]): ScopeSearch[S] =
-    new ScopeSearch(Right(factory))
 }

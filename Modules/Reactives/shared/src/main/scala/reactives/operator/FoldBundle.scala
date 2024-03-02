@@ -44,7 +44,7 @@ object Fold {
       }
       curr
 
-    ticket.create(
+    ticket.scope.create(
       staticDeps,
       Pulse.tryCatch[T](Pulse.Value(init)),
       needsReevaluation = !isStatic

@@ -1,6 +1,6 @@
 package tests.rescala.static.signals
 
-import reactives.core.CreationTicket
+import reactives.core.{CreationScope, CreationTicket}
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests {
@@ -205,7 +205,11 @@ class SignalMacro extends RETests {
           ct: CreationTicket[BundleState],
           ct2: CreationTicket[BundleState]
       ): (Boolean, Boolean, Boolean) = {
-        (ct.scope == ct2.scope, ct.scope.self.isLeft, ct2.scope.self.isLeft)
+        (
+          ct.scope == ct2.scope,
+          ct.scope.isInstanceOf[CreationScope.StaticCreationScope[BundleState]],
+          ct2.scope.isInstanceOf[CreationScope.StaticCreationScope[BundleState]]
+        )
       }
 
       val s = Signal { wantsTicket }

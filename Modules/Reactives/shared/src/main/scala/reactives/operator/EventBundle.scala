@@ -170,7 +170,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def toggle[A](a: Signal[A], b: Signal[A])(implicit ticket: CreationTicket[State]): Signal[A] =
-    ticket.scope.embedTransaction { ict =>
+    ticket.scope.embedCreation { ict =>
       val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
       Signal.dynamic(using ict) { if switched.value then b.value else a.value }
     }
@@ -285,7 +285,7 @@ object Events {
   )(expr: StaticTicket[State] => Pulse[T])(implicit
       ticket: CreationTicket[State]
   ): Event[T] = {
-    ticket.create[Pulse[T], EventImpl[T] & Event[T]](
+    ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
       dependencies.toSet,
       Pulse.NoChange,
       needsReevaluation = false
@@ -305,7 +305,7 @@ object Events {
       ticket: CreationTicket[State]
   ): Event[T] = {
     val staticDeps = dependencies.toSet
-    ticket.create[Pulse[T], EventImpl[T] & Event[T]](
+    ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
       staticDeps,
       Pulse.NoChange,
       needsReevaluation = true
@@ -317,7 +317,7 @@ object Events {
 
   /** Creates change events */
   def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
-    ticket.scope.embedTransaction { tx =>
+    ticket.scope.embedCreation { tx =>
       val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]
       & Event[Diff[T]]](
         Set[ReSource.of[State]](signal),
