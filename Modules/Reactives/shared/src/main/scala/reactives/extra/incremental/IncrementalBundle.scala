@@ -26,7 +26,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @return
     */
   def asEvent(implicit ticket: CreationTicket[State]): Event[Delta[T]] = {
-    Events.static(this) { staticTicket =>
+    Event.Impl.static(this) { staticTicket =>
       // each time a change occurs it is represented by a Delta
       // the staticTicket gets this Delta and the Event representing the ReactiveDeltaSeq will fire the Delta
       val delta = staticTicket.collectStatic(this)

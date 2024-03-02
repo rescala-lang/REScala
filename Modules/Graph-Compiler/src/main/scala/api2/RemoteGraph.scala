@@ -3,7 +3,6 @@ package api2
 import reactives.default.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import reactives.core.ReSource
-import reactives.operator.Events
 import reactives.default.global.State as BundleState
 
 trait RemoteGraph {
@@ -18,7 +17,7 @@ trait RemoteGraphWithInput[IN <: Tuple: EventTupleUtils](using JsonValueCodec[Op
 
   def startObserving(): Unit = {
     val dependencies = events.toList.map(_.asInstanceOf[ReSource.of[BundleState]])
-    val grouped = Events.static(dependencies*) { t =>
+    val grouped = Event.Impl.static(dependencies*) { t =>
       Some(summon[EventTupleUtils[IN]].staticAccesses(events, t))
     }
 

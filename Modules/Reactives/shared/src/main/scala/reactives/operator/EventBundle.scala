@@ -75,7 +75,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def recover[R >: T](onFailure: PartialFunction[Exception, Option[R]])(implicit
       ticket: CreationTicket[State]
   ): Event[R] =
-    Events.staticNamed(s"(recover $this)", this) { st =>
+    Event.Impl.staticNamed(s"(recover $this)", this) { st =>
       st.collectStatic(this) match {
         case Exceptional(t) =>
           onFailure.applyOrElse[Exception, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
@@ -89,7 +89,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket[State]): Event[U] = {
-    Events.staticNamed(s"(or $this $other)", this, other) { st =>
+    Event.Impl.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.collectStatic(this)
       if (tp.isChange) tp else st.collectStatic(other)
     }
@@ -99,7 +99,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final infix def except(exception: Event[Any])(implicit ticket: CreationTicket[State]): Event[T] = {
-    Events.staticNamed(s"(except $this  $exception)", this, exception) { st =>
+    Event.Impl.staticNamed(s"(except $this  $exception)", this, exception) { st =>
       st.collectStatic(exception) match {
         case NoChange            => st.collectStatic(this)
         case Value(_)            => Pulse.NoChange
@@ -245,13 +245,13 @@ object Event {
   inline def static[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
     val (sources, fun, isStatic) =
       reactives.macros.MacroLegos.getDependencies[Option[T], ReSource.of[State], StaticTicket[State], true](expr)
-    Events.static(sources*)(fun)
+    Event.Impl.static(sources*)(fun)
   }
 
   inline def dynamic[T](inline expr: Option[T])(using ct: CreationTicket[State]): Event[T] = {
     val (sources, fun, isStatic) =
       reactives.macros.MacroLegos.getDependencies[Option[T], ReSource.of[State], DynamicTicket[State], false](expr)
-    Events.dynamic(sources*)(fun)
+    Event.Impl.dynamic(sources*)(fun)
   }
 
   /** Allows to call some API that requires a callback.
@@ -273,59 +273,58 @@ object Event {
   /** The callback available within `fromCallback` */
   def handle[T](using cbt: Accepts[T], scope: PlanTransactionScope[State])(v: T): Unit = cbt.fire(v)
 
-}
+  object Impl {
 
-object Events {
-
-  /** the basic method to create static events */
-  def staticNamed[T](
-      name: String,
-      dependencies: ReSource.of[State]*
-  )(expr: StaticTicket[State] => Pulse[T])(implicit
-      ticket: CreationTicket[State]
-  ): Event[T] = {
-    ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
-      dependencies.toSet,
-      Pulse.NoChange,
-      needsReevaluation = false
-    ) {
-      state => new EventImpl(state, expr, ticket.info.derive(name), None) with Event[T]
-    }
-  }
-
-  /** Creates static events */
-  def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
-      ticket: CreationTicket[State]
-  ): Event[T] =
-    staticNamed(ticket.info.description, dependencies*)(st => Pulse.fromOption(expr(st)))
-
-  /** Creates dynamic events */
-  def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
-      ticket: CreationTicket[State]
-  ): Event[T] = {
-    val staticDeps = dependencies.toSet
-    ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
-      staticDeps,
-      Pulse.NoChange,
-      needsReevaluation = true
-    ) {
-      state =>
-        new EventImpl(state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps)) with Event[T]
-    }
-  }
-
-  /** Creates change events */
-  def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
-    ticket.scope.embedCreation { tx =>
-      val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]
-      & Event[Diff[T]]](
-        Set[ReSource.of[State]](signal),
-        (Pulse.NoChange, Pulse.NoChange),
-        needsReevaluation = true
-      ) { state =>
-        new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]]
+    /** the basic method to create static events */
+    def staticNamed[T](
+        name: String,
+        dependencies: ReSource.of[State]*
+    )(expr: StaticTicket[State] => Pulse[T])(implicit
+        ticket: CreationTicket[State]
+    ): Event[T] = {
+      ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
+        dependencies.toSet,
+        Pulse.NoChange,
+        needsReevaluation = false
+      ) {
+        state => new EventImpl(state, expr, ticket.info.derive(name), None) with Event[T]
       }
-      static(internal)(st => st.dependStatic(internal))(tx)
     }
 
+    /** Creates static events */
+    def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => Option[T])(implicit
+        ticket: CreationTicket[State]
+    ): Event[T] =
+      staticNamed(ticket.info.description, dependencies*)(st => Pulse.fromOption(expr(st)))
+
+    /** Creates dynamic events */
+    def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => Option[T])(implicit
+        ticket: CreationTicket[State]
+    ): Event[T] = {
+      val staticDeps = dependencies.toSet
+      ticket.scope.create[Pulse[T], EventImpl[T] & Event[T]](
+        staticDeps,
+        Pulse.NoChange,
+        needsReevaluation = true
+      ) {
+        state =>
+          new EventImpl(state, expr.andThen(Pulse.fromOption), ticket.info, Some(staticDeps)) with Event[T]
+      }
+    }
+
+    /** Creates change events */
+    def change[T](signal: Signal[T])(implicit ticket: CreationTicket[State]): Event[Diff[T]] =
+      ticket.scope.embedCreation { tx =>
+        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]
+        & Event[Diff[T]]](
+          Set[ReSource.of[State]](signal),
+          (Pulse.NoChange, Pulse.NoChange),
+          needsReevaluation = true
+        ) { state =>
+          new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]]
+        }
+        static(internal)(st => st.dependStatic(internal))(tx)
+      }
+
+  }
 }

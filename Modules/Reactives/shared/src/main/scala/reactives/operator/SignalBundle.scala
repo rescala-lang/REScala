@@ -110,7 +110,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     *
     * @group conversion
     */
-  final def change(implicit ticket: CreationTicket[State]): Event[Diff[T]] = Events.change(this)(ticket)
+  final def change(implicit ticket: CreationTicket[State]): Event[Diff[T]] = Event.Impl.change(this)(ticket)
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
@@ -118,7 +118,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     * @group conversion
     */
   final def changed(implicit ticket: CreationTicket[State]): Event[T] =
-    Events.staticNamed(s"(changed $this)", this) { st =>
+    Event.Impl.staticNamed(s"(changed $this)", this) { st =>
       st.collectStatic(this) match {
         case Pulse.empty(info) => Pulse.NoChange
         case other             => other
