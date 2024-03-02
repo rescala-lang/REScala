@@ -46,12 +46,12 @@ object Settings {
     )
   }
 
-  // seems generally unobstrusive (just add some explicit ()) and otherwise helpful
+  // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
   def valueDiscard(conf: TaskKey[?]*) = conf.map { c =>
     c / scalacOptions += "-Wvalue-discard"
   }
 
-  // can be annoying with methods that have optional results, can also help with methods that have non optional resuts …
+  // can be annoying with methods that have optional results, can also help with methods that have non optional results …
   def nonunitStatement(conf: TaskKey[?]*) = conf.map { c =>
     c / scalacOptions += "-Wnonunit-statement"
   }
