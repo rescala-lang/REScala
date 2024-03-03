@@ -19,10 +19,10 @@ class DottedTest extends munit.FunSuite {
     assert(added.data.status == AuctionInterface.Open)
     assert(added.data.winner == None)
 
-    val closed = added merge added.close()
-    assert(closed.data.bids == Set(Bid("First", 1)))
-    assert(closed.data.status == AuctionInterface.Closed)
-    assert(closed.data.winner == Some("First"))
+    val knockedDown = added merge added.knockDown()
+    assert(knockedDown.data.bids == Set(Bid("First", 1)))
+    assert(knockedDown.data.status == AuctionInterface.Closed)
+    assert(knockedDown.data.winner == Some("First"))
   }
 
   test("AuctionData can be in DeltaBuffer") {
@@ -37,10 +37,10 @@ class DottedTest extends munit.FunSuite {
     assert(added.state.status == AuctionInterface.Open)
     assert(added.state.winner == None)
 
-    val closed = added.close()
-    assert(closed.state.bids == Set(Bid("First", 1)))
-    assert(closed.state.status == AuctionInterface.Closed)
-    assert(closed.state.winner == Some("First"))
+    val knockedDown = added.knockDown()
+    assert(knockedDown.state.bids == Set(Bid("First", 1)))
+    assert(knockedDown.state.status == AuctionInterface.Closed)
+    assert(knockedDown.state.winner == Some("First"))
   }
 
   test("Dotted[AuctionData] can be in DeltaBuffer") {
@@ -55,10 +55,10 @@ class DottedTest extends munit.FunSuite {
     assert(added.state.data.status == AuctionInterface.Open)
     assert(added.state.data.winner == None)
 
-    val closed = added.close()
-    assert(closed.state.data.bids == Set(Bid("First", 1)))
-    assert(closed.state.data.status == AuctionInterface.Closed)
-    assert(closed.state.data.winner == Some("First"))
+    val knockedDown = added.knockDown()
+    assert(knockedDown.state.data.bids == Set(Bid("First", 1)))
+    assert(knockedDown.state.data.status == AuctionInterface.Closed)
+    assert(knockedDown.state.data.winner == Some("First"))
   }
 
   test("AuctionData can be in DeltaBufferContainer") {
@@ -73,10 +73,10 @@ class DottedTest extends munit.FunSuite {
     assert(added.result.state.status == AuctionInterface.Open)
     assert(added.result.state.winner == None)
 
-    val closed = added.close()
-    assert(closed.result.state.bids == Set(Bid("First", 1)))
-    assert(closed.result.state.status == AuctionInterface.Closed)
-    assert(closed.result.state.winner == Some("First"))
+    val knockedDown = added.knockDown()
+    assert(knockedDown.result.state.bids == Set(Bid("First", 1)))
+    assert(knockedDown.result.state.status == AuctionInterface.Closed)
+    assert(knockedDown.result.state.winner == Some("First"))
   }
 
   test("Dotted[AuctionData] can be in DeltaBufferContainer") {
@@ -91,10 +91,10 @@ class DottedTest extends munit.FunSuite {
     assert(added.result.state.data.status == AuctionInterface.Open)
     assert(added.result.state.data.winner == None)
 
-    val closed = added.close()
-    assert(closed.result.state.data.bids == Set(Bid("First", 1)))
-    assert(closed.result.state.data.status == AuctionInterface.Closed)
-    assert(closed.result.state.data.winner == Some("First"))
+    val knockedDown = added.knockDown()
+    assert(knockedDown.result.state.data.bids == Set(Bid("First", 1)))
+    assert(knockedDown.result.state.data.status == AuctionInterface.Closed)
+    assert(knockedDown.result.state.data.winner == Some("First"))
   }
 
 }

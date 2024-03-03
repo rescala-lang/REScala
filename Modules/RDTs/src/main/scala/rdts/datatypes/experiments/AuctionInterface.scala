@@ -73,7 +73,7 @@ object AuctionInterface {
       def bid(userId: User, price: Int): Mutator =
         AuctionData(bids = Set(Bid(userId, price))).mutator
 
-      def close()(using IsMutator): C = AuctionData(status = Closed).mutator
+      def knockDown()(using IsMutator): C = AuctionData(status = Closed).mutator
 
     }
 

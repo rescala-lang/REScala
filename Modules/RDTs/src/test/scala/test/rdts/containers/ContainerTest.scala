@@ -186,16 +186,16 @@ class ContainerTest extends munit.FunSuite {
 
     val added: AuctionData = auction merge added_delta
 
-    val closed_delta: AuctionData = added.close()
-    assertEquals(closed_delta.bids, Set.empty)
-    assertEquals(closed_delta.status, AuctionInterface.Closed)
-    assertEquals(closed_delta.winner, None)
+    val knockedDown_delta: AuctionData = added.knockDown()
+    assertEquals(knockedDown_delta.bids, Set.empty)
+    assertEquals(knockedDown_delta.status, AuctionInterface.Closed)
+    assertEquals(knockedDown_delta.winner, None)
 
-    val closed: AuctionData = added merge closed_delta
+    val knockedDown: AuctionData = added merge knockedDown_delta
 
-    assertEquals(closed.bids, Set(Bid("First", 1)))
-    assertEquals(closed.status, AuctionInterface.Closed)
-    assertEquals(closed.winner, Some("First"))
+    assertEquals(knockedDown.bids, Set(Bid("First", 1)))
+    assertEquals(knockedDown.status, AuctionInterface.Closed)
+    assertEquals(knockedDown.winner, Some("First"))
   }
 
   test("Dotted can contain plain AuctionData") {
@@ -210,10 +210,10 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added.data.status, AuctionInterface.Open)
     assertEquals(added.data.winner, None)
 
-    val closed = added merge added.close()
-    assertEquals(closed.data.bids, Set(Bid("First", 1)))
-    assertEquals(closed.data.status, AuctionInterface.Closed)
-    assertEquals(closed.data.winner, Some("First"))
+    val knockedDown = added merge added.knockDown()
+    assertEquals(knockedDown.data.bids, Set(Bid("First", 1)))
+    assertEquals(knockedDown.data.status, AuctionInterface.Closed)
+    assertEquals(knockedDown.data.winner, Some("First"))
   }
 
   test("Dotted DeltaBuffer can contain plain AuctionData") {
@@ -228,10 +228,10 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added.state.status, AuctionInterface.Open)
     assertEquals(added.state.winner, None)
 
-    val closed = added.close()
-    assertEquals(closed.state.bids, Set(Bid("First", 1)))
-    assertEquals(closed.state.status, AuctionInterface.Closed)
-    assertEquals(closed.state.winner, Some("First"))
+    val knockedDown = added.knockDown()
+    assertEquals(knockedDown.state.bids, Set(Bid("First", 1)))
+    assertEquals(knockedDown.state.status, AuctionInterface.Closed)
+    assertEquals(knockedDown.state.winner, Some("First"))
   }
 
   test("Dotted DeltaBuffer can contain plain AuctionData") {
@@ -246,10 +246,10 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added.state.data.status, AuctionInterface.Open)
     assertEquals(added.state.data.winner, None)
 
-    val closed = added.close()
-    assertEquals(closed.state.data.bids, Set(Bid("First", 1)))
-    assertEquals(closed.state.data.status, AuctionInterface.Closed)
-    assertEquals(closed.state.data.winner, Some("First"))
+    val knockedDown = added.knockDown()
+    assertEquals(knockedDown.state.data.bids, Set(Bid("First", 1)))
+    assertEquals(knockedDown.state.data.status, AuctionInterface.Closed)
+    assertEquals(knockedDown.state.data.winner, Some("First"))
   }
 
   test("Dotted DeltaBufferContainer can contain plain AuctionData") {
@@ -264,7 +264,7 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.result.state.data.status, AuctionInterface.Open)
     assertEquals(auction.result.state.data.winner, None)
 
-    auction.close()
+    auction.knockDown()
     assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
     assertEquals(auction.result.state.data.status, AuctionInterface.Closed)
     assertEquals(auction.result.state.data.winner, Some("First"))

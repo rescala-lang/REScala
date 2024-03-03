@@ -49,7 +49,7 @@ object RubisInterface {
       val (_, _, m) = current
       val newMap =
         if (m.contains(auctionId)) {
-          m.updatedWith(auctionId) { _.map(a => a.close()) }
+          m.updatedWith(auctionId) { _.map(a => a.knockDown()) }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
       deltaState.make(auctions = newMap).mutator
