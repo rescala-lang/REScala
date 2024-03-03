@@ -4,14 +4,11 @@ import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{DeltaBuffer, ReplicaId}
-import loci.registry.Binding
-import loci.serializer.jsoniterScala.given
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
 import reactives.default.*
 import reactives.extra.Tags.*
-import reactives.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import todo.Codecs.given
@@ -66,13 +63,6 @@ object TaskReferences {
     TaskReferences.taskrefObj = taskrefs
     taskrefs
   }
-
-  val taskBinding = Binding[DeltaFor[LastWriterWins[Option[TaskData]]] => Unit]("todo task")
-  val taskReplicator =
-    given Bottom[LastWriterWins[Option[TaskData]]] with {
-      override def empty: LastWriterWins[Option[TaskData]] = null
-    }
-    ReplicationGroup(reactives.default, Todolist.registry, taskBinding)
 }
 
 class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
@@ -112,17 +102,18 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Dotted[LastWriterWins[Option[TaskData]]]]()
+
+    val remoteUpdates = GlobalRegistry.subscribeBranch[LastWriterWins[Option[TaskData]]](taskID)
 
     val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Fold(init)(
         doneEv act { _ => current.clearDeltas().map(_.toggle()) },
         edittextStr act { v => current.clearDeltas().map(_.edit(v)) },
-        deltaEvt act { delta => current.clearDeltas().applyDelta(delta) }
+        remoteUpdates
       )
     }(using Codecs.codecLww)
 
-    TaskReferences.taskReplicator.distributeDeltaRDT(taskID, crdt, deltaEvt)
+    GlobalRegistry.publish(taskID, crdt)
 
     val taskData =
       crdt.map(x => x.read.getOrElse(TaskData(desc = "LWW Empty")))

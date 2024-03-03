@@ -167,14 +167,12 @@ lazy val examples = project.in(file("Modules/Example Misc 2015"))
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rdts.js, reactives.js)
+  .dependsOn(rdts.js, reactives.js, channels.js)
   .settings(
     scala3defaults,
     noPublish,
     resolverJitpack,
     Dependencies.scalatags,
-    Dependencies.loci.webrtc,
-    Dependencies.loci.jsoniterScala,
     Dependencies.jsoniterScala,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value

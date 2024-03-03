@@ -1,6 +1,5 @@
 package todo
 
-import loci.registry.Registry
 import org.scalajs.dom.{document, window}
 import rdts.base.Uid
 
@@ -9,8 +8,6 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 object Todolist {
 
   val replicaId: Uid = Uid.gen()
-
-  val registry = new Registry
 
   @JSExportTopLevel("Todolist")
   def run(): Unit = main(Array.empty[String])
@@ -23,10 +20,10 @@ object Todolist {
     val todoApp = new TodoAppUI(storagePrefix)
     val div     = todoApp.getContents()
 
-    val webrtc = WebRTCHandling(registry)
+    val webrtc = Example.example()
 
     document.body.replaceChild(div, document.body.firstElementChild)
-    document.body.appendChild(webrtc.webrtcHandlingArea.render)
+    document.body.appendChild(webrtc.render)
     ()
   }
 

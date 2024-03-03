@@ -1,13 +1,11 @@
 package todo
 
 import rdts.datatypes.contextual.ReplicatedList
-import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLDivElement, KeyboardEvent, UIEvent, document, window}
 import reactives.default.*
 import reactives.extra.Tags.*
-import reactives.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
@@ -16,15 +14,12 @@ import todo.Codecs.given
 import todo.Todolist.replicaId
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
-import loci.serializer.jsoniterScala.given
 import reactives.structure.Pulse
 
 import scala.annotation.targetName
 
 class TodoAppUI(val storagePrefix: String) {
 
-  val tasklistBinding    = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
-  val tasklistReplicator = new ReplicationGroup(reactives.default, Todolist.registry, tasklistBinding)
 
   def getContents(): Div = {
 
@@ -53,7 +48,7 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs, replicaId)
 
-    val deltaEvt = Evt[Dotted[ReplicatedList[TaskRef]]]()
+    val deltaEvt = GlobalRegistry.subscribe[ReplicatedList[TaskRef]]("tasklist")
 
     val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
       Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
@@ -67,7 +62,7 @@ class TodoAppUI(val storagePrefix: String) {
         )
       }
 
-    tasklistReplicator.distributeDeltaRDT("tasklist", tasksRDT, deltaEvt)
+    GlobalRegistry.publish("tasklist", tasksRDT)
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =

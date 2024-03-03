@@ -8,8 +8,6 @@ import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import rdts.time.Dot
-import loci.transmitter.IdenticallyTransmittable
-import reactives.extra.replication.DeltaFor
 
 object Codecs {
 
@@ -43,14 +41,11 @@ object Codecs {
         DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))
     }
 
-  implicit val transmittableList: IdenticallyTransmittable[DeltaFor[ReplicatedList[TaskRef]]] =
-    IdenticallyTransmittable()
-  implicit val codectDeltaForTasklist: JsonValueCodec[DeltaFor[ReplicatedList[TaskRef]]] = JsonCodecMaker.make
+  implicit val codectDeltaForTasklist: JsonValueCodec[ReplicatedList[TaskRef]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  implicit val codecDeltaForLWW: JsonValueCodec[DeltaFor[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecDeltaForLWW: JsonValueCodec[LastWriterWins[Option[TaskData]]] = JsonCodecMaker.make
+  implicit val codecDottedLWW: JsonValueCodec[Dotted[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
 
-  implicit val transmittableDeltaForLWW: IdenticallyTransmittable[DeltaFor[LastWriterWins[Option[TaskData]]]] =
-    IdenticallyTransmittable()
 
   implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
 

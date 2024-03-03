@@ -10,8 +10,8 @@ import scala.math.Ordering.Implicits.infixOrderingOps
 
 /** A LastWriterWins (register) is a common fallback for datatypes that don’t have good merge semantics.
   *
-  * Concurrent writes are resolved by wallclock time first (favouring replicas with clock drift into the future),
-  * and by replica ID, in case both writes happened in the same millisecond.
+  * Concurrent writes are resolved by a causality preserving clock based on milliseconds, using a random value as a tie breaker.
+  * The random values are non-fair, so a specific replica is more likely to win.
   */
 case class LastWriterWins[+A](timestamp: CausalTime, payload: A)
 
