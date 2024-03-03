@@ -15,14 +15,14 @@ object RExceptions {
     }
   }
 
-  def toExternalReadException[R](r: Any, f: => R): R = {
+  def toExternalReadException[R](r: ReSource, f: => R): R = {
     try { f }
     catch {
       case esct: EmptySignalControlThrowable =>
         // TODO: there is a API to add a cause to the exception, but only in JDK 15 …
-        throw new java.util.NoSuchElementException(s"$r is empty (propagated from ${esct.info}")
+        throw new java.util.NoSuchElementException(s"${r.info} is empty (propagated from ${esct.info}")
       // todo improve error message
-      case other: Throwable => throw ObservedException(r, "was accessed but contained an exception", other)
+      case other: Throwable => throw ObservedException(r.info, "was accessed but contained an exception", other)
     }
   }
 
