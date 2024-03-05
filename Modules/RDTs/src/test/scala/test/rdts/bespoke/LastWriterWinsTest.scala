@@ -35,4 +35,17 @@ class LastWriterWinsTest extends munit.FunSuite {
     assertEquals(merged.read, "Hello Distributed World")
   }
 
+  test("newer Bottom does not overwrite an earlier initial value") {
+    import LastWriterWins.given
+
+    val lww1 = LastWriterWins.now("Hello Distributed World")
+    val lww2 = Bottom[LastWriterWins[String]].empty
+
+    assertNotEquals(lww1.timestamp, lww2.timestamp)
+
+    val merged = lww1 merge lww2
+
+    assertEquals(merged.read, "Hello Distributed World")
+  }
+
 }

@@ -28,7 +28,7 @@ case class LastWriterWins[+A](timestamp: CausalTime, payload: A) {
 
 object LastWriterWins {
 
-  def empty[A: Bottom]: LastWriterWins[A] = now(Bottom.empty)
+  def empty[A: Bottom]: LastWriterWins[A] = LastWriterWins(Bottom[CausalTime].empty, Bottom[A].empty)
 
   def fallback[A](v: A): LastWriterWins[A] =
     LastWriterWins(rdts.time.CausalTime(Long.MinValue, 0, CausalTime.countedTime()), v)
