@@ -159,7 +159,6 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     Dependencies.loci.webrtc,
     Dependencies.loci.jsoniterScala,
     Dependencies.jsoniterScala,
-    jsAcceptUnfairGlobalTasks,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value
       val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
@@ -178,10 +177,9 @@ lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rescala.js)
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     Dependencies.scalatags,
-    jsAcceptUnfairGlobalTasks,
     TaskKey[File]("deploy", "generates a correct index.template.html for the unitconversion app") := {
       val fastlink = (Compile / fastLinkJS).value
       val jspath = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
