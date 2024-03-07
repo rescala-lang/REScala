@@ -78,9 +78,9 @@ object ChatApp {
       }
 
     //Network.replicate(history, registry)(Binding("history"))
-    CrdtConnector.initializeObj().flatMap(_ => {
+    CrdtConnector.initializeObj().map(_ => {
       CrdtConnector.connectGraph(history)
-      CrdtConnector.startReceiving()  // waiting on this future would be infinite
+      CrdtConnector.startReceiving()
     })
 
     val chatDisplay = Signal.dynamic {

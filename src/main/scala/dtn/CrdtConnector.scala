@@ -37,7 +37,8 @@ object CrdtConnector {
         dst = cRDTGroupEndpoint,
         bytes = payload
       )
-      ws.get.sendBundle(bundle)
+      println("start sending")
+      ws.get.sendBundle(bundle).onComplete(_ => println("finished sending"))
     })
 
     // push received updates into the crdt
@@ -60,10 +61,13 @@ object CrdtConnector {
     }
   }
 
-  def startReceiving(): Future[Unit] = {
+  def startReceiving(): Unit = {
+    println("start receiving")
     // update crdt on signals received through the dtn network
-    ws.get.receiveBundle().flatMap(bundle => {
-      onChangedUpdateFunc(bundle.getDataAsBytes)
+    ws.get.receiveBundle().onComplete(bundle => {
+      println("got a bundle")
+      onChangedUpdateFunc(bundle.get.getDataAsBytes)
+      println("pushed into CRDT")
       startReceiving()
     })
   }
