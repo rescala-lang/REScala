@@ -14,13 +14,13 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var sources: Array[Var[Int]]     = _
-  var results: Array[Signal[Int]]  = _
-  var dynamics: Array[Signal[Int]] = _
+  var sources: Array[Var[Int]]     = scala.compiletime.uninitialized
+  var results: Array[Signal[Int]]  = scala.compiletime.uninitialized
+  var dynamics: Array[Signal[Int]] = scala.compiletime.uninitialized
   var isManual: Boolean            = false
 
   @Setup(Level.Iteration)

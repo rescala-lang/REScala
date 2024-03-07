@@ -1,40 +1,49 @@
 package tests.rescala
 
-import org.scalajs.dom.{Element, Node}
+import org.scalajs.dom
 import org.scalajs.dom.html.Span
+import org.scalajs.dom.{Element, Node}
 import rescala.extra.Tags
-import scalatags.JsDom.all._
 import scalatags.JsDom.TypedTag
+import scalatags.JsDom.all.*
+import scalatags.generic.StylePair
 import tests.rescala.testtools.RETests
+
+import scala.util.chaining.scalaUtilChainingOps
 
 class RescalatagsTest extends RETests {
   multiEngined { engine =>
     val te = new Tags(engine, addDebuggingIds = false)
-    import te._
-    import te.api._
+    import te.api.*
+    import te.{*, given}
 
     test("put var into dom") {
-      val v              = Var.empty[TypedTag[Element]]
-      val rendered: Node = div(v.asModifier).render
+
+      val v        = Var.empty[Element]
+      val rendered = div().render.reattach(v)
       assert(rendered.textContent === "", "empty var gives empty frag")
 
-      val outer  = div(v.asModifier)
-      val outerR = outer.render
+      assert(rendered.innerHTML === "", "empty var into dom is empty")
 
-      assert(outerR.innerHTML === "", "empty var into dom is empty")
+      v.set(span("hallo welt").render)
+      assert(rendered.innerHTML === "<span>hallo welt</span>", "setting var changes rendered outer tag")
 
-      v.set(span("hallo welt"))
-      assert(outerR.innerHTML === "<span>hallo welt</span>", "setting var changes rendered outer tag")
+      v.set(div("hallo div").render)
+      assert(rendered.innerHTML === "<div>hallo div</div>", "resetting var changes rendered outer tag")
 
-      v.set(div("hallo div"))
-      assert(outerR.innerHTML === "<div>hallo div</div>", "resetting var changes rendered outer tag")
+    }
 
+    given RangeSplice[Modifier] with {
+      override def splice(range: dom.Range, value: Modifier): Unit =
+        val parent = range.commonAncestorContainer
+        parent match
+          case elem: dom.Element => value.applyTo(elem)
     }
 
     test("put style into dom") {
       val v: Var[String] = Var.empty[String]
 
-      val ourTag: Span = span(backgroundColor := v).render
+      val ourTag: Span = span.render.reattach(v.map(backgroundColor := _))
 
       assert(ourTag.style.getPropertyValue(backgroundColor.cssName) === "", "empty color does not render")
 
@@ -48,7 +57,7 @@ class RescalatagsTest extends RETests {
     test("put attribute into dom") {
       val v = Var.empty[String]
 
-      val ourTag = a(href := v).render
+      val ourTag = a().render.reattach(v.map(href := _))
 
       assert(ourTag.outerHTML === a.render.outerHTML, "empty href does not render")
 
@@ -62,30 +71,29 @@ class RescalatagsTest extends RETests {
 
     test("work with multiple childern") {
 
-      val v = Var(Seq(span("hey"), span("ho")))
+      val v     = Var(Seq(span("hey"), span("ho")))
+      def vrend = v.map(_.map(_.render))
 
-      val outer                  = div(v.asModifierL)
-      val outerR                 = outer.render
-      val outerWithOtherChildren = div(span("before"), v.asModifierL, span("after"))
-      val oR                     = outerWithOtherChildren.render
+      val outerR                 = div().render.reattach(vrend)
+      val outerWithOtherChildren = div(span("before")).render.reattach(vrend).tap(_.append(span("after").render))
 
       assert(outerR.innerHTML === "<span>hey</span><span>ho</span>", "render fragments")
       assert(
-        oR.innerHTML === "<span>before</span><span>hey</span><span>ho</span><span>after</span>",
+        outerWithOtherChildren.innerHTML === "<span>before</span><span>hey</span><span>ho</span><span>after</span>",
         "render fragments2"
       )
 
       v.set(Seq(span("hallo welt")))
       assert(outerR.innerHTML === "<span>hallo welt</span>", "setting to less elements works")
       assert(
-        oR.innerHTML === "<span>before</span><span>hallo welt</span><span>after</span>",
+        outerWithOtherChildren.innerHTML === "<span>before</span><span>hallo welt</span><span>after</span>",
         "setting to less elements works2"
       )
 
       v.set(Seq(span("hey2"), span("ho2")))
       assert(outerR.innerHTML === "<span>hey2</span><span>ho2</span>", "increasing works")
       assert(
-        oR.innerHTML === "<span>before</span><span>hey2</span><span>ho2</span><span>after</span>",
+        outerWithOtherChildren.innerHTML === "<span>before</span><span>hey2</span><span>ho2</span><span>after</span>",
         "increasing works2"
       )
 

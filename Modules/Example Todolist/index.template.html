@@ -21,13 +21,19 @@
 
 		<script type="text/javascript" src="JSPATH"></script>
 		<script type="text/javascript">
-			window.reScalaEvents = []
+			window.reScalaEvents = [];
 			window.reScalaId = Math.random();
+			window.domAssocations = new Map();
+
 			DebugAdapter.setListener(data => {
-				console.log(data);
-				//window.reScalaEvents.push(JSON.parse(data));
-			})
-			Todolist()
+				if (data.type === 'DomAssociation') {
+					window.domAssocations.set(JSON.parse(data.reSource).idCounter, data.node);
+				} else if (typeof data === 'string') {
+					window.reScalaEvents.push(JSON.parse(data));
+				}
+			});
+
+			Todolist();
 		</script>
 
 	</body>

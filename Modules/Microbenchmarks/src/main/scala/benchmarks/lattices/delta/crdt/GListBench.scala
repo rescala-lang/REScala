@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit
 class GListBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var listSize: Int = _
+  var listSize: Int = scala.compiletime.uninitialized
 
-  var list: NamedDeltaBuffer[GrowOnlyList[Int]] = _
+  var list: NamedDeltaBuffer[GrowOnlyList[Int]] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

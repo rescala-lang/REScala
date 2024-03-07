@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit
 class ArrayContextBench {
 
   @Param(Array("1", "1000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
-  var rep1Set: ArrayRanges        = _
-  var rep1SetPlusOne: ArrayRanges = _
-  var rep2Set: ArrayRanges        = _
-  var rep1single: ArrayRanges     = _
+  var rep1Set: ArrayRanges        = scala.compiletime.uninitialized
+  var rep1SetPlusOne: ArrayRanges = scala.compiletime.uninitialized
+  var rep2Set: ArrayRanges        = scala.compiletime.uninitialized
+  var rep1single: ArrayRanges     = scala.compiletime.uninitialized
 
   private def makeRep(mul: Int, off: Int, len: Int): ArrayRanges = {
     val ranges = Range(0, size).map(i => Range(i * mul + off, i * mul + len + off))

@@ -20,12 +20,12 @@ import java.util.concurrent.TimeUnit
 class CausalQueueBench {
 
   @Param(Array("100", "1000", "10000", "100000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
   @Param(Array("10000"))
-  var operations: Int = _
+  var operations: Int = scala.compiletime.uninitialized
 
-  var lca: Dotted[CausalQueue[Int]] = _
+  var lca: Dotted[CausalQueue[Int]] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {
@@ -62,12 +62,12 @@ class CausalQueueBench {
 class CausalQueueBenchWithRGA {
 
   @Param(Array("100", "1000", "10000", "100000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
   @Param(Array("10000"))
-  var operations: Int = _
+  var operations: Int = scala.compiletime.uninitialized
 
-  var lca: RGA[Int] = _
+  var lca: RGA[Int] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

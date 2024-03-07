@@ -18,13 +18,13 @@ import java.util.concurrent.TimeUnit
 class SizeBenchmarkWithInsert {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
-  var arg: Int = _
+  var arg: Int = scala.compiletime.uninitialized
 
-  var addEvent: Evt[Int]     = _
-  var sizeOfSeq: Signal[Int] = _
+  var addEvent: Evt[Int]     = scala.compiletime.uninitialized
+  var sizeOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]    = _
-  var sizeOfReactSeq: Signal[Int] = _
+  var reactSeq: SeqSource[Int]    = scala.compiletime.uninitialized
+  var sizeOfReactSeq: Signal[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
   def prepare(): Unit = {

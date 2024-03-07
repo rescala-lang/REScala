@@ -3,8 +3,8 @@ package test.kofre.baseproperties
 import kofre.base.Uid
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.datatypes.experiments.CausalStore
-import kofre.dotted.{DotFun, DotSet, Dotted, HasDots}
-import kofre.time.{ArrayRanges, Dots, VectorClock}
+import kofre.dotted.{Dotted, HasDots}
+import kofre.time.{ArrayRanges, Dots, VectorClock, Dot}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import test.kofre.DataGenerator.{*, given}
@@ -13,8 +13,8 @@ import test.kofre.DataGenerator.RGAGen.given
 import scala.collection.immutable.Queue
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-class DotSetHDChecks         extends HasDotsChecks[DotSet]
-class CausalStoreHDChecks    extends HasDotsChecks[CausalStore[DotFun[ExampleData]]]
+class DotSetHDChecks         extends HasDotsChecks[Dots]
+class CausalStoreHDChecks    extends HasDotsChecks[CausalStore[Map[Dot, ExampleData]]]
 class ReplicatedListHDChecks extends HasDotsChecks[ReplicatedList[ExampleData]]
 
 // the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
@@ -37,8 +37,7 @@ abstract class HasDotsChecks[A: Arbitrary: HasDots] extends munit.ScalaCheckSuit
     forAll: (a: A) =>
       a.removeDots(a.dots) match
         case Some(value) => assertEquals(value.dots, Dots.empty)
-        case None => // good
-
+        case None        => // good
   }
 
 }

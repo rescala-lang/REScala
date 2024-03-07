@@ -15,16 +15,16 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Benchmark)
 class SignalMapGrid extends BusyThreads {
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var source: Var[Int]        = _
-  var leafs: Seq[Signal[Int]] = _
+  var source: Var[Int]        = scala.compiletime.uninitialized
+  var leafs: Seq[Signal[Int]] = scala.compiletime.uninitialized
   @Param(Array("1", "4", "16"))
-  var width: Int = _
+  var width: Int = scala.compiletime.uninitialized
   @Param(Array("1", "4", "16"))
-  var depth: Int = _
+  var depth: Int = scala.compiletime.uninitialized
 
   @Setup(Level.Iteration)
   def setup(engineParam: EngineParam, work: Workload) = {

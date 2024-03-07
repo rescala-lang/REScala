@@ -1,11 +1,11 @@
 package encrdtlib.lattices
 
 import kofre.base.{Lattice, Uid}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 
 case class AddWinsMapLattice[K, V](
-    keys: Dotted[AddWinsSet[K]] = Dotted(AddWinsSet.empty[K]),
+    keys: Dotted[ReplicatedSet[K]] = Dotted(ReplicatedSet.empty[K]),
     mappings: Map[K, V] = Map[K, V]()
 ) {
   def values: Map[K, V] = mappings

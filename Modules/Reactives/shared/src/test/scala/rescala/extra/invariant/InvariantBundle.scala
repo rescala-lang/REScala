@@ -60,12 +60,12 @@ trait InvariantBundle extends TopoBundle {
 
   class InvariantState[V](value: V) extends TopoState[V](value) {
     var invariants: Seq[Invariant[V]] = Seq.empty
-    var gen: Gen[_]                   = _
+    var gen: Gen[?]                   = scala.compiletime.uninitialized
   }
 
   class InvariantInitializer(afterCommitObservers: ListBuffer[Observation])
       extends TopoInitializer(afterCommitObservers) {
-    override protected[this] def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
+    override protected def makeDerivedStructState[V](ip: V): InvariantState[V] = new InvariantState[V](ip)
   }
 
   object InvariantScheduler extends TopoSchedulerInterface {
@@ -92,7 +92,7 @@ trait InvariantBundle extends TopoBundle {
           customForAll(
             findGenerators(),
             changes => {
-              forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2))): _*)
+              forceValues(changes.map(pair => (pair._1, Pulse.Value(pair._2)))*)
               true
             }
           )

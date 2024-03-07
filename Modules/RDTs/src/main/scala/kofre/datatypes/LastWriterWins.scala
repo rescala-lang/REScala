@@ -1,6 +1,7 @@
 package kofre.datatypes
 
-import kofre.base.{Bottom, Lattice}
+import kofre.base.{Bottom, Lattice, Orderings}
+import kofre.datatypes.contextual.MultiVersionRegister
 import kofre.dotted.HasDots
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.CausalTime
@@ -25,7 +26,16 @@ object LastWriterWins {
 
   given hasDots[A]: HasDots[LastWriterWins[A]] = HasDots.noDots
 
-  given lattice[A]: Lattice[LastWriterWins[A]] with {
+  given lattice[A]: Lattice[LastWriterWins[A]] =
+    given Ordering[A] = MultiVersionRegister.assertEqualsOrdering
+    Lattice.fromOrdering(using Orderings.lexicographic)
+
+  inline def generalizedLattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom {
+    case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)
+    case _                        => GenericLastWriterWinsLattice(MultiVersionRegister.assertEqualsLattice)
+  }
+
+  class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] {
     override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp
 
     override def decompose(state: LastWriterWins[A]): Iterable[LastWriterWins[A]] = List(state)
@@ -33,8 +43,8 @@ object LastWriterWins {
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
       CausalTime.ordering.compare(left.timestamp, right.timestamp) match
         case 0 =>
-          assert(left.payload == right.payload, s"LWW same timestamp, different value: »$left«, »$right«")
-          left
+          val newPayload = conflict.merge(left.payload, right.payload)
+          LastWriterWins(left.timestamp, newPayload)
         case x if x < 0 => right
         case x if x > 0 => left
   }
@@ -48,12 +58,12 @@ object LastWriterWins {
   implicit class syntax[C, A](container: C)
       extends OpsSyntaxHelper[C, LastWriterWins[A]](container) {
 
-    def read(using PermQuery): A = current.payload
+    def read(using IsQuery): A = current.payload
 
-    def write(v: A): Mutate =
+    def write(v: A): Mutator =
       LastWriterWins(current.timestamp.advance, v).mutator
 
-    def map[B](using PermMutate)(using ev: A =:= Option[B])(f: B => B): C =
+    def map[B](using IsMutator)(using ev: A =:= Option[B])(f: B => B): C =
       read.map(f) match {
         case None => container
         case res  => write(ev.flip(res))

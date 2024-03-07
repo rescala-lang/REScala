@@ -22,7 +22,7 @@ abstract class DerivedImpl[S[_], T](
     if (newPulse.isChange) rein2.withValue(newPulse) else rein2
   }
 
-  protected[this] def computePulse(rein: ReevTicket[S, Pulse[T]]): Pulse[T]
+  protected def computePulse(rein: ReevTicket[S, Pulse[T]]): Pulse[T]
 }
 
 /** @param isDynamicWithStaticDeps None means static dependencies only,
@@ -35,7 +35,7 @@ abstract class SignalImpl[S[_], T](
     isDynamicWithStaticDeps: Option[Set[ReSource.of[S]]]
 ) extends DerivedImpl[S, T](initial, name, isDynamicWithStaticDeps) {
 
-  protected[this] def computePulse(rein: ReevTicket[S, Pulse[T]]): Pulse[T] = {
+  protected def computePulse(rein: ReevTicket[S, Pulse[T]]): Pulse[T] = {
     Pulse.tryCatch(Pulse.diffPulse(expr(rein, () => rein.before.get), rein.before))
   }
 }
@@ -52,6 +52,6 @@ class EventImpl[State[_], T](
 
   def internalAccess(v: Pulse[T]): Pulse[T] = v
 
-  override protected[this] def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] =
+  override protected def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] =
     Pulse.tryCatch(expr(rein), onEmpty = NoChange)
 }

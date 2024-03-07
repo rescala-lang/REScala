@@ -13,11 +13,11 @@ import scala.swing.event.Key
 
 class TextArea extends ReComponent {
   object localPeer extends Component with ComponentMixin {
-    override lazy val peer: JScrollableComponent with SuperMixin = new JScrollableComponent with SuperMixin
+    override lazy val peer: JScrollableComponent & SuperMixin = new JScrollableComponent with SuperMixin
   }
   override protected lazy val peer: localPeer.type = localPeer
 
-  protected def stringWidth = peer.peer.metrics.stringWidth _
+  protected def stringWidth = peer.peer.metrics.stringWidth
   protected def lineHeight  = peer.peer.unitHeight
 
   protected val padding   = 5
@@ -34,7 +34,7 @@ class TextArea extends ReComponent {
     def it = LineIterator(buffer.iterable.value)
     new Dimension(2 * padding + it.map(stringWidth(_)).max, (it.size + 1) * lineHeight)
   }
-  preferredSize.using(() => peer.preferredSize, peer.preferredSize_= _, "preferredSize")
+  preferredSize.using(() => peer.preferredSize, peer.preferredSize_=, "preferredSize")
 
   val charCount = Signal { buffer.length.value }
 

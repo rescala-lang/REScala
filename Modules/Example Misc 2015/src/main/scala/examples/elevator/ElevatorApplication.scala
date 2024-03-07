@@ -19,7 +19,7 @@ object ElevatorApplication extends SimpleSwingApplication {
     super.main(args)
     while (true) {
       Swing onEDTWait { elevator.tick.fire() }
-      Thread sleep 50
+      Thread `sleep` 50
     }
   }
 }

@@ -11,7 +11,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 trait SubsumableLockBundle extends FullMVBundle {
-  selfType: Mirror with TurnImplBundle with TaskBundle with FullMvStateBundle with SubsumableLockBundle =>
+  selfType: Mirror & TurnImplBundle & TaskBundle & FullMvStateBundle & SubsumableLockBundle =>
 
   class SubsumableLockHostImpl extends SubsumableLockHost with HostImpl[SubsumableLock] {
     override val dummy = new SubsumableLockImpl(this, Host.dummyGuid)

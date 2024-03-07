@@ -17,12 +17,12 @@ class SimplePhil {
 
   import benchmarks.philosophers.PhilosopherTable._
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var phil: Var[Philosopher] = _
-  var vision: Signal[Vision] = _
+  var phil: Var[Philosopher] = scala.compiletime.uninitialized
+  var vision: Signal[Vision] = scala.compiletime.uninitialized
 
   def buildPhil(): (Var[Philosopher], Signal[Vision]) = {
     val p: Var[Philosopher] = Var(Thinking)

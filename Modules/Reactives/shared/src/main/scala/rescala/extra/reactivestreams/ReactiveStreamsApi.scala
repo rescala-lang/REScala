@@ -13,7 +13,7 @@ class ReactiveStreamsApi(val api: Interface) {
 
   class RESubscriber[T](evt: Evt[T], fac: Scheduler[BundleState]) extends Subscriber[T] {
 
-    var subscription: Subscription = _
+    var subscription: Subscription = scala.compiletime.uninitialized
 
     override def onError(thrw: Throwable): Unit =
       synchronized {
@@ -36,7 +36,7 @@ class ReactiveStreamsApi(val api: Interface) {
 
   class REPublisher[T](dependency: ReadAs.of[BundleState, Pulse[T]], fac: Scheduler[BundleState]) extends Publisher[T] {
 
-    override def subscribe(s: Subscriber[_ >: T]): Unit = {
+    override def subscribe(s: Subscriber[? >: T]): Unit = {
       val sub = REPublisher.subscription(dependency, s, fac)
       s.onSubscribe(sub)
     }
@@ -46,7 +46,7 @@ class ReactiveStreamsApi(val api: Interface) {
   class SubscriptionReactive[T](
       bud: BundleState[Pulse[T]],
       dependency: ReadAs.of[BundleState, Pulse[T]],
-      subscriber: Subscriber[_ >: T],
+      subscriber: Subscriber[? >: T],
       name: ReInfo
   ) extends Base[BundleState, Pulse[T]](bud, name)
       with Derived
@@ -106,7 +106,7 @@ class ReactiveStreamsApi(val api: Interface) {
 
     def subscription[T](
         dependency: ReadAs.of[BundleState, Pulse[T]],
-        subscriber: Subscriber[_ >: T],
+        subscriber: Subscriber[? >: T],
         fac: Scheduler[BundleState]
     ): SubscriptionReactive[T] = {
       fac.forceNewTransaction() { ticket =>

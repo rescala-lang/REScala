@@ -15,8 +15,8 @@ class MultiVersionRegisterTest extends munit.FunSuite {
 
     val a = Dotted(MultiVersionRegister.empty[String])
 
-    val alice = Uid.predefined("alice")
-    val bob = Uid.predefined("bob")
+    val alice   = Uid.predefined("alice")
+    val bob     = Uid.predefined("bob")
     val charlie = Uid.predefined("charlie")
 
     val b = a.write(using alice)("hi")

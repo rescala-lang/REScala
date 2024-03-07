@@ -65,7 +65,7 @@ class Elevator(val nFloors: Int) {
   stoppedWaiting observe { _ =>
     queue.dequeue(); ()
   } // move to the next destination
-  callToFloor observe { queue enqueue _ }
+  callToFloor observe { queue `enqueue` _ }
   // enqueue a new floor
 
   // debugging

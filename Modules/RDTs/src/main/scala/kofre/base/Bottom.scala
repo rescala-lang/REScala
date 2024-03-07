@@ -1,6 +1,6 @@
 package kofre.base
 
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.time.Dots
 
 import scala.collection.immutable.Queue
@@ -13,24 +13,27 @@ import scala.compiletime.{summonAll, summonInline}
   *
   * That is:
   * ```scala
-  * Lattice.merge(empty, x) == x
+  * Lattice.merge(empty, x) == Lattice.normalize(x)
   * ```
   */
 @FunctionalInterface
 trait Bottom[A] {
   def empty: A
 
-  /** Tests if the state is an identity of [[merge]], i.e., forall `a` with `isEmpty(a)` we require that `a merge b == b`.
+  /** Tests if the state is an identity of [[Lattice.merge]], i.e., forall `a` with `isEmpty(a)` we require that `a merge b == b`.
     * See [[Bottom]] for cases when an empty element can be generated.
     */
   extension (value: A) def isEmpty: Boolean = value == empty
 }
 
 object Bottom {
+  def provide[A](v: A) = new Bottom[A]:
+    override val empty: A = v
+
   def empty[A](using bottom: Bottom[A]): A         = bottom.empty
   def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
 
-  private[this] object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
+  private object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
     override def empty: Map[Nothing, Nothing]                              = Map.empty
     extension (value: Map[Nothing, Nothing]) override def isEmpty: Boolean = value.isEmpty
   }
@@ -41,7 +44,7 @@ object Bottom {
     extension (value: Option[V]) override def isEmpty: Boolean = value.isEmpty
   }
 
-  private[this] object setBottomInstance extends Bottom[Set[Nothing]] {
+  private object setBottomInstance extends Bottom[Set[Nothing]] {
     override val empty: Set[Nothing]                              = Set.empty
     extension (value: Set[Nothing]) override def isEmpty: Boolean = value.isEmpty
 
@@ -54,9 +57,6 @@ object Bottom {
 
   }
 
-  given dotMap[K, V]: Bottom[DotMap[K, V]]   = Bottom.derived
-  given dotFun[V]: Bottom[DotFun[V]]         = Bottom.derived
-  given dotSet[K, V]: Bottom[DotSet]         = Bottom.derived
   given dots: Bottom[Dots]                   = Bottom.derived
   given dotted[A: Bottom]: Bottom[Dotted[A]] = Bottom.derived
 
@@ -83,9 +83,9 @@ object Bottom {
 
     class ProductBottom[T](pm: Mirror.ProductOf[T], bottoms: Tuple) extends Bottom[T] {
       override def empty: T =
-        type Unbottom[A] = A match { case Bottom[b] => b }
         pm.fromProduct(
-          bottoms.map([β] => (b: β) => (b match { case b: Bottom[_] => b.empty }): Unbottom[β])
+          Tuple.fromArray:
+            bottoms.toArray.map[AnyRef](_.asInstanceOf[Bottom[AnyRef]].empty)
         )
       extension (value: T)
         override def isEmpty: Boolean =

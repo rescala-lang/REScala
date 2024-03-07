@@ -5,7 +5,7 @@ import org.openjdk.jmh.annotations._
 @State(Scope.Thread)
 class Step {
   @Param(Array("2"))
-  var step: Int = _
+  var step: Int = scala.compiletime.uninitialized
 
   var count: Int = 0
 

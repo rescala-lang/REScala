@@ -15,12 +15,12 @@ import rescala.operator.Interface
 @State(Scope.Thread)
 class ChainSignalHalfChange {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var source: Var[Int]    = _
-  var result: Signal[Int] = _
+  var source: Var[Int]    = scala.compiletime.uninitialized
+  var result: Signal[Int] = scala.compiletime.uninitialized
 
   @Setup
   def setup(size: Size, step: Step, engineParam: EngineParam, work: Workload) = {

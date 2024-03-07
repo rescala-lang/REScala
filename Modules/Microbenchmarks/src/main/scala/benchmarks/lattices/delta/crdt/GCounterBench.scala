@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit
 class GCounterBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var numReplicas: Int = _
+  var numReplicas: Int = scala.compiletime.uninitialized
 
-  var counter: NamedDeltaBuffer[GrowOnlyCounter] = _
+  var counter: NamedDeltaBuffer[GrowOnlyCounter] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

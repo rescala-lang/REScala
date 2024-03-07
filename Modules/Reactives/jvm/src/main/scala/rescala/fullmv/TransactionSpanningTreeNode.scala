@@ -4,7 +4,7 @@ import java.util
 trait TransactionSpanningTreeNode[T] {
   val txn: T
   def childCount(): Int
-  def iterator(): java.util.Iterator[_ <: TransactionSpanningTreeNode[T]]
+  def iterator(): java.util.Iterator[? <: TransactionSpanningTreeNode[T]]
   def map[B](f: T => B): CaseClassTransactionSpanningTreeNode[B] = {
     val it = iterator()
     CaseClassTransactionSpanningTreeNode(f(txn), Array.fill(childCount()) { it.next().map(f) })
@@ -14,7 +14,7 @@ trait TransactionSpanningTreeNode[T] {
 case class CaseClassTransactionSpanningTreeNode[T](txn: T, children: Array[CaseClassTransactionSpanningTreeNode[T]])
     extends TransactionSpanningTreeNode[T] {
   override def childCount(): Int = children.length
-  override def iterator(): java.util.Iterator[_ <: TransactionSpanningTreeNode[T]] =
+  override def iterator(): java.util.Iterator[? <: TransactionSpanningTreeNode[T]] =
     new java.util.Iterator[CaseClassTransactionSpanningTreeNode[T]] {
       var current                   = 0
       override def hasNext: Boolean = current < children.length

@@ -38,5 +38,5 @@ class AddWinsLastWriterWinsMap[K, V](
 }
 
 object AddWinsLastWriterWinsMap {
-  type LatticeType[K, V] = AddWinsMapLattice[K,  LastWriterWins[V]]
+  type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWins[V]]
 }

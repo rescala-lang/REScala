@@ -11,7 +11,7 @@ class RePanel(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer: Panel with ComponentMixin = new Panel with ComponentMixin
+  override protected lazy val peer: Panel & ComponentMixin = new Panel with ComponentMixin
 }
 
 object RePanel {

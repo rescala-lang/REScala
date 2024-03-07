@@ -18,6 +18,7 @@ class ArrayRanges(
 
   override def equals(obj: Any): Boolean = obj match {
     case ar: ArrayRanges =>
+      if inner == ar.inner && used == ar.used then return true
       // would be nice to use the following, but does not exists on JS
       // util.Arrays.equals(inner, 0, used, ar.inner, 0, ar.used)
       val left  = inner.iterator.take(used)
@@ -36,26 +37,29 @@ class ArrayRanges(
       if s == einc then s"$s" else s"$s:$einc"
   }.mkString("[", ", ", "]")
 
-  def disjunct(right: ArrayRanges): Boolean = {
-    if (isEmpty) return true
-    if (right.isEmpty) return true
+  infix def disjunct(right: ArrayRanges): Boolean = {
+    if this.isEmpty then return true
+    if right.isEmpty then return true
 
     var leftIndex  = 0
     var rightIndex = 0
 
-    while (leftIndex < used && rightIndex < right.used) {
-      val leftLower  = inner(leftIndex)
-      val leftUpper  = inner(leftIndex + 1)
+    while (leftIndex < this.used && rightIndex < right.used) {
+      val leftLower  = this.inner(leftIndex)
+      val leftUpper  = this.inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
       val rightUpper = right.inner(rightIndex + 1)
 
-      if (leftLower >= rightUpper) rightIndex += 2
+      if leftLower >= rightUpper then rightIndex += 2
       else if rightLower >= leftUpper then leftIndex += 2
       else return false
     }
 
     return true
   }
+
+  /** Returns the causal prefix of this range, i.e., the first contiguous range */
+  def causalPrefix: ArrayRanges = if isEmpty then this else new ArrayRanges(inner.slice(0, 2), 2)
 
   @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
@@ -80,27 +84,30 @@ class ArrayRanges(
     return true
   }
 
-  def contains(x: Time): Boolean = {
-    val res = java.util.Arrays.binarySearch(inner.asInstanceOf[Array[Time]], 0, used, x)
-    val pos = if res < 0 then -res - 1 else res
-    if pos >= used then false
-    else if pos % 2 == 0
+  infix def contains(x: Time): Boolean = {
+    val index =
+      // binary search returns either the index of x, or the position where x should be inserted (but shifted into negative numbers)
+      val res = java.util.Arrays.binarySearch(inner, 0, used, x)
+      if res < 0 then -res - 1 else res
+    if index >= used then false
+    else if index % 2 == 0
       // found a start
-    then inner(pos) == x
+    then inner(index) == x
     // found an end
-    else x < inner(pos)
+    else x < inner(index)
   }
 
   def isEmpty: Boolean = used == 0
 
-  def add(x: Time): ArrayRanges =
+  infix def add(x: Time): ArrayRanges =
     union(new ArrayRanges(Array(x, x + 1), 2))
 
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
 
   def iterator: Iterator[Time] = new Iterator[Time] {
-    var pos                       = 0
-    var value                     = if used == 0 then 0 else inner(0)
+    var pos   = 0
+    var value = if used == 0 then 0 else inner(0)
+
     override def hasNext: Boolean = used > pos
     override def next(): Time =
       val res = value
@@ -116,7 +123,7 @@ class ArrayRanges(
     * Only allocates a single result array (size is the sum of the used size),
     * and traverses each input once fully.
     */
-  def union(other: ArrayRanges): ArrayRanges = {
+  infix def union(other: ArrayRanges): ArrayRanges = {
     var leftPos   = 0
     var rightPos  = 0
     var mergedPos = 0
@@ -144,7 +151,7 @@ class ArrayRanges(
           (rstart, rend)
 
       val curStart = selection._1
-      var minEnd = selection._2
+      var minEnd   = selection._2
 
       def mergeOverlapping(): Boolean =
         var res = false
@@ -157,13 +164,13 @@ class ArrayRanges(
       write(minEnd)
     end findNextRange
 
-    while (rok || lok) do findNextRange()
+    while rok || lok do findNextRange()
 
     new ArrayRanges(merged, mergedPos)
 
   }
 
-  def intersect(right: ArrayRanges): ArrayRanges = {
+  infix def intersect(right: ArrayRanges): ArrayRanges = {
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
 
@@ -196,7 +203,7 @@ class ArrayRanges(
     new ArrayRanges(newInner, newInnerNextIndex)
   }
 
-  def subtract(right: ArrayRanges): ArrayRanges = {
+  infix def subtract(right: ArrayRanges): ArrayRanges = {
     if (right.isEmpty) return this
     if (isEmpty) return this
 

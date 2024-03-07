@@ -23,7 +23,7 @@ type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
 
 class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])
 
-case class HMap(keys: Map[String, Key[_]], values: Map[String, Any])
+case class HMap(keys: Map[String, Key[?]], values: Map[String, Any])
 
 class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val replicaId: Uid,
@@ -94,13 +94,13 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     View(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def requestMissingBinding[PushBinding[Dots]] =
+  def requestMissingBinding: PushBinding[Dots] =
     @unused // this is a lie, but sometimes the compiler is confused
     given IdenticallyTransmittable[Dots] = IdenticallyTransmittable[Dots]()
     Binding[Dots => Unit]("requestMissing")
 
   val pushStateBinding: PushBinding[TransferState] =
-    given JsonValueCodec[TransferState]           = JsonCodecMaker.make
+    given JsonValueCodec[TransferState] = JsonCodecMaker.make
     @unused
     given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
     Binding[TransferState => Unit]("pushState")
@@ -137,7 +137,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
       deltas
     }
     registry.remotes.foreach { remote =>
-      //val ctx = contexts.now.getOrElse(remote, Dots.empty)
+      // val ctx = contexts.now.getOrElse(remote, Dots.empty)
       pushDeltas(deltas.view, remote)
     }
 

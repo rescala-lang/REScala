@@ -47,7 +47,7 @@ class ReToggleButton(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer: ToggleButton with ComponentMixin = new ToggleButton with ComponentMixin
+  override protected lazy val peer: ToggleButton & ComponentMixin = new ToggleButton with ComponentMixin
 }
 
 object ReToggleButton {

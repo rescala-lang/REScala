@@ -17,14 +17,14 @@ import rescala.operator.Interface
 @State(Scope.Benchmark)
 class MultiReverseFan {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var sources: Array[Var[Int]]    = _
-  var results: Array[Signal[Int]] = _
+  var sources: Array[Var[Int]]    = scala.compiletime.uninitialized
+  var results: Array[Signal[Int]] = scala.compiletime.uninitialized
   var locks: Array[Lock]          = null
-  var groupSize: Int              = _
+  var groupSize: Int              = scala.compiletime.uninitialized
 
   @Setup
   def setup(params: BenchmarkParams, size: Size, step: Step, engineParam: EngineParam, work: Workload) = {

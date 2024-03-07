@@ -1,14 +1,15 @@
 package encrdtlib.lattices
 
 import kofre.dotted.HasDots.*
-import kofre.dotted.{DotMap, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.time.Dots
+import HasDots.mapInstance
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {
-  type DeltaAddWinsMapLattice[K, V] = Dotted[DotMap[K, V]]
+  type DeltaAddWinsMapLattice[K, V] = Dotted[Map[K, V]]
 
-  def empty[K, V: HasDots]: DeltaAddWinsMapLattice[K, V] = Dotted(DotMap.empty, Dots.empty)
+  def empty[K, V: HasDots]: DeltaAddWinsMapLattice[K, V] = Dotted(Map.empty, Dots.empty)
 
   /** Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
     *
@@ -27,11 +28,11 @@ object DeltaAddWinsMap {
   ): DeltaAddWinsMapLattice[K, V] = {
 
     deltaMutator(Dotted(
-      map.data.repr.getOrElse(key, default),
+      map.data.getOrElse(key, default),
       map.context
     )) match {
       case Dotted(dotStore, causalContext) => Dotted(
-          DotMap(Map(key -> dotStore)),
+          Map(key -> dotStore),
           causalContext
         )
     }
@@ -47,8 +48,8 @@ object DeltaAddWinsMap {
     */
   def deltaRemove[K, V: HasDots](key: K, map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] =
     Dotted(
-      DotMap.empty,
-      map.data.repr.get(key).map(HasDots[V].dots).getOrElse(Dots.empty)
+      Map.empty,
+      map.data.get(key).map(HasDots[V].dots).getOrElse(Dots.empty)
     )
 
   /** Returns the '''delta''' that removes all values from the `map`.
@@ -59,7 +60,7 @@ object DeltaAddWinsMap {
     * @return The delta that contains the removal of all mappings
     */
   def deltaClear[K, V: HasDots](map: DeltaAddWinsMapLattice[K, V]): DeltaAddWinsMapLattice[K, V] = Dotted(
-    DotMap.empty,
+    Map.empty,
     map.data.dots
   )
 }

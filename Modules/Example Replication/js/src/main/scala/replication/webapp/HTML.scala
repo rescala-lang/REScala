@@ -32,11 +32,10 @@ object HTML {
     List(
       h1("connection management"),
       section(table(
-        tr(td("total state size"), dataManager.encodedStateSize.map(s => td(s)).asModifier),
+        tr(td("total state size")).render.reattach(dataManager.encodedStateSize.map(s => td(s).render)),
         tr(
           td("request queue"),
-          dataManager.mergedState.map(v => td(v.data.requests.elements.size)).asModifier
-        ),
+        ).render.reattach(dataManager.mergedState.map(v => td(v.data.requests.elements.size).render)),
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
@@ -48,31 +47,31 @@ object HTML {
           td(Uid.unwrap(dataManager.replicaId)),
           td(),
           td(),
-          table(
-            dataManager.currentContext.map(dotsToRows).asModifierL
-          )
-        ),
-        ccm.connectedRemotes.map { all =>
-          all.toList.sortBy(_._1.toString).map { (rr, connected) =>
-            tr(
-              td(remotePrettyName(rr)),
-              if !connected
-              then td("disconnected")
-              else
-                List(
-                  td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
-                  td(button("request", onclick := leftClickHandler{
+          table().render.reattach(dataManager.currentContext.map(dotsToRows))
+        )
+      ).render.reattach(ccm.connectedRemotes.map { all =>
+        all.toList.sortBy(_._1.toString).map { (rr, connected) =>
+          tr(
+            td(remotePrettyName(rr)),
+            if !connected
+            then td("disconnected")
+            else
+              List(
+                td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
+                td(button(
+                  "request",
+                  onclick := leftClickHandler {
                     dataManager.requestMissingFrom(rr)
                     ()
-                  })),
-                  td(table(
-                    dataManager.contextOf(rr).map(dotsToRows).asModifierL
-                  ))
-                )
-            )
-          }
-        }.asModifierL,
-      )),
+                  }
+                )),
+                td(table().render.reattach(
+                  dataManager.contextOf(rr).map(dotsToRows)
+                ))
+              )
+          ).render
+        }
+      })),
       section(aside(
         "remote url: ",
         ccm.wsUri,
@@ -83,12 +82,14 @@ object HTML {
 
   def dotsToRows(dots: kofre.time.Dots) =
     dots.internal.toList.sortBy(t => Uid.unwrap(t._1)).map { (k, v) =>
-      tr(td(Uid.unwrap(k)), td(v.toString))
+      tr(td(Uid.unwrap(k)), td(v.toString)).render
     }.toSeq
 
   def providers(exdat: FbdcExampleData) = {
     div(
       h1("make a request"),
+
+    ).render.reattach(
       exdat.providers.map { prov =>
         prov.observeRemoveMap.entries.map { (id, provided) =>
           section(
@@ -97,9 +98,9 @@ object HTML {
               case "fortune" => fortuneBox(exdat, id)
               case other     => northwindBox(exdat, id)
             }.toList
-          ).asInstanceOf[TypedTag[Element]]
+          ).render
         }.toList
-      }.asModifierL
+      }
     )
 
   }
@@ -113,8 +114,8 @@ object HTML {
         }
       }
     ),
-    exdat.latestFortune.map(f => p(f.map(_.result).getOrElse(""))).asModifier
-  )
+
+  ).render.reattach(exdat.latestFortune.map(f => p(f.map(_.result).getOrElse("")).render))
 
   def northwindBox(exdat: FbdcExampleData, id: Uid) =
     val ip = input().render
@@ -130,17 +131,17 @@ object HTML {
         }
       ),
       p(
-        table(
+        table().render.reattach(
           exdat.latestNorthwind.map {
             case None => Nil
             case Some(res) =>
               val keys = res.result.head.keys.toList.sorted
-              thead(keys.map(th(_)).toList: _*) ::
+              thead(keys.map(th(_)).toList*).render ::
               res.result.map { row =>
-                tr(keys.map(k => td(row(k))))
+                tr(keys.map(k => td(row(k)))).render
               }
-          }.asModifierL
+          }
         )
       )
-    )
+    ).render
 }

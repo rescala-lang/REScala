@@ -108,8 +108,8 @@ class TowPSetTest extends munit.ScalaCheckSuite {
     forAll {
       (insertA: List[Int], removeA: List[Int], insertB: List[Int], removeB: List[Int], networkGen: NetworkGenerator) =>
         val network = networkGen.make()
-        val aea = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
+        val aea     = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer("b"))
+        val aeb     = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
         val insertedA = insertA.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](aea)) {
           case (s, e) => s.insert(e)

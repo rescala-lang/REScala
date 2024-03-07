@@ -15,11 +15,11 @@ import rescala.operator.Interface
 @State(Scope.Benchmark)
 class SingleSwitch {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var source: Var[Int] = _
+  var source: Var[Int] = scala.compiletime.uninitialized
 
   var isManual: Boolean = false
 

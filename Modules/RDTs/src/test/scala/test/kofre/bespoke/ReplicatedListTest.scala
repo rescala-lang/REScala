@@ -47,21 +47,22 @@ class ReplicatedListTest extends munit.FunSuite {
     val mergedOrder = v2.data.order.value merge v3d.data.order.value
 
     val mergedLists: ReplicatedList[String] = v3d.data merge v2.data
-    val v3 = v2 merge v3d
+    val v3                                  = v2 merge v3d
 
-    assertEquals(v3.data.order.value.inner.get(GrowOnlyList.Node.Head), mergedLists.order.value.inner.get(GrowOnlyList.Node.Head))
+    assertEquals(
+      v3.data.order.value.inner.get(GrowOnlyList.Node.Head),
+      mergedLists.order.value.inner.get(GrowOnlyList.Node.Head)
+    )
 
     assertEquals(v3.data, mergedLists)
 
-    assertEquals(mergedLists.order.value.toList, List(Dot(aid,0), Dot(aid,1)))
-    assertEquals(mergedOrder.toList, List(Dot(aid,0), Dot(aid,1)))
-    assertEquals(v3.data.order.value.toList, List(Dot(aid,0), Dot(aid,1)))
-
+    assertEquals(mergedLists.order.value.toList, List(Dot(aid, 0), Dot(aid, 1)))
+    assertEquals(mergedOrder.toList, List(Dot(aid, 0), Dot(aid, 1)))
+    assertEquals(v3.data.order.value.toList, List(Dot(aid, 0), Dot(aid, 1)))
 
     assertEquals(v3.toList, List("10", "20"))
 
     val v4 = v3 merge v3.insert(using aid)(1, "30")
-
 
     assertEquals(v4.toList, List("10", "30", "20"))
 

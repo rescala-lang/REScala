@@ -15,12 +15,12 @@ class ReComboBox[A](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  final override protected lazy val peer: ComboBox[A] with ComponentMixin =
+  final override protected lazy val peer: ComboBox[A] & ComponentMixin =
     new ComboBox[A](Seq.empty[A]) with ComponentMixin
 
   protected val javaPeer = peer.peer.asInstanceOf[javax.swing.JComboBox[A]]
 
-  private var model: javax.swing.ListModel[A] = _
+  private var model: javax.swing.ListModel[A] = scala.compiletime.uninitialized
 
   private val modelListener = new javax.swing.event.ListDataListener {
     def contentsChanged(e: javax.swing.event.ListDataEvent): Unit = { peer publish ListChanged(null) }
@@ -34,13 +34,13 @@ class ReComboBox[A](
 
   def modelChanged() = {
     if (model != null)
-      model removeListDataListener modelListener
+      model `removeListDataListener` modelListener
     if (javaPeer.getModel != null)
-      javaPeer.getModel addListDataListener modelListener
+      javaPeer.getModel `addListDataListener` modelListener
     model = javaPeer.getModel
   }
 
-  javaPeer setModel new ReComboBox.ReComboBoxModel[A]
+  javaPeer `setModel` new ReComboBox.ReComboBoxModel[A]
   modelChanged()
 
   items.using(
@@ -55,13 +55,13 @@ class ReComboBox[A](
         case model: ReComboBox.ReComboBoxModel[A] => model
         case _ =>
           val model = new ReComboBox.ReComboBoxModel[A]
-          javaPeer setModel model
+          javaPeer `setModel` model
           modelChanged()
           model
       }
       model.update(items)
     },
-    classOf[ListChanged[_]]
+    classOf[ListChanged[?]]
   )
 
   class ReSelection(
@@ -112,7 +112,7 @@ object ReComboBox {
     def getSize              = items.size
     def getItems             = items
 
-    private var selected: AnyRef = _
+    private var selected: AnyRef = scala.compiletime.uninitialized
     def getSelectedItem: AnyRef  = selected
     def setSelectedItem(item: AnyRef): Unit = {
       if (

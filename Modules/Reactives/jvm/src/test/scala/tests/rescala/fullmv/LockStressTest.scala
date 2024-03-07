@@ -74,7 +74,7 @@ class LockStressTest extends AnyFunSuite {
       case Failure(ex: TimeoutException) => false
       case Failure(_)                    => true
       case Success(_)                    => false
-    }.asInstanceOf[Option[Failure[_]]].foreach {
+    }.asInstanceOf[Option[Failure[?]]].foreach {
       case Failure(ex) =>
         ex.printStackTrace()
     }

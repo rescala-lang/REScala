@@ -20,9 +20,9 @@ class ReLabel(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer: Label with ComponentMixin = new Label with ComponentMixin
+  override protected lazy val peer: Label & ComponentMixin = new Label with ComponentMixin
 
-  text.using({ () => peer.text }, peer.text_= _, "text")
+  text.using({ () => peer.text }, peer.text_=, "text")
 
   horizontalAlignment.using({ () => peer.horizontalAlignment }, peer.horizontalAlignment = _, "horizontalAlignment")
   verticalAlignment.using({ () => peer.verticalAlignment }, peer.verticalAlignment = _, "verticalAlignment")
@@ -31,10 +31,10 @@ class ReLabel(
     peer.horizontalTextPosition = _,
     "horizontalTextPosition"
   )
-  verticalTextPosition.using({ () => peer.verticalTextPosition }, peer.verticalTextPosition_= _, "verticalTextPosition")
+  verticalTextPosition.using({ () => peer.verticalTextPosition }, peer.verticalTextPosition_=, "verticalTextPosition")
 
-  icon.using({ () => peer.icon }, peer.icon_= _, "icon")
-  disabledIcon.using({ () => peer.disabledIcon }, peer.disabledIcon_= _, "disabledIcon")
+  icon.using({ () => peer.icon }, peer.icon_=, "icon")
+  disabledIcon.using({ () => peer.disabledIcon }, peer.disabledIcon_=, "disabledIcon")
 }
 
 object ReLabel {

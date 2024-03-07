@@ -5,9 +5,11 @@ import kofre.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import kofre.datatypes.contextual.{CausalQueue, ReplicatedList}
 import kofre.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import kofre.datatypes.experiments.CausalStore
-import kofre.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
-import kofre.dotted.{DotFun, DotMap, DotSet, Dotted, HasDots}
-import kofre.time.{Dots, Time, VectorClock}
+import kofre.datatypes.{
+  GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
+}
+import kofre.dotted.{Dotted, HasDots}
+import kofre.time.{Dots, Time, VectorClock, Dot}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import test.kofre.DataGenerator.{*, given}
@@ -15,15 +17,15 @@ import test.kofre.DataGenerator.RGAGen.given
 import test.kofre.isGithubCi
 
 class OpGraphChecks           extends LatticePropertyChecks[OpGraph[ExampleData]]
-class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[DotFun[ExampleData]]]
-class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[DotFun[ExampleData]]]]
+class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[Map[Dot, ExampleData]]]
+class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[Map[Dot, ExampleData]]]]
 class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
-class DotSetChecks            extends LatticePropertyChecks[Dotted[DotSet]]
+class DotSetChecks            extends LatticePropertyChecks[Dotted[Dots]]
 class EnableWinsFlagChecks    extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
-class DotFunChecks            extends LatticePropertyChecks[Dotted[DotFun[Int]]]
-class DotFunExampleChecks     extends LatticePropertyChecks[Dotted[DotFun[ExampleData]]]
+class DotFunChecks            extends LatticePropertyChecks[Dotted[Map[Dot, Int]]]
+class DotFunExampleChecks     extends LatticePropertyChecks[Dotted[Map[Dot, ExampleData]]]
 class ConMultiVersionChecks   extends LatticePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
-class DotMapChecks            extends LatticePropertyChecks[Dotted[DotMap[kofre.base.Uid, DotSet]]](expensive = true)
+class DotMapChecks            extends LatticePropertyChecks[Dotted[Map[kofre.base.Uid, Dots]]](expensive = true)
 class GrowOnlyCounterChecks   extends LatticePropertyChecks[GrowOnlyCounter]
 class GrowOnlyMapChecks       extends LatticePropertyChecks[GrowOnlyMap[String, Int]]
 class TwoPhaseSetChecks       extends LatticePropertyChecks[TwoPhaseSet[Int]]
@@ -43,8 +45,12 @@ class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedLis
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using arbitrary: Arbitrary[A], lattice: Lattice[A], bottomOpt: BottomOpt[A], shrink: Shrink[A])
-    extends OrderTests(using Lattice.latticeOrder)(total = false) {
+abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using
+    arbitrary: Arbitrary[A],
+    lattice: Lattice[A],
+    bottomOpt: BottomOpt[A],
+    shrink: Shrink[A]
+) extends OrderTests(using Lattice.latticeOrder)(total = false) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
 
@@ -80,7 +86,7 @@ abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using arbitr
       val decomposed = theValue.decomposed
       val normalized = Lattice.normalize(theValue)
 
-      val isDotted = theValue.isInstanceOf[Dotted[_]]
+      val isDotted = theValue.isInstanceOf[Dotted[?]]
 
       decomposed.foreach { d =>
         assertEquals(
@@ -99,8 +105,8 @@ abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using arbitr
           decomposed.foreach: other =>
             if d != other
             then
-              val thisCtx  = d.asInstanceOf[Dotted[_]].context
-              val otherCtx = other.asInstanceOf[Dotted[_]].context
+              val thisCtx  = d.asInstanceOf[Dotted[?]].context
+              val otherCtx = other.asInstanceOf[Dotted[?]].context
               assert(thisCtx disjunct otherCtx, s"overlapping context\n  ${d}\n  ${other}")
       }
 

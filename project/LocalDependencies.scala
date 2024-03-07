@@ -2,25 +2,14 @@ import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
 import sbt.*
 import sbt.Keys.*
 
-import Settings.{`is 3`, `is 2.11`}
+object LocalDependencies {
 
-object RescalaDependencies {
+  val scalatest          = libraryDependencies += "org.scalatest"     %%% "scalatest"       % "3.2.18"   % Test
+  val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test"
+  val circe = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
 
-  val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.17" % Test
-  val circe     = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
-  val scalaReflectProvided = libraryDependencies ++=
-    (if (`is 3`(scalaVersion.value)) None
-     else Some(scalaOrganization.value % "scala-reflect" % scalaVersion.value % "provided"))
-  val scalatestpluscheck =
-    libraryDependencies += (if (`is 2.11`(scalaVersion.value))
-      "org.scalatestplus"    %%% "scalacheck-1-15" % "3.2.4.0-M1" % "test"
-    else "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.17.0"   % "test")
-  val retypecheck = libraryDependencies += (
-    if (`is 3`(scalaVersion.value)) None
-    else Some("io.github.scala-loci" %% "retypecheck" % "0.10.0")
-  )
   def jetty11 = {
-    val jettyVersion = "11.0.17"
+    val jettyVersion = "11.0.20"
     libraryDependencies ++= Seq(
       "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
       "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
@@ -31,7 +20,7 @@ object RescalaDependencies {
   }
 
   // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
-  val tink = libraryDependencies +="com.google.crypto.tink" % "tink" % "1.7.0"
+  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.7.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 
@@ -49,10 +38,10 @@ object RescalaDependencies {
     Seq(
       scalaSwing,
       libraryDependencies ++= Seq(
-        "org.scalafx" %% "scalafx" % "20.0.0-R31",
+        "org.scalafx" %% "scalafx" % "21.0.0-R32",
       ),
       libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-        "org.openjfx" % s"javafx-$m" % "20" classifier osName
+        "org.openjfx" % s"javafx-$m" % "21.0.2" classifier osName
       )
     )
   }

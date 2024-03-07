@@ -26,7 +26,7 @@ object SignalVersion extends App {
   space.changed observe { x => println(f"Space: $x%.2f  ") }
 
   while (true) {
-    Thread sleep 200
+    Thread `sleep` 200
     time.transform(_ + 1)
   }
 

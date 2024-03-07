@@ -2,7 +2,7 @@ package replication.calendar
 
 import rescala.default.*
 import kofre.base.{Bottom, Uid}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 
@@ -16,10 +16,10 @@ class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit
 
   given ReplicaId = id
 
-  type Calendar = DeltaBuffer[Dotted[AddWinsSet[Appointment]]]
+  type Calendar = DeltaBuffer[Dotted[ReplicatedSet[Appointment]]]
 
-  val work     = Var[Calendar](DeltaBuffer(Dotted(AddWinsSet.empty[Appointment])))
-  val vacation = Var[Calendar](DeltaBuffer(Dotted(AddWinsSet.empty[Appointment])))
+  val work     = Var[Calendar](DeltaBuffer(Dotted(ReplicatedSet.empty[Appointment])))
+  val vacation = Var[Calendar](DeltaBuffer(Dotted(ReplicatedSet.empty[Appointment])))
 
   val replicated = Map("work" -> work, "vacation" -> vacation)
 

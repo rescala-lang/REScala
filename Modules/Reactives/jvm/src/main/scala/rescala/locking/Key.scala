@@ -14,7 +14,7 @@ final class Key[InterTurn](val turn: InterTurn) {
   val id: Long                  = keychain.id
   override def toString: String = s"Key($id)"
 
-  private[this] val semaphore = new Semaphore(0)
+  private val semaphore = new Semaphore(0)
 
   private[locking] def continue(): Unit = semaphore.release()
   private[locking] def await(): Unit    = semaphore.acquire()
@@ -33,7 +33,7 @@ final class Key[InterTurn](val turn: InterTurn) {
   }
 
   /** contains a list of all locks owned by us. */
-  private[this] val heldLocks: ArrayBuffer[ReLock[InterTurn]] = ArrayBuffer[ReLock[InterTurn]]()
+  private val heldLocks: ArrayBuffer[ReLock[InterTurn]] = ArrayBuffer[ReLock[InterTurn]]()
   private[locking] def addLock(lock: ReLock[InterTurn]): Unit = heldLocks.synchronized { heldLocks += lock; () }
   private[locking] def grabLocks()                            = heldLocks.synchronized(heldLocks)
 

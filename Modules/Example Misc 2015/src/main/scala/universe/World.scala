@@ -49,12 +49,12 @@ class World(val width: Int = 100, val height: Int = 100) {
 
   // each day, spawn a new plant
   time.day.changed observe { _ => // #HDL //#IF
-    plan(this spawn new Plant)
+    plan(this `spawn` new Plant)
   }
 
   // each week, spawn a new animal
   time.week.changed observe { _ => // #HDL  //#IF
-    plan(this spawn newAnimal)
+    plan(this `spawn` newAnimal)
   }
 
   /** spawns the given board element at the given position */

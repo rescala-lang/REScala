@@ -26,7 +26,7 @@ import scala.swing.event.Event
   * extends ReSwingValueConnection {
   *   protected def peer: UIElement
   *
-  *   preferredSize.using({() => peer.preferredSize}, peer.preferredSize_= _, "preferredSize")
+  *   preferredSize.using({() => peer.preferredSize}, peer.preferredSize_=, "preferredSize")
   * }
   * }}}
   *
@@ -50,10 +50,10 @@ private[reswing] trait ReSwingValueConnection {
   protected implicit def toChangingProperty(name: String): ChangingProperty =
     Left(name): ChangingProperty
 
-  protected implicit def toChangingProperty(reaction: (Publisher, Class[_])): ChangingProperty =
+  protected implicit def toChangingProperty(reaction: (Publisher, Class[?])): ChangingProperty =
     Right(reaction): ChangingProperty
 
-  protected implicit def toChangingProperty(reaction: Class[_]): ChangingProperty =
+  protected implicit def toChangingProperty(reaction: Class[?]): ChangingProperty =
     Right((peer, reaction)): ChangingProperty
 
   protected def ReSwingValue[T]: ReSwingValue[T] = (): ReSwingValue[T]
@@ -65,7 +65,7 @@ private[reswing] trait ReSwingValueConnection {
     * a scala.swing.Publisher and a scala.Predef.Class representing the
     * event-publishing component and the event type.
     */
-  protected type ChangingProperty = Either[String, (Publisher, Class[_])]
+  protected type ChangingProperty = Either[String, (Publisher, Class[?])]
 
   final protected class ReSwingValueConnector[T] private[ReSwingValueConnection] (value: ReSwingValue[T]) {
 
@@ -161,7 +161,7 @@ private[reswing] trait ReSwingValueConnection {
   }
 
   private val delayedInitValues: ListBuffer[() => Unit] = ListBuffer.empty[() => Unit]
-  private val changingReactions                         = Map.empty[Class[_], ListBuffer[() => Unit]]
+  private val changingReactions                         = Map.empty[Class[?], ListBuffer[() => Unit]]
   private val changingProperties                        = Map.empty[String, ListBuffer[() => Unit]]
   private val enforcedProperties                        = Map.empty[String, () => Unit]
 

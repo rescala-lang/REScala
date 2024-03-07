@@ -37,7 +37,7 @@ object AutomergyOpGraphLWW {
   implicit class syntax[C, T](container: C)
       extends OpsSyntaxHelper[C, OpGraph[T]](container) {
 
-    def values(using PermQuery): List[T] =
+    def values(using IsQuery): List[T] =
       def getTerminals(cur: Map[Id, Entry[T]]): List[T] =
         cur.toList.sortBy(_._1)(CausalTime.ordering.reverse).map(_._2.op).flatMap:
           case Op.set(v) => List(v)
@@ -46,7 +46,7 @@ object AutomergyOpGraphLWW {
               getTerminals(current.elements.filter((k, _) => pred.predecessors.contains(k)))
       getTerminals(current.heads)
 
-    private def applyOp(using PermMutate)(op: Op[T]) =
+    private def applyOp(using IsMutator)(op: Op[T]) =
       OpGraph(
         Map(
           current.latest.fold(CausalTime.now())(_.advance)
@@ -54,11 +54,11 @@ object AutomergyOpGraphLWW {
         )
       ).mutator
 
-    def set(using PermMutate)(value: T) = applyOp(Op.set(value))
+    def set(using IsMutator)(value: T) = applyOp(Op.set(value))
 
-    def del(using PermMutate)() = applyOp(Op.del)
+    def del(using IsMutator)() = applyOp(Op.del)
 
-    def undo(using PermMutate)(anchor: Id) = applyOp(Op.undo(anchor))
+    def undo(using IsMutator)(anchor: Id) = applyOp(Op.undo(anchor))
   }
 
 }

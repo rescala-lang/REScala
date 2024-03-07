@@ -6,7 +6,7 @@ import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import kofre.datatypes.GrowOnlyMap
 import replication.JsoniterCodecs.given
 import kofre.datatypes.GrowOnlyMap.{syntax, bottom}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import org.scalacheck.Prop.forAll
 
 import scala.collection.mutable
@@ -17,16 +17,16 @@ class GrowMapTest extends munit.ScalaCheckSuite {
   property("mutateKey/queryKey") {
     forAll { (add: List[Int], k: Int) =>
       val network = new Network(0, 0, 0)
-      val aea     = new AntiEntropy[GrowOnlyMap[Int, AddWinsSet[Int]]]("a", network, mutable.Buffer())
-      val aeb     = new AntiEntropy[AddWinsSet[Int]]("b", network, mutable.Buffer())
+      val aea     = new AntiEntropy[GrowOnlyMap[Int, ReplicatedSet[Int]]]("a", network, mutable.Buffer())
+      val aeb     = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer())
 
-      val set = add.foldLeft(AntiEntropyContainer[AddWinsSet[Int]](aeb)) {
+      val set = add.foldLeft(AntiEntropyContainer[ReplicatedSet[Int]](aeb)) {
         case (s, e) => s.add(using s.replicaID)(e)
       }
 
-      val map: AntiEntropyContainer[GrowOnlyMap[Int, AddWinsSet[Int]]] =
-        add.foldLeft(AntiEntropyContainer[GrowOnlyMap[Int, AddWinsSet[Int]]](aea)) {
-          case (m, e) => m.mutateKeyNamedCtx(k, AddWinsSet.empty[Int])((st) => st.add(using m.replicaID)(e))
+      val map: AntiEntropyContainer[GrowOnlyMap[Int, ReplicatedSet[Int]]] =
+        add.foldLeft(AntiEntropyContainer[GrowOnlyMap[Int, ReplicatedSet[Int]]](aea)) {
+          case (m, e) => m.mutateKeyNamedCtx(k, ReplicatedSet.empty[Int])((st) => st.add(using m.replicaID)(e))
         }
 
       val mapElements: Set[Int] = map.queryKey(k).map(o => o.elements).getOrElse(Set.empty[Int])

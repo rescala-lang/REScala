@@ -10,7 +10,7 @@ trait ReRootPanel extends ReUIElement {
 
   contents.using(
     { () => peer.contents.headOption getOrElse null },
-    peer.contents_= _,
+    peer.contents_=,
     classOf[ComponentAdded],
     classOf[ComponentRemoved]
   )

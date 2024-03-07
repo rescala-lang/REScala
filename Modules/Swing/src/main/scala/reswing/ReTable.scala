@@ -33,9 +33,9 @@ class ReTable[A <: AnyRef](
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer: Table with ComponentMixin = new Table with ComponentMixin
+  override protected lazy val peer: Table & ComponentMixin = new Table with ComponentMixin
 
-  private var model: javax.swing.table.TableModel = _
+  private var model: javax.swing.table.TableModel = scala.compiletime.uninitialized
 
   val modelListener = new javax.swing.event.TableModelListener {
     def tableChanged(e: javax.swing.event.TableModelEvent) =
@@ -62,13 +62,13 @@ class ReTable[A <: AnyRef](
 
   def modelChanged(): Unit = {
     if (model != null)
-      model removeTableModelListener modelListener
+      model `removeTableModelListener` modelListener
     if (peer.peer.getModel != null)
-      peer.peer.getModel addTableModelListener modelListener
+      peer.peer.getModel `addTableModelListener` modelListener
     model = peer.peer.getModel
   }
 
-  peer.peer setModel new ReTable.ReTableModel[A]
+  peer.peer `setModel` new ReTable.ReTableModel[A]
   modelChanged()
 
   rowData.using(
@@ -89,7 +89,7 @@ class ReTable[A <: AnyRef](
         case model: ReTable.ReTableModel[A @unchecked] => model
         case _ =>
           val model = new ReTable.ReTableModel[A]
-          peer.peer setModel model
+          peer.peer `setModel` model
           modelChanged()
           model
       })() = Left(rowData)
@@ -104,19 +104,19 @@ class ReTable[A <: AnyRef](
   columnNames.using(
     { () =>
       peer.peer.getModel match {
-        case model: ReTable.ReTableModel[_] =>
+        case model: ReTable.ReTableModel[?] =>
           model.getColumnNames
         case model =>
           for (c <- 0 to model.getColumnCount())
-            yield model getColumnName c
+            yield model `getColumnName` c
       }
     },
     { columnNames =>
       (peer.peer.getModel match {
-        case model: ReTable.ReTableModel[_] => model
+        case model: ReTable.ReTableModel[?] => model
         case _ =>
           val model = new ReTable.ReTableModel[A]
-          peer.peer setModel model
+          peer.peer `setModel` model
           modelChanged()
           model
       })() = Right(columnNames)
@@ -127,7 +127,7 @@ class ReTable[A <: AnyRef](
   editable.using(
     { () =>
       peer.peer.getModel match {
-        case model: ReTable.ReTableModel[_] =>
+        case model: ReTable.ReTableModel[?] =>
           model.getCellEditable
         case model =>
           (row, column) => model.isCellEditable(row, column)
@@ -135,13 +135,13 @@ class ReTable[A <: AnyRef](
     },
     { editable =>
       (peer.peer.getModel match {
-        case model: ReTable.ReTableModel[_] => model
+        case model: ReTable.ReTableModel[?] => model
         case _ =>
           val model = new ReTable.ReTableModel[A]
-          peer.peer setModel model
+          peer.peer `setModel` model
           modelChanged()
           model
-      }) setCellEditable editable
+      }) `setCellEditable` editable
     },
     classOf[TableStructureChanged]
   )
@@ -183,11 +183,11 @@ class ReTable[A <: AnyRef](
   selectAll.using(() => peer.peer.selectAll())
   clearSelection.using(() => peer.peer.clearSelection())
 
-  val changed          = ReSwingEvent using classOf[TableChanged]
-  val structureChanged = ReSwingEvent using classOf[TableStructureChanged]
-  val updated          = ReSwingEvent using classOf[TableUpdated]
-  val rowsAdded        = ReSwingEvent using classOf[TableRowsAdded]
-  val rowsRemoved      = ReSwingEvent using classOf[TableRowsRemoved]
+  val changed          = ReSwingEvent `using` classOf[TableChanged]
+  val structureChanged = ReSwingEvent `using` classOf[TableStructureChanged]
+  val updated          = ReSwingEvent `using` classOf[TableUpdated]
+  val rowsAdded        = ReSwingEvent `using` classOf[TableRowsAdded]
+  val rowsRemoved      = ReSwingEvent `using` classOf[TableRowsRemoved]
 
   class ReSelection(
       val intervalMode: ReSwingValue[IntervalMode.Value],
@@ -226,7 +226,7 @@ class ReTable[A <: AnyRef](
       (peer, classOf[TableRowsSelected])
     )
 
-    intervalMode.using({ () => peer.intervalMode }, peer.intervalMode_= _)
+    intervalMode.using({ () => peer.intervalMode }, peer.intervalMode_=)
     elementMode.using(
       { () => peer.elementMode },
       peer.elementMode = _,
@@ -258,7 +258,7 @@ object ReTable {
   class ReTableModel[A <: AnyRef] extends javax.swing.table.AbstractTableModel {
     private var rowData            = Seq.empty[Seq[A]]
     private var columnNames        = Seq.empty[String]
-    private var editable: Editable = _
+    private var editable: Editable = scala.compiletime.uninitialized
 
     def update(values: Either[Seq[Seq[A]], Seq[String]]): Unit = {
       values match {

@@ -36,9 +36,9 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
     import quotes.reflect.*
 
     {
-      case select @ Select(r @ Ident(rName), "value") if r.tpe <:< TypeRepr.of[CReactive[_]] =>
+      case select @ Select(r @ Ident(rName), "value") if r.tpe <:< TypeRepr.of[CReactive[?]] =>
         (rName, select.tpe)
-      case select @ Select(Inlined(_, _, r @ Ident(rName)), "value") if r.tpe <:< TypeRepr.of[CReactive[_]] =>
+      case select @ Select(Inlined(_, _, r @ Ident(rName)), "value") if r.tpe <:< TypeRepr.of[CReactive[?]] =>
         (rName, select.tpe)
     }
   }
@@ -61,13 +61,13 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
   override def compileReactiveTopLevelStmt(using Quotes)(using fc: FragmentedCompiler)(using
       TranslationContext
   ): PartialFunction[quotes.reflect.Statement, Unit] =
-    ensureCtx[ReactiveTC with ValueDeclTC with FunctionDeclTC] { ctx ?=>
+    ensureCtx[ReactiveTC & ValueDeclTC & FunctionDeclTC] { ctx ?=>
       import quotes.reflect.*
 
       {
-        case ValDef(name, tpt, Some(rhs)) if tpt.tpe <:< TypeRepr.of[CReactive[_]] =>
+        case ValDef(name, tpt, Some(rhs)) if tpt.tpe <:< TypeRepr.of[CReactive[?]] =>
           ctx.addReactive(dispatch[ReactiveIFFragment](_.compileReactive)(rhs).rename(name))
-        case t: Term if t.tpe <:< TypeRepr.of[CReactive[_]] =>
+        case t: Term if t.tpe <:< TypeRepr.of[CReactive[?]] =>
           ctx.addReactive(dispatch[ReactiveIFFragment](_.compileReactive)(t))
         case valDef: ValDef =>
           val decl = dispatch[DefinitionIFFragment](_.compileValDefToCVarDecl)(valDef)
@@ -94,7 +94,7 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
             _,
             _
           )
-          if inlined.tpe <:< TypeRepr.of[CReactive[_]] =>
+          if inlined.tpe <:< TypeRepr.of[CReactive[?]] =>
         val name = "signal" + posToString(apply.pos)
 
         val cFun  = dispatch[ReactiveIFFragment](_.compileReactiveExpr)(f)
@@ -163,15 +163,15 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
             _,
             Typed(expansion, _)
           )
-          if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
+          if inlined.tpe <:< TypeRepr.of[CReactive[?]] => (methodId.pos, methodName, expansion)
       case inlined @ Inlined(
             Some(Apply(Apply(TypeApply(methodId @ Ident(methodName), _), _), _)),
             _,
             Typed(expansion, _)
           )
-          if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
+          if inlined.tpe <:< TypeRepr.of[CReactive[?]] => (methodId.pos, methodName, expansion)
       case inlined @ Inlined(Some(Apply(TypeApply(methodId @ Ident(methodName), _), _)), _, Typed(expansion, _))
-          if inlined.tpe <:< TypeRepr.of[CReactive[_]] => (methodId.pos, methodName, expansion)
+          if inlined.tpe <:< TypeRepr.of[CReactive[?]] => (methodId.pos, methodName, expansion)
     }
   }
 
@@ -180,7 +180,7 @@ object ReactiveFragment extends SelectIFFragment with ApplyIFFragment with React
 
     {
       case apply @ Apply(TypeApply(Select(Ident(id @ ("CSignal" | "CEvent")), "apply"), _), List(expr))
-          if apply.tpe <:< TypeRepr.of[CReactive[_]] => (id, expr)
+          if apply.tpe <:< TypeRepr.of[CReactive[?]] => (id, expr)
     }
   }
 

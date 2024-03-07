@@ -18,13 +18,13 @@ import java.util.concurrent.TimeUnit
 class MinBenchmarkWithInsertOfNotMin {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
-  var arg: Int = _
+  var arg: Int = scala.compiletime.uninitialized
 
-  var addEvent: Evt[Int]    = _
-  var minOfSeq: Signal[Int] = _
+  var addEvent: Evt[Int]    = scala.compiletime.uninitialized
+  var minOfSeq: Signal[Int] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]           = _
-  var reactMinOfSeq: Signal[Option[Int]] = _
+  var reactSeq: SeqSource[Int]           = scala.compiletime.uninitialized
+  var reactMinOfSeq: Signal[Option[Int]] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
   def prepare(): Unit = {

@@ -14,9 +14,9 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class GSetBench {
   @Param(Array("0", "1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
-  var set: NamedDeltaBuffer[Set[Int]] = _
+  var set: NamedDeltaBuffer[Set[Int]] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

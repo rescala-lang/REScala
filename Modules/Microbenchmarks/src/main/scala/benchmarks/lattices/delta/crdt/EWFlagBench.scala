@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class EWFlagBench {
 
-  var flagEnabled: DeltaBufferDotted[EnableWinsFlag]  = _
-  var flagDisabled: DeltaBufferDotted[EnableWinsFlag] = _
+  var flagEnabled: DeltaBufferDotted[EnableWinsFlag]  = scala.compiletime.uninitialized
+  var flagDisabled: DeltaBufferDotted[EnableWinsFlag] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

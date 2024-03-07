@@ -14,7 +14,6 @@ case class CliConnections(
     //      Argument(_.text("add random data on a time").valueName("milliseconds"))
 )
 
-
 class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()

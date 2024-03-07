@@ -202,12 +202,12 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
           nOpsB1: (Byte, Byte, Byte, Byte),
           nOpsA2: (Byte, Byte, Byte, Byte),
           nOpsB2: (Byte, Byte, Byte, Byte),
-        networkGen: NetworkGenerator
+          networkGen: NetworkGenerator
       ) =>
         {
           val network = networkGen.make()
-          val aea = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
-          val aeb = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
+          val aea     = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
+          val aeb     = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
 
           val opsA1 = Random.shuffle(List.fill(nOpsA1._1.toInt)(0) ++ List.fill(nOpsA1._2.toInt)(1) ++ List.fill(
             nOpsA1._3.toInt

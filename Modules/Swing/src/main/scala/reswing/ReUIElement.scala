@@ -17,9 +17,9 @@ abstract class ReUIElement(
   val location = ReSwingValue.using({ () => peer.location }, classOf[UIElementMoved])
   val bounds   = ReSwingValue.using({ () => peer.bounds }, classOf[UIElementResized], classOf[UIElementMoved])
 
-  minimumSize.using({ () => peer.minimumSize }, peer.minimumSize_= _, "minimumSize")
-  maximumSize.using({ () => peer.maximumSize }, peer.maximumSize_= _, "maximumSize")
-  preferredSize.using({ () => peer.preferredSize }, peer.preferredSize_= _, "preferredSize")
+  minimumSize.using({ () => peer.minimumSize }, peer.minimumSize_=, "minimumSize")
+  maximumSize.using({ () => peer.maximumSize }, peer.maximumSize_=, "maximumSize")
+  preferredSize.using({ () => peer.preferredSize }, peer.preferredSize_=, "preferredSize")
 
   def initReactiveLayer(): Unit = {
     initReSwingValueConnection()

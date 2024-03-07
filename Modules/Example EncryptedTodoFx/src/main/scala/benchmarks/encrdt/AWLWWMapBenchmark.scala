@@ -104,9 +104,9 @@ class AWLWWMapBenchmark {
 @State(Scope.Thread)
 class AeadState {
   @Param(Array("AES128_GCM", "AES256_GCM", "AES256_GCM_SIV", "XCHACHA20_POLY1305"))
-  var keyTemplateString: String = _
+  var keyTemplateString: String = scala.compiletime.uninitialized
 
-  var aead: Aead = _
+  var aead: Aead = scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def setupAead(): Unit = {
@@ -116,15 +116,15 @@ class AeadState {
 
 @State(Scope.Thread)
 class SerializeOnlyBenchmarkState {
-  var crdt: AddWinsLastWriterWinsMap[String, String]                  = _
-  var crdtState: AddWinsLastWriterWinsMap.LatticeType[String, String] = _
-  var crdtStateVersionVector: VectorClock                             = _
+  var crdt: AddWinsLastWriterWinsMap[String, String]                  = scala.compiletime.uninitialized
+  var crdtState: AddWinsLastWriterWinsMap.LatticeType[String, String] = scala.compiletime.uninitialized
+  var crdtStateVersionVector: VectorClock                             = scala.compiletime.uninitialized
 
-  var serialPlaintextState: Array[Byte]       = _
-  var serialPlaintextVectorClock: Array[Byte] = _
+  var serialPlaintextState: Array[Byte]       = scala.compiletime.uninitialized
+  var serialPlaintextVectorClock: Array[Byte] = scala.compiletime.uninitialized
 
   @Param(Array("10", "100", "1000"))
-  var crdtSizeInElements: Int = _
+  var crdtSizeInElements: Int = scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def setupCrdtState(): Unit = {
@@ -152,10 +152,10 @@ class SerializeOnlyBenchmarkState {
 
 @State(Scope.Thread)
 class PutManyBenchmarkState {
-  var dummyKeyValuePairs: Array[(String, String)] = _
+  var dummyKeyValuePairs: Array[(String, String)] = scala.compiletime.uninitialized
 
   @Param(Array("10", "100", "1000"))
-  var crdtSizeInElements: Int = _
+  var crdtSizeInElements: Int = scala.compiletime.uninitialized
 
   @Setup(Level.Trial)
   def setupTestData(): Unit = {

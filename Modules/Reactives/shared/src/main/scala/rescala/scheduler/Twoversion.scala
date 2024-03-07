@@ -9,7 +9,7 @@ import rescala.core.{
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 
-class Token()
+class Token
 
 trait Twoversion {
 
@@ -21,7 +21,7 @@ trait Twoversion {
   abstract class TwoVersionState[V](protected[rescala] var current: V) {
 
     private var owner: Token = null
-    private var update: V    = _
+    private var update: V    = scala.compiletime.uninitialized
 
     def write(value: V, token: Token): Unit = {
       assert(owner == null, s"buffer owned by $owner written by $token")
@@ -29,7 +29,7 @@ trait Twoversion {
       owner = token
     }
     def base(token: Token): V = current
-    def get(token: Token): V          = { if (token eq owner) update else current }
+    def get(token: Token): V  = { if (token eq owner) update else current }
 
     def commit(r: V => V): Unit = {
       if (update != null) current = r(update)

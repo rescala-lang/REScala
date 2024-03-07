@@ -3,7 +3,7 @@ package test.kofre.bespoke
 import kofre.base.Uid
 import kofre.datatypes.experiments.AutomergyOpGraphLWW.{Entry, OpGraph}
 import kofre.datatypes.experiments.{BoundedCounter, CausalDelta, CausalStore}
-import kofre.dotted.{DotFun, Dotted}
+import kofre.dotted.{Dotted}
 import kofre.syntax.TestReplica
 import kofre.time.{ArrayRanges, Dot, Dots}
 import test.kofre.DataGenerator.ExampleData
@@ -25,7 +25,7 @@ class OpGraphTest extends munit.FunSuite {
     assertEquals(r1r2.values, List("bye!", "hi!"))
 
     val deletion = r1r2.del()
-    val deleted = r1r2 merge deletion
+    val deleted  = r1r2 merge deletion
 
     assertEquals(deleted.values, List())
 

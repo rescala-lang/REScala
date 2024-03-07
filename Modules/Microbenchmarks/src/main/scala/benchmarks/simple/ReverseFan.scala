@@ -17,12 +17,12 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class ReverseFan {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var sources: Array[Var[Int]] = _
-  var result: Signal[Int]      = _
+  var sources: Array[Var[Int]] = scala.compiletime.uninitialized
+  var result: Signal[Int]      = scala.compiletime.uninitialized
   var isManual: Boolean        = false
 
   @Setup

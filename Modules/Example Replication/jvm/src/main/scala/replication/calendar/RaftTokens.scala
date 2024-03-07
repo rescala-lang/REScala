@@ -1,7 +1,7 @@
 package replication.calendar
 
 import kofre.base.{Uid, Lattice}
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.datatypes.experiments.RaftState
 import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
@@ -15,8 +15,8 @@ case class Token(id: Long, owner: Uid, value: String) {
 case class RaftTokens(
     replicaID: Uid,
     tokenAgreement: RaftState[Token],
-    want: DeltaBuffer[Dotted[AddWinsSet[Token]]],
-    tokenFreed: DeltaBuffer[Dotted[AddWinsSet[Token]]]
+    want: DeltaBuffer[Dotted[ReplicatedSet[Token]]],
+    tokenFreed: DeltaBuffer[Dotted[ReplicatedSet[Token]]]
 ) {
 
   given ReplicaId = replicaID
@@ -57,11 +57,11 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Dotted[AddWinsSet[Token]]): RaftTokens = {
+  def applyWant(state: Dotted[ReplicatedSet[Token]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Dotted[AddWinsSet[Token]]): RaftTokens = {
+  def applyFree(state: Dotted[ReplicatedSet[Token]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 
@@ -79,7 +79,7 @@ object RaftTokens {
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),
-      DeltaBuffer(Dotted(AddWinsSet.empty[Token])),
-      DeltaBuffer(Dotted(AddWinsSet.empty[Token]))
+      DeltaBuffer(Dotted(ReplicatedSet.empty[Token])),
+      DeltaBuffer(Dotted(ReplicatedSet.empty[Token]))
     )
 }

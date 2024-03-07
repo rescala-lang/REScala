@@ -16,7 +16,7 @@ import scala.quoted.*
 trait ReactiveMacroCompilerCode extends MacroCompilerCode {
   override given compiler: FragmentedCompiler = ReactiveFragment +: standardFragmentedCompiler
 
-  override type CTX = StandardContext with ReactiveTC
+  override type CTX = StandardContext & ReactiveTC
 
   override protected def createTranslationContext(): CTX = new StandardContext with ReactiveTC {}
 
@@ -26,7 +26,7 @@ trait ReactiveMacroCompilerCode extends MacroCompilerCode {
     case _                                   => t
   }
 
-  def compileGraphCode(appName: Expr[String])(graph: Expr[_])(using Quotes): Expr[Unit] = {
+  def compileGraphCode(appName: Expr[String])(graph: Expr[?])(using Quotes): Expr[Unit] = {
     import quotes.reflect.*
 
     given ctx: CTX = createTranslationContext()

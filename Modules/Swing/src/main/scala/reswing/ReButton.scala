@@ -48,7 +48,7 @@ class ReButton(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer: Button with ComponentMixin = new Button with ComponentMixin
+  override protected lazy val peer: Button & ComponentMixin = new Button with ComponentMixin
 
   if (action != null)
     peer.action = action

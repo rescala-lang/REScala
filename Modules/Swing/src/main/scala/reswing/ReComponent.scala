@@ -13,14 +13,14 @@ abstract class ReComponent(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReUIElement(minimumSize, maximumSize, preferredSize) {
 
-  override protected lazy val peer: CompItem with ComponentMixin = new Component with ComponentMixin
+  override protected lazy val peer: CompItem & ComponentMixin = new Component with ComponentMixin
 
   val hasFocus = ReSwingValue.using({ () => peer.hasFocus }, classOf[FocusGained], classOf[FocusLost])
 
-  background.using({ () => peer.background }, peer.background_= _, "background")
-  foreground.using({ () => peer.foreground }, peer.foreground_= _, "foreground")
-  font.using({ () => peer.font }, peer.font_= _, "font")
-  enabled.using({ () => peer.enabled }, peer.enabled_= _, "enabled")
+  background.using({ () => peer.background }, peer.background_=, "background")
+  foreground.using({ () => peer.foreground }, peer.foreground_=, "foreground")
+  font.using({ () => peer.font }, peer.font_=, "font")
+  enabled.using({ () => peer.enabled }, peer.enabled_=, "enabled")
 
   object mouse {
     object clicks {

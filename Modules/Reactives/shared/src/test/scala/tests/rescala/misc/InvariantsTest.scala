@@ -154,7 +154,7 @@ class InvariantsTest extends RETests with ScalaCheckDrivenPropertyChecks with Ma
       val sut = Signal { v.value }
 
       v.setValueGenerator(Gen.posNum[Int])
-      sut.specify(invariants: _*)
+      sut.specify(invariants*)
 
       // expect the correct invariant to fail
       val caught = intercept[InvariantViolationException] { sut.test() }

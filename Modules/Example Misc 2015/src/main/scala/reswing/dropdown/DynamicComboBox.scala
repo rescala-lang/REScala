@@ -9,7 +9,7 @@ import scala.swing.ComboBox
 import scala.swing.event.SelectionChanged
 
 class DynamicComboBox[A] extends ComboBox[A](Nil: List[A]) {
-  val peerBox: JComboBox[_] = this.peer.asInstanceOf[JComboBox[_]]
+  val peerBox: JComboBox[?] = this.peer.asInstanceOf[JComboBox[?]]
 
   /** Set the choices */
   def setChoices(options: List[A]): Unit = {
@@ -31,8 +31,8 @@ class ReDynamicComboBox[A](
     val selectIndices: ReSwingEvent[Seq[Int]] = ()
 ) extends ReComponent {
 
-  override protected lazy val peer: DynamicComboBox[A] with ComponentMixin = new DynamicComboBox[A] with ComponentMixin
+  override protected lazy val peer: DynamicComboBox[A] & ComponentMixin = new DynamicComboBox[A] with ComponentMixin
 
-  options.using(() => peer.getChoices, peer.setChoices _, classOf[Nothing])
-  selection.using(() => peer.selection.index, peer.selection.index_= _, (peer.selection, classOf[SelectionChanged]))
+  options.using(() => peer.getChoices, peer.setChoices, classOf[Nothing])
+  selection.using(() => peer.selection.index, peer.selection.index_=, (peer.selection, classOf[SelectionChanged]))
 }

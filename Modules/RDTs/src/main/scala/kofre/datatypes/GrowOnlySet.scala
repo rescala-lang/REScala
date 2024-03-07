@@ -10,16 +10,16 @@ object GrowOnlySet {
 
   def empty[E]: GrowOnlySet[E] = Set.empty
 
-  given bottomInstance[E]: Bottom[GrowOnlySet[E]]          = Bottom.setBottom
-  given lattice[E]: Lattice[GrowOnlySet[E]]                = Lattice.setLattice
+  given bottomInstance[E]: Bottom[GrowOnlySet[E]] = Bottom.setBottom
+  given lattice[E]: Lattice[GrowOnlySet[E]]       = Lattice.setLattice
 
   extension [C, E](container: C)
     def growOnlySet: syntax[C, E] = syntax(container)
 
   implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, GrowOnlySet[E]](container) {
 
-    def elements(using PermQuery): Set[E] = current
+    def elements(using IsQuery): Set[E] = current
 
-    def insert(element: E)(using PermMutate): C = Set(element).mutator
+    def insert(element: E)(using IsMutator): C = Set(element).mutator
   }
 }

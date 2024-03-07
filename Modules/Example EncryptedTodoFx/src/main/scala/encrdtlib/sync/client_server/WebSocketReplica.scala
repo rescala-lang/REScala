@@ -15,7 +15,7 @@ import java.net.URI
 import java.time.Duration
 
 trait WebSocketReplica extends Replica {
-  protected var server: Server         = _
+  protected var server: Server         = scala.compiletime.uninitialized
   protected var replicas: Set[Session] = Set.empty
 
   override protected def disseminate(encryptedState: EncryptedState): Unit = {

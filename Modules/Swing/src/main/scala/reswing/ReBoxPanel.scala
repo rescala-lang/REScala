@@ -14,7 +14,7 @@ class ReBoxPanel(
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends RePanel(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize)
     with ReSequentialContainer {
-  override protected lazy val peer: BoxPanel with ComponentMixin = new BoxPanel(orientation) with ComponentMixin
+  override protected lazy val peer: BoxPanel & ComponentMixin = new BoxPanel(orientation) with ComponentMixin
 }
 
 object ReBoxPanel {

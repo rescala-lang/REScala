@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class NaturalGraph {
 
-  var engine: Interface       = _
+  var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine._
 
-  var source: Var[Int]          = _
-  var result: List[Signal[Int]] = _
+  var source: Var[Int]          = scala.compiletime.uninitialized
+  var result: List[Signal[Int]] = scala.compiletime.uninitialized
 
   @Setup
   def setup(step: Step, engineParam: EngineParam, work: Workload): Unit = {

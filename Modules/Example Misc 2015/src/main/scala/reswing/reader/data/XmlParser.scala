@@ -147,7 +147,7 @@ class XmlParser {
     if (res.isEmpty)
       None
     else
-      try Some(dateFormat parse res.text)
+      try Some(dateFormat `parse` res.text)
       catch {
         case _: ParseException => None
       }

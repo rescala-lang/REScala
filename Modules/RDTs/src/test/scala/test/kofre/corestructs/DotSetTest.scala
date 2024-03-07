@@ -1,7 +1,7 @@
 package test.kofre.corestructs
 
 import kofre.base.Lattice
-import kofre.dotted.{DotSet, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.time.{Dot, Dots}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.*
@@ -12,8 +12,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
   test("empty") {
     assert(
-      DotSet.empty.isEmpty,
-      s"DotSet.empty should be empty, but ${DotSet.empty} is not empty"
+      Dots.empty.isEmpty,
+      s"DotSet.empty should be empty, but ${Dots.empty} is not empty"
     )
 
   }
@@ -30,8 +30,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
     val c2 = Set(d1, d2) // d1 is already deleted in the second causal context
 
     val mergedStore = Lattice.merge(
-      Dotted(DotSet.from(s1), Dots.from(c1)),
-      Dotted(DotSet.from(s2), Dots.from(c2))
+      Dotted(Dots.from(s1), Dots.from(c1)),
+      Dotted(Dots.from(s2), Dots.from(c2))
     ).data
 
     assert(!mergedStore.contains(d1))
@@ -44,8 +44,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val c2 = s2 ++ t2
 
       // commutativity
-      val m1 = Dotted(DotSet.from(s1), Dots.from(c1)) merge Dotted(DotSet.from(s2), Dots.from(c2))
-      val m2 = Dotted(DotSet.from(s2), Dots.from(c2)) merge Dotted(DotSet.from(s1), Dots.from(c1))
+      val m1 = Dotted(Dots.from(s1), Dots.from(c1)) merge Dotted(Dots.from(s2), Dots.from(c2))
+      val m2 = Dotted(Dots.from(s2), Dots.from(c2)) merge Dotted(Dots.from(s1), Dots.from(c1))
       assert(m1 == m2)
 
       // check if all elements were added to the new causal context
@@ -78,9 +78,9 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val ccA = dsA union deletedA
       val ccB = dsB union deletedB
 
-      val Dotted(dsMerged, ccMerged) = Lattice[Dotted[DotSet]].merge(
-        Dotted(DotSet(dsA), ccA),
-        Dotted(DotSet(dsB), ccB)
+      val Dotted(dsMerged, ccMerged) = Lattice[Dotted[Dots]].merge(
+        Dotted(dsA, ccA),
+        Dotted(dsB, ccB)
       )
 
       assert(
@@ -92,11 +92,11 @@ class DotSetTest extends munit.ScalaCheckSuite {
         s"DotSet.merge should not add new elements to the DotSet, but $dsMerged is not a subset of ${dsA union dsB}"
       )
       assert(
-        (dsMerged.repr intersect (deletedA diff dsA)).isEmpty,
+        (dsMerged intersect (deletedA diff dsA)).isEmpty,
         s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the lhs, but $dsMerged contains elements from ${deletedA diff dsA}"
       )
       assert(
-        (dsMerged.repr intersect (deletedB diff dsB)).isEmpty,
+        (dsMerged intersect (deletedB diff dsB)).isEmpty,
         s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the rhs, but $dsMerged contains elements from ${deletedB diff dsB}"
       )
     }
@@ -106,8 +106,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
       val ccA        = dsA union deletedA
       val ccB        = dsB union deletedB
-      val dottedSetA = Dotted(DotSet(dsA), ccA)
-      val dottedSetB = Dotted(DotSet(dsB), ccB)
+      val dottedSetA = Dotted(dsA, ccA)
+      val dottedSetB = Dotted(dsB, ccB)
 
       assert(
         dottedSetA <= dottedSetA,
@@ -131,8 +131,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
     forAll { (ds: Dots, deleted: Dots) =>
       val cc = ds union deleted
 
-      val decomposed                         = Dotted(DotSet(ds), cc).decomposed
-      val Dotted(DotSet(dsMerged), ccMerged) = decomposed.foldLeft(Dotted.empty[DotSet]) { _ merge _ }
+      val decomposed                         = Dotted(ds, cc).decomposed
+      val Dotted(dsMerged, ccMerged) = decomposed.foldLeft(Dotted.empty[Dots]) { _ merge _ }
 
       assertEquals(
         dsMerged,

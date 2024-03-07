@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit
 class DietMapCContextBench {
 
   @Param(Array("1", "1000"))
-  var size: Long = _
+  var size: Long = scala.compiletime.uninitialized
 
-  var cca: Dots       = _
-  var ccb: Dots       = _
-  var cca1: Dots      = _
-  var ccaSingle: Dots = _
+  var cca: Dots       = scala.compiletime.uninitialized
+  var ccb: Dots       = scala.compiletime.uninitialized
+  var cca1: Dots      = scala.compiletime.uninitialized
+  var ccaSingle: Dots = scala.compiletime.uninitialized
 
   private def makeCContext(replicaID: String, mul: Long, off: Long, len: Long): Dots = {
     val ranges = Range.Long(0L, size, 1).map(i => Range.Long(i * mul + off, i * mul + len + off, 1))

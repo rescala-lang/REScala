@@ -2,7 +2,7 @@ package replication.checkpointing.central
 
 import Bindings._
 import kofre.base.Lattice
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
@@ -18,7 +18,7 @@ class Checkpointer(listenPort: Int) {
 
   val minCheckpointSize: Int = 10
 
-  val bottom: SetState = Dotted(AddWinsSet.empty[Int])
+  val bottom: SetState = Dotted(ReplicatedSet.empty[Int])
 
   var fullState: SetState = bottom
 

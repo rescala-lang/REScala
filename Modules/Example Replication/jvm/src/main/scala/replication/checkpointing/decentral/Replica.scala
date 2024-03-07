@@ -5,7 +5,7 @@ import kofre.dotted.Dotted
 import kofre.syntax.{DeltaBuffer, ReplicaId}
 import loci.transmitter.{RemoteAccessException, RemoteRef}
 import Bindings.*
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
@@ -22,7 +22,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
   val minAtomsForCheckpoint = 100
   val maxAtomsForCheckpoint = 500
 
-  var set: DeltaBuffer[Dotted[AddWinsSet[Int]]] = DeltaBuffer(Dotted(AddWinsSet.empty))
+  var set: DeltaBuffer[Dotted[ReplicatedSet[Int]]] = DeltaBuffer(Dotted(ReplicatedSet.empty))
 
   var checkpoints: Map[Uid, Int] = Map(id -> 0)
 
@@ -30,7 +30,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
 
   var unboundLocalChanges: List[SetState] = List()
 
-  var unboundRemoteChanges: SetState = Dotted(AddWinsSet.empty[Int])
+  var unboundRemoteChanges: SetState = Dotted(ReplicatedSet.empty[Int])
 
   given ReplicaId = id
 
@@ -97,7 +97,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
             set = set.applyDelta(changes).clearDeltas()
 
             unboundRemoteChanges =
-              Lattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(AddWinsSet.empty))
+              Lattice[SetState].diff(changes, unboundRemoteChanges).getOrElse(Dotted(ReplicatedSet.empty))
 
             checkpoints = checkpoints.updated(replicaID, counter)
 
@@ -181,7 +181,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
 
       val unboundChanges = unboundLocalChanges.foldLeft(unboundRemoteChanges) { Lattice[SetState].merge }
 
-      if (unboundChanges != Dotted(AddWinsSet.empty))
+      if (unboundChanges != Dotted(ReplicatedSet.empty))
         sendDelta(unboundChanges, rr)
     }
     ()

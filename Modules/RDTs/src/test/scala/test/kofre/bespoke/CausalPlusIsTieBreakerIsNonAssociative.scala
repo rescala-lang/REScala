@@ -8,7 +8,7 @@ import kofre.base.Lattice
 import test.kofre.given
 import math.Ordering.Implicits.infixOrderingOps
 
-/* This tests a pitfall, with a common assumption about a causal clock with a tiebreaker */
+/* This tests a pitfall, with an assumption about a causal clock with a tiebreaker */
 class CausalPlusIsTieBreakerIsNonAssociative extends munit.FunSuite {
 
   /* Causal plus is a variant on the last-writer-wins idea, where we use a vector clock as the primary means of (causal)ordering, and when there is no causal ordering, we fall back to some tiebreaker, such as the current wallclock time.  */
@@ -24,7 +24,7 @@ class CausalPlusIsTieBreakerIsNonAssociative extends munit.FunSuite {
         case Some(value) => value
         case None =>
           Integer.compare(x.tieBreaker, y.tieBreaker)
-  given Lattice[CausalPlus] = Lattice.fromOrdering(summon)
+  given Lattice[CausalPlus] = Lattice.fromOrdering(using summon)
 
   test("basic usage") {
 

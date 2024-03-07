@@ -30,8 +30,8 @@ trait SourceBundle {
     /** Trigger the event */
     @deprecated("use .fire instead of apply", "0.21.0")
     def apply(value: T)(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit        = fire(value)
-    def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
-    def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
+    infix def fire()(implicit fac: Scheduler[State], scopeSearch: ScopeSearch[State], ev: Unit =:= T): Unit = fire(ev(()))
+    infix def fire(value: T)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -65,7 +65,7 @@ trait SourceBundle {
 
     override def disconnect(): Unit = ()
 
-    def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
+    infix def set(value: A)(implicit sched: Scheduler[State], scopeSearch: ScopeSearch[State]): Unit =
       scopeSearch.maybeTransaction match {
         case None => sched.forceNewTransaction(this) { admit(value)(_) }
         case Some(tx) => tx.observe(new Observation {
@@ -102,7 +102,7 @@ trait SourceBundle {
   object Var {
     def apply[T](initval: T)(implicit ticket: CreationTicket[BundleState]): Var[T] = fromChange(Pulse.Value(initval))
     def empty[T](implicit ticket: CreationTicket[BundleState]): Var[T]             = fromChange(Pulse.empty)
-    private[this] def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): Var[T] = {
+    private def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[BundleState]): Var[T] = {
       ticket.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.info))
     }
   }

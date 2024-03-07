@@ -15,11 +15,11 @@ import java.util.concurrent.TimeUnit
 class ORMapBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var numEntries: Int = _
+  var numEntries: Int = scala.compiletime.uninitialized
 
   type SUT = DeltaBufferDotted[ObserveRemoveMap[Int, EnableWinsFlag]]
 
-  var map: SUT = _
+  var map: SUT = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

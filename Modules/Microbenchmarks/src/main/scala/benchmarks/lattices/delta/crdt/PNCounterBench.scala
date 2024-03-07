@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit
 class PNCounterBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var numReplicas: Int = _
+  var numReplicas: Int = scala.compiletime.uninitialized
 
-  var counter: NamedDeltaBuffer[PosNegCounter] = _
+  var counter: NamedDeltaBuffer[PosNegCounter] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

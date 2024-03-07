@@ -87,8 +87,8 @@ class GSetTest extends munit.ScalaCheckSuite {
   property("convergence") {
     forAll { (insertedA: List[Int], insertedB: List[Int], networkGen: NetworkGenerator) =>
       val network = networkGen.make()
-      val aea = new AntiEntropy[GrowOnlySet[Int]]("a", network, mutable.Buffer("b"))
-      val aeb = new AntiEntropy[GrowOnlySet[Int]]("b", network, mutable.Buffer("a"))
+      val aea     = new AntiEntropy[GrowOnlySet[Int]]("a", network, mutable.Buffer("b"))
+      val aeb     = new AntiEntropy[GrowOnlySet[Int]]("b", network, mutable.Buffer("a"))
 
       val sa0 = insertedA.foldLeft(AntiEntropyContainer[GrowOnlySet[Int]](aea)) {
         case (set, e) => set.insert(e)

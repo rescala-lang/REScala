@@ -60,13 +60,13 @@ object MergeImpl {
 class MapMergeBenchmark {
 
   @Param(Array("1", "100", "1000"))
-  var leftSize: Int = _
+  var leftSize: Int = scala.compiletime.uninitialized
 
   @Param(Array("1"))
-  var rightSize: Int = _
+  var rightSize: Int = scala.compiletime.uninitialized
 
-  var left: Map[Int, Int]  = _
-  var right: Map[Int, Int] = _
+  var left: Map[Int, Int]  = scala.compiletime.uninitialized
+  var right: Map[Int, Int] = scala.compiletime.uninitialized
 
   import MergeImpl.IntLattice
 

@@ -114,11 +114,11 @@ class ReplicaListener[S: Lattice: JsonValueCodec](replica: Replica[S]) extends L
   val modeSwitched: Promise[true] = Promise[true]
 
   override def onOpen(webSocket: WebSocket): Unit = ()
-  override def onText(webSocket: WebSocket, data: CharSequence, last: Boolean): CompletionStage[_] =
+  override def onText(webSocket: WebSocket, data: CharSequence, last: Boolean): CompletionStage[?] =
     if CharSequence.compare(data, "200 tx mode: JSON") == 0 then modeSwitched.succeed(true)
     println(data)
     super.onText(webSocket, data, last)
-  override def onBinary(webSocket: WebSocket, data: ByteBuffer, last: Boolean): CompletionStage[_] = {
+  override def onBinary(webSocket: WebSocket, data: ByteBuffer, last: Boolean): CompletionStage[?] = {
     replica.receive(data)
 
     super.onBinary(webSocket, data, last)

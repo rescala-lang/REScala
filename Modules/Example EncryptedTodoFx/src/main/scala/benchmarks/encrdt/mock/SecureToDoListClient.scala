@@ -8,7 +8,7 @@ import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterW
 import benchmarks.encrdt.Codecs._
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
-import kofre.dotted.{DotMap, Dotted}
+import kofre.dotted.{Dotted}
 
 import java.util.UUID
 import scala.collection.mutable
@@ -22,7 +22,7 @@ class SecureToDoListClient(
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =
-    DecryptedDeltaGroup(Dotted(DotMap.empty, Dots.empty), Dots.empty)
+    DecryptedDeltaGroup(Dotted(Map.empty, Dots.empty), Dots.empty)
 
   private var _disseminatedDataInBytes: Long = 0
   def disseminatedDataInBytes: Long          = _disseminatedDataInBytes

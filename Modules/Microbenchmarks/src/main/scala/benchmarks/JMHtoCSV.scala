@@ -12,10 +12,10 @@ object JMHtoCSV {
   val MEASUREMENT = "^Iteration .*: (\\d+)[.,](\\d+) .*?$".r
 
   var outfiles           = Map[String, FileWriter]()
-  var benchmark: String  = _
-  var threads: String    = _
-  var parameters: String = _
-  var mode: String       = _
+  var benchmark: String  = scala.compiletime.uninitialized
+  var threads: String    = scala.compiletime.uninitialized
+  var parameters: String = scala.compiletime.uninitialized
+  var mode: String       = scala.compiletime.uninitialized
 
   def main(args: Array[String]): Unit = {
     try {

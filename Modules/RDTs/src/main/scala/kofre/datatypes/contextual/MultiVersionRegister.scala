@@ -1,7 +1,7 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, ReplicaId}
 import kofre.time.{Dot, Dots}
 
@@ -10,19 +10,22 @@ import kofre.time.{Dot, Dots}
   * In the absence of concurrent writes, the MultiVersionRegister is either empty or holds one value.
   * When multiple values are written concurrently, reading the MultiVersionRegister returns a set holding all these values.
   */
-case class MultiVersionRegister[A](repr: DotFun[A])
+case class MultiVersionRegister[A](repr: Map[Dot, A])
 
 object MultiVersionRegister {
-  def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(DotFun.empty)
+  def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(Map.empty)
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
 
-  val assertEqualsOrdering: Ordering[Any] = (l, r) =>
+  private val _assertEqualsOrdering: Ordering[Any] = (l, r) =>
     if l == r then 0
     else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
+  // we could replace this by casting …
+  def assertEqualsOrdering[A]: Ordering[A] = _assertEqualsOrdering.on(identity)
+  def assertEqualsLattice[A]: Lattice[A] = Lattice.fromOrdering(using assertEqualsOrdering)
 
   given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
-    given Lattice[A] = Lattice.fromOrdering(assertEqualsOrdering.on(identity))
+    given Lattice[A] = Lattice.fromOrdering(using assertEqualsOrdering)
     Lattice.derived
 
   given hasDot[A]: HasDots[MultiVersionRegister[A]] = HasDots.derived
@@ -32,21 +35,21 @@ object MultiVersionRegister {
 
   implicit class syntax[C, A](container: C) extends OpsSyntaxHelper[C, MultiVersionRegister[A]](container) {
 
-    def read(using PermQuery): Set[A] = current.repr.repr.values.toSet
+    def read(using IsQuery): Set[A] = current.repr.values.toSet
 
-    def write(using ReplicaId)(v: A): CausalMutate = {
+    def write(using ReplicaId)(v: A): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
 
       Dotted(
-        MultiVersionRegister(DotFun(Map(nextDot -> v))),
-        Dots.from(current.repr.repr.keySet).add(nextDot)
+        MultiVersionRegister(Map(nextDot -> v)),
+        Dots.from(current.repr.keySet).add(nextDot)
       ).mutator
     }
 
-    def clear(using PermCausalMutate)(): C =
+    def clear(using IsCausalMutator)(): C =
       Dotted(
         MultiVersionRegister.empty,
-        Dots.from(current.repr.repr.keySet)
+        Dots.from(current.repr.keySet)
       ).mutator
   }
 }

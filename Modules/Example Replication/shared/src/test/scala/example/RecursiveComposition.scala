@@ -21,7 +21,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
   val exampleComposition: Component = Container(
     List(
       Label("Do you Accept?"),
-      Container (
+      Container(
         List(
           Button("Yes"),
           Button("Ok")
@@ -31,7 +31,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
   )
 
   test("composition is serializable") {
-    val bytes = writeToArray(exampleComposition)
+    val bytes        = writeToArray(exampleComposition)
     val roundtripped = readFromArray[Component](bytes)
     assertEquals(roundtripped, exampleComposition)
   }

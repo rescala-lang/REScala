@@ -20,7 +20,7 @@ class DrawingSpaceState {
     } map { (_: Any) => null }) ||
       (select && { shape => // #EF
         shape == null || (shapes.value contains shape)
-      })) hold null // #IF
+      })) `hold` null // #IF
   // Without this indirection, the access above is made static, which causes an immediate infinite recursion
   def selectedShape = _selectedShape
   // currently drawn shapes
@@ -60,7 +60,7 @@ class DrawingSpaceState {
     commandInvoked.fold((List.empty[Command], List.empty[Shape])) { // #IF
       case ((commands, shapes), commandType) => commandType match {
           case Execute(command) =>
-            (command :: commands, command execute shapes)
+            (command :: commands, command `execute` shapes)
           case Revert(command) =>
             commands indexOf command match {
               case -1 => (commands, shapes)
@@ -68,7 +68,7 @@ class DrawingSpaceState {
                 val count = index + 1
                 (
                   commands drop count,
-                  (commands take count).foldLeft(shapes) { (shapes, command) => command revert shapes }
+                  (commands take count).foldLeft(shapes) { (shapes, command) => command `revert` shapes }
                 )
             }
           case Clear() =>

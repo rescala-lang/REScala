@@ -19,7 +19,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     hfc: HelperFunCollection
 ) {
   private val allNodes: Set[ReSource] = flattenGraph(outputs, Set())
-  private val sources: Set[Source[_]] = allNodes.collect { case s: Source[_] => s }
+  private val sources: Set[Source[?]] = allNodes.collect { case s: Source[_] => s }
 
   private val dataflow: Map[ReSource, Set[ReSource]] =
     allNodes.foldLeft(Map.empty[ReSource, Set[ReSource]]) { (acc, r) =>
@@ -27,7 +27,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     }
 
   private val topological: List[ReSource]         = toposort(sources.toList).reverse
-  private val sourcesTopological: List[Source[_]] = topological.collect { case s: Source[_] => s }
+  private val sourcesTopological: List[Source[?]] = topological.collect { case s: Source[_] => s }
 
   @tailrec
   private def flattenGraph(check: List[ReSource], acc: Set[ReSource]): Set[ReSource] = {

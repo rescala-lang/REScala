@@ -27,10 +27,10 @@ class ReAbstractButton(
     maximumSize: ReSwingValue[Dimension] = (),
     preferredSize: ReSwingValue[Dimension] = ()
 ) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
-  override protected lazy val peer: AbstractButton with ComponentMixin = new AbstractButton with ComponentMixin
+  override protected lazy val peer: AbstractButton & ComponentMixin = new AbstractButton with ComponentMixin
 
-  text.using({ () => peer.text }, peer.text_= _, "text")
-  selected.using({ () => peer.selected }, peer.selected_= _, classOf[ButtonClicked])
+  text.using({ () => peer.text }, peer.text_=, "text")
+  selected.using({ () => peer.selected }, peer.selected_=, classOf[ButtonClicked])
 
   horizontalAlignment.using({ () => peer.horizontalAlignment }, peer.horizontalAlignment = _, "horizontalAlignment")
   verticalAlignment.using({ () => peer.verticalAlignment }, peer.verticalAlignment = _, "verticalAlignment")
@@ -39,15 +39,15 @@ class ReAbstractButton(
     peer.horizontalTextPosition = _,
     "horizontalTextPosition"
   )
-  verticalTextPosition.using({ () => peer.verticalTextPosition }, peer.verticalTextPosition_= _, "verticalTextPosition")
+  verticalTextPosition.using({ () => peer.verticalTextPosition }, peer.verticalTextPosition_=, "verticalTextPosition")
 
-  icon.using({ () => peer.icon }, peer.icon_= _, "icon")
-  pressedIcon.using({ () => peer.pressedIcon }, peer.pressedIcon_= _, "pressedIcon")
-  selectedIcon.using({ () => peer.selectedIcon }, peer.selectedIcon_= _, "selectedIcon")
-  disabledIcon.using({ () => peer.disabledIcon }, peer.disabledIcon_= _, "disabledIcon")
-  disabledSelectedIcon.using({ () => peer.disabledSelectedIcon }, peer.disabledSelectedIcon_= _, "disabledSelectedIcon")
-  rolloverIcon.using({ () => peer.rolloverIcon }, peer.rolloverIcon_= _, "rolloverIcon")
-  rolloverSelectedIcon.using({ () => peer.rolloverSelectedIcon }, peer.rolloverSelectedIcon_= _, "rolloverSelectedIcon")
+  icon.using({ () => peer.icon }, peer.icon_=, "icon")
+  pressedIcon.using({ () => peer.pressedIcon }, peer.pressedIcon_=, "pressedIcon")
+  selectedIcon.using({ () => peer.selectedIcon }, peer.selectedIcon_=, "selectedIcon")
+  disabledIcon.using({ () => peer.disabledIcon }, peer.disabledIcon_=, "disabledIcon")
+  disabledSelectedIcon.using({ () => peer.disabledSelectedIcon }, peer.disabledSelectedIcon_=, "disabledSelectedIcon")
+  rolloverIcon.using({ () => peer.rolloverIcon }, peer.rolloverIcon_=, "rolloverIcon")
+  rolloverSelectedIcon.using({ () => peer.rolloverSelectedIcon }, peer.rolloverSelectedIcon_=, "rolloverSelectedIcon")
 
   val clicked = ReSwingEvent.using(classOf[ButtonClicked])
 }

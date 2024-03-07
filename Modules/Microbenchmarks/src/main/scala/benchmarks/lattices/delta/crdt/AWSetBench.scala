@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.Dotted
 import org.openjdk.jmh.annotations.*
 
@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit
 class AWSetBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
-  var set: DeltaBufferDotted[AddWinsSet[Int]] = _
+  var set: DeltaBufferDotted[ReplicatedSet[Int]] = scala.compiletime.uninitialized
 
-  def createBySize(size: Int): DeltaBufferDotted[AddWinsSet[Int]] =
-    (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", AddWinsSet.empty[Int])) {
+  def createBySize(size: Int): DeltaBufferDotted[ReplicatedSet[Int]] =
+    (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])) {
       case (s, e) => s.add(using s.replicaID)(e)
     }
 
@@ -34,25 +34,25 @@ class AWSetBench {
   def elements(): Set[Int] = set.elements
 
   @Benchmark
-  def add(): DeltaBufferDotted[AddWinsSet[Int]] = set.add(using set.replicaID)(-1)
+  def add(): DeltaBufferDotted[ReplicatedSet[Int]] = set.add(using set.replicaID)(-1)
 
   @Benchmark
-  def addAll(): DeltaBufferDotted[AddWinsSet[Int]] =
-    val ndb = NamedDeltaBuffer.dotted("a", AddWinsSet.empty[Int])
+  def addAll(): DeltaBufferDotted[ReplicatedSet[Int]] =
+    val ndb = NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])
     ndb.addAll(using ndb.replicaID)(0 until size)
 
   @Benchmark
-  def remove(): DeltaBufferDotted[AddWinsSet[Int]] = set.remove(0)
+  def remove(): DeltaBufferDotted[ReplicatedSet[Int]] = set.remove(0)
 
   @Benchmark
-  def removeBy(): DeltaBufferDotted[AddWinsSet[Int]] = set.removeBy((e: Int) => e == 0)
+  def removeBy(): DeltaBufferDotted[ReplicatedSet[Int]] = set.removeBy((e: Int) => e == 0)
 
   @Benchmark
-  def removeAll(): DeltaBufferDotted[AddWinsSet[Int]] = set.removeAll(set.elements)
+  def removeAll(): DeltaBufferDotted[ReplicatedSet[Int]] = set.removeAll(set.elements)
 
   @Benchmark
-  def clear(): DeltaBufferDotted[AddWinsSet[Int]] = set.clear()
+  def clear(): DeltaBufferDotted[ReplicatedSet[Int]] = set.clear()
 
   @Benchmark
-  def construct(): DeltaBufferDotted[AddWinsSet[Int]] = createBySize(size)
+  def construct(): DeltaBufferDotted[ReplicatedSet[Int]] = createBySize(size)
 }

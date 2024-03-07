@@ -12,8 +12,9 @@ trait Lattice[A] {
 
   /** By assumption: associative, commutative, idempotent.
     *
-    * For use with Delta CRDTs, this function should be optimized for the case
-    * that left >> right, i.e., that left is the current state and right the delta
+    * Implementation note: If it matters, assume that `left` is the current state and `right` is an added delta.
+    * All code should assume that `left` is the larger state (and optimize for this).
+    * If `left == right`, prefer to return `left`.
     */
   def merge(left: A, right: A): A
 
@@ -172,7 +173,7 @@ object Lattice {
 
       override def decompose(a: T): Iterable[T] =
         val ordinal = sm.ordinal(a)
-        val res = lat(ordinal).decompose(a)
+        val res     = lat(ordinal).decompose(a)
         // When `a` decomposes into nothing, it is no longer possible to distinguish which alternative of the sum we are dealing with. That is fine when the ordinal is 0 because then we have reached the bottom case for the sum type, but in all other cases we must keep enough information around to figure out the ordinal.
         if ordinal != 0 && res.isEmpty
         then Iterable(a)

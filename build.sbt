@@ -1,16 +1,16 @@
-import RescalaDependencies.*
+import LocalDependencies.*
 import Settings.*
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   // core
   rescala.js,
   rescala.jvm,
-  // rescala.native,
+  rescala.native,
   rescalafx,
   reswing,
   kofre.js,
   kofre.jvm,
-  // kofre.native,
+  kofre.native,
   aead.js,
   aead.jvm,
   // research & eval
@@ -31,7 +31,7 @@ lazy val rescalaAggregate =
   project.in(file("target/PhonyBuilds/rescalaAggregate")).settings(
     crossScalaVersions := Nil,
     noPublish,
-    scalaVersion_3
+    scala3defaults
   ).aggregate(
     rescala.js,
     rescala.jvm,
@@ -40,7 +40,7 @@ lazy val rescalaAggregate =
 
 lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -48,33 +48,31 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     // Compile / doc := (if (`is 3`(scalaVersion.value)) file("target/dummy/doc") else (Compile / doc).value),
     Test / scalacOptions ~= (old => old.filter(_ != "-Xfatal-warnings")),
     publishSonatype,
-    scalaReflectProvided,
     resolverJitpack,
     Dependencies.sourcecode,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
-    RescalaDependencies.retypecheck
+    LocalDependencies.scalatest,
+    LocalDependencies.scalatestpluscheck,
   )
   .jsSettings(
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % "provided,test",
-    jsAcceptUnfairGlobalTasks,
+    Dependencies.scalajsDom,
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % "test",
     jsEnvDom,
     sourcemapFromEnv(),
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scalaVersion_3, noPublish,  RescalaDependencies.scalaSwing)
+  .settings(scala3defaults, noPublish, LocalDependencies.scalaSwing)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(rescala.jvm)
-  .settings(scalaVersion_3, noPublish, scalaFxDependencies, fork := true)
+  .settings(scala3defaults, noPublish, scalaFxDependencies, fork := true)
 
 lazy val kofreAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
     crossScalaVersions := Nil,
     noPublish,
-    scalaVersion_3
+    scala3defaults
   ).aggregate(
     kofre.js,
     kofre.jvm,
@@ -84,7 +82,7 @@ lazy val kofreAggregate =
 lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Modules/RDTs"))
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
@@ -95,21 +93,20 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
+    LocalDependencies.scalatest,
+    LocalDependencies.scalatestpluscheck,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
   .jvmSettings(
-      RescalaDependencies.tink
+    LocalDependencies.tink
   )
-  .jsConfigure(_.enablePlugins(ScalablyTypedConverterPlugin))
+  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
     Compile / npmDependencies ++= Seq(
-      "libsodium-wrappers"        -> "0.7.10",
-      "@types/libsodium-wrappers" -> "0.7.10"
+      "libsodium-wrappers"        -> "0.7.13",
     )
   )
 
@@ -119,7 +116,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Modules/Graph-Compiler"))
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     Dependencies.jsoniterScala,
   )
@@ -128,7 +125,7 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).c
 lazy val microbench = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     Dependencies.upickle,
@@ -143,7 +140,7 @@ lazy val microbench = project.in(file("Modules/Microbenchmarks"))
 lazy val examples = project.in(file("Modules/Example Misc 2015"))
   .dependsOn(rescala.jvm, reswing)
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     fork := true,
     libraryDependencies ++= Seq(
@@ -156,14 +153,14 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(kofre.js, rescala.js)
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     Dependencies.scalatags,
     Dependencies.loci.webrtc,
     Dependencies.loci.jsoniterScala,
     Dependencies.jsoniterScala,
     jsAcceptUnfairGlobalTasks,
-    TaskKey[File]("deploy", "generates a correct index.template.html for the todolist app") := {
+    TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value
       val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
       val bp         = baseDirectory.value.toPath
@@ -203,13 +200,13 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
   .dependsOn(kofre.jvm)
   .settings(
-    scalaVersion_3,
+    scala3defaults,
     noPublish,
     scalaFxDependencies,
     fork := true,
     Dependencies.jsoniterScala,
-    RescalaDependencies.jetty11,
-    RescalaDependencies.tink,
+    LocalDependencies.jetty11,
+    LocalDependencies.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
@@ -217,7 +214,7 @@ lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
     .dependsOn(rescala, kofre, aead, kofre % "compile->compile;test->test")
     .settings(
-      scalaVersion_3,
+      scala3defaults,
       noPublish,
       run / fork         := true,
       run / connectInput := true,
@@ -232,11 +229,10 @@ lazy val replicationExamples =
       Dependencies.jsoniterScala
     )
     .jvmSettings(
-      Dependencies.loci.wsJetty11,
+      Dependencies.loci.wsJetty12,
       Dependencies.scribeSlf4j2,
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
-      RescalaDependencies.jetty11,
     )
     .jsSettings(
       Dependencies.scalatags,

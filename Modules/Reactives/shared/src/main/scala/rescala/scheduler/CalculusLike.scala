@@ -28,10 +28,10 @@ trait CalculusLike {
     */
   final class SimpleCreation() extends Initializer[State] {
 
-    override protected[this] def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
+    override protected def makeDerivedStructState[V](initialValue: V): StoreValue[V] =
       new StoreValue[V](initialValue)
 
-    override protected[this] def register[V](
+    override protected def register[V](
         reactive: ReSource.of[State],
         inputs: Set[ReSource.of[State]],
         initialValue: V
@@ -40,7 +40,7 @@ trait CalculusLike {
       FScheduler.allReactives += reactive
     }
 
-    override protected[this] def initialize(
+    override protected def initialize(
         reactive: Derived.of[State],
         incoming: Set[ReSource.of[State]],
         needsReevaluation: Boolean

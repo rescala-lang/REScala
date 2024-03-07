@@ -1,10 +1,11 @@
 package kofre.datatypes.contextual
 
 import kofre.base.{Bottom, Lattice}
-import kofre.datatypes.{Epoche, GrowOnlyList, LastWriterWins}
-import kofre.dotted.{DotFun, Dotted, HasDots}
+import kofre.datatypes.{Epoch, GrowOnlyList, LastWriterWins}
+import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.{OpsSyntaxHelper, PermQuery, ReplicaId}
 import kofre.time.{Dot, Dots}
+import HasDots.mapInstance
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *
@@ -24,30 +25,22 @@ import kofre.time.{Dot, Dots}
   *
   * This implementation was modeled after the RGA proposed by Roh et al. in "Replicated abstract data types: Building blocks
   * for collaborative applications", see [[https://www.sciencedirect.com/science/article/pii/S0743731510002716?casa_token=lQaLin7aEvcAAAAA:Esc3h3WvkFHUcvhalTPPvV5HbJge91D4-2jyKiSlz8GBDjx31l4xvfH8DIstmQ973PVi46ckXHg here]]
- * However, since then the implementation was changed significantly, thus it may be a different or even a novel strategy by now.
+  * However, since then the implementation was changed significantly, thus it may be a different or even a novel strategy by now.
   */
-case class ReplicatedList[E](order: Epoche[GrowOnlyList[Dot]], meta: DotFun[LastWriterWins[E]])
+case class ReplicatedList[E](order: Epoch[GrowOnlyList[Dot]], meta: Map[Dot, LastWriterWins[E]])
 object ReplicatedList {
 
-  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoche.empty, DotFun.empty)
+  def empty[E]: ReplicatedList[E] = ReplicatedList(Epoch.empty, Map.empty)
 
-  given lattice[E]: Lattice[ReplicatedList[E]] =
-    new Lattice[ReplicatedList[E]] {
-      override def merge(left: ReplicatedList[E], right: ReplicatedList[E]): ReplicatedList[E] =
-        ReplicatedList(left.order merge right.order, left.meta merge right.meta)
-
-      override def decompose(a: ReplicatedList[E]): Iterable[ReplicatedList[E]] =
-        Iterable(a)
-
-    }
+  given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
       def dots: Dots = dotted.meta.dots
       def removeDots(dots: Dots): Option[ReplicatedList[E]] =
-        val nmeta = dotted.meta.repr.filter((k, _) => !dots.contains(k))
+        val nmeta = dotted.meta.filter((k, _) => !dots.contains(k))
 
         if nmeta.isEmpty && dotted.order.isEmpty then None
-        else Some(dotted.copy(meta = DotFun(nmeta)))
+        else Some(dotted.copy(meta = nmeta))
   }
 
   given bottom[E]: Bottom[ReplicatedList[E]] = new:
@@ -56,8 +49,8 @@ object ReplicatedList {
   private class DeltaStateFactory[E] {
 
     def make(
-        epoche: Epoche[GrowOnlyList[Dot]] = empty._1,
-        df: DotFun[LastWriterWins[E]] = DotFun.empty,
+        epoche: Epoch[GrowOnlyList[Dot]] = empty._1,
+        df: Map[Dot, LastWriterWins[E]] = Map.empty,
         cc: Dots = Dots.empty
     ): Dotted[ReplicatedList[E]] = Dotted(ReplicatedList(epoche, df), cc)
   }
@@ -70,19 +63,19 @@ object ReplicatedList {
   implicit class syntax[C, E](container: C)
       extends OpsSyntaxHelper[C, ReplicatedList[E]](container) {
 
-    def read(using PermQuery)(i: Int): Option[E] = {
+    def read(using IsQuery)(i: Int): Option[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.toLazyList.flatMap(df.repr.get).map(_.payload).lift(i)
+      fw.value.toLazyList.flatMap(df.get).map(_.payload).lift(i)
     }
 
-    def size(using PermQuery): Int = current.meta.repr.size
+    def size(using IsQuery): Int = current.meta.size
 
-    def toList(using PermQuery): List[E] = {
+    def toList(using IsQuery): List[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.growOnlyList.toList.flatMap(df.repr.get).map(_.payload)
+      fw.value.growOnlyList.toList.flatMap(df.get).map(_.payload)
     }
 
-    def sequence(using PermQuery): Long = {
+    def sequence(using IsQuery): Long = {
       val ReplicatedList(fw, _) = current
       fw.counter
     }
@@ -90,11 +83,11 @@ object ReplicatedList {
     private def findInsertIndex(state: ReplicatedList[E], n: Int): Option[Int] = state match {
       case ReplicatedList(fw, df) =>
         fw.value.toLazyList.zip(LazyList.from(1)).filter {
-          case (dot, _) => df.repr.contains(dot)
+          case (dot, _) => df.contains(dot)
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(using ReplicaId, PermCausalMutate)(i: Int, e: E): C = {
+    def insert(using ReplicaId, IsCausalMutator)(i: Int, e: E): C = {
       val ReplicatedList(order, entries) = current
       val nextDot                        = context.nextDot(replicaId)
 
@@ -104,7 +97,7 @@ object ReplicatedList {
           val glistDelta = order.map { gl =>
             gl.insertGL(glistInsertIndex, nextDot)
           }
-          val dfDelta = DotFun.single(nextDot, LastWriterWins.now(e))
+          val dfDelta = Map(nextDot -> LastWriterWins.now(e))
 
           deltaState[E].make(
             epoche = glistDelta,
@@ -114,7 +107,7 @@ object ReplicatedList {
       }
     }.mutator
 
-    def insertAll(using ReplicaId, PermCausalMutate)(i: Int, elems: Iterable[E]): C = {
+    def insertAll(using ReplicaId, IsCausalMutator)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaId)
 
@@ -129,11 +122,11 @@ object ReplicatedList {
             fw.map { gl =>
               gl.insertAllGL(glistInsertIndex, nextDots)
             }
-          val dfDelta = DotFun.empty[LastWriterWins[E]].repr ++ (nextDots zip elems.map(e => LastWriterWins.now(e)))
+          val dfDelta = Map.empty[Dot, LastWriterWins[E]] ++ (nextDots zip elems.map(e => LastWriterWins.now(e)))
 
           deltaState[E].make(
             epoche = glistDelta,
-            df = DotFun(dfDelta),
+            df = dfDelta,
             cc = Dots.from(nextDots.toSet)
           )
       }
@@ -144,45 +137,45 @@ object ReplicatedList {
       fw.value.toLazyList.lift(i) match {
         case None => Dotted(ReplicatedList.empty)
         case Some(d) =>
-          df.repr.get(d) match
+          df.get(d) match
             case None => Dotted(ReplicatedList.empty)
             case Some(current) =>
               newNode match
                 case None => deltaState[E].make(cc = Dots.single(d))
                 case Some(value) =>
-                  deltaState[E].make(df = DotFun.single(d, current.write(value)), cc = Dots.single(d))
+                  deltaState[E].make(df = Map(d -> current.write(value)), cc = Dots.single(d))
       }
     }
 
-    def update(using ReplicaId, PermCausalMutate)(i: Int, e: E): C =
+    def update(using ReplicaId, IsCausalMutator)(i: Int, e: E): C =
       updateRGANode(current, i, Some(e)).mutator
 
-    def delete(using ReplicaId, PermCausalMutate)(i: Int): C = updateRGANode(current, i, None).mutator
+    def delete(using ReplicaId, IsCausalMutator)(i: Int): C = updateRGANode(current, i, None).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
         cond: E => Boolean,
         transform: LastWriterWins[E] => Option[LastWriterWins[E]]
     ): Dotted[ReplicatedList[E]] = {
-      val touched: Iterable[Dot] = state.meta.repr.flatMap: (k, v) =>
+      val touched: Iterable[Dot] = state.meta.flatMap: (k, v) =>
         Option.when(cond(v.payload))(k)
 
-      val updates = DotFun:
+      val updates =
         touched.flatMap: dot =>
-          val value = state.meta.repr(dot)
+          val value = state.meta(dot)
           transform(value).map(nv => dot -> nv)
         .toMap
 
       deltaState[E].make(df = updates, cc = Dots.from(touched))
     }
 
-    def updateBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean, e: E): C =
+    def updateBy(using ReplicaId, IsCausalMutator)(cond: E => Boolean, e: E): C =
       updateRGANodeBy(current, cond, old => Some(old.write(e))).mutator
 
-    def deleteBy(using ReplicaId, PermCausalMutate)(cond: E => Boolean): C =
+    def deleteBy(using ReplicaId, IsCausalMutator)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, _ => None).mutator
 
-    def purgeTombstones(using ReplicaId, PermCausalMutate)(): C = {
+    def purgeTombstones(using ReplicaId, IsCausalMutator)(): C = {
       val ReplicatedList(epoche, df) = current
 
       val known: List[Dot] = epoche.value.growOnlyList.toList
@@ -199,19 +192,19 @@ object ReplicatedList {
       ).mutator
     }
 
-    def clear(using PermCausalMutate)(): C = {
+    def clear(using IsCausalMutator)(): C = {
       deltaState[E].make(
         cc = context
       ).mutator
     }
 
-    def prepend(using ReplicaId, PermCausalMutate)(e: E): C = insert(0, e)
+    def prepend(using ReplicaId, IsCausalMutator)(e: E): C = insert(0, e)
 
-    def append(using ReplicaId, PermCausalMutate)(e: E): C = insert(size, e)
+    def append(using ReplicaId, IsCausalMutator)(e: E): C = insert(size, e)
 
-    def prependAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(0, elems)
+    def prependAll(using ReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(0, elems)
 
-    def appendAll(using ReplicaId, PermCausalMutate)(elems: Iterable[E]): C = insertAll(size, elems)
+    def appendAll(using ReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(size, elems)
 
   }
 }

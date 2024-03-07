@@ -27,7 +27,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
       ()
     }
     def assertClear(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
-      assert(elements: _*)
+      assert(elements*)
       results = Nil
     }
   }

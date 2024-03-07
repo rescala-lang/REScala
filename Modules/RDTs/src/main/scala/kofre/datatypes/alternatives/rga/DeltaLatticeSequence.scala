@@ -2,7 +2,7 @@ package kofre.datatypes.alternatives.rga
 
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes
-import kofre.datatypes.contextual.AddWinsSet
+import kofre.datatypes.contextual.ReplicatedSet
 import kofre.dotted.{Dotted, HasDots}
 import kofre.syntax.OpsSyntaxHelper
 import kofre.time.Dots
@@ -10,7 +10,7 @@ import kofre.time.Dots
 import scala.collection.{AbstractIterator, immutable}
 
 case class DeltaSequence[A](
-    vertices: AddWinsSet[Vertex],
+    vertices: ReplicatedSet[Vertex],
     edges: DeltaSequence.DeltaSequenceOrder,
     values: Map[Vertex, A]
 )
@@ -22,7 +22,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = Dotted(AddWinsSet.empty[Vertex]).add(using Vertex.start.id)(
+    val addStart = Dotted(ReplicatedSet.empty[Vertex]).add(using Vertex.start.id)(
       Vertex.start
     )
     DeltaSequence(
@@ -50,7 +50,7 @@ object DeltaSequence {
   implicit class DeltaSequenceOps[C, A](container: C)
       extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
 
-    def successor(v: Vertex)(using PermQuery): Option[Vertex] = {
+    def successor(v: Vertex)(using IsQuery): Option[Vertex] = {
       current.edges.inner.get(v) match {
         case None => None
         case Some(u) =>
@@ -58,20 +58,20 @@ object DeltaSequence {
       }
     }
 
-    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using PermCausalMutate): C = {
+    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using IsCausalMutator): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
       val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues)).mutator
     }
 
-    def prependDelta(replica: Uid, value: A)(using PermCausalMutate): C =
+    def prependDelta(replica: Uid, value: A)(using IsCausalMutator): C =
       addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
 
-    def removeDelta(v: Vertex)(using PermCausalMutate): C =
+    def removeDelta(v: Vertex)(using IsCausalMutator): C =
       context.wrap(current.vertices).remove(v).map(vert => current.copy(vertices = vert)).mutator
 
-    def filterDelta(keep: A => Boolean)(using PermCausalMutate): C = {
+    def filterDelta(keep: A => Boolean)(using IsCausalMutator): C = {
       val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }
       removed.foldLeft(context.wrap(current: DeltaSequence[A])) {
         case (curr, toRemove) =>
@@ -80,11 +80,11 @@ object DeltaSequence {
       }.mutator
     }
 
-    def toList(using PermQuery): List[A] = iterator.toList
+    def toList(using IsQuery): List[A] = iterator.toList
 
-    def iterator(using PermQuery): Iterator[A] = vertexIterator.map(v => current.values(v))
+    def iterator(using IsQuery): Iterator[A] = vertexIterator.map(v => current.values(v))
 
-    def vertexIterator(using PermQuery): Iterator[Vertex] =
+    def vertexIterator(using IsQuery): Iterator[Vertex] =
       new AbstractIterator[Vertex] {
         var lastVertex: Vertex = Vertex.start
 
@@ -110,9 +110,9 @@ object DeltaSequence {
     extension (value: DeltaSequence[A])
       def dots: Dots = value.vertices.dots
       override def removeDots(dots: Dots): Option[DeltaSequence[A]] =
-          HasDots.apply[AddWinsSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
-            value.copy(vertices = nv)
-          }
+        HasDots.apply[ReplicatedSet[Vertex]].removeDots(value.vertices)(dots).map { nv =>
+          value.copy(vertices = nv)
+        }
   }
 
   given deltaSequenceLattice[A]: Lattice[DeltaSequence[A]] =
@@ -136,7 +136,7 @@ object DeltaSequence {
             else merged.addRightEdge(oldPositions(v), v)
         }
         val vertices = left.vertices merge right.vertices
-        val values   = Lattice.merge(left.values, right.values)(Lattice.mapLattice(Lattice.assertNoConflicts))
+        val values   = Lattice.merge(left.values, right.values)(using Lattice.mapLattice(using Lattice.assertNoConflicts))
 
         DeltaSequence(
           vertices = vertices,
@@ -144,7 +144,6 @@ object DeltaSequence {
           values = values.view.filterKeys(vertices.contains).toMap
         )
       }
-
 
     }
 }

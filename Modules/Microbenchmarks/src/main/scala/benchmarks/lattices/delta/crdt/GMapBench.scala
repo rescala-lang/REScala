@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit
 class GMapBench {
 
   @Param(Array("1", "10", "100", "1000"))
-  var numEntries: Int = _
+  var numEntries: Int = scala.compiletime.uninitialized
 
   type Contained = GrowOnlyMap[Int, EnableWinsFlag]
   type SUT       = DeltaBufferDotted[Contained]
-  var map: SUT = _
+  var map: SUT = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

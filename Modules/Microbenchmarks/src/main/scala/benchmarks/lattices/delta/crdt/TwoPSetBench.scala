@@ -15,9 +15,9 @@ import java.util.concurrent.TimeUnit
 class TwoPSetBench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var size: Int = _
+  var size: Int = scala.compiletime.uninitialized
 
-  var set: NamedDeltaBuffer[TwoPhaseSet[Int]] = _
+  var set: NamedDeltaBuffer[TwoPhaseSet[Int]] = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

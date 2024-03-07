@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit
 class RGABench {
 
   @Param(Array("0", "1", "10", "100", "1000"))
-  var rgaSize: Int = _
+  var rgaSize: Int = scala.compiletime.uninitialized
 
   type SUT = DeltaBufferDotted[ReplicatedList[Int]]
 
-  var rga: SUT        = _
-  var rgaCleared: SUT = _
+  var rga: SUT        = scala.compiletime.uninitialized
+  var rgaCleared: SUT = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {

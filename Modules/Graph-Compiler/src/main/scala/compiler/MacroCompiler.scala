@@ -5,7 +5,6 @@ import clangast.expr.CExpr
 import clangast.types.CType
 import clangast.{CASTNode, WithContext}
 
-
 trait MacroCompiler {
   inline def compileTree(inline t: Any): WithContext[CASTNode]
 

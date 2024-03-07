@@ -55,7 +55,7 @@ trait Sidup extends Twoversion {
 
   class SidupInitializer(currentTx: SidupTransaction) extends Initializer[State] {
 
-    override protected[this] def makeDerivedStructState[V](initialValue: V): SidupState[V] =
+    override protected def makeDerivedStructState[V](initialValue: V): SidupState[V] =
       new SidupState(initialValue)
     override protected def initialize(
         reactive: Derived,
@@ -102,7 +102,7 @@ trait Sidup extends Twoversion {
     /** Store a single resettable ticket for the whole evaluation.
       * This optimization drastically reduces garbage generation of a relatively expensive object
       */
-    private val reevaluationTicket: ReevTicket[State, _] = makeDynamicReevaluationTicket(null)
+    private val reevaluationTicket: ReevTicket[State, ?] = makeDynamicReevaluationTicket(null)
 
     private var evaluating: List[Derived]      = List.empty
     private var evaluatingLater: List[Derived] = List.empty

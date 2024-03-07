@@ -17,14 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-12, ubuntu-22.04, windows-2022]
-        java-version: [11, 17, 20]
+        java-version: [11, 17, 21]
     env:
       JAVA_OPTS: -Xmx4g
     steps:
     - uses: actions/checkout@v3
-    - uses: coursier/cache-action@v6
-      continue-on-error: true
-    - uses: actions/setup-java@v3
+    # - uses: coursier/cache-action@v6
+    #   continue-on-error: true
+    - uses: actions/setup-java@v4
       with:
         java-version: ${{ matrix.java-version}}
         distribution: 'zulu'

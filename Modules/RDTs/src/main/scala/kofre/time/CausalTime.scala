@@ -1,6 +1,6 @@
 package kofre.time
 
-import kofre.base.Lattice
+import kofre.base.{Lattice, Orderings}
 
 import java.util.concurrent.atomic.AtomicLong
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -12,20 +12,17 @@ import scala.util.Random
   * The `random` parameter is used for enforcing totality in cases where the `causal` values also happen to collide. It is slightly preferrable if `random` is monotonically increasing on a single replica, as then updates within the same millisecond from the same replica do not need to increment the causal counter.
   */
 case class CausalTime(time: Time, causal: Long, random: Long):
-  def inc: CausalTime = CausalTime(time, causal + 1, CausalTime.countedTime())
+  def causalIncrement: CausalTime = CausalTime(time, causal + 1, CausalTime.countedTime())
   def advance: CausalTime =
     val now = CausalTime.now()
     if now <= this
-    then inc
+    then causalIncrement
     else now
 
 object CausalTime:
-  given ordering: Ordering[CausalTime] =
-    Ordering.by[CausalTime, Long](_.time)
-      .orElseBy(_.causal)
-      .orElseBy(_.random)
+  given ordering: Ordering[CausalTime] = Orderings.lexicographic
 
-  given lattice: Lattice[CausalTime] = Lattice.fromOrdering(ordering)
+  given lattice: Lattice[CausalTime] = Lattice.fromOrdering(using ordering)
 
   // originally used `System.nanoTime` for the third component, but the Web does not offer high precision timers, so a counter it is!
   private val timeCounter = AtomicLong(Random.nextLong())

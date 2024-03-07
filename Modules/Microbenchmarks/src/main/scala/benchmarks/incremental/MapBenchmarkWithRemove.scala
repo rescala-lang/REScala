@@ -18,13 +18,13 @@ import scala.util.Random
 class MapBenchmarkWithRemove {
 
   @Param(Array("1", "5", "10", "50", "100", "500", "1000", "5000", "10000"))
-  var arg: Int = _
+  var arg: Int = scala.compiletime.uninitialized
 
-  var removeEvent: Evt[Int]       = _
-  var mappedSeq: Signal[Seq[Int]] = _
+  var removeEvent: Evt[Int]       = scala.compiletime.uninitialized
+  var mappedSeq: Signal[Seq[Int]] = scala.compiletime.uninitialized
 
-  var reactSeq: SeqSource[Int]              = _
-  var reactMappedSeq: ReactiveDeltaSeq[Int] = _
+  var reactSeq: SeqSource[Int]              = scala.compiletime.uninitialized
+  var reactMappedSeq: ReactiveDeltaSeq[Int] = scala.compiletime.uninitialized
 
   @Setup(Level.Invocation)
   def prepare(): Unit = {

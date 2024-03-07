@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations._
 @Threads(1)
 @State(Scope.Thread)
 class PlainWork {
-  var work: Workload = _
+  var work: Workload = scala.compiletime.uninitialized
   @Setup
   def setup(work: Workload): Unit = this.work = work
 

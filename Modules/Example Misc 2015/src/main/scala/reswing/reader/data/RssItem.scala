@@ -31,7 +31,7 @@ case class RSSItem(
     val result = for {
       thisDate <- this.pubDate
       thatDate <- that.pubDate
-    } yield { thisDate compareTo thatDate }
+    } yield { thisDate `compareTo` thatDate }
 
     result getOrElse 0
   }

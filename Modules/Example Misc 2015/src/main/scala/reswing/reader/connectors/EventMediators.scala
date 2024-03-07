@@ -35,7 +35,7 @@ object SimpleReporter extends EventMediator {
     parser.channelParsed observe { _ => println("A channel was parsed") } // #HDL
     parser.itemParsed observe { _ => println("An item was parsed") }      // #HDL
 
-    fetcher.state.changed observe println _ // #IF //#HDL
+    fetcher.state.changed observe println // #IF //#HDL
     ()
   }
 }

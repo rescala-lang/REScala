@@ -8,7 +8,7 @@ import rescala.scheduler.Levelbased
 
 class TrueDynamicSignals extends RETests {
   multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[Interface with Levelbased])
+    val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
     import ie.assertLevel
     import ie.api._
 
@@ -86,7 +86,7 @@ class TrueDynamicSignals extends RETests {
 
       val evt = Evt[Int]()
       val testsig = Signal.dynamic {
-        obj.sig.value + (evt hold -1).value
+        obj.sig.value + (evt `hold` -1).value
       }
 
       assert(testsig.readValueOnce === -1)

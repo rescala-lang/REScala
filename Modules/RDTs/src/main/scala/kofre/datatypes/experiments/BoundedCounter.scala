@@ -22,21 +22,21 @@ object BoundedCounter {
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, BoundedCounter](container) {
 
-    def addParticipants(part: Set[Uid])(using PermMutate): C = neutral.copy(participants = part).mutator
+    def addParticipants(part: Set[Uid])(using IsMutator): C = neutral.copy(participants = part).mutator
 
-    def allocated(using PermQuery)(id: Uid): Int  = current.allocations.inner.getOrElse(id, 0)
-    def reserved(using ReplicaId, PermQuery): Int = reserved(replicaId)
-    def reserved(using PermQuery)(id: Uid): Int =
+    def allocated(using IsQuery)(id: Uid): Int  = current.allocations.inner.getOrElse(id, 0)
+    def reserved(using ReplicaId, IsQuery): Int = reserved(replicaId)
+    def reserved(using IsQuery)(id: Uid): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
-    def available(using PermQuery)(id: Uid): Int   = reserved(id) - allocated(id)
-    def available(using ReplicaId, PermQuery): Int = available(replicaId)
+    def available(using IsQuery)(id: Uid): Int   = reserved(id) - allocated(id)
+    def available(using ReplicaId, IsQuery): Int = available(replicaId)
 
-    def allocate(value: Int): IdMutate = {
+    def allocate(value: Int): IdMutator = {
       if value < 0 || available(replicaId) < value then neutral
       else neutral.copy(allocations = current.allocations.add(value))
     }.mutator
 
-    def transfer(amount: Int, target: Uid): IdMutate = {
+    def transfer(amount: Int, target: Uid): IdMutator = {
       if amount > available(replicaId) then neutral
       else
         neutral.copy(reservations =
@@ -45,7 +45,7 @@ object BoundedCounter {
         )
     }.mutator
 
-    def rebalance: IdMutate = {
+    def rebalance: IdMutator = {
       val availableByReplica = current.participants.iterator.map(id => available(id) -> id).toList
       val most               = availableByReplica.max
       val least              = availableByReplica.min
@@ -55,7 +55,7 @@ object BoundedCounter {
         current.transfer(diff, least._2)
     }.mutator
 
-    def invariantOk(using PermQuery): Unit =
+    def invariantOk(using IsQuery): Unit =
       assert(current.reservations.value == 0, s"incorrect reservations: ${current.reservations.value}")
       assert(
         current.allocations.value <= current.reservations.neg.inner(Uid.predefined("initial-allocation")),

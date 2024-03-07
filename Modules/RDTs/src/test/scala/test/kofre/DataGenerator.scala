@@ -12,6 +12,7 @@ import kofre.dotted.*
 import kofre.syntax.ReplicaId
 import kofre.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
+import HasDots.mapInstance
 
 import scala.annotation.nowarn
 import scala.collection.immutable.Queue
@@ -23,7 +24,7 @@ object DataGenerator {
   }
   object ExampleData:
     given Conversion[String, ExampleData] = ed => ExampleData(Set(ed))
-    given hasDots: HasDots[ExampleData] = HasDots.noDots
+    given hasDots: HasDots[ExampleData]   = HasDots.noDots
 
   given Arbitrary[ExampleData] = Arbitrary:
     Gen.oneOf(List("Anne", "Ben", "Chris", "Erin", "Julina", "Lynn", "Sara", "Taylor")).map(name =>
@@ -111,21 +112,18 @@ object DataGenerator {
     yield ArrayRanges.from(x.map(_.toLong))
   )
 
-  def genDotFun[A](implicit g: Arbitrary[A]): Gen[DotFun[A]] = for {
+  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] = for {
     n      <- Gen.choose(0, 10)
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g.arbitrary)
-  } yield DotFun((dots zip values).toMap)
+  } yield (dots zip values).toMap
 
-  implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[DotFun[A]] = Arbitrary(genDotFun)
+  implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
   def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match
       case Nil    => acc
       case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
-
-  given arbDotSet: Arbitrary[DotSet] = Arbitrary:
-    arbDots.arbitrary.map(DotSet.apply)
 
   case class SmallTimeSet(s: Set[Time])
 
@@ -158,11 +156,11 @@ object DataGenerator {
       elem <- arb.arbitrary
     yield Dotted(elem, dots union elem.dots)
 
-  given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[DotMap[K, V]] =
+  given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[Map[K, V]] =
     Arbitrary:
       Gen.listOf(Gen.zip[K, V](arbElem.arbitrary, arbKey.arbitrary)).map: pairs =>
         // remove dots happens to normalize the structure to remove empty inner elements
-        DotMap(pairs.toMap).removeDots(Dots.empty).getOrElse(DotMap(Map.empty))
+        pairs.toMap.removeDots(Dots.empty).getOrElse(Map.empty)
 
   @nowarn
   given shrinkDotted[A: HasDots]: Shrink[Dotted[A]] = Shrink: dotted =>
@@ -171,10 +169,10 @@ object DataGenerator {
 
   given arbCMultiVersion[E](using arb: Arbitrary[E]): Arbitrary[contextual.MultiVersionRegister[E]] = Arbitrary:
     Gen.listOf(Gen.zip(uniqueDot, arb.arbitrary)).map: pairs =>
-      MultiVersionRegister(DotFun(pairs.toMap))
+      MultiVersionRegister(pairs.toMap)
 
   given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
-    arbDotSet.arbitrary.map(EnableWinsFlag.apply)
+    arbDots.arbitrary.map(EnableWinsFlag.apply)
 
   given arbCausalDelta[A: Arbitrary: HasDots]: Arbitrary[CausalDelta[A]] = Arbitrary:
     for

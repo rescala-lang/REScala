@@ -49,12 +49,12 @@ class ReTextArea(
       maximumSize,
       preferredSize
     ) {
-  override protected lazy val peer: TextArea with ComponentMixin =
+  override protected lazy val peer: TextArea & ComponentMixin =
     new TextArea(null, rows, columns) with ComponentMixin
 
-  tabSize.using({ () => peer.tabSize }, peer.tabSize_= _, "tabSize")
-  lineWrap.using({ () => peer.lineWrap }, peer.lineWrap_= _, "lineWrap")
-  charWrap.using({ () => peer.charWrap }, peer.charWrap_= _, "wrapStyleWord")
+  tabSize.using({ () => peer.tabSize }, peer.tabSize_=, "tabSize")
+  lineWrap.using({ () => peer.lineWrap }, peer.lineWrap_=, "lineWrap")
+  charWrap.using({ () => peer.charWrap }, peer.charWrap_=, "wrapStyleWord")
 
   val lineCount = ReSwingValue.using({ () => peer.lineCount }, classOf[ValueChanged])
 }

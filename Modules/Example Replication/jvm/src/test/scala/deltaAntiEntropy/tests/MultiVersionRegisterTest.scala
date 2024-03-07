@@ -42,7 +42,7 @@ object MVRegisterGenerators {
 class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
   import MVRegisterGenerators.*
 
-  given Lattice[Int]                         = math.max _
+  given Lattice[Int]                         = math.max
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("write") {
@@ -119,8 +119,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
     forAll {
       (valuesA: List[Int], nClearA: Short, valuesB: List[Int], nClearB: Short, networkGen: NetworkGenerator) =>
         val network = networkGen.make()
-        val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
-        val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
+        val aea     = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
+        val aeb     = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
         val opsA = Random.shuffle(valuesA.indices ++ List.fill(nClearA.toInt)(-1))
         val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))

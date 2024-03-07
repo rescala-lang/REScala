@@ -6,7 +6,7 @@ import kofre.base.Lattice.optionLattice
 import kofre.base.{Bottom, Lattice, Uid}
 import kofre.datatypes.*
 import kofre.datatypes.contextual.CausalQueue.QueueElement
-import kofre.datatypes.contextual.{AddWinsSet, CausalQueue, ObserveRemoveMap}
+import kofre.datatypes.contextual.{ReplicatedSet, CausalQueue, ObserveRemoveMap}
 import kofre.dotted.{Dotted, DottedLattice, HasDots}
 import kofre.syntax.{DeltaBuffer, PermCausalMutate, ReplicaId}
 import kofre.time.{Dots, VectorClock}
@@ -44,14 +44,14 @@ class Focus[Inner: DottedLattice, Outer](dm: DataManager[Outer])(extract: Outer 
 type RespValue = Option[LastWriterWins[Res]]
 given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
 
+given HasDots[RespValue] = HasDots.noDots
 given DottedLattice[RespValue] = Dotted.lattice
 
-given HasDots[RespValue] = HasDots.noDots
 
 case class State(
     requests: CausalQueue[Req],
     responses: ObserveRemoveMap[String, RespValue],
-    providers: ObserveRemoveMap[Uid, AddWinsSet[String]]
+    providers: ObserveRemoveMap[Uid, ReplicatedSet[String]]
 ) derives DottedLattice, HasDots, Bottom
 
 object State:

@@ -1,7 +1,7 @@
 package kofre.time
 
 import kofre.base.{Lattice, Uid}
-import kofre.dotted.Dotted
+import kofre.dotted.{Dotted, HasDots}
 
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
@@ -19,9 +19,11 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def clockOf(replicaId: Uid): Option[Dot] = max(replicaId)
 
+  def causalPrefix: Dots = Dots(internal.view.mapValues(_.causalPrefix).toMap)
+
   def clock: VectorClock = VectorClock(internal.view.mapValues(_.next.fold(0L)(_ - 1)).toMap)
 
-  def add(dot: Dot): Dots = add(dot.place, dot.time)
+  infix def add(dot: Dot): Dots = add(dot.place, dot.time)
 
   def add(replicaId: Uid, time: Time): Dots =
     Dots(internal.updated(
@@ -38,9 +40,9 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
     this.add(next)
   }
 
-  def diff(other: Dots): Dots = subtract(other)
+  infix def diff(other: Dots): Dots = subtract(other)
 
-  def subtract(other: Dots): Dots = {
+  infix def subtract(other: Dots): Dots = {
     Dots(
       internal.map { case left @ (id, leftRanges) =>
         other.internal.get(id) match {
@@ -51,7 +53,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
     )
   }
 
-  def intersect(other: Dots): Dots =
+  infix def intersect(other: Dots): Dots =
     Dots {
       internal.flatMap { case (id, ranges) =>
         other.internal.get(id) match {
@@ -64,17 +66,17 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
       }
     }
 
-  def disjunct(other: Dots): Boolean =
+  infix def disjunct(other: Dots): Boolean =
     val keys = internal.keySet intersect other.internal.keySet
     keys.forall { k =>
       rangeAt(k) disjunct other.rangeAt(k)
     }
 
-  def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
+  infix def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 
-  def contains(d: Dot): Boolean = internal.get(d.place).exists(_.contains(d.time))
+  infix def contains(d: Dot): Boolean = internal.get(d.place).exists(_.contains(d.time))
 
-  def contains(other: Dots): Boolean = other <= this
+  infix def contains(other: Dots): Boolean = other <= this
 
   def iterator: Iterator[Dot] = internal.iterator.flatMap((k, v) => v.iterator.map(t => Dot(k, t)))
 
@@ -84,7 +86,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
   def max(replicaID: Uid): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
 
-  def <=(other: Dots): Boolean = internal.forall {
+  infix def <=(other: Dots): Boolean = internal.forall {
     case (id, leftRange) => leftRange <= other.rangeAt(id)
   }
 }
@@ -123,6 +125,19 @@ object Dots {
       ArrayRanges.leftRightToOrder(leftLTE, rightLTE)
 
     override def lteq(x: Dots, y: Dots): Boolean = x <= y
+  }
+
+
+  given HasDots[Dots] with {
+    extension (dotted: Dots)
+      def dots: Dots = dotted
+
+      /** Removes dots and anything associated to them from the value.
+       * In case the value becomes fully “empty” returns None
+       */
+      def removeDots(dots: Dots): Option[Dots] =
+        val res = dotted.diff(dots)
+        if res.isEmpty then None else Some(res)
   }
 
 }
