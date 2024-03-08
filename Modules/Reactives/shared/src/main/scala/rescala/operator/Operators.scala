@@ -1,5 +1,7 @@
 package rescala.operator
 
+import rescala.extra.lenses.LensBundle
+
 /** To support virtual State types, everything is put into the bundle traits.
   * But because the operators all have cyclic dependencies to each other,
   * we need this combining bundle, which all other operator bundles use as a self type

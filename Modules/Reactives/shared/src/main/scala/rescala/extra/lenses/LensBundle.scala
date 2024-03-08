@@ -1,6 +1,7 @@
-package rescala.operator
+package rescala.extra.lenses
 
 import rescala.core.*
+import rescala.operator.Operators
 
 trait LensBundle {
   self: Operators =>
