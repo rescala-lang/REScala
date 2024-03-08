@@ -3,7 +3,7 @@ package reactives.core
 import scala.util.DynamicVariable
 
 trait SchedulerWithDynamicScope[State[_], Tx <: Transaction[State]] extends Scheduler[State] {
-  def dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
+  val dynamicScope: DynamicScopeImpl[State, Tx] = new DynamicScopeImpl[State, Tx](this)
 }
 
 /** Provides the capability to look up transactions in the dynamic scope. */
@@ -12,7 +12,7 @@ trait DynamicScope[State[_]] {
   def maybeTransaction: Option[Transaction[State]]
 }
 
-class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerWithDynamicScope[State, Tx])
+class DynamicScopeImpl[State[_], Tx <: Transaction[State]](val scheduler: SchedulerWithDynamicScope[State, Tx])
     extends DynamicScope[State] {
 
   final private[reactives] def dynamicTransaction[T](f: Transaction[State] ?=> T): T = {
