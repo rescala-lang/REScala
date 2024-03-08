@@ -1,0 +1,30 @@
+Points:
+	1. Propagation richtung Root
+	2. How to do toModel()
+
+Idee:
+	1. If LVar changed -> Propagate using toModel() Function -> where are the dependencies?
+	2. Propagate Signals & toViews() -> multiple Points of Change or just from root and evaluate vars multiple times
+
+Signals vs Lenses
+
+					Signals						Lenses
+					n -> 1						1 <-> 1
+					expr(Vars) -> Signal		expr1(LVar) -> LVar
+												LVar <- expr2(LVar)
+					Signal = Signal {...}		LVar[View] = LVar[Model].applyLens(...) / Lens(LVar) z.B. meters = yards.applyLens(new MulLens(0.9144))
+
+What happens when an update occurs?
+
+					Signal => all dependencies are reevaluated
+					Var => inherits from Signal, but updates can be triggered manually
+					LVar => inherits from Var AND
+							all LVars connected via Lenses are updated using toView() OR toModel()
+
+How to decide which method to call?
+
+					1.	no change in dependency structure
+						toView() "trivially" as Signal expression
+                      	toModel() if "incoming" is connected via Lens, call toModel() -> How do we know that? & Do Vars have "incoming"?
+
+					2.	extend dependencies bidirectional, if LVar in "incoming" && "outgoing" we have found a Lens -> What's the orientation?

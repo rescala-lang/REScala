@@ -18,31 +18,31 @@ trait LowPrioTransactionScope {
 }
 
 trait CreationScope[State[_]] {
-  def embedCreation[T](f: Transaction[State] => T): T
+  def embedCreation[T](f: Transaction[State] ?=> T): T
 
   private[reactives] def create[V, T <: Derived.of[State]](
       incoming: Set[ReSource.of[State]],
       initValue: V,
       needsReevaluation: Boolean
   )(instantiateReactive: State[V] => T): T = {
-    embedCreation { tx =>
+    embedCreation { tx ?=>
       val init: Initializer[State] = tx.initializer
       init.create(incoming, initValue, needsReevaluation)(instantiateReactive)
     }
   }
 
   private[reactives] def createSource[V, T <: ReSource.of[State]](intv: V)(instantiateReactive: State[V] => T): T = {
-    embedCreation(_.initializer.createSource(intv)(instantiateReactive))
+    embedCreation(tx ?=> tx.initializer.createSource(intv)(instantiateReactive))
   }
 }
 
 object CreationScope {
 
   case class StaticCreationScope[State[_]](tx: Transaction[State]) extends CreationScope[State] {
-    override def embedCreation[T](f: Transaction[State] => T): T = f(tx)
+    override def embedCreation[T](f: Transaction[State] ?=> T): T = f(using tx)
   }
   case class DynamicCreationScope[State[_]](ds: DynamicScope[State]) extends CreationScope[State] {
-    override def embedCreation[T](f: Transaction[State] => T): T = ds.dynamicTransaction(f)
+    override def embedCreation[T](f: Transaction[State] ?=> T): T = ds.dynamicTransaction(f)
   }
 
   inline given search(using ts: TransactionSearch[Interface.State]): CreationScope[Interface.State] = ts.static match

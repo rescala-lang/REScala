@@ -8,17 +8,17 @@ trait SchedulerWithDynamicScope[State[_], Tx <: Transaction[State]] extends Sche
 
 /** Provides the capability to look up transactions in the dynamic scope. */
 trait DynamicScope[State[_]] {
-  private[reactives] def dynamicTransaction[T](f: Transaction[State] => T): T
+  private[reactives] def dynamicTransaction[T](f: Transaction[State] ?=> T): T
   def maybeTransaction: Option[Transaction[State]]
 }
 
 class DynamicScopeImpl[State[_], Tx <: Transaction[State]](scheduler: SchedulerWithDynamicScope[State, Tx])
     extends DynamicScope[State] {
 
-  final private[reactives] def dynamicTransaction[T](f: Transaction[State] => T): T = {
+  final private[reactives] def dynamicTransaction[T](f: Transaction[State] ?=> T): T = {
     _currentTransaction.value match {
-      case Some(transaction) => f(transaction)
-      case None              => scheduler.forceNewTransaction(Set.empty, ticket => f(ticket.tx))
+      case Some(transaction) => f(using transaction)
+      case None              => scheduler.forceNewTransaction(Set.empty, ticket => f(using ticket.tx))
     }
   }
 

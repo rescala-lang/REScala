@@ -21,6 +21,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   // examples & case studies
   examples,
   todolist,
+  unitConversion,
   encryptedTodo,
   replicationExamples.js,
   replicationExamples.jvm,
@@ -188,6 +189,27 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     }
   )
 
+lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(reactives.js)
+  .settings(
+    scala3defaults,
+    noPublish,
+    Dependencies.scalatags,
+    TaskKey[File]("deploy", "generates a correct index.template.html for the unitconversion app") := {
+      val fastlink = (Compile / fastLinkJS).value
+      val jspath = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      val bp = baseDirectory.value.toPath
+      val tp = target.value.toPath
+      val template = IO.read(bp.resolve("index.template.html").toFile)
+      val targetpath = tp.resolve("index.html")
+      val jsrel = targetpath.getParent.relativize(jspath.toPath)
+      IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
+      //IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
+      targetpath.toFile
+    }
+  )
+
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
   .dependsOn(rdts.jvm)
@@ -229,13 +251,13 @@ lazy val replicationExamples =
     .jsSettings(
       Dependencies.scalatags,
       Dependencies.loci.wsWeb,
-      TaskKey[File]("deploy", "generates a correct index.html") := {
+      TaskKey[File]("deploy", "generates a correct index.template.html") := {
         val fastlink   = (Compile / fastLinkJS).value
         val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
         val bp         = baseDirectory.value.toPath
         val tp         = jspath.toPath
         val template   = IO.read(bp.resolve("index.template.html").toFile)
-        val targetpath = tp.resolve("index.html").toFile
+        val targetpath = tp.resolve("index.template.html").toFile
         IO.write(targetpath, template.replace("JSPATH", s"main.js"))
         IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
         targetpath
