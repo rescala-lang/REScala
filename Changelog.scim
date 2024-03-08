@@ -1,9 +1,21 @@
 = Changelog
 
+== v.next
+
+• refactor API to no longer require bundle traits
+	• this removes the capability to select schedulers at runtime and instead moves the selection to compile time
+• rename module imports to use generic names:
+	• rescala -> reactives
+	• kofre -> rdts
+• add channels module as an experiment to have rdt specific communication infrastructure
+• migrate all tests to munit
+
+
 == v0.35.1
 date = 2024-03-08
 
 • update Scala version to 3.3.3 due to incompatible release
+
 
 == v0.35.0
 date = 2024-02-24
