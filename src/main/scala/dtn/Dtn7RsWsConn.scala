@@ -27,15 +27,15 @@ object Dtn7RsWsConn {
     backend.send(request).map(x => x.body)
   }
 
-  def create(): Future[Dtn7RsWsConn] = {
-    val conn: Dtn7RsWsConn = Dtn7RsWsConn()
+  def create(port: Int): Future[Dtn7RsWsConn] = {
+    val conn: Dtn7RsWsConn = Dtn7RsWsConn(port)
 
-    uget(uri"${Dtn7RsInfo.http_api}/status/nodeid").map(x => conn.nodeId = Option(x))
-      .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))
+    uget(uri"${Dtn7RsInfo.http_api(port)}/status/nodeid").map(x => conn.nodeId = Option(x))
+      .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))
       .map(_ => {conn.command("/json"); conn})  // select json communication
   }
 }
-class Dtn7RsWsConn {
+class Dtn7RsWsConn(port: Int) {
   var nodeId: Option[String] = None
 
   // todo: check if exception on ws internal access is comprehensible, e.g. create() was not used to instantiate the class
@@ -61,6 +61,7 @@ class Dtn7RsWsConn {
         receiveBundle()
       }
       case b: Array[Byte] => {
+        println(s"received bundle")
         Future(Bundle.createFromDtnWsJson(b))
       }
     }
@@ -114,7 +115,7 @@ class Dtn7RsWsConn {
 
   def registerEndpointAndSubscribe(service: String): Future[Unit] = {
     // register the endpoint on the DTN daemon
-    Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api}/register?$service").map(_ => {
+    Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api(port)}/register?$service").map(_ => {
       registeredServices = service :: registeredServices
       // subscribe to the registered endpoint with out websocket
       command(s"/subscribe $service")
@@ -122,7 +123,7 @@ class Dtn7RsWsConn {
   }
 
   def disconnect(): Future[Unit] = {
-    registeredServices.foreach(service => Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api}/unregister?$service"))
+    registeredServices.foreach(service => Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api(port)}/unregister?$service"))
     registeredServices = List()
     ws.get.close()
     // todo: do I need to make sure each uget is done before leaving this method?

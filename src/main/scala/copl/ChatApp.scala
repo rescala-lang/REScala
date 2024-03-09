@@ -8,7 +8,7 @@ import kofre.syntax.ReplicaId
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.*
 import org.scalajs.dom.html.{Div, Input, Paragraph}
-import org.scalajs.dom.{UIEvent, document, window}
+import org.scalajs.dom.{HTMLElement, UIEvent, document, window}
 import rescala.default
 import rescala.default.*
 import rescala.extra.Tags.*
@@ -18,7 +18,6 @@ import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
-
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
@@ -29,7 +28,7 @@ case class Epoche[T](number: Int, payload: T)
 @JSExportTopLevel("ChatApp")
 object ChatApp {
 
-  val registry = new Registry
+//  val registry = new Registry
 
   given ReplicaId = ReplicaId.gen()
 
@@ -45,7 +44,18 @@ object ChatApp {
     val contents = getContents()
     document.body.replaceChild(contents.render, document.body.firstChild)
     document.body.appendChild(p(style := "height: 3em").render)
-    document.body.appendChild(WebRTCHandling(registry).webrtcHandlingArea.render)
+//    document.body.appendChild(WebRTCHandling(registry).webrtcHandlingArea.render)
+    document.body.appendChild(getConnectorContents())
+  }
+
+  def getConnectorContents(): HTMLElement = {
+    val portInput = input(placeholder := "dtnd ws port").render
+    val connectButton = button(onclick := {() => {
+      CrdtConnector.connectToWS(portInput.value.toInt)
+    }}).render
+    connectButton.textContent = "Connect"
+
+    div(portInput, connectButton).render
   }
 
   def getContents(): TypedTag[Div] = {
@@ -78,10 +88,7 @@ object ChatApp {
       }
 
     //Network.replicate(history, registry)(Binding("history"))
-    CrdtConnector.initializeObj().map(_ => {
-      CrdtConnector.connectGraph(history)
-      CrdtConnector.startReceiving()
-    })
+    CrdtConnector.connectGraph(history)
 
     val chatDisplay = Signal.dynamic {
       val reversedHistory = history.value.payload.toList.reverse

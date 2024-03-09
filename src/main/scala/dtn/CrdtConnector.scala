@@ -11,21 +11,28 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray
 
 
 object CrdtConnector {
-  private val cRDTGroupEndpoint: String = "dtn://global/crdt/~app1"
+  private val cRDTGroupEndpoint: String = "dtn://global/~crdt/app1"
 
   private var ws: Option[Dtn7RsWsConn] = None
 
   private var onChangedUpdateFunc: Array[Byte] => Unit = x => {}
-
-  def initializeObj(): Future[Unit] = {
-    Dtn7RsWsConn.create().flatMap(conn => {
-      ws = Option(conn)
+  
+  def connectToWS(port: Int): Unit = {
+    def receiveBundle(): Unit = {
+      ws.get.receiveBundle().onComplete(bundle => {
+        onChangedUpdateFunc(bundle.get.getDataAsBytes)
+        receiveBundle()
+      })
+    }
+    
+    Dtn7RsWsConn.create(port).flatMap(conn => {
+      ws = Some(conn)
 
       println(s"connected to DTN node: ${ws.get.nodeId.get}")
       if (ws.get.nodeId.get.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
 
       ws.get.registerEndpointAndSubscribe(cRDTGroupEndpoint)
-    })
+    }).onComplete(_ => receiveBundle())
   }
 
   def connectGraph[A: Lattice: JsonValueCodec](signal: Signal[A]): Unit = {
@@ -37,8 +44,9 @@ object CrdtConnector {
         dst = cRDTGroupEndpoint,
         bytes = payload
       )
-      println("start sending")
-      ws.get.sendBundle(bundle).onComplete(_ => println("finished sending"))
+      ws match
+        case Some(value) => value.sendBundle(bundle)
+        case None => println("cannot send update. not connected. throwing away.")
     })
 
     // push received updates into the crdt
@@ -59,16 +67,5 @@ object CrdtConnector {
         })
       }
     }
-  }
-
-  def startReceiving(): Unit = {
-    println("start receiving")
-    // update crdt on signals received through the dtn network
-    ws.get.receiveBundle().onComplete(bundle => {
-      println("got a bundle")
-      onChangedUpdateFunc(bundle.get.getDataAsBytes)
-      println("pushed into CRDT")
-      startReceiving()
-    })
   }
 }
