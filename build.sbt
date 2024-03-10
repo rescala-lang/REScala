@@ -197,15 +197,15 @@ lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
     noPublish,
     Dependencies.scalatags,
     TaskKey[File]("deploy", "generates a correct index.template.html for the unitconversion app") := {
-      val fastlink = (Compile / fastLinkJS).value
-      val jspath = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-      val bp = baseDirectory.value.toPath
-      val tp = target.value.toPath
-      val template = IO.read(bp.resolve("index.template.html").toFile)
+      val fastlink   = (Compile / fastLinkJS).value
+      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      val bp         = baseDirectory.value.toPath
+      val tp         = target.value.toPath
+      val template   = IO.read(bp.resolve("index.template.html").toFile)
       val targetpath = tp.resolve("index.html")
-      val jsrel = targetpath.getParent.relativize(jspath.toPath)
+      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
       IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
-      //IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
+      // IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
       targetpath.toFile
     }
   )
@@ -219,9 +219,15 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     LocalSetting.scalaFxDependencies,
     fork := true,
     Dependencies.jsoniterScala,
-    LocalSetting.jetty11,
     LocalSetting.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
+    libraryDependencies ++= {
+      val jettyVersion = "11.0.20"
+      Seq(
+        "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
+        "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
+      )
+    }
   )
 
 lazy val replicationExamples =

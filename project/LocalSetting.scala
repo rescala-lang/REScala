@@ -3,17 +3,6 @@ import sbt.Keys._
 
 object LocalSetting {
 
-  def jetty11 = {
-    val jettyVersion = "11.0.20"
-    libraryDependencies ++= Seq(
-      "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
-      "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
-      "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
-      "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
-      "org.eclipse.jetty"           % "jetty-rewrite"          % jettyVersion,
-    )
-  }
-
   val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.12.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
