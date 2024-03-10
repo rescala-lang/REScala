@@ -31,6 +31,7 @@ object GlobalRegistry {
     currentValues.foreach: (id, cw) =>
       val enc = encode(id, cw.signal.now.state)(using cw.codec)
       channels.foreach: chan =>
+        println(s"sending existing data for $id to new channel")
         chan.send(enc).run(using ())(println)
   }
 
@@ -90,7 +91,7 @@ object GlobalRegistry {
   def publish[A](name: String, reactive: Signal[DeltaBuffer[Dotted[A]]])(using JsonValueCodec[Dotted[A]]) = {
     println(s"publishing $name")
 
-    currentValues = currentValues.updated("name", Valued(reactive, summon))
+    currentValues = currentValues.updated(name, Valued(reactive, summon))
 
     val initial = encode(name, reactive.now.state)
     channels.foreach(c => c.send(initial).run(println))
