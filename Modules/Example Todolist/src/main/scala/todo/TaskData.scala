@@ -156,16 +156,15 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 }
 
 given RangeSplice[Modifier] with {
-  override def splice(range: dom.Range, value: Modifier): Unit =
-    val parent = range.commonAncestorContainer
-    parent match
+  override def splice(anchor: dom.Element, range: dom.Range, value: Modifier): Unit =
+    println(s"applying $value to $anchor")
+    anchor match
       case elem: dom.Element => value.applyTo(elem)
 }
 
 given RangeSplice[dom.Element => Unit] with {
-  override def splice(range: dom.Range, value: dom.Element => Unit): Unit =
-    val parent = range.commonAncestorContainer
-    parent match
+  override def splice(anchor: dom.Element, range: dom.Range, value: dom.Element => Unit): Unit =
+    anchor match
       case elem: dom.Element => value.apply(elem)
 }
 

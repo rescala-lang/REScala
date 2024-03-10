@@ -33,7 +33,7 @@ class RescalatagsTest extends RETests {
   }
 
   given RangeSplice[Modifier] with {
-    override def splice(range: dom.Range, value: Modifier): Unit =
+    override def splice(anchor: dom.Element, range: dom.Range, value: Modifier): Unit =
       val parent = range.commonAncestorContainer
       parent match
         case elem: dom.Element => value.applyTo(elem)

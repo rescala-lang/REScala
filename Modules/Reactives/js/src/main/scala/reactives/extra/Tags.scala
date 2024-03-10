@@ -17,36 +17,38 @@ object Tags extends Tags(true)
 class Tags(val addDebuggingIds: Boolean) {
 
   trait RangeSplice[-T]:
-    def splice(range: dom.Range, value: T): Unit
+    def splice(anchor: dom.Element, range: dom.Range, value: T): Unit
   object RangeSplice:
     given elem: RangeSplice[dom.Element] with {
-      override def splice(range: Range, value: dom.Element) =
+      override def splice(anchor: dom.Element, range: Range, value: dom.Element) =
         range.insertNode(value)
     }
     given many[T](using other: RangeSplice[T]): RangeSplice[Seq[T]] with {
-      override def splice(range: Range, value: Seq[T]) =
-        value.reverseIterator.foreach(v => other.splice(range, v))
+      override def splice(anchor: dom.Element, range: Range, value: Seq[T]) =
+        value.reverseIterator.foreach(v => other.splice(anchor, range, v))
     }
     given string: RangeSplice[String] with {
-      override def splice(range: Range, value: String) =
-        range.insertNode(document.createTextNode(value))
+      override def splice(anchor: dom.Element, range: Range, value: String) =
+        anchor.textContent = value
     }
 
-  extension (outer: dom.Element)
+  extension (anchor: dom.Element)
     def reattach[T](signal: Signal[T])(using
         splicer: RangeSplice[T],
         creationTicket: CreationTicket[Interface.State]
-    ): outer.type = {
+    ): anchor.type = {
       val range = document.createRange()
-      range.selectNodeContents(outer)
-      range.collapse(toStart = false)
       Observe.strong(signal, true) {
-        tagObserver(outer, signal) { v =>
+        tagObserver(anchor, signal) { v =>
+          if range.commonAncestorContainer != anchor then
+            println(s"was not anchor")
+            range.selectNodeContents(anchor)
+            range.collapse(toStart = false)
           range.deleteContents()
-          splicer.splice(range, v)
+          splicer.splice(anchor, range, v)
         }
       }
-      outer
+      anchor
     }
 
   extension (input: Input)
