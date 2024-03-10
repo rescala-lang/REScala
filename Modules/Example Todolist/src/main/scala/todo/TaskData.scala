@@ -121,8 +121,9 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
     GlobalRegistry.publish(taskID, crdt)
     GlobalRegistry.unbuffer(taskID)
 
-    val taskData =
-      crdt.map(x => x.state.data.read.getOrElse(TaskData(desc = "LWW Empty")))
+    val taskData = Signal {
+      crdt.value.state.data.read.getOrElse(TaskData(desc = "LWW Empty"))
+    }
 
     val removeButton =
       Event.fromCallback(button(`class` := "destroy", onclick := Event.handle))

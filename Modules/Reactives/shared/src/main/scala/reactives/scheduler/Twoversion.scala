@@ -171,6 +171,7 @@ trait Twoversion {
 
     val toCommit      = ListBuffer[ReSource]()
     val observers     = ListBuffer[Observation]()
+    val followups     = ListBuffer[Observation]()
     var commitStarted = false
 
     override def schedule(commitable: ReSource): Unit = { toCommit += commitable; () }
@@ -180,7 +181,17 @@ trait Twoversion {
         s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
         s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
       )
-      observers += f; ()
+      observers += f
+      ()
+    }
+
+    override def followup(obs: Observation): Unit = {
+      if (commitStarted) throw new IllegalStateException(
+        s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
+        s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
+      )
+      followups += obs
+      ()
     }
 
     override def commitPhase(): Unit = {
@@ -199,6 +210,12 @@ trait Twoversion {
       // find some failure and rethrow the contained exception
       // we should probably aggregate all of the exceptions,
       // but this is not the place to invent exception aggregation
+      if (failure != null) throw failure
+
+      followups.foreach { n =>
+        try n.execute()
+        catch { case NonFatal(e) => failure = e }
+      }
       if (failure != null) throw failure
     }
 

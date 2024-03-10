@@ -166,6 +166,8 @@ trait Transaction[State[_]] {
 
   def observe(obs: Observation): Unit
 
+  def followup(obs: Observation): Unit = observe(obs)
+
   def initializer: Initializer[State]
 
   private[reactives] def discover(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
