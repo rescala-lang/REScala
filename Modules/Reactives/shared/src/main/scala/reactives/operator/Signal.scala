@@ -145,7 +145,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   */
 object Signal {
 
-  inline def apply[T](using CreationTicket[State])(inline expr: T): Signal[T] = static(expr)
+  inline def apply[T](inline expr: T)(using CreationTicket[State]): Signal[T] = static(expr)
 
   inline def static[T](using CreationTicket[State])(inline expr: T): Signal[T] = {
     val (inputs, fun, isStatic) =
