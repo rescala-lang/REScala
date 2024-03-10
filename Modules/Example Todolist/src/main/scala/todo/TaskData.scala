@@ -8,6 +8,7 @@ import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
 import reactives.default.*
+import reactives.default.act
 import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
@@ -114,6 +115,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
     }(using Codecs.codecLww)
 
     GlobalRegistry.publish(taskID, crdt)
+    GlobalRegistry.unbuffer(taskID)
 
     val taskData =
       crdt.map(x => x.read.getOrElse(TaskData(desc = "LWW Empty")))

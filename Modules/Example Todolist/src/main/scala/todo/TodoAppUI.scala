@@ -74,6 +74,7 @@ class TodoAppUI(val storagePrefix: String) {
     val hideEmpty = Signal:
       `style` := (if tasksData.value.isEmpty then "display:none" else "")
 
+    div(`class` := "appcontainer",
     div(
       `class` := "todoapp",
       header(
@@ -113,7 +114,7 @@ class TodoAppUI(val storagePrefix: String) {
             ).render
           }
         }
-    ).render
+    )).render
   }
 
 }

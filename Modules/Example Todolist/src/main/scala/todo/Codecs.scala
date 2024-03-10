@@ -44,7 +44,8 @@ object Codecs {
   implicit val codectDeltaForTasklist: JsonValueCodec[ReplicatedList[TaskRef]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
   implicit val codecDeltaForLWW: JsonValueCodec[LastWriterWins[Option[TaskData]]] = JsonCodecMaker.make
-  implicit val codecDottedLWW: JsonValueCodec[Dotted[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecDottedLWWOpt: JsonValueCodec[Dotted[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
+  implicit val codecDottedLWW: JsonValueCodec[Dotted[LastWriterWins[TaskData]]] = JsonCodecMaker.make
 
 
   implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make

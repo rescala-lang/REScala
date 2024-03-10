@@ -14,13 +14,24 @@ object GlobalRegistry {
 
   case class Listener[A](evt: Evt[Dotted[A]], codec: JsonValueCodec[Dotted[A]])
 
+  case class Valued[A](signal: Signal[DeltaBuffer[Dotted[A]]], codec: JsonValueCodec[Dotted[A]])
+
   private var listeners: Map[String, Listener[?]] = Map.empty
+
+  private var currentValues: Map[String, Valued[?]] = Map.empty
+
+  private var buffer: Map[String, List[(Int, Array[Byte])]] = Map.empty
 
   private var channels: List[OutChan] = Nil
 
   def addConnection(connection: WebRTCConnection): Unit = {
     println(s"adding channel")
     channels = connection :: channels
+
+    currentValues.foreach: (id, cw) =>
+      val enc = encode(id, cw.signal.now.state)(using cw.codec)
+      channels.foreach: chan =>
+        chan.send(enc).run(using ())(println)
   }
 
   def handle(message: MessageBuffer): Unit = {
@@ -28,11 +39,31 @@ object GlobalRegistry {
     val pos          = messageArray.indexOfSlice("\r\n\r\n".getBytes(StandardCharsets.UTF_8))
     if pos <= 0 then println(s"Received invalid message")
     else
-      println(s"handling received message")
-      val name = messageArray.slice(0, pos)
-      listeners.get(new String(name, StandardCharsets.UTF_8)).foreach: listener =>
-        val decoded = readFromSubArray(messageArray, pos + 4, messageArray.length)(listener.codec)
-        listener.evt.fire(decoded)
+      val name = new String(messageArray.slice(0, pos), StandardCharsets.UTF_8)
+      println(s"handling received message for $name")
+      listeners.get(name) match
+        case Some(listener) =>
+          val decoded = readFromSubArray(messageArray, pos + 4, messageArray.length)(listener.codec)
+          listener.evt.fire(decoded)
+        case None =>
+          println(s"no listener for $name, buffering")
+          buffer = buffer.updatedWith(name) {
+            case None    => Some(List((pos + 4, messageArray)))
+            case Some(l) => Some((pos + 4, messageArray) :: l)
+          }
+  }
+
+  def unbuffer(name: String): Unit = {
+    (buffer.get(name), listeners.get(name)) match
+      case (Some(elements), Some(listener)) =>
+        println(s"unbuffering $name: ${elements.length}")
+        elements.foreach: (offset, bytes) =>
+          val decoded = readFromSubArray(bytes, offset, bytes.length)(listener.codec)
+          listener.evt.fire(decoded)
+        buffer = buffer.removed(name)
+      case other =>
+        println(s"wanted to unbuffer $name, but state was ${other}")
+        ()
   }
 
   def subscribe[A](name: String)(using
@@ -58,8 +89,11 @@ object GlobalRegistry {
 
   def publish[A](name: String, reactive: Signal[DeltaBuffer[Dotted[A]]])(using JsonValueCodec[Dotted[A]]) = {
     println(s"publishing $name")
+
+    currentValues = currentValues.updated("name", Valued(reactive, summon))
+
     val initial = encode(name, reactive.now.state)
-    channels.foreach(c => c.send(initial))
+    channels.foreach(c => c.send(initial).run(println))
 
     reactive.observe: db =>
       println(s"publishing changes of $name to $channels")
