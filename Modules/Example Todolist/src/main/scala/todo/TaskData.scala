@@ -140,7 +140,13 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
           `type`  := "checkbox",
           doneClick.data,
         ).render.reattach(Signal:
-          checked := (if (taskData.value.done) then Some(checked.v) else None)
+          if taskData.value.done
+          then (elem: dom.html.Input) =>
+            elem.checked = true
+            elem.setAttribute("checked", "checked")
+          else (elem: dom.html.Input) =>
+            elem.checked = false
+            elem.removeAttribute("checked")
         ),
         label.render.reattach(taskData.map(c => c.desc)),
         removeButton.data
@@ -156,17 +162,17 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
   }
 }
 
-given RangeSplice[Modifier] with {
+given RangeSplice[dom.Element, Modifier] with {
   override def splice(anchor: dom.Element, range: dom.Range, value: Modifier): Unit =
     println(s"applying $value to $anchor")
     anchor match
       case elem: dom.Element => value.applyTo(elem)
 }
 
-given RangeSplice[dom.Element => Unit] with {
-  override def splice(anchor: dom.Element, range: dom.Range, value: dom.Element => Unit): Unit =
+given [A <: dom.Element]: RangeSplice[A, A => Unit] with {
+  override def splice(anchor: A, range: dom.Range, value: A => Unit): Unit =
     anchor match
-      case elem: dom.Element => value.apply(elem)
+      case elem: A => value.apply(elem)
 }
 
 implicit def optionAttrValue[T](implicit ev: AttrValue[T]): AttrValue[Option[T]] =

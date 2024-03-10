@@ -15,34 +15,35 @@ import scala.scalajs.js
 
 object Tags {
 
-  trait RangeSplice[-T]:
-    def splice(anchor: dom.Element, range: dom.Range, value: T): Unit
+  trait RangeSplice[-A <: dom.Element, -T]:
+    def splice(anchor: A, range: dom.Range, value: T): Unit
   object RangeSplice:
-    given elem: RangeSplice[dom.Element] with {
+    given elem: RangeSplice[dom.Element, dom.Element] with {
       override def splice(anchor: dom.Element, range: Range, value: dom.Element) =
         range.insertNode(value)
     }
-    given many[T](using other: RangeSplice[T]): RangeSplice[Seq[T]] with {
-      override def splice(anchor: dom.Element, range: Range, value: Seq[T]) =
+    given many[A <: dom.Element, T](using other: RangeSplice[A, T]): RangeSplice[A, Seq[T]] with {
+      override def splice(anchor: A, range: Range, value: Seq[T]) =
         value.reverseIterator.foreach(v => other.splice(anchor, range, v))
     }
-    given string: RangeSplice[String] with {
+    given string: RangeSplice[dom.Element, String] with {
       override def splice(anchor: dom.Element, range: Range, value: String) =
         anchor.textContent = value
     }
 
-  extension (anchor: dom.Element)
+  extension [A <: dom.Element](anchor: A)
     def reattach[T](signal: Signal[T])(using
-        splicer: RangeSplice[T],
+        splicer: RangeSplice[A, T],
         creationTicket: CreationTicket[Interface.State]
     ): anchor.type = {
       val range = document.createRange()
+      range.selectNodeContents(anchor)
+      range.collapse(toStart = false)
       Observe.strong(signal, true) {
         tagObserver(anchor, signal) { v =>
           if range.commonAncestorContainer != anchor then
-            range.selectNodeContents(anchor)
-            range.collapse(toStart = false)
-          range.deleteContents()
+            println(s"weird state $anchor; $range; ${range.commonAncestorContainer} ${range.startContainer}; ${range.endContainer}")
+          range.extractContents()
           splicer.splice(anchor, range, v)
         }
       }
