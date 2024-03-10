@@ -41,7 +41,6 @@ class Tags(val addDebuggingIds: Boolean) {
       Observe.strong(signal, true) {
         tagObserver(anchor, signal) { v =>
           if range.commonAncestorContainer != anchor then
-            println(s"was not anchor")
             range.selectNodeContents(anchor)
             range.collapse(toStart = false)
           range.deleteContents()
