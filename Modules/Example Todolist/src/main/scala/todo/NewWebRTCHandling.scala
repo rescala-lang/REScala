@@ -47,9 +47,9 @@ object Example {
       tr(
         th("local session description"),
         th("remote session description"),
-        th("iceGatheringState"),
-        th("iceConnectionState"),
-        th("signalingState"),
+        th("gather"),
+        th("con"),
+        th("signal"),
         th("trickle"),
       )
     ).render
