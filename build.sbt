@@ -41,6 +41,7 @@ lazy val reactivesAggregate =
 lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     scala3defaults,
+    java(9),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -80,6 +81,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
+    java(8),
     LocalSetting.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
