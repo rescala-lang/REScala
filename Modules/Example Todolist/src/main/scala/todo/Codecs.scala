@@ -11,43 +11,19 @@ import rdts.time.Dot
 
 object Codecs {
 
-  implicit val taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
-  implicit val dotKeyCodec: JsonKeyCodec[Dot] = new JsonKeyCodec[Dot] {
-    override def decodeKey(in: JsonReader): Dot = {
-      val Array(time, id) = in.readKeyAsString().split("-", 2)
-      Dot(Uid.predefined(id), time.toLong)
-    }
-    override def encodeKey(x: Dot, out: JsonWriter): Unit = out.writeKey(s"${x.time}-${x.place}")
-  }
-  implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
-    override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
-    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
-
-  implicit val codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
+  given taskRefCodec: JsonValueCodec[TaskRef] = JsonCodecMaker.make
+  given idCodec: JsonValueCodec[Uid]          = JsonCodecMaker.make[String].asInstanceOf
+  given codecState: JsonValueCodec[Dotted[ReplicatedList[TaskRef]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-  implicit val codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
-    new JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] {
-      override def decodeValue(
-          in: JsonReader,
-          default: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
-      ): DeltaBuffer[Dotted[ReplicatedList[TaskRef]]] = {
-        val state = codecState.decodeValue(in, default.state)
-        DeltaBuffer[Dotted[ReplicatedList[TaskRef]]](state)
-      }
-      override def encodeValue(x: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]], out: JsonWriter): Unit =
-        codecState.encodeValue(x.state, out)
-      override def nullValue: DeltaBuffer[Dotted[ReplicatedList[TaskRef]]] =
-        DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))
-    }
-
-  implicit val codectDeltaForTasklist: JsonValueCodec[ReplicatedList[TaskRef]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-  implicit val codecDeltaForLWW: JsonValueCodec[LastWriterWins[Option[TaskData]]] = JsonCodecMaker.make
-  implicit val codecDottedLWWOpt: JsonValueCodec[Dotted[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
-  implicit val codecDottedLWW: JsonValueCodec[Dotted[LastWriterWins[TaskData]]] = JsonCodecMaker.make
-
-
-  implicit val codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
+  given codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given codectDeltaForTasklist: JsonValueCodec[ReplicatedList[TaskRef]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given codecDeltaForLWW: JsonValueCodec[LastWriterWins[Option[TaskData]]] = JsonCodecMaker.make
+  given codecDottedLWWOpt: JsonValueCodec[Dotted[LastWriterWins[Option[TaskData]]]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given codecDottedLWW: JsonValueCodec[Dotted[LastWriterWins[TaskData]]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
 
 }
