@@ -13,6 +13,10 @@ import rdts.time.{Dot, Dots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.rdts.DataGenerator.*
 
+import test.rdts.UtilHacks.*
+import test.rdts.UtilHacks2.*
+
+
 class ContainerTest extends munit.FunSuite {
 
   object helper {

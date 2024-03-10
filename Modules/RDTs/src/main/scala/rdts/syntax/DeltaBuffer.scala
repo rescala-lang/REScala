@@ -18,6 +18,8 @@ case class DeltaBuffer[State](
   def clearDeltas() = DeltaBuffer(state)
 
   def mutable: DeltaBufferContainer[State] = new DeltaBufferContainer(this)
+
+  def transform(f: State => State)(using Lattice[State]) = applyDelta(f(state))
 }
 
 object DeltaBuffer {

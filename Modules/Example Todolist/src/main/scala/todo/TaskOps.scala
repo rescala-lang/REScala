@@ -27,7 +27,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
   def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] =
     removeAll.act: _ =>
       current.clearDeltas().deleteBy { (taskref: TaskRef) =>
-        val isDone = taskref.task.value.read.exists(_.done)
+        val isDone = taskref.task.value.state.data.read.exists(_.done)
         // todo, move to observer, disconnect during transaction does not respect rollbacks
         if (isDone) taskref.task.disconnect()
         isDone

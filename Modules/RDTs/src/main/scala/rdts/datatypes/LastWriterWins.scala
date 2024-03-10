@@ -13,7 +13,18 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * Concurrent writes are resolved by a causality preserving clock based on milliseconds, using a random value as a tie breaker.
   * The random values are non-fair, so a specific replica is more likely to win.
   */
-case class LastWriterWins[+A](timestamp: CausalTime, payload: A)
+case class LastWriterWins[+A](timestamp: CausalTime, payload: A) {
+  def read: A = payload
+
+  def write[B](v: B): LastWriterWins[B] =
+    LastWriterWins(timestamp.advance, v)
+
+  def map[B](using ev: A <:< Option[B])(f: B => B): LastWriterWins[Option[B]] =
+    read.map(f) match {
+      case None => ev.substituteCo(this)
+      case res  => write(res)
+    }
+}
 
 object LastWriterWins {
 
@@ -52,21 +63,5 @@ object LastWriterWins {
   given bottom[A: Bottom]: Bottom[LastWriterWins[A]] with
     override def empty: LastWriterWins[A] = LastWriterWins.this.empty
 
-  extension [C, A](container: C)
-    def causalLastWriterWins: syntax[C, A] = syntax(container)
 
-  implicit class syntax[C, A](container: C)
-      extends OpsSyntaxHelper[C, LastWriterWins[A]](container) {
-
-    def read(using IsQuery): A = current.payload
-
-    def write(v: A): Mutator =
-      LastWriterWins(current.timestamp.advance, v).mutator
-
-    def map[B](using IsMutator)(using ev: A =:= Option[B])(f: B => B): C =
-      read.map(f) match {
-        case None => container
-        case res  => write(ev.flip(res))
-      }
-  }
 }

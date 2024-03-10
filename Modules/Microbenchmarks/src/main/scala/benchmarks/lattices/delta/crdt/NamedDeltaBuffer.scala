@@ -28,6 +28,8 @@ case class NamedDeltaBuffer[State](
     }
 
   def clearDeltas(): NamedDeltaBuffer[State] = copy(deltaBuffer = List())
+
+  def transform(f: State => State)(using Lattice[State]) = applyDelta(replicaID, f(state))
 }
 
 object NamedDeltaBuffer {

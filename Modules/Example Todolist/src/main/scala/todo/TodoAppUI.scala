@@ -66,7 +66,7 @@ class TodoAppUI(val storagePrefix: String) {
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
-      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.read) }
+      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.state.data.read) }
     val taskTags: Signal[List[LI]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.drop(1)

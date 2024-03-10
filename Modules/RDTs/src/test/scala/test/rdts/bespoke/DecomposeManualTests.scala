@@ -10,10 +10,13 @@ import rdts.time.{Dot, Dots, VectorClock}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.*
 
+import test.rdts.UtilHacks.*
+
 class DecomposeManualTests extends munit.ScalaCheckSuite {
 
   val r1: ReplicaId = "r1".asId
   val r2: ReplicaId = "r2".asId
+
 
   test("GrowOnlyCounter decomposition") {
     val empty: GrowOnlyCounter = Bottom[GrowOnlyCounter].empty

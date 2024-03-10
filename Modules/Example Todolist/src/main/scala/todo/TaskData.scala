@@ -106,10 +106,13 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val remoteUpdates = GlobalRegistry.subscribeBranch[LastWriterWins[Option[TaskData]]](taskID)
 
-    val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
+    extension (db: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]) def modTask(f: TaskData => TaskData): DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
+      db.transform(_.map(_.map(f)))
+
+    val crdt: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
       Fold(init)(
-        doneEv act { _ => current.clearDeltas().map(_.toggle()) },
-        edittextStr act { v => current.clearDeltas().map(_.edit(v)) },
+        doneEv act { _ => current.clearDeltas().modTask(_.toggle()) },
+        edittextStr act { v => current.clearDeltas().modTask(_.edit(v)) },
         remoteUpdates
       )
     }(using Codecs.codecLww)
@@ -118,7 +121,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
     GlobalRegistry.unbuffer(taskID)
 
     val taskData =
-      crdt.map(x => x.read.getOrElse(TaskData(desc = "LWW Empty")))
+      crdt.map(x => x.state.data.read.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
       Event.fromCallback(button(`class` := "destroy", onclick := Event.handle))
