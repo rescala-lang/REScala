@@ -12,9 +12,8 @@ import reactives.operator.*
 import scala.annotation.targetName
 import scala.scalajs.js
 
-object Tags extends Tags(true)
 
-class Tags(val addDebuggingIds: Boolean) {
+object Tags {
 
   trait RangeSplice[-T]:
     def splice(anchor: dom.Element, range: dom.Range, value: T): Unit
