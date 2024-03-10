@@ -24,7 +24,7 @@ object Dependencies {
   def jsoniterScala =
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.28.4",
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.28.4" % "provided"
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.28.4" % Provided
     )
 
   object slips {
