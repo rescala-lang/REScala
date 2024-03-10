@@ -103,19 +103,20 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-
     val remoteUpdates = GlobalRegistry.subscribeBranch[LastWriterWins[Option[TaskData]]](taskID)
 
-    extension (db: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]) def modTask(f: TaskData => TaskData): DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
-      db.transform(_.map(_.map(f)))
+    extension (db: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]])
+      def modTask(f: TaskData => TaskData): DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
+        db.transform(_.map(_.map(f)))
 
-    val crdt: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
-      Fold(init)(
-        doneEv act { _ => current.clearDeltas().modTask(_.toggle()) },
-        edittextStr act { v => current.clearDeltas().modTask(_.edit(v)) },
-        remoteUpdates
-      )
-    }(using Codecs.codecLww)
+    val crdt: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] =
+      Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
+        Fold(init)(
+          doneEv act { _ => current.clearDeltas().modTask(_.toggle()) },
+          edittextStr act { v => current.clearDeltas().modTask(_.edit(v)) },
+          remoteUpdates
+        )
+      }(using Codecs.codecLww)
 
     GlobalRegistry.publish(taskID, crdt)
     GlobalRegistry.unbuffer(taskID)
@@ -145,7 +146,9 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
       ),
       editInput
     ).render.reattach(Signal {
-      `class` := (if editingV.value then "editing" else "no-editing")
+      if editingV.value
+      then (elem: dom.Element) => elem.setAttribute("class", "editing")
+      else (elem: dom.Element) => elem.setAttribute("class", "no-editing")
     })
 
     new TaskRefData(crdt, listItem, removeButton.event.map(_ => taskID), taskID)
@@ -157,6 +160,13 @@ given RangeSplice[Modifier] with {
     val parent = range.commonAncestorContainer
     parent match
       case elem: dom.Element => value.applyTo(elem)
+}
+
+given RangeSplice[dom.Element => Unit] with {
+  override def splice(range: dom.Range, value: dom.Element => Unit): Unit =
+    val parent = range.commonAncestorContainer
+    parent match
+      case elem: dom.Element => value.apply(elem)
 }
 
 implicit def optionAttrValue[T](implicit ev: AttrValue[T]): AttrValue[Option[T]] =
