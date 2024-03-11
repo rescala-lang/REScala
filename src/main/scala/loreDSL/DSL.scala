@@ -4,7 +4,7 @@ import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.core.Names.TermName
+import dotty.tools.dotc.core.Names.Name
 import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.core.Symbols.*
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
@@ -42,28 +42,67 @@ class DSLPhase extends PluginPhase:
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
-      // Only match ValDefs for LoRe reactives (Source, Derived, Interaction)
+      // Match value definitions for base types Int, String and Boolean, as these also exist in LoRe
+      // and are likely to be referenced in the definition of LoRe reactives (specifically Sources)
+      case ValDef(name, tpt, Literal(Constant(num: Int))) if tpt.tpe <:< defn.IntType =>
+        // TODO: Values other than number literals (operators, as seen below)
+        println(s"Detected Number definition, adding to term list")
+        loreTerms = loreTerms :+ TAbs(
+          name.toString,
+          SimpleType("Number", List()),
+          TNum(num)
+        )
+      case ValDef(name, tpt, Literal(Constant(str: String))) if tpt.tpe <:< defn.StringType =>
+        println(s"Detected String definition, adding to term list")
+        loreTerms = loreTerms :+ TAbs(
+          name.toString,
+          SimpleType("String", List()),
+          TString(str)
+        )
+      case ValDef(name, tpt, Literal(Constant(bool: Boolean))) if tpt.tpe <:< defn.BooleanType =>
+        // TODO: Values other than true and false literals (operators, as seen below)
+        println(s"Detected Boolean definition, adding to term list")
+        loreTerms = loreTerms :+ TAbs(
+          name.toString,
+          SimpleType("String", List()),
+          if (bool) TTrue() else TFalse()
+        )
+      // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if loreReactives.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
         tpt.tpe.show match
           case reactiveSourcePattern(typeArg) =>
             println(s"Detected Source definition with $typeArg type parameter")
-            // Process the RHS of the definition
             typeArg match
               case "Int" =>
                 rhs match
-                  case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
+                  // Source gets inlined to Rescala Var, so this needs to match for Inlined first of all
+                  // Additionally, because the RHS is wrapped in a Source, there's one layer of an Apply call
+                  // wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list
+                  // This parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
+                  case Inlined(Apply(_, List(properRhs)), _, _) =>
                     // Match for different kinds of RHS, like value literals or operator applications
-                    // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
-                    call match
-                      case Apply(_, List(Literal(Constant(value: Number)))) => // E.g. "Source(0)"
+                    // Typechecking for whether the arguments are actually of the expected type (in this case integers)
+                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
+                    properRhs match
+                      case Literal(Constant(value: Number)) => // E.g. "Source(0)"
                         println(s"Adding Source reactive with number value $value to term list")
                         loreTerms = loreTerms :+ TAbs(
                           name.toString,
                           SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
                           TSource(TNum(value)) // Source(value)
                         )
-                      case Apply(_, List(Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))))) => // E.g. "Source(4 ◯ 2")
+                      case Ident(referenceName: Name) => // E.g. "Source(foo)" where "foo" is a reference
+                        println(s"Adding Source reactive with variable reference to $referenceName to term list")
+                        // No need to check whether the reference specified here actually exists, because if it didn't
+                        // then the original Scala code would not have compiled due to invalid reference and this
+                        // point would not have been reached either way, so just pass on the reference name to a TVar
+                        loreTerms = loreTerms :+ TAbs(
+                          name.toString,
+                          SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
+                          TSource(TVar(referenceName.toString)) // Source(referenceName)
+                        )
+                      case Apply(Select(Literal(Constant(lhs: Number)), op), List(Literal(Constant(rhs: Number)))) => // E.g. "Source(4 ◯ 2")
                         println(s"Adding Source reactive with integer value $lhs $op $rhs to term list")
                         op match
                           case nme.ADD => // E.g. "Source(2 + 3)"
@@ -94,12 +133,14 @@ class DSLPhase extends PluginPhase:
                             report.error(s"Unsupported binary operator used: $op", tree.sourcePos)
                       case _ => // Unsupported type of integer RHS
                         report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
-                  case _ => () // Non-Inlined RHS (i.e. non-Source) can't happen because it would be caught by the type checker
+                  case _ => () // Anything that's not Inlined and not wrapped with Source, can't happen because of the type checker
               case "String" =>
                 rhs match
                   case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
                     // Match for different kinds of RHS, like value literals or string operators
                     // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
+                    // Typechecking for whether the arguments are actually of the expected type (in this case strings)
+                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
                     call match
                       case Apply(_, List(Literal(Constant(value: String)))) => // E.g. "Source("abc")"
                         println(s"Adding Source reactive with string value $value to term list")
@@ -112,6 +153,8 @@ class DSLPhase extends PluginPhase:
                   case Inlined(call, _, _) => // Source gets inlined to Rescala Var, so this needs to match for Inlined
                     // Match for different kinds of RHS, like literals or boolean operators
                     // The fun value of the (outer) Apply will be the type application of Source ("Source(x)" for x), so it can be ignored
+                    // Typechecking for whether the arguments are actually of the expected type (in this case booleans)
+                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
                     call match
                       case Apply(_, List(Literal(Constant(value: Boolean)))) => // E.g. "Source(true)"
                         println(s"Adding Source reactive with boolean value $value to term list")

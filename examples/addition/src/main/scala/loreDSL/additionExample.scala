@@ -4,14 +4,21 @@ import lore.DSL.*
 
 object additionExample:
   @main def main(): Unit =
-    val integerSource: Source[Int] = Source(0)
+    val testInt: Int = 0
+    val integerReferenceSource: Source[Int] = Source(testInt)
+    val integerLiteralSource: Source[Int] = Source(0)
 
     val integerAdditionSource: Source[Int] = Source(4 + 2)
     val integerSubtractionSource: Source[Int] = Source(4 - 2)
     val integerMultiplicationSource: Source[Int] = Source(4 * 2)
     val integerDivisionSource: Source[Int] = Source(4 / 2)
 
-    val stringSource: Source[String] = Source("abc")
+    val testString: String = "foo"
+    val stringReferenceSource: Source[String] = Source(testString)
+    val stringLiteralSource: Source[String] = Source("abc")
+
+    val testBoolean: Boolean = true
+    val boolReferenceSource: Source[Boolean] = Source(testBoolean)
 
     val boolTrueSource: Source[Boolean] = Source(true)
     val boolFalseSource: Source[Boolean] = Source(false)
