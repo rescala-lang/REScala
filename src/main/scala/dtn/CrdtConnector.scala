@@ -27,10 +27,6 @@ object CrdtConnector {
     
     Dtn7RsWsConn.create(port).flatMap(conn => {
       ws = Some(conn)
-
-      println(s"connected to DTN node: ${ws.get.nodeId.get}")
-      if (ws.get.nodeId.get.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
-
       ws.get.registerEndpointAndSubscribe(cRDTGroupEndpoint)
     }).onComplete(_ => receiveBundle())
   }

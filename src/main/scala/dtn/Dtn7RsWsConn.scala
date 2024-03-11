@@ -30,9 +30,14 @@ object Dtn7RsWsConn {
   def create(port: Int): Future[Dtn7RsWsConn] = {
     val conn: Dtn7RsWsConn = Dtn7RsWsConn(port)
 
-    uget(uri"${Dtn7RsInfo.http_api(port)}/status/nodeid").map(x => conn.nodeId = Option(x))
-      .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))
-      .map(_ => {conn.command("/json"); conn})  // select json communication
+    uget(uri"${Dtn7RsInfo.http_api(port)}/status/nodeid")
+      .map(nodeId => {
+        println(s"connected to DTN node: $nodeId"); 
+        conn.nodeId = Option(nodeId)
+        if (nodeId.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
+      })  // set node-id and check for supported dtn URI scheme
+      .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
+      .map(_ => {conn.command("/json"); conn})  // select json communication and return Dtn7RsWsConn object
   }
 }
 class Dtn7RsWsConn(port: Int) {
@@ -48,16 +53,17 @@ class Dtn7RsWsConn(port: Int) {
   }
 
   def receiveBundle(): Future[Bundle] = {
-    // We have a problem:
-    // The "command()" triggers a response by the dtn7-rs indicating its success.
-    // But because of the Futures, if we wait on command and receiveBundle, we could wait concurrently,
-    // possibly returning the wrong result to the wrong function
-    // SOLUTION: we only receive in this function, throwing an error if the command response indicates "non-successful"
-    // not ideal, but should be sufficient for now
+    /*
+    We have a problem:
+    The "command() and sendBundle() functions" trigger a string response by the dtn7-rs indicating its success.
+    But, because of the Futures, if we wait on command() and receiveBundle(), we could wait concurrently, possibly returning the wrong result to the wrong function.
+    SOLUTION: we only receive in this function, throwing an error if the command response indicates "non-successful".
+    Not ideal, but should be sufficient for now.
+    */
     
     receiveWholeMessage().flatMap {
       case s: String => {
-        println(s"received command response: $s")
+        println(s"received string response: $s") // todo: throw an error if the response indicates "non-successful"
         receiveBundle()
       }
       case b: Array[Byte] => {
@@ -97,10 +103,12 @@ class Dtn7RsWsConn(port: Int) {
         }
       }
       case Ping(payload: Array[Byte]) => {
+        // case is here but never used, (fetchbackend) seems to handle ping/pong automatically
         println("received ping, NOT sending back pong")
         receiveWholeMessage()
       }
       case Pong(payload: Array[Byte]) => {
+        // case is here but never used, (fetchbackend) seems to handle ping/pong automatically
         println("received pong")
         receiveWholeMessage()
       }
@@ -110,7 +118,7 @@ class Dtn7RsWsConn(port: Int) {
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
     println("in sendBundle: start sending")
-    ws.get.sendBinary(bundle.toDtnWsJson).map(_ => {println("in sendBundle: finished sending, returning string-response-future to wait upon")})
+    ws.get.sendBinary(bundle.toDtnWsJson)
   }
 
   def registerEndpointAndSubscribe(service: String): Future[Unit] = {
@@ -123,6 +131,7 @@ class Dtn7RsWsConn(port: Int) {
   }
 
   def disconnect(): Future[Unit] = {
+    // currently unused method so we do not unregister atm todo: check when we actually want to unregister
     registeredServices.foreach(service => Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api(port)}/unregister?$service"))
     registeredServices = List()
     ws.get.close()
