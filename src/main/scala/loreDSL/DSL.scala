@@ -42,15 +42,57 @@ class DSLPhase extends PluginPhase:
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
-      // Match value definitions for base types Int, String and Boolean, as these also exist in LoRe
-      // and are likely to be referenced in the definition of LoRe reactives (specifically Sources)
-      case ValDef(name, tpt, Literal(Constant(num: Int))) if tpt.tpe <:< defn.IntType =>
-        // TODO: Values other than simple int literals (operators, as seen below)
-        println(s"Detected Int definition with name \"$name\" and value $num, adding to term list")
+      // ============== Match value definitions for base types Int, String and Boolean ==============
+      // These also exist in LoRe and are likely to be referenced in the definition of LoRe reactives (specifically Sources)
+      case ValDef(name, tpt, rhs) if tpt.tpe <:< defn.IntType =>
+        println(s"Detected Int definition with name \"$name\", adding to term list")
+        // Build term for the RHS
+        val rhsTerm: Term = rhs match
+          case Literal(Constant(num: Int)) => // E.g. "foo: Int = 39"
+            println(s"The right side is the simple value $num")
+            TNum(num)
+          case Ident(referenceName: Name) => // E.g. "foo: Int = bar" where "bar" is a reference
+            println(s"The right side is a reference to \"$referenceName\"")
+            // No need to check whether the reference specified here actually exists, because if it didn't
+            // then the original Scala code would not have compiled due to invalid reference and this
+            // point would not have been reached either way, so just pass on the reference name to a TVar
+            TVar(referenceName.toString)
+          case Apply(Select(leftArg, op), List(rightArg)) => // E.g. "foo: Int = 4 ◯ 2"
+            println(s"The right side is an operator application of the form \"left $op right\"")
+            // Set left and right value terms depending on if they are literals or references
+            val leftValueTerm: Term = leftArg match
+              case Literal(Constant(leftValue: Int)) =>
+                println(s"The left operand is the literal value $leftValue")
+                TNum(leftValue)
+              case Ident(leftReference: Name) =>
+                println(s"The left operand is a reference to \"$leftReference\"")
+                TVar(leftReference.toString)
+              // TODO: If the value is not a simple literal or reference, recurse to build term
+              // TODO: Fix the case and output value here when implementing the above
+              case _ =>
+                TNum(0)
+            val rightValueTerm: Term = rightArg match
+              case Literal(Constant(rightValue: Int)) =>
+                println(s"The right operand is the literal value $rightValue")
+                TNum(rightValue)
+              case Ident(rightReference: Name) =>
+                println(s"The right operand is a reference to \"$rightReference\"")
+                TVar(rightReference.toString)
+              // TODO: If the value is not a simple literal or reference, recurse to build term
+              // TODO: Fix the case and output value here when implementing the above
+              case _ =>
+                TNum(0)
+            // Create wrapper terms depending on used operator
+            op match
+              case nme.ADD => TSource(TAdd(leftValueTerm, rightValueTerm)) // Source(left + right)
+              case nme.SUB => TSource(TSub(leftValueTerm, rightValueTerm)) // Source(left - right)
+              case nme.MUL => TSource(TMul(leftValueTerm, rightValueTerm)) // Source(left * right)
+              case nme.DIV => TSource(TDiv(leftValueTerm, rightValueTerm)) // Source(left / right)
+        // Build the final term
         loreTerms = loreTerms :+ TAbs(
-          name.toString,
-          SimpleType("Int", List()),
-          TNum(num)
+          name.toString, // foo
+          SimpleType("Int", List()), // Int
+          rhsTerm // 3, or 3 + 1, or foo where "foo" is a reference, etc
         )
       case ValDef(name, tpt, Literal(Constant(str: String))) if tpt.tpe <:< defn.StringType =>
         println(s"Detected String definition with name \"$name\" and value \"$str\", adding to term list")
@@ -67,7 +109,7 @@ class DSLPhase extends PluginPhase:
           SimpleType("String", List()),
           if (bool) TTrue() else TFalse()
         )
-      // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
+      // ============== Match ValDefs for LoRe reactives (Source, Derived, Interaction) ==============
       case ValDef(name, tpt, rhs) if loreReactives.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
         tpt.tpe.show match

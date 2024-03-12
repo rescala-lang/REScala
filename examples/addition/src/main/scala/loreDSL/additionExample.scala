@@ -4,56 +4,68 @@ import lore.DSL.*
 
 object additionExample:
   @main def main(): Unit =
-    // ========= Integer tests =========
+    // ========= Non-Source Values to use in below tests =========
+    val testIntReference1: Int = 0
+    val testIntReference2: Int = 1 + 2
+    val testIntReference3: Int = testIntReference1
 
-    // Simple values
+    val testIntBinaryOpReference1: Int = 4
+    val testIntBinaryOpReference2: Int = 2
+
+    val testStringReference: String = "foo"
+
+    val testBooleanReference1: Boolean = true
+    val testBooleanReference2: Boolean = true && false
+    val testBooleanReference3: Boolean = testBooleanReference1
+
+    val testBooleanBinaryOpReference1: Boolean = true
+    val testBooleanBinaryOpReference2: Boolean = false
+
+    val testIntBinaryBoolOpReference1: Int = 1
+    val testIntBinaryBoolOpReference2: Int = 2
+
+    // ========= Source tests =========
+
+    // Simple integer values
     val integerLiteralSource: Source[Int] = Source(0)
-    val testIntReference: Int = 0
-    val integerReferenceSource: Source[Int] = Source(testIntReference)
+    val integerReferenceSource: Source[Int] = Source(testIntReference1)
 
-    // Binary operators
+    // Binary integer operators
     val integerLiteralAdditionSource: Source[Int] = Source(4 + 2)
     val integerLiteralSubtractionSource: Source[Int] = Source(4 - 2)
     val integerLiteralMultiplicationSource: Source[Int] = Source(4 * 2)
     val integerLiteralDivisionSource: Source[Int] = Source(4 / 2)
 
-    // Binary operators with references
-    val testIntReference2: Int = 4
-    val testIntReference3: Int = 2
-    val integerReferenceAdditionSource1: Source[Int] = Source(testIntReference2 + testIntReference3)
-    val integerReferenceAdditionSource2: Source[Int] = Source(4 + testIntReference3)
-    val integerReferenceAdditionSource3: Source[Int] = Source(testIntReference2 + 2)
+    // Binary integer operators with references
+    val integerReferenceAdditionSource1: Source[Int] = Source(testIntBinaryOpReference1 + testIntBinaryOpReference2)
+    val integerReferenceAdditionSource2: Source[Int] = Source(4 + testIntBinaryOpReference2)
+    val integerReferenceAdditionSource3: Source[Int] = Source(testIntBinaryOpReference1 + 2)
 
-    // ========= String tests =========
-
-    // Simple values
+    // Simple string values
     val stringLiteralSource: Source[String] = Source("abc")
-    val testString: String = "foo"
-    val stringReferenceSource: Source[String] = Source(testString)
+    val stringReferenceSource: Source[String] = Source(testStringReference)
 
-    // ========= Boolean tests =========
-
-    // Simple values
+    // Simple boolean values
     val boolTrueSource: Source[Boolean] = Source(true)
     val boolFalseSource: Source[Boolean] = Source(false)
-    val testBoolean: Boolean = true
-    val boolReferenceSource: Source[Boolean] = Source(testBoolean)
+    val boolReferenceSource: Source[Boolean] = Source(testBooleanReference1)
 
-    // Binary operators
+    // Unary boolean operators
     val boolNotSource: Source[Boolean] = Source(!false)
+    val boolNotReferenceSource: Source[Boolean] = Source(!testBooleanReference1)
+
+    // Binary boolean operators
     val boolAndSource1: Source[Boolean] = Source(true && true)
     val boolAndSource2: Source[Boolean] = Source(true && false)
     val boolOrSource1: Source[Boolean] = Source(true || false)
     val boolOrSource2: Source[Boolean] = Source(false || false)
 
-    // Binary operators with references
-    val testBoolean2: Boolean = true
-    val testBoolean3: Boolean = false
-    val boolReferenceAndSource1: Source[Boolean] = Source(testBoolean2 && testBoolean3)
-    val boolReferenceAndSource2: Source[Boolean] = Source(true && testBoolean3)
-    val boolReferenceAndSource3: Source[Boolean] = Source(testBoolean2 && false)
+    // Binary boolean operators with references
+    val boolReferenceAndSource1: Source[Boolean] = Source(testBooleanBinaryOpReference1 && testBooleanBinaryOpReference2)
+    val boolReferenceAndSource2: Source[Boolean] = Source(true && testBooleanBinaryOpReference2)
+    val boolReferenceAndSource3: Source[Boolean] = Source(testBooleanBinaryOpReference1 && false)
 
-    // Binary operators with numerical values and boolean output
+    // Binary boolean operators with numerical values and boolean output
     val boolLTSource: Source[Boolean] = Source(1 < 2)
     val boolGTSource: Source[Boolean] = Source(1 > 2)
     val boolLESource: Source[Boolean] = Source(1 <= 2)
@@ -61,12 +73,10 @@ object additionExample:
     val boolEQSource: Source[Boolean] = Source(1 == 2)
     val boolNESource: Source[Boolean] = Source(1 != 2)
 
-    // Binary operators with numerical values and boolean output on references
-    val testIntReference4: Int = 1
-    val testIntReference5: Int = 2
-    val boolReferenceNESource1: Source[Boolean] = Source(testIntReference4 != testIntReference5)
-    val boolReferenceNESource2: Source[Boolean] = Source(1 != testIntReference5)
-    val boolReferenceNESource3: Source[Boolean] = Source(testIntReference4 != 2)
+    // Binary boolean operators with numerical values and boolean output on references
+    val boolReferenceNESource1: Source[Boolean] = Source(testIntBinaryBoolOpReference1 != testIntBinaryBoolOpReference2)
+    val boolReferenceNESource2: Source[Boolean] = Source(1 != testIntBinaryBoolOpReference2)
+    val boolReferenceNESource3: Source[Boolean] = Source(testIntBinaryBoolOpReference1 != 2)
 
       // ========= TODO: Derived and Interactions =========
 
