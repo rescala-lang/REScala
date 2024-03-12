@@ -12,7 +12,7 @@ lazy val root = project
     libraryDependencies += "de.tu-darmstadt.stg" %% "lore" % "0.2-SNAPSHOT"
   )
 
-lazy val additionExample = project.in(file("examples/addition"))
+lazy val sourceExamples = project.in(file("examples/sources"))
 
 lazy val publishPluginLocal = taskKey[Unit]("Publish DSL plugin locally")
 publishPluginLocal := {

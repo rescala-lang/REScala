@@ -2,7 +2,7 @@ package loreDSL
 
 import lore.DSL.*
 
-object additionExample:
+object sourceExamples:
   @main def main(): Unit =
     // ========= Non-Source Values to use in below tests =========
     val testIntReference1: Int = 0
@@ -97,4 +97,4 @@ object additionExample:
 //    integerInteraction(0)
 //    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
   end main
-end additionExample
+end sourceExamples
