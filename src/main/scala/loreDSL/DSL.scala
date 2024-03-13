@@ -40,6 +40,48 @@ class DSLPhase extends PluginPhase:
   private val reactiveDerivedPattern: Regex = """rescala\.default\.Signal\[(\w+)\]""".r
   private val reactiveInteractionPattern: Regex = """lore\.DSL\.InteractionWithTypes\[(\w+), (\w+)\]""".r
 
+  /**
+   * Takes the tree for a Scala RHS value and builds a LoRe term for it.
+   * Further documentation and actual code TODO.
+   * @param tree The Scala AST Tree node
+   * @return The corresponding LoRe AST Tree node
+   */
+  private def buildLoreRhsTerm(tree: tpd.Tree | tpd.LazyTree): Term =
+    tree match
+      case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
+        println(s"The operand is the literal integer value $num")
+        TNum(num)
+      case Literal(Constant(str: String)) => // Basic string values like "foo"
+        println(s"The operand is the literal string value $str")
+        TString(str)
+      case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
+        println(s"The operand is the literal boolean value $bool")
+        if (bool) TTrue() else TFalse()
+      case Ident(referenceName: Name) => // References to variables (any type)
+        println(s"The operand is a reference to \"$referenceName\"")
+        // No need to check whether the reference specified here actually exists, because if it didn't
+        // then the original Scala code would not have compiled due to invalid reference and this
+        // point would not have been reached either way, so just pass on the reference name to a TVar
+        TVar(referenceName.toString)
+      case Apply(Select(leftArg, op), List(rightArg)) => // Operator applications, recursive path
+        println(s"The operand is an operator application of the form \"left $op right\"")
+        op match
+          case nme.ADD => TAdd(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left + right
+          case nme.SUB => TSub(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left - right
+          case nme.MUL => TMul(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left * right
+          case nme.DIV => TDiv(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left / right
+          // Important: nme.AND is & and nme.And is &&
+          case nme.And => TConj(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left && right
+          // Important: nme.OR is | and nme.Or is ||
+          case nme.Or => TDisj(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left || right
+          case nme.LT => TLt(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left < right
+          case nme.GT => TGt(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left > right
+          case nme.LE => TLeq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left <= right
+          case nme.GE => TGeq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left >= right
+          case nme.EQ => TEq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left == right
+          case nme.NE => TIneq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left != right
+  end buildLoreRhsTerm
+
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // ============== Match value definitions for base types Int, String and Boolean ==============
@@ -69,8 +111,8 @@ class DSLPhase extends PluginPhase:
                 TVar(leftReference.toString)
               // TODO: If the value is not a simple literal or reference, recurse to build term
               // TODO: Fix the case and output value here when implementing the above
-              case _ =>
-                TNum(0)
+              case Apply(Select(_, _), List(_)) =>
+                buildLoreRhsTerm(leftArg)
             val rightValueTerm: Term = rightArg match
               case Literal(Constant(rightValue: Int)) =>
                 println(s"The right operand is the literal value $rightValue")
@@ -80,14 +122,14 @@ class DSLPhase extends PluginPhase:
                 TVar(rightReference.toString)
               // TODO: If the value is not a simple literal or reference, recurse to build term
               // TODO: Fix the case and output value here when implementing the above
-              case _ =>
-                TNum(0)
+              case Apply(Select(_, _), List(_)) =>
+                buildLoreRhsTerm(rightArg)
             // Create wrapper terms depending on used operator
             op match
-              case nme.ADD => TAdd(leftValueTerm, rightValueTerm) // Source(left + right)
-              case nme.SUB => TSub(leftValueTerm, rightValueTerm) // Source(left - right)
-              case nme.MUL => TMul(leftValueTerm, rightValueTerm) // Source(left * right)
-              case nme.DIV => TDiv(leftValueTerm, rightValueTerm) // Source(left /
+              case nme.ADD => TAdd(leftValueTerm, rightValueTerm) // left + right
+              case nme.SUB => TSub(leftValueTerm, rightValueTerm) // left - right
+              case nme.MUL => TMul(leftValueTerm, rightValueTerm) // left * right
+              case nme.DIV => TDiv(leftValueTerm, rightValueTerm) // left / right
           case _ => TNum(0) // TODO: Not a literal, reference or operator application, unsure what this could be
         // Build the final term
         loreTerms = loreTerms :+ TAbs(
@@ -149,15 +191,15 @@ class DSLPhase extends PluginPhase:
             // Create wrapper terms depending on used operator
             op match
               // Important: nme.AND is & and nme.And is &&
-              case nme.And => TConj(leftValueTerm, rightValueTerm) // Source(left && right)
+              case nme.And => TConj(leftValueTerm, rightValueTerm) // left && right
               // Important: nme.OR is | and nme.Or is ||
-              case nme.Or => TDisj(leftValueTerm, rightValueTerm) // // Source(left || right)
-              case nme.LT => TLt(leftValueTerm, rightValueTerm) // Source(left < right)
-              case nme.GT => TGt(leftValueTerm, rightValueTerm) // Source(left > right)
-              case nme.LE => TLeq(leftValueTerm, rightValueTerm) // Source(left <= right)
-              case nme.GE => TGeq(leftValueTerm, rightValueTerm) // Source(left >= right)
-              case nme.EQ => TEq(leftValueTerm, rightValueTerm) // Source(left == right)
-              case nme.NE => TIneq(leftValueTerm, rightValueTerm) // Source(left != right)
+              case nme.Or => TDisj(leftValueTerm, rightValueTerm) // left || right
+              case nme.LT => TLt(leftValueTerm, rightValueTerm) // left < right
+              case nme.GT => TGt(leftValueTerm, rightValueTerm) // left > right
+              case nme.LE => TLeq(leftValueTerm, rightValueTerm) // left <= right
+              case nme.GE => TGeq(leftValueTerm, rightValueTerm) // left >= right
+              case nme.EQ => TEq(leftValueTerm, rightValueTerm) // left == right
+              case nme.NE => TIneq(leftValueTerm, rightValueTerm) // left != right
           case _ => TNum(0) // TODO: Not a literal, reference or operator application, unsure what this could be
         // Build the final term
         loreTerms = loreTerms :+ TAbs(
@@ -291,7 +333,7 @@ class DSLPhase extends PluginPhase:
                   // Source gets inlined to Rescala Var, so this needs to match for Inlined first of all
                   // Additionally, because the RHS is wrapped in a Source, there's one layer of an Apply call
                   // wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list
-                  // This parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
+                  // This parameter list always has length 1, because  Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
                   case Inlined(Apply(_, List(properRhs)), _, _) =>
                     // Match for different kinds of RHS, like value literals or operator applications
                     // Typechecking for whether the arguments are actually of the expected type (in this case booleans)

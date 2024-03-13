@@ -8,6 +8,7 @@ object sourceExamples:
     val testIntReference1: Int = 0
     val testIntReference2: Int = 1 + 2
     val testIntReference3: Int = testIntReference1
+    val testIntReference4: Int = 1 + 2 + 3 + 4 + 5 + 6
 
     val testIntBinaryOpReference1: Int = 4
     val testIntBinaryOpReference2: Int = 2
