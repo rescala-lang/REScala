@@ -120,7 +120,7 @@ class DSLPhase extends PluginPhase:
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
         // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
         loreTerms = loreTerms :+ TAbs(
-          name.toString, // foo
+          name.toString, // foo (any valid Scala identifier)
           SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
           buildLoreRhsTerm(rhs) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
         )
