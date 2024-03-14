@@ -42,433 +42,117 @@ class DSLPhase extends PluginPhase:
 
   /**
    * Takes the tree for a Scala RHS value and builds a LoRe term for it.
-   * Further documentation and actual code TODO.
    * @param tree The Scala AST Tree node
    * @return The corresponding LoRe AST Tree node
    */
-  private def buildLoreRhsTerm(tree: tpd.Tree | tpd.LazyTree): Term =
+  private def buildLoreRhsTerm(tree: tpd.LazyTree, operandSide: String = "")(using Context): Term =
     tree match
       case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
-        println(s"The operand is the literal integer value $num")
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is the literal integer value $num")
+        else
+          println(s"The parameter is the literal integer value $num")
         TNum(num)
       case Literal(Constant(str: String)) => // Basic string values like "foo"
-        println(s"The operand is the literal string value $str")
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is the literal string value $str")
+        else
+          println(s"The parameter is the literal string value $str")
         TString(str)
       case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
-        println(s"The operand is the literal boolean value $bool")
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is the literal boolean value $bool")
+        else
+          println(s"The parameter is the literal boolean value $bool")
         if (bool) TTrue() else TFalse()
       case Ident(referenceName: Name) => // References to variables (any type)
-        println(s"The operand is a reference to \"$referenceName\"")
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is a reference to \"$referenceName\"")
+        else
+          println(s"The parameter is a reference to \"$referenceName\"")
         // No need to check whether the reference specified here actually exists, because if it didn't
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
-      case Apply(Select(leftArg, op), List(rightArg)) => // Operator applications, recursive path
-        println(s"The operand is an operator application of the form \"left $op right\"")
+      case Select(arg, op) => // Unary operator application, proceeds recursively
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is a unary operator application of the form ${op.show}<operand>")
+        else
+          println(s"The parameter is a unary operator application of the form ${op.show}<operand>")
         op match
-          case nme.ADD => TAdd(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left + right
-          case nme.SUB => TSub(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left - right
-          case nme.MUL => TMul(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left * right
-          case nme.DIV => TDiv(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left / right
+          // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
+          case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg)) // !operand
+          case _ => // Unsupported unary operators
+            report.error(s"Unsupported unary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
+            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+      case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
+        if (operandSide.nonEmpty)
+          println(s"The $operandSide parameter is an operator application of the form \"left ${op.show} right\"")
+        else
+          println(s"The parameter is an operator application of the form \"left ${op.show} right\"")
+        op match
+          case nme.ADD => TAdd(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left + right
+          case nme.SUB => TSub(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left - right
+          case nme.MUL => TMul(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left * right
+          case nme.DIV => TDiv(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left / right
           // Important: nme.AND is & and nme.And is &&
-          case nme.And => TConj(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left && right
+          case nme.And => TConj(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left && right
           // Important: nme.OR is | and nme.Or is ||
-          case nme.Or => TDisj(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left || right
-          case nme.LT => TLt(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left < right
-          case nme.GT => TGt(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left > right
-          case nme.LE => TLeq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left <= right
-          case nme.GE => TGeq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left >= right
-          case nme.EQ => TEq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left == right
-          case nme.NE => TIneq(buildLoreRhsTerm(leftArg), buildLoreRhsTerm(rightArg)) // left != right
+          case nme.Or => TDisj(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left || right
+          case nme.LT => TLt(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left < right
+          case nme.GT => TGt(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left > right
+          case nme.LE => TLeq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left <= right
+          case nme.GE => TGeq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left >= right
+          case nme.EQ => TEq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left == right
+          case nme.NE => TIneq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left != right
+          case _ => // Unsupported binary operators
+            report.error(s"Unsupported binary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
+            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+      case _ => // Unsupported RHS forms
+        report.error(s"Unsupported RHS form used:\n$tree") // No access to sourcePos here due to LazyTree
+        TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
   end buildLoreRhsTerm
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
-      // ============== Match value definitions for base types Int, String and Boolean ==============
-      // These also exist in LoRe and are likely to be referenced in the definition of LoRe reactives (specifically Sources)
-      case ValDef(name, tpt, rhs) if tpt.tpe <:< defn.IntType =>
-        println(s"Detected Int definition with name \"$name\", adding to term list")
-        // Build term for the RHS
-        val rhsTerm: Term = rhs match
-          case Literal(Constant(num: Int)) => // E.g. "foo: Int = 39"
-            println(s"The right side is the simple value $num")
-            TNum(num)
-          case Ident(referenceName: Name) => // E.g. "foo: Int = bar" where "bar" is a reference
-            println(s"The right side is a reference to \"$referenceName\"")
-            // No need to check whether the reference specified here actually exists, because if it didn't
-            // then the original Scala code would not have compiled due to invalid reference and this
-            // point would not have been reached either way, so just pass on the reference name to a TVar
-            TVar(referenceName.toString)
-          case Apply(Select(leftArg, op), List(rightArg)) => // E.g. "foo: Int = 4 ◯ 2"
-            println(s"The right side is an operator application of the form \"left $op right\"")
-            // Set left and right value terms depending on if they are literals or references
-            val leftValueTerm: Term = leftArg match
-              case Literal(Constant(leftValue: Int)) =>
-                println(s"The left operand is the literal value $leftValue")
-                TNum(leftValue)
-              case Ident(leftReference: Name) =>
-                println(s"The left operand is a reference to \"$leftReference\"")
-                TVar(leftReference.toString)
-              // TODO: If the value is not a simple literal or reference, recurse to build term
-              // TODO: Fix the case and output value here when implementing the above
-              case Apply(Select(_, _), List(_)) =>
-                buildLoreRhsTerm(leftArg)
-            val rightValueTerm: Term = rightArg match
-              case Literal(Constant(rightValue: Int)) =>
-                println(s"The right operand is the literal value $rightValue")
-                TNum(rightValue)
-              case Ident(rightReference: Name) =>
-                println(s"The right operand is a reference to \"$rightReference\"")
-                TVar(rightReference.toString)
-              // TODO: If the value is not a simple literal or reference, recurse to build term
-              // TODO: Fix the case and output value here when implementing the above
-              case Apply(Select(_, _), List(_)) =>
-                buildLoreRhsTerm(rightArg)
-            // Create wrapper terms depending on used operator
-            op match
-              case nme.ADD => TAdd(leftValueTerm, rightValueTerm) // left + right
-              case nme.SUB => TSub(leftValueTerm, rightValueTerm) // left - right
-              case nme.MUL => TMul(leftValueTerm, rightValueTerm) // left * right
-              case nme.DIV => TDiv(leftValueTerm, rightValueTerm) // left / right
-          case _ => TNum(0) // TODO: Not a literal, reference or operator application, unsure what this could be
-        // Build the final term
+      // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
+      case ValDef(name, tpt, rhs) if tpt.tpe <:< defn.IntType || tpt.tpe <:< defn.StringType || tpt.tpe <:< defn.BooleanType =>
+        println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
+        // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
         loreTerms = loreTerms :+ TAbs(
           name.toString, // foo
-          SimpleType("Int", List()), // Int
-          rhsTerm // 3, or 3 + 1, or foo where "foo" is a reference, etc
+          SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
+          buildLoreRhsTerm(rhs) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
         )
-      case ValDef(name, tpt, Literal(Constant(str: String))) if tpt.tpe <:< defn.StringType =>
-        println(s"Detected String definition with name \"$name\" and value \"$str\", adding to term list")
-        loreTerms = loreTerms :+ TAbs(
-          name.toString,
-          SimpleType("String", List()),
-          TString(str)
-        )
-      case ValDef(name, tpt, rhs) if tpt.tpe <:< defn.BooleanType =>
-        println(s"Detected Boolean definition with name \"$name\", adding to term list")
-        // Build term for the RHS
-        val rhsTerm: Term = rhs match
-          case Literal(Constant(bool: Boolean)) => // E.g. "foo: Boolean = true"
-            println(s"The right side is the simple value $bool")
-            if (bool) TTrue() else TFalse()
-          case Ident(referenceName: Name) => // E.g. "foo: Boolean = bar" where "bar" is a reference
-            println(s"The right side is a reference to \"$referenceName\"")
-            // No need to check whether the reference specified here actually exists, because if it didn't
-            // then the original Scala code would not have compiled due to invalid reference and this
-            // point would not have been reached either way, so just pass on the reference name to a TVar
-            TVar(referenceName.toString)
-          case Apply(Select(leftArg, op), List(rightArg)) => // E.g. "foo: Boolean = true ◯ false" or "4 ◯ 2"
-            println(s"The right side is an operator application of the form \"left $op right\"")
-            // Set left and right value terms depending on if they are literals or references
-            val leftValueTerm: Term = leftArg match
-              case Literal(Constant(leftValue: Boolean)) =>
-                println(s"The left operand is the literal bool value $leftValue")
-                if (leftValue) TTrue() else TFalse()
-              case Literal(Constant(leftValue: Int)) =>
-                println(s"The left operand is the literal int value $leftValue")
-                TNum(leftValue)
-              case Ident(leftReference: Name) =>
-                println(s"The left operand is a reference to \"$leftReference\"")
-                TVar(leftReference.toString)
-              // TODO: If the value is not a simple literal or reference, recurse to build term
-              // TODO: Fix the case and output value here when implementing the above
-              case _ =>
-                TNum(0)
-            val rightValueTerm: Term = rightArg match
-              case Literal(Constant(rightValue: Boolean)) =>
-                println(s"The right operand is the literal bool value $rightValue")
-                if (rightValue) TTrue() else TFalse()
-              case Literal(Constant(rightValue: Int)) =>
-                println(s"The right operand is the literal int value $rightValue")
-                TNum(rightValue)
-              case Ident(rightReference: Name) =>
-                println(s"The right operand is a reference to \"$rightReference\"")
-                TVar(rightReference.toString)
-              // TODO: If the value is not a simple literal or reference, recurse to build term
-              // TODO: Fix the case and output value here when implementing the above
-              case _ =>
-                TNum(0)
-            // Create wrapper terms depending on used operator
-            op match
-              // Important: nme.AND is & and nme.And is &&
-              case nme.And => TConj(leftValueTerm, rightValueTerm) // left && right
-              // Important: nme.OR is | and nme.Or is ||
-              case nme.Or => TDisj(leftValueTerm, rightValueTerm) // left || right
-              case nme.LT => TLt(leftValueTerm, rightValueTerm) // left < right
-              case nme.GT => TGt(leftValueTerm, rightValueTerm) // left > right
-              case nme.LE => TLeq(leftValueTerm, rightValueTerm) // left <= right
-              case nme.GE => TGeq(leftValueTerm, rightValueTerm) // left >= right
-              case nme.EQ => TEq(leftValueTerm, rightValueTerm) // left == right
-              case nme.NE => TIneq(leftValueTerm, rightValueTerm) // left != right
-          case _ => TNum(0) // TODO: Not a literal, reference or operator application, unsure what this could be
-        // Build the final term
-        loreTerms = loreTerms :+ TAbs(
-          name.toString, // foo
-          SimpleType("Boolean", List()), // Int
-          rhsTerm // true, or false && true, or foo where "foo" is a reference, etc
-        )
-      // ============== Match ValDefs for LoRe reactives (Source, Derived, Interaction) ==============
+      // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if loreReactives.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
         tpt.tpe.show match
           case reactiveSourcePattern(typeArg) =>
             println(s"Detected Source definition with $typeArg type parameter")
-            typeArg match
-              case "Int" =>
-                rhs match
-                  // Source gets inlined to Rescala Var, so this needs to match for Inlined first of all
-                  // Additionally, because the RHS is wrapped in a Source, there's one layer of an Apply call
-                  // wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list
-                  // This parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
-                  case Inlined(Apply(_, List(properRhs)), _, _) =>
-                    // Match for different kinds of RHS, like value literals or operator applications
-                    // Typechecking for whether the arguments are actually of the expected type (in this case integers)
-                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
-                    properRhs match
-                      case Literal(Constant(literalValue: Int)) => // E.g. "foo: Source[Int] = Source(0)"
-                        println(s"Adding Source reactive with name \"$name\" and literal int value $literalValue to term list")
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                          TSource(TNum(literalValue)) // Source(literalValue)
-                        )
-                      case Ident(referenceName: Name) => // E.g. "foo: Source[Int] = Source(bar)" where "bar" is a reference
-                        println(s"Adding Source reactive with name \"$name\" and variable reference to \"$referenceName\" to term list")
-                        // No need to check whether the reference specified here actually exists, because if it didn't
-                        // then the original Scala code would not have compiled due to invalid reference and this
-                        // point would not have been reached either way, so just pass on the reference name to a TVar
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                          TSource(TVar(referenceName.toString)) // Source(referenceName)
-                        )
-                      case Apply(Select(leftArg, op), List(rightArg)) => // E.g. "foo: Source[Int] = Source(4 ◯ 2")
-                        println(s"Adding Source reactive with name \"$name\" and the form \"left $op right\" to term list")
-                        // Set left and right value terms depending on if they are literals or references
-                        val leftValueTerm: Term = leftArg match
-                          case Literal(Constant(leftValue: Int)) =>
-                            println(s"The left operand is the literal value $leftValue")
-                            TNum(leftValue)
-                          case Ident(leftReference: Name) =>
-                            println(s"The left operand is a reference to \"$leftReference\"")
-                            TVar(leftReference.toString)
-                          // TODO: If the value is not a simple literal or reference, recurse to build term
-                          // TODO: Fix the case and output value here when implementing the above
-                          case _ =>
-                            TNum(0)
-                        val rightValueTerm: Term = rightArg match
-                          case Literal(Constant(rightValue: Int)) =>
-                            println(s"The right operand is the literal value $rightValue")
-                            TNum(rightValue)
-                          case Ident(rightReference: Name) =>
-                            println(s"The right operand is a reference to \"$rightReference\"")
-                            TVar(rightReference.toString)
-                          // TODO: If the value is not a simple literal or reference, recurse to build term
-                          // TODO: Fix the case and output value here when implementing the above
-                          case _ =>
-                            TNum(0)
-                        // Create wrapper terms depending on used operator
-                        op match
-                          case nme.ADD => // E.g. "foo: Source[Int] = Source(2 + 3)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                              TSource(TAdd(leftValueTerm, rightValueTerm)) // Source(left + right)
-                            )
-                          case nme.SUB => // E.g. "foo: Source[Int] = Source(2 - 3)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                              TSource(TSub(leftValueTerm, rightValueTerm)) // Source(left - right)
-                            )
-                          case nme.MUL => // E.g. "foo: Source[Int] = Source(2 * 3)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                              TSource(TMul(leftValueTerm, rightValueTerm)) // Source(left * right)
-                            )
-                          case nme.DIV => // E.g. "foo: Source[Int] = Source(2 / 3)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Int", List()))), // Source[Int]
-                              TSource(TDiv(leftValueTerm, rightValueTerm)) // Source(left / right)
-                            )
-                          case _ => // Unsupported binary operator
-                            report.error(s"Unsupported binary operator used: $op", tree.sourcePos)
-                      case _ => // Unsupported type of integer RHS
-                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
-                  case _ => () // Anything that's not Inlined and not wrapped with Source, can't happen because of the type checker
-              case "String" =>
-                rhs match
-                  // Source gets inlined to Rescala Var, so this needs to match for Inlined first of all
-                  // Additionally, because the RHS is wrapped in a Source, there's one layer of an Apply call
-                  // wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list
-                  // This parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
-                  case Inlined(Apply(_, List(properRhs)), _, _) =>
-                    // Match for different kinds of RHS, like value literals or operator applications
-                    // Typechecking for whether the arguments are actually of the expected type (in this case strings)
-                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
-                    properRhs match
-                      case Literal(Constant(value: String)) => // E.g. "foo: Source[String] = Source("abc")"
-                        println(s"Adding Source reactive with name \"$name\" and string value $value to term list")
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("String", List()))), // Source[String]
-                          TSource(TString(value))) // Source(value) where value is a string
-                      case Ident(referenceName: Name) => // E.g. "foo: Source[String] = Source(bar)" where "bar" is a reference
-                        println(s"Adding Source reactive with name \"$name\" and variable reference to \"$referenceName\" to term list")
-                        // No need to check whether the reference specified here actually exists, because if it didn't
-                        // then the original Scala code would not have compiled due to invalid reference and this
-                        // point would not have been reached either way, so just pass on the reference name to a TVar
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("String", List()))), // Source[String]
-                          TSource(TVar(referenceName.toString)) // Source(referenceName)
-                        )
-                      case _ => // Unsupported type of string RHS
-                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
-                  case _ => () // Anything that's not Inlined and not wrapped with Source, can't happen because of the type checker
-              case "Boolean" =>
-                rhs match
-                  // Source gets inlined to Rescala Var, so this needs to match for Inlined first of all
-                  // Additionally, because the RHS is wrapped in a Source, there's one layer of an Apply call
-                  // wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list
-                  // This parameter list always has length 1, because  Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)")
-                  case Inlined(Apply(_, List(properRhs)), _, _) =>
-                    // Match for different kinds of RHS, like value literals or operator applications
-                    // Typechecking for whether the arguments are actually of the expected type (in this case booleans)
-                    // is already handled by the type-checker prior to this, so we can just assume it's correct at this point
-                    properRhs match
-                      case Literal(Constant(literalValue: Boolean)) => // E.g. "foo: Source[Boolean] = Source(true)"
-                        println(s"Adding Source reactive with name \"$name\" and boolean value $literalValue to term list")
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                          TSource(if (literalValue) TTrue() else TFalse()) // Source(literalValue)
-                        )
-                      case Ident(referenceName: Name) => // E.g. "foo: Source[Boolean] = Source(bar)" where "bar" is a reference
-                        println(s"Adding Source reactive with name \"$name\" and variable reference to \"$referenceName\" to term list")
-                        // No need to check whether the reference specified here actually exists, because if it didn't
-                        // then the original Scala code would not have compiled due to invalid reference and this
-                        // point would not have been reached either way, so just pass on the reference name to a TVar
-                        loreTerms = loreTerms :+ TAbs(
-                          name.toString, // foo
-                          SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                          TSource(TVar(referenceName.toString)) // Source(referenceName)
-                        )
-                      case Select(arg, op) => // E.g. "Source(◯true)" (unary operators)
-                        println(s"Adding Source reactive with name \"$name\" and unary operator boolean form ${op}<operand> to term list")
-                        // Set operand term depending on if it is a literal or reference
-                        val unaryTerm: Term = arg match
-                          case Literal(Constant(literalValue: Boolean)) =>
-                            println(s"The operand is the literal value $literalValue")
-                            if (literalValue) TTrue() else TFalse()
-                          case Ident(referenceName: Name) =>
-                            println(s"The operand is a reference to \"$referenceName\"")
-                            TVar(referenceName.toString)
-                          // TODO: If the value is not a simple literal or reference, recurse to build term
-                          // TODO: Fix the case and output value here when implementing the above
-                          case _ =>
-                            TTrue()
-                        op match
-                          // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
-                          case nme.UNARY_! => // E.g. "foo: Source[Boolean] = Source(!false)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TNeg(unaryTerm)) // Source(!value)
-                            )
-                          case _ => // Unsupported unary operator
-                            report.error(s"Unsupported unary boolean operator used: $op", tree.sourcePos)
-                      case Apply(Select(leftArg, op), List(rightArg)) => // E.g. "foo: Source[Boolean] = Source(true ◯ false)" or "Source(3 ◯ 9)"
-                        println(s"Adding Source reactive with name \"$name\" and the form \"left $op right\" to term list")
-                        // Set left and right value terms depending on if they are literals or references
-                        val leftValueTerm: Term = leftArg match
-                          case Literal(Constant(leftValue: Boolean)) =>
-                            println(s"The left operand is the literal bool value $leftValue")
-                            if (leftValue) TTrue() else TFalse()
-                          case Literal(Constant(leftValue: Int)) =>
-                            println(s"The left operand is the literal int value $leftValue")
-                            TNum(leftValue)
-                          case Ident(leftReference: Name) =>
-                            println(s"The left operand is a reference to \"$leftReference\"")
-                            TVar(leftReference.toString)
-                          // TODO: If the value is not a simple literal or reference, recurse to build term
-                          // TODO: Fix the case and output value here when implementing the above
-                          case _ =>
-                            TNum(0)
-                        val rightValueTerm: Term = rightArg match
-                          case Literal(Constant(rightValue: Boolean)) =>
-                            println(s"The right operand is the literal bool value $rightValue")
-                            if (rightValue) TTrue() else TFalse()
-                          case Literal(Constant(rightValue: Int)) =>
-                            println(s"The right operand is the literal int value $rightValue")
-                            TNum(rightValue)
-                          case Ident(rightReference: Name) =>
-                            println(s"The right operand is a reference to \"$rightReference\"")
-                            TVar(rightReference.toString)
-                          // TODO: If the value is not a simple literal or reference, recurse to build term
-                          // TODO: Fix the case and output value here when implementing the above
-                          case _ =>
-                            TNum(0)
-                        op match
-                          // Important: nme.AND is & and nme.And is &&
-                          case nme.And => // E.g. "foo: Source[Boolean] = Source(true && true)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TConj(leftValueTerm, rightValueTerm)) // Source(left && right)
-                            )
-                          // Important: nme.OR is | and nme.Or is ||
-                          case nme.Or => // E.g. "foo: Source[Boolean] = Source(true || false)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TDisj(leftValueTerm, rightValueTerm)) // Source(left || right)
-                            )
-                          case nme.LT => // E.g. "foo: Source[Boolean] = Source(1 < 2)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TLt(leftValueTerm, rightValueTerm)) // Source(left < right)
-                            )
-                          case nme.GT => // E.g. "foo: Source[Boolean] = Source(2 > 1)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TGt(leftValueTerm, rightValueTerm)) // Source(left > right)
-                            )
-                          case nme.LE => // E.g. "foo: Source[Boolean] = Source(2 <= 1)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TLeq(leftValueTerm, rightValueTerm)) // Source(left <= right)
-                            )
-                          case nme.GE => // E.g. "foo: Source[Boolean] = Source(2 >= 1)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TGeq(leftValueTerm, rightValueTerm)) // Source(left >= right)
-                            )
-                          case nme.EQ => // E.g. "foo: Source[Boolean] = Source(2 == 1)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TEq(leftValueTerm, rightValueTerm)) // Source(left == right)
-                            )
-                          case nme.NE => // E.g. "foo: Source[Boolean] = Source(2 != 1)"
-                            loreTerms = loreTerms :+ TAbs(
-                              name.toString, // foo
-                              SimpleType("Source", List(SimpleType("Boolean", List()))), // Source[Boolean]
-                              TSource(TIneq(leftValueTerm, rightValueTerm)) // Source(left != right)
-                            )
-                          case _ => // Unsupported binary boolean operator
-                            report.error(s"Unsupported binary operator with bool outcome used: $op", tree.sourcePos)
-                      case _ => // Unsupported type of boolean RHS
-                        report.error(s"Unsupported RHS: $rhs", tree.sourcePos)
-                  case _ => () // Anything that's not Inlined and not wrapped with Source, can't happen because of the type checker
-              case _ => // Unsupported LHS type argument
-                report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
+            // Only Int, String and Boolean type parameters are supported
+            if (!typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean")) {
+              report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
+            }
+            rhs match
+              // Several notes to make here for future reference:
+              // * Source gets inlined to Rescala Var, so this needs to match for Inlined first of all.
+              // * Because the RHS is wrapped in a call to the Source type, there's one layer of an Apply call
+              //   wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list.
+              // * The Source parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)").
+              // * Typechecking for whether the arguments both in the Source type call, as well as within the expression
+              //   contained within any part of that call, are of the expected type, are handled by the Scala type-checker already
+              case Inlined(Apply(_, List(properRhs)), _, _) => // E.g. "foo: Source[bar] = Source(baz)"
+                println(s"Adding a Source reactive with type parameter $typeArg and name \"$name\" to term list")
+                loreTerms = loreTerms :+ TAbs(
+                  name.toString, // foo
+                  SimpleType("Source", List(SimpleType(typeArg, List()))), // Source[bar]
+                  TSource(buildLoreRhsTerm(properRhs)) // Source(baz)
+                )
+              case _ =>
+                // Anything that's not Inlined and not wrapped with Source, should not be possible at this point because of the Scala type-checker
+                println(s"A non-Inlined definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs")
+                report.error("Non-Inlined Source Definition not wrapped in Source call", tree.sourcePos)
           case reactiveDerivedPattern(typeArg) =>
             println(s"Detected Derived definition with $typeArg type parameter")
             // TODO: Implement
