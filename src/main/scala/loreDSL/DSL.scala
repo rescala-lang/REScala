@@ -116,7 +116,7 @@ class DSLPhase extends PluginPhase:
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs) if tpt.tpe <:< defn.IntType || tpt.tpe <:< defn.StringType || tpt.tpe <:< defn.BooleanType =>
+      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
         // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
         loreTerms = loreTerms :+ TAbs(
