@@ -3,16 +3,26 @@ package dtn
 import dtn.Dtn7RsWsConn
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import dtn2.PrimaryBLock
-import dtn2.DestinationSpecificPart.{DTN, DTN_NONE}
+import dtn2.Bundle
+import dtn2.given_Decoder_Bundle
 
-import io.bullet.borer.{Codec, Json}
+import java.nio.file.{Files, Paths}
+
+import io.bullet.borer.Cbor
+
 
 @main def run(): Unit = {
 
-  val block = PrimaryBLock(7, 0, 0, 1, DTN("//node1/incoming"), 1, DTN("//node1/incoming"), 1, DTN_NONE(), 0, 1, 2)
+  val bundle_bytes = Files.readAllBytes(Paths.get("simple_bundle"))
+
+  val bundle = Cbor.decode(bundle_bytes).to[Bundle].value
+
+  println(bundle)
+
+
+  //val block = PrimaryBLock(7, 0, 0, 1, DTN("//node1/incoming"), 1, DTN("//node1/incoming"), 1, DTN_NONE(), 0, 1, 2)
   
-  println(Json.encode(block).toUtf8String)
+  //println(Json.encode(block).toUtf8String)
   
   /*
   Dtn7RsWsConn.create().map(conn => {
