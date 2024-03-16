@@ -1,11 +1,11 @@
 package todo
 
+import channel.broadcastchannel.BroadcastChannelConnector
+import channel.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
 import channel.{ArrayMessageBuffer, Ctx, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Callback}
-import loci.communicator.broadcastchannel.BroadcastChannelConnector
-import loci.communicator.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
 import org.scalajs.dom
 import org.scalajs.dom.html.{Div, Input, Table}
 import org.scalajs.dom.{MouseEvent, RTCIceConnectionState, RTCIceGatheringState, RTCIceServer, UIEvent, document, window}

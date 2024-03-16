@@ -1,6 +1,6 @@
 package channel
 
-import channel.webnative.WebsocketConnect
+import channel.webnativewebsockets.WebsocketConnect
 import de.rmgk.delay.Async
 
 class EchoWSTest extends munit.FunSuite {

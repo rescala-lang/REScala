@@ -1,4 +1,4 @@
-package channel.webnative
+package channel.webnativewebsockets
 
 import channel.MesageBufferExtensions.asArrayBuffer
 import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
@@ -10,11 +10,9 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import scala.scalajs.js
 import scala.scalajs.js.timers.*
-import scala.scalajs.js.typedarray.ArrayBuffer
-import scala.util.{Failure, Success}
 import scala.scalajs.js.typedarray.TypedArrayBufferOps.*
-import scala.scalajs.js.typedarray.given
-import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer, Uint8Array}
+import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer, Uint8Array, given}
+import scala.util.{Failure, Success}
 
 class WebsocketException(msg: String) extends IOException(msg)
 

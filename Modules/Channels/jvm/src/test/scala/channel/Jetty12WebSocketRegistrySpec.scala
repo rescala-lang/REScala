@@ -1,8 +1,7 @@
-package loci
-package registry
+package channel
 
+import channel.jettywebsockets.{JettyWsConnection, JettyWsListener}
 import channel.{ArrayMessageBuffer, Ctx}
-import channel.jetty.{JettyWsConnection, JettyWsListener}
 import de.rmgk.delay.Async
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ContextHandler

@@ -1,8 +1,8 @@
 package todo
 
+import channel.webrtc.WebRTCConnection
 import channel.{ArrayMessageBuffer, MessageBuffer, OutChan}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromSubArray, writeToArray}
-import loci.communicator.webrtc.WebRTCConnection
 import rdts.base.Lattice
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer

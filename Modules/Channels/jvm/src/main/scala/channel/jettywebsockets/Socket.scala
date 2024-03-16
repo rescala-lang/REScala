@@ -1,6 +1,7 @@
-package channel.jetty
+package channel.jettywebsockets
+
 import channel.{ArrayMessageBuffer, InChan, MessageBuffer, OutChan, Prod}
-import de.rmgk.delay.{Async, Callback as DelayCallback}
+import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ContextHandler
 import org.eclipse.jetty.server.{Server, ServerConnector}
@@ -10,10 +11,7 @@ import org.eclipse.jetty.websocket.api.{Session, Callback as JettyCallback}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.core.client.WebSocketCoreClient
 import org.eclipse.jetty.websocket.server
-import org.eclipse.jetty.websocket.server.{
-  ServerUpgradeResponse, ServerWebSocketContainer, WebSocketCreator, WebSocketUpgradeHandler
-}
-import de.rmgk.delay.syntax
+import org.eclipse.jetty.websocket.server.{ServerUpgradeResponse, ServerWebSocketContainer, WebSocketCreator, WebSocketUpgradeHandler}
 
 import java.net.URI
 import java.nio.ByteBuffer
@@ -90,7 +88,7 @@ object JettyWsConnection {
 
 class JettyWsConnection(handler: JettyWsHandler) extends InChan with OutChan {
 
-  private[jetty] var internalCallback: DelayCallback[MessageBuffer] = scala.compiletime.uninitialized
+  private[jettywebsockets] var internalCallback: DelayCallback[MessageBuffer] = scala.compiletime.uninitialized
 
   override def receive: Prod[MessageBuffer] = Async.fromCallback {
     handler.getSession.demand()

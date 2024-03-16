@@ -1,4 +1,4 @@
-package loci.communicator.webrtc
+package channel.webrtc
 
 import channel.MesageBufferExtensions.asArrayBuffer
 import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}

@@ -1,6 +1,4 @@
-package loci
-package communicator
-package broadcastchannel
+package channel.broadcastchannel
 
 import channel.MesageBufferExtensions.asArrayBuffer
 import channel.{ArrayMessageBuffer, InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}

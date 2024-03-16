@@ -1,7 +1,7 @@
-package loci.registry
+package channel
 
+import channel.jettywebsockets.JettyWsConnection
 import channel.{ArrayMessageBuffer, Ctx}
-import channel.jetty.JettyWsConnection
 import de.rmgk.delay.*
 
 import java.net.URI

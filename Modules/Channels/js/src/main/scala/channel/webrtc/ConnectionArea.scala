@@ -1,12 +1,11 @@
-package loci.communicator.webrtc
+package channel.webrtc
 
+import channel.broadcastchannel.BroadcastChannelConnector
 import channel.{ArrayMessageBuffer, Ctx, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.syntax.toAsync
 import de.rmgk.delay.{Async, Callback}
-import loci.communicator.broadcastchannel.BroadcastChannelConnector
-import loci.communicator.webrtc
 import org.scalajs.dom
 import org.scalajs.dom.html.{Div, Input, Table}
 import org.scalajs.dom.{
@@ -180,7 +179,7 @@ def errorReporter: Callback[Any] =
 
 class WebRTCHandling(readyChannel: Option[Callback[SessionDescription]]) {
 
-  val codec: JsonValueCodec[webrtc.SessionDescription] = JsonCodecMaker.make
+  val codec: JsonValueCodec[SessionDescription] = JsonCodecMaker.make
 
   val peer = WebRTCConnector(new dom.RTCConfiguration {
     iceServers = js.Array[dom.RTCIceServer](new RTCIceServer {
