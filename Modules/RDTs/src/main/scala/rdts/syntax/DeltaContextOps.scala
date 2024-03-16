@@ -30,8 +30,12 @@ object PermMutate:
     override def mutate(c: A, delta: A): A = delta
 
 @implicitNotFound(
-  "Requires a replica ID."
+  "Requires a replica ID of the current local replica that is doing the modification."
 )
+/** Operations may require an ID of the replica doing a modification.
+  * We provide it as it’s own opaque type, to make it obvious that this should not be just any ID.
+  * Use [[Uid]] if you want to store an ID in a replicated data structure.
+  */
 opaque type LocalReplicaId = Uid
 object LocalReplicaId:
   given ordering: Ordering[LocalReplicaId]             = Uid.ordering
@@ -64,7 +68,7 @@ trait OpsTypes[DeltaContainer, Value] {
 }
 class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[rdts] def current(using perm: IsQuery): L                = perm.query(container)
-  final protected[rdts] def replicaId(using perm: LocalReplicaId): Uid          = perm.uid
+  final protected[rdts] def replicaId(using perm: LocalReplicaId): Uid     = perm.uid
   final protected[rdts] def context(using perm: IsCausalMutator): Dots     = perm.context(container)
   extension (l: L) def mutator: Mutator                                    = summon[IsMutator].mutate(container, l)
   extension (l: Dotted[L])(using perm: IsCausalMutator) def mutator: C     = perm.mutateContext(container, l)
