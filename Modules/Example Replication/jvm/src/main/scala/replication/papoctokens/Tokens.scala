@@ -6,8 +6,8 @@ import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.contextual.ReplicatedSet.syntax
 import rdts.datatypes.experiments.RaftState
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.ReplicaId.replicaId
-import rdts.syntax.{DeltaBuffer, OpsSyntaxHelper, ReplicaId}
+import rdts.syntax.LocalReplicaId.replicaId
+import rdts.syntax.{DeltaBuffer, OpsSyntaxHelper, LocalReplicaId}
 import rdts.time.Dots
 
 import scala.util.Random
@@ -24,15 +24,15 @@ object Ownership {
 
 case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
 
-  def isOwner(using ReplicaId): Boolean = replicaId == os.owner
+  def isOwner(using LocalReplicaId): Boolean = replicaId == os.owner
 
-  def request(using ReplicaId, Dots): Dotted[Token] =
+  def request(using LocalReplicaId, Dots): Dotted[Token] =
     wants.addElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
-  def release(using ReplicaId, Dots): Dotted[Token] =
+  def release(using LocalReplicaId, Dots): Dotted[Token] =
     wants.removeElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
-  def upkeep(using ReplicaId): Token =
+  def upkeep(using LocalReplicaId): Token =
     if !isOwner then Token.unchanged
     else
       selectFrom(wants) match
@@ -40,7 +40,7 @@ case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
         case Some(nextOwner) =>
           Token(Ownership(os.epoch + 1, nextOwner), ReplicatedSet.empty)
 
-  def selectFrom(wants: ReplicatedSet[Uid])(using ReplicaId) =
+  def selectFrom(wants: ReplicatedSet[Uid])(using LocalReplicaId) =
     // We find the “largest” ID that wants the token.
     // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
     wants.elements.maxOption.filter(id => id != replicaId)
@@ -60,29 +60,29 @@ case class ExampleTokens(
 case class Vote(owner: Uid, voter: Uid)
 case class Voting(rounds: Epoch[ReplicatedSet[Vote]]) {
 
-  def isOwner(using ReplicaId): Boolean =
+  def isOwner(using LocalReplicaId): Boolean =
     val (id, count) = leadingCount
     id == replicaId && count >= Voting.threshold
 
-  def request(using ReplicaId, Dots): Dotted[Voting] =
+  def request(using LocalReplicaId, Dots): Dotted[Voting] =
     if !rounds.value.isEmpty then Voting.unchanged
     else voteFor(replicaId)
 
-  def release(using ReplicaId): Voting =
+  def release(using LocalReplicaId): Voting =
     if !isOwner
     then Voting.unchanged.data
     else Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
 
-  def upkeep(using ReplicaId, Dots): Dotted[Voting] =
+  def upkeep(using LocalReplicaId, Dots): Dotted[Voting] =
     val (id, count) = leadingCount
     if checkIfMajorityPossible(count)
     then voteFor(id)
     else Dotted(forceRelease)
 
-  def forceRelease(using ReplicaId): Voting =
+  def forceRelease(using LocalReplicaId): Voting =
     Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty))
 
-  def voteFor(uid: Uid)(using ReplicaId, Dots): Dotted[Voting] =
+  def voteFor(uid: Uid)(using LocalReplicaId, Dots): Dotted[Voting] =
     if rounds.value.elements.exists { case Vote(id, _) => id == replicaId }
     then Voting.unchanged // already voted!
     else
@@ -94,7 +94,7 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]]) {
     val remainingVotes = Voting.participants - totalVotes
     (count + remainingVotes) > Voting.threshold
 
-  def leadingCount(using ReplicaId): (Uid, Int) =
+  def leadingCount(using LocalReplicaId): (Uid, Int) =
     val votes: Set[Vote] = rounds.value.elements
     votes.groupBy(_.owner).map((o, elems) => (o, elems.size)).maxBy((o, size) => size)
 }
@@ -111,7 +111,7 @@ object Voting {
 }
 
 case class Exclusive[T: Lattice: Bottom](token: Token, value: T) {
-  def transform(f: T => T)(using ReplicaId) =
+  def transform(f: T => T)(using LocalReplicaId) =
     if token.isOwner then f(value) else Bottom.empty
 }
 

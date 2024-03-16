@@ -42,7 +42,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
     val rlist = DeltaBuffer(Dotted(ReplicatedList.empty[Component]))
 
     // some operations on replicated data types require a unique ID per replica, here we just generate one randomly that is then used in the call to `append` below
-    given myId: rdts.syntax.ReplicaId = Uid.gen()
+    given myId: rdts.syntax.LocalReplicaId = Uid.gen()
 
     // okay, this is cheating, this just adds complex components to a replicated list, and would not be sufficient for fine grained editing of replicated UIs … however, it should be sufficient for a very simple usecase
     rlist.append(exampleComposition)

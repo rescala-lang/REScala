@@ -3,7 +3,7 @@ package todo
 import rdts.dotted.Dotted
 import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedList
-import rdts.syntax.{DeltaBuffer, ReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import reactives.default.*
 
 import java.util.concurrent.ThreadLocalRandom
@@ -15,7 +15,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
 
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 
-  given ReplicaId = replicaID
+  given LocalReplicaId = replicaID
 
   def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"

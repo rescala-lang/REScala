@@ -7,7 +7,7 @@ import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
-import rdts.syntax.ReplicaId
+import rdts.syntax.LocalReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.given

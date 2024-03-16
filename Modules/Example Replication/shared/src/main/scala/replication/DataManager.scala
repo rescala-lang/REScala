@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{PermCausalMutate, ReplicaId}
+import rdts.syntax.{PermCausalMutate, LocalReplicaId}
 import rdts.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
@@ -30,7 +30,7 @@ class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
     val registry: Registry
 ) {
 
-  given ReplicaId = replicaId
+  given LocalReplicaId = replicaId
 
   type TransferState = Dotted[State]
 

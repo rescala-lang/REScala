@@ -4,7 +4,7 @@ import rdts.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
 import rdts.dotted.Dotted
 import rdts.base.Uid.asId
-import rdts.syntax.ReplicaId
+import rdts.syntax.LocalReplicaId
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -26,7 +26,7 @@ class RCounterBench {
     counter =
       (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
         case (c, n) =>
-          given rid: ReplicaId = n.toString.asId
+          given rid: LocalReplicaId = n.toString.asId
           val delta            = Dotted(ResettableCounter.zero).increment()
           c.applyDelta(rid.uid, delta)
       }

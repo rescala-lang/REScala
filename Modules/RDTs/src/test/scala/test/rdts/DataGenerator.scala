@@ -9,7 +9,7 @@ import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.{CausalDelta, CausalStore}
 import rdts.dotted.*
-import rdts.syntax.ReplicaId
+import rdts.syntax.LocalReplicaId
 import rdts.time.*
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import HasDots.mapInstance
@@ -190,7 +190,7 @@ object DataGenerator {
     def makeRGA[E](
         inserted: List[(Int, E)],
         removed: List[Int],
-        rid: ReplicaId
+        rid: LocalReplicaId
     ): Dotted[ReplicatedList[E]] = {
       val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
         case (rga, (i, e)) => rga merge rga.insert(using rid)(i, e)

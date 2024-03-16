@@ -5,7 +5,7 @@ import rdts.base.Uid.asId
 import rdts.datatypes.contextual.{CausalQueue, EnableWinsFlag, MultiVersionRegister}
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.ReplicaId
+import rdts.syntax.LocalReplicaId
 import rdts.time.{Dot, Dots, VectorClock}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Prop.*
@@ -14,8 +14,8 @@ import test.rdts.UtilHacks.*
 
 class DecomposeManualTests extends munit.ScalaCheckSuite {
 
-  val r1: ReplicaId = "r1".asId
-  val r2: ReplicaId = "r2".asId
+  val r1: LocalReplicaId = "r1".asId
+  val r2: LocalReplicaId = "r2".asId
 
 
   test("GrowOnlyCounter decomposition") {

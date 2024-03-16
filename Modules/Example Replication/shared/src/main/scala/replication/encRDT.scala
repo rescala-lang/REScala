@@ -4,7 +4,7 @@ import com.github.ckuessner.aead.{Aead, AeadHelper, ByteArray}
 import rdts.base.Lattice
 import rdts.base.Lattice.merge
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.ReplicaId
+import rdts.syntax.LocalReplicaId
 import rdts.time.Dots
 
 type Secret = String
@@ -19,7 +19,7 @@ given encrdtLattice[S]: Lattice[EncRDT[S]] with
 extension [S](c: EncRDT[S])
   def version: Dots = c.deltas.map(_.context).reduceOption(Lattice.merge).getOrElse(Dots.empty)
   def send(data: Dotted[S], aead: Aead)(using
-      rid: ReplicaId
+      rid: LocalReplicaId
   )(using Conversion[S, ByteArray], Conversion[Dots, ByteArray]): EncRDT[S] =
     EncRDT(Set(Dotted(AeadHelper.toBase64(aead.encrypt(data.data.convert, data.context.convert).get), data.context)))
 

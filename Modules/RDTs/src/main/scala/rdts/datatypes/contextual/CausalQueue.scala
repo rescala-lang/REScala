@@ -3,7 +3,7 @@ package rdts.datatypes.contextual
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, ReplicaId}
+import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
 import rdts.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
@@ -36,7 +36,7 @@ object CausalQueue:
   implicit class syntax[C, T](container: C)
       extends OpsSyntaxHelper[C, CausalQueue[T]](container) {
 
-    def enqueue(using ReplicaId, IsCausalMutator)(e: T): C =
+    def enqueue(using LocalReplicaId, IsCausalMutator)(e: T): C =
       val time = context.clock.inc(replicaId)
       val dot  = time.dotOf(replicaId)
       Dotted(CausalQueue(Queue(QueueElement(e, dot, time))), Dots.single(dot)).mutator

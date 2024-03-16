@@ -4,7 +4,7 @@ import rdts.base.{Uid, Lattice}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, ReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 
 import scala.util.Random
 
@@ -19,7 +19,7 @@ case class RaftTokens(
     tokenFreed: DeltaBuffer[Dotted[ReplicatedSet[Token]]]
 ) {
 
-  given ReplicaId = replicaID
+  given LocalReplicaId = replicaID
 
   def owned(value: String): List[Token] = {
     val freed  = tokenFreed.elements

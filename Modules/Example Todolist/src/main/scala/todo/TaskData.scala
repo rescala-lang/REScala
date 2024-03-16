@@ -3,7 +3,7 @@ package todo
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{DeltaBuffer, ReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
@@ -67,7 +67,7 @@ object TaskReferences {
 }
 
 class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
-  given fixedId: ReplicaId = replicaId
+  given fixedId: LocalReplicaId = replicaId
 
   def createTaskRef(
       taskID: String,

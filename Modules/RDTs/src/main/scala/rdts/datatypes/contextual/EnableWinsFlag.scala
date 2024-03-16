@@ -3,7 +3,7 @@ package rdts.datatypes.contextual
 import rdts.base.{Bottom, Lattice}
 
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, ReplicaId}
+import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
 import rdts.time.Dots
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
@@ -28,7 +28,7 @@ object EnableWinsFlag {
   implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
     def read(using IsQuery): Boolean = !current.dots.isEmpty
 
-    def enable(using ReplicaId)(): CausalMutator = {
+    def enable(using LocalReplicaId)(): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
       Dotted(
         EnableWinsFlag(Dots.single(nextDot)),

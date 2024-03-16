@@ -2,7 +2,7 @@ package rdts.datatypes.alternatives
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, ReplicaId}
+import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
 import rdts.time.{Dot, Dots}
 
 /** An ResettableCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.
@@ -49,7 +49,7 @@ object ResettableCounter {
     /** Without using fresh, reset wins over concurrent increments/decrements
       * When using fresh after every time deltas are shipped to other replicas, increments/decrements win over concurrent resets
       */
-    def fresh(using ReplicaId)(): CausalMutator = {
+    def fresh(using LocalReplicaId)(): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
 
       deltaState(
@@ -58,7 +58,7 @@ object ResettableCounter {
       ).mutator
     }
 
-    private def update(using ReplicaId, IsCausalMutator)(u: (Int, Int)): C = {
+    private def update(using LocalReplicaId, IsCausalMutator)(u: (Int, Int)): C = {
       context.max(replicaId) match {
         case Some(currentDot) if current.inner.contains(currentDot) =>
           val newCounter = (current.inner(currentDot), u) match {
@@ -79,9 +79,9 @@ object ResettableCounter {
       }
     }
 
-    def increment(using ReplicaId, IsCausalMutator)(): C = update((1, 0))
+    def increment(using LocalReplicaId, IsCausalMutator)(): C = update((1, 0))
 
-    def decrement(using ReplicaId, IsCausalMutator)(): C = update((0, 1))
+    def decrement(using LocalReplicaId, IsCausalMutator)(): C = update((0, 1))
 
     def reset()(using IsCausalMutator): C = {
       deltaState(

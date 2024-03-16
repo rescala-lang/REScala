@@ -32,16 +32,16 @@ object PermMutate:
 @implicitNotFound(
   "Requires a replica ID."
 )
-opaque type ReplicaId = Uid
-object ReplicaId:
-  given ordering: Ordering[ReplicaId]             = Uid.ordering
-  extension (id: ReplicaId) def uid: Uid          = id
-  def apply(id: Uid): ReplicaId                   = id
-  inline given fromId: Conversion[Uid, ReplicaId] = identity
-  def predefined(s: String): ReplicaId            = ReplicaId.fromId(Uid.predefined(s))
-  def unwrap(id: ReplicaId): Uid                  = id
-  def gen(): ReplicaId                            = Uid.gen()
-  def replicaId(using rid: ReplicaId): Uid        = rid.uid
+opaque type LocalReplicaId = Uid
+object LocalReplicaId:
+  given ordering: Ordering[LocalReplicaId]             = Uid.ordering
+  extension (id: LocalReplicaId) def uid: Uid          = id
+  def apply(id: Uid): LocalReplicaId                   = id
+  inline given fromId: Conversion[Uid, LocalReplicaId] = identity
+  def predefined(s: String): LocalReplicaId            = LocalReplicaId.fromId(Uid.predefined(s))
+  def unwrap(id: LocalReplicaId): Uid                  = id
+  def gen(): LocalReplicaId                            = Uid.gen()
+  def replicaId(using rid: LocalReplicaId): Uid        = rid.uid
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
@@ -60,11 +60,11 @@ trait OpsTypes[DeltaContainer, Value] {
   final type IsCausalMutator = s.PermCausalMutate[DeltaContainer, Value]
   final type CausalMutator   = IsCausalMutator ?=> DeltaContainer
   final type Mutator         = IsMutator ?=> DeltaContainer
-  final type IdMutator       = ReplicaId ?=> Mutator
+  final type IdMutator       = LocalReplicaId ?=> Mutator
 }
 class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[rdts] def current(using perm: IsQuery): L                = perm.query(container)
-  final protected[rdts] def replicaId(using perm: ReplicaId): Uid          = perm.uid
+  final protected[rdts] def replicaId(using perm: LocalReplicaId): Uid          = perm.uid
   final protected[rdts] def context(using perm: IsCausalMutator): Dots     = perm.context(container)
   extension (l: L) def mutator: Mutator                                    = summon[IsMutator].mutate(container, l)
   extension (l: Dotted[L])(using perm: IsCausalMutator) def mutator: C     = perm.mutateContext(container, l)

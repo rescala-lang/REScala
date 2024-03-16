@@ -8,7 +8,7 @@ import rdts.datatypes.experiments.AuctionInterface
 import rdts.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
 import rdts.dotted.HasDots.*
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, ReplicaId}
+import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalReplicaId}
 import rdts.time.{Dot, Dots}
 import org.scalacheck.{Arbitrary, Gen}
 import test.rdts.DataGenerator.*
@@ -21,7 +21,7 @@ class ContainerTest extends munit.FunSuite {
 
   object helper {
 
-    given r: ReplicaId = "me".asId
+    given r: LocalReplicaId = "me".asId
 
     given bottomString: Bottom[String] with {
       override def empty: String = ""
@@ -35,7 +35,7 @@ class ContainerTest extends munit.FunSuite {
 
   test("Dotted can contain contextual EnableWinsFlag") {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given ReplicaId                  = "me".asId
+    given LocalReplicaId                  = "me".asId
 
     assertEquals(flag.read, false)
 

@@ -2,7 +2,7 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, ReplicaId}
+import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
 import rdts.time.Dots
 import rdts.dotted.HasDots.mapInstance
 
@@ -46,7 +46,7 @@ object ObserveRemoveMap {
     def queryAllEntries(using IsQuery): Iterable[V] = current.inner.values
     def entries(using IsQuery): Iterable[(K, V)]    = current.inner.view
 
-    def update(using ReplicaId, IsCausalMutator, Bottom[V])(k: K, v: V): C = {
+    def update(using LocalReplicaId, IsCausalMutator, Bottom[V])(k: K, v: V): C = {
       transform(k)(_ => Dotted(v, Dots.single(context.nextDot(replicaId))))
     }
 

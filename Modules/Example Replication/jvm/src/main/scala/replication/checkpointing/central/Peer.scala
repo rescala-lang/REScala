@@ -3,7 +3,7 @@ package replication.checkpointing.central
 import Bindings.*
 import rdts.base.Lattice
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, ReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
@@ -20,7 +20,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   val registry = new Registry
 
-  given ReplicaId = id
+  given LocalReplicaId = id
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
