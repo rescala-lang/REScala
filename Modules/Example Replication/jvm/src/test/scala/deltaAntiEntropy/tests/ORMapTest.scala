@@ -6,7 +6,7 @@ import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import rdts.base.Bottom
 import rdts.datatypes.contextual.{ReplicatedSet, ObserveRemoveMap}
 import rdts.dotted.Dotted
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 import org.scalacheck.Prop.*
 
 import scala.collection.mutable

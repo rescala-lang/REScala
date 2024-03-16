@@ -8,7 +8,7 @@ import rdts.base.Lattice
 import rdts.datatypes.contextual.MultiVersionRegister
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
 import scala.util.Random

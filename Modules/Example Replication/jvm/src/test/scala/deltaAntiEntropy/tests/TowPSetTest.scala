@@ -7,7 +7,7 @@ import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import rdts.datatypes.TwoPhaseSet
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
 

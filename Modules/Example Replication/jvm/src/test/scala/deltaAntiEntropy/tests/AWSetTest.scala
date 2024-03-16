@@ -9,7 +9,7 @@ import rdts.datatypes.contextual.ReplicatedSet
 import rdts.syntax.ReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 import replication.dtn.Replica
 
 import scala.collection.mutable

@@ -10,7 +10,7 @@ import rdts.dotted.Dotted
 import rdts.syntax.ReplicaId
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 import test.rdts.DataGenerator.RGAGen.{makeRGA, given}
 
 import scala.collection.mutable

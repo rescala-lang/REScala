@@ -7,7 +7,7 @@ import rdts.dotted.Dotted
 import loci.registry.Binding
 import loci.transmitter.IdenticallyTransmittable
 import loci.serializer.jsoniterScala._
-import replication.JsoniterCodecs._
+import replication.JsoniterCodecs.given
 
 import scala.concurrent.Future
 
@@ -19,17 +19,17 @@ object Bindings {
 
   case class CheckpointMessage(cp: Int, apply: List[SetState], keep: SetState)
 
-  implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
-  implicit val BooleanCodec: JsonValueCodec[Boolean] = JsonCodecMaker.make
+  given BooleanCodec: JsonValueCodec[Boolean] = JsonCodecMaker.make
 
-  implicit val SyncMessageCodec: JsonValueCodec[SyncMessage] = JsonCodecMaker.make
+  given SyncMessageCodec: JsonValueCodec[SyncMessage] = JsonCodecMaker.make
 
-  implicit val CheckpointMessageCodec: JsonValueCodec[CheckpointMessage] = JsonCodecMaker.make
+  given CheckpointMessageCodec: JsonValueCodec[CheckpointMessage] = JsonCodecMaker.make
 
-  implicit val transmittableSyncMessage: IdenticallyTransmittable[SyncMessage] = IdenticallyTransmittable()
+  given transmittableSyncMessage: IdenticallyTransmittable[SyncMessage] = IdenticallyTransmittable()
 
-  implicit val transmittableCheckpointMessage: IdenticallyTransmittable[CheckpointMessage] = IdenticallyTransmittable()
+  given transmittableCheckpointMessage: IdenticallyTransmittable[CheckpointMessage] = IdenticallyTransmittable()
 
   val receiveSyncMessageBinding: Binding[SyncMessage => Unit, SyncMessage => Future[Unit]] =
     Binding[SyncMessage => Unit]("receiveDelta")

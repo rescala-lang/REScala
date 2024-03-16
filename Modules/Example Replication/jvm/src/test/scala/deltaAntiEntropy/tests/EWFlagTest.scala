@@ -5,7 +5,7 @@ import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import rdts.datatypes.contextual.EnableWinsFlag
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import replication.JsoniterCodecs.*
+import replication.JsoniterCodecs.given
 
 import scala.collection.mutable
 import scala.util.Random
