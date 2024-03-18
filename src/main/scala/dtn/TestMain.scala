@@ -1,10 +1,13 @@
 package dtn
 
 import dtn.Dtn7RsWsConn
+import dtn.Bundle
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import dtn2.Bundle
-import dtn2.given_Decoder_Bundle
+import scala.concurrent.Future
+
+//import dtn2.Bundle
+//import dtn2.given_Decoder_Bundle
 
 import java.nio.file.{Files, Paths}
 
@@ -12,25 +15,27 @@ import io.bullet.borer.Cbor
 
 
 @main def run(): Unit = {
-
+  /*
   val bundle_bytes = Files.readAllBytes(Paths.get("simple_bundle"))
 
   val bundle = Cbor.decode(bundle_bytes).to[Bundle].value
 
   println(bundle)
+  */
 
-
-  //val block = PrimaryBLock(7, 0, 0, 1, DTN("//node1/incoming"), 1, DTN("//node1/incoming"), 1, DTN_NONE(), 0, 1, 2)
-  
-  //println(Json.encode(block).toUtf8String)
-  
-  /*
-  Dtn7RsWsConn.create().map(conn => {
+  Dtn7RsWsConn.create(3000).map(conn => {
     println(s"connected to node: ${conn.nodeId.get}")
 
-    if (conn.nodeId.get.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
+    // flush receive forever
+    def flush_receive(): Future[Unit] = {
+      conn.receiveBundle().flatMap(bundle => {
+        println(s"received bundle: $bundle")
+        flush_receive()
+      })
+    }
+    flush_receive()
 
-    val cRDTGroupEndpoint = "dtn://global/crdt/~app1"
+    val cRDTGroupEndpoint = "dtn://global/~crdt/app1"
 
     conn.registerEndpointAndSubscribe(cRDTGroupEndpoint).flatMap(_ => {
       val bundle = Bundle.createWithUTF8TextAsData(
@@ -42,15 +47,11 @@ import io.bullet.borer.Cbor
       )
 
       println(s"start sending bundle with text: ${bundle.getDataAsUTF8Text}")
-      conn.sendBundle(bundle).flatMap(response => {
-        println(s"finished sending bundle, response: ${response}")
-        println(s"start receiving bundle")
-        conn.receiveBundle()
-      }).flatMap(response => {
-        println(s"received bundle with text: ${response.getDataAsUTF8Text}")
-        conn.disconnect()
-      })
+      conn.sendBundle(bundle)
     })
   })
-  */
+  
+  while (true) {
+    Thread.sleep(200)
+  }
 }

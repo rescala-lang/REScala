@@ -3,20 +3,18 @@ package dtn
 import sttp.model.{Header, Uri}
 import sttp.capabilities.WebSockets
 import sttp.client4.fetch.FetchBackend
-import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
-// import sttp.client4.pekkohttp.PekkoHttpBackend
-import sttp.client4.*
-import sttp.ws.WebSocket
+//import sttp.client4.httpclient.HttpClientFutureBackend
 import sttp.client4.ws.async.*
-
+import sttp.client4.*
+import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
+import sttp.ws.WebSocket
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
 object Dtn7RsWsConn {
-//  private val backend: GenericBackend[Future, WebSockets] = PekkoHttpBackend()
   private val backend: GenericBackend[Future, WebSockets] = FetchBackend()
-
+//  private val backend: GenericBackend[Future, WebSockets] = HttpClientFutureBackend()
 
   private def uget(uri: Uri): Future[String] = {
     val request = basicRequest.get(uri).response(asStringAlways)
