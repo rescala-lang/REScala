@@ -4,3 +4,4 @@ target/
 .metals
 out/
 .bsp/
+metals.sbt
