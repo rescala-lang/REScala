@@ -1,1 +1,5 @@
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.15.0")
+addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.6.4")
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"      % "1.2.0")
+addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.2.0")
+addSbtPlugin("org.scala-js"       % "sbt-scalajs"                   % "1.4.0")
+addSbtPlugin("org.scala-native"   % "sbt-scala-native"              % "0.3.7")

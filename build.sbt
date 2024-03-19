@@ -1,9 +1,7 @@
-lazy val chat = project.in(file("."))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    scalaVersion                    := "3.3.1",
-    resolvers += "jitpack" at "https://jitpack.io",
-    libraryDependencies ++= Seq(
+val sharedSettings = Seq(
+  scalaVersion := "3.3.3", 
+  resolvers += "jitpack" at "https://jitpack.io",
+  libraryDependencies ++= Seq(
       "com.github.rescala-lang.rescala" %%% "rescala"     % "71e3cee000",
       "com.github.rescala-lang.rescala" %%% "kofre"       % "71e3cee000",
       "org.scala-js"                    %%% "scalajs-dom" % "2.8.0",
@@ -18,4 +16,16 @@ lazy val chat = project.in(file("."))
       "io.bullet" %% "borer-core" % "1.14.0",
       "io.bullet" %% "borer-derivation" % "1.14.0"
     ),
-  )
+)
+
+lazy val chat =
+  // select supported platforms
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Pure).in(file(".")) // [Pure, Full, Dummy], default: CrossType.Full
+    .settings(sharedSettings)
+    .jsSettings(
+      scalaVersion := "3.3.3" 
+    )
+    .jvmSettings(
+      scalaVersion := "3.3.3"
+    )
