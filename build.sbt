@@ -1,7 +1,7 @@
 lazy val chat =
   // select supported platforms
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Pure).in(file(".")) // [Pure, Full, Dummy], default: CrossType.Full
+  crossProject(JSPlatform)
+    .crossType(CrossType.Full).in(file(".")) // [Pure, Full, Dummy], default: CrossType.Full
     .settings(
       scalaVersion := "3.3.3",
       resolvers += "jitpack" at "https://jitpack.io",
@@ -22,7 +22,7 @@ lazy val chat =
     .jsSettings(
       scalaVersion := "3.3.3" 
     )
-    .jvmSettings(
-      scalaVersion := "3.3.3",
-      libraryDependencies += "com.softwaremill.sttp.client4"          %% "okhttp-backend"                       % "4.0.0-M11",
-    )
+//    .jvmSettings(
+//      scalaVersion := "3.3.3",
+//      libraryDependencies += "com.softwaremill.sttp.client4"          %% "okhttp-backend"                       % "4.0.0-M11",
+//    )
