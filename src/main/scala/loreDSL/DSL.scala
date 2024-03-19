@@ -42,74 +42,110 @@ class DSLPhase extends PluginPhase:
 
   /**
    * Takes the tree for a Scala RHS value and builds a LoRe term for it.
-   * @param tree The Scala AST Tree node
-   * @return The corresponding LoRe AST Tree node
+   * @param tree The Scala AST Tree node for a RHS expression to convert
+   * @param indentLevel How many tabs to add before the logs of this call (none by default)
+   * @param operandSide Which side to refer to in logs if expressing binary expressions (none by default)
+   * @return The corresponding LoRe AST Tree node of the RHS
    */
-  private def buildLoreRhsTerm(tree: tpd.LazyTree, operandSide: String = "")(using Context): Term =
+  private def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using Context): Term =
     tree match
       case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is the literal integer value $num")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal integer value $num")
         else
-          println(s"The parameter is the literal integer value $num")
+          println(s"${"\t".repeat(indentLevel)}The parameter is the literal integer value $num")
         TNum(num)
       case Literal(Constant(str: String)) => // Basic string values like "foo"
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is the literal string value $str")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal string value $str")
         else
-          println(s"The parameter is the literal string value $str")
+          println(s"${"\t".repeat(indentLevel)}The parameter is the literal string value $str")
         TString(str)
       case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is the literal boolean value $bool")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal boolean value $bool")
         else
-          println(s"The parameter is the literal boolean value $bool")
+          println(s"${"\t".repeat(indentLevel)}The parameter is the literal boolean value $bool")
         if (bool) TTrue() else TFalse()
       case Ident(referenceName: Name) => // References to variables (any type)
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is a reference to \"$referenceName\"")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a reference to \"$referenceName\"")
         else
-          println(s"The parameter is a reference to \"$referenceName\"")
+          println(s"${"\t".repeat(indentLevel)}The parameter is a reference to \"$referenceName\"")
         // No need to check whether the reference specified here actually exists, because if it didn't
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
       case Select(arg, op) => // Unary operator application, proceeds recursively
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is a unary operator application of the form ${op.show}<operand>")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>")
         else
-          println(s"The parameter is a unary operator application of the form ${op.show}<operand>")
+          println(s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>")
         op match
           // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
           case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg)) // !operand
           case _ => // Unsupported unary operators
-            report.error(s"Unsupported unary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
+            report.error(s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
         if (operandSide.nonEmpty)
-          println(s"The $operandSide parameter is an operator application of the form \"left ${op.show} right\"")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is an operator application of the form \"left ${op.show} right\"")
         else
-          println(s"The parameter is an operator application of the form \"left ${op.show} right\"")
+          println(s"${"\t".repeat(indentLevel)}The parameter is an operator application of the form \"left ${op.show} right\"")
         op match
-          case nme.ADD => TAdd(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left + right
-          case nme.SUB => TSub(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left - right
-          case nme.MUL => TMul(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left * right
-          case nme.DIV => TDiv(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left / right
-          // Important: nme.AND is & and nme.And is &&
-          case nme.And => TConj(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left && right
-          // Important: nme.OR is | and nme.Or is ||
-          case nme.Or => TDisj(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left || right
-          case nme.LT => TLt(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left < right
-          case nme.GT => TGt(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left > right
-          case nme.LE => TLeq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left <= right
-          case nme.GE => TGeq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left >= right
-          case nme.EQ => TEq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left == right
-          case nme.NE => TIneq(buildLoreRhsTerm(leftArg, "left"), buildLoreRhsTerm(rightArg, "right")) // left != right
+          case nme.ADD => TAdd( // left + right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.SUB => TSub( // left - right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.MUL => TMul( // left * right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.DIV => TDiv( // left / right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.And => TConj( // left && right, Important: nme.AND is & and nme.And is &&
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.Or => TDisj(// left || right, Important: nme.OR is | and nme.Or is ||
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.LT => TLt( // left < right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.GT => TGt( // left > right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.LE => TLeq( // left <= right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.GE => TGeq( // left >= right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.EQ => TEq( // left == right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
+          case nme.NE => TIneq( // left != right
+            buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+            buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+          )
           case _ => // Unsupported binary operators
-            report.error(s"Unsupported binary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
+            report.error(s"${"\t".repeat(indentLevel)}Unsupported binary operator ${op.show} used:\n$tree") // No access to sourcePos here due to LazyTree
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
-        report.error(s"Unsupported RHS form used:\n$tree") // No access to sourcePos here due to LazyTree
+        report.error(s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n$tree") // No access to sourcePos here due to LazyTree
         TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
   end buildLoreRhsTerm
 
@@ -140,14 +176,14 @@ class DSLPhase extends PluginPhase:
               // * Because the RHS is wrapped in a call to the Source type, there's one layer of an Apply call
               //   wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list.
               // * The Source parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)").
-              // * Typechecking for whether the arguments both in the Source type call, as well as within the expression
-              //   contained within any part of that call, are of the expected type, are handled by the Scala type-checker already
+              // * Typechecking for whether the arguments both in the Source type call as well as within the expression
+              //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
               case Inlined(Apply(_, List(properRhs)), _, _) => // E.g. "foo: Source[bar] = Source(baz)"
                 println(s"Adding a Source reactive with type parameter $typeArg and name \"$name\" to term list")
                 loreTerms = loreTerms :+ TAbs(
-                  name.toString, // foo
-                  SimpleType("Source", List(SimpleType(typeArg, List()))), // Source[bar]
-                  TSource(buildLoreRhsTerm(properRhs)) // Source(baz)
+                  name.toString, // foo (any valid Scala identifier)
+                  SimpleType("Source", List(SimpleType(typeArg, List()))), // Source[bar], where bar is one of Int, String, Boolean
+                  TSource(buildLoreRhsTerm(properRhs)) // Source(baz), where baz is any recognized expression, see above
                 )
               case _ =>
                 // Anything that's not Inlined and not wrapped with Source, should not be possible at this point because of the Scala type-checker

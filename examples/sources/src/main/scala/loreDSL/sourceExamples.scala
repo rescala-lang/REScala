@@ -76,7 +76,7 @@ object sourceExamples:
     val boolReferenceNumeralBinaryOpSource2: Source[Boolean] = Source(1 != testIntLiteral)
     val boolReferenceNumeralBinaryOpSource3: Source[Boolean] = Source(testIntLiteral <= 2)
 
-      // ========= TODO: Derived and Interactions =========
+      // ========= TODO: Derived and Interactions (in separate example files) =========
 
 //    val integerDerived: Derived[Int] = Derived { integerSource() + integerSource() }
 //    val integerInteraction = Interaction[Int, Int]
