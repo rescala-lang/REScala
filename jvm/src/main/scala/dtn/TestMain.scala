@@ -1,13 +1,12 @@
 package dtn
 
 import dtn.Dtn7RsWsConn
-import dtn.Bundle
+//import dtn.Bundle
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-//import dtn2.Bundle
-//import dtn2.given_Decoder_Bundle
+import dtn2.{Bundle, given_Decoder_Bundle, given_Encoder_Bundle}
 
 import java.nio.file.{Files, Paths}
 
@@ -15,15 +14,19 @@ import io.bullet.borer.Cbor
 
 
 @main def run(): Unit = {
-  /*
+  
   val bundle_bytes = Files.readAllBytes(Paths.get("simple_bundle"))
 
   val bundle = Cbor.decode(bundle_bytes).to[Bundle].value
 
-  println(bundle)
-  */
+  val new_bundle_bytes = Cbor.encode(bundle).toByteArray
 
+  val new_bundle = Cbor.decode(new_bundle_bytes).to[Bundle].value
+
+  println(new_bundle)
   
+
+  /*
   Dtn7RsWsConn.create(3000).map(conn => {
     println(s"connected to node: ${conn.nodeId.get}")
 
@@ -55,5 +58,5 @@ import io.bullet.borer.Cbor
   while (true) {
     Thread.sleep(200)
   }
-  
+  */
 }
