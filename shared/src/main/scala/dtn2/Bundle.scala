@@ -1,6 +1,6 @@
 package dtn2
 
-import io.bullet.borer.{Decoder, Encoder}
+import io.bullet.borer.{Cbor, Decoder, Encoder}
 
 import scala.collection.mutable.ListBuffer
 
@@ -10,6 +10,8 @@ case class Endpoint(scheme: Int, specific_part: String | Int)
 case class CreationTimestamp(bundle_creation_time: Long, sequence_number: Int)
 
 case class FragmentInfo(fragment_offset: Int, total_application_data_length: Int)
+
+case class HopCount(hop_limit: Int, current_count: Int)
 
 case class PrimaryBlock(version: Int,
                         bundle_processing_control_flags: Int,
@@ -22,13 +24,26 @@ case class PrimaryBlock(version: Int,
                         var fragment_info: Option[FragmentInfo] = None,
                         var crc: Option[Array[Byte]] = None)
 
-case class CanonicalBlock(block_type_code: Int,
-                          block_number: Int,
-                          block_processing_control_flags: Int,
-                          crc_type: Int,
-                          data: Array[Byte],
-                          var crc: Option[Array[Byte]] = None)
+abstract class CanonicalBlock {
+  def block_type_code: Int
+  def block_number: Int
+  def block_processing_control_flags: Int
+  def crc_type: Int
+  def data: Array[Byte]
+  var crc: Option[Array[Byte]] = None
+}
 
+case class PayloadBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: Int, crc_type: Int, data: Array[Byte]) extends CanonicalBlock
+case class PreviousNodeBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: Int, crc_type: Int, data: Array[Byte]) extends CanonicalBlock {
+  def previous_node_id: Endpoint = Cbor.decode(data).to[Endpoint].value
+}
+case class BundleAgeBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: Int, crc_type: Int, data: Array[Byte]) extends CanonicalBlock {
+  def age_milliseconds: Int = Cbor.decode(data).to[Int].value
+}
+case class HopCountBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: Int, crc_type: Int, data: Array[Byte]) extends CanonicalBlock {
+  def hop_count: HopCount = Cbor.decode(data).to[HopCount].value
+}
+case class UnknownBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: Int, crc_type: Int, data: Array[Byte]) extends CanonicalBlock
 
 case class Bundle(primary_block: PrimaryBlock, other_blocks: List[CanonicalBlock])
 
@@ -92,6 +107,25 @@ given Decoder[FragmentInfo] = Decoder { reader =>
     total_application_data_length = reader.readInt()
   )
   reader.readArrayClose(unbounded, fragment_info)
+}
+
+
+
+given Encoder[HopCount] = Encoder { (writer, hopCount) =>
+  writer
+    .writeArrayOpen(2)
+    .writeInt(hopCount.hop_limit)
+    .writeInt(hopCount.current_count)
+    .writeArrayClose()
+}
+
+given Decoder[HopCount] = Decoder { reader =>
+  val unbounded = reader.readArrayOpen(2)
+  val hop_count = HopCount(
+    hop_limit = reader.readInt(),
+    current_count = reader.readInt()
+  )
+  reader.readArrayClose(unbounded, hop_count)
 }
 
 
@@ -194,13 +228,18 @@ given Decoder[CanonicalBlock] = Decoder { reader =>
   val length = reader.readArrayHeader()
   val unbounded = false
 
-  val block = CanonicalBlock(
-    block_type_code = reader.readInt(),
-    block_number = reader.readInt(),
-    block_processing_control_flags = reader.readInt(),
-    crc_type = reader.readInt(),
-    data = reader.readByteArray()
-  )
+  val block_type_code = reader.readInt()
+
+  def readBlock(b_type: Int): CanonicalBlock = {
+    b_type match
+      case 1 => PayloadBlock(b_type, reader.readInt(), reader.readInt(),reader.readInt(), reader.readByteArray())
+      case 6 => PreviousNodeBlock(b_type, reader.readInt(), reader.readInt(),reader.readInt(), reader.readByteArray())
+      case 7 => BundleAgeBlock(b_type, reader.readInt(), reader.readInt(),reader.readInt(), reader.readByteArray())
+      case 10 => HopCountBlock(b_type, reader.readInt(), reader.readInt(),reader.readInt(), reader.readByteArray())
+      case _ => UnknownBlock(b_type, reader.readInt(), reader.readInt(),reader.readInt(), reader.readByteArray())
+  }
+  
+  val block = readBlock(block_type_code)
 
   if (reader.hasByteArray) {
     block.crc = Option(reader.readByteArray())
