@@ -15,14 +15,7 @@ import dtn.CompatCode
 object Dtn7RsWsConn {
   private val backend: GenericBackend[Future, WebSockets] = CompatCode.getBackend()
 
-  private def uget(uri: Uri): Future[String] = {
-    val request = basicRequest.get(uri).response(asStringAlways)
-
-    //println(request.headers)
-    //backend.send(request).failed.map(println)
-
-    backend.send(request).map(x => x.body)
-  }
+  private def uget(uri: Uri): Future[String] = backend.send(basicRequest.get(uri).response(asStringAlways)).map(x => x.body)
 
   def create(port: Int): Future[Dtn7RsWsConn] = {
     val conn: Dtn7RsWsConn = Dtn7RsWsConn(port)
@@ -60,7 +53,11 @@ class Dtn7RsWsConn(port: Int) {
     
     receiveWholeMessage().flatMap {
       case s: String => {
-        println(s"received string response: $s") // todo: throw an error if the response indicates "non-successful"
+        // string responses should always start with 200
+        // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
+        // we throw an Exception if this is not the case
+        println(s"received command response: $s")
+        if (!s.startsWith("200")) throw Exception(s"dtn ws command response indicated 'not successfull', aborting: $s")
         receiveBundle()
       }
       case b: Array[Byte] => {
@@ -100,12 +97,13 @@ class Dtn7RsWsConn(port: Int) {
         }
       }
       case Ping(payload: Array[Byte]) => {
-        // case is here but never used, (fetchbackend) seems to handle ping/pong automatically
-        println("received ping, NOT sending back pong")
+        // js FetchBackend and jvm HttpClientFutureBackend seem to answer these automatically 
+        // HttpClientFutureBackend forwards these messages to us, FetchBackend does not
+        // in either case, no actions are required
+        println("received ping")
         receiveWholeMessage()
       }
       case Pong(payload: Array[Byte]) => {
-        // case is here but never used, (fetchbackend) seems to handle ping/pong automatically
         println("received pong")
         receiveWholeMessage()
       }
@@ -122,7 +120,7 @@ class Dtn7RsWsConn(port: Int) {
     // register the endpoint on the DTN daemon
     Dtn7RsWsConn.uget(uri"${Dtn7RsInfo.http_api(port)}/register?$service").map(_ => {
       registeredServices = service :: registeredServices
-      // subscribe to the registered endpoint with out websocket
+      // subscribe to the registered endpoint with our websocket
       command(s"/subscribe $service")
     })
   }
