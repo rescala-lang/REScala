@@ -5,11 +5,33 @@ import io.bullet.borer.{Cbor, Decoder, Encoder}
 import scala.collection.mutable.ListBuffer
 import java.util.Base64
 import java.nio.charset.StandardCharsets
+import java.time.{ZonedDateTime, ZoneId, Duration}
+import java.time.temporal.{ChronoUnit, ChronoField}
 
 
 case class Endpoint(scheme: Int, specific_part: String | Int)
 
-case class CreationTimestamp(bundle_creation_time: Long, sequence_number: Int)
+case class CreationTimestamp(bundle_creation_time: ZonedDateTime, sequence_number: Int)
+object CreationTimestamp {
+  val DTN_REFERENCE_TIMSTAMP: ZonedDateTime = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
+
+  private var old_now: Option[CreationTimestamp] = None
+
+  def NOW: CreationTimestamp = {
+    // DTN only uses millisecond resolution. So to avoid bundles with indistinguishable creation-timestamps we base our comparison on the already truncated timestamp.
+    val untruncated_bundle_creation_time = ZonedDateTime.now(ZoneId.of("UTC"))
+    val bundle_creation_time = untruncated_bundle_creation_time.`with`(ChronoField.NANO_OF_SECOND, (untruncated_bundle_creation_time.getNano() / 1000000) * 1000000)
+    var sequence_number = 0
+
+    while(old_now.isDefined && bundle_creation_time.isEqual(old_now.get.bundle_creation_time) && sequence_number <= old_now.get.sequence_number) {
+      sequence_number += 1
+    }
+
+    val now = CreationTimestamp(bundle_creation_time, sequence_number)
+    old_now = Option(now)
+    now
+  }
+}
 
 case class FragmentInfo(fragment_offset: Int, total_application_data_length: Int)
 
@@ -164,17 +186,21 @@ given Decoder[Endpoint] = Decoder { reader =>
 
 
 given Encoder[CreationTimestamp] = Encoder { (writer, timestamp) => 
+  def to_dtn_imestamp(d: ZonedDateTime): Long = Duration.between(CreationTimestamp.DTN_REFERENCE_TIMSTAMP, d).toMillis()
+
   writer
     .writeArrayOpen(2)
-    .writeLong(timestamp.bundle_creation_time)
+    .writeLong(to_dtn_imestamp(timestamp.bundle_creation_time))
     .writeInt(timestamp.sequence_number)
     .writeArrayClose()
 }
 
 given Decoder[CreationTimestamp] = Decoder { reader =>
+  def from_dtn_timestamp(ts: Long): ZonedDateTime = CreationTimestamp.DTN_REFERENCE_TIMSTAMP.plus(Duration.ofMillis(ts))
+
   val unbounded = reader.readArrayOpen(2)
   val creation_timestamp = CreationTimestamp(
-    bundle_creation_time = reader.readLong(),
+    bundle_creation_time = from_dtn_timestamp(reader.readLong()),
     sequence_number = reader.readInt()
   )
   reader.readArrayClose(unbounded, creation_timestamp)

@@ -6,7 +6,7 @@ import dtn.Dtn7RsWsConn
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import dtn2.{Bundle, PreviousNodeBlock, BundleAgeBlock, HopCountBlock, PayloadBlock, UnknownBlock, given_Decoder_Bundle, given_Encoder_Bundle}
+import dtn2.{Bundle, PreviousNodeBlock, BundleAgeBlock, HopCountBlock, PayloadBlock, UnknownBlock, CreationTimestamp, given_Decoder_Bundle, given_Encoder_Bundle}
 
 import java.nio.file.{Files, Paths}
 
@@ -23,7 +23,14 @@ import io.bullet.borer.Cbor
 
   val new_bundle = Cbor.decode(new_bundle_bytes).to[Bundle].value
 
+
+  println(bundle)
+
+  println("\n\n")
+
   println(new_bundle)
+
+  println("\n\n")
 
   for (block <- new_bundle.other_blocks) {
     block match
@@ -32,6 +39,12 @@ import io.bullet.borer.Cbor
       case x: BundleAgeBlock => println(s"bundle age contents: ${x.age_milliseconds}")
       case x: HopCountBlock => println(s"hop count contents: ${x.hop_count}")
       case x: UnknownBlock => println(s"unknown block contents: ${x.data}")
+  }
+
+  println("\n\n")
+
+  for (_ <- 0 to 10) {
+    println(s"now: ${CreationTimestamp.NOW}")
   }
   
 
