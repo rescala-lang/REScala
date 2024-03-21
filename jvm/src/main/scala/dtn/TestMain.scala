@@ -27,7 +27,7 @@ import io.bullet.borer.Cbor
 
   for (block <- new_bundle.other_blocks) {
     block match
-      case x: PayloadBlock => println(s"payload contents: ${x.data}")
+      case x: PayloadBlock => println(s"payload utf8 contents: ${x.payload_as_utf8}")
       case x: PreviousNodeBlock => println(s"previous node contents: ${x.previous_node_id}")
       case x: BundleAgeBlock => println(s"bundle age contents: ${x.age_milliseconds}")
       case x: HopCountBlock => println(s"hop count contents: ${x.hop_count}")
