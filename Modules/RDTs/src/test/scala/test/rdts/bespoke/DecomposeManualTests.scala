@@ -2,13 +2,11 @@ package test.rdts.bespoke
 
 import rdts.base.{Bottom, Lattice}
 import rdts.base.Uid.asId
-import rdts.datatypes.contextual.{CausalQueue, EnableWinsFlag, MultiVersionRegister}
-import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
-import rdts.dotted.{Dotted, DottedLattice, HasDots}
+import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}
+import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
+import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalReplicaId
-import rdts.time.{Dot, Dots, VectorClock}
-import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.Prop.*
+import rdts.time.{Dot, Dots}
 
 import test.rdts.UtilHacks.*
 
