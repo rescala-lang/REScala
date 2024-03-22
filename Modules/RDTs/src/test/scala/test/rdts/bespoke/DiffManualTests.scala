@@ -30,16 +30,16 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.value, 2)
 
     val delta_1_diff_delta_2: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[GrowOnlyCounter] = Lattice[GrowOnlyCounter].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("PosNegCounter diff") {
@@ -57,16 +57,16 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.value, 0)
 
     val delta_1_diff_delta_2: Option[PosNegCounter] = Lattice[PosNegCounter].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[PosNegCounter] = Lattice[PosNegCounter].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[PosNegCounter] = Lattice[PosNegCounter].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[PosNegCounter] = Lattice[PosNegCounter].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("Dotted[EnableWinsFlag] diff") {
@@ -90,16 +90,16 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.read, true)
 
     val delta_1_diff_delta_2: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, None, "delta_1 wins - delta_2 is obsolete")
+    assertEquals(delta_1_diff_delta_2.isDefined, false, "delta_1 wins - delta_2 is obsolete")
 
     val delta_2_diff_delta_1: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[Dotted[EnableWinsFlag]] = Lattice[Dotted[EnableWinsFlag]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("Dotted[MultiVersionRegister[Int]] diff") {
@@ -119,19 +119,19 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val delta_1_diff_delta_2: Option[Dotted[MultiVersionRegister[Int]]] =
       Lattice[Dotted[MultiVersionRegister[Int]]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[Dotted[MultiVersionRegister[Int]]] =
       Lattice[Dotted[MultiVersionRegister[Int]]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[Dotted[MultiVersionRegister[Int]]] =
       Lattice[Dotted[MultiVersionRegister[Int]]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[Dotted[MultiVersionRegister[Int]]] =
       Lattice[Dotted[MultiVersionRegister[Int]]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("Dotted[LastWriterWins[Int]] diff") {
@@ -154,19 +154,19 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val delta_1_diff_delta_2: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, None, "delta_1 happened before delta_2 - delta_1 is obsolete")
+    assertEquals(delta_2_diff_delta_1.isDefined, false, "delta_1 happened before delta_2 - delta_1 is obsolete")
 
     val merged_diff_delta_1: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("GrowOnlySet[Int] diff") {
@@ -186,16 +186,16 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.elements, Set(1, 2))
 
     val delta_1_diff_delta_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[GrowOnlySet[Int]] = Lattice[GrowOnlySet[Int]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] diff") {
@@ -242,19 +242,19 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val delta_1_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
       Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
       Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
       Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
       Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
   test("Dotted[GrowOnlyMap[Int, EnableWinsFlag]] diff") {
@@ -291,19 +291,19 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val delta_1_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] =
       Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(delta_1, delta_2)
-    assertEquals(delta_1_diff_delta_2, Some(delta_2), "delta_2 is not contained in delta_1")
+    assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
 
     val delta_2_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] =
       Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(delta_2, delta_1)
-    assertEquals(delta_2_diff_delta_1, Some(delta_1), "delta_1 is not contained in delta_2")
+    assertEquals(delta_2_diff_delta_1.isDefined, true, "delta_1 is not contained in delta_2")
 
     val merged_diff_delta_1: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] =
       Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(merged, delta_1)
-    assertEquals(merged_diff_delta_1, None, "delta_1 should be contained in merged")
+    assertEquals(merged_diff_delta_1.isDefined, false, "delta_1 should be contained in merged")
 
     val merged_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] =
       Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].diff(merged, delta_2)
-    assertEquals(merged_diff_delta_2, None, "delta_2 should be contained in merged")
+    assertEquals(merged_diff_delta_2.isDefined, false, "delta_2 should be contained in merged")
   }
 
 }
