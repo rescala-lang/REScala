@@ -34,7 +34,7 @@ object Settings {
     )
   )
 
-  def java(n: Int) = scalacOptions ++= List("-java-output-version", n.toString)
+  def javaOutputVersion(n: Int) = scalacOptions ++= List("-java-output-version", n.toString)
 
   def unusedWarnings(conf: TaskKey[?]*) = conf.map { c =>
     c / scalacOptions ++= List(
