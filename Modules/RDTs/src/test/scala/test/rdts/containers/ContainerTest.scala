@@ -1,17 +1,13 @@
 package test.rdts.containers
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.Bottom
 import rdts.base.Uid.asId
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.{ReplicatedSet, EnableWinsFlag}
 import rdts.datatypes.experiments.AuctionInterface
 import rdts.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
-import rdts.dotted.HasDots.*
-import rdts.dotted.{Dotted, HasDots}
+import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalReplicaId}
-import rdts.time.{Dot, Dots}
-import org.scalacheck.{Arbitrary, Gen}
-import test.rdts.DataGenerator.*
 
 import test.rdts.UtilHacks.*
 import test.rdts.UtilHacks2.*
