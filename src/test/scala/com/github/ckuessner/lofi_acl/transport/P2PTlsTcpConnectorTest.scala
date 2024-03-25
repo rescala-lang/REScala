@@ -3,9 +3,11 @@ package com.github.ckuessner.lofi_acl.transport
 import com.github.ckuessner.lofi_acl.crypto.{IdentityFactory, PrivateIdentity, X509TestHelper}
 import munit.FunSuite
 
+import java.net.SocketException
 import java.util.concurrent.Executors
 import javax.net.ssl.SSLHandshakeException
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 class P2PTlsTcpConnectorTest extends FunSuite {
   private val executor       = Executors.newVirtualThreadPerTaskExecutor()
@@ -52,7 +54,7 @@ class P2PTlsTcpConnectorTest extends FunSuite {
       (clientSocket, _) <- clientConnFuture // Client can connect, though the socket should be closed by server
     yield
       assert(serverErr.isInstanceOf[SSLHandshakeException])
-      clientSocket.close()
+      Try { clientSocket.close() }
       clientConnector.closeServerSocket()
       serverConnector.closeServerSocket()
   }
@@ -78,6 +80,27 @@ class P2PTlsTcpConnectorTest extends FunSuite {
       assert(serverErr.isInstanceOf[SSLHandshakeException])
       clientConnector.closeServerSocket()
       serverConnector.closeServerSocket()
+  }
+
+  test("establishing a connection to a port that is closed fails") {
+    var serverId: PrivateIdentity = IdentityFactory.createNewIdentity
+    val clientId: PrivateIdentity = IdentityFactory.createNewIdentity
+
+    val serverCert = X509TestHelper.genCertSignedByWrongKey(serverId.identityKey, serverId.tlsKey)
+    serverId = serverId.copy(certificateHolder = serverCert)
+
+    val serverConnector = P2PTlsTcpConnector(serverId)
+    val clientConnector = P2PTlsTcpConnector(clientId)
+
+    // Close server socket. This gives us a (now closed) port that we can try to connect to
+    serverConnector.closeServerSocket()
+    val clientConnFuture = clientConnector.connect("localhost", serverConnector.listenPort)
+
+    for {
+      clientErr <- clientConnFuture.failed
+    } yield
+      assert(clientErr.isInstanceOf[SocketException])
+      clientConnector.closeServerSocket()
   }
 
 }

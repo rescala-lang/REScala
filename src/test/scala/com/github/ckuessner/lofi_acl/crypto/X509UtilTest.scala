@@ -55,7 +55,6 @@ class X509UtilTest extends FunSuite {
     val certHolder: X509CertificateHolder = X509Util.generateCustomP2PX509Certificate(identityKey, certKey)
     val pemString                         = certHolder.toPem.pemString
 
-    println(Security.getProviders.mkString("Array(", ", ", ")"))
     List("BC", "SUN").foreach { providerName =>
       val cf         = CertificateFactory.getInstance("X.509", providerName)
       val parsedCert = cf.generateCertificate(ByteArrayInputStream(pemString.getBytes()))
