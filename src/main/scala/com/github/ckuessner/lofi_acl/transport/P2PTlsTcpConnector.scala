@@ -51,7 +51,7 @@ class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int
     sslServerSocket.close()
   }
 
-  private def doHandshake(socket: SSLSocket): Future[PublicIdentity] = {
+  private def doHandshake(socket: SSLSocket)(implicit ec: ExecutionContext): Future[PublicIdentity] = {
     val identityPromise = Promise[PublicIdentity]
 
     socket.addHandshakeCompletedListener { ev =>
@@ -62,8 +62,9 @@ class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int
       identityPromise.success(peerIdentity)
     }
 
-    socket.startHandshake()
-
-    identityPromise.future
+    for {
+      _              <- Future(socket.startHandshake())
+      publicIdentity <- identityPromise.future
+    } yield publicIdentity
   }
 }
