@@ -3,6 +3,7 @@ package com.github.ckuessner.lofi_acl.crypto
 import munit.FunSuite
 import org.bouncycastle.crypto.params.{Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters}
 import org.bouncycastle.crypto.signers.Ed25519Signer
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.Assert
 import org.junit.Assert.assertArrayEquals
 
@@ -11,6 +12,10 @@ import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
 import java.util.Base64
 
 class Ed25519UtilTest extends FunSuite {
+  if (Security.getProvider("BC") == null) {
+    Security.addProvider(new BouncyCastleProvider())
+  }
+
   private val cryptoProviders = List("BC", "SunEC")
 
   test("generateNewKeyPair") {
@@ -79,12 +84,12 @@ class Ed25519UtilTest extends FunSuite {
     cryptoProviders.foreach { providerName =>
       val keyPair = KeyPairGenerator.getInstance("Ed25519", providerName).generateKeyPair()
       val pem     = Ed25519Util.privateKeyToPem(keyPair.getPrivate).pemString
-      assert(pem.startsWith("-----BEGIN PRIVATE KEY-----\n"))
-      assert(pem.endsWith("-----END PRIVATE KEY-----\n"))
+      assert(pem.startsWith("-----BEGIN PRIVATE KEY-----" + System.lineSeparator()))
+      assert(pem.endsWith("-----END PRIVATE KEY-----" + System.lineSeparator()))
       val pkcs8Bytes = Base64.getMimeDecoder.decode(
         pem.substring(
-          "-----BEGIN PRIVATE KEY-----\n".length,
-          pem.length - "-----END PRIVATE KEY-----\n".length
+          ("-----BEGIN PRIVATE KEY-----" + System.lineSeparator()).length,
+          pem.length - ("-----END PRIVATE KEY-----" + System.lineSeparator()).length
         )
       )
 
@@ -106,13 +111,13 @@ class Ed25519UtilTest extends FunSuite {
     cryptoProviders.foreach { providerName =>
       val keyPair = KeyPairGenerator.getInstance("Ed25519", providerName).generateKeyPair()
       val pem     = Ed25519Util.publicKeyToPemString(keyPair.getPublic)
-      assert(pem.startsWith("-----BEGIN PUBLIC KEY-----\n"))
-      assert(pem.endsWith("-----END PUBLIC KEY-----\n"))
+      assert(pem.startsWith("-----BEGIN PUBLIC KEY-----" + System.lineSeparator()))
+      assert(pem.endsWith("-----END PUBLIC KEY-----" + System.lineSeparator()))
 
       val x509EncodedBytes = Base64.getMimeDecoder.decode(
         pem.substring(
-          "-----BEGIN PUBLIC KEY-----\n".length,
-          pem.length - "-----END PUBLIC KEY-----\n".length
+          ("-----BEGIN PUBLIC KEY-----" + System.lineSeparator()).length,
+          pem.length - ("-----END PUBLIC KEY-----" + System.lineSeparator()).length
         )
       )
 
