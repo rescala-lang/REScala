@@ -16,5 +16,8 @@ lazy val root = project
       "org.scalameta"    %% "munit"                        % "0.7.29" % Test,
       "org.bouncycastle"  % "bcprov-jdk18on"               % "1.77",
       "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.77",
+      "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
+      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
+      "org.slf4j"         % "slf4j-jdk14"                  % "2.0.12"
     )
   )
