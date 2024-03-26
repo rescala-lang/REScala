@@ -26,7 +26,10 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: 'sbt'
-    - run: curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup --yes --install-dir /usr/bin --apps sbt
+    - run: curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup --yes --install-dir ~/.local/bin --apps sbt
+      if: ${{ env.ACT }}
+    - run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      if: ${{ env.ACT }}
     - name: Run tests
       run: sbt test
       # Optional: This step uploads information to the GitHub dependency graph and unblocking Dependabot alerts for the repository
