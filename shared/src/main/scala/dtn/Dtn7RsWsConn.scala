@@ -24,7 +24,7 @@ object Dtn7RsWsConn {
       .map(nodeId => {
         println(s"connected to DTN node: $nodeId"); 
         conn.nodeId = Option(nodeId)
-        if (nodeId.startsWith("ipn")) throw Exception("DTN mode IPN is unsupported by this client")
+        if (nodeId.startsWith("ipn")) CompatCode.exitWithMessage("DTN mode IPN is unsupported by this client")
       })  // set node-id and check for supported dtn URI scheme
       .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
       .map(_ => {conn.command("/json"); conn})  // select json communication and return Dtn7RsWsConn object
@@ -57,7 +57,7 @@ class Dtn7RsWsConn(port: Int) {
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
-        if (!s.startsWith("200")) throw Exception(s"dtn ws command response indicated 'not successfull', aborting: $s")
+        if (!s.startsWith("200")) CompatCode.exitWithMessage(s"dtn ws command response indicated 'not successfull', aborting: $s")
         receiveBundle()
       }
       case b: Array[Byte] => {
@@ -72,10 +72,10 @@ class Dtn7RsWsConn(port: Int) {
       f1 match {
         case s: String => f2 match {
           case s2: String => s + s2
-          case b2: Array[Byte] => throw Exception("cannot combine String and Array[Byte] fragment")
+          case b2: Array[Byte] => CompatCode.exitWithMessage("cannot combine String and Array[Byte] fragment"); ""
         }
         case b: Array[Byte] => f2 match {
-          case s2: String => throw Exception("cannot combine String and Array[Byte] fragment")
+          case s2: String => CompatCode.exitWithMessage("cannot combine String and Array[Byte] fragment"); ""
           case b2: Array[Byte] => b ++ b2
         }
       }
@@ -107,7 +107,10 @@ class Dtn7RsWsConn(port: Int) {
         println("received pong")
         receiveWholeMessage()
       }
-      case _ => throw Exception("unknown received data type")
+      case _ => {
+        println("unknown received data type. ignoring.")
+        receiveWholeMessage()
+      }
     }
   }
 
