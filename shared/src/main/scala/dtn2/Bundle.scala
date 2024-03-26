@@ -9,7 +9,41 @@ import java.time.{ZonedDateTime, ZoneId, Duration}
 import java.time.temporal.{ChronoUnit, ChronoField}
 
 
-case class Endpoint(scheme: Int, specific_part: String | Int)
+case class Endpoint(scheme: Int, specific_part: String | Int) {
+  def full_uri: String = {
+    if (scheme == Endpoint.DTN_URI_SCHEME_ENCODED) {
+      if (specific_part == Endpoint.NONE_ENDPOINT_SPECIFIC_PART_ENCODED) return s"${Endpoint.DTN_URI_SCHEME_NAME}:${Endpoint.NONE_ENDPOINT_SPECIFIC_PART_NAME}"
+      else return s"${Endpoint.DTN_URI_SCHEME_NAME}:$specific_part"
+    } else if (scheme == Endpoint.IPN_URI_SCHEME_ENCODED) {
+      return s"${Endpoint.IPN_URI_SCHEME_NAME}:$specific_part"
+    } else {
+      throw Exception(s"unkown encoded dtn uri scheme: $scheme")
+    }
+  }
+}
+object Endpoint {
+  val DTN_URI_SCHEME_NAME: String = "dtn"
+  val DTN_URI_SCHEME_ENCODED: Int = 1
+  val IPN_URI_SCHEME_NAME: String = "ipn"
+  val IPN_URI_SCHEME_ENCODED: Int = 2
+  val NONE_ENDPOINT_SPECIFIC_PART_NAME = "//none"
+  val NONE_ENDPOINT_SPECIFIC_PART_ENCODED = 0
+
+  def createFrom(full_uri: String): Endpoint = {
+    val arr = full_uri.split(":")
+    val scheme = arr(0)
+    val specific_part = arr(1)
+
+    if (scheme.equalsIgnoreCase(DTN_URI_SCHEME_NAME)) {
+      if (specific_part.equalsIgnoreCase(NONE_ENDPOINT_SPECIFIC_PART_NAME)) return Endpoint(DTN_URI_SCHEME_ENCODED, NONE_ENDPOINT_SPECIFIC_PART_ENCODED)
+      else return Endpoint(DTN_URI_SCHEME_ENCODED, specific_part)
+    } else if (scheme.equalsIgnoreCase(IPN_URI_SCHEME_NAME)) {
+      return Endpoint(IPN_URI_SCHEME_ENCODED, specific_part)
+    } else {
+      throw Exception(s"unknown dtn uri scheme: $scheme")
+    }
+  }
+}
 
 case class CreationTimestamp(bundle_creation_time: ZonedDateTime, sequence_number: Int)
 object CreationTimestamp {
