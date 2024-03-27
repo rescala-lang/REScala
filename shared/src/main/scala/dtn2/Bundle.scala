@@ -30,9 +30,7 @@ object Endpoint {
   val NONE_ENDPOINT_SPECIFIC_PART_ENCODED = 0
 
   def createFrom(full_uri: String): Endpoint = {
-    val arr = full_uri.split(":")
-    val scheme = arr(0)
-    val specific_part = arr(1)
+    val Array(scheme, specific_part) = full_uri.split(":", 2): @unchecked
 
     if (scheme.equalsIgnoreCase(DTN_URI_SCHEME_NAME)) {
       if (specific_part.equalsIgnoreCase(NONE_ENDPOINT_SPECIFIC_PART_NAME)) return Endpoint(DTN_URI_SCHEME_ENCODED, NONE_ENDPOINT_SPECIFIC_PART_ENCODED)
