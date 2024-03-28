@@ -1,60 +1,42 @@
 package lore.dsl
 
+import rescala.core.CreationTicket
+import rescala.default.*
+
+import scala.quoted.*
+
 trait Invariant {
 
-  def apply(): Boolean
-  
   val representation: String
 
 }
 
+def showInvariantCode(expr: Expr[() => Boolean])(using Quotes): Expr[String] = {
+  Expr(expr.show)
+}
+
+case class DefaultInvariant(override val representation: String) extends Invariant
+
+def constructInvariant(pred: Expr[() => Boolean])(using Quotes): Expr[Invariant] =
+  '{ DefaultInvariant(${ showInvariantCode(pred) }) }
+
 object Invariant {
-  inline def apply(name: String)(using invariantManager: InvariantManager): Invariant = {
-    val invariant = new Invariant {
+  private inline def createInvariant(inline pred: () => Boolean): Invariant =
+    ${ constructInvariant('{ pred }) }
 
-      override def apply(): Boolean = {
-        println(f"Checking invariant $name")
-
-        true
-      }
-
-      override val representation: String = name
-
+  inline def apply(inline pred: Boolean): Invariant = {
+    val x: Signal[Boolean] = Signal {
+      pred
     }
 
-    invariantManager.registerInvariant(invariant)
+    val invariant = createInvariant { () => pred }
+
+    x.observe { it =>
+      if (!it) {
+        throw new IllegalStateException(s"Violated Invariant ${invariant.representation}")
+      }
+    }
 
     invariant
   }
 }
-
-trait InvariantManager {
-
-  def registerInvariant(invariant: Invariant): Unit
-
-  def registeredInvariants: Seq[Invariant]
-
-  def checkInvariants(): Boolean = {
-    var success = true
-
-    for inv <- registeredInvariants do {
-      if !inv() then {
-        success = false
-        println(s"Interaction violated invariant: ${inv.representation} evaluated to false!")
-      }
-    }
-
-    success
-
-  }
-
-}
-
-given defaultInvariantManager: InvariantManager = new InvariantManager {
-  private var invariants: List[Invariant] = List.empty
-
-  override def registerInvariant(invariant: Invariant): Unit = invariants :+= invariant
-
-  override def registeredInvariants: Seq[Invariant] = invariants
-}
-

@@ -1,73 +1,70 @@
 package lore.dsl
 
+import rescala.Lul.dynamicTicket
+import rescala.core.ReSource
+import rescala.default.*
+
 import scala.quoted.{Expr, Quotes, Type}
+import scala.reflect.ClassTag
 
-def constructBoundInteractionWithRequires[S, A](requires: Expr[Seq[Requires[S, A]]],
-                                                ensures: Expr[Seq[Ensures[S, A]]],
-                                                executes: Expr[(S, A) => S],
-                                                modifies: Expr[Source[S]],
-                                                expr: Expr[(S, A) => Boolean],
-                                                invariantManager: Expr[InvariantManager])
-                                               (using Quotes, Type[S], Type[A]): Expr[BoundInteraction[S, A]] =
-  '{ BoundInteraction[S, A]($requires :+ Requires($expr, ${ showPredicateCode(expr) }), $ensures, $executes, $modifies, $invariantManager) }
+def constructBoundInteractionWithRequires[ST <: Tuple, S <: Tuple, A](interaction: Expr[BoundInteraction[ST, S, A]],
+                                                                      expr: Expr[(ST, A) => Boolean])
+                                                                     (using Quotes, Type[ST], Type[S], Type[A]): Expr[BoundInteraction[ST, S, A]] = '{
+  val (inputs, fun, isStatic) =
+    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
 
-def constructBoundInteractionWithEnsures[S, A](requires: Expr[Seq[Requires[S, A]]],
-                                               ensures: Expr[Seq[Ensures[S, A]]],
-                                               executes: Expr[(S, A) => S],
-                                               modifies: Expr[Source[S]],
-                                               expr: Expr[(S, A) => Boolean],
-                                               invariantManager: Expr[InvariantManager])
-                                              (using Quotes, Type[S], Type[A]): Expr[BoundInteraction[S, A]] =
-  '{ BoundInteraction[S, A]($requires, $ensures :+ Ensures($expr, ${ showPredicateCode(expr) }), $executes, $modifies, $invariantManager) }
-
-case class BoundInteraction[S, A] private[dsl](private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
-                                               private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty,
-                                               private[dsl] val executes: (S, A) => S,
-                                               private[dsl] val modifies: Source[S],
-                                               private[dsl] val invariantManager: InvariantManager)
-  extends Interaction[S, A]
-    with CanApply[S, A] {
-  type T[_, _] = BoundInteraction[S, A]
-
-  override inline def requires(inline pred: (S, A) => Boolean): BoundInteraction[S, A] =
-    ${ constructBoundInteractionWithRequires('requires, 'ensures, 'executes, 'modifies, 'pred, 'invariantManager) }
-
-  override inline def ensures(inline pred: (S, A) => Boolean): BoundInteraction[S, A] =
-    ${ constructBoundInteractionWithEnsures('requires, 'ensures, 'executes, 'modifies, 'pred, 'invariantManager) }
-
-  private def checkRequires(currentValue: S, arg: A): Boolean = {
-    var success = true
-
-    for req <- requires do {
-      if !req.predicate(currentValue, arg) then {
-        success = false
-        println(s"Interaction violated requirement: ${req.representation} evaluated to false!")
-      }
-    }
-
-    success
-  }
-
-  private def checkEnsures(currentValue: S, arg: A): Boolean = {
-    var success = true
-
-    for ens <- ensures do {
-      if !ens.predicate(currentValue, arg) then {
-        success = false
-        // TODO (Svenja, 24.02.2024): Is there another word for post-condition which is closer to ensures like requires and requirement?
-        println(s"Interaction violated post-condition: ${ens.representation} evaluated to false!")
-      }
-    }
-
-    success
-  }
-
-  override def apply(arg: A): Unit = {
-    modifies.transform(currVal =>
-      if !checkRequires(currVal, arg) || !invariantManager.checkInvariants() then currVal else {
-        val res = executes(currVal, arg)
-        if !checkEnsures(res, arg) || !invariantManager.checkInvariants() then currVal else res
-      }
-    )
-  }
+  $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
+
+def constructBoundInteractionWithEnsures[ST <: Tuple, S <: Tuple, A](interaction: Expr[BoundInteraction[ST, S, A]],
+                                                                     expr: Expr[(ST, A) => Boolean])
+                                                                    (using Quotes, Type[ST], Type[S], Type[A]): Expr[BoundInteraction[ST, S, A]] = '{
+  val (inputs, fun, isStatic) =
+    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+
+  $interaction.copy(ensures = $interaction.ensures :+ Ensures(inputs, fun, ${ showPredicateCode(expr) }))
+}
+
+case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[ST, A]] = Seq.empty,
+                                                                     private[dsl] val ensures: Seq[Ensures[ST, A]] = Seq.empty,
+                                                                     private[dsl] val executes: (ST, A) => ST,
+                                                                     private[dsl] val modifies: S)
+  extends Interaction[ST, A] {
+
+  type T[_, _] = BoundInteraction[ST, S, A]
+
+  override inline def requires(inline pred: (ST, A) => Boolean): BoundInteraction[ST, S, A] =
+    ${ constructBoundInteractionWithRequires('{ this }, '{ pred }) }
+
+  override inline def ensures(inline pred: (ST, A) => Boolean): BoundInteraction[ST, S, A] =
+    ${ constructBoundInteractionWithEnsures('{ this }, '{ pred }) }
+
+  def apply(a: A)(using ClassTag[ST]): Unit = {
+    val modList = modifies.toList.asInstanceOf[List[Var[?]]]
+    transaction((modList ++ requires.flatMap(_.inputs) ++ ensures.flatMap(_.inputs)).asInstanceOf[Seq[Var[?]]] *) { implicit at =>
+      val curr = modList.map(it => at.now(it))
+
+      val t = Tuple.fromArray(curr.toArray).asInstanceOf[ST]
+
+      for (req <- requires) {
+        if (!req.fun(dynamicTicket)(t, a)) {
+          val message = s"Interaction violated requirement: ${req.representation} with argument ($curr, $a) evaluated to false!"
+          throw new IllegalStateException(message)
+        }
+      }
+
+      val res = executes(t, a)
+
+      for (ens <- ensures) {
+        if (!ens.fun(dynamicTicket)(res, a)) {
+          val message = s"Interaction violated post-condition: ${ens.representation} with argument (($curr), $a) evaluated to false!"
+          throw new IllegalStateException(message)
+        }
+      }
+
+      modifies.zip(res).asInstanceOf[Seq[(Var[Any], Any)]].map { case (source, v) => source.set(v) }
+    }
+  }
+
+}
+

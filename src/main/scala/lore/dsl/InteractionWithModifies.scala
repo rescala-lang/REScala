@@ -1,38 +1,44 @@
 package lore.dsl
 
+import rescala.core.ReSource
+import rescala.default.*
+
 import scala.quoted.{Expr, Quotes, Type}
 
-def constructInteractionWithModifiesWithRequires[S, A](requires: Expr[Seq[Requires[S, A]]],
-                                                       ensures: Expr[Seq[Ensures[S, A]]],
-                                                       modifies: Expr[Source[S]],
-                                                       expr: Expr[(S, A) => Boolean],
-                                                       invariantManager: Expr[InvariantManager])
-                                                      (using Quotes, Type[S], Type[A]): Expr[InteractionWithModifies[S, A]] =
-  '{ InteractionWithModifies[S, A]($requires :+ Requires($expr, ${ showPredicateCode(expr) }), $ensures, $modifies, $invariantManager) }
+def constructInteractionWithModifiesWithRequires[ST <: Tuple, S <: Tuple, A](interaction: Expr[InteractionWithModifies[ST, S, A]],
+                                                           expr: Expr[(ST, A) => Boolean])
+                                                          (using Quotes, Type[ST], Type[S], Type[A]): Expr[InteractionWithModifies[ST, S, A]] = '{
+  val (inputs, fun, isStatic) =
+    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
 
-def constructInteractionWithModifiesWithEnsures[S, A](requires: Expr[Seq[Requires[S, A]]],
-                                                      ensures: Expr[Seq[Ensures[S, A]]],
-                                                      modifies: Expr[Source[S]],
-                                                      expr: Expr[(S, A) => Boolean],
-                                                      invariantManager: Expr[InvariantManager])
-                                                     (using Quotes, Type[S], Type[A]): Expr[InteractionWithModifies[S, A]] =
-  '{ InteractionWithModifies[S, A]($requires, $ensures :+ Ensures($expr, ${ showPredicateCode(expr) }), $modifies, $invariantManager) }
+  $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
+}
 
-case class InteractionWithModifies[S, A] private[dsl](private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
-                                                      private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty,
-                                                      private[dsl] val modifies: Source[S],
-                                                      private[dsl] val invariantManager: InvariantManager)
-  extends Interaction[S, A]
-    with CanExecute[S, A] {
-  type T[_, _] = InteractionWithModifies[S, A]
-  type E[_, _] = BoundInteraction[S, A]
+def constructInteractionWithModifiesWithEnsures[ST <: Tuple, S <: Tuple, A](interaction: Expr[InteractionWithModifies[ST, S, A]],
+                                                          expr: Expr[(ST, A) => Boolean])
+                                                         (using Quotes, Type[ST], Type[S], Type[A]): Expr[InteractionWithModifies[ST, S, A]] = '{
+  val (inputs, fun, isStatic) =
+    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
 
-  override inline def requires(inline pred: (S, A) => Boolean): InteractionWithModifies[S, A] =
-    ${ constructInteractionWithModifiesWithRequires('requires, 'ensures, 'modifies, 'pred, 'invariantManager) }
+  val newEns = Ensures(inputs, fun, ${ showPredicateCode(expr) })
 
-  override inline def ensures(inline pred: (S, A) => Boolean): InteractionWithModifies[S, A] =
-    ${ constructInteractionWithModifiesWithEnsures('requires, 'ensures, 'modifies, 'pred, 'invariantManager) }
+  $interaction.copy(ensures = $interaction.ensures :+ newEns)
+}
 
-  override inline def executes(inline fun: (S, A) => S): BoundInteraction[S, A] =
-    BoundInteraction(requires, ensures, fun, modifies, invariantManager)
+case class InteractionWithModifies[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[ST, A]] = Seq.empty,
+                                                          private[dsl] val ensures: Seq[Ensures[ST, A]] = Seq.empty,
+                                                          private[dsl] val modifies: S)
+  extends Interaction[ST, A]
+    with CanExecute[ST, A] {
+  type T[_, _] = InteractionWithModifies[ST, S, A]
+  type E[_, _] = BoundInteraction[ST, S, A]
+
+  override inline def requires(inline pred: (ST, A) => Boolean): InteractionWithModifies[ST, S, A] =
+    ${ constructInteractionWithModifiesWithRequires('{ this }, '{ pred }) }
+
+  override inline def ensures(inline pred: (ST, A) => Boolean): InteractionWithModifies[ST, S, A] =
+    ${ constructInteractionWithModifiesWithEnsures('{ this }, '{ pred }) }
+
+  override def executes(fun: (ST, A) => ST): BoundInteraction[ST, S, A] =
+    BoundInteraction(requires, ensures, fun, modifies)
 }

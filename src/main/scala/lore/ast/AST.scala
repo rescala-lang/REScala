@@ -1,22 +1,25 @@
 package lore.ast
 
-import io.circe._
 import cats.data.NonEmptyList
 import cats.parse.Caret
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.auto._
+import io.circe.generic.auto.*
+import io.circe.*
+
 import java.nio.file.Path
 import scala.util.Try
 
 sealed trait SourceType derives Codec.AsObject
+
 case object Unknown extends SourceType
+
 case object Inline extends SourceType
+
 case class FromFile(path: Path) extends SourceType
 
 case class SourcePos(start: Caret, end: Caret, _type: SourceType = Unknown)
 
 /** The abstract syntax of the LoRe language.
-  */
+ */
 sealed trait Term derives Codec.AsObject {
   def sourcePos: Option[SourcePos]
 }
@@ -24,12 +27,14 @@ sealed trait Term derives Codec.AsObject {
 // helper trait for expressions with two sides
 sealed trait BinaryOp {
   def left: Term
+
   def right: Term
 }
 
 // imports
 case class TViperImport(path: Path, sourcePos: Option[SourcePos] = None)
-    extends TViper
+  extends TViper
+
 implicit val pathEncoder: Encoder[Path] =
   Encoder.encodeString.contramap[Path](_.toString)
 implicit val pathDecoder: Decoder[Path] =
@@ -37,61 +42,70 @@ implicit val pathDecoder: Decoder[Path] =
 
 // helper types
 type ID = String
+
 sealed trait Type derives Codec.AsObject
+
 case class SimpleType(name: String, inner: List[Type]) extends Type
+
 case class TupleType(inner: NonEmptyList[Type]) extends Type
+
 type Number = Int
 
 case class TArgT( // argument with type annotation
-    name: ID,
-    _type: Type,
-    sourcePos: Option[SourcePos] = None
-) extends Term
+                  name: ID,
+                  _type: Type,
+                  sourcePos: Option[SourcePos] = None
+                ) extends Term
 
 // basic terms
 case class TVar( // variable
-    name: ID,
-    sourcePos: Option[SourcePos] = None
-) extends Term
-    with TViper
+                 name: ID,
+                 sourcePos: Option[SourcePos] = None
+               ) extends Term
+  with TViper
+
 case class TAbs( // abstractions
-    name: ID,
-    _type: Type,
-    body: Term,
-    sourcePos: Option[SourcePos] = None
-) extends Term
-    with TViper
+                 name: ID,
+                 _type: Type,
+                 body: Term,
+                 sourcePos: Option[SourcePos] = None
+               ) extends Term
+  with TViper
+
 case class TTuple( // tuples
-    factors: NonEmptyList[Term],
-    sourcePos: Option[SourcePos] = None
-) extends Term
+                   factors: NonEmptyList[Term],
+                   sourcePos: Option[SourcePos] = None
+                 ) extends Term
 
 case class TIf( // if clauses
-    cond: Term,
-    _then: Term,
-    _else: Option[Term],
-    sourcePos: Option[SourcePos] = None
-) extends Term
+                cond: Term,
+                _then: Term,
+                _else: Option[Term],
+                sourcePos: Option[SourcePos] = None
+              ) extends Term
 // case class TApp(left: Term, right: Term) extends Term // application
 // case class TUnit() extends Term // unit
 
 // derived forms
 case class TSeq( // sequences
-    body: NonEmptyList[Term],
-    sourcePos: Option[SourcePos] = None
-) extends Term
-    with TViper
+                 body: NonEmptyList[Term],
+                 sourcePos: Option[SourcePos] = None
+               ) extends Term
+  with TViper
+
 case class TArrow( // anonymous functions
-    left: Term,
-    right: Term,
-    sourcePos: Option[SourcePos] = None
-) extends Term
-    with BinaryOp {
+                   left: Term,
+                   right: Term,
+                   sourcePos: Option[SourcePos] = None
+                 ) extends Term
+  with BinaryOp {
   private def findBody: Term => Term = {
     case t: TArrow => findBody(t.right)
-    case t         => t
+    case t => t
   }
+
   def body: Term = findBody(right)
+
   private def collectArgNames: (acc: List[ID], term: Term) => List[ID] = {
     case (acc, TArrow(TVar(name, _), t: TArrow, _)) =>
       collectArgNames(acc :+ name, t)
@@ -99,73 +113,82 @@ case class TArrow( // anonymous functions
       acc :+ name
     case (acc, t) => acc
   }
+
   def args: List[ID] = collectArgNames(List(), this)
 }
 
 case class TTypeAl(
-    name: ID,
-    _type: Type,
-    sourcePos: Option[SourcePos] = None
-) extends Term // type aliases
+                    name: ID,
+                    _type: Type,
+                    sourcePos: Option[SourcePos] = None
+                  ) extends Term // type aliases
 
 // Viper terms
 sealed trait TViper extends Term derives Codec.AsObject
 
 case class TAssert(
-    body: Term,
-    sourcePos: Option[SourcePos] = None
-) extends Term
-    with TViper
+                    body: Term,
+                    sourcePos: Option[SourcePos] = None
+                  ) extends Term
+  with TViper
+
 case class TAssume(body: Term, sourcePos: Option[SourcePos] = None)
-    extends Term
+  extends Term
     with TViper
 
 // reactives
 sealed trait TReactive extends Term {
   def body: Term
 }
+
 case class TSource(body: Term, sourcePos: Option[SourcePos] = None)
-    extends TReactive
+  extends TReactive
+
 case class TDerived(body: Term, sourcePos: Option[SourcePos] = None)
-    extends TReactive
+  extends TReactive
 
 // interactions
 case class TInteraction(
-    reactiveType: Type,
-    argumentType: Type,
-    modifies: List[ID] = List(),
-    requires: List[Term] = List(),
-    ensures: List[Term] = List(),
-    executes: Option[Term] = None,
-    sourcePos: Option[SourcePos] = None
-) extends Term
+                         reactiveType: Type,
+                         argumentType: Type,
+                         modifies: List[ID] = List(),
+                         requires: List[Term] = List(),
+                         ensures: List[Term] = List(),
+                         executes: Option[Term] = None,
+                         sourcePos: Option[SourcePos] = None
+                       ) extends Term
 
 // invariants
 case class TInvariant(
-    condition: TBoolean,
-    sourcePos: Option[SourcePos] = None
-) extends Term
+                       condition: TBoolean,
+                       sourcePos: Option[SourcePos] = None
+                     ) extends Term
 
 // arithmetic expressions
 sealed trait TArith extends Term with TViper
+
 // numbers
 case class TNum(value: Number, sourcePos: Option[SourcePos] = None)
-    extends TArith
+  extends TArith
+
 // division
 case class TDiv(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith
+  extends TArith
     with BinaryOp
+
 // multiplication
 case class TMul(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith
+  extends TArith
     with BinaryOp
+
 // addition
 case class TAdd(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith
+  extends TArith
     with BinaryOp
+
 // subtraction
 case class TSub(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TArith // substraction
+  extends TArith // substraction
     with BinaryOp
 
 // boolean expressions
@@ -182,97 +205,115 @@ sealed trait TBoolean extends Term with TViper
 //       t.copy(left = t.left, right = t.right)
 
 case class TTrue(sourcePos: Option[SourcePos] = None) extends TBoolean
+
 case class TFalse(sourcePos: Option[SourcePos] = None) extends TBoolean
+
 case class TNeg(body: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
+
 case class TLt(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 case class TGt(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 case class TLeq(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 case class TGeq(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // equality
 case class TEq(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // inequality
 case class TIneq(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // disjunction
 case class TDisj(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // conjunction
 case class TConj(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // implication
 case class TImpl(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
 // bi-implication
 
 case class TBImpl(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
+
 // in set
 case class TInSet(left: Term, right: Term, sourcePos: Option[SourcePos] = None)
-    extends TBoolean
+  extends TBoolean
     with BinaryOp
 
 sealed trait TQuantifier extends TBoolean {
   def vars: NonEmptyList[TArgT]
+
   def body: Term
 }
+
 case class TForall(
-    vars: NonEmptyList[TArgT],
-    triggers: List[NonEmptyList[Term]],
-    body: Term,
-    sourcePos: Option[SourcePos] = None
-) extends TQuantifier
+                    vars: NonEmptyList[TArgT],
+                    triggers: List[NonEmptyList[Term]],
+                    body: Term,
+                    sourcePos: Option[SourcePos] = None
+                  ) extends TQuantifier
+
 case class TExists(
-    vars: NonEmptyList[TArgT],
-    body: Term,
-    sourcePos: Option[SourcePos] = None
-) extends TQuantifier
+                    vars: NonEmptyList[TArgT],
+                    body: Term,
+                    sourcePos: Option[SourcePos] = None
+                  ) extends TQuantifier
 
 // parantheses
 case class TParens(inner: Term, sourcePos: Option[SourcePos] = None)
-    extends Term
+  extends Term
     with TViper
 
 // strings
 case class TString(value: String, sourcePos: Option[SourcePos] = None)
-    extends Term
+  extends Term
 
 // Scala stuff
 // field access
 sealed trait TFAcc extends Term {
   def parent: Term
+
   def field: ID
 }
+
 case class TFCall( // field call
-    parent: Term,
-    field: ID,
-    args: List[Term],
-    sourcePos: Option[SourcePos] = None
-) extends TFAcc
-    with TViper
+                   parent: Term,
+                   field: ID,
+                   args: List[Term],
+                   sourcePos: Option[SourcePos] = None
+                 ) extends TFAcc
+  with TViper
+
 case class TFCurly( // field call with curly braces
-    parent: Term,
-    field: ID,
-    body: Term,
-    sourcePos: Option[SourcePos] = None
-) extends TFAcc
+                    parent: Term,
+                    field: ID,
+                    body: Term,
+                    sourcePos: Option[SourcePos] = None
+                  ) extends TFAcc
 
 // function call
 case class TFunC(name: ID, args: Seq[Term], sourcePos: Option[SourcePos] = None)
-    extends Term
+  extends Term
     with TViper

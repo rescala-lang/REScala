@@ -5,7 +5,7 @@ lazy val root = (project in file("."))
     name := "lore",
     organization := "de.tu-darmstadt.stg",
     version := "0.2-SNAPSHOT",
-    scalaVersion := "3.3.0",
+    scalaVersion := "3.4.0",
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
     libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
@@ -21,7 +21,7 @@ lazy val root = (project in file("."))
     // ),
     libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0"),
     // REScala deps
-    libraryDependencies += ("de.tu-darmstadt.stg" %% "rescala" % "0.33.0"),
+    libraryDependencies += ("de.tu-darmstadt.stg" %% "rescala" % "0.35.1"),
     // optics dependencies
     libraryDependencies ++= Seq(
       "dev.optics" %% "monocle-core" % "3.2.0"
@@ -37,12 +37,12 @@ lazy val root = (project in file("."))
       "-rewrite",
       "-no-indent",
       // warn in case of unused imports and values
-      "-Wunused:imports",
+      /*"-Wunused:imports",
       "-Wunused:locals",
       "-Wunused:privates",
       "-Wunused:params",
       "-Wunused:implicits",
-      "-Wunused:linted", // not sure what this does actually
+      "-Wunused:linted", */ // not sure what this does actually
       "-Xfatal-warnings", // turn warnings into errors
       "-Xmax-inlines:200" // needed for circe generic
     ),

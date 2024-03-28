@@ -5,7 +5,7 @@ type Invites = AWSet[(Appointment, User)]
 val work: Source[Calendar] = Source(AWSet())
 val vacation: Source[Calendar] = Source(AWSet())
 
-val all_appointments: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }
+val all_appointments: Derived[Set[Appointment]] = Derived{ work.toSet.union(vacation.toSet) }
 val remaining_vacation: Derived[Int] = Derived{ 30 - vacation.toSet.map(a => a.days).sum }
 
 // users
