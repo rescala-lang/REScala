@@ -1,9 +1,7 @@
 package reactives.scheduler
 
-import reactives.core.{
-  AccessHandler, AdmissionTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope,
-  Transaction
-}
+import reactives.core.ReSource.of
+import reactives.core.{AccessHandler, AdmissionTicket, DynamicTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Transaction}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -86,6 +84,10 @@ trait TopoBundle {
 
     override private[reactives] def access(reactive: ReSource): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                               = initializer.observe(obs)
+
+    override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
+      override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = access(reactive)
+      override private[reactives] def collectStatic(reactive: ReSource.of[State]) = access(reactive)
   }
 
   object TopoScheduler extends TopoSchedulerInterface

@@ -1,10 +1,7 @@
 package reactives.scheduler
 
 import reactives.core
-import reactives.core.{
-  AccessHandler, AdmissionTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope,
-  Tracing, Transaction
-}
+import reactives.core.{AccessHandler, AdmissionTicket, DynamicTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Tracing, Transaction}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
@@ -244,6 +241,11 @@ trait Twoversion {
         TwoVersionTransactionImpl.this.dynamicAfter(reactive)
       override def staticAccess(reactive: ReSource): reactive.Value = reactive.state.get(token)
     }
+
+    override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
+      override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = accessHandler.dynamicAccess(reactive)
+      override private[reactives] def collectStatic(reactive: ReSource.of[State]) = accessHandler.staticAccess(reactive)
+
 
     override private[reactives] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket[State] =
       new AdmissionTicket[State](this, initialWrites)

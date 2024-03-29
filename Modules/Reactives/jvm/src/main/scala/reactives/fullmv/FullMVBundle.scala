@@ -1,15 +1,11 @@
 package reactives.fullmv
 
 import reactives.core
-import reactives.core.{
-  AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, SchedulerWithDynamicScope, Transaction
-}
+import reactives.core.{AdmissionTicket, Derived, DynamicTicket, Initializer, Observation, ReSource, ReadAs, SchedulerWithDynamicScope, Transaction}
 import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.*
 import reactives.fullmv.NotificationBranchResult.*
 import reactives.fullmv.mirrors.*
-import reactives.fullmv.sgt.synchronization.{
-  SubsumableLock, SubsumableLockEntryPoint, SubsumableLockHostImpl, SubsumableLockImpl
-}
+import reactives.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, SubsumableLockHostImpl, SubsumableLockImpl}
 import reactives.fullmv.tasks.{Framing, Notification, Reevaluation, SourceNotification}
 
 import java.util.concurrent.atomic.AtomicReference
@@ -119,6 +115,10 @@ case class TransactionHandle(ti: FullMVTurn) extends Transaction[State] {
   override private[reactives] def access(reactive: ReSource.of[State]): reactive.Value = ti.dynamicBefore(reactive)
   override def initializer: Initializer[State]                                         = ti
   override def observe(obs: Observation): Unit                                         = ti.observe(() => obs.execute())
+
+  override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
+    override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = ti.dynamicBefore(reactive)
+    override private[reactives] def collectStatic(reactive: ReSource.of[State]) = ti.staticBefore(reactive)
 }
 
 class FullMVEngine(val timeout: Duration, val schedulerName: String)

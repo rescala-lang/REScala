@@ -3,10 +3,8 @@
   */
 package reactives.scheduler
 
-import reactives.core.{
-  AccessHandler, AdmissionTicket, Derived, Initializer, Observation, ReSource, ReadAs, ReevTicket,
-  SchedulerWithDynamicScope, Transaction
-}
+import reactives.core.ReSource.of
+import reactives.core.{AccessHandler, AdmissionTicket, Derived, DynamicTicket, Initializer, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Transaction}
 
 object CalculusLike {
 
@@ -71,6 +69,10 @@ object CalculusLike {
       extends Transaction[State] {
     override private[reactives] def access(reactive: ReSource.of[State]): reactive.Value = reactive.state.value
     override def observe(obs: Observation): Unit                                         = obs.execute()
+
+    override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
+      override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = access(reactive)
+      override private[reactives] def collectStatic(reactive: ReSource.of[State]) = access(reactive)
   }
 
   object FScheduler

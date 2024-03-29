@@ -170,6 +170,8 @@ trait Transaction[State[_]] {
 
   def initializer: Initializer[State]
 
+  def preconditionTicket: DynamicTicket[State]
+
   private[reactives] def discover(source: ReSource.of[State], sink: Derived.of[State]): Unit = {
     Tracing.observe(Tracing.Discover(source, sink))
   }
