@@ -9,13 +9,8 @@ import sbt.Keys._
 object Settings {
 
   object Versions {
-    val scala3 = "3.4.0"
+    val scala3 = "3.4.1"
   }
-
-  val commonCrossBuildVersions =
-    crossScalaVersions := Seq(Versions.scala3)
-
-  private def cond(b: Boolean, opts: String*) = if (b) opts.toList else Nil
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
   val fatalWarnings = Seq(Compile / compile, Test / compile).map(s =>
@@ -32,6 +27,14 @@ object Settings {
       "-source",
       "3.4",
     )
+  )
+
+  val commonScalacOptions =
+    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
+
+  val scala3defaults = Def.settings(
+    scalaVersion := Versions.scala3,
+    commonScalacOptions
   )
 
   def javaOutputVersion(n: Int) = scalacOptions ++= List("-java-output-version", n.toString)
@@ -68,14 +71,6 @@ object Settings {
     c / scalacOptions += "-Ysafe-init"
   }
 
-  val commonScalacOptions =
-    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
-
-  val scala3defaults = Def.settings(
-    scalaVersion := Versions.scala3,
-    commonScalacOptions
-  )
-
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
 
@@ -96,19 +91,21 @@ object Settings {
   )
 
   // see https://www.scala-js.org/doc/project/js-environments.html
+  // TLDR: enables the dom API when running on nodejs for the tests
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
+  // allows to specify a source map prefix, in case you want to have source maps refer to some online source
+  // 2024-03: not sure if this is still used/tested anywhere
   def sourcemapFromEnv() = {
-    val customSourcePrefix = scala.sys.env.get("CUSTOM_SCALAJS_SOURCE_MAP_PREFIX")
-    customSourcePrefix match {
-      case Some(targetUrl) if !targetUrl.isEmpty =>
+    scala.sys.env.get("CUSTOM_SCALAJS_SOURCE_MAP_PREFIX") match {
+      case Some(customSourcePrefix) if !customSourcePrefix.isEmpty =>
         Def.settings(
           scalacOptions += {
 
             def gitHash: String = sys.process.Process("git rev-parse HEAD").lineStream_!.head
             def baseUrl: String = (LocalRootProject / baseDirectory).value.toURI.toString
 
-            s"-scalajs-mapSourceURI:$baseUrl->$targetUrl$gitHash/"
+            s"-scalajs-mapSourceURI:$baseUrl->$customSourcePrefix$gitHash/"
           }
         )
       case _ => Def.settings()

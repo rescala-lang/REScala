@@ -12,7 +12,7 @@ object LocalSetting {
   // then again, the announcement for 12.0.2 seems incorrect …
   val javaFxModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
   lazy val javaFxDependencies = {
-    val javaFxVersion = "21.0.2"
+    val javaFxVersion = "22"
     // Determine OS version of JavaFX binaries
     val osName = System.getProperty("os.name") match {
       case n if n.startsWith("Linux")   => "linux"
