@@ -1,7 +1,7 @@
 package channel
 
 import channel.tcp.{TCPConnection, TCPListener}
-import channel.{ArrayMessageBuffer, Bidirectional}
+import channel.{ArrayMessageBuffer, BiChan}
 import de.rmgk.delay.Async
 
 import java.text.Bidi

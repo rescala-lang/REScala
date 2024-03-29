@@ -1,6 +1,6 @@
 package channel.udp
 
-import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutChan, Prod, context}
+import channel.{ArrayMessageBuffer, BiChan, InChan, MessageBuffer, OutChan, Prod, context}
 import de.rmgk.delay.Async
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}

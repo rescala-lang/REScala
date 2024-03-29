@@ -1,6 +1,6 @@
 package channel
 
-import channel.{ArrayMessageBuffer, Bidirectional}
+import channel.{ArrayMessageBuffer, BiChan}
 import de.rmgk.delay.Async
 import munit.internal.io.PlatformIO.Files
 

@@ -30,7 +30,6 @@ trait InChan {
 
 trait OutChan {
   def send(message: MessageBuffer): Async[Any, Unit]
-
 }
 
-case class Bidirectional(in: InChan, out: OutChan)
+case class BiChan(in: InChan, out: OutChan)

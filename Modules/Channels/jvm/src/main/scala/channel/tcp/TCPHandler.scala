@@ -1,6 +1,6 @@
 package channel.tcp
 
-import channel.{ArrayMessageBuffer, Bidirectional, InChan, MessageBuffer, OutChan}
+import channel.{ArrayMessageBuffer, BiChan, InChan, MessageBuffer, OutChan}
 
 import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException}
 import java.net.{DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
