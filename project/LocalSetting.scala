@@ -3,7 +3,7 @@ import sbt.Keys._
 
 object LocalSetting {
 
-  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.12.0"
+  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.13.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 

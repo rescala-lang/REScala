@@ -252,9 +252,9 @@ lazy val replicationExamples =
     )
     .jvmSettings(
       Dependencies.loci.wsJetty12,
-      Dependencies.scribeSlf4j2,
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
+      libraryDependencies += "com.outr" %% "scribe-slf4j2" % "3.10.7",
     )
     .jsSettings(
       Dependencies.scalatags,
