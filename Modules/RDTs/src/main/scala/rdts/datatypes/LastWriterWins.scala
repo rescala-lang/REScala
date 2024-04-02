@@ -15,6 +15,8 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   */
 case class LastWriterWins[+A](timestamp: CausalTime, payload: A) {
   def read: A = payload
+  
+  def value: A = read
 
   def write[B](v: B): LastWriterWins[B] =
     LastWriterWins(timestamp.advance, v)
