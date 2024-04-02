@@ -13,7 +13,7 @@ lazy val root = project
       "-Ysafe-init"
     ),
     libraryDependencies ++= Seq(
-      "org.scalameta"    %% "munit"                        % "0.7.29" % Test,
+      "org.scalameta"    %% "munit"                        % "1.0.0-M11" % Test,
       "org.bouncycastle"  % "bcprov-jdk18on"               % "1.77",
       "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.77",
       "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
