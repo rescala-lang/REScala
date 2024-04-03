@@ -4,7 +4,7 @@ import com.github.ckuessner.lofi_acl.crypto.{PrivateIdentity, PublicIdentity, X5
 import nl.altindag.ssl.SSLFactory
 import nl.altindag.ssl.pem.util.PemUtils
 
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, IOException}
 import java.security.cert.X509Certificate
 import javax.net.ssl.{SSLServerSocket, SSLSocket}
 import scala.concurrent.{ExecutionContext, Future, Promise}
@@ -62,9 +62,12 @@ class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int
       identityPromise.success(peerIdentity)
     }
 
-    for {
-      _              <- Future(socket.startHandshake())
-      publicIdentity <- identityPromise.future
-    } yield publicIdentity
+    try {
+      socket.startHandshake()
+    } catch {
+      case e: IOException => identityPromise.failure(e)
+    }
+
+    identityPromise.future
   }
 }
