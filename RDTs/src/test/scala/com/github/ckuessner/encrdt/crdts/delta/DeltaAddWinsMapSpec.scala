@@ -7,7 +7,7 @@ import DeltaAddWinsMap.DeltaAddWinsMapLattice
 import com.github.ckuessner.encrdt.causality.{CausalContext, LamportClock}
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.should
+import org.scalatest.matchers.should.Matchers._
 
 import scala.language.implicitConversions
 

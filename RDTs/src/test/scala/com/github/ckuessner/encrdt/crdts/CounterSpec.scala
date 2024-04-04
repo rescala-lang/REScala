@@ -5,7 +5,7 @@ import com.github.ckuessner.encrdt.lattices.{CounterLattice, SemiLattice}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.shouldBe
+import org.scalatest.matchers.should.Matchers._
 
 class CounterSpec extends AnyFlatSpec {
 
