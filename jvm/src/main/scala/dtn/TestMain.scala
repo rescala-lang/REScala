@@ -1,12 +1,7 @@
 package dtn
 
-import dtn.Dtn7RsWsConn
-//import dtn.Bundle
-
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-import dtn2.{Bundle, PreviousNodeBlock, BundleAgeBlock, HopCountBlock, PayloadBlock, UnknownBlock, CreationTimestamp, given_Decoder_Bundle, given_Encoder_Bundle}
 
 import java.nio.file.{Files, Paths}
 
@@ -46,6 +41,12 @@ import io.bullet.borer.Cbor
   for (_ <- 0 to 10) {
     println(s"now: ${CreationTimestamp.NOW}")
   }
+
+
+  val own_bundle: Bundle = Creation.createBundleUTF8("hey there", "dtn://global/~crdt/app1", "dtn://global/~crdt/app1")
+
+  print("\n\n")
+  print(own_bundle)
   
 
   /*

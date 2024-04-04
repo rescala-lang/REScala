@@ -20,7 +20,11 @@ object CrdtConnector {
   def connectToWS(port: Int): Unit = {
     def receiveBundle(): Unit = {
       ws.get.receiveBundle().onComplete(bundle => {
-        onChangedUpdateFunc(bundle.get.getDataAsBytes)
+        for (block <- bundle.get.other_blocks) {
+          block match
+            case PayloadBlock(block_type_code, block_number, block_processing_control_flags, crc_type, data) => onChangedUpdateFunc(block.data)
+            case _ => {}
+        }
         receiveBundle()
       })
     }
@@ -35,10 +39,10 @@ object CrdtConnector {
     // send signal updates through the dtn network
     signal observe ((x: A) => {
       val payload: Array[Byte] = writeToArray(x)
-      val bundle: Bundle = Bundle.createWithBytesAsData(
-        src = cRDTGroupEndpoint,
-        dst = cRDTGroupEndpoint,
-        bytes = payload
+      val bundle: Bundle = Creation.createBundle(
+        data = payload,
+        full_destination_uri = cRDTGroupEndpoint,
+        full_source_url = cRDTGroupEndpoint
       )
       ws match
         case Some(value) => value.sendBundle(bundle)

@@ -11,6 +11,8 @@ import scala.concurrent.Future
 
 import dtn.CompatCode
 
+import io.bullet.borer.Cbor
+
 
 object Dtn7RsWsConn {
   private val backend: GenericBackend[Future, WebSockets] = CompatCode.getBackend()
@@ -27,7 +29,7 @@ object Dtn7RsWsConn {
         if (nodeId.startsWith("ipn")) CompatCode.exitWithMessage("DTN mode IPN is unsupported by this client")
       })  // set node-id and check for supported dtn URI scheme
       .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
-      .map(_ => {conn.command("/json"); conn})  // select json communication and return Dtn7RsWsConn object
+      .map(_ => {conn.command("/bundle"); conn})  // select raw bundle communication and return Dtn7RsWsConn object
   }
 }
 class Dtn7RsWsConn(port: Int) {
@@ -62,7 +64,7 @@ class Dtn7RsWsConn(port: Int) {
       }
       case b: Array[Byte] => {
         println(s"received bundle")
-        Future(Bundle.createFromDtnWsJson(b))
+        Future(Cbor.decode(b).to[Bundle].value)
       }
     }
   }
@@ -116,7 +118,7 @@ class Dtn7RsWsConn(port: Int) {
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
     println("in sendBundle: start sending")
-    ws.get.sendBinary(bundle.toDtnWsJson)
+    ws.get.sendBinary(Cbor.encode(bundle).toByteArray)
   }
 
   def registerEndpointAndSubscribe(service: String): Future[Unit] = {
