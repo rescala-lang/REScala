@@ -2,14 +2,12 @@ package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.crdts.Counter
 import com.github.ckuessner.encrdt.lattices.{CounterLattice, SemiLattice}
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
 
 class CounterSpec extends AnyFlatSpec {
 
-  implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
+  //implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
 
   "A CounterCrdt" should "initialize with 0" in {
     val crdt = new Counter("42")
@@ -163,6 +161,7 @@ class CounterSpec extends AnyFlatSpec {
     }
   }
 
+  /*
   it should "serialize and deserialize" in {
     val crdtState = CounterLattice(positiveCounts = Map("42" -> 21, "21" -> 42), negativeCounts = Map("42" -> 42, "21" -> 21))
 
@@ -171,6 +170,7 @@ class CounterSpec extends AnyFlatSpec {
 
     crdtDeserialized shouldBe crdtState
   }
+   */
 
 
 }

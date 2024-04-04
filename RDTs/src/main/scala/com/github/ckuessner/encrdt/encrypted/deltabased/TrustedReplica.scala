@@ -8,8 +8,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
 abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(
-    implicit val stateJsonCodec: JsonValueCodec[T],
-    implicit val dotSetJsonCodec: JsonValueCodec[CausalContext]
+    implicit stateJsonCodec: JsonValueCodec[T], dotSetJsonCodec: JsonValueCodec[CausalContext]
 ) extends Replica {
 
   protected var dottedVersionVector: CausalContext = CausalContext()

@@ -1,13 +1,13 @@
 lazy val scala213Settings: Def.SettingsDefinition = List(
   organization := "com.github.ckuessner",
   scalaVersion := "2.13.13",
-  scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations", "-Xsource:3"),
+  scalacOptions ++= Seq("-unchecked", "-deprecation", "-Ymacro-annotations", "-Xsource:3", "-Ytasty-reader"),
   version := "0.1"
 )
 
 lazy val scala3Settings: Def.SettingsDefinition = List(
   organization := "com.github.ckuessner",
-  scalaVersion := "3.4.0",
+  scalaVersion := "3.4.1",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-explain", "-feature", "-release:21"),
   version := "0.1"
 )
@@ -16,9 +16,10 @@ lazy val encrdt = project
   .in(file("."))
   .settings(
     name := "encrdt",
-    //scala3Settings,
-    scala213Settings,
-    libraryDependencies ++= commonDependencies ++ scalatestDependency ++ jettyDependency
+    scala3Settings,
+    //crossScalaVersions := Seq("2.13.13", "3.4.0"),
+    libraryDependencies += jsoniterCoreDependency,//.cross(CrossVersion.for2_13Use3),
+    libraryDependencies ++= commonDependencies ++ scalatestDependency,
   )
 
 lazy val benchmarks = project
@@ -26,25 +27,44 @@ lazy val benchmarks = project
   .enablePlugins(JmhPlugin)
   .settings(
     name := "benchmarks",
-    scala213Settings,
-    assembly := (assembly dependsOn (Jmh/compile)).value,
-    libraryDependencies ++= commonDependencies ++ javaFakerDependency,
+    scala3Settings,
+    libraryDependencies ++= javaFakerDependency,
     libraryDependencies +=   "com.github.pathikrit" %% "better-files" % "3.9.2",
-                             assembly / mainClass := Some("com.github.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
+    libraryDependencies += jsoniterCoreDependency,
+    libraryDependencies += jsoniterMacroDependency,
+    assembly := (assembly dependsOn (Jmh/compile)).value,
+    assembly / mainClass := Some("com.github.ckuessner.encrdt.benchmarks.BenchmarkRunnerApp"),
     assembly / assemblyJarName := "benchmarks.jar",
     assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
+  ).dependsOn(encrdt, codecConfig)
+
+lazy val codecConfig = project
+  .in(file("codecs/config"))
+  .settings(
+    scala3Settings,
+    libraryDependencies += jsoniterMacroDependency
+  )
+
+lazy val sync = project
+  .in(file("sync"))
+  .settings(
+    name := "sync",
+    scala3Settings,
+    libraryDependencies ++= jettyDependencies,
+    libraryDependencies += jsoniterMacroDependency
   ).dependsOn(encrdt)
 
 lazy val todolist = project
   .in(file("examples/Todolist"))
   .settings(
     name := "todolist",
-    scala213Settings,
-    libraryDependencies ++= commonDependencies ++ scalafxDependency,
+    scala3Settings,
+    libraryDependencies ++= scalafxDependencies,
+    libraryDependencies += jsoniterMacroDependency,
     fork := true,
     assembly / assemblyJarName := "todolist.jar",
     assembly / assemblyMergeStrategy := discardModuleInfoMergeStrategy
-  ).dependsOn(encrdt)
+  ).dependsOn(sync)
 
 
 lazy val counter = project
@@ -52,7 +72,8 @@ lazy val counter = project
   .settings(
     name := "Counter",
     scala213Settings,
-    libraryDependencies ++= akkaDependency ++ scalafxDependency,
+    libraryDependencies ++= akkaDependency ++ scalafxDependencies,
+    libraryDependencies += ("org.scalafx" %% "scalafxml-core-sfx8" % "0.5"), // Not supported for Scala 3.X as of now
     fork := true
   ).dependsOn(encrdt)
 
@@ -60,13 +81,13 @@ lazy val commonDependencies = Seq(
   // Encryption / Decryption using Googles Tink Crypto Library
   "com.google.crypto.tink" % "tink" % "1.13.0",
   "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-  // jsoniter-scala
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.28.4",
-  "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4" % "compile-internal",
-  // Logging
-  "org.slf4j" % "slf4j-api" % "2.0.12",
-  "org.slf4j" % "slf4j-simple" % "2.0.12",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5")
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
+)
+
+// jsoniter-scala
+//lazy val jsoniterCoreDependency = "com.github.plokhotnyuk.jsoniter-scala" % "jsoniter-scala-core_2.13" % "2.28.4"
+lazy val jsoniterCoreDependency = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.28.4"
+lazy val jsoniterMacroDependency = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4" % Provided
 
 // scalatest
 lazy val scalatestDependency = Seq(
@@ -88,11 +109,14 @@ lazy val akkaDependency = Seq(
 )
 
 lazy val jettyVersion = "11.0.20"
-lazy val jettyDependency = Seq(
+lazy val jettyDependencies = Seq(
   "org.eclipse.jetty" % "jetty-server" % jettyVersion,
   "org.eclipse.jetty.websocket" % "websocket-jetty-api" % jettyVersion,
   "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
   "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
+  // Logging
+  "org.slf4j" % "slf4j-api" % "2.0.12",
+  "org.slf4j" % "slf4j-simple" % "2.0.12",
 )
 
 lazy val osName = System.getProperty("os.name") match {
@@ -103,13 +127,9 @@ lazy val osName = System.getProperty("os.name") match {
   case _ => throw new Exception("Unknown platform!")
 }
 
-lazy val scalafxDependency = Seq(
+lazy val scalafxDependencies = Seq(
   "org.scalafx" %% "scalafx" % "22.0.0-R33",
-  "org.scalafx" %% "scalafxml-core-sfx8" % "0.5"
-) ++ javafxDependencies
-
-lazy val javafxDependencies =
-  Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
+) ++ Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
     .map(m => "org.openjfx" % s"javafx-$m" % "22" classifier osName)
 
 lazy val discardModuleInfoMergeStrategy: (String => sbtassembly.MergeStrategy) = {

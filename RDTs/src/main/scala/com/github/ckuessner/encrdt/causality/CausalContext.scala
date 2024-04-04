@@ -14,7 +14,7 @@ case class CausalContext(acc: ArrayCausalContext) {
 
   def merged(other: Set[Dot]): CausalContext = merged(other)
 
-  def add(d: Dot) = CausalContext(acc.add(d.replicaId, d.time))
+  def add(d: Dot): CausalContext = CausalContext(acc.add(d.replicaId, d.time))
 }
 
 object CausalContext {

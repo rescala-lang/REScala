@@ -3,9 +3,7 @@ package com.github.ckuessner.encrdt.encrypted.statebased
 import com.github.ckuessner.encrdt.causality.VectorClock
 import com.github.ckuessner.encrdt.crdts.interfaces.Crdt
 import com.github.ckuessner.encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
-import DecryptedState.vectorClockJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
 
 import scala.util.{Failure, Success, Try}
@@ -21,10 +19,10 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     if (state.versions.isEmpty) VectorClock()
     else state.versions.keys.reduce((a, b) => a.merged(b))
 
-  def unseal[T: SemiLattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =
+  def unseal[T: SemiLattice](aead: Aead)(implicit tJsonValueCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): Try[DecryptedState[T]] =
     state.versions.values.map { (encState: EncryptedState) =>
       Try {
-        encState.decrypt[T](aead)(jsonValueCodec)
+        encState.decrypt[T](aead)
       }
     } reduce ((leftTry: Try[DecryptedState[T]], rightTry: Try[DecryptedState[T]]) => {
       (leftTry, rightTry) match {
@@ -42,9 +40,9 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
 }
 
 case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Array[Byte]) {
-  lazy val versionVector: VectorClock = readFromArray(serialVersionVector)
+  def versionVector(implicit jsonValueCodec: JsonValueCodec[VectorClock]): VectorClock = readFromArray(serialVersionVector)
 
-  def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedState[T] = {
+  def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): DecryptedState[T] = {
     val plainText = aead.decrypt(stateCiphertext, serialVersionVector)
     val state = readFromArray[T](plainText)
     val versionVector = readFromArray[VectorClock](serialVersionVector)
@@ -52,12 +50,12 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
   }
 }
 
-object EncryptedState {
-  implicit val encStateJsonCodec: JsonValueCodec[EncryptedState] = JsonCodecMaker.make
-}
+//object EncryptedState {
+//  implicit val encStateJsonCodec: JsonValueCodec[EncryptedState] = JsonCodecMaker.make
+//}
 
 case class DecryptedState[T](state: T, versionVector: VectorClock) {
-  def encrypt(aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): EncryptedState = {
+  def encrypt(aead: Aead)(implicit tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): EncryptedState = {
     val serialVectorClock = writeToArray(versionVector)
     val stateCipherText = aead.encrypt(
       writeToArray(state),
@@ -68,7 +66,7 @@ case class DecryptedState[T](state: T, versionVector: VectorClock) {
 }
 
 object DecryptedState {
-  implicit val vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
+  //implicit val vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
 
   implicit def lattice[T](implicit tLattice: SemiLattice[T]): SemiLattice[DecryptedState[T]] = (left, right) => {
     DecryptedState(SemiLattice[T].merged(left.state, right.state), left.versionVector.merged(right.versionVector))

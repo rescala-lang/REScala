@@ -7,7 +7,10 @@ import VectorClock.VectorClockOrdering
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
-abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Replica {
+abstract class UntrustedReplica(initialStates: Set[EncryptedState])
+                               (implicit tJsonCodec: JsonValueCodec[EncryptedState], vcJsonCodec: JsonValueCodec[VectorClock]
+                               ) extends Replica {
+
   protected var stateStore: Set[EncryptedState] = initialStates
 
   protected var versionVector: VectorClock = _
@@ -84,11 +87,13 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
 }
 
 object UntrustedReplica {
-  object encStatePOrd extends PartialOrdering[EncryptedState] {
-    override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
-      VectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
+  // TODO: Migrate to scala 3
+  implicit def encStatePOrd(implicit vcJsonCodec: JsonValueCodec[VectorClock]): PartialOrdering[EncryptedState] =
+    new PartialOrdering[EncryptedState] {
+      override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
+        VectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
 
-    override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
-      VectorClockOrdering.lteq(x.versionVector, y.versionVector)
-  }
+      override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
+        VectorClockOrdering.lteq(x.versionVector, y.versionVector)
+    }
 }
