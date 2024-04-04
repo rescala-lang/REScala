@@ -24,9 +24,8 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
   override def get(key: K): Option[V] =
     _state.dotStore
       .getOrElse(key, Set())
-      .map(_._2)
-      .maxByOption(_._2)
-      .map(_._1)
+      .maxByOption { case (_, (_, dot: (Instant, String))) => dot }
+      .map { case (_, (v: V, _)) => v }
 
   override def put(key: K, value: V): Unit =
     mutate(

@@ -5,7 +5,7 @@ import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
 import com.github.ckuessner.encrdt.causality.DotStore.{Dot, DotFun, DotSet}
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.should
 
 class CausalSpec extends AnyFlatSpec {
   def dot(time: Long, replicaId: String): LamportClock = LamportClock(time, replicaId)

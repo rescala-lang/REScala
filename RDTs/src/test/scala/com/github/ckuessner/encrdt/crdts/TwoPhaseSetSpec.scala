@@ -5,7 +5,7 @@ import com.github.ckuessner.encrdt.lattices.TwoPhaseSetLattice
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldBe
 
 class TwoPhaseSetSpec extends AnyFlatSpec {
 

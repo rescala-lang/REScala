@@ -3,8 +3,8 @@ package com.github.ckuessner.encrdt.crdts
 import com.github.ckuessner.encrdt.crdts.AddWinsLastWriterWinsMap
 import com.github.ckuessner.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.must.Matchers.must
+import org.scalatest.matchers.should.Matchers.should
 
 import scala.annotation.tailrec
 

@@ -22,7 +22,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
     else state.versions.keys.reduce((a, b) => a.merged(b))
 
   def unseal[T: SemiLattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =
-    state.versions.values.map { encState: EncryptedState =>
+    state.versions.values.map { (encState: EncryptedState) =>
       Try {
         encState.decrypt[T](aead)(jsonValueCodec)
       }

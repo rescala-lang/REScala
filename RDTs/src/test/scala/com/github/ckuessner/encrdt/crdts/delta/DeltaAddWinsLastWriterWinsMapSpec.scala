@@ -2,7 +2,7 @@ package com.github.ckuessner.encrdt.crdts.delta
 
 import com.github.ckuessner.encrdt.crdts.DeltaAddWinsLastWriterWinsMap
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.should
 
 class DeltaAddWinsLastWriterWinsMapSpec extends AnyFlatSpec {
   def awlwwm(replicaId: String = "A"): DeltaAddWinsLastWriterWinsMap[Int, Int] =
