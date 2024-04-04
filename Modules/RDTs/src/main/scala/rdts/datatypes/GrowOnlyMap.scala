@@ -1,8 +1,12 @@
 package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
-import rdts.dotted.{Dotted}
+import rdts.datatypes.contextual.ObserveRemoveMap
+import rdts.datatypes.contextual.ObserveRemoveMap.make
+import rdts.dotted.Dotted
 import rdts.syntax.OpsSyntaxHelper
+import rdts.syntax.LocalReplicaId
+import rdts.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
   * In contrast to [[rdts.datatypes.contextual.ObserveRemoveMap]], key/value pairs cannot be removed from this map. However, due to the smaller internal
@@ -41,6 +45,9 @@ object GrowOnlyMap {
         container.queryKey(k).getOrElse(default).inheritContext
       ).map(v => Map(k -> v)).mutator
     }
+    def +(element: (K, V))(using IsCausalMutator, Bottom[V]): C =
+      // mutateKeyNamedCtx(element._1, Bottom.empty[V])(_ => Dotted(element._2, Dots.single(context.nextDot(replicaId))))
+      mutateKeyNamedCtx(element._1, Bottom.empty[V])(_ => element._2.inheritContext)
   }
 
 }
