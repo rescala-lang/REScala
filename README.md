@@ -10,6 +10,20 @@ The simplest way to get started is to install [coursier](https://get-coursier.io
 
 Type `projects` into the sbt shell to get an overview of the available modules. Many modules have a JVM/JS/Native/Aggregate suffix, indicating that this module is cross compiled to different backends. You can select a specific module in the sbt shell by running, for example, `project reactivesJVM`. Then the `compile` or `test` commands will only happen in the selected module. See below for an overview of the modules.
 
+## IDE Setup
+
+There are two IDE choices for Scala (and generally, the use of an IDE is recommended):
+
+* IntelliJ with the Scala plugin: https://www.jetbrains.com/help/idea/get-started-with-scala.html
+* Metals (a language server): https://scalameta.org/metals/
+
+Generally, we recommend starting sbt from the command line (see above) first, and then using IntelliJ (with the Scala plugin) to open the project folder (the root folder, not any of the submodules). This should allow you to select `bsp` as the import type (instead of sbt). Using [bsp](https://www.scala-lang.org/blog/2020/10/27/bsp-in-sbt.html) means that IntelliJ is communicating directly with sbt to send commands to compile/test/run your code, providing the best compatibility.
+Note that Scala support int IntelliJ is not perfect, it is possible that the IDE believes some correct code to not compile, or does not flag some errors. Fall back to trying the sbt command line directly if you have issues.
+
+Metals also allows using [sbt as a bsp server](https://scalameta.org/metals/docs/build-tools/sbt/#sbt-build-server), but we don’t have much experience if this is necessary over the default import.
+
+
+
 # Reactives / REScala
 
 REScala is a set of libraries for principled reactive programming,
