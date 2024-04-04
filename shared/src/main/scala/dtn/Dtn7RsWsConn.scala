@@ -26,7 +26,7 @@ object Dtn7RsWsConn {
       .map(nodeId => {
         println(s"connected to DTN node: $nodeId"); 
         conn.nodeId = Option(nodeId)
-        if (nodeId.startsWith("ipn")) CompatCode.exitWithMessage("DTN mode IPN is unsupported by this client")
+        if (nodeId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
       })  // set node-id and check for supported dtn URI scheme
       .flatMap(_ => backend.send(basicRequest.get(uri"${Dtn7RsInfo.ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
       .map(_ => {conn.command("/bundle"); conn})  // select raw bundle communication and return Dtn7RsWsConn object
@@ -59,7 +59,7 @@ class Dtn7RsWsConn(port: Int) {
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
-        if (!s.startsWith("200")) CompatCode.exitWithMessage(s"dtn ws command response indicated 'not successfull', aborting: $s")
+        if (!s.startsWith("200")) println(s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s")
         receiveBundle()
       }
       case b: Array[Byte] => {
@@ -74,10 +74,10 @@ class Dtn7RsWsConn(port: Int) {
       f1 match {
         case s: String => f2 match {
           case s2: String => s + s2
-          case b2: Array[Byte] => CompatCode.exitWithMessage("cannot combine String and Array[Byte] fragment"); ""
+          case b2: Array[Byte] => println("warning: cannot combine String and Array[Byte] fragment"); f1  // this looses f2, but will likely fail anyways more toplevel
         }
         case b: Array[Byte] => f2 match {
-          case s2: String => CompatCode.exitWithMessage("cannot combine String and Array[Byte] fragment"); ""
+          case s2: String => println("cannot combine String and Array[Byte] fragment"); f1  // this looses f2, but will likely fail anyways more toplevel
           case b2: Array[Byte] => b ++ b2
         }
       }

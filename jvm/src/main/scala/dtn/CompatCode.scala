@@ -8,6 +8,4 @@ import sttp.capabilities.WebSockets
 
 object CompatCode {
   def getBackend(): GenericBackend[Future, WebSockets] = HttpClientFutureBackend()
-
-  def exitWithMessage(message: String): Unit = {println(message); sys.exit(1)}
 }
