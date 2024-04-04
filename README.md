@@ -1,4 +1,16 @@
-# REScala
+# This Repository
+
+This repository contains research software related to Programming Foundations for Distributed Systems at the [Software Technology Group](http://www.stg.tu-darmstadt.de/).
+
+The two most likely modules in this project you are interested in are the library for reactive programming, and the library for replicated data types, both are detailed below.
+
+All code in this repository is written in Scala and organized as a single [sbt](https://www.scala-sbt.org/) project containing multiple modules.
+
+The simplest way to get started is to install [coursier](https://get-coursier.io/docs/cli-installation) – a single binary called `cs` – and then run `cs launch sbt` in the project root directory. This provides you with the sbt shell, where you can type `compile` or `test` to ensure that everything is working correctly. If you get strange errors you may be using a too new/old java version, try `cs launch --jvm=21 sbt` to force the use of Java 21 (will be downloaded).
+
+Type `projects` into the sbt shell to get an overview of the available modules. Many modules have a JVM/JS/Native/Aggregate suffix, indicating that this module is cross compiled to different backends. You can select a specific module in the sbt shell by running, for example, `project reactivesJVM`. Then the `compile` or `test` commands will only happen in the selected module. See below for an overview of the modules.
+
+# Reactives / REScala
 
 REScala is a set of libraries for principled reactive programming,
 a programming paradigm that integrates the strong guarantees of functional reactive programming into object oriented programs,
@@ -6,13 +18,17 @@ and is useful in many contexts such as traditional user interfaces, concurrent a
 
 * Homepage: <http://www.rescala-lang.com/>
 * Usage Manual: <http://www.rescala-lang.com/manual>
+* Maven Artifacts: https://index.scala-lang.org/rescala-lang/rescala/artifacts/rescala?pre-releases=false
 
-REScala is a research project held at TU Darmstadt in the
-[Software Technology Group](http://www.stg.tu-darmstadt.de/)
-in the context of the [PACE](http://www.pace-erc.eu/)
-and [NICER](http://nicer.network/) projects.
+# Replicated Data Types (ARDTs)
 
-## Repository Overview
+The RDT library is still being actively researched
+
+* primary paper introducing the concept: https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ECOOP.2023.14
+* Maven Artifacts: https://index.scala-lang.org/rescala-lang/rescala/artifacts/kofre?pre-releases=false
+
+
+# Repository Module Overview
 
 This repository contains multiple subprojects in the __Modules__ folder:
 
