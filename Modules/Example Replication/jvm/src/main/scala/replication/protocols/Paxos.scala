@@ -44,16 +44,16 @@ case class Paxos[A](
       Paxos.unchanged
     else
       // there is a new higher proposal
-      // check if I already promised a specific value
+      // check if I already accepted a specific value
       val value =
-        promises.filter(p => (p.acceptor == replicaId) && p.value.isDefined).map(_.value).headOption.flatten
+        accepteds.filter(p => (p.acceptor == replicaId)).map(_.value).headOption
       Paxos.unchanged.copy(
         promises = promises.insert(Promise(highestProposal.proposalNumber, value, replicaId))
       )
 
   def accept(using LocalReplicaId)(v: A): Paxos[A] =
-    val highestProposal     = prepares.maxByOption(_.proposalNumber)
-    val promisesForProposal = promises.filter(_.proposalNumber == highestProposal.map(_.proposalNumber).getOrElse(-1))
+    val highestProposalNumber     = promises.map(_.proposalNumber).maxOption
+    val promisesForProposal = promises.filter(_.proposalNumber == highestProposalNumber.getOrElse(-1))
     // check if accepted
     if promisesForProposal.size < quorum then
       // is not accepted
@@ -63,7 +63,7 @@ case class Paxos[A](
       val promisesWithVal = promisesForProposal.filter(_.value.isDefined)
       val value           = promisesWithVal.map(_.value).head.getOrElse(v)
       Paxos.unchanged.copy(
-        accepts = accepts.insert(Accept(highestProposal.get.proposalNumber, value))
+        accepts = accepts.insert(Accept(highestProposalNumber.get, value))
       )
 
   def accepted(using LocalReplicaId): Paxos[A] =
