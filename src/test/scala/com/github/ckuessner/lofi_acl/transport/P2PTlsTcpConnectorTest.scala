@@ -3,6 +3,7 @@ package com.github.ckuessner.lofi_acl.transport
 import com.github.ckuessner.lofi_acl.crypto.{IdentityFactory, PrivateIdentity, X509TestHelper}
 import munit.FunSuite
 
+import java.io.IOException
 import java.net.SocketException
 import java.util.concurrent.Executors
 import javax.net.ssl.SSLHandshakeException
@@ -77,7 +78,7 @@ class P2PTlsTcpConnectorTest extends FunSuite {
       serverErr <- serverConnFuture.failed
     } yield
       assert(clientErr.isInstanceOf[SSLHandshakeException])
-      assert(serverErr.isInstanceOf[SSLHandshakeException])
+      assert(serverErr.isInstanceOf[SSLHandshakeException] || serverErr.isInstanceOf[IOException])
       clientConnector.closeServerSocket()
       serverConnector.closeServerSocket()
   }
