@@ -1,7 +1,9 @@
 package com.github.ckuessner.encrdt.lattices
 
-case class TwoPhaseMapLattice[K, V: SemiLattice](keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),
-                                                 mappings: Map[K, V] = Map[K, V]()) {
+case class TwoPhaseMapLattice[K, V: SemiLattice](
+    keys: TwoPhaseSetLattice[K] = TwoPhaseSetLattice[K](),
+    mappings: Map[K, V] = Map[K, V]()
+) {
 
   def values: Map[K, V] = mappings
 

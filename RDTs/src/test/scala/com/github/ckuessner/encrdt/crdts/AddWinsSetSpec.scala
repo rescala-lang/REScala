@@ -40,7 +40,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "have symmetric merge" in {
-    var left = AddWinsSetLattice[Int]().added(1, "A")
+    var left  = AddWinsSetLattice[Int]().added(1, "A")
     var right = left
     left = left.removed(1)
     right = right.added(1, "B")
@@ -49,7 +49,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "prefer add over remove if parallel" in {
-    var left = AddWinsSetLattice[Int]().added(1, "A")
+    var left  = AddWinsSetLattice[Int]().added(1, "A")
     var right = left
     left = left.removed(1)
     right = right.added(1, "B")
@@ -59,7 +59,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "remove element if removal is causal" in {
-    var left = AddWinsSetLattice[Int]().added(1, "A")
+    var left  = AddWinsSetLattice[Int]().added(1, "A")
     var right = left
 
     right = right.removed(1)
@@ -69,7 +69,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "have idempotent merge" in {
-    var left = AddWinsSetLattice[Int]().added(1, "A")
+    var left  = AddWinsSetLattice[Int]().added(1, "A")
     var right = left
     left = left.removed(1)
     right = right.added(1, "B")
@@ -83,13 +83,13 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "merge parallel add of different elements" in {
-    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val left  = AddWinsSetLattice[Int]().added(1, "A")
     val right = AddWinsSetLattice[Int]().added(2, "B")
-    merged(left, right).values should ===(Set(1,2))
+    merged(left, right).values should ===(Set(1, 2))
   }
 
   it should "merge parallel add of same elements" in {
-    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val left  = AddWinsSetLattice[Int]().added(1, "A")
     val right = AddWinsSetLattice[Int]().added(1, "B")
     merged(left, right).values should ===(Set(1))
   }
@@ -101,16 +101,16 @@ class AddWinsSetSpec extends AnyFlatSpec {
   }
 
   it should "keep values in merge if added twice" in {
-    val left = AddWinsSetLattice[Int]().added(1, "A")
+    val left                = AddWinsSetLattice[Int]().added(1, "A")
     val stateAfterSecondAdd = left.added(1, "A")
     merged(left, stateAfterSecondAdd).values should ===(Set(1))
   }
 
   it should "work with dropped states" in {
-    val first = AddWinsSetLattice[Int]().added(1, "A")
+    val first  = AddWinsSetLattice[Int]().added(1, "A")
     val second = first.removed(1)
 
-    val thirdA = second.added(2, "A").removed(2)
+    val thirdA  = second.added(2, "A").removed(2)
     val fourthA = thirdA.added(1, "A")
 
     val thirdB = second.added(2, "B")
@@ -122,7 +122,7 @@ class AddWinsSetSpec extends AnyFlatSpec {
     merged(first, fourthA).values should ===(Set(1))
     merged(second, fourthA).values should ===(Set(1))
     merged(fourthA, second).values should ===(Set(1))
-    merged(merged(thirdB, thirdA), fourthA).values should ===(Set(1,2))
-    merged(fourthA, thirdB).values should ===(Set(1,2))
+    merged(merged(thirdB, thirdA), fourthA).values should ===(Set(1, 2))
+    merged(fourthA, thirdB).values should ===(Set(1, 2))
   }
 }

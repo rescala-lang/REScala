@@ -7,7 +7,7 @@ import org.scalatest.matchers.should.Matchers._
 
 class CounterSpec extends AnyFlatSpec {
 
-  //implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
+  // implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
 
   "A CounterCrdt" should "initialize with 0" in {
     val crdt = new Counter("42")
@@ -53,7 +53,7 @@ class CounterSpec extends AnyFlatSpec {
 
   it should "be idempotent when merging" in {
     val state = CounterLattice(Map("1" -> 10), Map("2" -> 2))
-    val crdt = new Counter("1", state)
+    val crdt  = new Counter("1", state)
     assume(crdt.query() == 8)
 
     crdt.merge(state)
@@ -84,7 +84,7 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "merge with all replicas in both crdts" in {
-    val crdtLeft = new Counter("42")
+    val crdtLeft  = new Counter("42")
     val crdtRight = new Counter("42")
 
     crdtLeft.update(10)
@@ -103,8 +103,8 @@ class CounterSpec extends AnyFlatSpec {
 
   it should "merge with some replicas not present in left crdt" in {
     val leftStateInitial = CounterLattice(Map("1" -> 1, "2" -> 1))
-    var crdtLeft = new Counter("1", leftStateInitial)
-    val rightState = CounterLattice(Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
+    var crdtLeft         = new Counter("1", leftStateInitial)
+    val rightState       = CounterLattice(Map("1" -> 1, "2" -> 2, "3" -> 3, "4" -> 4))
 
     assume(crdtLeft.query() == 2)
 
@@ -132,8 +132,8 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   it should "merge with some replicas not present in right crdt" in {
-    val leftState = CounterLattice(Map("1" -> 1, "2" -> 1, "3" -> 3, "4" -> 4))
-    var crdtLeft = new Counter("1", leftState)
+    val leftState  = CounterLattice(Map("1" -> 1, "2" -> 1, "3" -> 3, "4" -> 4))
+    var crdtLeft   = new Counter("1", leftState)
     val rightState = CounterLattice(Map("1" -> 1, "2" -> 2))
 
     assume(crdtLeft.query() == 9)
@@ -171,6 +171,5 @@ class CounterSpec extends AnyFlatSpec {
     crdtDeserialized shouldBe crdtState
   }
    */
-
 
 }

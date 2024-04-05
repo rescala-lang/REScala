@@ -2,9 +2,8 @@ package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.lattices.{CounterLattice, SemiLattice}
 
-/**
- * Counter CRDT using states
- */
+/** Counter CRDT using states
+  */
 class Counter(val replicaId: String) {
 
   def this(replicaId: String, initialState: CounterLattice) = {

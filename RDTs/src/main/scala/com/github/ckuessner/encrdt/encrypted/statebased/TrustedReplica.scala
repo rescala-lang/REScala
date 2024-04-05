@@ -4,9 +4,10 @@ import com.github.ckuessner.encrdt.causality.VectorClock
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
-abstract class TrustedReplica[T](val localReplicaId: String,
-                                 private val aead: Aead
-                                )(implicit val tJsonCodec: JsonValueCodec[T], val vcJsonCodec: JsonValueCodec[VectorClock]) extends Replica {
+abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
+    val tJsonCodec: JsonValueCodec[T],
+    val vcJsonCodec: JsonValueCodec[VectorClock]
+) extends Replica {
 
   var versionVector: VectorClock = VectorClock()
 

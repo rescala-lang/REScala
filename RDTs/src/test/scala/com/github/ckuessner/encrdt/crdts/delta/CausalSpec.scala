@@ -13,11 +13,13 @@ class CausalSpec extends AnyFlatSpec {
   import scala.language.implicitConversions
 
   private implicit def mapToSetOfDots(map: Map[String, Int]): Set[Dot] =
-    map.flatMap(tuple =>
-      1 to tuple._2 map {
-        LamportClock(_, tuple._1)
-      }
-    ).toSet
+    map
+      .flatMap(tuple =>
+        1 to tuple._2 map {
+          LamportClock(_, tuple._1)
+        }
+      )
+      .toSet
 
   private implicit def setOfDotsToDotSet(setOfDots: Set[Dot]): DotSet = {
     ArrayCausalContext.fromSet(setOfDots)
@@ -47,9 +49,7 @@ class CausalSpec extends AnyFlatSpec {
       Causal(Set(dot(1, "A")), CausalContext(Map("A" -> 1))),
       Causal(Set(dot(1, "B")), CausalContext(Map("B" -> 1)))
     ) should ===(
-      Causal[DotSet](
-        Set(dot(1, "A"), dot(1, "B")),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal[DotSet](Set(dot(1, "A"), dot(1, "B")), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
   }
 
@@ -78,7 +78,7 @@ class CausalSpec extends AnyFlatSpec {
 
     SemiLattice[Causal[DotSet]].merged(
       Causal(Set.empty[Dot], CausalContext(Map("A" -> 2))),
-      Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2))),
+      Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2)))
     ) should ===(
       Causal[DotSet](
         Set.empty[Dot],
@@ -88,7 +88,7 @@ class CausalSpec extends AnyFlatSpec {
 
     SemiLattice[Causal[DotSet]].merged(
       Causal(Set(dot(1, "B")), CausalContext(Map("A" -> 2, "B" -> 1))),
-      Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2))),
+      Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2)))
     ) should ===(
       Causal[DotSet](
         Set(dot(1, "B")),
@@ -137,9 +137,12 @@ class CausalSpec extends AnyFlatSpec {
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "A") -> Set(21)), CausalContext(Map("A" -> 1)))
     ) should ===(
-      Causal(Map(
-        dot(1, "A") -> Set(21, 42),
-      ), CausalContext(Map("A" -> 1)))
+      Causal(
+        Map(
+          dot(1, "A") -> Set(21, 42)
+        ),
+        CausalContext(Map("A" -> 1))
+      )
     )
   }
 
@@ -149,10 +152,13 @@ class CausalSpec extends AnyFlatSpec {
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("B" -> 1)))
     ) should ===(
-      Causal(Map(
-        dot(1, "A") -> Set(42),
-        dot(1, "B") -> Set(21),
-      ), CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal(
+        Map(
+          dot(1, "A") -> Set(42),
+          dot(1, "B") -> Set(21)
+        ),
+        CausalContext(Map("A" -> 1, "B" -> 1))
+      )
     )
   }
 
@@ -162,18 +168,24 @@ class CausalSpec extends AnyFlatSpec {
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("A" -> 1, "B" -> 1)))
     ) should ===(
-      Causal(Map(
-        dot(1, "B") -> Set(21),
-      ), CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal(
+        Map(
+          dot(1, "B") -> Set(21)
+        ),
+        CausalContext(Map("A" -> 1, "B" -> 1))
+      )
     )
 
     SemiLattice[Causal[DotFun[Set[Int]]]].merged(
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("A" -> 1, "B" -> 1))),
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1)))
     ) should ===(
-      Causal(Map(
-        dot(1, "B") -> Set(21),
-      ), CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal(
+        Map(
+          dot(1, "B") -> Set(21)
+        ),
+        CausalContext(Map("A" -> 1, "B" -> 1))
+      )
     )
   }
 
@@ -225,7 +237,8 @@ class CausalSpec extends AnyFlatSpec {
     ) should ===(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A")), 2 -> Set(dot(1, "B"))),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+        CausalContext(Map("A" -> 1, "B" -> 1))
+      )
     )
   }
 
@@ -242,7 +255,8 @@ class CausalSpec extends AnyFlatSpec {
     ) should ===(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A")), 2 -> Set(dot(1, "B"))),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+        CausalContext(Map("A" -> 1, "B" -> 1))
+      )
     )
   }
 
@@ -257,9 +271,7 @@ class CausalSpec extends AnyFlatSpec {
         CausalContext(Map("A" -> 1, "B" -> 1))
       )
     ) should ===(
-      Causal[Map[Int, DotSet]](
-        Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"), dot(1, "B"))), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
   }
 
@@ -274,9 +286,7 @@ class CausalSpec extends AnyFlatSpec {
         CausalContext(Map("A" -> 1, "B" -> 1))
       )
     ) should ===(
-      Causal[Map[Int, DotSet]](
-        Map(1 -> Set(dot(1, "A"))),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
 
     SemiLattice.merged(
@@ -289,9 +299,7 @@ class CausalSpec extends AnyFlatSpec {
         CausalContext(Map("A" -> 1, "B" -> 1))
       )
     ) should ===(
-      Causal[Map[Int, DotSet]](
-        Map(1 -> Set(dot(1, "A"))),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
   }
 
@@ -306,9 +314,7 @@ class CausalSpec extends AnyFlatSpec {
         CausalContext(Map("A" -> 1, "B" -> 1))
       )
     ) should ===(
-      Causal[Map[Int, DotSet]](
-        Map[Int, DotSet](),
-        CausalContext(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, DotSet]](Map[Int, DotSet](), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
   }
 }

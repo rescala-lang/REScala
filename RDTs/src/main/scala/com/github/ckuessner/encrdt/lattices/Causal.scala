@@ -11,8 +11,8 @@ object Causal {
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
-    val inBoth = left.dotStore intersect right.dotStore
-    val newInLeft = left.dotStore subtract right.causalContext.acc
+    val inBoth     = left.dotStore intersect right.dotStore
+    val newInLeft  = left.dotStore subtract right.causalContext.acc
     val newInRight = right.dotStore subtract left.causalContext.acc
 
     val mergedCausalContext = left.causalContext.merged(right.causalContext)
@@ -36,14 +36,18 @@ object Causal {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit vSemiLattice: SemiLattice[Causal[V]]
-                                                      ): SemiLattice[Causal[DotMap[K, V]]] =
+  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit
+      vSemiLattice: SemiLattice[Causal[V]]
+  ): SemiLattice[Causal[DotMap[K, V]]] =
     (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
-      Causal(((left.dotStore.keySet union right.dotStore.keySet) map { key =>
-        val leftCausal = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
-        val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
-        key -> SemiLattice[Causal[V]].merged(leftCausal, rightCausal).dotStore
-      } filterNot {
-        case (key, dotStore) => DotStore[V].bottom == dotStore
-      }).toMap, left.causalContext.merged(right.causalContext))
+      Causal(
+        ((left.dotStore.keySet union right.dotStore.keySet) map { key =>
+          val leftCausal  = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
+          val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
+          key -> SemiLattice[Causal[V]].merged(leftCausal, rightCausal).dotStore
+        } filterNot { case (key, dotStore) =>
+          DotStore[V].bottom == dotStore
+        }).toMap,
+        left.causalContext.merged(right.causalContext)
+      )
 }

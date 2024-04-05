@@ -4,7 +4,7 @@ import scala.math.Ordered.orderingToOrdered
 
 // Lamport clock with replicaId
 case class LamportClock(time: Long, replicaId: String) extends Ordered[LamportClock] {
-  override def compare(that: LamportClock): Int = (time, replicaId) compare(that.time, that.replicaId)
+  override def compare(that: LamportClock): Int = (time, replicaId) compare (that.time, that.replicaId)
 
   def advance(replicaId: String): LamportClock = LamportClock(time + 1, replicaId)
 }

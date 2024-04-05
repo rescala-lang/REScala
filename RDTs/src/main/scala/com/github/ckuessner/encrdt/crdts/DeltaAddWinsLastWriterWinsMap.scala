@@ -10,16 +10,19 @@ import com.github.ckuessner.encrdt.lattices.LastWriterWinsTagLattice.lwwLattice
 import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
 
-class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
-                                          initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
-                                          initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
-                                         ) extends MapCrdt[K, V] with Crdt[DeltaAddWinsLastWriterWinsMapLattice[K, V]] {
-  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
+class DeltaAddWinsLastWriterWinsMap[K, V](
+    val replicaId: String,
+    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.bottom[K, V],
+    initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
+) extends MapCrdt[K, V]
+    with Crdt[DeltaAddWinsLastWriterWinsMapLattice[K, V]] {
+  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
   protected val _deltas: ArrayBuffer[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = ArrayBuffer.from(initialDeltas)
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
 
-  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = _deltas.toVector // TODO: Maybe change this to another type
+  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] =
+    _deltas.toVector // TODO: Maybe change this to another type
 
   override def get(key: K): Option[V] =
     _state.dotStore
@@ -50,17 +53,16 @@ class DeltaAddWinsLastWriterWinsMap[K, V](val replicaId: String,
   override def remove(key: K): Unit =
     mutate(DeltaAddWinsMap.deltaRemove(key, _state))
 
-  def removeDelta(key: K): DeltaAddWinsMapLattice[K, DotFun[(V,  (Instant, String))]] = {
+  def removeDelta(key: K): DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] = {
     val delta = DeltaAddWinsMap.deltaRemove(key, _state)
     mutate(delta)
     delta
   }
 
-  def removeAllDelta(keys: Seq[K]): DeltaAddWinsMapLattice[K, DotFun[(V,  (Instant, String))]] = {
+  def removeAllDelta(keys: Seq[K]): DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]] = {
     val subDeltas = keys.map(DeltaAddWinsMap.deltaRemove(_, _state))
-    val delta = subDeltas.reduce((left, right) =>
-      SemiLattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merged(left, right)
-    )
+    val delta =
+      subDeltas.reduce((left, right) => SemiLattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merged(left, right))
     mutate(delta)
     delta
   }
@@ -84,7 +86,8 @@ object DeltaAddWinsLastWriterWinsMap {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMapLattice[K, DotFun[(V, (Instant, String))]]
 
-  def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
+  def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
+    DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
   implicit def timestampedValueLattice[V]: SemiLattice[(V, (Instant, String))] = (left, right) => {
     if (SemiLattice.merged(left._2, right._2) == left._2) left

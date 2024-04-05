@@ -3,8 +3,8 @@ package com.github.ckuessner.encrdt.crdts
 import com.github.ckuessner.encrdt.crdts.interfaces.MapCrdt
 import com.github.ckuessner.encrdt.lattices.{SemiLattice, TwoPhaseMapLattice}
 
-class TwoPhaseMap[K, V: SemiLattice](val replicaId: String,
-                                     val initialState: TwoPhaseMapLattice[K, V]) extends MapCrdt[K, V] {
+class TwoPhaseMap[K, V: SemiLattice](val replicaId: String, val initialState: TwoPhaseMapLattice[K, V])
+    extends MapCrdt[K, V] {
 
   private var _state = initialState
 

@@ -4,8 +4,8 @@ import com.github.ckuessner.encrdt.causality.CausalContext
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray}
 import com.google.crypto.tink.Aead
 
-case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersionVector: Array[Byte])(
-    implicit dotSetJsonCodec: JsonValueCodec[CausalContext]
+case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersionVector: Array[Byte])(implicit
+    dotSetJsonCodec: JsonValueCodec[CausalContext]
 ) {
   lazy val dottedVersionVector: CausalContext = readFromArray(serialDottedVersionVector)
 

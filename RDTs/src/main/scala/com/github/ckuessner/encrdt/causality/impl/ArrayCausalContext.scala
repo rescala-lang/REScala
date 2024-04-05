@@ -18,10 +18,12 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
   def clockOf(replicaId: Id): Option[Dot] = max(replicaId)
 
   def add(replicaId: Id, time: Time): ArrayCausalContext =
-    ArrayCausalContext(internal.updated(
-      replicaId,
-      rangeAt(replicaId).add(time)
-    ))
+    ArrayCausalContext(
+      internal.updated(
+        replicaId,
+        rangeAt(replicaId).add(time)
+      )
+    )
 
   def nextTime(replicaId: Id): Time = rangeAt(replicaId).next.getOrElse(0)
 
@@ -29,13 +31,12 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def diff(extern: ArrayCausalContext): ArrayCausalContext =
     ArrayCausalContext(
-      internal.map {
-        case (id, range) =>
-          val filtered = extern.internal.get(id).map { erange =>
-            val keep = range.iterator.filterNot(erange.contains)
-            ArrayRanges.from(keep)
-          }
-          id -> filtered.getOrElse(range)
+      internal.map { case (id, range) =>
+        val filtered = extern.internal.get(id).map { erange =>
+          val keep = range.iterator.filterNot(erange.contains)
+          ArrayRanges.from(keep)
+        }
+        id -> filtered.getOrElse(range)
       }
     )
 
@@ -47,7 +48,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
             val intersection = ranges intersect otherRanges
             if (intersection.isEmpty) None
             else Some(id -> intersection)
-          case None              => None
+          case None => None
         }
       }
     }
@@ -56,12 +57,14 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def subtract(other: ArrayCausalContext): ArrayCausalContext = {
     ArrayCausalContext(
-      internal.map { case left@(id, leftRanges) =>
-        other.internal.get(id) match {
-          case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
-          case None => left
+      internal
+        .map { case left @ (id, leftRanges) =>
+          other.internal.get(id) match {
+            case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
+            case None              => left
+          }
         }
-      }.filterNot(_._2.isEmpty)
+        .filterNot(_._2.isEmpty)
     )
   }
 
@@ -81,8 +84,8 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
     tree.iterator.forall(time => cond(causality.LamportClock(time, id)))
   }
 
-  def <= (other: ArrayCausalContext): Boolean = internal.forall {
-    case (id, leftRange) => leftRange <= other.rangeAt(id)
+  def <=(other: ArrayCausalContext): Boolean = internal.forall { case (id, leftRange) =>
+    leftRange <= other.rangeAt(id)
   }
 }
 
@@ -101,9 +104,10 @@ object ArrayCausalContext {
     }
   }
 
-  def fromSet(dots: Set[Dot]): ArrayCausalContext = ArrayCausalContext(dots.groupBy(_.replicaId).map {
-    case (key, times) =>
+  def fromSet(dots: Set[Dot]): ArrayCausalContext = ArrayCausalContext(
+    dots.groupBy(_.replicaId).map { case (key, times) =>
       key -> ArrayRanges.from(times.iterator.map(_.time))
-  })
+    }
+  )
 
 }

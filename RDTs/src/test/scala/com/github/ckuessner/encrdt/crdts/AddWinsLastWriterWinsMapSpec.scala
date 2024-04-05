@@ -1,7 +1,12 @@
 package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.crdts.AddWinsLastWriterWinsMap
-import com.github.ckuessner.encrdt.lattices.{AddWinsMapLattice, CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
+import com.github.ckuessner.encrdt.lattices.{
+  AddWinsMapLattice,
+  CausalTimeTag,
+  LastWriterWinsRegisterLattice,
+  SemiLattice
+}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers._
 import org.scalatest.matchers.should.Matchers._
@@ -16,13 +21,17 @@ class AddWinsLastWriterWinsMapSpec extends AnyFlatSpec {
 
   def crdt[K, V](replicaId: String): AddWinsLastWriterWinsMap[K, V] = new AddWinsLastWriterWinsMap[K, V](replicaId)
 
-  def crdt[K, V](lattice: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
-                 replicaId: String = ""): AddWinsLastWriterWinsMap[K, V] =
+  def crdt[K, V](
+      lattice: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
+      replicaId: String = ""
+  ): AddWinsLastWriterWinsMap[K, V] =
     new AddWinsLastWriterWinsMap(replicaId, lattice)
 
-  def wrapAndMerge[K, V](initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
-                         stateToMerge: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
-                         replicaId: String = ""): AddWinsLastWriterWinsMap[K, V] = {
+  def wrapAndMerge[K, V](
+      initialState: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
+      stateToMerge: AddWinsMapLattice[K, LastWriterWinsRegisterLattice[V, CausalTimeTag]],
+      replicaId: String = ""
+  ): AddWinsLastWriterWinsMap[K, V] = {
     val c = crdt(initialState)
     c.merge(stateToMerge)
     c
@@ -33,12 +42,13 @@ class AddWinsLastWriterWinsMapSpec extends AnyFlatSpec {
 
   def genCrdt[K, V](mappings: List[(K, V)], replicaId: String): AddWinsLastWriterWinsMap[K, V] = {
     @tailrec
-    def rec(mappings: List[(K, V)], crdt: AddWinsLastWriterWinsMap[K, V]): AddWinsLastWriterWinsMap[K, V] = mappings match {
-      case head :: next =>
-        crdt.put(head._1, head._2)
-        rec(next, crdt)
-      case Nil => crdt
-    }
+    def rec(mappings: List[(K, V)], crdt: AddWinsLastWriterWinsMap[K, V]): AddWinsLastWriterWinsMap[K, V] =
+      mappings match {
+        case head :: next =>
+          crdt.put(head._1, head._2)
+          rec(next, crdt)
+        case Nil => crdt
+      }
 
     rec(mappings, crdt(replicaId))
   }
@@ -82,7 +92,7 @@ class AddWinsLastWriterWinsMapSpec extends AnyFlatSpec {
   }
 
   it should "keep causal value when replacing" in {
-    val crdtA = genCrdt(List(1 -> 42), "A")
+    val crdtA         = genCrdt(List(1 -> 42), "A")
     val beforeReplace = crdtA.state
     crdtA.put(1, 1)
     val afterReplace = crdtA.state

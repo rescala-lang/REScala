@@ -29,18 +29,20 @@ class DeltaAddWinsMapSpec extends AnyFlatSpec {
   "Lattice" should "merge if empty" in {
     SemiLattice.merged(
       DeltaAddWinsMap.bottom[Int, DotSet],
-      DeltaAddWinsMap.bottom[Int, DotSet],
+      DeltaAddWinsMap.bottom[Int, DotSet]
     ) should ===(DeltaAddWinsMap.bottom[Int, DotSet])
   }
 
   it should "merge concurrent updates" in {
     SemiLattice[DeltaAddWinsMapLattice[Int, DotSet]].merged(
       Causal(Map(1 -> Set(dot(1, "A"))), Set(dot(1, "A"))),
-      Causal(Map(1 -> Set(dot(1, "B"))), Set(dot(1, "B"))),
-    ) should ===(Causal[DotMap[Int, DotSet]](
-      Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
-      Set(dot(1, "A"), dot(1, "B"))
-    ))
+      Causal(Map(1 -> Set(dot(1, "B"))), Set(dot(1, "B")))
+    ) should ===(
+      Causal[DotMap[Int, DotSet]](
+        Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
+        Set(dot(1, "A"), dot(1, "B"))
+      )
+    )
   }
 
 }

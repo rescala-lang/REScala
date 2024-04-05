@@ -2,8 +2,7 @@ package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.lattices.{CausalTimeTag, LastWriterWinsRegisterLattice, SemiLattice}
 
-class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, CausalTimeTag],
-                                val replicaId: String) { // SemiLattice requires ordering of timestamp
+class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, CausalTimeTag], val replicaId: String) { // SemiLattice requires ordering of timestamp
 
   private var _state = initialState
 
@@ -22,8 +21,7 @@ class LastWriterWinsRegister[T](initialState: LastWriterWinsRegisterLattice[T, C
 object LastWriterWinsRegister {
   def apply[T](replicaId: String, initialValue: T): LastWriterWinsRegister[T] =
     new LastWriterWinsRegister(
-      LastWriterWinsRegisterLattice(
-        initialValue,
-        CausalTimeTag().advance(replicaId)),
-      replicaId)
+      LastWriterWinsRegisterLattice(initialValue, CausalTimeTag().advance(replicaId)),
+      replicaId
+    )
 }

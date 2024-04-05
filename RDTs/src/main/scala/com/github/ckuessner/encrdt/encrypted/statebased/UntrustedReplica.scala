@@ -7,9 +7,10 @@ import VectorClock.VectorClockOrdering
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
-abstract class UntrustedReplica(initialStates: Set[EncryptedState])
-                               (implicit tJsonCodec: JsonValueCodec[EncryptedState], vcJsonCodec: JsonValueCodec[VectorClock]
-                               ) extends Replica {
+abstract class UntrustedReplica(initialStates: Set[EncryptedState])(implicit
+    tJsonCodec: JsonValueCodec[EncryptedState],
+    vcJsonCodec: JsonValueCodec[VectorClock]
+) extends Replica {
 
   protected var stateStore: Set[EncryptedState] = initialStates
 
@@ -40,7 +41,9 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState])
     }
 
     stateStore = leastUpperBound(
-      stateStore.filterNot(oldState => VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)) + newState
+      stateStore.filterNot(oldState =>
+        VectorClockOrdering.lteq(oldState.versionVector, newState.versionVector)
+      ) + newState
     )
 
     Console.println(stateStore.map(_.versionVector))
