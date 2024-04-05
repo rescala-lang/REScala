@@ -32,9 +32,8 @@ lazy val encrdt = project
 
 lazy val encrdtDependencies = Seq(
   // Encryption / Decryption using Googles Tink Crypto Library
-  "com.google.crypto.tink"      % "tink"                   % "1.13.0",
-  "org.conscrypt"               % "conscrypt-openjdk-uber" % "2.5.2",
-  "com.typesafe.scala-logging" %% "scala-logging"          % "3.9.5"
+  "com.google.crypto.tink"      % "tink"          % "1.13.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
 )
 
 // jsoniter-scala
