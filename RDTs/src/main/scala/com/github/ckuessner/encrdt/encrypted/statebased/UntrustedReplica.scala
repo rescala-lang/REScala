@@ -3,11 +3,10 @@ package com.github.ckuessner.encrdt.encrypted.statebased
 import com.github.ckuessner.encrdt.causality.VectorClock
 import com.github.ckuessner.encrdt.causality.VectorClock.VectorClockOrdering
 import com.github.ckuessner.encrdt.lattices.SemiLattice
-import VectorClock.VectorClockOrdering
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
-abstract class UntrustedReplica(initialStates: Set[EncryptedState])(implicit
+abstract class UntrustedReplica(initialStates: Set[EncryptedState])(using
     tJsonCodec: JsonValueCodec[EncryptedState],
     vcJsonCodec: JsonValueCodec[VectorClock]
 ) extends Replica {
@@ -52,8 +51,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState])(implicit
   private def leastUpperBound(states: Set[EncryptedState]): Set[EncryptedState] = {
     if (states.size <= 1) return states
 
-    @inline
-    def subsetIsUpperBound(subset: Set[(EncryptedState, Int)], state: EncryptedState): Boolean = {
+    inline def subsetIsUpperBound(subset: Set[(EncryptedState, Int)], state: EncryptedState): Boolean = {
       val mergeOfAllOtherVersionVectors = subset
         .map(_._1.versionVector)
         .foldLeft(VectorClock()) { case (a: VectorClock, b: VectorClock) => a.merged(b) }
@@ -90,13 +88,11 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState])(implicit
 }
 
 object UntrustedReplica {
-  // TODO: Migrate to scala 3
-  implicit def encStatePOrd(implicit vcJsonCodec: JsonValueCodec[VectorClock]): PartialOrdering[EncryptedState] =
-    new PartialOrdering[EncryptedState] {
-      override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
-        VectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
+  given encStatePOrd(using vcJsonCodec: JsonValueCodec[VectorClock]): PartialOrdering[EncryptedState] with {
+    override def tryCompare(x: EncryptedState, y: EncryptedState): Option[Int] =
+      VectorClockOrdering.tryCompare(x.versionVector, y.versionVector)
 
-      override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
-        VectorClockOrdering.lteq(x.versionVector, y.versionVector)
-    }
+    override def lteq(x: EncryptedState, y: EncryptedState): Boolean =
+      VectorClockOrdering.lteq(x.versionVector, y.versionVector)
+  }
 }

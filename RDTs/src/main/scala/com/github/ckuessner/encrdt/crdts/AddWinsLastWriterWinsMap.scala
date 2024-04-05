@@ -1,5 +1,6 @@
 package com.github.ckuessner.encrdt.crdts
 
+import com.github.ckuessner.encrdt.crdts.AddWinsLastWriterWinsMap.LatticeType
 import com.github.ckuessner.encrdt.crdts.interfaces.MapCrdt
 import com.github.ckuessner.encrdt.lattices.{
   AddWinsMapLattice,
@@ -7,7 +8,6 @@ import com.github.ckuessner.encrdt.lattices.{
   LastWriterWinsRegisterLattice,
   SemiLattice
 }
-import AddWinsLastWriterWinsMap.LatticeType
 
 class AddWinsLastWriterWinsMap[K, V](
     val replicaId: String,

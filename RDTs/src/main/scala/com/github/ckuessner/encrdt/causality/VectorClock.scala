@@ -9,7 +9,7 @@ case class VectorClock(timestamps: Map[String, Long] = Map()) {
 
   def merged(other: Map[String, Long]): VectorClock = VectorClock(max(timestamps, other))
 
-  def merged(other: LamportClock): VectorClock = merged(Map(other.replicaId -> other.time))
+  def merged(other: Dot): VectorClock = merged(Map(other.replicaId -> other.time))
 
   def advance(replicaId: String): VectorClock = VectorClock(
     timestamps = timestamps + (replicaId -> (timestamps.getOrElse(replicaId, 0L) + 1L))
@@ -17,13 +17,13 @@ case class VectorClock(timestamps: Map[String, Long] = Map()) {
 
   def timeOf(replicaId: String): Long = timestamps.getOrElse(replicaId, 0)
 
-  def clockOf(replicaId: String): LamportClock = LamportClock(timeOf(replicaId), replicaId)
+  def clockOf(replicaId: String): Dot = Dot(timeOf(replicaId), replicaId)
 
-  def contains(timestamp: LamportClock): Boolean = timestamps.getOrElse(timestamp.replicaId, 0L) >= timestamp.time
+  def contains(timestamp: Dot): Boolean = timestamps.getOrElse(timestamp.replicaId, 0L) >= timestamp.time
 }
 
 object VectorClock {
-  implicit object VectorClockOrdering extends PartialOrdering[VectorClock] {
+  given VectorClockOrdering: PartialOrdering[VectorClock] with {
     override def tryCompare(x: VectorClock, y: VectorClock): Option[Int] = {
       if (x.timestamps.isEmpty) return Some(0)
       if (x.timestamps.keySet != y.timestamps.keySet) return None

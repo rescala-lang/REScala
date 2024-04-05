@@ -1,12 +1,8 @@
 package com.github.ckuessner.encrdt.lattices
 
-import com.github.ckuessner.encrdt.causality.{LamportClock, VectorClock}
+import com.github.ckuessner.encrdt.causality.{Dot, VectorClock}
 
-case class AddWinsSetLattice[T](
-    elements: Set[(T, LamportClock)] = Set[(T, LamportClock)](),
-    clocks: VectorClock = VectorClock()
-) {
-
+case class AddWinsSetLattice[T](elements: Set[(T, Dot)] = Set.empty[(T, Dot)], clocks: VectorClock = VectorClock()) {
   def values: Set[T] = elements.map(_._1)
 
   def removed(element: T): AddWinsSetLattice[T] = {
@@ -30,21 +26,21 @@ object AddWinsSetLattice {
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       val commonElems = left.elements & right.elements
 
-      val leftCausalElements = left.elements.filter { case (e, LamportClock(c, i)) =>
+      val leftCausalElements = left.elements.filter { case (e, Dot(c, i)) =>
         c > right.clocks.timeOf(i)
       }
 
-      val rightCausalElements = right.elements.filter { case (e, LamportClock(c, i)) =>
+      val rightCausalElements = right.elements.filter { case (e, Dot(c, i)) =>
         c > left.clocks.timeOf(i)
       }
 
       val allElements = commonElems ++ leftCausalElements ++ rightCausalElements
 
       // Only keep most recent LamportClock (per replica)
-      val duplicates = allElements.filter { case (e, LamportClock(c, i)) =>
+      val duplicates = allElements.filter { case (e, Dot(c, i)) =>
         allElements.exists {
-          case (`e`, LamportClock(otherC, `i`)) => c < otherC
-          case _                                => false
+          case (`e`, Dot(otherC, `i`)) => c < otherC
+          case _                       => false
         }
       }
 

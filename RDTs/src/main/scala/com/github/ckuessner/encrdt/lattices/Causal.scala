@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.lattices
 
 import com.github.ckuessner.encrdt.causality.DotStore.*
-import com.github.ckuessner.encrdt.causality.{CausalContext, DotStore}
+import com.github.ckuessner.encrdt.causality.{CausalContext, Dot, DotStore}
 
 case class Causal[D](dotStore: D, causalContext: CausalContext)
 

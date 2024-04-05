@@ -21,7 +21,7 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
 
   def unseal[T: SemiLattice](
       aead: Aead
-  )(implicit tJsonValueCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): Try[DecryptedState[T]] =
+  )(using tJsonValueCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): Try[DecryptedState[T]] =
     state.versions.values.map { (encState: EncryptedState) =>
       Try {
         encState.decrypt[T](aead)
@@ -46,13 +46,13 @@ class EncryptedCrdt(initialState: MultiValueRegisterLattice[EncryptedState] = Mu
 }
 
 case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Array[Byte]) {
-  def versionVector(implicit jsonValueCodec: JsonValueCodec[VectorClock]): VectorClock = readFromArray(
+  def versionVector(using jsonValueCodec: JsonValueCodec[VectorClock]): VectorClock = readFromArray(
     serialVersionVector
   )
 
   def decrypt[T](
       aead: Aead
-  )(implicit tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): DecryptedState[T] = {
+  )(using tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): DecryptedState[T] = {
     val plainText     = aead.decrypt(stateCiphertext, serialVersionVector)
     val state         = readFromArray[T](plainText)
     val versionVector = readFromArray[VectorClock](serialVersionVector)
@@ -60,14 +60,10 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
   }
 }
 
-//object EncryptedState {
-//  implicit val encStateJsonCodec: JsonValueCodec[EncryptedState] = JsonCodecMaker.make
-//}
-
 case class DecryptedState[T](state: T, versionVector: VectorClock) {
   def encrypt(
       aead: Aead
-  )(implicit tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): EncryptedState = {
+  )(using tJsonCodec: JsonValueCodec[T], vcJsonCodec: JsonValueCodec[VectorClock]): EncryptedState = {
     val serialVectorClock = writeToArray(versionVector)
     val stateCipherText = aead.encrypt(
       writeToArray(state),
@@ -78,9 +74,7 @@ case class DecryptedState[T](state: T, versionVector: VectorClock) {
 }
 
 object DecryptedState {
-  // implicit val vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
-
-  implicit def lattice[T](implicit tLattice: SemiLattice[T]): SemiLattice[DecryptedState[T]] = (left, right) => {
+  given lattice[T](using tLattice: SemiLattice[T]): SemiLattice[DecryptedState[T]] = (left, right) => {
     DecryptedState(SemiLattice[T].merged(left.state, right.state), left.versionVector.merged(right.versionVector))
   }
 }

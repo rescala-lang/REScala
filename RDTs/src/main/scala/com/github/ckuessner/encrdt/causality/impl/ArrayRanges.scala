@@ -1,7 +1,9 @@
 package com.github.ckuessner.encrdt.causality.impl
 
-import Defs.Time
+import com.github.ckuessner.encrdt.causality.impl.Defs.Time
 import com.github.ckuessner.encrdt.lattices.SemiLattice
+
+import scala.annotation.targetName
 
 case class ArrayRanges(inner: Array[Time], used: Int) {
 
@@ -9,6 +11,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     case ar: ArrayRanges => inner.iterator.take(used).sameElements(ar.inner.iterator.take(ar.used))
   }
 
+  @targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
     if (isEmpty) return true
     if (right.isEmpty) return false
@@ -73,19 +76,19 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
 
     val merged = new Array[Time](used + other.used)
 
-    @inline def write(t: Time): Unit = {
+    inline def write(t: Time): Unit = {
       merged(mergedPos) = t
 
       mergedPos += 1
     }
 
-    @inline def lstart = inner(leftPos)
-    @inline def lend   = inner(leftPos + 1)
-    @inline def rstart = other.inner(rightPos)
-    @inline def rend   = other.inner(rightPos + 1)
+    inline def lstart = inner(leftPos)
+    inline def lend   = inner(leftPos + 1)
+    inline def rstart = other.inner(rightPos)
+    inline def rend   = other.inner(rightPos + 1)
 
-    @inline def lok = leftPos < used
-    @inline def rok = rightPos < other.used
+    inline def lok = leftPos < used
+    inline def rok = rightPos < other.used
 
     def findNextRange(): Unit = {
       var (curStart, minEnd) =
@@ -152,7 +155,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
 
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
-    @inline def includeRangeInclusive(min: Time, max: Time): Unit = {
+    inline def includeRangeInclusive(min: Time, max: Time): Unit = {
       newInner(newInnerNextIndex) = min         // From lMin
       newInner(newInnerNextIndex + 1) = max + 1 // to lMax (but range is in array is exclusive, so lMax+1)
       newInnerNextIndex += 2
@@ -161,7 +164,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     var lIndex = 0
     var lMin   = inner(0)
     var lMax   = inner(1) - 1
-    @inline def nextLeft(): Boolean = {
+    inline def nextLeft(): Boolean = {
       lIndex += 2
       if (lIndex < used) {
         lMin = inner(lIndex)
@@ -175,7 +178,7 @@ case class ArrayRanges(inner: Array[Time], used: Int) {
     var rIndex = 0
     var rMin   = right.inner(0)
     var rMax   = right.inner(1) - 1
-    @inline def nextRightOrAddAllFromLeft(): Boolean = {
+    inline def nextRightOrAddAllFromLeft(): Boolean = {
       rIndex += 2
       if (rIndex < right.used) {
         rMin = right.inner(rIndex)
@@ -270,5 +273,5 @@ object ArrayRanges {
     ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  implicit val latticeInstance: SemiLattice[ArrayRanges] = _ `merge` _
+  given latticeInstance: SemiLattice[ArrayRanges] = _ `merge` _
 }

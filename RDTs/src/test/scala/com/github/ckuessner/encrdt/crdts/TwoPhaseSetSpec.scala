@@ -8,8 +8,6 @@ import org.scalatest.matchers.should.Matchers._
 
 class TwoPhaseSetSpec extends AnyFlatSpec {
 
-  // implicit def twoPhaseIntSetCodec: JsonValueCodec[TwoPhaseSetLattice[Int]] = JsonCodecMaker.make
-
   "A TwoPhaseSetCrdt" should "merge with empty crdt" in {
     val left  = new TwoPhaseSet[String]("A")
     val right = new TwoPhaseSet[String]("B")
@@ -70,6 +68,7 @@ class TwoPhaseSetSpec extends AnyFlatSpec {
   }
 
   /*
+  implicit def twoPhaseIntSetCodec: JsonValueCodec[TwoPhaseSetLattice[Int]] = JsonCodecMaker.make
   it should "serialize and deserialize" in {
     val crdtState = TwoPhaseSetLattice[Int]()
 

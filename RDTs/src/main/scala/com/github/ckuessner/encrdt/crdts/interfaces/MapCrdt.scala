@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.crdts.interfaces
 
 trait MapCrdt[K, V] {
-  @inline def apply(key: K): Option[V] = get(key)
+  inline def apply(key: K): Option[V] = get(key)
 
   def get(key: K): Option[V]
 

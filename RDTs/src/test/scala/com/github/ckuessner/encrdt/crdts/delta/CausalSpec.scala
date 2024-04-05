@@ -1,29 +1,25 @@
 package com.github.ckuessner.encrdt.crdts.delta
 
-import com.github.ckuessner.encrdt.causality.{CausalContext, LamportClock}
+import com.github.ckuessner.encrdt.causality.DotStore.{DotFun, DotSet}
 import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
-import com.github.ckuessner.encrdt.causality.DotStore.{Dot, DotFun, DotSet}
+import com.github.ckuessner.encrdt.causality.{CausalContext, Dot}
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers.*
 
 class CausalSpec extends AnyFlatSpec {
-  def dot(time: Long, replicaId: String): LamportClock = LamportClock(time, replicaId)
+  def dot(time: Long, replicaId: String): Dot = Dot(time, replicaId)
 
   import scala.language.implicitConversions
 
-  private implicit def mapToSetOfDots(map: Map[String, Int]): Set[Dot] =
-    map
-      .flatMap(tuple =>
-        1 to tuple._2 map {
-          LamportClock(_, tuple._1)
-        }
-      )
-      .toSet
+  private given mapToSetOfDots: Conversion[Map[String, Int], Set[Dot]] =
+    _.flatMap(tuple =>
+      1 to tuple._2 map {
+        Dot(_, tuple._1)
+      }
+    ).toSet
 
-  private implicit def setOfDotsToDotSet(setOfDots: Set[Dot]): DotSet = {
-    ArrayCausalContext.fromSet(setOfDots)
-  }
+  private given setOfDotsToDotSet: Conversion[Set[Dot], DotSet] = ArrayCausalContext.fromSet(_)
 
   "Causal with DotSet" should "merge when empty" in {
     SemiLattice[Causal[DotSet]].merged(

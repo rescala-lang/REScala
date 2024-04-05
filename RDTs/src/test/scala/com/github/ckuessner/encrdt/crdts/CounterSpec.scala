@@ -7,8 +7,6 @@ import org.scalatest.matchers.should.Matchers._
 
 class CounterSpec extends AnyFlatSpec {
 
-  // implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
-
   "A CounterCrdt" should "initialize with 0" in {
     val crdt = new Counter("42")
     assertResult(0) {
@@ -162,6 +160,8 @@ class CounterSpec extends AnyFlatSpec {
   }
 
   /*
+  implicit val codec: JsonValueCodec[CounterLattice] = JsonCodecMaker.make
+
   it should "serialize and deserialize" in {
     val crdtState = CounterLattice(positiveCounts = Map("42" -> 21, "21" -> 42), negativeCounts = Map("42" -> 42, "21" -> 21))
 

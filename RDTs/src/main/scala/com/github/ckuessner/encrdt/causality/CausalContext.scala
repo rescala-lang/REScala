@@ -1,11 +1,11 @@
 package com.github.ckuessner.encrdt.causality
 
+import com.github.ckuessner.encrdt.causality.DotStore.DotSet
 import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
-import DotStore.{Dot, DotSet}
 
 // Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(acc: ArrayCausalContext) {
-  def clockOf(replicaId: String): Dot = acc.clockOf(replicaId).getOrElse(LamportClock(0, replicaId))
+  def clockOf(replicaId: String): Dot = acc.clockOf(replicaId).getOrElse(Dot(0, replicaId))
 
   def contains(dot: Dot): Boolean = acc.contains(dot)
 
@@ -18,11 +18,9 @@ case class CausalContext(acc: ArrayCausalContext) {
 }
 
 object CausalContext {
-
-  import scala.language.implicitConversions
-
-  def apply(dots: Set[Dot]): CausalContext = CausalContext(ArrayCausalContext.fromSet(dots))
   def apply(): CausalContext               = CausalContext(ArrayCausalContext.empty)
+  def apply(dot: Dot): CausalContext       = CausalContext(ArrayCausalContext.single(dot))
+  def apply(dots: Set[Dot]): CausalContext = CausalContext(ArrayCausalContext.fromSet(dots))
 
-  implicit def dotSetToCausalContext(dotSet: DotSet): CausalContext = apply(dotSet)
+  given dotSetToCausalContextConversion: Conversion[DotSet, CausalContext] = apply(_)
 }

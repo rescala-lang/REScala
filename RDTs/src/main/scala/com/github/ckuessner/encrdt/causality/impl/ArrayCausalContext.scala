@@ -1,11 +1,10 @@
 package com.github.ckuessner.encrdt.causality.impl
 
-import com.github.ckuessner.encrdt.causality.LamportClock
-import com.github.ckuessner.encrdt.causality.DotStore.Dot
-import Defs.{Id, Time}
 import com.github.ckuessner.encrdt.causality
-import com.github.ckuessner.encrdt.lattices.SemiLattice
+import com.github.ckuessner.encrdt.causality.Dot
+import com.github.ckuessner.encrdt.causality.impl.Defs.{Id, Time}
 import com.github.ckuessner.encrdt.lattices.GrowOnlyMapLattice.gMapLattice
+import com.github.ckuessner.encrdt.lattices.SemiLattice
 
 object Defs {
   type Id   = String
@@ -28,7 +27,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 
   def nextTime(replicaId: Id): Time = rangeAt(replicaId).next.getOrElse(0)
 
-  def nextDot(replicaId: Id): Dot = LamportClock(nextTime(replicaId), replicaId)
+  def nextDot(replicaId: Id): Dot = Dot(nextTime(replicaId), replicaId)
 
   def diff(extern: ArrayCausalContext): ArrayCausalContext =
     ArrayCausalContext(
@@ -72,17 +71,17 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
   def toSet: Set[Dot] =
-    internal.flatMap { case (key, tree) => tree.iterator.map(time => causality.LamportClock(time, key)) }.toSet
+    internal.flatMap { case (key, tree) => tree.iterator.map(time => causality.Dot(time, key)) }.toSet
 
   def max(replicaID: String): Option[Dot] =
-    internal.get(replicaID).flatMap(_.next.map(c => LamportClock(c - 1, replicaID)))
+    internal.get(replicaID).flatMap(_.next.map(c => Dot(c - 1, replicaID)))
 
   def decompose(exclude: Dot => Boolean): Iterable[ArrayCausalContext] =
     internal.flatMap { case (id, tree) =>
-      tree.iterator.map(time => causality.LamportClock(time, id)).filterNot(exclude).map(ArrayCausalContext.one)
+      tree.iterator.map(time => causality.Dot(time, id)).filterNot(exclude).map(ArrayCausalContext.one)
     }
   def forall(cond: Dot => Boolean): Boolean = internal.forall { case (id, tree) =>
-    tree.iterator.forall(time => cond(causality.LamportClock(time, id)))
+    tree.iterator.forall(time => cond(causality.Dot(time, id)))
   }
 
   def <=(other: ArrayCausalContext): Boolean = internal.forall { case (id, leftRange) =>
@@ -93,13 +92,13 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
 object ArrayCausalContext {
   def single(replicaId: Id, time: Long): ArrayCausalContext = empty.add(replicaId, time)
 
-  def single(lamportClock: LamportClock): ArrayCausalContext = empty.add(lamportClock.replicaId, lamportClock.time)
+  def single(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
   val empty: ArrayCausalContext = ArrayCausalContext(Map.empty)
 
   def one(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: SemiLattice[ArrayCausalContext] =
+  given contextLattice: SemiLattice[ArrayCausalContext] =
     (left: ArrayCausalContext, right: ArrayCausalContext) => {
       ArrayCausalContext(SemiLattice.merged(left.internal, right.internal))
     }

@@ -89,7 +89,7 @@ object DeltaAddWinsLastWriterWinsMap {
   def bottom[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMap.bottom[K, DotFun[(V, (Instant, String))]]
 
-  implicit def timestampedValueLattice[V]: SemiLattice[(V, (Instant, String))] = (left, right) => {
+  given timestampedValueLattice[V]: SemiLattice[(V, (Instant, String))] = (left, right) => {
     if (SemiLattice.merged(left._2, right._2) == left._2) left
     else right
   }

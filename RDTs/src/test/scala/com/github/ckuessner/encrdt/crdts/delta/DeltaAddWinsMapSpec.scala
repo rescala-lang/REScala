@@ -1,30 +1,27 @@
 package com.github.ckuessner.encrdt.crdts.delta
 
+import com.github.ckuessner.encrdt.causality.CausalContext.*
+import com.github.ckuessner.encrdt.causality.DotStore.{DotMap, DotSet}
 import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
-import com.github.ckuessner.encrdt.causality.DotStore.{Dot, DotMap, DotSet}
+import com.github.ckuessner.encrdt.causality.{CausalContext, Dot}
 import com.github.ckuessner.encrdt.crdts.DeltaAddWinsMap
-import DeltaAddWinsMap.DeltaAddWinsMapLattice
-import com.github.ckuessner.encrdt.causality.{CausalContext, LamportClock}
+import com.github.ckuessner.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers.*
 
 import scala.language.implicitConversions
 
 class DeltaAddWinsMapSpec extends AnyFlatSpec {
-  def dot(time: Long, replicaId: String): LamportClock = LamportClock(time, replicaId)
+  def dot(time: Long, replicaId: String): Dot = Dot(time, replicaId)
 
-  implicit def pairToDot(tuple: (String, Int)): Dot = dot(tuple._2, tuple._1)
+  given pairToDot: Conversion[(String, Int), Dot] = { case (s, i) => dot(i, s) }
 
-  import scala.language.implicitConversions
-
-  private implicit def setOfDotsToCausalContext(setOfDots: Set[LamportClock]): CausalContext = {
-    CausalContext(ArrayCausalContext.fromSet(setOfDots))
+  given convSetOfDotsToCausalContext: Conversion[Set[Dot], CausalContext] = dotSet => {
+    CausalContext(ArrayCausalContext.fromSet(dotSet))
   }
 
-  private implicit def setOfDotsToDotSet(setOfDots: Set[LamportClock]): DotSet = {
-    ArrayCausalContext.fromSet(setOfDots)
-  }
+  given setOfDotsToDotSet: Conversion[Set[Dot], DotSet] = ArrayCausalContext.fromSet(_)
 
   "Lattice" should "merge if empty" in {
     SemiLattice.merged(

@@ -1,8 +1,10 @@
 package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.causality.DotStore
+import com.github.ckuessner.encrdt.causality.DotStore.*
 import com.github.ckuessner.encrdt.lattices.Causal
-import DotStore._
+
+import scala.language.implicitConversions
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {

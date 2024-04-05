@@ -1,11 +1,8 @@
 package com.github.ckuessner.encrdt.causality.impl
 
-import com.github.ckuessner.encrdt.causality.impl.ArrayRanges
 import com.github.ckuessner.encrdt.causality.impl.Defs.Time
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers._
-
-import scala.language.implicitConversions
 
 class ArrayRangesTest extends AnyFlatSpec {
 
@@ -62,7 +59,8 @@ class ArrayRangesTest extends AnyFlatSpec {
     (right `intersect` left) shouldEqual ArrayRanges.empty
   }
 
-  private implicit def iteratorConv(range: Iterator[Int]): Iterator[Time] = range.map(i => i)
+  import scala.language.implicitConversions
+  private given iteratorConv: Conversion[Iterator[Int], Iterator[Time]] = _.map(i => i)
 
   "from" should "work" in {
     ArrayRanges.from(Seq[Time](1, 2, 3).iterator) shouldEqual ArrayRanges(Seq((1, 4)))
