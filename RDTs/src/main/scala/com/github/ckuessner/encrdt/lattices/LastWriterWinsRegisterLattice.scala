@@ -15,23 +15,19 @@ package com.github.ckuessner.encrdt.lattices
 case class LastWriterWinsRegisterLattice[T, O](value: T, timestamp: O)
 
 object LastWriterWinsRegisterLattice {
-  implicit def LWWRegLattice[T, O <: Ordered[O]]: SemiLattice[LastWriterWinsRegisterLattice[T, O]] = { (left, right) =>
-    {
-      if (left == right) left
-      else if (left.timestamp > right.timestamp) left
-      else if (left.timestamp < right.timestamp) right
-      else throw new IllegalArgumentException(s"$left and $right can't be ordered")
-    }
+  given LWWRegLattice[T, O <: Ordered[O]]: SemiLattice[LastWriterWinsRegisterLattice[T, O]] = (left, right) => {
+    if (left == right) left
+    else if (left.timestamp > right.timestamp) left
+    else if (left.timestamp < right.timestamp) right
+    else throw new IllegalArgumentException(s"$left and $right can't be ordered")
   }
 
-  implicit def LWWRegLattice[T, O](implicit ord: Ordering[O]): SemiLattice[LastWriterWinsRegisterLattice[T, O]] = {
-    (left, right) =>
-      {
-        val order = ord.compare(left.timestamp, right.timestamp)
-        if (left == right) left
-        else if (order > 0) left
-        else if (order < 0) right
-        else throw new IllegalArgumentException(s"$left and $right can't be ordered")
-      }
-  }
+  given LWWRegLatticeWithOrdering[T, O](using ord: Ordering[O]): SemiLattice[LastWriterWinsRegisterLattice[T, O]] =
+    (left, right) => {
+      val order = ord.compare(left.timestamp, right.timestamp)
+      if (left == right) left
+      else if (order > 0) left
+      else if (order < 0) right
+      else throw new IllegalArgumentException(s"$left and $right can't be ordered")
+    }
 }

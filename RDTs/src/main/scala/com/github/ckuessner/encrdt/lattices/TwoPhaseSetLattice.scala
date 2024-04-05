@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.lattices
 
-case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Set[T] = Set[T]()) {
+case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set.empty[T], removedElems: Set[T] = Set.empty[T]) {
   def values: Set[T] = addedElems -- removedElems
 
   def added(element: T): TwoPhaseSetLattice[T] = copy(addedElems = addedElems + element)
@@ -13,7 +13,7 @@ case class TwoPhaseSetLattice[T](addedElems: Set[T] = Set[T](), removedElems: Se
 }
 
 object TwoPhaseSetLattice {
-  implicit def TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetLattice[T]] =
+  given TwoPhaseSetSemiLattice[T]: SemiLattice[TwoPhaseSetLattice[T]] =
     (left: TwoPhaseSetLattice[T], right: TwoPhaseSetLattice[T]) =>
       TwoPhaseSetLattice(left.addedElems ++ right.addedElems, left.removedElems ++ right.removedElems)
 }

@@ -5,8 +5,8 @@ case class GrowOnlySetLattice[T](values: Set[T]) {
 }
 
 object GrowOnlySetLattice {
-  implicit def lattice[T]: SemiLattice[GrowOnlySetLattice[T]] = (l, r) => GrowOnlySetLattice(l.values ++ r.values)
+  given lattice[T]: SemiLattice[GrowOnlySetLattice[T]] = (l, r) => GrowOnlySetLattice(l.values ++ r.values)
 
-  implicit def SetLattice[T]: SemiLattice[Set[T]] =
+  given SetLattice[T]: SemiLattice[Set[T]] =
     (left: Set[T], right: Set[T]) => left ++ right
 }

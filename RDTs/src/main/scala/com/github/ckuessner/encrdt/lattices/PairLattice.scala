@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.lattices
 
 object PairLattice {
-  def pairLattice[A: SemiLattice, B: SemiLattice]: SemiLattice[(A, B)] =
+  given pairLattice[A: SemiLattice, B: SemiLattice]: SemiLattice[(A, B)] =
     (left, right) =>
       (
         SemiLattice[A].merged(left._1, right._1),

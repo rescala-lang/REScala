@@ -5,6 +5,7 @@ import com.github.ckuessner.encrdt.causality.DotStore.Dot
 import Defs.{Id, Time}
 import com.github.ckuessner.encrdt.causality
 import com.github.ckuessner.encrdt.lattices.SemiLattice
+import com.github.ckuessner.encrdt.lattices.GrowOnlyMapLattice.gMapLattice
 
 object Defs {
   type Id   = String

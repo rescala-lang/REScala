@@ -20,7 +20,7 @@ case class CounterLattice(positiveCounts: Map[String, Int] = Map(), negativeCoun
 }
 
 object CounterLattice {
-  implicit val semiLattice: SemiLattice[CounterLattice] = (left: CounterLattice, right: CounterLattice) =>
+  given semiLattice: SemiLattice[CounterLattice] = (left: CounterLattice, right: CounterLattice) =>
     CounterLattice(
       max(left.positiveCounts, right.positiveCounts),
       max(left.negativeCounts, right.negativeCounts)

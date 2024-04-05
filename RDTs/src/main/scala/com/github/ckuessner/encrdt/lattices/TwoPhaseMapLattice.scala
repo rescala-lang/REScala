@@ -40,7 +40,7 @@ object TwoPhaseMapLattice {
 
   import OptionLattice.optLattice
 
-  def twoPhaseMapLattice[K, V: SemiLattice]: SemiLattice[TwoPhaseMapLattice[K, V]] = (l, r) => {
+  given twoPhaseMapLattice[K, V: SemiLattice]: SemiLattice[TwoPhaseMapLattice[K, V]] = (l, r) => {
     val mergedKeys = SemiLattice.merged(l.keys, r.keys)
     val mergedMap = mergedKeys.values.map { (key: K) =>
       key -> SemiLattice.merged(l.get(key), r.get(key)).get

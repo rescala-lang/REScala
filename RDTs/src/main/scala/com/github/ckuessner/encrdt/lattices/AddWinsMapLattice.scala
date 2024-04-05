@@ -23,7 +23,7 @@ object AddWinsMapLattice {
 
   import OptionLattice.optLattice
 
-  implicit def AddWinsLattice[K, V: SemiLattice]: SemiLattice[AddWinsMapLattice[K, V]] =
+  given AddWinsLattice[K, V: SemiLattice]: SemiLattice[AddWinsMapLattice[K, V]] =
     (left: AddWinsMapLattice[K, V], right: AddWinsMapLattice[K, V]) => {
       val keys = SemiLattice.merged(left.keys, right.keys)
       val mappings = keys.values.map { key =>

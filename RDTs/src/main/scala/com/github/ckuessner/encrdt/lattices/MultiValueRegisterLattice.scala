@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 case class MultiValueRegisterLattice[T](versions: Map[VectorClock, T])
 
 object MultiValueRegisterLattice {
-  implicit def MVRegLattice[T](implicit pOrd: PartialOrdering[VectorClock]): SemiLattice[MultiValueRegisterLattice[T]] =
+  given MVRegLattice[T](using pOrd: PartialOrdering[VectorClock]): SemiLattice[MultiValueRegisterLattice[T]] =
     (left, right) => {
       val both   = left.versions ++ right.versions
       val toKeep = parallelVersionSubset(both.keySet.toList, List.empty)
@@ -14,7 +14,7 @@ object MultiValueRegisterLattice {
     }
 
   @tailrec
-  private def parallelVersionSubset[T](list: List[T], acc: List[T])(implicit pOrd: PartialOrdering[T]): List[T] =
+  private def parallelVersionSubset[T](list: List[T], acc: List[T])(using pOrd: PartialOrdering[T]): List[T] =
     list match {
       case head :: Nil => head :: acc
       case head :: tail =>

@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.lattices
 
+import com.github.ckuessner.encrdt.causality.DotStore.*
 import com.github.ckuessner.encrdt.causality.{CausalContext, DotStore}
-import com.github.ckuessner.encrdt.causality.DotStore._
 
 case class Causal[D](dotStore: D, causalContext: CausalContext)
 
@@ -10,7 +10,7 @@ object Causal {
   def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, CausalContext())
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  implicit def CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
+  given CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
     val inBoth     = left.dotStore `intersect` right.dotStore
     val newInLeft  = left.dotStore `subtract` right.causalContext.acc
     val newInRight = right.dotStore `subtract` left.causalContext.acc
@@ -23,7 +23,7 @@ object Causal {
   //                       {(d, v) ∈ m  | d ∉ c'} ∪
   //                       {(d, v) ∈ m' | d ∉ c},
   //                      c ∪ c')
-  implicit def CausalWithDotFunLattice[V: SemiLattice]: SemiLattice[Causal[DotFun[V]]] = (left, right) => {
+  given CausalWithDotFunLattice[V: SemiLattice]: SemiLattice[Causal[DotFun[V]]] = (left, right) => {
     Causal(
       (left.dotStore.keySet & right.dotStore.keySet map { (dot: Dot) =>
         (dot, SemiLattice.merged(left.dotStore(dot), right.dotStore(dot)))
@@ -36,9 +36,7 @@ object Causal {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  implicit def CausalWithDotMapLattice[K, V: DotStore](implicit
-      vSemiLattice: SemiLattice[Causal[V]]
-  ): SemiLattice[Causal[DotMap[K, V]]] =
+  given CausalWithDotMapLattice[K, V: DotStore](using SemiLattice[Causal[V]]): SemiLattice[Causal[DotMap[K, V]]] =
     (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
       Causal(
         ((left.dotStore.keySet union right.dotStore.keySet) map { key =>

@@ -26,7 +26,7 @@ case class AddWinsSetLattice[T](
 
 object AddWinsSetLattice {
   // See: https://arxiv.org/pdf/1210.3368.pdf - An Optimized Conflict-free Replicated Set
-  implicit def AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
+  given AddWinsSetSemiLattice[T]: SemiLattice[AddWinsSetLattice[T]] =
     (left: AddWinsSetLattice[T], right: AddWinsSetLattice[T]) => {
       val commonElems = left.elements & right.elements
 

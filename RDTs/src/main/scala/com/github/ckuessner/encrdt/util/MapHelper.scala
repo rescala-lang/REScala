@@ -15,7 +15,7 @@ object MapHelper {
     * @return
     *   Map containing all keys of both maps with maximum value per key
     */
-  def max[K, V](a: Map[K, V], b: Map[K, V])(implicit num: Numeric[V]): Map[K, V] =
+  def max[K, V](a: Map[K, V], b: Map[K, V])(using num: Numeric[V]): Map[K, V] =
     (a.keySet ++ b.keySet)
       .map(key => key -> num.max(a.getOrElse(key, num.zero), b.getOrElse(key, num.zero)))
       .toMap
