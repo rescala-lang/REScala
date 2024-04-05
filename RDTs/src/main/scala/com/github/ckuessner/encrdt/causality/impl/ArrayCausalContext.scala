@@ -45,7 +45,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
       internal.flatMap { case (id, ranges) =>
         other.internal.get(id) match {
           case Some(otherRanges) =>
-            val intersection = ranges intersect otherRanges
+            val intersection = ranges.intersect(otherRanges)
             if (intersection.isEmpty) None
             else Some(id -> intersection)
           case None => None
@@ -60,7 +60,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
       internal
         .map { case left @ (id, leftRanges) =>
           other.internal.get(id) match {
-            case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
+            case Some(rightRanges) => id -> leftRanges.subtract(rightRanges)
             case None              => left
           }
         }
@@ -98,11 +98,10 @@ object ArrayCausalContext {
 
   def one(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
-  implicit val contextLattice: SemiLattice[ArrayCausalContext] = new SemiLattice[ArrayCausalContext] {
-    override def merged(left: ArrayCausalContext, right: ArrayCausalContext): ArrayCausalContext = {
+  implicit val contextLattice: SemiLattice[ArrayCausalContext] =
+    (left: ArrayCausalContext, right: ArrayCausalContext) => {
       ArrayCausalContext(SemiLattice.merged(left.internal, right.internal))
     }
-  }
 
   def fromSet(dots: Set[Dot]): ArrayCausalContext = ArrayCausalContext(
     dots.groupBy(_.replicaId).map { case (key, times) =>

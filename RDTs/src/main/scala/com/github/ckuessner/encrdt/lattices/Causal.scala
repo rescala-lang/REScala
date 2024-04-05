@@ -11,12 +11,12 @@ object Causal {
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   implicit def CausalWithDotSetLattice: SemiLattice[Causal[DotSet]] = (left, right) => {
-    val inBoth     = left.dotStore intersect right.dotStore
-    val newInLeft  = left.dotStore subtract right.causalContext.acc
-    val newInRight = right.dotStore subtract left.causalContext.acc
+    val inBoth     = left.dotStore `intersect` right.dotStore
+    val newInLeft  = left.dotStore `subtract` right.causalContext.acc
+    val newInRight = right.dotStore `subtract` left.causalContext.acc
 
     val mergedCausalContext = left.causalContext.merged(right.causalContext)
-    Causal(inBoth union newInLeft union newInRight, mergedCausalContext)
+    Causal(inBoth `union` newInLeft `union` newInRight, mergedCausalContext)
   }
 
   // (m, c) ⨆ (m', c') = ( {k -> m(k) ⨆ m'(k) | k ∈ dom m ∩ dom m'} ∪

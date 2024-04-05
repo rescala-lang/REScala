@@ -14,7 +14,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState])(implicit
 
   protected var stateStore: Set[EncryptedState] = initialStates
 
-  protected var versionVector: VectorClock = _
+  protected var versionVector: VectorClock = scala.compiletime.uninitialized
   versionVector = {
     if (initialStates.isEmpty) VectorClock()
     else initialStates.map(_.versionVector).reduce((l, r) => l.merged(r))

@@ -270,5 +270,5 @@ object ArrayRanges {
     ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  implicit val latticeInstance: SemiLattice[ArrayRanges] = _ merge _
+  implicit val latticeInstance: SemiLattice[ArrayRanges] = _ `merge` _
 }
