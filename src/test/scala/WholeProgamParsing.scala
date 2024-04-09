@@ -1,11 +1,15 @@
 package lore
-import munit.FunSuite
-import lore.ast._
-import io.circe.parser.decode
-import cats.parse
-import cats.implicits._
-import java.nio.charset.StandardCharsets
 import cats.data.NonEmptyList
+import cats.implicits.*
+import cats.parse
+import com.github.plokhotnyuk.jsoniter_scala.core.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import lore.ast.*
+import lore.ast.Codecs.given
+import munit.FunSuite
+
+import java.nio.charset.StandardCharsets
+import scala.util.{Failure, Success, Try}
 
 class WholeProgramParsing extends FunSuite {
   def readResource(name: String): String =

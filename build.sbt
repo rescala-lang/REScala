@@ -9,6 +9,10 @@ lazy val root = (project in file("."))
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
     libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
+    libraryDependencies += "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core"   % "2.28.4",
+    // Use the "provided" scope instead when the "compile-internal" scope is not supported
+    libraryDependencies += "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4" % "compile-internal",
+    libraryDependencies += "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-macros" % "2.28.4" % "test",
     // libraryDependencies += ("org.scalameta" %% "scalafmt-core" % "3.7.4").cross(
     //   CrossVersion.for3Use2_13
     // ),

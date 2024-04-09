@@ -2,8 +2,8 @@ package lore.ast
 
 import cats.data.NonEmptyList
 import cats.parse.Caret
-import io.circe.generic.auto.*
-import io.circe.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 
 import java.nio.file.Path
 import scala.util.Try
@@ -17,6 +17,49 @@ case object Inline extends SourceType
 case class FromFile(path: Path) extends SourceType
 
 case class SourcePos(start: Caret, end: Caret, _type: SourceType = Unknown)
+
+object Codecs {
+  private val config = CodecMakerConfig
+    .withAllowRecursiveTypes(true)
+    .withDiscriminatorFieldName(None)
+    .withCirceLikeObjectEncoding(true)
+  given JsonValueCodec[Term] = JsonCodecMaker.make(
+    CodecMakerConfig
+      .withAllowRecursiveTypes(true)
+      .withDiscriminatorFieldName(None)
+      .withCirceLikeObjectEncoding(true)
+  )
+
+  given JsonValueCodec[List[Term]] = JsonCodecMaker.make
+
+  given [A](using
+      listCodec: JsonValueCodec[List[A]]
+  ): JsonValueCodec[NonEmptyList[A]] with {
+    def decodeValue(in: JsonReader, default: NonEmptyList[A]) =
+      NonEmptyList.fromList(listCodec.decodeValue(in, List())) match {
+        case Some(value) => value
+        case None        => default
+      }
+
+    def encodeValue(l: NonEmptyList[A], out: JsonWriter) =
+      listCodec.encodeValue(l.toList, out)
+
+    override def nullValue: NonEmptyList[A] = null
+  }
+
+  given JsonValueCodec[Path] with {
+    def decodeValue(in: JsonReader, default: Path) = Try(
+      Path.of(in.readString(""))
+    ) match {
+      case Failure(exception) => default
+      case Success(value)     => value
+    }
+
+    def encodeValue(p: Path, out: JsonWriter) = out.writeVal(p.toString)
+
+    override def nullValue: Path = null
+  }
+}
 
 /** The abstract syntax of the LoRe language.
  */
