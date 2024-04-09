@@ -5,10 +5,19 @@ import scala.concurrent.Future
 
 import java.nio.file.{Files, Paths}
 
-import io.bullet.borer.Cbor
+import io.bullet.borer.{Cbor, Json, Codec}
 
 
 @main def run(): Unit = {
+
+  val bar = Packet.Error(reason = "abc")
+
+  val encoded_bar = Json.encode(bar).toByteArray
+
+  val decode_bar = Json.decode(encoded_bar).to[Packet].value
+
+  println(s"${Json.encode(decode_bar).toUtf8String}")
+
   
   val bundle_bytes = Files.readAllBytes(Paths.get("simple_bundle"))
 
@@ -43,7 +52,7 @@ import io.bullet.borer.Cbor
   }
 
 
-  val own_bundle: Bundle = Creation.createBundleUTF8("hey there", "dtn://global/~crdt/app1", "dtn://global/~crdt/app1")
+  val own_bundle: Bundle = BundleCreation.createBundleUTF8("hey there", "dtn://global/~crdt/app1", "dtn://global/~crdt/app1")
 
   print("\n\n")
   print(own_bundle)

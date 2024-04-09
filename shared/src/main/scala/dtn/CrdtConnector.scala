@@ -13,7 +13,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray
 object CrdtConnector {
   private val cRDTGroupEndpoint: String = "dtn://global/~crdt/app1"
 
-  private var ws: Option[Dtn7RsWsConn] = None
+  private var ws: Option[WSEndpointClient] = None
 
   private var onChangedUpdateFunc: Array[Byte] => Unit = x => {}
   
@@ -29,7 +29,7 @@ object CrdtConnector {
       })
     }
     
-    Dtn7RsWsConn.create(port).flatMap(conn => {
+    WSEndpointClient.create(port).flatMap(conn => {
       ws = Some(conn)
       ws.get.registerEndpointAndSubscribe(cRDTGroupEndpoint)
     }).onComplete(_ => receiveBundle())
@@ -39,7 +39,7 @@ object CrdtConnector {
     // send signal updates through the dtn network
     signal observe ((x: A) => {
       val payload: Array[Byte] = writeToArray(x)
-      val bundle: Bundle = Creation.createBundle(
+      val bundle: Bundle = BundleCreation.createBundle(
         data = payload,
         full_destination_uri = cRDTGroupEndpoint,
         full_source_url = cRDTGroupEndpoint

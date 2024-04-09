@@ -1,6 +1,6 @@
 package dtn
 
-object Creation {
+object BundleCreation {
   def createBundle(data: Array[Byte], full_destination_uri: String, full_source_url: String, lifetime: Int = 3600 * 24 * 1000): Bundle = {
     val primary_block: PrimaryBlock = PrimaryBlock(
       version = 7,
