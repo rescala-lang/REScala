@@ -25,6 +25,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   encryptedTodo,
   replicationExamples.js,
   replicationExamples.jvm,
+  lore,
 )
 
 lazy val reactivesAggregate =
