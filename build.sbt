@@ -1,4 +1,4 @@
-ThisBuild / scalaVersion := "3.4.0"
+ThisBuild / scalaVersion := "3.4.1"
 ThisBuild / scalacOptions ++= Seq(
   "-feature",
   "-release:21",
@@ -14,8 +14,8 @@ lazy val root = project
     name := "CRDT ACLs",
     libraryDependencies ++= Seq(
       "org.scalameta"    %% "munit"                        % "1.0.0-M11" % Test,
-      "org.bouncycastle"  % "bcprov-jdk18on"               % "1.77",
-      "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.77",
+      "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78",
+      "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78",
       "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
       "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
       "org.slf4j"         % "slf4j-jdk14"                  % "2.0.12"
