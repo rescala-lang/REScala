@@ -129,6 +129,44 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
+
+
+val circeVersion = "0.14.5"
+
+lazy val lore = (project in file("Modules/Lore"))
+  .settings(
+    scala3defaults,
+    libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
+    libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
+    libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
+    // libraryDependencies += ("org.scalameta" %% "scalafmt-core" % "3.7.4").cross(
+    //   CrossVersion.for3Use2_13
+    // ),
+    libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.9",
+    libraryDependencies += "io.circe" %% "circe-core" % circeVersion,
+    libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
+    libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
+    // libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0").cross(
+    //   CrossVersion.for3Use2_13 // needed because scalafmt is 2.13
+    // ),
+    libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0"),
+    // optics dependencies
+    libraryDependencies ++= Seq(
+      "dev.optics" %% "monocle-core" % "3.2.0"
+    ),
+    // test dependencies
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+    testFrameworks += new TestFramework("munit.Framework"),
+    // compiler options
+    scalacOptions ++= List(
+      "-Xmax-inlines:200" // needed for circe generic
+    ),
+  )
+  .dependsOn(reactives.jvm)
+  .settings(Compile / mainClass := Some("lore.Compiler"))
+
+
+
 // =====================================================================================
 // evaluation and experimental
 
