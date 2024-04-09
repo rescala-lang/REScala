@@ -1,0 +1,10 @@
+*.class
+*.log
+*.tasty
+target
+.vscode
+.metals
+.bsp
+.bloop
+metals.sbt
+tmp

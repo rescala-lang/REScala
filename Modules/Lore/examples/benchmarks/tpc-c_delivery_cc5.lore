@@ -1,0 +1,56 @@
+//> viperimport ../tpc-c/deps/tpc-c-header.vpr
+
+// graph definition
+val warehouses: Source[AWSet[Warehouse]]  = Source(AWSet()) 
+val districts: Source[AWSet[District]]    = Source(AWSet()) 
+val customers: Source[AWSet[Customer]]    = Source(AWSet())
+val orders: Source[AWSet[Order]]          = Source(AWSet())
+val newOrders: Source[AWSet[NewOrder]]    = Source(AWSet())
+val orderLines: Source[AWSet[OrderLine]]  = Source(AWSet())
+val items: Source[AWSet[Item]]            = Source(AWSet())
+val stocks: Source[AWSet[Stock]]          = Source(AWSet())
+val paymentHistory: Source[AWSet[History]]     = Source(AWSet())
+
+
+val warehouseYTD: Derived[Map[Warehouse, YTD]] = Derived {
+	mapDistrictYTD(districtsPerWarehouse(warehouses,districts)).toMap()
+}
+val districtYTD: Derived[Map[District, YTD]] = Derived{
+    paymentsPerDistrict(districts,paymentHistory).map(sum).toMap()
+}
+val customerYTD: Derived[Map[Customer, YTD]] = Derived{
+    paymentsPerCustomer(customers, paymentHistory).map(sum).toMap()
+}
+val customerBalance: Derived[Map[Customer, Balance]] = Derived {
+ 	YTDMinusSum(customerYTD, sumOfOrdersPerCustomer(customers, oderLines)).toMap()
+}
+val nextOrderId: Derived[Map[District, OrderID]] = Derived{
+	mapPlusOne(highestOrderIDperDistrict(districts, oders)).toMap()
+}
+val orderLineCount: Derived[Map[Order, Int]] = Derived{
+    orderLinesPerOrder(orders, orderLines).map(length).toMap()
+}
+
+// invariants
+// cc5
+invariant forall o: Order :: orders.contains(o) ==> 
+    (get_o_c_id(o) == 0 <==> is_new_order(toSet(newOrders), o))
+
+val delivery: Unit = Interaction[(AWSet[NewOrder], AWSet[Order], AWSet[OrderLine])][Id]
+    .modifies(newOrders, orders, orderLines)
+    .executes{
+        (no, o, ol) => w_id => {
+            // get districts of this warehouse
+            val whDistricts: Set[District] = getDistrictsByWID(toSet(districts), w_id)
+            (
+                // ship newest order per district
+                shipNewOrders(whDistricts, o, no),
+
+                // set carrier id in orders
+                setCarrierIds(o, no),
+
+                // set delivery dates
+                setDeliveryDates(ol, o)
+            )
+        }
+    }

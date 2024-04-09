@@ -1,0 +1,45 @@
+import "helper_functions.vpr"
+
+// delivery
+function setCarrierIds(orders_: AWSet[Order], newOrders_: AWSet[NewOrder]): AWSet[Order]
+    // carrier ids are updated accordingly
+    ensures forall o: Order :: contains(result, o) ==>
+        (is_new_order(toSet(newOrders_), o) <==> get_o_c_id(o) == 0)
+    ensures |toSet(orders_)| == |toSet(result)|
+
+function setDeliveryDates(orderLines_: AWSet[OrderLine], orders_: AWSet[Order]): AWSet[OrderLine]
+    ensures |toSet(orderLines_)| == |toSet(result)|
+    ensures forall ol: OrderLine, o: Order :: contains(result, ol) && get_ol_o_num(ol) == get_o_num(o) ==>
+        (get_ol_del_date(ol) == 0 <==> get_o_c_id(o) == 0)
+
+function shipNewOrders(districts_: Set[District], orders_: AWSet[Order], newOrders_: AWSet[NewOrder]): AWSet[NewOrder]
+    ensures forall d: District :: !(d in districts_) ==> filterNewOrdersByDistrict(toSet(newOrders_), get_d_id(d)) == filterNewOrdersByDistrict(toSet(result), get_d_id(d))
+    ensures forall d: District :: d in districts_ ==> let d_id == (get_d_id(d)) in
+        maxNOrderNum(toSet(result), d_id) == maxNOrderNum(toSet(newOrders_), d_id) &&
+        minNOrderNum(toSet(result), d_id) == minNOrderNum(toSet(newOrders_), d_id) + 1 &&
+        countNewOrders(toSet(result), d_id) == countNewOrders(toSet(newOrders_), d_id) - 1
+
+// new order
+method processOrderLines(o_id: Int)
+returns (newOrderLines: Seq[OrderLine])
+ensures forall ol: OrderLine :: ol in newOrderLines ==> get_ol_del_date(ol) == 0 && get_ol_o_num(ol) == o_id
+
+function addAll(oldOrderLines: AWSet[OrderLine], newOrderLines: Seq[OrderLine]): AWSet[OrderLine]
+ensures toSet(result) == toSet(oldOrderLines) union seqToSet(newOrderLines)
+
+function genOrder(orderNum: Int, d_id: Id, c_id: Int, oldOrders: AWSet[Order]): Order
+requires forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != orderNum
+ensures get_o_num(result) == orderNum
+ensures get_o_d_id(result) == d_id
+ensures get_o_c_id(result) == 0
+ensures forall o: Order :: contains(oldOrders, o) && get_o_d_id(o) == d_id ==> get_o_num(o) != get_o_num(result)
+
+function genNewOrder(orderNum: Int, d_id: Id): NewOrder
+ensures get_no_o_num(result) == orderNum
+ensures get_no_d_id(result) == d_id
+
+// payment
+function findCustomer(_customers: AWSet[Customer], c_id: Id, c_last: Option[String]): Customer
+ensures contains(_customers, result)
+
+function getId(customer: Customer): Id

@@ -1,0 +1,18 @@
+import "../../lib/crdts/aw_set.vpr"
+import "../../lib/basic_types.vpr"
+
+// custom types
+domain Appointment {
+  function get_start(a: Appointment): Int
+  function get_end(a: Appointment): Int
+  function days(a: Appointment) : Int
+
+  axiom days_ax{
+    forall a:Appointment :: 
+      { days(a) }
+        days(a) > 0
+  }
+}
+
+function sumDays(appointments: Set[Appointment]): Int
+ensures |appointments| == result

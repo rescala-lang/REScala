@@ -1,0 +1,46 @@
+//> viperimport deps/calendar_header.vpr
+
+type Calendar = AWSet[Appointment]
+val work: Source[Calendar] = Source(AWSet())     
+val vacation: Source[Calendar] = Source(AWSet()) 
+
+val all_appointments: Derived[Set[Appointment]]   = Derived{ work.toSet.union(vacation.toSet) }    
+val remaining_vacation: Derived[Int] = Derived{ 30 - sumDays(vacation.toSet) } 
+
+val add_appointment : Unit = Interaction[Calendar][Appointment] 
+  .requires{ cal => a => get_start(a) < get_end(a) } 
+  .requires{ cal => a => !(a in cal.toSet)}
+  .executes{ cal => a => cal.add(a) } 
+  .ensures { cal => a => a in cal.toSet } 
+val add_vacation : Unit = add_appointment.modifies(vacation)
+  .requires{ cal => a => remaining_vacation - a.days >= 0}
+val add_work     : Unit = add_appointment.modifies(work) 
+
+val remove_appointment: Unit = Interaction[Calendar][Appointment]
+  .requires{ cal => a => a in cal.toSet}
+  .executes{ cal => a => cal.remove(a)}
+  .ensures{ cal => a => !(a in cal.toSet)}
+  .ensures{ cal => a => cal.toSet == old(cal.toSet).setminus(Set(a))}
+  .ensures{ cal => a => sumDays(cal.toSet) == old(sumDays(cal.toSet)) - sumDays(Set(a))}
+val remove_vacation : Unit = remove_appointment.modifies(vacation)
+val remove_work     : Unit = remove_appointment.modifies(work) 
+
+val change_appointment: Unit = Interaction[Calendar][(Appointment, Appointment)]
+  .requires{ cal => (oldApp, newApp) => get_start(newApp) < get_end(newApp) } 
+  .requires{ cal => (oldApp, newApp) => oldApp in cal.toSet}
+  .requires{ cal => (oldApp, newApp) => !(newApp in cal.toSet)}
+  .executes{ cal => (oldApp, newApp) => cal.remove(oldApp).add(newApp)}
+  .ensures{ cal => (oldApp, newApp) => newApp in cal.toSet}
+  .ensures{ cal => (oldApp, newApp) => cal.toSet == old(cal.toSet.setminus(Set(oldApp)).union(Set(newApp)))}
+  .ensures{ cal => (oldApp, newApp) => !(oldApp in cal.toSet)}
+  .ensures{ cal => (oldApp, newApp) => size(cal.toSet) == old(size(cal.toSet))}
+val change_vacation : Unit = change_appointment.modifies(vacation)
+val change_work     : Unit = change_appointment.modifies(work) 
+
+UI.display(all_appointments, remaining_vacation) 
+UI.vacationDialog.onConfirm{a => add_vacation.apply(a)} 
+
+invariant forall a: Appointment ::
+  a in all_appointments ==> get_start(a) < get_end(a)
+
+invariant remaining_vacation >= 0

@@ -1,0 +1,16 @@
+domain String {
+}
+
+domain SetHelpers[A] {
+    function get1s(s: Set[A]): A
+
+    axiom get1sAx {
+        forall s: Set[A] :: {get1s(s)} |s| > 0 ==> get1s(s) in s
+    }
+
+    function seqToSet(s: Seq[A]): Set[A]
+
+    axiom seqToSetAx {
+        forall el: A, s: Seq[A] :: el in s <==> el in seqToSet(s)
+    }
+}
