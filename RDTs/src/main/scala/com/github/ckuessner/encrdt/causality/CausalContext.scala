@@ -3,7 +3,6 @@ package com.github.ckuessner.encrdt.causality
 import com.github.ckuessner.encrdt.causality.DotStore.DotSet
 import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
 
-// Can be optimized using Concise Version Vectors / Interval Version Vectors
 case class CausalContext(acc: ArrayCausalContext) {
   def clockOf(replicaId: String): Dot = acc.clockOf(replicaId).getOrElse(Dot(0, replicaId))
 
