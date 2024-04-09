@@ -1,2 +1,0 @@
-# force consistent linefeeds on .lore example files
-src/test/resources/*.lore text eol=lf
