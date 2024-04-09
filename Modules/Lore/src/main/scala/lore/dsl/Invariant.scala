@@ -1,7 +1,7 @@
 package lore.dsl
 
-import rescala.core.CreationTicket
-import rescala.default.*
+import reactives.core.CreationTicket
+import reactives.default.*
 
 import scala.quoted.*
 

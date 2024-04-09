@@ -1,7 +1,8 @@
 package lore.dsl
 
-import rescala.core.ReSource
-import rescala.default.BundleState
+import reactives.core.ReSource
+import reactives.operator.Interface.State as BundleState
+
 
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -9,7 +10,7 @@ def constructUnboundInteractionWithRequires[S <: Tuple, A](interaction: Expr[Unb
                                                   expr: Expr[(S, A) => Boolean])
                                                  (using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
@@ -18,7 +19,7 @@ def constructUnboundInteractionWithEnsures[S <: Tuple, A](interaction: Expr[Unbo
                                                  expr: Expr[(S, A) => Boolean])
                                                 (using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   $interaction.copy(ensures = $interaction.ensures :+ Ensures(inputs, fun, ${ showPredicateCode(expr) }))
 }

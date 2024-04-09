@@ -1,8 +1,8 @@
 package lore.dsl
 
 import lore.dsl.Ex
-import rescala.default.Var as Source
-import rescala.default.Signal as Derived
+import reactives.default.Var as Source
+import reactives.default.Signal as Derived
 
 object DSLTest {
   @main
@@ -18,7 +18,7 @@ object DSLTest {
     Invariant {
       b.value < 25
     }
-    
+
     val add10: BoundInteraction[Tuple1[Int], Tuple1[Source[Int]], Int] =
       Interaction[Int, Int]
         .requires[Int]((t, _) => t < 20)

@@ -1,7 +1,7 @@
 package lore.dsl
 
 import lore.dsl.*
-import rescala.default.{Var as Source, *}
+import reactives.default.{Var as Source, *}
 
 import scala.annotation.targetName
 
@@ -138,5 +138,5 @@ implicit object Ex {
     BoundInteraction[(T1, T2, T3, T4, T5), (Source[T1], Source[T2], Source[T3], Source[T4], Source[T5]), A] =
       BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4, source5))
   }
-  
+
 }

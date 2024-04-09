@@ -1,7 +1,9 @@
 package lore.dsl
 
-import rescala.core.ReSource
-import rescala.default.*
+import reactives.core.ReSource
+import reactives.default.*
+import reactives.operator.Interface.State as BundleState
+
 
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -9,7 +11,7 @@ def constructInteractionWithModifiesWithRequires[ST <: Tuple, S <: Tuple, A](int
                                                            expr: Expr[(ST, A) => Boolean])
                                                           (using Quotes, Type[ST], Type[S], Type[A]): Expr[InteractionWithModifies[ST, S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
@@ -18,7 +20,7 @@ def constructInteractionWithModifiesWithEnsures[ST <: Tuple, S <: Tuple, A](inte
                                                           expr: Expr[(ST, A) => Boolean])
                                                          (using Quotes, Type[ST], Type[S], Type[A]): Expr[InteractionWithModifies[ST, S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   val newEns = Ensures(inputs, fun, ${ showPredicateCode(expr) })
 

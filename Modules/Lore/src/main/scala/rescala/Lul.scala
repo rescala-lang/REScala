@@ -1,8 +1,10 @@
-package rescala
+package reactives
 
-import rescala.core.{AdmissionTicket, ReevTicket, StaticTicket}
-import rescala.default.*
-import rescala.scheduler.Twoversion
+import reactives.core.{AdmissionTicket, ReevTicket, StaticTicket}
+import reactives.default.*
+import reactives.scheduler.Twoversion
+import reactives.operator.Interface.State as BundleState
+
 
 package object Lul extends Twoversion {
   def dynamicTicket(implicit at: AdmissionTicket[BundleState]): StaticTicket[BundleState] =

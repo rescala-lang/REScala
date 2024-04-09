@@ -1,8 +1,10 @@
 package lore.dsl
 
-import rescala.Lul.dynamicTicket
-import rescala.core.ReSource
-import rescala.default.*
+import reactives.Lul.dynamicTicket
+import reactives.core.ReSource
+import reactives.default.*
+import reactives.operator.Interface.State as BundleState
+
 
 import scala.quoted.{Expr, Quotes, Type}
 import scala.reflect.ClassTag
@@ -11,7 +13,7 @@ def constructBoundInteractionWithRequires[ST <: Tuple, S <: Tuple, A](interactio
                                                                       expr: Expr[(ST, A) => Boolean])
                                                                      (using Quotes, Type[ST], Type[S], Type[A]): Expr[BoundInteraction[ST, S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
@@ -20,7 +22,7 @@ def constructBoundInteractionWithEnsures[ST <: Tuple, S <: Tuple, A](interaction
                                                                      expr: Expr[(ST, A) => Boolean])
                                                                     (using Quotes, Type[ST], Type[S], Type[A]): Expr[BoundInteraction[ST, S, A]] = '{
   val (inputs, fun, isStatic) =
-    rescala.macros.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], rescala.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[(ST, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
 
   $interaction.copy(ensures = $interaction.ensures :+ Ensures(inputs, fun, ${ showPredicateCode(expr) }))
 }
@@ -63,7 +65,9 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
       }
 
       modifies.zip(res).asInstanceOf[Seq[(Var[Any], Any)]].map { case (source, v) => source.set(v) }
+      ()
     }
+
   }
 
 }

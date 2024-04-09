@@ -1,7 +1,8 @@
 package lore.dsl
 
-import rescala.core.{AdmissionTicket, ReSource, StaticTicket}
-import rescala.default.*
+import reactives.core.{AdmissionTicket, ReSource, StaticTicket}
+import reactives.default.*
+import reactives.operator.Interface.State as BundleState
 
 import scala.quoted.*
 
