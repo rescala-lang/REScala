@@ -1,6 +1,18 @@
 package com.github.ckuessner.ardt.base
 
 object StandardLibrary:
+
+  // Option[T] with Some > None
+  object OptionLattice:
+    // TODO: This can also be derived, using the sum type Lattice
+    given lattice[T: Lattice]: Lattice[Option[T]] =
+      case (l, None)                    => l
+      case (None, r)                    => r
+      case (Some(lInner), Some(rInner)) => Some(Lattice.merge(lInner, rInner))
+
+    given bottom[Nothing]: Bottom[Option[Nothing]] with
+      override val empty: Option[Nothing] = None
+
   // Set[T] can be treated as a grow only set
   object GrowOnlySet:
     object mutators:
