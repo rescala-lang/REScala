@@ -139,4 +139,17 @@ implicit object Ex {
       BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4, source5))
   }
 
+  extension (left: Boolean) {
+    infix def implies(right: Boolean): Boolean = !left || right
+    
+    @targetName("impliesOp")
+    def ==>(right: Boolean): Boolean = !left || right
+
+    infix def equiv(right: Boolean): Boolean = left == right
+    
+    @targetName("equivOP")
+    def <==>(right: Boolean): Boolean = left == right
+  }
+  inline def assume(inline expr: Boolean): Unit = {}
+
 }
