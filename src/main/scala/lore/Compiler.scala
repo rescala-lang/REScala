@@ -82,7 +82,7 @@ object Compiler extends IOApp {
       ast <- Parser.parse(program) match {
         case Left(e) =>
           IO.raiseError(Parser.ParsingException(e.show))
-        case Right(a) => IO(a)
+        case Right(a) => IO.pure(a)
       }
       // perform requested subcommand
       result <-

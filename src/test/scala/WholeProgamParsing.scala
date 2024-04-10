@@ -42,17 +42,16 @@ class WholeProgramParsing extends FunSuite {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
-        // import io.circe.syntax.*
-        // import java.nio.file.{Files, Path}
-        // Files.write(
-        //   Path.of("src/test/resources/viperimport.ast"),
-        //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
-        // )
-        decode[NonEmptyList[Term]](astStr) match {
+//         import java.nio.file.{Files, Path}
+//         Files.write(
+//           Path.of("src/test/resources/viperimport.ast"),
+//           writeToString(parsed).getBytes(StandardCharsets.UTF_8)
+//         )
+        Try(readFromString[NonEmptyList[Term]](astStr)) match {
           // check if AST matches expectation
-          case Right(ast) =>
+          case Success(ast) =>
             assertEquals(parsed, ast);
-          case Left(err) => fail(err.show)
+          case Failure(err) => fail(err.toString)
         }
     }
   }
@@ -64,18 +63,16 @@ class WholeProgramParsing extends FunSuite {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
-        // import io.circe.syntax.*
-        // import java.nio.file.{Files, Path}
-        // Files.write(
-        //   Path.of("src/test/resources/calendar_new.ast"),
-        //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
-        // )
-        decode[NonEmptyList[Term]](astStr) match {
+//         import java.nio.file.{Files, Path}
+//         Files.write(
+//           Path.of("src/test/resources/calendar_new.ast"),
+//           writeToString(parsed).getBytes(StandardCharsets.UTF_8)
+//         )
+        Try(readFromString[NonEmptyList[Term]](astStr)) match {
           // check if AST matches expectation
-          case Right(ast) =>
+          case Success(ast) =>
             assertEquals(parsed, ast);
-
-          case Left(err) => fail(err.show)
+          case Failure(err) => fail(err.toString)
         }
     }
   }
@@ -87,16 +84,17 @@ class WholeProgramParsing extends FunSuite {
       case Left(e)       => fail(e.show) // parsing failure
       case Right(parsed) =>
         // uncomment when AST format changes
-        // Files.write(
-        //   Path.of("examples/calendar_advanced.ast"),
-        //   parsed.asJson.toString.getBytes(StandardCharsets.UTF_8)
-        // )
-        decode[NonEmptyList[Term]](astStr) match {
+//        import java.nio.file.{Files, Path}
+//        Files.write(
+//          Path.of("src/test/resources/calendar_advanced.ast"),
+//          writeToArray(parsed)
+//          //writeToString(parsed).getBytes(StandardCharsets.UTF_8)
+//        )
+        Try(readFromString[NonEmptyList[Term]](astStr)) match {
           // check if AST matches expectation
-          case Right(ast) =>
+          case Success(ast) =>
             assertEquals(parsed, ast);
-
-          case Left(err) => fail(err.show)
+          case Failure(err) => fail(err.toString)
         }
     }
   }
