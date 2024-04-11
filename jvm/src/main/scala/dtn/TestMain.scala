@@ -9,6 +9,7 @@ import io.bullet.borer.{Cbor, Json, Codec}
 
 
 @main def run(): Unit = {
+  /*
 
   val bar = Packet.Error(reason = "abc")
 
@@ -56,6 +57,23 @@ import io.bullet.borer.{Cbor, Json, Codec}
 
   print("\n\n")
   print(own_bundle)
+
+  */
+
+  WSEroutingClient.create(3000).map(conn =>
+
+    def flush_receive(): Future[Unit] = {
+      conn.receivePacket().flatMap(packet => {
+        println(s"received packet: $packet")
+        flush_receive()
+      })
+    }
+    flush_receive().recover(throwable => println(throwable))
+  )
+
+  while (true) {
+    Thread.sleep(200)
+  }
   
 
   /*

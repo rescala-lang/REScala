@@ -7,6 +7,16 @@ import java.util.Base64
 import java.nio.charset.StandardCharsets
 import java.time.{ZonedDateTime, ZoneId, Duration}
 import java.time.temporal.{ChronoUnit, ChronoField}
+import io.bullet.borer.Reader
+import scala.collection.mutable.ArrayBuffer
+
+
+/* This module supports:
+serialization: object -> CBOR
+deserialization: CBOR -> object && JSON -> object
+
+todo: for object -> JSON serialization the corresponding counter-method to readBytes(reader: Reader): Array[Byte] is missing. we would need info on the desired serialized presentation (JSON or CBOR) for this.
+*/
 
 
 case class Endpoint(scheme: Int, specific_part: String | Int) {
@@ -147,6 +157,22 @@ case class BlockProcessingControlFlags(
 )
 
 
+// utility method which either reads a byte-array (for CBOR) or an unbounded array of int (for JSON)
+private def readBytes(reader: Reader): Array[Byte] = {
+  if (reader.hasByteArray) {
+    reader.readByteArray()
+  } else {
+    val buffer: ArrayBuffer[Byte] = ArrayBuffer[Byte]()
+
+    reader.readArrayStart()
+    while (!reader.hasBreak) {
+      buffer += reader.readInt().toByte
+    }
+    reader.readArrayClose(unbounded = true, buffer.toArray)
+  }
+}
+
+
 
 given Encoder[Endpoint] = Encoder { (writer, endpoint) => 
   writer
@@ -161,6 +187,7 @@ given Encoder[Endpoint] = Encoder { (writer, endpoint) =>
 }
 
 given Decoder[Endpoint] = Decoder { reader =>
+  // readArrayOpen(arity: Long) is JSON compatible, e.g. allows the serialized array to be unbounded
   val unbounded = reader.readArrayOpen(2)
   val endpoint = Endpoint(
     scheme = reader.readInt(),
@@ -197,19 +224,15 @@ given Decoder[CreationTimestamp] = Decoder { reader =>
 
 given Encoder[FragmentInfo] = Encoder { (writer, fragmentInfo) => 
   writer
-    .writeArrayOpen(2)
     .writeInt(fragmentInfo.fragment_offset)
     .writeInt(fragmentInfo.total_application_data_length)
-    .writeArrayClose()
 }
 
 given Decoder[FragmentInfo] = Decoder { reader =>
-  val unbounded = reader.readArrayOpen(2)
-  val fragment_info = FragmentInfo(
+  FragmentInfo(
     fragment_offset = reader.readInt(),
     total_application_data_length = reader.readInt()
   )
-  reader.readArrayClose(unbounded, fragment_info)
 }
 
 
@@ -223,6 +246,7 @@ given Encoder[HopCount] = Encoder { (writer, hopCount) =>
 }
 
 given Decoder[HopCount] = Decoder { reader =>
+  // readArrayOpen(arity: Long) is JSON compatible, e.g. allows the serialized array to be unbounded
   val unbounded = reader.readArrayOpen(2)
   val hop_count = HopCount(
     hop_limit = reader.readInt(),
@@ -262,11 +286,12 @@ given Encoder[PrimaryBlock] = Encoder { (writer, primaryBlock) =>
 }
 
 given Decoder[PrimaryBlock] = Decoder { reader =>
-  // this is always bounded, e.g. has a length
-  // but we don't care about the length because both fragment-info and crc are optional -> we parse by order of appearance
-  // emulate: reader.readArrayOpen(pre-defined-length)
-  val length = reader.readArrayHeader()
-  val unbounded = false
+  // the CBOR should always be bounded, e.g. has a length, but we do not know it beforehand
+  // we sliently accept unbounded arrays because either the CBOR is not to spec, or we got a JSON encoded bundle where arrays are always unbounded
+  val unbounded: Boolean = reader.hasArrayStart
+  var length: Long = -1
+  if (unbounded) {reader.readArrayStart()}
+  else {length = reader.readArrayHeader()}
 
   val block = PrimaryBlock(
     version = reader.readInt(),
@@ -280,24 +305,13 @@ given Decoder[PrimaryBlock] = Decoder { reader =>
   )
 
   // read fragment info
-  if (reader.hasArrayStart) {
+  if (reader.hasInt) {
     block.fragment_info = Option(reader.read[FragmentInfo]())
   }
 
-  // idk if fragment data is in a tuple or two plain values
-  // in case of two plain values parse it like this
-  if (reader.hasInt) {
-    println("warning: I was wrong about fragment encoding")
-    val fragment_info = FragmentInfo(
-      fragment_offset = reader.readInt(),
-      total_application_data_length = reader.readInt()
-    )
-    block.fragment_info = Option(fragment_info)
-  }
-
   // read crc
-  if (reader.hasByteArray) {
-    block.crc = Option(reader.readByteArray())
+  if (reader.hasByteArray || reader.hasArrayStart) {  // be JSON compatible
+    block.crc = Option(readBytes(reader))
   }
 
   reader.readArrayClose(unbounded, block)
@@ -326,26 +340,28 @@ given Encoder[CanonicalBlock] = Encoder { (writer, block) =>
 }
 
 given Decoder[CanonicalBlock] = Decoder { reader =>
-  // this is always bounded, e.g. has a length
-  // but we don't care about the length because crc is optional -> we parse by order of appearance
-  val length = reader.readArrayHeader()
-  val unbounded = false
+  // the CBOR should always be bounded, e.g. has a length, but we do not know it beforehand
+  // we sliently accept unbounded arrays because either the CBOR is not to spec, or we got a JSON encoded bundle where arrays are always unbounded
+  val unbounded: Boolean = reader.hasArrayStart
+  var length: Long = -1
+  if (unbounded) {reader.readArrayStart()}
+  else {length = reader.readArrayHeader()}
 
   val block_type_code = reader.readInt()
 
   def readBlock(b_type: Int): CanonicalBlock = {
     b_type match
-      case CanonicalBlock.PAYLOAD_BLOCK_TYPE_CODE => PayloadBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), reader.readByteArray())
-      case CanonicalBlock.PREVIOUS_NODE_BLOCK_TYPE_CODE => PreviousNodeBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), reader.readByteArray())
-      case CanonicalBlock.BUNDLE_AGE_BLOCK_TYPE_CODE => BundleAgeBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), reader.readByteArray())
-      case CanonicalBlock.HOP_COUNT_BLOCK_TYPE_CODE => HopCountBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), reader.readByteArray())
-      case _ => UnknownBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), reader.readByteArray())
+      case CanonicalBlock.PAYLOAD_BLOCK_TYPE_CODE => PayloadBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), readBytes(reader))
+      case CanonicalBlock.PREVIOUS_NODE_BLOCK_TYPE_CODE => PreviousNodeBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), readBytes(reader))
+      case CanonicalBlock.BUNDLE_AGE_BLOCK_TYPE_CODE => BundleAgeBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), readBytes(reader))
+      case CanonicalBlock.HOP_COUNT_BLOCK_TYPE_CODE => HopCountBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), readBytes(reader))
+      case _ => UnknownBlock(b_type, reader.readInt(), reader.read[BlockProcessingControlFlags](), reader.readInt(), readBytes(reader))
   }
-  
+
   val block = readBlock(block_type_code)
 
-  if (reader.hasByteArray) {
-    block.crc = Option(reader.readByteArray())
+  if (reader.hasByteArray || reader.hasArrayStart) {  // be JSON compatible
+    block.crc = Option(readBytes(reader))
   }
 
   reader.readArrayClose(unbounded, block)
@@ -368,23 +384,18 @@ given Encoder[Bundle] = Encoder { (writer, bundle) =>
 }
 
 given Decoder[Bundle] = Decoder { reader =>
-  var unbounded = true
-  if (reader.hasArrayStart) {
-    // in case of not-to-spec-bundle with unbounded array, parse anyway
-    println("warning: parsing not-to-spec bundle -> unbounded top level array")
-    reader.readArrayStart()
-  } else {
-    // in case of bounded to-spec array -> emulate reader.readArrayOpen(pre-defined-length)
-    // we parse by order of appearance and don't care about the length
-    val length = reader.readArrayHeader()
-    unbounded = false
-  }
+  // the CBOR should always be bounded, e.g. has a length, but we do not know it beforehand
+  // we sliently accept unbounded arrays because either the CBOR is not to spec, or we got a JSON encoded bundle where arrays are always unbounded
+  val unbounded: Boolean = reader.hasArrayStart
+  var length: Long = -1
+  if (unbounded) {reader.readArrayStart()}
+  else {length = reader.readArrayHeader()}
 
   val primaryBlock: PrimaryBlock = reader.read[PrimaryBlock]()
 
   val canonicalBlocks: ListBuffer[CanonicalBlock] = ListBuffer()
 
-  while (reader.hasArrayHeader) {
+  while (reader.hasArrayHeader || reader.hasArrayStart) {
     canonicalBlocks.addOne(reader.read[CanonicalBlock]())
   }
 

@@ -8,5 +8,5 @@ object ConnectionInfo {
   
   def ws_url(port: Int): String = s"ws://$ip:$port/ws"
 
-  def external_routing_ws_url(port: Int): String = s"sw://$ip:$port/ws/erouting"
+  def external_routing_ws_url(port: Int): String = s"ws://$ip:$port/ws/erouting"
 }

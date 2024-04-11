@@ -12,6 +12,7 @@ import scala.concurrent.Future
 import dtn.CompatCode
 
 import io.bullet.borer.{Cbor, Json}
+import java.nio.charset.StandardCharsets
 
 
 class WSConnection(port: Int) {
@@ -151,7 +152,7 @@ object WSEroutingClient {
         if (nodeId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
       })  // set node-id and check for supported dtn URI scheme
       .flatMap(_ => CompatCode.backend.send(basicRequest.get(uri"${ConnectionInfo.external_routing_ws_url(port)}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
-      .map(_ => {conn.command("/bundle"); conn})  // select raw bundle communication and return Dtn7RsWsConn object
+      .map(_ => conn)
   }
 }
 class WSEroutingClient(port: Int) extends WSConnection(port: Int) {
@@ -160,9 +161,8 @@ class WSEroutingClient(port: Int) extends WSConnection(port: Int) {
   def receivePacket(): Future[Packet] = {    
     receiveWholeMessage().flatMap {
       case s: String => {
-        println(s"received packet")
-        //Future(Json.decode(s).to[Bundle].value)
-        receivePacket()
+        println("received packet")
+        Future(Json.decode(s.getBytes(StandardCharsets.UTF_8)).to[Packet].value)
       }
       case b: Array[Byte] => {
         println("received bytes on external routing ws, but shouldn't have. ignoring")
