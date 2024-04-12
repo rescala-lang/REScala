@@ -1,9 +1,10 @@
 package com.github.ckuessner.ardt.causality
 
-import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
-import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.base.Causal.given
+import com.github.ckuessner.ardt.base.StandardLibrary.GrowOnlySet.given
+import com.github.ckuessner.ardt.base.{Causal, Lattice}
 import com.github.ckuessner.ardt.causality.DotStore.{DotFun, DotSet}
-import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.*
 
@@ -22,26 +23,26 @@ class CausalSpec extends AnyFlatSpec {
   private given setOfDotsToDotSet: Conversion[Set[Dot], DotSet] = ArrayCausalContext.fromSet(_)
 
   "Causal with DotSet" should "merge when empty" in {
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal.bottom[DotSet],
       Causal.bottom[DotSet]
     )
   }
 
   it should "union the CausalContext" in {
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set.empty[Dot], CausalContext(Map("A" -> 1))),
       Causal(Set.empty[Dot], CausalContext(Map("B" -> 2)))
     ) should ===(Causal[DotSet](Set.empty[Dot], CausalContext(Map("A" -> 1, "B" -> 2))))
 
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set.empty[Dot], CausalContext(Map("A" -> 1, "B" -> 1))),
       Causal(Set.empty[Dot], CausalContext(Map("B" -> 2)))
     ) should ===(Causal[DotSet](Set.empty[Dot], CausalContext(Map("A" -> 1, "B" -> 2))))
   }
 
   it should "merge with disjoint dotset" in {
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set(dot(1, "A")), CausalContext(Map("A" -> 1))),
       Causal(Set(dot(1, "B")), CausalContext(Map("B" -> 1)))
     ) should ===(
@@ -50,7 +51,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "remove dots from dotset that are contained in CausalContext" in {
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set(dot(1, "A")), CausalContext(Map("A" -> 1))),
       Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2)))
     ) should ===(
@@ -62,7 +63,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "remove dots from dotset if removed" in {
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2))),
       Causal(Set.empty[Dot], CausalContext(Map("A" -> 2)))
     ) should ===(
@@ -72,7 +73,7 @@ class CausalSpec extends AnyFlatSpec {
       )
     )
 
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set.empty[Dot], CausalContext(Map("A" -> 2))),
       Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2)))
     ) should ===(
@@ -82,7 +83,7 @@ class CausalSpec extends AnyFlatSpec {
       )
     )
 
-    SemiLattice[Causal[DotSet]].merged(
+    Lattice[Causal[DotSet]].merge(
       Causal(Set(dot(1, "B")), CausalContext(Map("A" -> 2, "B" -> 1))),
       Causal(Set(dot(2, "A")), CausalContext(Map("A" -> 2)))
     ) should ===(
@@ -94,8 +95,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   "Causal with DotFun" should "merge when empty" in {
-    import com.github.ckuessner.encrdt.lattices.GrowOnlySetLattice.SetLattice
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(), CausalContext()),
       Causal(Map(), CausalContext())
     ) should ===(
@@ -104,22 +104,21 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "merge idempotent" in {
-    import com.github.ckuessner.encrdt.lattices.GrowOnlySetLattice.SetLattice
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "A") -> Set(1)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "A") -> Set(1)), CausalContext(Map("A" -> 1)))
     ) should ===(
       Causal(Map(dot(1, "A") -> Set(1)), CausalContext(Map("A" -> 1)))
     )
 
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(), CausalContext(Map("A" -> 2))),
       Causal(Map(), CausalContext(Map("A" -> 2)))
     ) should ===(
       Causal(Map[Dot, Set[Int]](), CausalContext(Map("A" -> 2)))
     )
 
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "A") -> Set()), CausalContext(Map("A" -> 2))),
       Causal(Map(dot(1, "A") -> Set()), CausalContext(Map("A" -> 2)))
     ) should ===(
@@ -128,8 +127,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "merge lattice when dot contained in both dotstores" in {
-    import com.github.ckuessner.encrdt.lattices.GrowOnlySetLattice.SetLattice
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "A") -> Set(21)), CausalContext(Map("A" -> 1)))
     ) should ===(
@@ -143,8 +141,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "union dotstore when disjoint dotstores and not a causal removal" in {
-    import com.github.ckuessner.encrdt.lattices.GrowOnlySetLattice.SetLattice
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("B" -> 1)))
     ) should ===(
@@ -159,8 +156,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "discard values in dotstore when not contained in causal context and has disjoint dotstores" in {
-    import com.github.ckuessner.encrdt.lattices.GrowOnlySetLattice.SetLattice
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1))),
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("A" -> 1, "B" -> 1)))
     ) should ===(
@@ -172,7 +168,7 @@ class CausalSpec extends AnyFlatSpec {
       )
     )
 
-    SemiLattice[Causal[DotFun[Set[Int]]]].merged(
+    Lattice[Causal[DotFun[Set[Int]]]].merge(
       Causal(Map(dot(1, "B") -> Set(21)), CausalContext(Map("A" -> 1, "B" -> 1))),
       Causal(Map(dot(1, "A") -> Set(42)), CausalContext(Map("A" -> 1)))
     ) should ===(
@@ -186,14 +182,14 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   "Causal with DotMap" should "merge when empty" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(), CausalContext()),
       Causal[Map[Int, DotSet]](Map(), CausalContext())
     ) should ===(Causal[Map[Int, DotSet]](Map(), CausalContext()))
   }
 
   it should "merge idempotent" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1))),
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1)))
     ) should ===(
@@ -202,14 +198,14 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "remove values when removal is causal" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1))),
       Causal[Map[Int, DotSet]](Map(), CausalContext(Map("A" -> 2)))
     ) should ===(
       Causal[Map[Int, DotSet]](Map(), CausalContext(Map("A" -> 2)))
     )
 
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(), CausalContext(Map("A" -> 2))),
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1)))
     ) should ===(
@@ -218,7 +214,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "replace dotstore when causal" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1))),
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "B"))), CausalContext(Map("A" -> 1, "B" -> 1)))
     ) should ===(
@@ -227,7 +223,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "merge dotstore when disjoint" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1))),
       Causal[Map[Int, DotSet]](Map(2 -> Set(dot(1, "B"))), CausalContext(Map("B" -> 1)))
     ) should ===(
@@ -239,7 +235,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "merge dotstore when not disjoint" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A"))),
         CausalContext(Map("A" -> 1))
@@ -257,7 +253,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "merge dotstore recursively" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A"))),
         CausalContext(Map("A" -> 1))
@@ -272,7 +268,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "respect CausalContext when merging dotstore recursively" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A"))),
         CausalContext(Map("A" -> 1, "B" -> 1))
@@ -285,7 +281,7 @@ class CausalSpec extends AnyFlatSpec {
       Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), CausalContext(Map("A" -> 1, "B" -> 1)))
     )
 
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
         CausalContext(Map("A" -> 1, "B" -> 1))
@@ -300,7 +296,7 @@ class CausalSpec extends AnyFlatSpec {
   }
 
   it should "remove entry when merging of value yields bottom" in {
-    SemiLattice.merged(
+    Lattice.merge(
       Causal[Map[Int, DotSet]](
         Map(1 -> Set(dot(1, "A"))),
         CausalContext(Map("A" -> 1, "B" -> 1))
