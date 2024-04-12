@@ -132,11 +132,10 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
 
 
 
-val circeVersion = "0.14.5"
-
 lazy val lore = (project in file("Modules/Lore"))
   .settings(
     scala3defaults,
+    Dependencies.jsoniterScala,
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
     libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
@@ -144,9 +143,6 @@ lazy val lore = (project in file("Modules/Lore"))
     //   CrossVersion.for3Use2_13
     // ),
     libraryDependencies += "org.typelevel" %% "cats-parse" % "0.3.9",
-    libraryDependencies += "io.circe" %% "circe-core" % circeVersion,
-    libraryDependencies += "io.circe" %% "circe-generic" % circeVersion,
-    libraryDependencies += "io.circe" %% "circe-parser" % circeVersion,
     // libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0").cross(
     //   CrossVersion.for3Use2_13 // needed because scalafmt is 2.13
     // ),
