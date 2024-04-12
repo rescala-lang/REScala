@@ -16,7 +16,7 @@ class WholeProgramParsing extends FunSuite {
     String(
       getClass.getClassLoader.getResourceAsStream(name).readAllBytes,
       StandardCharsets.UTF_8
-    )
+    ).linesIterator.mkString("\n")
 
   // test("calendar old") {
   //     val prog = readProg(Path.of("examples/calendar.fr"))
