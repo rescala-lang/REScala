@@ -130,16 +130,14 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
-
-
 lazy val lore = (project in file("Modules/Lore"))
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
+    libraryDependencies += "org.typelevel" %% "cats-core"   % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",
-    libraryDependencies += "com.monovore" %% "decline" % "2.4.1",
+    libraryDependencies += "com.monovore"  %% "decline"     % "2.4.1",
     // libraryDependencies += ("org.scalameta" %% "scalafmt-core" % "3.7.4").cross(
     //   CrossVersion.for3Use2_13
     // ),
@@ -162,8 +160,6 @@ lazy val lore = (project in file("Modules/Lore"))
   )
   .dependsOn(reactives.jvm)
   .settings(Compile / mainClass := Some("lore.Compiler"))
-
-
 
 // =====================================================================================
 // evaluation and experimental
