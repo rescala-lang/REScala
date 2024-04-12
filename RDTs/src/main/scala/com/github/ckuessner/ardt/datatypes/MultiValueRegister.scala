@@ -1,6 +1,6 @@
 package com.github.ckuessner.ardt.datatypes
 
-import com.github.ckuessner.ardt.base.{Causal, Lattice}
+import com.github.ckuessner.ardt.base.Causal
 import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.DotFun
 import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext

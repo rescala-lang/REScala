@@ -1,7 +1,7 @@
 package com.github.ckuessner.ardt.datatypes
 
 import com.github.ckuessner.ardt.base.{Bottom, Lattice}
-import com.github.ckuessner.encrdt.util.MapHelper.max
+import com.github.ckuessner.ardt.util.MapHelper.max
 
 case class Counter(positiveCounts: Map[String, Int] = Map.empty, negativeCounts: Map[String, Int] = Map.empty) {
   def value: Int = positiveCounts.values.sum - negativeCounts.values.sum

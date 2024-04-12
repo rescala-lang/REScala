@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.encrypted.deltabased
+package com.github.ckuessner.encrdt
 
 import com.github.ckuessner.ardt.base.Lattice
 import com.github.ckuessner.ardt.causality.CausalContext

@@ -1,6 +1,6 @@
 package com.github.ckuessner.ardt.causality
 
-import com.github.ckuessner.encrdt.util.MapHelper.max
+import com.github.ckuessner.ardt.util.MapHelper.max
 
 import scala.math.PartialOrdering
 

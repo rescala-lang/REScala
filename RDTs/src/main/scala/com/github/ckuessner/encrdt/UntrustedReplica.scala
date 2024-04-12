@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.encrypted.deltabased
+package com.github.ckuessner.encrdt
 
 import com.github.ckuessner.ardt.causality.CausalContext
 import scala.collection.mutable

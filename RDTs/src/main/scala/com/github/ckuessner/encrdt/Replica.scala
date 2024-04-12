@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.encrypted.deltabased
+package com.github.ckuessner.encrdt
 
 trait Replica {
   def receive(encryptedState: EncryptedDeltaGroup): Unit

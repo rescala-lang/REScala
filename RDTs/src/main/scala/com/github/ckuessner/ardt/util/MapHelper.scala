@@ -1,6 +1,6 @@
-package com.github.ckuessner.encrdt.util
+package com.github.ckuessner.ardt.util
 
-object MapHelper {
+private[ardt] object MapHelper {
 
   /** Returns map where each value is the maximum in both maps. If a key is present in one map, takes max(0, val).
     *
