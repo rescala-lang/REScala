@@ -18,8 +18,6 @@ object MultiValueRegister:
   private[datatypes] given regToCausal[V]: Conversion[MultiValueRegister[V], Causal[DotFun[V]]] = identity
   private[datatypes] given causalToReg[V]: Conversion[Causal[DotFun[V]], MultiValueRegister[V]] = identity
 
-  given lattice[V]: Lattice[MultiValueRegister[V]] = Causal.CausalWithDotFunLattice[V]
-
   object mutators:
     def write[V](register: MultiValueRegister[V], value: V, replicaId: String): MultiValueRegister[V] =
       val dot = register.causalContext.clockOf(replicaId).advance(replicaId)

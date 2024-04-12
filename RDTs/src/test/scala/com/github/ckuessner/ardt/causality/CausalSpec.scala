@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.crdts.delta
+package com.github.ckuessner.ardt.causality
 
 import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
 import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext

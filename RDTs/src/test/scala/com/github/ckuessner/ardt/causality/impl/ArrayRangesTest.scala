@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.causality.impl
+package com.github.ckuessner.ardt.causality.impl
 
 import com.github.ckuessner.ardt.causality.impl.ArrayRanges
 import com.github.ckuessner.ardt.causality.impl.Defs.Time

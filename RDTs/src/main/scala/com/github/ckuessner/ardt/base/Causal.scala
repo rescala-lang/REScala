@@ -25,7 +25,7 @@ object Causal {
   //                      c ∪ c')
   given CausalWithDotFunLattice[V: Lattice]: Lattice[Causal[DotFun[V]]] = (left, right) => {
     Causal(
-      (left.dotStore.keySet & right.dotStore.keySet map { (dot: Dot) =>
+      ((left.dotStore.keySet `intersect` right.dotStore.keySet) map { (dot: Dot) =>
         (dot, Lattice.merge(left.dotStore(dot), right.dotStore(dot)))
       }).toMap
         ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
