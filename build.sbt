@@ -135,6 +135,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
 lazy val lore = (project in file("Modules/Lore"))
   .settings(
     scala3defaults,
+    Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
     libraryDependencies += "org.typelevel" %% "cats-core" % "2.9.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.0",

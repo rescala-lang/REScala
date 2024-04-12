@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-12, ubuntu-22.04, windows-2022]
-        java-version: [11, 17, 21]
+        java-version: [17, 21]
     env:
       JAVA_OPTS: -Xmx4g
     steps:
