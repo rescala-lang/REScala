@@ -1,14 +1,14 @@
 package com.github.ckuessner.encrdt.encrypted.deltabased
 
+import com.github.ckuessner.ardt.base.{Bottom, Lattice}
 import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
-import com.github.ckuessner.encrdt.crdts.interfaces.Crdt
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 
-abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], private val aead: Aead)(using
-    stateJsonCodec: JsonValueCodec[T],
+abstract class TrustedReplica[T: Lattice: Bottom: JsonValueCodec](val replicaId: String, private val aead: Aead)(using
     dotSetJsonCodec: JsonValueCodec[CausalContext]
 ) extends Replica {
+  private var crdt: T = Bottom[T].empty
 
   protected var dottedVersionVector: CausalContext = CausalContext()
 
@@ -24,14 +24,14 @@ abstract class TrustedReplica[T](val replicaId: String, val crdt: Crdt[T], priva
     synchronized {
       dottedVersionVector = dottedVersionVector.merged(decryptedState.dottedVersionVector)
       // TODO: Non-causally consistent unless underlying CRDT handles causal consistency
-      crdt.merge(decryptedState.deltaGroup)
+      crdt = Lattice.merge(crdt, decryptedState.deltaGroup)
     }
   }
 
-  def localChange(state: T): Unit = {
+  def localChange(delta: T): Unit = {
     val eventDot = nextDot()
     dottedVersionVector.add(eventDot)
-    val encryptedDelta = DecryptedDeltaGroup(state, CausalContext(eventDot)).encrypt(aead)
+    val encryptedDelta = DecryptedDeltaGroup(delta, CausalContext(eventDot)).encrypt(aead)
     disseminate(encryptedDelta)
   }
 }

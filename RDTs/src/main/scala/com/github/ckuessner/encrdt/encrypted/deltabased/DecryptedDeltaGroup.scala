@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.encrypted.deltabased
 
+import com.github.ckuessner.ardt.base.Lattice
 import com.github.ckuessner.ardt.causality.CausalContext
-import com.github.ckuessner.encrdt.lattices.SemiLattice
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.google.crypto.tink.Aead
 
@@ -18,10 +18,10 @@ case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: CausalCont
 }
 
 object DecryptedDeltaGroup {
-  given decryptedDeltaGroupSemiLattice[T](using tLattice: SemiLattice[T]): SemiLattice[DecryptedDeltaGroup[T]] =
+  given decryptedDeltaGroupLattice[T](using tLattice: Lattice[T]): Lattice[DecryptedDeltaGroup[T]] =
     (l, r) =>
       DecryptedDeltaGroup(
-        SemiLattice[T].merged(l.deltaGroup, r.deltaGroup),
+        Lattice[T].merge(l.deltaGroup, r.deltaGroup),
         l.dottedVersionVector.merged(r.dottedVersionVector)
       )
 }
