@@ -21,7 +21,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
       results ::= v1.asInstanceOf[A]
       v1
     }
-    def assert(elements: A*)(implicit pos: org.scalactic.source.Position): Unit = {
+    def assert(elements: A*)(using munit.Location): Unit = {
       assertEquals(results, elements.toList)
       ()
     }
