@@ -1,3 +1,11 @@
+# Chat
+
+For TUDa members (with TU-ID) you should be able to directly join:
+https://element.matrix.tu-darmstadt.de/#/room/#difosys:matrix.tu-darmstadt.de
+
+Everyone else may join using any matrix connection:
+https://matrix.to/#/#difosys:matrix.tu-darmstadt.de
+
 # This Repository
 
 This repository contains research software related to Programming Foundations for Distributed Systems at the [Software Technology Group](http://www.stg.tu-darmstadt.de/).
