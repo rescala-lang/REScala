@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.encrypted.deltabased
 
-import com.github.ckuessner.encrdt.causality.{CausalContext, Dot}
+import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
 import com.github.ckuessner.encrdt.crdts.interfaces.Crdt
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead

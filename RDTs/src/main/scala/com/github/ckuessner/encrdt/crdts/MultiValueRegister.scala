@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.crdts
 
-import com.github.ckuessner.encrdt.causality.VectorClock
+import com.github.ckuessner.ardt.causality.VectorClock
 import com.github.ckuessner.encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
 
 class MultiValueRegister[T](initialState: MultiValueRegisterLattice[T], val replicaId: String) {

@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.lattices
 
-import com.github.ckuessner.encrdt.causality.VectorClock
 import CausalTimeTag.lwwTimeOrd
+import com.github.ckuessner.ardt.causality.VectorClock
 
 import java.time.Instant
 import scala.math.PartialOrdering

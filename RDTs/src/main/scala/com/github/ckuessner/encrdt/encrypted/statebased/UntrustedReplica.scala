@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.encrypted.statebased
 
-import com.github.ckuessner.encrdt.causality.VectorClock
-import com.github.ckuessner.encrdt.causality.VectorClock.VectorClockOrdering
+import com.github.ckuessner.ardt.causality.VectorClock
+import VectorClock.VectorClockOrdering
 import com.github.ckuessner.encrdt.lattices.SemiLattice
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead

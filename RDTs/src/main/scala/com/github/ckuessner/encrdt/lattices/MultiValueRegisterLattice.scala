@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.lattices
 
-import com.github.ckuessner.encrdt.causality.VectorClock
+import com.github.ckuessner.ardt.causality.VectorClock
 import scala.annotation.tailrec
 
 case class MultiValueRegisterLattice[T](versions: Map[VectorClock, T])

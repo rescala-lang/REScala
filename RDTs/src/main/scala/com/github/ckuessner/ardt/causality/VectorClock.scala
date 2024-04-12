@@ -1,4 +1,4 @@
-package com.github.ckuessner.encrdt.causality
+package com.github.ckuessner.ardt.causality
 
 import com.github.ckuessner.encrdt.util.MapHelper.max
 

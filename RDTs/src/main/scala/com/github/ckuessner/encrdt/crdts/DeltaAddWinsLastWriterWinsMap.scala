@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.crdts
 
 import com.github.ckuessner.encrdt.crdts.interfaces.{Crdt, MapCrdt}
-import com.github.ckuessner.encrdt.causality.DotStore.DotFun
+import com.github.ckuessner.ardt.causality.DotStore.DotFun
 import com.github.ckuessner.encrdt.lattices.SemiLattice
 import DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, timestampedValueLattice}
 import DeltaAddWinsMap.DeltaAddWinsMapLattice

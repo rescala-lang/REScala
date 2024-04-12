@@ -1,7 +1,7 @@
-package com.github.ckuessner.encrdt.causality.impl
+package com.github.ckuessner.ardt.causality.impl
 
-import com.github.ckuessner.encrdt.causality.impl.Defs.Time
-import com.github.ckuessner.encrdt.lattices.SemiLattice
+import Defs.Time
+import com.github.ckuessner.ardt.base.Lattice
 
 import scala.annotation.targetName
 
@@ -273,5 +273,5 @@ object ArrayRanges {
     ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  given latticeInstance: SemiLattice[ArrayRanges] = _ `merge` _
+  given lattice: Lattice[ArrayRanges] = _ `merge` _
 }

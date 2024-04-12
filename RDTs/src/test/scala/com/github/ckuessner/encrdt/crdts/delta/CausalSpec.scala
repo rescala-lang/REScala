@@ -1,8 +1,8 @@
 package com.github.ckuessner.encrdt.crdts.delta
 
-import com.github.ckuessner.encrdt.causality.DotStore.{DotFun, DotSet}
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
-import com.github.ckuessner.encrdt.causality.{CausalContext, Dot}
+import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.causality.DotStore.{DotFun, DotSet}
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers.*

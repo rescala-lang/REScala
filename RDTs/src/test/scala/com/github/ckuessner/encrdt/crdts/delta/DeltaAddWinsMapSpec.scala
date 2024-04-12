@@ -1,9 +1,9 @@
 package com.github.ckuessner.encrdt.crdts.delta
 
-import com.github.ckuessner.encrdt.causality.CausalContext.*
-import com.github.ckuessner.encrdt.causality.DotStore.{DotMap, DotSet}
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
-import com.github.ckuessner.encrdt.causality.{CausalContext, Dot}
+import com.github.ckuessner.ardt.causality.{CausalContext, Dot}
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.causality.CausalContext.*
+import com.github.ckuessner.ardt.causality.DotStore.{DotMap, DotSet}
 import com.github.ckuessner.encrdt.crdts.DeltaAddWinsMap
 import com.github.ckuessner.encrdt.crdts.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}

@@ -1,11 +1,11 @@
 package com.github.ckuessner.encrdt.crdts
 
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
 import com.github.ckuessner.encrdt.crdts.interfaces.SetCrdt
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
-import com.github.ckuessner.encrdt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
+import com.github.ckuessner.ardt.causality.DotStore.{DotMap, DotSet, dotSetDotStore}
 import DeltaAddWinsSet.DeltaAddWinsSetLattice
-import com.github.ckuessner.encrdt.causality.{CausalContext, DotStore}
+import com.github.ckuessner.ardt.causality.{CausalContext, DotStore}
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
 
 class DeltaAddWinsSet[E](
     val replicaId: String,

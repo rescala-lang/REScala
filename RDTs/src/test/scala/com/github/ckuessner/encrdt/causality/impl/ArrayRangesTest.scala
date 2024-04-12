@@ -1,8 +1,9 @@
 package com.github.ckuessner.encrdt.causality.impl
 
-import com.github.ckuessner.encrdt.causality.impl.Defs.Time
+import com.github.ckuessner.ardt.causality.impl.ArrayRanges
+import com.github.ckuessner.ardt.causality.impl.Defs.Time
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers._
+import org.scalatest.matchers.should.Matchers.*
 
 class ArrayRangesTest extends AnyFlatSpec {
 

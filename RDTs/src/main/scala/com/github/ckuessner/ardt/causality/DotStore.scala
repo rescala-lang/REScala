@@ -1,7 +1,7 @@
-package com.github.ckuessner.encrdt.causality
+package com.github.ckuessner.ardt.causality
 
-import com.github.ckuessner.encrdt.causality.DotStore.*
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import DotStore.*
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 sealed trait DotStore[D] {

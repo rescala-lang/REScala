@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.encrypted.statebased
 
-import com.github.ckuessner.encrdt.causality.VectorClock
+import com.github.ckuessner.ardt.causality.VectorClock
 import com.github.ckuessner.encrdt.crdts.interfaces.Crdt
 import com.github.ckuessner.encrdt.lattices.{MultiValueRegisterLattice, SemiLattice}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}

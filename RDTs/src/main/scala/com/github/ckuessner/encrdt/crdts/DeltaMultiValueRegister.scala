@@ -1,8 +1,8 @@
 package com.github.ckuessner.encrdt.crdts
 
-import com.github.ckuessner.encrdt.causality.DotStore
-import com.github.ckuessner.encrdt.causality.DotStore.{DotFun, dotFunDotStore}
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.causality.DotStore
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import DotStore.{DotFun, dotFunDotStore}
 import com.github.ckuessner.encrdt.lattices.{Causal, SemiLattice}
 
 import scala.language.implicitConversions

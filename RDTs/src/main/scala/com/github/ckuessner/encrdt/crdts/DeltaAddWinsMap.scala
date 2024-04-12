@@ -1,7 +1,7 @@
 package com.github.ckuessner.encrdt.crdts
 
-import com.github.ckuessner.encrdt.causality.DotStore
-import com.github.ckuessner.encrdt.causality.DotStore.*
+import com.github.ckuessner.ardt.causality.DotStore
+import DotStore.*
 import com.github.ckuessner.encrdt.lattices.Causal
 
 import scala.language.implicitConversions

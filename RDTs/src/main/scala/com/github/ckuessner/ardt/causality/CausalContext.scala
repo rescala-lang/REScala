@@ -1,7 +1,7 @@
-package com.github.ckuessner.encrdt.causality
+package com.github.ckuessner.ardt.causality
 
-import com.github.ckuessner.encrdt.causality.DotStore.DotSet
-import com.github.ckuessner.encrdt.causality.impl.ArrayCausalContext
+import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import DotStore.DotSet
 
 case class CausalContext(acc: ArrayCausalContext) {
   def clockOf(replicaId: String): Dot = acc.clockOf(replicaId).getOrElse(Dot(0, replicaId))
@@ -9,7 +9,7 @@ case class CausalContext(acc: ArrayCausalContext) {
   def contains(dot: Dot): Boolean = acc.contains(dot)
 
   def merged(other: CausalContext): CausalContext =
-    CausalContext(ArrayCausalContext.contextLattice.merged(acc, other.acc))
+    CausalContext(ArrayCausalContext.lattice.merge(acc, other.acc))
 
   def merged(other: Set[Dot]): CausalContext = merged(other)
 

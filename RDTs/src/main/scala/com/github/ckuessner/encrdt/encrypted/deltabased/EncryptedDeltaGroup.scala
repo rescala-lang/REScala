@@ -1,6 +1,6 @@
 package com.github.ckuessner.encrdt.encrypted.deltabased
 
-import com.github.ckuessner.encrdt.causality.CausalContext
+import com.github.ckuessner.ardt.causality.CausalContext
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray}
 import com.google.crypto.tink.Aead
 

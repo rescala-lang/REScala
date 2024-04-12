@@ -1,7 +1,6 @@
 package com.github.ckuessner.encrdt.encrypted.deltabased
 
-import com.github.ckuessner.encrdt.causality.CausalContext
-
+import com.github.ckuessner.ardt.causality.CausalContext
 import scala.collection.mutable
 
 abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = Set.empty) extends Replica {

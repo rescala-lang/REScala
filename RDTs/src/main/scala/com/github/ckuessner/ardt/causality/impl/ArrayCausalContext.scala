@@ -1,10 +1,9 @@
-package com.github.ckuessner.encrdt.causality.impl
+package com.github.ckuessner.ardt.causality.impl
 
-import com.github.ckuessner.encrdt.causality
-import com.github.ckuessner.encrdt.causality.Dot
-import com.github.ckuessner.encrdt.causality.impl.Defs.{Id, Time}
-import com.github.ckuessner.encrdt.lattices.GrowOnlyMapLattice.gMapLattice
-import com.github.ckuessner.encrdt.lattices.SemiLattice
+import Defs.{Id, Time}
+import com.github.ckuessner.ardt
+import com.github.ckuessner.ardt.base.Lattice
+import com.github.ckuessner.ardt.causality.Dot
 
 object Defs {
   type Id   = String
@@ -53,7 +52,7 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
       }
     }
 
-  def union(other: ArrayCausalContext): ArrayCausalContext = ArrayCausalContext.contextLattice.merged(this, other)
+  def union(other: ArrayCausalContext): ArrayCausalContext = ArrayCausalContext.lattice.merge(this, other)
 
   def subtract(other: ArrayCausalContext): ArrayCausalContext = {
     ArrayCausalContext(
@@ -71,17 +70,17 @@ case class ArrayCausalContext(internal: Map[Id, ArrayRanges]) {
   def contains(d: Dot): Boolean = internal.get(d.replicaId).exists(_.contains(d.time))
 
   def toSet: Set[Dot] =
-    internal.flatMap { case (key, tree) => tree.iterator.map(time => causality.Dot(time, key)) }.toSet
+    internal.flatMap { case (key, tree) => tree.iterator.map(time => ardt.causality.Dot(time, key)) }.toSet
 
   def max(replicaID: String): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(c - 1, replicaID)))
 
   def decompose(exclude: Dot => Boolean): Iterable[ArrayCausalContext] =
     internal.flatMap { case (id, tree) =>
-      tree.iterator.map(time => causality.Dot(time, id)).filterNot(exclude).map(ArrayCausalContext.one)
+      tree.iterator.map(time => ardt.causality.Dot(time, id)).filterNot(exclude).map(ArrayCausalContext.one)
     }
   def forall(cond: Dot => Boolean): Boolean = internal.forall { case (id, tree) =>
-    tree.iterator.forall(time => cond(causality.Dot(time, id)))
+    tree.iterator.forall(time => cond(ardt.causality.Dot(time, id)))
   }
 
   def <=(other: ArrayCausalContext): Boolean = internal.forall { case (id, leftRange) =>
@@ -98,9 +97,10 @@ object ArrayCausalContext {
 
   def one(dot: Dot): ArrayCausalContext = empty.add(dot.replicaId, dot.time)
 
-  given contextLattice: SemiLattice[ArrayCausalContext] =
+  import com.github.ckuessner.ardt.base.StandardLibrary.GrowOnlyMap.lattice
+  given lattice: Lattice[ArrayCausalContext] =
     (left: ArrayCausalContext, right: ArrayCausalContext) => {
-      ArrayCausalContext(SemiLattice.merged(left.internal, right.internal))
+      ArrayCausalContext(Lattice.merge(left.internal, right.internal))
     }
 
   def fromSet(dots: Set[Dot]): ArrayCausalContext = ArrayCausalContext(
