@@ -6,6 +6,7 @@ import scala.concurrent.Future
 import java.nio.file.{Files, Paths}
 
 import io.bullet.borer.{Cbor, Json, Codec}
+import dtn.routers.DirectRouter
 
 
 @main def run(): Unit = {
@@ -60,16 +61,9 @@ import io.bullet.borer.{Cbor, Json, Codec}
 
   */
 
-  WSEroutingClient.create(3000).map(conn =>
-
-    def flush_receive(): Future[Unit] = {
-      conn.receivePacket().flatMap(packet => {
-        println(s"received packet: $packet")
-        flush_receive()
-      })
-    }
-    flush_receive().recover(throwable => println(throwable))
-  )
+  DirectRouter.create(3000).flatMap(router => {
+    router.start_receiving()
+  })
 
   while (true) {
     Thread.sleep(200)

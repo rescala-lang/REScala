@@ -24,11 +24,29 @@ case class Endpoint(scheme: Int, specific_part: String | Int) {
     scheme match {
       case Endpoint.DTN_URI_SCHEME_ENCODED => specific_part match {
         case Endpoint.NONE_ENDPOINT_SPECIFIC_PART_ENCODED => s"${Endpoint.DTN_URI_SCHEME_NAME}:${Endpoint.NONE_ENDPOINT_SPECIFIC_PART_NAME}"
-        case _ => s"${Endpoint.DTN_URI_SCHEME_NAME}:$specific_part"
+        case _: Int => throw Exception(s"unknown integer specific part: $specific_part")
+        case _: String => s"${Endpoint.DTN_URI_SCHEME_NAME}:$specific_part"
       }
       case Endpoint.IPN_URI_SCHEME_ENCODED => s"${Endpoint.IPN_URI_SCHEME_NAME}:$specific_part"
       case _ => throw Exception(s"unkown encoded dtn uri scheme: $scheme")
     }
+  }
+
+  def extract_node_endpoint(): Endpoint = {
+    scheme match {
+      case Endpoint.DTN_URI_SCHEME_ENCODED => {
+        specific_part match
+          case Endpoint.NONE_ENDPOINT_SPECIFIC_PART_ENCODED => Endpoint.NONE_ENDPOINT
+          case _: Int => throw Exception(s"unkown integer specific part: $specific_part")
+          case s: String => {
+            val i: Int = s.indexOf("/", 2)
+            if (i == -1) Endpoint(scheme, specific_part)
+            else Endpoint(scheme, s.substring(0, i+1))
+          }
+      }
+      case Endpoint.IPN_URI_SCHEME_ENCODED => throw Exception(s"cannot extract node endpoint from ipn endpoint: $this")
+      case _ => throw Exception(s"unkown encoded dtn uri scheme: $scheme")
+    } 
   }
 }
 object Endpoint {
