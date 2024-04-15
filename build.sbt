@@ -165,13 +165,14 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
       "-explain",
     ),
     Dependencies.munit,
+    Dependencies.munitCheck,
     Dependencies.lofiAcl.bouncycastleProvider,
     Dependencies.lofiAcl.bouncycastlePkix,
     Dependencies.lofiAcl.sslcontextKickstart,
     Dependencies.jsoniterScala,
     LocalSetting.tink,
-    libraryDependencies += "org.slf4j" % "slf4j-jdk14" % "2.0.12"
-  ).dependsOn(rdts.jvm)
+    libraryDependencies += "org.slf4j" % "slf4j-jdk14" % "2.0.12",
+  ).dependsOn(rdts.jvm % "compile->compile;test->test")
 
 // =====================================================================================
 // evaluation and experimental
