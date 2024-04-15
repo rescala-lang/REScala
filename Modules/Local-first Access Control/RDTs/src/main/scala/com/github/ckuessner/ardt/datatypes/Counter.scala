@@ -23,6 +23,6 @@ object Counter:
     def updated(counter: Counter, delta: Int, replicaId: String): Counter =
       if delta > 0 then
         counter.copy(positiveCounts = Map.Map1(replicaId, counter.positiveCounts.getOrElse(replicaId, 0) + delta))
-      if delta < 0 then
+      else if delta < 0 then
         counter.copy(negativeCounts = Map.Map1(replicaId, counter.negativeCounts.getOrElse(replicaId, 0) + delta))
       else Counter.zero

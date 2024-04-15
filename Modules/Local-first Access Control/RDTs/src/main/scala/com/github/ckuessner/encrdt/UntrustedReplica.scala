@@ -11,7 +11,7 @@ abstract class UntrustedReplica(initialDeltaGroups: Set[EncryptedDeltaGroup] = S
     prune(encryptedDeltaGroup)
 
     dottedVersionVector = dottedVersionVector.merged(encryptedDeltaGroup.dottedVersionVector)
-    encryptedDeltaGroupStore.add(encryptedDeltaGroup)
+    val _ = encryptedDeltaGroupStore.add(encryptedDeltaGroup)
   }
 
   protected def prune(receivedEncryptedDeltaGroup: EncryptedDeltaGroup): Unit

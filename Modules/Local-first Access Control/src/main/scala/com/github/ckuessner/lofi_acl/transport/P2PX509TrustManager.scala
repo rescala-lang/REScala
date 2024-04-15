@@ -23,7 +23,7 @@ class P2PX509TrustManager extends X509TrustManager {
     if (!subject.equals(issuer)) throw CertificateException("certificate not self-issued")
 
     // Verifies that certificate is actually signed by identity in certificate
-    X509Util.certificateToPublicIdentity(certificate)
+    val id = X509Util.certificateToPublicIdentity(certificate)
   }
 
   override def checkClientTrusted(chain: Array[X509Certificate], authType: String): Unit = {

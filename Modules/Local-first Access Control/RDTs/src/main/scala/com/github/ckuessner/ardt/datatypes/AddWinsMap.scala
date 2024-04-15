@@ -1,8 +1,8 @@
 package com.github.ckuessner.ardt.datatypes
 
 import com.github.ckuessner.ardt.base.{Bottom, Causal, Lattice}
-import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.{DotFun, DotMap}
+import com.github.ckuessner.ardt.causality.{Dot, DotStore}
 
 import java.time.Instant
 import scala.language.implicitConversions
@@ -97,10 +97,13 @@ object AddWinsLastWriterWinsMap {
   }
 
   extension [K, V](self: AddWinsLastWriterWinsMap[K, V])
-    def get(key: K): Option[V] = self.dotStore
-      .getOrElse(key, Set())
-      .maxByOption { case (_, (_, dot: (Instant, String))) => dot }
-      .map { case (_, (v: V, _)) => v }
+    def get(key: K): Option[V] =
+      val dotMap: Map[K, DotFun[(V, (Instant, String))]] = self.dotStore
+      dotMap.get(key) match
+        case Some(dotFun) =>
+          dotFun.maxByOption { case (_, (_, dot: (Instant, String))) => dot }
+            .map { case (_, (v: V, _)) => v }
+        case None => None
 
     def values: Map[K, V] =
       self.dotStore.map { case (k, mvReg) =>

@@ -21,7 +21,7 @@ import java.util.{Base64, Date}
 
 object X509Util {
   if (Security.getProvider("BC") == null) {
-    Security.addProvider(new BouncyCastleProvider())
+    val _ = Security.addProvider(new BouncyCastleProvider())
   }
 
   private val algoIdEd25519 = new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519)

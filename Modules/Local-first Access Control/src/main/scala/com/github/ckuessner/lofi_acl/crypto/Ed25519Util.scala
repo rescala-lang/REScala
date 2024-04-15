@@ -20,7 +20,7 @@ import java.util.Base64
 
 object Ed25519Util {
   if (Security.getProvider("BC") == null) {
-    Security.addProvider(new BouncyCastleProvider())
+    val _ = Security.addProvider(new BouncyCastleProvider())
   }
 
   private val ed25519AlgoIdentifier = new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519)
