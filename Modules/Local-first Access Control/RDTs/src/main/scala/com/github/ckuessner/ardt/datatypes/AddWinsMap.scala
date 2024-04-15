@@ -1,8 +1,8 @@
 package com.github.ckuessner.ardt.datatypes
 
 import com.github.ckuessner.ardt.base.{Bottom, Causal, Lattice}
+import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.{DotFun, DotMap}
-import com.github.ckuessner.ardt.causality.{Dot, DotStore}
 
 import java.time.Instant
 import scala.language.implicitConversions

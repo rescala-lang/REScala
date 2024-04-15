@@ -1,21 +1,22 @@
 package com.github.ckuessner.ardt.base
 
+import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.{DotFun, DotMap, DotSet}
-import com.github.ckuessner.ardt.causality.{CausalContext, Dot, DotStore}
+import rdts.time.{Dot, Dots}
 
-case class Causal[D](dotStore: D, causalContext: CausalContext)
+case class Causal[D](dotStore: D, causalContext: Dots)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
-  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, CausalContext())
+  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, Dots.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   given CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
     val inBoth     = left.dotStore `intersect` right.dotStore
-    val newInLeft  = left.dotStore `subtract` right.causalContext.acc
-    val newInRight = right.dotStore `subtract` left.causalContext.acc
+    val newInLeft  = left.dotStore `subtract` right.causalContext
+    val newInRight = right.dotStore `subtract` left.causalContext
 
-    val mergedCausalContext = left.causalContext.merged(right.causalContext)
+    val mergedCausalContext = left.causalContext.union(right.causalContext)
     Causal(inBoth `union` newInLeft `union` newInRight, mergedCausalContext)
   }
 
@@ -30,7 +31,7 @@ object Causal {
       }).toMap
       ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
       ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
-      left.causalContext.merged(right.causalContext)
+      left.causalContext.union(right.causalContext)
     )
   }
 
@@ -46,6 +47,6 @@ object Causal {
         } filterNot { case (key, dotStore) =>
           DotStore[V].bottom == dotStore
         }).toMap,
-        left.causalContext.merged(right.causalContext)
+        left.causalContext.union(right.causalContext)
       )
 }

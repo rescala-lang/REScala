@@ -1,9 +1,9 @@
 package com.github.ckuessner.ardt.datatypes
 
 import com.github.ckuessner.ardt.base.Causal
-import com.github.ckuessner.ardt.causality.{CausalContext, DotStore}
+import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.{DotMap, DotSet}
-import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import rdts.time.Dots
 
 opaque type AddWinsSet[E] = Causal[DotMap[E, DotSet]]
 
@@ -27,11 +27,11 @@ object AddWinsSet:
       *   The delta of the add operation.
       */
     def add[E](set: AddWinsSet[E], replicaId: String, element: E): AddWinsSet[E] =
-      val newDot                           = set.causalContext.clockOf(replicaId).advance(replicaId)
-      val deltaDotStore: DotMap[E, DotSet] = Map(element -> ArrayCausalContext.single(newDot))
-      val deltaCausalContext = CausalContext(
-        set.dotStore.getOrElse(element, DotStore[DotSet].bottom).add(newDot.replicaId, newDot.time)
-      )
+      val newDot                           = set.causalContext.nextDot(replicaId)
+      val deltaDotStore: DotMap[E, DotSet] = Map(element -> Dots.single(newDot))
+      val deltaCausalContext = set.dotStore.get(element) match
+        case Some(dots) => dots.add(newDot)
+        case None       => Dots.single(newDot)
       Causal(deltaDotStore, deltaCausalContext)
 
     /** Returns the '''delta''' that removes the element from the `set`.
@@ -47,7 +47,7 @@ object AddWinsSet:
       */
     def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Causal(
       DotStore[DotMap[E, DotSet]].bottom,
-      CausalContext(set.dotStore.getOrElse(element, DotStore[DotSet].bottom))
+      set.dotStore.getOrElse(element, DotStore[DotSet].bottom)
     )
 
     /** Returns the '''delta''' that removes all elements from the `set`.
@@ -63,5 +63,5 @@ object AddWinsSet:
       */
     def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
       DotStore[DotMap[E, DotSet]].bottom,
-      CausalContext(DotStore[DotMap[E, DotSet]].dots(set.dotStore))
+      DotStore[DotMap[E, DotSet]].dots(set.dotStore)
     )

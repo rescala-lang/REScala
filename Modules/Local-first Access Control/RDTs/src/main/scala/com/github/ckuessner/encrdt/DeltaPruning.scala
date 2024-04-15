@@ -1,15 +1,16 @@
 package com.github.ckuessner.encrdt
 
-import com.github.ckuessner.ardt.causality.CausalContext
+import rdts.time.Dots
+
 import scala.collection.mutable
 
 trait DeltaPruning {
-  protected var dottedVersionVector: CausalContext
+  protected var dottedVersionVector: Dots
   protected var encryptedDeltaGroupStore: mutable.Set[EncryptedDeltaGroup]
 
   protected def prune(receivedDeltaGroup: EncryptedDeltaGroup): Unit = {
     encryptedDeltaGroupStore.filterInPlace(subsumedDeltaGroup =>
-      !(subsumedDeltaGroup.dottedVersionVector.acc <= receivedDeltaGroup.dottedVersionVector.acc)
+      !(subsumedDeltaGroup.dottedVersionVector <= receivedDeltaGroup.dottedVersionVector)
     )
   }
 }

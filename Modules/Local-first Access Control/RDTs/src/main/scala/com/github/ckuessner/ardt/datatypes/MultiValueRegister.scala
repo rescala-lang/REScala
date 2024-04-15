@@ -3,7 +3,7 @@ package com.github.ckuessner.ardt.datatypes
 import com.github.ckuessner.ardt.base.Causal
 import com.github.ckuessner.ardt.causality.DotStore
 import com.github.ckuessner.ardt.causality.DotStore.DotFun
-import com.github.ckuessner.ardt.causality.impl.ArrayCausalContext
+import rdts.time.Dots
 
 import scala.language.implicitConversions
 
@@ -20,14 +20,14 @@ object MultiValueRegister:
 
   object mutators:
     def write[V](register: MultiValueRegister[V], value: V, replicaId: String): MultiValueRegister[V] =
-      val dot = register.causalContext.clockOf(replicaId).advance(replicaId)
+      val dot = register.causalContext.nextDot(replicaId)
       Causal(
         Map(dot -> value),
-        ArrayCausalContext.fromSet(register.dotStore.keySet).add(dot.replicaId, dot.time)
+        Dots.from(register.dotStore.keySet + dot)
       )
 
     def clear[V](register: MultiValueRegister[V]): MultiValueRegister[V] =
       Causal(
         DotStore[DotFun[V]].bottom,
-        ArrayCausalContext.fromSet(register.dotStore.keySet)
+        Dots.from(register.dotStore.keySet)
       )
