@@ -16,7 +16,7 @@ object Dependencies {
   def scalacheck    = libraryDependencies += "org.scalacheck"             %%% "scalacheck"       % "1.17.0"    % Test
   def scalaJavaTime = libraryDependencies += "io.github.cquiroz"          %%% "scala-java-time"  % "2.3.0"
   def scalajsDom    = libraryDependencies += "org.scala-js"               %%% "scalajs-dom"      % "2.8.0"
-  def scalatags     = libraryDependencies += "com.lihaoyi"                %%% "scalatags"        % "0.12.0"
+  def scalatags     = libraryDependencies += "com.lihaoyi"                %%% "scalatags"        % "0.13.1"
   def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.3.1"
   def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.45.2.0"
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.2.0"
