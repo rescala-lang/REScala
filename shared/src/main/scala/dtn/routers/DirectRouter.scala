@@ -15,13 +15,14 @@ class DirectRouter extends DeliveredIncludedBaseRouter {
       return None
     }
 
-    val target: Option[DtnPeer] = peers.get(packet.bp.destination.extract_node_endpoint().full_uri)
+    val target_node_name: String = packet.bp.destination.extract_node_name()
+    val target: Option[DtnPeer] = peers.get(target_node_name)
 
     var selected_clas: ListBuffer[Sender] = ListBuffer()
 
     target match
       case None => {
-        println("peer not directly known")
+        println(s"peer $target_node_name not directly known")
         None
       }
       case Some(peer) => {

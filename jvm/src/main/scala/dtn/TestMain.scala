@@ -60,14 +60,6 @@ import dtn.routers.DirectRouter
   print(own_bundle)
 
   */
-
-  DirectRouter.create(3000).flatMap(router => {
-    router.start_receiving()
-  })
-
-  while (true) {
-    Thread.sleep(200)
-  }
   
 
   /*
@@ -103,4 +95,38 @@ import dtn.routers.DirectRouter
     Thread.sleep(200)
   }
   */
+}
+
+
+@main def start_direct_routing(): Unit = {
+  DirectRouter.create(3000).flatMap(router => {
+    router.start_receiving()
+  }).recover(throwable => println(throwable))
+
+  while (true) {
+    Thread.sleep(200)
+  }
+}
+
+@main def send_direct_package(): Unit = {
+  WSEndpointClient.create(3000).flatMap(client => {
+    // flush receive forever
+    client.receiveBundle().flatMap(bundle => {
+      println(s"received bundle: $bundle")
+      client.receiveBundle()
+    })
+
+    // send one bundle to //node4000/
+    val bundle: Bundle = BundleCreation.createBundleUTF8(
+      utf8_payload = "Ping",
+      full_destination_uri = "dtn://node4000/incoming",
+      full_source_url = Endpoint.NONE_ENDPOINT.full_uri
+    )
+
+    client.sendBundle(bundle)
+  }).recover(throwable => println(throwable))
+
+  while (true) {
+    Thread.sleep(200)
+  }
 }
