@@ -7,6 +7,7 @@ import java.nio.file.{Files, Paths}
 
 import io.bullet.borer.{Cbor, Json, Codec}
 import dtn.routers.DirectRouter
+import dtn.routers.EpidemicRouter
 
 
 @main def run(): Unit = {
@@ -97,6 +98,16 @@ import dtn.routers.DirectRouter
   */
 }
 
+
+@main def start_epidemic_routing(): Unit = {
+  EpidemicRouter.create(3000).flatMap(router => {
+    router.start_receiving()
+  }).recover(throwable => println(throwable))
+
+  while (true) {
+    Thread.sleep(200)
+  }
+}
 
 @main def start_direct_routing(): Unit = {
   DirectRouter.create(3000).flatMap(router => {
