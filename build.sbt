@@ -26,6 +26,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
   replicationExamples.js,
   replicationExamples.jvm,
   lore,
+  lofiAcl
 )
 
 lazy val reactivesAggregate =
@@ -167,25 +168,10 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
     Dependencies.lofiAcl.bouncycastleProvider,
     Dependencies.lofiAcl.bouncycastlePkix,
     Dependencies.lofiAcl.sslcontextKickstart,
-    libraryDependencies += "org.slf4j" % "slf4j-jdk14" % "2.0.12"
-  )
-
-lazy val lofiAclRdts = (project in file("Modules/Local-first Access Control/RDTs"))
-  .settings(
-    scala3defaults,
-    noPublish,
-    scalacOptions ++= Seq(
-      "-release:21",
-      "-Ysafe-init",
-      "-explain",
-    ),
-    libraryDependencies ++= Seq(
-      "org.scalactic" %% "scalactic" % "3.2.18",
-      "org.scalatest" %% "scalatest" % "3.2.18" % "test"
-    ),
     Dependencies.jsoniterScala,
-    LocalSetting.tink
-  )
+    LocalSetting.tink,
+    libraryDependencies += "org.slf4j" % "slf4j-jdk14" % "2.0.12"
+  ).dependsOn(rdts.jvm)
 
 // =====================================================================================
 // evaluation and experimental
