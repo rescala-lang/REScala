@@ -50,12 +50,10 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     val serverConnFuture = serverConnector.acceptConnection
     val clientConnFuture = clientConnector.connect("localhost", serverConnector.listenPort)
 
-    for
-      serverErr         <- serverConnFuture.failed
-      (clientSocket, _) <- clientConnFuture // Client can connect, though the socket should be closed by server
+    for serverErr <- serverConnFuture.failed
     yield
       assert(serverErr.isInstanceOf[SSLHandshakeException])
-      Try { clientSocket.close() }
+      Try { clientConnFuture.map(_._1.close()) } // Client might connect, though the socket should be closed by server
       clientConnector.closeServerSocket()
       serverConnector.closeServerSocket()
   }

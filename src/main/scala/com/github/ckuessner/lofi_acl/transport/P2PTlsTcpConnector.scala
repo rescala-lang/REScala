@@ -8,6 +8,7 @@ import java.io.{ByteArrayInputStream, IOException}
 import java.security.cert.X509Certificate
 import javax.net.ssl.{SSLServerSocket, SSLSocket}
 import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.Try
 
 class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int = 0) {
   require(_listenPort >= 0 && _listenPort <= 0xffff)
@@ -47,7 +48,7 @@ class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int
     publicIdentity <- doHandshake(socket)
   } yield (socket, publicIdentity)
 
-  def closeServerSocket(): Unit = {
+  def closeServerSocket(): Try[Unit] = Try {
     sslServerSocket.close()
   }
 
