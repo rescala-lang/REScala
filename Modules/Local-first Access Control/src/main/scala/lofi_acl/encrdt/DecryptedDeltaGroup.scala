@@ -1,8 +1,8 @@
 package lofi_acl.encrdt
 
-import lofi_acl.ardt.base.Lattice
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.google.crypto.tink.Aead
+import rdts.base.Lattice
 import rdts.time.Dots
 
 case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: Dots) {

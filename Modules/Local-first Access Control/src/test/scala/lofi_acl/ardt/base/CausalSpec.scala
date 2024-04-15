@@ -2,9 +2,9 @@ package lofi_acl.ardt.base
 
 import lofi_acl.ardt.base.Causal.given
 import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.given
-import lofi_acl.ardt.base.{Causal, Lattice}
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotSet}
 import munit.FunSuite
+import rdts.base.Lattice
 import rdts.time.{Dot, Dots}
 
 class CausalSpec extends FunSuite {

@@ -1,7 +1,8 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.{Bottom, Lattice}
+import lofi_acl.ardt.base.Bottom
 import lofi_acl.ardt.util.MapHelper.max
+import rdts.base.Lattice
 
 case class Counter(positiveCounts: Map[String, Int] = Map.empty, negativeCounts: Map[String, Int] = Map.empty) {
   def value: Int = positiveCounts.values.sum - negativeCounts.values.sum

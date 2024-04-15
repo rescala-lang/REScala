@@ -1,6 +1,7 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.{Bottom, Lattice}
+import lofi_acl.ardt.base.Bottom
+import rdts.base.Lattice
 
 case class TwoPhaseMap[K, V](
     keys: TwoPhaseSet[K] = TwoPhaseSet.empty[K],

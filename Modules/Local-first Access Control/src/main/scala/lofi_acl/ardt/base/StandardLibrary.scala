@@ -1,5 +1,7 @@
 package lofi_acl.ardt.base
 
+import rdts.base.Lattice
+
 object StandardLibrary:
 
   // Option[T] with Some > None

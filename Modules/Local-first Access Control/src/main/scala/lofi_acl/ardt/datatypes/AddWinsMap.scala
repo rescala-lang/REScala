@@ -1,8 +1,9 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.{Bottom, Causal, Lattice}
+import lofi_acl.ardt.base.{Bottom, Causal}
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap}
+import rdts.base.Lattice
 
 import java.time.Instant
 import scala.language.implicitConversions

@@ -2,6 +2,7 @@ package lofi_acl.ardt.base
 
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap, DotSet}
+import rdts.base.Lattice
 import rdts.time.{Dot, Dots}
 
 case class Causal[D](dotStore: D, causalContext: Dots)
