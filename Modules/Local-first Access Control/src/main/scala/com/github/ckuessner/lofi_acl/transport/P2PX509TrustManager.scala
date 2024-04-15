@@ -7,8 +7,7 @@ import javax.net.ssl.X509TrustManager
 
 class P2PX509TrustManager extends X509TrustManager {
 
-  /** Verifies that the certificate is signed by subject unique identifier of self-signed certificate.
-    */
+  /** Verifies that the certificate is signed by subject unique identifier of self-signed certificate. */
   private def verifyP2PCertificate(certificate: X509Certificate): Unit = {
     if ("Ed25519" != certificate.getSigAlgName)
       throw CertificateException("Only Ed25519 is supported as signature algo")

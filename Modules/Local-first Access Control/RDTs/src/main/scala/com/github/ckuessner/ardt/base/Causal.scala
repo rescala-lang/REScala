@@ -28,8 +28,8 @@ object Causal {
       ((left.dotStore.keySet `intersect` right.dotStore.keySet) map { (dot: Dot) =>
         (dot, Lattice.merge(left.dotStore(dot), right.dotStore(dot)))
       }).toMap
-        ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
-        ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
+      ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
+      ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
       left.causalContext.merged(right.causalContext)
     )
   }
