@@ -22,8 +22,8 @@ jobs:
         distribution: 'temurin'
         cache: 'sbt'
     - name: Run tests
-      run: sbt test
-      
+      run: sbt "test; ardt/test"
+
   dependency-graph:
     name: Upload dependency graph
     permissions:

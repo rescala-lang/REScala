@@ -22,19 +22,15 @@ lazy val root = project
     )
   )
 
-lazy val encrdt = project
+lazy val ardt = project
   .in(file("RDTs"))
   .settings(
-    name := "encrdt",
+    name := "ardt",
     libraryDependencies += jsoniterCoreDependency,
-    libraryDependencies ++= encrdtDependencies ++ scalatestDependency
+    // Encryption / Decryption using Googles Tink Crypto Library
+    libraryDependencies += "com.google.crypto.tink" % "tink" % "1.13.0",
+    libraryDependencies ++= scalatestDependency
   )
-
-lazy val encrdtDependencies = Seq(
-  // Encryption / Decryption using Googles Tink Crypto Library
-  "com.google.crypto.tink"      % "tink"          % "1.13.0",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
-)
 
 // jsoniter-scala
 lazy val jsoniterCoreDependency = "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % "2.28.4"
