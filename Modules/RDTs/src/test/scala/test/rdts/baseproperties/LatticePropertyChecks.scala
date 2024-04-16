@@ -16,6 +16,12 @@ import test.rdts.DataGenerator.{*, given}
 import test.rdts.DataGenerator.RGAGen.given
 import test.rdts.isGithubCi
 
+// TODO, or maybe a note:
+// These tests potentially fail if certain assumptions of the data types are invalidated by the generation strategy.
+// Specifically, some values assume uniqueness, but the data generators don’t ensure uniqueness.
+// Most notably, the Multi-Version-Register sometimes generates unique IDs associated with two different values, merging those is no longer commutative.
+// This currently happens rarely enough, that a fix is postponed until a better strategy in general is found (just not allowing ID reuse might work, but would also exclude possible correct states, reducing the chance to find bugs. Though, that does not seem to be very high anyway …)
+
 class OpGraphChecks           extends LatticePropertyChecks[OpGraph[ExampleData]]
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[Map[Dot, ExampleData]]]
 class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[Map[Dot, ExampleData]]]]
