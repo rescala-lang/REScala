@@ -3,8 +3,8 @@
 
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt._
-import sbt.Keys._
+import sbt.*
+import sbt.Keys.*
 
 object Settings {
 
@@ -109,6 +109,18 @@ object Settings {
           }
         )
       case _ => Def.settings()
+    }
+  }
+
+  def isJavaVersionAtLeast(majorVersion: Int): Boolean = {
+    sys.props.get("java.version").map { v =>
+      val withoutOldPrefix = v.replace("1.", "") // For 1.8 and below
+      if (withoutOldPrefix.contains('.')) { // java version specifies minor version
+        withoutOldPrefix.substring(0, withoutOldPrefix.indexOf('.')).toInt
+      } else withoutOldPrefix.toInt
+    } match {
+      case None             => true // We don't know, let's just assume it is
+      case Some(jvmVersion) => jvmVersion >= majorVersion
     }
   }
 }

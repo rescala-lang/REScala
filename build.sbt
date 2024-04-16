@@ -1,33 +1,43 @@
 import Settings.*
 import sbt.librarymanagement.Configurations.TestInternal
 
-lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
-  // core
-  reactives.js,
-  reactives.jvm,
-  reactives.native,
-  rescalafx,
-  reswing,
-  rdts.js,
-  rdts.jvm,
-  rdts.native,
-  aead.js,
-  aead.jvm,
-  // research & eval
-  compileMacros.js,
-  compileMacros.jvm,
-  // compileMacros.native,
-  microbenchmarks,
-  // examples & case studies
-  examples,
-  todolist,
-  unitConversion,
-  encryptedTodo,
-  replicationExamples.js,
-  replicationExamples.jvm,
-  lore,
-  lofiAcl
-)
+lazy val bismuthProjects = {
+  var projects: Array[ProjectReference] = Array(
+    // core
+    reactives.js,
+    reactives.jvm,
+    reactives.native,
+    rescalafx,
+    reswing,
+    rdts.js,
+    rdts.jvm,
+    rdts.native,
+    aead.js,
+    aead.jvm,
+    // research & eval
+    compileMacros.js,
+    compileMacros.jvm,
+    // compileMacros.native,
+    microbenchmarks,
+    // examples & case studies
+    examples,
+    todolist,
+    unitConversion,
+    encryptedTodo,
+    replicationExamples.js,
+    replicationExamples.jvm,
+    lore
+  )
+
+  // Skip lofiAcl if java version < 21 (Uses virtual threads)
+  if (Settings.isJavaVersionAtLeast(21)) {
+    projects = projects :+ (lofiAcl: ProjectReference)
+  }
+
+  projects
+}
+
+lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(bismuthProjects: _*)
 
 lazy val reactivesAggregate =
   project.in(file("target/PhonyBuilds/reactives")).settings(
@@ -158,9 +168,9 @@ lazy val lore = (project in file("Modules/Lore"))
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
     scala3defaults,
+    javaOutputVersion(21),
     noPublish,
     scalacOptions ++= Seq(
-      "-release:21",
       "-Ysafe-init",
       "-explain",
     ),
