@@ -168,7 +168,7 @@ lazy val lore = (project in file("Modules/Lore"))
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
     scala3defaults,
-    javaOutputVersion(21),
+    javaOutputVersion(11),
     noPublish,
     scalacOptions ++= Seq(
       "-Ysafe-init",
