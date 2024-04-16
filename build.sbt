@@ -1,43 +1,32 @@
-import Settings.*
+import Settings.{noPublish, scala3defaults, javaOutputVersion, resolverJitpack}
 import sbt.librarymanagement.Configurations.TestInternal
 
-lazy val bismuthProjects = {
-  var projects: Array[ProjectReference] = Array(
-    // core
-    reactives.js,
-    reactives.jvm,
-    reactives.native,
-    rescalafx,
-    reswing,
-    rdts.js,
-    rdts.jvm,
-    rdts.native,
-    aead.js,
-    aead.jvm,
-    // research & eval
-    compileMacros.js,
-    compileMacros.jvm,
-    // compileMacros.native,
-    microbenchmarks,
-    // examples & case studies
-    examples,
-    todolist,
-    unitConversion,
-    encryptedTodo,
-    replicationExamples.js,
-    replicationExamples.jvm,
-    lore
-  )
-
-  // Skip lofiAcl if java version < 21 (Uses virtual threads)
-  if (Settings.isJavaVersionAtLeast(21)) {
-    projects = projects :+ (lofiAcl: ProjectReference)
-  }
-
-  projects
-}
-
-lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(bismuthProjects: _*)
+lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
+  // core projects
+  reactives.js,
+  reactives.jvm,
+  reactives.native,
+  rescalafx,
+  reswing,
+  rdts.js,
+  rdts.jvm,
+  rdts.native,
+  aead.js,
+  aead.jvm,
+  lore,
+  lofiAcl,
+  compileMacros.js,
+  compileMacros.jvm,
+  // compileMacros.native,
+  // examples, case studies, & eval
+  microbenchmarks,
+  examples,
+  todolist,
+  unitConversion,
+  encryptedTodo,
+  replicationExamples.js,
+  replicationExamples.jvm,
+)
 
 lazy val reactivesAggregate =
   project.in(file("target/PhonyBuilds/reactives")).settings(
@@ -64,8 +53,8 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   .jsSettings(
     Dependencies.scalajsDom,
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % Test,
-    jsEnvDom,
-    sourcemapFromEnv(),
+    Settings.jsEnvDom,
+    Settings.sourcemapFromEnv(),
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
@@ -97,7 +86,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
     Dependencies.munitCheck,
   )
   .jsSettings(
-    sourcemapFromEnv()
+    Settings.sourcemapFromEnv()
   )
 
 lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
@@ -107,7 +96,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
     Dependencies.munit,
     Dependencies.jsoniterScala,
   ).jsSettings(
-    jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv(),
+    Settings.jsEnvDom,
     Dependencies.scalajsDom,
     Dependencies.scalatags,
   ).jvmSettings(
@@ -170,18 +159,19 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
     scala3defaults,
     javaOutputVersion(11),
     noPublish,
-    scalacOptions ++= Seq(
-      "-Ysafe-init",
-      "-explain",
-    ),
+    Settings.safeInit(Compile / compile, Test / compile),
     Dependencies.munit,
     Dependencies.munitCheck,
-    Dependencies.lofiAcl.bouncycastleProvider,
-    Dependencies.lofiAcl.bouncycastlePkix,
-    Dependencies.lofiAcl.sslcontextKickstart,
     Dependencies.jsoniterScala,
     LocalSetting.tink,
-    libraryDependencies += "org.slf4j" % "slf4j-jdk14" % "2.0.12",
+    libraryDependencies ++=
+      List(
+        "org.slf4j"         % "slf4j-jdk14"                  % "2.0.12",
+        "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78",
+        "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78",
+        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
+        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
+      )
   ).dependsOn(rdts.jvm % "compile->compile;test->test")
 
 // =====================================================================================
@@ -204,7 +194,7 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     Dependencies.upickle,
     Dependencies.jsoniterScala,
-    jolSettings,
+    Settings.jolSettings,
   )
   .dependsOn(reactives.jvm, rdts.jvm)
 

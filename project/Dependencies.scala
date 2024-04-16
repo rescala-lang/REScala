@@ -1,8 +1,8 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
-import sbt.*
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
+import sbt._
 import sbt.Keys.libraryDependencies
 
 object Dependencies {
@@ -54,14 +54,5 @@ object Dependencies {
     def wsJavalin     = generic("communicator-ws-javalin")
     def wsJetty       = generic("communicator-ws-jetty")
     def wsJetty12     = generic("communicator-ws-jetty12")
-  }
-
-  object lofiAcl {
-    def bouncycastleProvider = libraryDependencies += "org.bouncycastle" % "bcprov-jdk18on" % "1.78"
-    def bouncycastlePkix     = libraryDependencies += "org.bouncycastle" % "bcpkix-jdk18on" % "1.78"
-    def sslcontextKickstart = libraryDependencies ++= Seq(
-      "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
-      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
-    )
   }
 }
