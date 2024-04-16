@@ -1,6 +1,6 @@
 package lofi_acl.ardt.base
 
-import rdts.base.Lattice
+import rdts.base.{Bottom, Lattice}
 
 object StandardLibrary:
 

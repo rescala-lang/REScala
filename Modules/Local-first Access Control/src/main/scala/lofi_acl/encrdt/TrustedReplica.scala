@@ -1,9 +1,8 @@
 package lofi_acl.encrdt
 
-import lofi_acl.ardt.base.Bottom
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import rdts.base.Lattice
+import rdts.base.{Bottom, Lattice}
 import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 

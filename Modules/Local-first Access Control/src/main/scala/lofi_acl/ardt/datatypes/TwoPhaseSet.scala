@@ -1,7 +1,6 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.Bottom
-import rdts.base.Lattice
+import rdts.base.{Bottom, Lattice}
 
 case class TwoPhaseSet[T](added: Set[T] = Set.empty[T], removed: Set[T] = Set.empty[T]):
   def contains(elem: T): Boolean =

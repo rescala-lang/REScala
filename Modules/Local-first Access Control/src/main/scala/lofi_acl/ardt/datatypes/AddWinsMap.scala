@@ -1,9 +1,9 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.{Bottom, Causal}
+import lofi_acl.ardt.base.Causal
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap}
-import rdts.base.Lattice
+import rdts.base.{Bottom, Lattice}
 import rdts.syntax.LocalUid
 
 import java.time.Instant
