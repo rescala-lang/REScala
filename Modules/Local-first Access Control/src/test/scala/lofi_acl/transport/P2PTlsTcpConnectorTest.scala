@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 
 class P2PTlsTcpConnectorTest extends FunSuite {
-  private val executor       = Executors.newWorkStealingPool()
+  private val executor       = Executors.newCachedThreadPool()
   given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
   test("establishing a connection returns the identity of the peer") {
