@@ -177,7 +177,7 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
 // =====================================================================================
 // evaluation and experimental
 
-lazy val compileMacros = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
+lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Modules/Graph-Compiler"))
   .settings(
     scala3defaults,
