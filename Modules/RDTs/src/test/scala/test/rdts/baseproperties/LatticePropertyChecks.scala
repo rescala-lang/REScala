@@ -5,9 +5,7 @@ import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import rdts.datatypes.contextual.{CausalQueue, ReplicatedList}
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.CausalStore
-import rdts.datatypes.{
-  GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual
-}
+import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dots, Time, VectorClock, Dot}
 import org.scalacheck.Prop.*

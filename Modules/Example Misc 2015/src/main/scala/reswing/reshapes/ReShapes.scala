@@ -8,10 +8,7 @@ import reswing.reshapes.actions.{LoadAction, SaveAction}
 import reswing.reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
 import reswing.reshapes.figures.Shape
 import reswing.reshapes.ui.dialogs.{NewTabDialog, ServerDialog}
-import reswing.reshapes.ui.panels.{
-  CommandPanel, DrawingPanel, InfoPanel, ShapePanel, ShapeSelectionPanel, ShowCoordinateSystem, ShowIntersection,
-  ShowNameLabels, StrokeInputPanel
-}
+import reswing.reshapes.ui.panels.{CommandPanel, DrawingPanel, InfoPanel, ShapePanel, ShapeSelectionPanel, ShowCoordinateSystem, ShowIntersection, ShowNameLabels, StrokeInputPanel}
 import reswing.reshapes.util.ReactiveUtil.{UnionEvent, bilateralValues}
 import reswing.ReMenuItem.toMenuItem
 import reswing.{ReMenu, ReMenuItem, ReSwingValue}
@@ -19,10 +16,7 @@ import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 import scala.collection.mutable.HashMap
 import scala.swing.BorderPanel.Position
 import scala.swing.TabbedPane.Page
-import scala.swing.{
-  Action, BorderPanel, Component, Dimension, MainFrame, Menu, MenuBar, MenuItem, Separator, SimpleSwingApplication,
-  Swing, TabbedPane
-}
+import scala.swing.{Action, BorderPanel, Component, Dimension, MainFrame, Menu, MenuBar, MenuItem, Separator, SimpleSwingApplication, Swing, TabbedPane}
 import scala.swing.event.SelectionChanged
 
 object ReShapes extends SimpleSwingApplication {

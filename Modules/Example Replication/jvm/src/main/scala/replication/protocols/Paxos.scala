@@ -99,7 +99,7 @@ case class Paxos[A, N <: Int](
     else
       Paxos.unchanged
 
-  def write(value: A): Paxos[A,N] =
+  def write(value: A): Paxos[A, N] =
     // TODO: What would write look like? Maybe return false if we can't write at the moment?
     ???
 

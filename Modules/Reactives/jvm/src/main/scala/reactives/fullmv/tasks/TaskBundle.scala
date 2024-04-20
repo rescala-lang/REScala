@@ -2,9 +2,7 @@ package reactives.fullmv.tasks
 
 import reactives.core.{AccessHandler, Derived, ReSource, ReevTicket, Result}
 import reactives.fullmv.FramingBranchResult._
-import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{
-  NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly
-}
+import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import reactives.fullmv.NotificationBranchResult.*
 import reactives.fullmv.*
 import reactives.structure.Pulse

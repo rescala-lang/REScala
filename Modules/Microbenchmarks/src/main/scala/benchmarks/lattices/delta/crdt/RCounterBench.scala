@@ -27,7 +27,7 @@ class RCounterBench {
       (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
         case (c, n) =>
           given rid: LocalReplicaId = n.toString.asId
-          val delta            = Dotted(ResettableCounter.zero).increment()
+          val delta                 = Dotted(ResettableCounter.zero).increment()
           c.applyDelta(rid.uid, delta)
       }
   }

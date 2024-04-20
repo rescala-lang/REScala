@@ -30,7 +30,7 @@ class CreationTicketTest extends RETests {
     implicit val implicitTurn: Transaction[State] = getTurn
     implicitly[CreationTicket[State]].scope match
       case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
-      case other => assert(false)
+      case other                   => assert(false)
     assertEquals(implicitly[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
   }
 
@@ -39,7 +39,7 @@ class CreationTicketTest extends RETests {
       implicit val implicitTurn: Transaction[State] = getTurn
       implicitly[CreationTicket[State]].scope match
         case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
-        case other => assert(false)
+        case other                   => assert(false)
       assertEquals(implicitly[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
     }
   }
@@ -53,7 +53,7 @@ class CreationTicketTest extends RETests {
     transaction() { _ =>
       closure().scope match
         case StaticCreationScope(tx) => assertEquals(tx, closureDefinition)
-        case other => assert(false)
+        case other                   => assert(false)
       assertEquals(closure().scope.embedCreation(x ?=> x), closureDefinition)
     }
   }

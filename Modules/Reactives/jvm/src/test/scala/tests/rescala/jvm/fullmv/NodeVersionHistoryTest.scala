@@ -2,9 +2,7 @@ package tests.rescala.fullmv
 
 import reactives.fullmv.FramingBranchResult.{Frame, FramingBranchEnd}
 import reactives.fullmv.NotificationBranchResult.{DoNothing, ReevaluationReady}
-import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{
-  NotifyAndReevaluationReadySuccessor, PureNotifyOnly
-}
+import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndReevaluationReadySuccessor, PureNotifyOnly}
 import reactives.fullmv._
 
 import scala.concurrent.duration.Duration

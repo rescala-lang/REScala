@@ -12,10 +12,10 @@ import rdts.time.{Dot, Dots}
   * Specifically, the `deletions` and `contained` methods reflect this interpretation.
   */
 case class Dotted[A](data: A, context: Dots) {
-  def map[B](f: A => B): Dotted[B]      = Dotted(f(data), context)
-  def knows(dot: Dot): Boolean          = context.contains(dot)
-  def deletions(using HasDots[A]): Dots = context diff contained
-  def contained(using HasDots[A]): Dots = data.dots
+  def map[B](f: A => B): Dotted[B]           = Dotted(f(data), context)
+  def knows(dot: Dot): Boolean               = context.contains(dot)
+  def deletions(using HasDots[A]): Dots      = context diff contained
+  def contained(using HasDots[A]): Dots      = data.dots
   def advanced(r: LocalReplicaId): Dotted[A] = Dotted(data, context.advanced(r.uid))
 }
 

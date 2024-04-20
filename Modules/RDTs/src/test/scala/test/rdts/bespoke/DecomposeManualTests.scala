@@ -15,7 +15,6 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
   val r1: LocalReplicaId = "r1".asId
   val r2: LocalReplicaId = "r2".asId
 
-
   test("GrowOnlyCounter decomposition") {
     val empty: GrowOnlyCounter = Bottom[GrowOnlyCounter].empty
 

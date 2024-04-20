@@ -118,7 +118,7 @@ case class TransactionHandle(ti: FullMVTurn) extends Transaction[State] {
 
   override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
     override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = ti.dynamicBefore(reactive)
-    override private[reactives] def collectStatic(reactive: ReSource.of[State]) = ti.staticBefore(reactive)
+    override private[reactives] def collectStatic(reactive: ReSource.of[State])  = ti.staticBefore(reactive)
 }
 
 class FullMVEngine(val timeout: Duration, val schedulerName: String)

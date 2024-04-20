@@ -243,9 +243,9 @@ trait Twoversion {
     }
 
     override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
-      override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = accessHandler.dynamicAccess(reactive)
+      override private[reactives] def collectDynamic(reactive: ReSource.of[State]) =
+        accessHandler.dynamicAccess(reactive)
       override private[reactives] def collectStatic(reactive: ReSource.of[State]) = accessHandler.staticAccess(reactive)
-
 
     override private[reactives] def makeAdmissionPhaseTicket(initialWrites: Set[ReSource]): AdmissionTicket[State] =
       new AdmissionTicket[State](this, initialWrites)

@@ -54,8 +54,8 @@ class ConnectionManager(lrid: LocalReplicaId) {
 
   val addPeerRef: Evt[PeerRef[?]] = Evt()
 
-  val peers: Signal[List[PeerRef[?]]] = Fold(List.empty){
-    addPeerRef act {_ :: current}
+  val peers: Signal[List[PeerRef[?]]] = Fold(List.empty) {
+    addPeerRef act { _ :: current }
   }
 
   def addConnection[T](connection: BiChan, coder: MessageCoder[T]): Async[Ctx, Unit] = {

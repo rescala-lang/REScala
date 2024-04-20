@@ -72,7 +72,7 @@ object CalculusLike {
 
     override def preconditionTicket: DynamicTicket[State] = new DynamicTicket[State](this):
       override private[reactives] def collectDynamic(reactive: ReSource.of[State]) = access(reactive)
-      override private[reactives] def collectStatic(reactive: ReSource.of[State]) = access(reactive)
+      override private[reactives] def collectStatic(reactive: ReSource.of[State])  = access(reactive)
   }
 
   object FScheduler

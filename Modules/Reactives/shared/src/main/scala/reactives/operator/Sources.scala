@@ -1,8 +1,6 @@
 package reactives.operator
 
-import reactives.core.{
-  AdmissionTicket, Base, CreationTicket, InitialChange, Observation, PlanTransactionScope, ReInfo, ReSource, Scheduler
-}
+import reactives.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, PlanTransactionScope, ReInfo, ReSource, Scheduler}
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
 

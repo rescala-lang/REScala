@@ -3,9 +3,7 @@ package reactives.fullmv.mirrors.localcloning
 import reactives.fullmv.mirrors._
 import reactives.fullmv.sgt.synchronization._
 import reactives.fullmv.tasks.TaskBundle
-import reactives.fullmv.{
-  FullMVBundle, FullMVUtil, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase
-}
+import reactives.fullmv.{FullMVBundle, FullMVUtil, FullMvStateBundle, TransactionSpanningTreeNode, TurnImplBundle, TurnPhase}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration

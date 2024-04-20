@@ -8,9 +8,7 @@ import de.rmgk.delay.syntax.toAsync
 import de.rmgk.delay.{Async, Callback}
 import org.scalajs.dom
 import org.scalajs.dom.html.{Div, Input, Table}
-import org.scalajs.dom.{
-  MouseEvent, RTCIceConnectionState, RTCIceGatheringState, RTCIceServer, UIEvent, document, window
-}
+import org.scalajs.dom.{MouseEvent, RTCIceConnectionState, RTCIceGatheringState, RTCIceServer, UIEvent, document, window}
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 

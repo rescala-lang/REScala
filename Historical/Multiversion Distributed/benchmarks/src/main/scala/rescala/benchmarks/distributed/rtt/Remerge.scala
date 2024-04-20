@@ -2,9 +2,7 @@ package reactives.benchmarks.distributed.rtt
 
 import org.openjdk.jmh.annotations._
 import reactives.core.ReInfo
-import reactives.fullmv.DistributedFullMVApi.{
-  FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup
-}
+import reactives.fullmv.DistributedFullMVApi.{FullMVEngine, ReactiveLocalClone, Signal, Signals, Var, scopedScheduler, transactionWithWrapup}
 import reactives.fullmv.mirrors.localcloning.FakeDelayer
 
 import java.util.concurrent._

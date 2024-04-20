@@ -5,10 +5,7 @@ import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}
 import org.scalajs.dom
-import org.scalajs.dom.{
-  RTCConfiguration, RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription,
-  RTCSignalingState
-}
+import org.scalajs.dom.{RTCConfiguration, RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription, RTCSignalingState}
 
 import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -149,7 +149,7 @@ def run(): Unit =
     val nodeId = sget(URI.create(s"$api/status/nodeid")).bind
     sget(URI.create(s"$api/register?$service")).bind
 
-    val replica     = Replica(Uid.gen(), nodeId, service, PosNegCounter.zero)
+    val replica          = Replica(Uid.gen(), nodeId, service, PosNegCounter.zero)
     given LocalReplicaId = replica.id
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind

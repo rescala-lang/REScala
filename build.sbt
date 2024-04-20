@@ -136,8 +136,8 @@ lazy val lore = (project in file("Modules/Lore"))
     libraryDependencies += "org.typelevel" %% "cats-core"   % "2.10.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.4",
     libraryDependencies += "com.monovore"  %% "decline"     % "2.4.1",
-    libraryDependencies += "org.typelevel" %% "cats-parse" % "1.0.0",
-    libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.5.0"),
+    libraryDependencies += "org.typelevel" %% "cats-parse"  % "1.0.0",
+    libraryDependencies += ("com.lihaoyi"  %% "fansi"       % "0.5.0"),
     // optics dependencies
     libraryDependencies ++= Seq(
       "dev.optics" %% "monocle-core" % "3.2.0"

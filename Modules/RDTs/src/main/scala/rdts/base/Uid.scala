@@ -4,7 +4,8 @@ import java.util.Base64
 import scala.util.Random
 
 // opaque currently causes too many weird issues with library integrations, in particular the json libraries can no longer auto serialize
-/* opaque */ type Uid = String
+/* opaque */
+type Uid = String
 
 object Uid:
   given ordering: Ordering[Uid]  = Ordering.String

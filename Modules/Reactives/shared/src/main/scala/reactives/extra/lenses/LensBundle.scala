@@ -32,7 +32,7 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
   export state.{now}
 
   final infix def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
-    implicit ticket: CreationTicket[State]
+      implicit ticket: CreationTicket[State]
   ): Disconnectable = state.observe(onValue, onError, fireImmediately)
 
   /** Function to access state of LVar in reactives. Simple wrapper for internal.value. */

@@ -12,7 +12,6 @@ import reactives.operator.*
 import scala.annotation.targetName
 import scala.scalajs.js
 
-
 object Tags {
 
   trait RangeSplice[-A <: dom.Element, -T]:
@@ -42,7 +41,9 @@ object Tags {
       Observe.strong(signal, true) {
         tagObserver(anchor, signal) { v =>
           if range.commonAncestorContainer != anchor then
-            println(s"weird state $anchor; $range; ${range.commonAncestorContainer} ${range.startContainer}; ${range.endContainer}")
+            println(
+              s"weird state $anchor; $range; ${range.commonAncestorContainer} ${range.startContainer}; ${range.endContainer}"
+            )
           range.extractContents()
           splicer.splice(anchor, range, v)
         }

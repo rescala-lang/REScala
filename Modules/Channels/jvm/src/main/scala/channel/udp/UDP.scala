@@ -4,10 +4,7 @@ import channel.{ArrayMessageBuffer, BiChan, InChan, MessageBuffer, OutChan, Prod
 import de.rmgk.delay.Async
 
 import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
-import java.net.{
-  DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException,
-  SocketTimeoutException
-}
+import java.net.{DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException, SocketTimeoutException}
 import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
 import scala.collection.mutable
 import scala.concurrent.duration.Duration

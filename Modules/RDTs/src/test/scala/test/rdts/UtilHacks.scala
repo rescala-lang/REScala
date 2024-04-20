@@ -25,7 +25,6 @@ object UtilHacks2 {
     def write(v: V)(using Lattice[Dotted[LastWriterWins[V]]]) = dottedLww.transform(x => Dotted(x.data.write(v)))
   }
 
-
   extension [V](dottedLww: DeltaBufferContainer[Dotted[LastWriterWins[V]]]) {
     private def workaround4: LastWriterWins[V] = dottedLww.result.state.data
     export workaround4.read

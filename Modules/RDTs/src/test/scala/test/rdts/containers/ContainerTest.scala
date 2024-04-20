@@ -12,7 +12,6 @@ import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalReplicaId}
 import test.rdts.UtilHacks.*
 import test.rdts.UtilHacks2.*
 
-
 class ContainerTest extends munit.FunSuite {
 
   object helper {
@@ -31,7 +30,7 @@ class ContainerTest extends munit.FunSuite {
 
   test("Dotted can contain contextual EnableWinsFlag") {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given LocalReplicaId                  = "me".asId
+    given LocalReplicaId             = "me".asId
 
     assertEquals(flag.read, false)
 

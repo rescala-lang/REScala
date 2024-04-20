@@ -4,9 +4,7 @@ import clangast.*
 import clangast.given
 import clangast.decl.*
 import clangast.expr.*
-import clangast.expr.binaryop.{
-  CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr
-}
+import clangast.expr.binaryop.{CAndExpr, CAssignmentExpr, CEqualsExpr, CGreaterThanExpr, CLessThanExpr, CNotEqualsExpr, COrExpr}
 import clangast.expr.unaryop.CNotExpr
 import clangast.stmt.*
 import clangast.stubs.{CJSONH, DyadH, StdBoolH, StdLibH}

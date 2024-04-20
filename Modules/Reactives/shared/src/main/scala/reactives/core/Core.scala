@@ -119,7 +119,7 @@ object CreationTicket {
 
 final class CreationTicketCont[State[_]](ct: CreationTicket[State])
 object CreationTicketCont {
-  given fromTicket[State[_]](using ct: CreationTicket[State]): CreationTicketCont[State] =  CreationTicketCont(ct)
+  given fromTicket[State[_]](using ct: CreationTicket[State]): CreationTicketCont[State] = CreationTicketCont(ct)
 }
 
 /** Essentially a kill switch, that will remove the reactive at some point. */

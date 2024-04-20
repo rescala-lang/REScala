@@ -32,9 +32,6 @@ given [T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] = v => ArrayMes
 
 given JsonValueCodec[BroadcastCommunication] = JsonCodecMaker.make
 
-
-
-
 object Example {
 
   // label seems mostly for auto negotiation
@@ -57,12 +54,12 @@ object Example {
     val renderedAddConnectionButton = button("new peerConnection").render
 
     Async.fromCallback {
-        renderedAddConnectionButton.onclick = (ev: MouseEvent) =>
-          Async.handler.succeed(())
-      }.map: _ =>
-        val handling = WebRTCHandling(None)
-        renderedConnectionTable.appendChild(handling.controlRow().render)
-        addDataChannel(handling)
+      renderedAddConnectionButton.onclick = (ev: MouseEvent) =>
+        Async.handler.succeed(())
+    }.map: _ =>
+      val handling = WebRTCHandling(None)
+      renderedConnectionTable.appendChild(handling.controlRow().render)
+      addDataChannel(handling)
     .run(using ExecutionContext.global)(errorReporter)
 
     useLocalBroadcastChannel(renderedConnectionTable)

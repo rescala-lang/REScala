@@ -20,7 +20,6 @@ import scala.annotation.targetName
 
 class TodoAppUI(val storagePrefix: String) {
 
-
   def getContents(): Div = {
 
     val todoInputTag: Input = input(
@@ -74,47 +73,49 @@ class TodoAppUI(val storagePrefix: String) {
     val hideEmpty = Signal:
       `style` := (if tasksData.value.isEmpty then "display:none" else "")
 
-    div(`class` := "appcontainer",
     div(
-      `class` := "todoapp",
-      header(
-        `class` := "header",
-        h1(if (largeheader.nonEmpty) largeheader else "todos"),
-        todoInputTag
-      ),
-      section(
-        `class` := "main",
-        toggleAll.data,
-        label(`for` := "toggle-all", "Mark all as complete"),
-        ul(
-          `class` := "todo-list",
-        ).render.reattach(taskTags)
-      ).render.reattach(hideEmpty),
+      `class` := "appcontainer",
       div(
-        `class` := "footer",
-        span(
-          `class` := "todo-count",
-        ).render.reattach(
-          Signal {
-            val remainingTasks = tasksData.value.count(!_.done)
-            println(s"remaining observer")
-            List(
-              strong(remainingTasks.toString).render,
-              span(if (remainingTasks == 1)
-                " item left"
-              else " items left").render
-            )
+        `class` := "todoapp",
+        header(
+          `class` := "header",
+          h1(if (largeheader.nonEmpty) largeheader else "todos"),
+          todoInputTag
+        ),
+        section(
+          `class` := "main",
+          toggleAll.data,
+          label(`for` := "toggle-all", "Mark all as complete"),
+          ul(
+            `class` := "todo-list",
+          ).render.reattach(taskTags)
+        ).render.reattach(hideEmpty),
+        div(
+          `class` := "footer",
+          span(
+            `class` := "todo-count",
+          ).render.reattach(
+            Signal {
+              val remainingTasks = tasksData.value.count(!_.done)
+              println(s"remaining observer")
+              List(
+                strong(remainingTasks.toString).render,
+                span(if (remainingTasks == 1)
+                  " item left"
+                else " items left").render
+              )
+            }
+          )
+        ).render.reattach(hideEmpty)
+          .reattach {
+            Signal {
+              removeAll.data(
+                `class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}"
+              ).render
+            }
           }
-        )
-      ).render.reattach(hideEmpty)
-        .reattach {
-          Signal {
-            removeAll.data(
-              `class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}"
-            ).render
-          }
-        }
-    )).render
+      )
+    ).render
   }
 
 }

@@ -7,9 +7,9 @@ import rdts.dotted.Dotted
 import rdts.syntax.LocalReplicaId
 
 class TokensTest extends munit.FunSuite {
-  given dots: Dots             = Dots.empty
-  given Lattice[Dotted[Token]] = Lattice.derived
-  val numOfReplicas            = 5
+  given dots: Dots                  = Dots.empty
+  given Lattice[Dotted[Token]]      = Lattice.derived
+  val numOfReplicas                 = 5
   val replicas: Seq[LocalReplicaId] = List.tabulate(numOfReplicas)(_ => LocalReplicaId.gen())
   var token = Dotted(Token(
     os = Ownership.unchanged,

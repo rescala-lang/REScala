@@ -8,7 +8,7 @@ import scalatags.JsDom.{Attr, TypedTag}
 
 object RenderUtil {
   def inputFieldHandler(tag: TypedTag[Input], attr: Attr, clear: Boolean = true): (Event[String], Input) = {
-    val handler = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
+    val handler               = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
     val todoInputField: Input = handler.data.render
 
     // observer to prevent form submit and empty content
@@ -24,7 +24,7 @@ object RenderUtil {
   }
 
   def dropDownHandler(tag: TypedTag[Select], attr: Attr, clear: Boolean = true): (Event[String], Select) = {
-    val handler = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
+    val handler                = Event.fromCallback(tag(attr := Event.handle[UIEvent]))
     val todoInputField: Select = handler.data.render
 
 //    // observer to prevent form submit and empty content
@@ -39,7 +39,7 @@ object RenderUtil {
     (inputFieldText, todoInputField)
   }
 
-  def setInputDisplay(in : Input, text : String): Unit = {
+  def setInputDisplay(in: Input, text: String): Unit = {
     in.value = text
   }
 }

@@ -141,12 +141,14 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
           doneClick.data,
         ).render.reattach(Signal:
           if taskData.value.done
-          then (elem: dom.html.Input) =>
-            elem.checked = true
-            elem.setAttribute("checked", "checked")
-          else (elem: dom.html.Input) =>
-            elem.checked = false
-            elem.removeAttribute("checked")
+          then
+            (elem: dom.html.Input) =>
+              elem.checked = true
+              elem.setAttribute("checked", "checked")
+          else
+            (elem: dom.html.Input) =>
+              elem.checked = false
+              elem.removeAttribute("checked")
         ),
         label.render.reattach(taskData.map(c => c.desc)),
         removeButton.data
