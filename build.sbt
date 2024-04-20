@@ -52,7 +52,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
   .jsSettings(
     Dependencies.scalajsDom,
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % Test,
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1" % Test,
     Settings.jsEnvDom,
     Settings.sourcemapFromEnv(),
   )
@@ -136,14 +136,8 @@ lazy val lore = (project in file("Modules/Lore"))
     libraryDependencies += "org.typelevel" %% "cats-core"   % "2.10.0",
     libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.4",
     libraryDependencies += "com.monovore"  %% "decline"     % "2.4.1",
-    // libraryDependencies += ("org.scalameta" %% "scalafmt-core" % "3.7.4").cross(
-    //   CrossVersion.for3Use2_13
-    // ),
     libraryDependencies += "org.typelevel" %% "cats-parse" % "1.0.0",
-    // libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0").cross(
-    //   CrossVersion.for3Use2_13 // needed because scalafmt is 2.13
-    // ),
-    libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.4.0"),
+    libraryDependencies += ("com.lihaoyi" %% "fansi" % "0.5.0"),
     // optics dependencies
     libraryDependencies ++= Seq(
       "dev.optics" %% "monocle-core" % "3.2.0"
@@ -166,9 +160,9 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
     LocalSetting.tink,
     libraryDependencies ++=
       List(
-        "org.slf4j"         % "slf4j-jdk14"                  % "2.0.12",
-        "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78",
-        "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78",
+        "org.slf4j"         % "slf4j-jdk14"                  % "2.0.13",
+        "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
+        "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
         "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
         "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
       )

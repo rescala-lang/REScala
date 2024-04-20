@@ -28,7 +28,7 @@ object LocalSetting {
   }
 
   lazy val scalaFxDependencies = javaFxDependencies ++ {
-    val scalaFxVersion = "21.0.0-R32"
+    val scalaFxVersion = "22.0.0-R33"
     Seq(
       scalaSwing,
       libraryDependencies ++= Seq(
