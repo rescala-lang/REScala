@@ -3,7 +3,6 @@ package reactives.fullmv.sgt.synchronization
 import reactives.fullmv.{FullMVTurn, FullMVUtil}
 import reactives.fullmv.mirrors.*
 import reactives.parrp.Backoff
-import reactives.fullmv.sgt.synchronization.SubsumableLock
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
