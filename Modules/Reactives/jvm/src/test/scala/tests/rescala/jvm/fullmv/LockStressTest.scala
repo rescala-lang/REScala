@@ -1,18 +1,17 @@
 package tests.rescala.fullmv
 
+import reactives.fullmv.*
+import tests.rescala.testtools.Spawn
+
 import java.util.concurrent.atomic.AtomicReference
-
-import reactives.fullmv._
-import tests.rescala.testtools.{IgnoreOnWindowsBecause, Spawn}
-
 import scala.annotation.tailrec
 import scala.concurrent.TimeoutException
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Random, Success}
 
 class LockStressTest extends munit.FunSuite {
-  // IgnoreOnWindowsBecause("this stackoverlfows in subsumable lock"))
-  if !sys.props.get("os.name").exists(_.startsWith("Windows")) then
+
+  if !sys.env.contains("GITHUB_ACTIONS") then
     test("stress") {
       val host = new FullMVEngine(Duration.Zero, "lockStressTest")
 
