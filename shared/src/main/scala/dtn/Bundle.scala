@@ -288,6 +288,49 @@ given Decoder[HopCount] = Decoder { reader =>
 
 
 
+given Encoder[BundleProcessingControlFlags] = Encoder { (writer, ctrlflags) => 
+  def set(bit: Int, flags: Int): Int = flags | 1 << bit
+
+  var flags: Int = 0
+
+  if (ctrlflags.is_fragment) flags = set(0, flags)
+  if (ctrlflags.payload_is_admin_record) flags = set(1, flags)
+  if (ctrlflags.do_not_fragment) flags = set(2, flags)
+  // bits 3 and 4 are reserved for future use
+  if (ctrlflags.acknowledgement_is_requested) flags = set(5, flags)
+  if (ctrlflags.status_time_is_requested) flags = set(6, flags)
+  // bits 7 to 13 are reserved for future use
+  if (ctrlflags.status_report_of_reception_is_requested) flags = set(14, flags)
+  // bit 15 is reserved for future use
+  if (ctrlflags.status_report_of_forwarding_is_requested) flags = set(16, flags)
+  if (ctrlflags.status_report_of_delivery_is_requested) flags = set(17, flags)
+  if (ctrlflags.status_report_of_deletion_is_requested) flags = set(18, flags)
+  // bits 19 and 20 are reserved for future use
+  // bits 21 to 63 are unassigned
+
+  writer.writeInt(flags)
+}
+
+given Decoder[BundleProcessingControlFlags] = Decoder { reader =>
+  def get(bit: Int, flags: Int): Boolean = ((flags >> bit) & 1) != 0
+
+  val flags: Int = reader.readInt()
+
+  BundleProcessingControlFlags(
+    is_fragment = get(0, flags),
+    payload_is_admin_record = get(1, flags),
+    do_not_fragment = get(2, flags),
+    acknowledgement_is_requested = get(5, flags),
+    status_time_is_requested = get(6, flags),
+    status_report_of_reception_is_requested = get(14, flags),
+    status_report_of_forwarding_is_requested = get(16, flags),
+    status_report_of_delivery_is_requested = get(17, flags),
+    status_report_of_deletion_is_requested = get(18, flags)
+  )
+}
+
+
+
 given Encoder[PrimaryBlock] = Encoder { (writer, primaryBlock) => 
   // optional empty fields are not encoded, so we need to calculate our length beforehand
   var length = 8
@@ -346,6 +389,37 @@ given Decoder[PrimaryBlock] = Decoder { reader =>
   }
 
   reader.readArrayClose(unbounded, block)
+}
+
+
+
+given Encoder[BlockProcessingControlFlags] = Encoder { (writer, ctrlflags) =>
+  def set(bit: Int, flags: Int): Int = flags | 1 << bit
+
+  var flags: Int = 0
+
+  if (ctrlflags.block_must_be_replicated_in_every_fragment) flags = set(0, flags)
+  if (ctrlflags.report_status_if_block_cant_be_processed) flags = set(1, flags)
+  if (ctrlflags.delete_bundle_if_block_cant_be_processed) flags = set(2, flags)
+  // bit 3 is reserved for future use
+  if (ctrlflags.discard_block_if_block_cant_be_processed) flags = set(4, flags)
+  // bits 5 and 6 are reserved for future use
+  // bits 7 to 63 are unassigned
+
+  writer.writeInt(flags)
+}
+
+given Decoder[BlockProcessingControlFlags] = Decoder { reader =>
+  def get(bit: Int, flags: Int): Boolean = ((flags >> bit) & 1) != 0
+
+  val flags: Int = reader.readInt()
+
+  BlockProcessingControlFlags(
+    block_must_be_replicated_in_every_fragment = get(0, flags),
+    report_status_if_block_cant_be_processed = get(1, flags),
+    delete_bundle_if_block_cant_be_processed = get(2, flags),
+    discard_block_if_block_cant_be_processed = get(4, flags)
+  )
 }
 
 
@@ -433,77 +507,4 @@ given Decoder[Bundle] = Decoder { reader =>
   reader.readArrayClose(unbounded, Bundle(primaryBlock, canonicalBlocks.toList))
 }
 
-
-
-given Encoder[BundleProcessingControlFlags] = Encoder { (writer, ctrlflags) => 
-  def set(bit: Int, flags: Int): Int = flags | 1 << bit
-
-  var flags: Int = 0
-
-  if (ctrlflags.is_fragment) flags = set(0, flags)
-  if (ctrlflags.payload_is_admin_record) flags = set(1, flags)
-  if (ctrlflags.do_not_fragment) flags = set(2, flags)
-  // bits 3 and 4 are reserved for future use
-  if (ctrlflags.acknowledgement_is_requested) flags = set(5, flags)
-  if (ctrlflags.status_time_is_requested) flags = set(6, flags)
-  // bits 7 to 13 are reserved for future use
-  if (ctrlflags.status_report_of_reception_is_requested) flags = set(14, flags)
-  // bit 15 is reserved for future use
-  if (ctrlflags.status_report_of_forwarding_is_requested) flags = set(16, flags)
-  if (ctrlflags.status_report_of_delivery_is_requested) flags = set(17, flags)
-  if (ctrlflags.status_report_of_deletion_is_requested) flags = set(18, flags)
-  // bits 19 and 20 are reserved for future use
-  // bits 21 to 63 are unassigned
-
-  writer.writeInt(flags)
-}
-
-given Decoder[BundleProcessingControlFlags] = Decoder { reader =>
-  def get(bit: Int, flags: Int): Boolean = ((flags >> bit) & 1) != 0
-
-  val flags: Int = reader.readInt()
-
-  BundleProcessingControlFlags(
-    is_fragment = get(0, flags),
-    payload_is_admin_record = get(1, flags),
-    do_not_fragment = get(2, flags),
-    acknowledgement_is_requested = get(5, flags),
-    status_time_is_requested = get(6, flags),
-    status_report_of_reception_is_requested = get(14, flags),
-    status_report_of_forwarding_is_requested = get(16, flags),
-    status_report_of_delivery_is_requested = get(17, flags),
-    status_report_of_deletion_is_requested = get(18, flags)
-  )
-}
-
-
-
-given Encoder[BlockProcessingControlFlags] = Encoder { (writer, ctrlflags) =>
-  def set(bit: Int, flags: Int): Int = flags | 1 << bit
-
-  var flags: Int = 0
-
-  if (ctrlflags.block_must_be_replicated_in_every_fragment) flags = set(0, flags)
-  if (ctrlflags.report_status_if_block_cant_be_processed) flags = set(1, flags)
-  if (ctrlflags.delete_bundle_if_block_cant_be_processed) flags = set(2, flags)
-  // bit 3 is reserved for future use
-  if (ctrlflags.discard_block_if_block_cant_be_processed) flags = set(4, flags)
-  // bits 5 and 6 are reserved for future use
-  // bits 7 to 63 are unassigned
-
-  writer.writeInt(flags)
-}
-
-given Decoder[BlockProcessingControlFlags] = Decoder { reader =>
-  def get(bit: Int, flags: Int): Boolean = ((flags >> bit) & 1) != 0
-
-  val flags: Int = reader.readInt()
-
-  BlockProcessingControlFlags(
-    block_must_be_replicated_in_every_fragment = get(0, flags),
-    report_status_if_block_cant_be_processed = get(1, flags),
-    delete_bundle_if_block_cant_be_processed = get(2, flags),
-    discard_block_if_block_cant_be_processed = get(4, flags)
-  )
-}
 
