@@ -34,7 +34,7 @@ download a graalvm for native executable creation:
     tar -xvzf graalvm-jdk-22_linux-x64_bin.tar.gz
     rm graalvm-jdk-22_linux-x64_bin.tar.gz
 
-create a config for native executable creation (one time only, should be in this repo already):
+create a config for native executable creation (one time only for each main method):
 
     graalvm-jdk-22.0.1+8.1/bin/java -agentlib:native-image-agent=config-output-dir=jvm/src/main/resources/META-INF/native-image/dtn.start_epdidemic_routing/generated --class-path jvm/target/jars/"*" dtn.start_epidemic_routing
 
