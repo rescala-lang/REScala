@@ -1,8 +1,7 @@
 package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, DENY}
-import lofi_acl.access.PermissionTree.allow
-import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
+import lofi_acl.access.PermissionTree.{allow, deny}
 import munit.FunSuite
 
 class PermissionTreeTest extends FunSuite {
@@ -15,6 +14,12 @@ class PermissionTreeTest extends FunSuite {
 
   def allowExcept(labelsWithTree: (String, PermissionTree)*): PermissionTree = {
     PermissionTree(ALLOW, labelsWithTree.toMap)
+  }
+
+  def testAllPermutations(list: List[(String, Permission)], expectedResult: PermissionTree): Unit = {
+    list.permutations.foreach { list =>
+      assertEquals(list.toPermissionTree, expectedResult)
+    }
   }
 
   test("PermissionTree.deny and PermissionTree.allow") {
@@ -44,15 +49,15 @@ class PermissionTreeTest extends FunSuite {
   }
 
   test("empty label between separator") {
-    intercept[InvalidPathException](
+    intercept[IllegalArgumentException](
       List("a..b" -> ALLOW).toPermissionTree
     )
 
-    intercept[InvalidPathException](
+    intercept[IllegalArgumentException](
       List("a...b" -> ALLOW).toPermissionTree
     )
 
-    intercept[InvalidPathException](
+    intercept[IllegalArgumentException](
       List("..b" -> ALLOW).toPermissionTree
     )
 
@@ -62,7 +67,7 @@ class PermissionTreeTest extends FunSuite {
   }
 
   test("a..b -> ALLOW") {
-    intercept[InvalidPathException](
+    intercept[IllegalArgumentException](
       List("a..b" -> ALLOW).toPermissionTree
     )
   }
@@ -91,25 +96,13 @@ class PermissionTreeTest extends FunSuite {
   }
 
   test("b1.a -> ALLOW & b2 -> ALLOW") {
-    assertEquals(
-      List("b1.a" -> ALLOW, "b2" -> ALLOW).toPermissionTree,
+    testAllPermutations(
+      List("b1.a" -> ALLOW, "b2" -> ALLOW),
       PermissionTree(
         DENY,
         Map(
           "b1" -> PermissionTree(DENY, Map("a" -> PermissionTree(ALLOW, Map.empty))),
           "b2" -> PermissionTree(ALLOW, Map.empty)
-        )
-      )
-    )
-
-    // Order of rules doesn't matter
-    assertEquals(
-      List("b2" -> ALLOW, "b1.a" -> ALLOW).toPermissionTree,
-      PermissionTree(
-        DENY,
-        Map(
-          "b2" -> PermissionTree(ALLOW, Map.empty),
-          "b1" -> PermissionTree(DENY, Map("a" -> PermissionTree(ALLOW, Map.empty)))
         )
       )
     )
@@ -130,8 +123,8 @@ class PermissionTreeTest extends FunSuite {
   }
 
   test("a.b.c -> ALLOW & a.b.e -> ALLOW") {
-    assertEquals(
-      List("a.b.c" -> ALLOW, "a.b.e" -> ALLOW).toPermissionTree,
+    testAllPermutations(
+      List("a.b.c" -> ALLOW, "a.b.e" -> ALLOW),
       PermissionTree(
         DENY,
         Map("a" -> PermissionTree(
@@ -148,25 +141,51 @@ class PermissionTreeTest extends FunSuite {
   }
 
   test("a -> ALLOW & a.b.c -> ALLOW & a.b -> DENY") {
-    assertEquals(
-      List("a" -> ALLOW, "a.b.c" -> ALLOW, "a.b" -> DENY).toPermissionTree,
+    testAllPermutations(
+      List("a"       -> ALLOW, "a.b.c" -> ALLOW, "a.b" -> DENY),
       denyExcept("a" -> allowExcept("b" -> denyExcept("c" -> allow)))
+    )
+  }
+
+  // ------------------ Pruning ---------------------------
+  test("a -> ALLOW & a.b -> ALLOW & a.c -> ALLOW") {
+    assertEquals(
+      List("a" -> ALLOW, "a.b" -> ALLOW, "a.c" -> ALLOW).toPermissionTree,
+      denyExcept("a" -> allow)
+    )
+  }
+  
+  test("a & a.b.c.d") {
+    testAllPermutations(
+      List(
+        "a"       -> ALLOW,
+        "a.b.c.d" -> ALLOW
+      ),
+      denyExcept("a" -> allow)
+    )
+
+    testAllPermutations(
+      List(
+        "a"       -> ALLOW,
+        "a.b.c.d" -> DENY
+      ),
+      denyExcept("a" -> allowExcept("b" -> allowExcept("c" -> allowExcept("d" -> deny))))
+    )
+
+    testAllPermutations(
+      List(
+        ""        -> ALLOW,
+        "a"       -> DENY,
+        "a.b.c.d" -> DENY
+      ),
+      allowExcept("a" -> deny)
     )
   }
 
   test("a.b.c -> ALLOW & a.b.e -> DENY") {
     // a.b.e -> DENY should be pruned
-    assertEquals(
-      List("a.b.c" -> ALLOW, "a.b.e" -> DENY).toPermissionTree,
-      PermissionTree(
-        DENY,
-        Map("a" -> PermissionTree(DENY, Map("b" -> PermissionTree(DENY, Map("c" -> PermissionTree(ALLOW, Map.empty))))))
-      )
-    )
-
-    // Regardless of order
-    assertEquals(
-      List("a.b.e" -> DENY, "a.b.c" -> ALLOW).toPermissionTree,
+    testAllPermutations(
+      List("a.b.c" -> ALLOW, "a.b.e" -> DENY),
       PermissionTree(
         DENY,
         Map("a" -> PermissionTree(DENY, Map("b" -> PermissionTree(DENY, Map("c" -> PermissionTree(ALLOW, Map.empty))))))
@@ -176,8 +195,8 @@ class PermissionTreeTest extends FunSuite {
 
   test("a -> ALLOW & a.b -> ALLOW & a.b.c -> DENY merges into a -> ALLOW and a.b.c -> DENY") {
     // Check whether a & a.b.c is correct
-    assertEquals(
-      List("a" -> ALLOW, "a.b.c" -> DENY).toPermissionTree,
+    testAllPermutations(
+      List("a" -> ALLOW, "a.b.c" -> DENY),
       PermissionTree(
         DENY,
         Map("a" -> PermissionTree(ALLOW, Map("b" -> PermissionTree(ALLOW, Map("c" -> PermissionTree.deny)))))

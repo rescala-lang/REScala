@@ -59,11 +59,12 @@ object PermissionTree:
 
     // Now we merge every rule into the permission tree in (shortest paths first, more specific paths later).
     // This is required for longest-prefix-matching semantics.
-    sortedPermissions.foldLeft(fromPermission(topLevelPermission)) { case (tree, rule) =>
+    val tree = sortedPermissions.foldLeft(fromPermission(topLevelPermission)) { case (tree, rule) =>
       // Merges the more specific rule into the more general permission tree
       mergeIntoTree(tree, path = rule._1, pathPermission = rule._2)
     }
 
+    pruneTree(tree)._1
     // TODO: Post process / normalize (i.e., merge * into non-* siblings)
   }
 
@@ -75,11 +76,6 @@ object PermissionTree:
 
   /** This method assumes that the rules are <b>processed from shortest to longest prefix!</b> */
   private def mergeIntoTree(tree: PermissionTree, path: List[String], pathPermission: Permission): PermissionTree = {
-    // Same permission on a shorter terminal prefix, no need to add more specific but redundant permission
-    if tree.permission == pathPermission && !tree.children.contains(path.head) && !tree.children.contains("*")
-    then return tree
-
-    // In case the new rule isn't redundant, merge the rule into the tree.
     (tree, path) match
       case (parent, pathPrefix :: Nil) => // We are at the end of the inserted path
         require(
@@ -102,4 +98,24 @@ object PermissionTree:
             val newSubtree = pathToTree(pathSuffix, parent.permission, pathPermission)
             PermissionTree(parent.permission, parent.children + (pathPrefix -> newSubtree))
       case (parent, Nil) => throw IllegalArgumentException("path should not be empty")
+  }
+
+  /** Prunes redundant branches from the tree.
+    * A branch is redundant iff. the set of all permissions encountered on the branch is equal to the permission of the node.
+    * @return A tuple with the pruned tree and the set of permissions encountered in all branches and the node itself.
+    */
+  private def pruneTree(root: PermissionTree): (PermissionTree, Set[Permission]) = {
+    val rootPermission = Set(root.permission)
+    val (prunedChildren, collectedPermissions) =
+      root.children.foldLeft(Map.empty[String, PermissionTree], Set.empty[Permission]) {
+        case ((collectedSiblings, collectedPermissions), label -> child) =>
+          val (prunedChild, permissionsOnChildPath) = pruneTree(child)
+          val newSiblingPermissions                 = collectedPermissions ++ permissionsOnChildPath
+          // Is permission on child path identical to this levels permission?
+          if permissionsOnChildPath.equals(rootPermission)
+          then (collectedSiblings, newSiblingPermissions) // Filter out child, if it is redundant
+          else (collectedSiblings + (label -> prunedChild), newSiblingPermissions) // Else keep the child
+      }
+
+    (root.copy(children = prunedChildren), collectedPermissions union rootPermission)
   }
