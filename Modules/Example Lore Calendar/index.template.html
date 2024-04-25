@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Template • TodoMVC</title>
+		<link rel="stylesheet" href="calendar.css">
+	</head>
+	<body>
+		<section class="calendar">
+			<noscript><div style="padding:2em;text-align:center;font-size:2em">
+				Please enable JavaScript!
+			</div></noscript>
+		</section>
+
+		<footer class="info">
+			<p>Created by the <a href="https://www.rescala-lang.com/">REScala Team</a></p>
+		</footer>
+
+		<script type="text/javascript" src="JSPATH"></script>
+		<script type="text/javascript">
+			window.reScalaEvents = [];
+			window.reScalaId = Math.random();
+			window.domAssocations = new Map();
+
+			DebugAdapter.setListener(data => {
+				if (data.type === 'DomAssociation') {
+					window.domAssocations.set(JSON.parse(data.reSource).idCounter, data.node);
+				} else if (typeof data === 'string') {
+					window.reScalaEvents.push(JSON.parse(data));
+				}
+			});
+
+			Calendar();
+		</script>
+
+	</body>
+</html>
