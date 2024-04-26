@@ -16,6 +16,9 @@ class PermissionTreeTest extends FunSuite {
     PermissionTree(ALLOW, labelsWithTree.toMap)
   }
 
+  def pt(permission: Permission, children: (String, PermissionTree)*): PermissionTree =
+    PermissionTree(permission, children.toMap)
+
   def testAllPermutations(list: List[(String, Permission)], expectedResult: PermissionTree): Unit = {
     list.permutations.foreach { list =>
       assertEquals(list.toPermissionTree, expectedResult)
@@ -154,7 +157,7 @@ class PermissionTreeTest extends FunSuite {
       denyExcept("a" -> allow)
     )
   }
-  
+
   test("a & a.b.c.d") {
     testAllPermutations(
       List(
@@ -212,10 +215,74 @@ class PermissionTreeTest extends FunSuite {
 
   // ----------- WILDCARDS ----------------
 
-  test("b1.* -> ALLOW") {
+  test("Trailing .*") {
     assertEquals(
-      List("b1" -> ALLOW).toPermissionTree,
-      PermissionTree(DENY, Map("b1" -> PermissionTree(ALLOW, Map.empty)))
+      List("a.*" -> ALLOW).toPermissionTree,
+      PermissionTree(DENY, Map("a" -> allow))
+    )
+
+    assertEquals(
+      List("a.b.c.*" -> ALLOW).toPermissionTree,
+      denyExcept("a" -> denyExcept("b" -> denyExcept("c" -> allow)))
+    )
+
+    testAllPermutations(
+      List(
+        "a.*"   -> ALLOW,
+        "b"     -> ALLOW,
+        "b.c.*" -> DENY,
+        "c"     -> ALLOW
+      ),
+      denyExcept("a" -> allow, "b" -> allowExcept("c" -> deny), "c" -> allow)
+    )
+  }
+
+  test(".* as prefix should fail") {
+    intercept[IllegalArgumentException](
+      List("a" -> ALLOW, ".*" -> ALLOW).toPermissionTree
+    )
+
+    intercept[IllegalArgumentException](
+      List("a" -> ALLOW, ".*" -> ALLOW).toPermissionTree
+    )
+
+    intercept[IllegalArgumentException](
+      List(".*" -> DENY).toPermissionTree
+    )
+
+    intercept[IllegalArgumentException](
+      List(".*.b" -> ALLOW).toPermissionTree
+    )
+  }
+
+  test("** should fail") {
+    List("**" -> ALLOW, "a" -> ALLOW, "b" -> ALLOW).permutations.foreach { list =>
+      intercept[IllegalArgumentException](list.toPermissionTree)
+    }
+
+    intercept[IllegalArgumentException](List("**" -> DENY).toPermissionTree)
+    intercept[IllegalArgumentException](List("a.**" -> DENY).toPermissionTree)
+    intercept[IllegalArgumentException](List("a.**.b" -> ALLOW).toPermissionTree)
+  }
+
+  test("a.* & a should fail") {
+    intercept[IllegalArgumentException](List("a.*" -> ALLOW, "a" -> ALLOW).toPermissionTree)
+    intercept[IllegalArgumentException](List("a" -> ALLOW, "a.*" -> ALLOW).toPermissionTree)
+    intercept[IllegalArgumentException](List("a.*" -> ALLOW, "a" -> DENY).toPermissionTree)
+    intercept[IllegalArgumentException](List("a" -> DENY, "a.*" -> ALLOW).toPermissionTree)
+  }
+
+  test("a.*.*.*") {
+    assertEquals(
+      List("a.*.*.*" -> ALLOW).toPermissionTree,
+      denyExcept("a" -> denyExcept("*" -> denyExcept("*" -> allow)))
+    )
+  }
+
+  test("a -> ALLOW & a.b.c -> ALLOW & a.b.* -> DENY") {
+    testAllPermutations(
+      List("a" -> ALLOW, "a.b.c" -> ALLOW, "a.b.*" -> DENY),
+      PermissionTree(DENY, Map("a" -> PermissionTree(ALLOW, Map("b" -> PermissionTree(DENY, Map("c" -> allow))))))
     )
   }
 
@@ -232,25 +299,139 @@ class PermissionTreeTest extends FunSuite {
     )
   }
 
-  test("b1.*.e -> ALLOW & b1.d.e -> DENY") {
-    assertEquals(
-      List("b1.*.e" -> ALLOW, "b1.d.e" -> DENY).toPermissionTree,
+  test("a.* -> ALLOW & a.*.c -> DENY") {
+    testAllPermutations(
+      List("a.*" -> ALLOW, "a.*.c" -> DENY),
+      PermissionTree(DENY, Map("a" -> PermissionTree(ALLOW, Map("*" -> PermissionTree(ALLOW, Map("c" -> deny))))))
+    )
+  }
+
+  test("a.*.c -> ALLOW & a.b.c -> DENY") {
+    // Note: a.b.c is more specific than a.*.c
+    testAllPermutations(
+      List("a.*.c" -> ALLOW, "a.b.c" -> DENY),
       PermissionTree(
         DENY,
-        Map("b1" -> PermissionTree(
+        Map("a" -> PermissionTree(
           DENY,
           Map(
-            "*" -> PermissionTree(DENY, Map("e" -> PermissionTree(ALLOW, Map.empty))),
-            "e" -> PermissionTree(DENY, Map("e" -> PermissionTree(DENY, Map.empty)))
+            "*" -> PermissionTree(DENY, Map("c" -> PermissionTree(ALLOW, Map.empty))),
+            "b" -> PermissionTree(DENY, Map("c" -> PermissionTree(DENY, Map.empty)))
           )
         ))
       )
     )
   }
 
+  test("a.*.c -> DENY & a.b.c -> ALLOW") {
+    // Note: a.b.c is more specific than a.*.c
+    testAllPermutations(
+      List("a.*.c" -> DENY, "a.b.c" -> ALLOW),
+      PermissionTree(
+        DENY,
+        Map("a" -> PermissionTree(
+          DENY,
+          Map(
+            "*" -> deny,
+            "b" -> PermissionTree(DENY, Map("c" -> PermissionTree(ALLOW, Map.empty)))
+          )
+        ))
+      )
+    )
+  }
   test("Passing both b1.* -> ALLOW and b1.* -> DENY should fail") {
     intercept[IllegalArgumentException](
       List("b1.*" -> ALLOW, "b1.*" -> DENY).toPermissionTree
+    )
+  }
+
+  // ------------- WILDCARD RULE DUPLICATION -------------
+  test("a.*.c -> DENY & a.b -> ALLOW") {
+    testAllPermutations(
+      List("a.*.c" -> DENY, "a.b" -> ALLOW),
+      PermissionTree(
+        DENY,
+        Map("a" -> PermissionTree(
+          DENY,
+          Map(
+            // "*" -> PermissionTree(DENY, Map("c" -> DENY)), <--- Pruned
+            "b" -> PermissionTree(ALLOW, Map("c" -> deny)) // <--- *.c -> deny rule was copied into concrete rule
+          )
+        ))
+      )
+    )
+  }
+
+  test("a.*.c.* -> ALLOW & a.b.*.d -> DENY & *.b.*.d -> DENY") {
+    // Before duplication and pruning
+    // pt(
+    //  DENY,
+    //  "a" -> pt(DENY, "*" -> pt(DENY, "c" -> allow), "b" -> pt(DENY, "*" -> pt(DENY, "d" -> deny))),
+    //  "*" -> pt("b" -> pt("*" -> "d" -> deny))
+    // )
+
+    testAllPermutations(
+      List("a.*.c.*" -> ALLOW, "a.b.*.d" -> DENY, "*.b.*.d" -> DENY),
+      pt(DENY, "a"   -> pt(DENY, "*" -> pt(DENY, "c" -> allow)))
+    )
+  }
+
+  test(" -> ALLOW & a.*.c.d -> ALLOW & a.b.*.d.e -> DENY & *.b.*.d.f -> DENY") {
+    testAllPermutations(
+      List("" -> ALLOW, "a.*.c.d" -> DENY, "a.b.*.d.e" -> DENY, "*.b.*.d.x" -> DENY),
+      pt (
+        ALLOW,
+        "a" -> pt(
+          ALLOW,
+          "*" -> pt(ALLOW, "c" -> pt(ALLOW, "d" -> deny)),
+          "b" -> pt(ALLOW, "*" -> pt(ALLOW, "d" -> pt(ALLOW, "e" -> deny, "x" -> deny)))
+        ),
+        "*" -> pt(ALLOW, "b" -> pt(ALLOW, "*" -> pt(ALLOW, "d" -> pt(ALLOW, "x" -> deny))))
+      )
+    )
+  }
+
+  test(" -> ALLOW & a.* -> DENY & a.b.* -> ALLOW & a.b.c.* -> DENY") {
+    testAllPermutations(
+      List(""       -> ALLOW, "a.*" -> DENY, "a.b.*" -> ALLOW, "a.b.c.*" -> DENY),
+      pt(ALLOW, "a" -> pt(DENY, "b" -> pt(ALLOW, "c" -> deny)))
+    )
+  }
+
+  test("-> ALLOW & a.*.c -> DENY & a.b.c.d -> ALLOW") {
+    // a.b.c.d should be allowed, since it's more specific
+    testAllPermutations(
+      List(
+        ""        -> ALLOW,
+        "a.*.c"   -> DENY,
+        "a.b.c.d" -> ALLOW
+      ),
+      pt(ALLOW, "a" -> pt(ALLOW, "*" -> pt(ALLOW, "c" -> deny), "b" -> pt(ALLOW, "c" -> pt(DENY, "d" -> allow))))
+    )
+  }
+
+  test("-> ALLOW & a.*.c -> DENY & a.b.c -> ALLOW") {
+    testAllPermutations(
+      List(
+        ""        -> ALLOW,
+        "a.*.c"   -> DENY,
+        "a.b.c.d" -> ALLOW
+      ),
+      pt(ALLOW, "a" -> pt(ALLOW, "*" -> pt(ALLOW, "c" -> deny), "b" -> pt(ALLOW, "c" -> pt(DENY, "d" -> allow))))
+    )
+  }
+
+  test("a.b.c.d -> ALLOW & a.*.x -> ALLOW & a.*.*.d -> DENY") {
+    testAllPermutations(
+      List("a.b.c.d" -> ALLOW, "a.*.x" -> ALLOW, "a.*.*.d" -> DENY),
+      pt(
+        DENY,
+        "a" -> pt(
+          DENY,
+          "b" -> pt(DENY, "c" -> pt(DENY, "d" -> allow)),
+          "*" -> pt(DENY, "x" -> pt(ALLOW, "d" -> deny)),
+        )
+      )
     )
   }
 }
