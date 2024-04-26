@@ -86,7 +86,9 @@ object Endpoint {
   }
 }
 
-case class CreationTimestamp(bundle_creation_time: ZonedDateTime, sequence_number: Int)
+case class CreationTimestamp(bundle_creation_time: ZonedDateTime, sequence_number: Int) {
+  def creation_time_as_dtn_timestamp: Long = Duration.between(CreationTimestamp.DTN_REFERENCE_TIMSTAMP, bundle_creation_time).toMillis()
+}
 object CreationTimestamp {
   val DTN_REFERENCE_TIMSTAMP: ZonedDateTime = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"))
 
@@ -159,7 +161,9 @@ object HopCountBlock {
 }
 case class UnknownBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: BlockProcessingControlFlags, crc_type: Int, data: Array[Byte]) extends CanonicalBlock
 
-case class Bundle(primary_block: PrimaryBlock, other_blocks: List[CanonicalBlock])
+case class Bundle(primary_block: PrimaryBlock, other_blocks: List[CanonicalBlock]) {
+  def id: String = s"${primary_block.source.full_uri}-${primary_block.creation_timestamp.creation_time_as_dtn_timestamp}-${primary_block.creation_timestamp.sequence_number}"
+}
 
 
 abstract class Flags() {
@@ -231,11 +235,9 @@ given Decoder[Endpoint] = Decoder { reader =>
 
 
 given Encoder[CreationTimestamp] = Encoder { (writer, timestamp) => 
-  def to_dtn_imestamp(d: ZonedDateTime): Long = Duration.between(CreationTimestamp.DTN_REFERENCE_TIMSTAMP, d).toMillis()
-
   writer
     .writeArrayOpen(2)
-    .writeLong(to_dtn_imestamp(timestamp.bundle_creation_time))
+    .writeLong(timestamp.creation_time_as_dtn_timestamp)
     .writeInt(timestamp.sequence_number)
     .writeArrayClose()
 }

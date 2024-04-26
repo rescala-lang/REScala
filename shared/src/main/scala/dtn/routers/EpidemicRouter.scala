@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class EpidemicRouter extends BaseRouter {
-  var delivered: Map[String, ListBuffer[String]] = Map()  // will grow indefinitely as we do not garbage collect here
+  var delivered: Map[String, Set[String]] = Map()  // will grow indefinitely as we do not garbage collect here
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
@@ -39,8 +39,8 @@ class EpidemicRouter extends BaseRouter {
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
     delivered.get(packet.bid) match {
-      case None => delivered += (packet.bid -> ListBuffer(packet.cla_sender))
-      case Some(list) => list += packet.cla_sender
+      case None => delivered += (packet.bid -> Set(packet.cla_sender))
+      case Some(set) => delivered += (packet.bid -> (set + packet.cla_sender))
     }
     println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle ${packet.bid} -> ${delivered.get(packet.bid)}")
   }
