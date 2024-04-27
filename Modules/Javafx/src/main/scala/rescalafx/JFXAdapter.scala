@@ -15,31 +15,31 @@ object JFXAdapter {
     }
   }
 
-  implicit class SignalToStringProperty[T](s: Signal[T])(implicit ev: T =:= String) {
+  implicit class SignalToStringProperty(s: Signal[String]) {
     def toProperty: StringProperty = {
-      val p = StringProperty(ev(s.now))
+      val p = StringProperty(s.now)
       s observe { v =>
-        Platform.runLater(p.update(ev(v)))
+        Platform.runLater(p.update(v))
       }
       p
     }
   }
 
-  implicit class SignalToDoubleProperty[T](s: Signal[T])(implicit ev: T =:= Double) {
+  implicit class SignalToDoubleProperty(s: Signal[Double]) {
     def toProperty: DoubleProperty = {
-      val p = DoubleProperty(ev(s.now))
+      val p = DoubleProperty(s.now)
       s observe { v =>
-        Platform.runLater(p.update(ev(v)))
+        Platform.runLater(p.update(v))
       }
       p
     }
   }
 
-  implicit class SignalToBooleanProperty[T](s: Signal[T])(implicit ev: T =:= Boolean) {
+  implicit class SignalToBooleanProperty(s: Signal[Boolean]) {
     def toProperty: BooleanProperty = {
-      val p = BooleanProperty(ev(s.now))
+      val p = BooleanProperty(s.now)
       s observe { v =>
-        Platform.runLater(p.update(ev(v)))
+        Platform.runLater(p.update(v))
       }
       p
     }
