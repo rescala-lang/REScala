@@ -3,11 +3,9 @@ package example
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Uid
-import rdts.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
+import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
-
-import java.awt.Component
 
 sealed trait Component
 case class Button(text: String)                 extends Component

@@ -1,12 +1,8 @@
 package example
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Uid
-import rdts.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
 import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
-import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import rdts.syntax.LocalReplicaId
 import reactives.default.*
 
 type ID = String
