@@ -129,7 +129,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     *
     * @group operator
     */
-  final inline infix def map[B](using CreationTicket[State])(inline expression: T => B): Signal[B] =
+  final inline infix def map[B](inline expression: T => B)(using CreationTicket[State]): Signal[B] =
     Signal.dynamic(expression(this.value))
 }
 
