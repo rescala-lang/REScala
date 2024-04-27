@@ -16,7 +16,6 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   lofiAcl,
   compileMacros.js,
   compileMacros.jvm,
-  // compileMacros.native,
   // examples, case studies, & eval
   microbenchmarks,
   examples,
