@@ -1,7 +1,7 @@
 import Settings.{noPublish, scala3defaults, javaOutputVersion, resolverJitpack}
 
 lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).aggregate(
-  // core projects
+  // library projects
   reactives.js,
   reactives.jvm,
   reactives.native,
