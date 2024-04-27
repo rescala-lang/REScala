@@ -202,7 +202,7 @@ lazy val examples = project.in(file("Modules/Example Misc 2015"))
     noPublish,
     fork := true,
     libraryDependencies ++= Seq(
-      ("org.scala-lang.modules" %% "scala-xml"   % "1.3.1").cross(CrossVersion.for3Use2_13),
+      "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
       "org.scala-lang.modules"  %% "scala-swing" % "3.0.0"
     )
   )
