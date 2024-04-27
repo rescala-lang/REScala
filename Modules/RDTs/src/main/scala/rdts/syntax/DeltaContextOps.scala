@@ -39,7 +39,6 @@ object PermMutate:
 case class LocalReplicaId(uid: Uid)
 object LocalReplicaId:
   given ordering: Ordering[LocalReplicaId]             = Uid.ordering.on(_.uid)
-  def apply(id: Uid): LocalReplicaId                   = LocalReplicaId(id)
   inline given fromId: Conversion[Uid, LocalReplicaId] = apply
   def predefined(s: String): LocalReplicaId            = LocalReplicaId.fromId(Uid.predefined(s))
   def unwrap(id: LocalReplicaId): Uid                  = id.uid
