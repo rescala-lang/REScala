@@ -1,12 +1,9 @@
 package channel.udp
 
-import channel.{ArrayMessageBuffer, BiChan, InChan, MessageBuffer, OutChan, Prod, context}
+import channel.{ArrayMessageBuffer, InChan, MessageBuffer, OutChan, Prod, context}
 import de.rmgk.delay.Async
 
-import java.io.{BufferedInputStream, BufferedOutputStream, IOException}
-import java.net.{DatagramPacket, DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException, SocketTimeoutException}
-import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
-import scala.collection.mutable
+import java.net.{DatagramPacket, DatagramSocket, SocketAddress, SocketTimeoutException}
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
@@ -33,7 +30,7 @@ class UdpInChan(serverSocket: DatagramSocket) extends InChan {
 
   override def receive: Prod[MessageBuffer] = Async.fromCallback {
 
-    // 1 << 16 should be slighly larger than the max UDP/IP packets
+    // 1 << 16 should be slightly larger than the max UDP/IP packets
     val receiveBuffer = new Array[Byte](1 << 16)
 
     try { // scalafmt does not understand this without braces

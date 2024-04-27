@@ -1,6 +1,5 @@
 package channel
 
-import channel.{InChan, OutChan}
 import de.rmgk.delay.Async
 
 import java.nio.charset.StandardCharsets

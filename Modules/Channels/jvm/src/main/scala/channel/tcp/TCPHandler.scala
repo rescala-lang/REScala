@@ -1,16 +1,12 @@
 package channel.tcp
 
-import channel.{ArrayMessageBuffer, BiChan, InChan, MessageBuffer, OutChan}
-
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException}
-import java.net.{DatagramSocket, InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
-import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
-import scala.collection.mutable
-import scala.util.{Failure, Success}
-import scala.util.control.NonFatal
+import channel.{ArrayMessageBuffer, InChan, MessageBuffer, OutChan}
 import de.rmgk.delay.Async
 
-import java.nio.ByteBuffer
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException}
+import java.net.Socket
+import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 def connect(host: String, port: Int): Async[Any, TCPConnection] = Async.fromCallback {
   try

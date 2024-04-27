@@ -2,18 +2,17 @@ package replication
 
 import channel.{ArrayMessageBuffer, BiChan, Ctx, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromSubArray, writeToArray}
-import rdts.syntax.LocalReplicaId
+import de.rmgk.delay.Async
+import de.rmgk.delay.syntax.run
 import rdts.base.Uid
+import rdts.syntax.LocalReplicaId
+import reactives.default.{act, current}
+import reactives.operator.{Evt, Fold, Signal}
 import replication.CMessage.{Identify, Payload}
 import replication.JsoniterCodecs.given
-import de.rmgk.delay.Async
-import reactives.operator.{Evt, Fold, Signal}
-import reactives.default.{act, current}
-import de.rmgk.delay.syntax.run
 
 import java.nio.charset.StandardCharsets
-import java.util.concurrent.{ArrayBlockingQueue, BlockingDeque}
-import scala.util.chaining.scalaUtilChainingOps
+import java.util.concurrent.ArrayBlockingQueue
 
 class PeerRef[T](uid: Uid) {
   val messageQueue: ArrayBlockingQueue[T] = new ArrayBlockingQueue[T](Int.MaxValue)

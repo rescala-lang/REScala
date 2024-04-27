@@ -3,13 +3,13 @@ package channel
 import channel.tcp.{TCPConnection, TCPListener}
 import channel.{ArrayMessageBuffer, BiChan}
 import de.rmgk.delay.Async
+import de.rmgk.delay.syntax.run
 
 import java.text.Bidi
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.util.{Failure, Success}
-import de.rmgk.delay.syntax.run
 
 object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {

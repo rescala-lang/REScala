@@ -9,15 +9,12 @@ import org.eclipse.jetty.util.Callback as JettyUtilCallback
 import org.eclipse.jetty.websocket.api.Session.Listener
 import org.eclipse.jetty.websocket.api.{Session, Callback as JettyCallback}
 import org.eclipse.jetty.websocket.client.WebSocketClient
-import org.eclipse.jetty.websocket.core.client.WebSocketCoreClient
 import org.eclipse.jetty.websocket.server
 import org.eclipse.jetty.websocket.server.{ServerUpgradeResponse, ServerWebSocketContainer, WebSocketCreator, WebSocketUpgradeHandler}
 
 import java.net.URI
 import java.nio.ByteBuffer
-import java.nio.charset.Charset
-import java.util.concurrent.{Executors, ScheduledFuture, ThreadFactory, TimeUnit}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 object JettyWsListener {
 

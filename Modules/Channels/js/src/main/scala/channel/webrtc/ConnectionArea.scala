@@ -14,8 +14,8 @@ import scalatags.JsDom.tags2.section
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.{Array, Date}
 import scala.scalajs.js.annotation.JSExportTopLevel
+import scala.scalajs.js.{Array, Date}
 import scala.util.{Failure, Random, Success}
 
 sealed trait BroadcastCommunication

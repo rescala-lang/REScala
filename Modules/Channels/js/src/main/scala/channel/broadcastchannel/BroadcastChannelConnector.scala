@@ -1,16 +1,15 @@
 package channel.broadcastchannel
 
 import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{ArrayMessageBuffer, InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
+import org.scalajs.dom.{BroadcastChannel, MessageEvent}
 
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success}
-import scala.scalajs.js.annotation.*
-import dom.{BroadcastChannel, MessageEvent}
 
 class BroadcastException(message: String, event: MessageEvent) extends Exception(message)
 

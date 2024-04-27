@@ -7,11 +7,9 @@ import org.scalajs.dom
 import org.scalajs.dom.Blob
 
 import java.io.IOException
-import java.nio.ByteBuffer
 import scala.scalajs.js
-import scala.scalajs.js.timers.*
+import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBufferOps.*
-import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer, Uint8Array, given}
 import scala.util.{Failure, Success}
 
 class WebsocketException(msg: String) extends IOException(msg)
