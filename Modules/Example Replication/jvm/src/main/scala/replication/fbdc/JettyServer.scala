@@ -36,13 +36,14 @@ class JettyServer(
     connector.setPort(port)
     jettyServer.addConnector(connector)
 
-    jettyServer.start()
 
     val setup = JettyWsListener.fromServer(jettyServer, PathSpec.from("/ws"))
 
     setup.connections(Some(new Handler.Sequence(mainHandler, staticResourceHandler))).run(using ()):
       case Success(conn) => dataManager.addConnection(BiChan(conn, conn))
       case Failure(t)    => t.printStackTrace()
+
+    jettyServer.start()
 
   }
 
