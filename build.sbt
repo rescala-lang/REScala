@@ -1,7 +1,6 @@
 import Settings.{noPublish, scala3defaults, javaOutputVersion, resolverJitpack}
-import sbt.librarymanagement.Configurations.TestInternal
 
-lazy val bismuth = project.in(file(".")).settings(noPublish).aggregate(
+lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).aggregate(
   // core projects
   reactives.js,
   reactives.jvm,
@@ -58,12 +57,12 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, LocalSettings.scalaSwing)
+  .settings(scala3defaults, noPublish, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
   .dependsOn(reactives.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, noPublish, LocalSettings.scalaFxDependencies, fork := true, Settings.javaOutputVersion(17))
+  .settings(scala3defaults, noPublish, LocalSettings.scalafx, fork := true, Settings.javaOutputVersion(17))
 
 lazy val rdtsAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
@@ -236,7 +235,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .settings(
     scala3defaults,
     noPublish,
-    LocalSettings.scalaFxDependencies,
+    LocalSettings.scalafx,
     fork := true,
     Dependencies.jsoniterScala,
     LocalSettings.tink,

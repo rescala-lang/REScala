@@ -4,39 +4,8 @@ import sbt.Keys.*
 
 object LocalSettings {
 
-  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.13.0"
-
-  val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
-
-  // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
-  // https://www.scalafx.org/news/releases/
-  // then again, the announcement for 12.0.2 seems incorrect …
-  val javaFxModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
-  lazy val javaFxDependencies = {
-    val javaFxVersion = "22.0.1"
-    // Determine OS version of JavaFX binaries
-    val osName = System.getProperty("os.name") match {
-      case n if n.startsWith("Linux")   => "linux"
-      case n if n.startsWith("Mac")     => "mac"
-      case n if n.startsWith("Windows") => "win"
-      case _                            => throw new Exception("Unknown platform!")
-    }
-    Seq(
-      libraryDependencies ++= javaFxModules.map(m =>
-        "org.openjfx" % s"javafx-$m" % javaFxVersion classifier osName
-      )
-    )
-  }
-
-  lazy val scalaFxDependencies = javaFxDependencies ++ {
-    val scalaFxVersion = "22.0.0-R33"
-    Seq(
-      scalaSwing,
-      libraryDependencies ++= Seq(
-        "org.scalafx" %% "scalafx" % scalaFxVersion,
-      ),
-    )
-  }
+  def tink    = libraryDependencies += "com.google.crypto.tink" % "tink"    % "1.13.0"
+  def scalafx = libraryDependencies += "org.scalafx"           %% "scalafx" % "22.0.0-R33"
 
   val deployTask = TaskKey[File]("deploy", "generates a correct index.template.html") := {
     val fastlink   = (Compile / fastLinkJS).value
