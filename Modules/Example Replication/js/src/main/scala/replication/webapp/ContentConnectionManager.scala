@@ -1,15 +1,15 @@
 package replication.webapp
 
-import loci.communicator.ws.webnative.WS
-import loci.registry.Registry
+import channel.BiChan
+import channel.webnativewebsockets.WebsocketConnect
 import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import reactives.default.*
+import replication.DataManager
 
-import scala.concurrent.Future
-import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import scala.util.{Failure, Success}
 
-class ContentConnectionManager(registry: Registry) {
+class ContentConnectionManager(dataManager: DataManager[?]) {
 
   val wsUri: String = {
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
@@ -22,29 +22,16 @@ class ContentConnectionManager(registry: Registry) {
     s"$wsProtocol://${dom.document.location.host}${parent}ws"
   }
 
-  val joined = Event.fromCallback {
-    registry.remoteJoined.foreach(Event.handle)
-  }.event
-  val left = Event.fromCallback {
-    registry.remoteLeft.foreach(Event.handle)
-  }.event
-
-  val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])(
-    joined act { rr => Fold.current.updated(rr, true) },
-    left act { rr => Fold.current.updated(rr, false) }
-  )
-
-  val connectionStatusChanged = joined || left
-
-  val _connectionAttempt = Var.empty[Signal[RemoteRef]]
-  val connectionAttempt  = _connectionAttempt.flatten
+  val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])()
 
   def connect(): Unit = {
-    _connectionAttempt.set(Signal.fromFuture(tryConnect()))
+    tryConnect()
   }
 
-  def tryConnect(): Future[RemoteRef] = {
+  def tryConnect(): Unit = {
     println(s"trying to connect to $wsUri")
-    registry.connect(WS(wsUri))
+    WebsocketConnect.connect(wsUri).run(using ()):
+      case Success(conn) => dataManager.addConnection(BiChan(conn, conn))
+      case Failure(t)    => t.printStackTrace()
   }
 }
