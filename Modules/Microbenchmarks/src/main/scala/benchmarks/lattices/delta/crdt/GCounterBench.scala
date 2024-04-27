@@ -22,16 +22,16 @@ class GCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0", GrowOnlyCounter.zero).inc()(using "0".asId)) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0".asId, GrowOnlyCounter.zero).map(_.inc())) {
       case (c, n) =>
-        val delta = NamedDeltaBuffer(n.toString, GrowOnlyCounter.zero).inc()(using n.toString.asId).deltaBuffer.head
+        val delta = NamedDeltaBuffer(n.toString.asId, GrowOnlyCounter.zero).map(_.inc()).deltaBuffer.head
         c.applyDelta(delta.replicaId, delta.anon)
     }
   }
 
   @Benchmark
-  def value(): Int = counter.value
+  def value(): Int = counter.state.value
 
   @Benchmark
-  def inc(): NamedDeltaBuffer[GrowOnlyCounter] = counter.inc()(using counter.replicaID)
+  def inc(): NamedDeltaBuffer[GrowOnlyCounter] = counter.map(_.inc())
 }

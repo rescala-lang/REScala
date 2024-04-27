@@ -22,21 +22,21 @@ object PosNegCounter {
   implicit class syntax[C](container: C)
       extends OpsSyntaxHelper[C, PosNegCounter](container) {
     def value(using IsQuery): Int =
-      val pos = current.pos.growOnlyCounter.value
-      val neg = current.neg.growOnlyCounter.value
+      val pos = current.pos.value
+      val neg = current.neg.value
       pos - neg
 
     def inc(): IdMutator =
-      val pos = current.pos.growOnlyCounter.inc()
+      val pos = current.pos.inc()
       PosNegCounter(pos, GrowOnlyCounter.zero).mutator
 
     def dec(): IdMutator =
-      val neg = current.neg.growOnlyCounter.inc()
+      val neg = current.neg.inc()
       PosNegCounter(GrowOnlyCounter.zero, neg).mutator
 
     def add(delta: Int): IdMutator = {
-      if (delta > 0) PosNegCounter(current.pos.growOnlyCounter.add(delta), GrowOnlyCounter.zero)
-      else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.growOnlyCounter.add(-delta))
+      if (delta > 0) PosNegCounter(current.pos.add(delta), GrowOnlyCounter.zero)
+      else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, current.neg.add(-delta))
       else PosNegCounter.zero
     }.mutator
   }

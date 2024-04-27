@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.Uid.asId
 import rdts.datatypes.TwoPhaseSet
 
 import java.util.concurrent.TimeUnit
@@ -21,7 +22,7 @@ class TwoPSetBench {
 
   @Setup
   def setup(): Unit = {
-    set = (0 until size).foldLeft(NamedDeltaBuffer("a", TwoPhaseSet.empty[Int])) {
+    set = (0 until size).foldLeft(NamedDeltaBuffer("a".asId, TwoPhaseSet.empty[Int])) {
       case (s, e) => s.insert(e)
     }
   }

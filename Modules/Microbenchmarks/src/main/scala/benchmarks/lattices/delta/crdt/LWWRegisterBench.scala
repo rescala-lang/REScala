@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.Uid.asId
 import rdts.datatypes.LastWriterWins
 
 import java.util.concurrent.TimeUnit
@@ -18,7 +19,7 @@ class LWWRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    full = NamedDeltaBuffer("b", LastWriterWins.now(0))
+    full = NamedDeltaBuffer("b".asId, LastWriterWins.now(0))
   }
 
   @Benchmark

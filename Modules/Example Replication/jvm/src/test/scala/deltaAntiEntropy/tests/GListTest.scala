@@ -31,7 +31,7 @@ object GListGenerators {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[GrowOnlyList[E]]("a", network, mutable.Buffer())
     val aec     = AntiEntropyContainer[GrowOnlyList[E]](ae)
-    aec.applyDelta(Named(aec.replicaID, Dotted(v)))
+    aec.applyDelta(Named(aec.replicaID.uid, Dotted(v)))
 
 }
 

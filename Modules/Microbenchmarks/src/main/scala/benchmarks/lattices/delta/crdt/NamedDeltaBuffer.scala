@@ -14,10 +14,13 @@ case class Named[T](replicaId: Uid, anon: T)
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
 case class NamedDeltaBuffer[State](
-    replicaID: Uid,
+    replicaID: LocalReplicaId,
     state: State,
     deltaBuffer: List[Named[State]] = Nil
 ) {
+
+  inline def map(f: LocalReplicaId ?=> State => State)(using Lattice[State]): NamedDeltaBuffer[State] =
+    applyDelta(replicaID.uid, f(using replicaID)(state))
 
   def applyDelta(source: Uid, delta: State)(using Lattice[State]): NamedDeltaBuffer[State] =
     Lattice[State].diff(state, delta) match {
@@ -29,7 +32,7 @@ case class NamedDeltaBuffer[State](
 
   def clearDeltas(): NamedDeltaBuffer[State] = copy(deltaBuffer = List())
 
-  def transform(f: State => State)(using Lattice[State]) = applyDelta(replicaID, f(state))
+  def transform(f: State => State)(using Lattice[State]) = applyDelta(replicaID.uid, f(state))
 }
 
 object NamedDeltaBuffer {
@@ -46,13 +49,13 @@ object NamedDeltaBuffer {
     override def mutateContext(
         container: NamedDeltaBuffer[Dotted[L]],
         withContext: Dotted[L]
-    ): NamedDeltaBuffer[Dotted[L]] = container.applyDelta(container.replicaID, withContext)
+    ): NamedDeltaBuffer[Dotted[L]] = container.applyDelta(container.replicaID.uid, withContext)
     override def context(c: NamedDeltaBuffer[Dotted[L]]): Dots = c.state.context
   }
 
   given plainPermissions[L: Lattice]: PermMutate[NamedDeltaBuffer[L], L] = new {
     override def mutate(c: NamedDeltaBuffer[L], delta: L): NamedDeltaBuffer[L] =
-      c.applyDelta(c.replicaID, delta)
+      c.applyDelta(c.replicaID.uid, delta)
     override def query(c: NamedDeltaBuffer[L]): L = c.state
   }
 }

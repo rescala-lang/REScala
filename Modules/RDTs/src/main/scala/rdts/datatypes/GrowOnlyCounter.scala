@@ -3,9 +3,16 @@ package rdts.datatypes
 import rdts.base.Lattice.*
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.dotted.HasDots
-import rdts.syntax.{OpsSyntaxHelper, PermQuery}
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper, PermQuery}
 
-case class GrowOnlyCounter(inner: Map[Uid, Int]) derives Bottom
+case class GrowOnlyCounter(inner: Map[Uid, Int]) {
+  lazy val value: Int = inner.valuesIterator.sum
+
+  def inc()(using localReplicaId: LocalReplicaId): GrowOnlyCounter = add(1)
+  def add(amount: Int)(using localReplicaId: LocalReplicaId): GrowOnlyCounter =
+    require(amount >= 0, "may not decrease counter")
+    GrowOnlyCounter(Map(localReplicaId.uid -> (inner.getOrElse(localReplicaId.uid, 0) + amount)))
+}
 
 /** A GCounter is a Delta CRDT modeling an increment-only counter. */
 object GrowOnlyCounter {
@@ -13,21 +20,10 @@ object GrowOnlyCounter {
 
   given hasDots: HasDots[GrowOnlyCounter] = HasDots.noDots
 
+  given bottom: Bottom[GrowOnlyCounter] = Bottom.derived
+
   given lattice: Lattice[GrowOnlyCounter] =
     given Lattice[Int] = math.max
     Lattice.derived
 
-  extension [C](container: C)
-    def growOnlyCounter: syntax[C] = syntax(container)
-
-  implicit class syntax[C](container: C)
-      extends OpsSyntaxHelper[C, GrowOnlyCounter](container) {
-    def value(using IsQuery): Int = current.inner.valuesIterator.sum
-
-    def inc(): IdMutator =
-      GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + 1))).mutator
-    def add(amount: Int): IdMutator =
-      require(amount >= 0, "may not decrease counter")
-      GrowOnlyCounter(Map(replicaId -> (current.inner.getOrElse(replicaId, 0) + amount))).mutator
-  }
 }

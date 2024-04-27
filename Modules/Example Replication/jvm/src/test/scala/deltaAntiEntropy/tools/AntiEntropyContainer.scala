@@ -3,7 +3,7 @@ package deltaAntiEntropy.tools
 import rdts.base.{Lattice, Uid}
 import rdts.base.Uid.asId
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{PermCausalMutate, PermMutate}
+import rdts.syntax.{LocalReplicaId, PermCausalMutate, PermMutate}
 import rdts.time.Dots
 
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
@@ -16,12 +16,15 @@ import rdts.time.Dots
 class AntiEntropyContainer[State](
     protected val antiEntropy: AntiEntropy[State]
 ) {
-  val replicaID: Uid = antiEntropy.replicaID.asId
+  val replicaID: LocalReplicaId = antiEntropy.replicaID.asId
 
   def state: Dotted[State] = antiEntropy.state
 
   override def toString: String =
     s"AntiEntropy($replicaID, $state)"
+
+  inline def map(f: LocalReplicaId ?=> State => State)(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+    applyDelta(Named(replicaID.uid, Dotted(f(using replicaID)(state.data))))
 
   def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
@@ -47,12 +50,12 @@ object AntiEntropyContainer {
       : (PermMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
     new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
       override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =
-        c.applyDelta(Named(c.replicaID, Dotted(delta, Dots.empty)))
+        c.applyDelta(Named(c.replicaID.uid, Dotted(delta, Dots.empty)))
       override def query(c: AntiEntropyContainer[L]): L = c.state.data
       override def mutateContext(
           container: AntiEntropyContainer[L],
           withContext: Dotted[L]
-      ): AntiEntropyContainer[L] = container.applyDelta(Named(container.replicaID, withContext))
+      ): AntiEntropyContainer[L] = container.applyDelta(Named(container.replicaID.uid, withContext))
       override def context(c: AntiEntropyContainer[L]): Dots = c.state.context
     }
 

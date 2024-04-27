@@ -17,7 +17,7 @@ object GCounterGenerators {
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
     (0 until n).foldLeft(AntiEntropyContainer[GrowOnlyCounter](ae)) {
-      case (c, _) => c.inc()(using ae.uid)
+      case (c, _) => c.map(_.inc())
     }
   }
 
@@ -27,15 +27,18 @@ object GCounterGenerators {
 class GCounterTest extends munit.ScalaCheckSuite {
   import GCounterGenerators.*
 
+
+  extension (aec: AntiEntropyContainer[GrowOnlyCounter]) def value = aec.state.data.value
+
   property("inc") {
     forAll { (counter: AntiEntropyContainer[GrowOnlyCounter]) =>
-      val before     = counter.value
-      val counterInc = counter.inc()(using counter.replicaID)
+      val before     = counter.state.data.value
+      val counterInc = counter.map(_.inc())
 
       assertEquals(
-        counterInc.value,
+        counterInc.state.data.value,
         before + 1,
-        s"Incrementing the counter should increase its value by 1, but ${counterInc.value} does not equal ${counter.value} + 1"
+        s"Incrementing the counter should increase its value by 1, but ${counterInc.state.data.value} does not equal ${counter.state.data.value} + 1"
       )
     }
   }
@@ -46,8 +49,8 @@ class GCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyContainer[GrowOnlyCounter](aea).inc()(using aea.uid)
-    val cb0 = AntiEntropyContainer[GrowOnlyCounter](aeb).inc()(using aeb.uid)
+    val ca0 = AntiEntropyContainer[GrowOnlyCounter](aea).map(_.inc())
+    val cb0 = AntiEntropyContainer[GrowOnlyCounter](aeb).map(_.inc())
 
     AntiEntropy.sync(aea, aeb)
 
@@ -73,10 +76,10 @@ class GCounterTest extends munit.ScalaCheckSuite {
       val aeb     = new AntiEntropy[GrowOnlyCounter]("b", network, mutable.Buffer("a"))
 
       val ca0 = (0 until incA.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aea)) {
-        case (c, _) => c.inc()(using c.replicaID)
+        case (c, _) => c.map(_.inc())
       }
       val cb0 = (0 until incB.toInt).foldLeft(AntiEntropyContainer[GrowOnlyCounter](aeb)) {
-        case (c, _) => c.inc()(using c.replicaID)
+        case (c, _) => c.map(_.inc())
       }
 
       AntiEntropy.sync(aea, aeb)
