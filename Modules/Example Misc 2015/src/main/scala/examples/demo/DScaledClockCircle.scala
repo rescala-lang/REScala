@@ -1,10 +1,9 @@
 package examples.demo
 
-import java.awt.Dimension
-
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 
+import java.awt.Dimension
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
 /** So far, we showed Vars and Signals defined as a transformation

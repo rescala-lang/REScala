@@ -1,7 +1,6 @@
 package reswing
 
 import javax.swing.Icon
-
 import scala.swing.{Action, Alignment, Button, Color, Dimension, Font}
 
 class ReButton(

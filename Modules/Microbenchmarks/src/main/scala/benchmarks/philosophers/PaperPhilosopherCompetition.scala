@@ -1,7 +1,7 @@
 package benchmarks.philosophers
 
 import benchmarks.{BusyThreads, EngineParam}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 
 import java.util.concurrent.TimeUnit

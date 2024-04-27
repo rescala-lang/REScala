@@ -1,7 +1,7 @@
 package reactives.benchmarks.measureSizes
 
-import rdts.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
+import rdts.time.ArrayRanges
 import reactives.core.{AccessHandler, ReSource, ReevTicket}
 import reactives.default
 import reactives.parrp.ParRPDefault

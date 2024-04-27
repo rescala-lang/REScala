@@ -1,6 +1,7 @@
 package reswing.reshapes.util
 
-import reactives.default._
+import reactives.default.*
+
 import scala.collection.mutable.ListBuffer
 
 object ReactiveUtil {

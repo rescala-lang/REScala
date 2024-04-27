@@ -1,7 +1,7 @@
 package todolist
 
 import javafx.scene.control.ListCell
-import scalafx.Includes._
+import scalafx.Includes.*
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 import scalafx.beans.value.ObservableValue

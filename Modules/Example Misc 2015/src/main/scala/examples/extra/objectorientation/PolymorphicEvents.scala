@@ -1,6 +1,6 @@
 package examples.extra.objectorientation
 
-import reactives.default._
+import reactives.default.*
 
 class Keyboard {
   protected lazy val press: Event[String] = Evt[String]()

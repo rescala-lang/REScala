@@ -1,8 +1,8 @@
 package reswing.texteditor.signalsAndEventsFromImperative
 
-import javax.swing
+import reactives.default.*
 
-import reactives.default._
+import javax.swing
 
 class Timer(delay0: Int) {
   val peer: swing.Timer = new swing.Timer(delay0, null) {

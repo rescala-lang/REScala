@@ -1,7 +1,7 @@
 package benchmarks.simple
 
-import benchmarks._
-import org.openjdk.jmh.annotations._
+import benchmarks.*
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.ThreadParams
 import reactives.operator.Interface
 
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class LowContentionSerialOrder extends BusyThreads {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
   var sources: Array[Var[Int]]        = scala.compiletime.uninitialized
   var grid: Array[Array[Signal[Int]]] = scala.compiletime.uninitialized
   @Param(Array("16"))

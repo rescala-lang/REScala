@@ -1,9 +1,9 @@
 package examples.pong
 
-import java.awt.Point
-
 import examples.Mouse
-import reactives.default._
+import reactives.default.*
+
+import java.awt.Point
 
 object Pong {
   val Max_X = 800

@@ -1,6 +1,6 @@
 package reswing.texteditor.signalsAndEventsFromImperative
 
-import reactives.default._
+import reactives.default.*
 
 /** Iterates over `array` whose content has the size of `count`.
   * If `count` is less than the length of `array`, there is assumed to be a

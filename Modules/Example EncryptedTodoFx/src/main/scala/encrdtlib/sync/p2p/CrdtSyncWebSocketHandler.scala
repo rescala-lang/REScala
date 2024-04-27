@@ -1,10 +1,10 @@
 package encrdtlib.sync.p2p
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToString}
+import encrdtlib.sync.p2p.CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
+import encrdtlib.sync.p2p.P2PConnectionManager.{Message, Peers, REPLICAID_HEADER, RequestPeers, RequestState, State}
 import org.eclipse.jetty.websocket.api.exceptions.WebSocketTimeoutException
 import org.eclipse.jetty.websocket.api.{CloseStatus, Session, WebSocketAdapter, WebSocketBehavior}
-import CrdtSyncWebSocketHandler.{clientShutdownCloseStatus, duplicateCloseStatus}
-import P2PConnectionManager.{Message, Peers, REPLICAID_HEADER, RequestPeers, RequestState, State}
 
 import scala.util.{Failure, Success, Try}
 

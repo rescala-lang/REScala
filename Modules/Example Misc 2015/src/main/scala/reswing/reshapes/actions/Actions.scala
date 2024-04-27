@@ -1,15 +1,13 @@
 package reswing.reshapes.actions
 
-import java.io.File
-
-import scala.swing.Action
-import scala.swing.FileChooser
-import scala.xml.XML
-
+import reactives.default.*
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.CreateShape
 import reswing.reshapes.figures.Shape
-import reactives.default._
+
+import java.io.File
+import scala.swing.{Action, FileChooser}
+import scala.xml.XML
 
 /** Serializes all currently drawn shapes to a chosen file */
 class SaveAction extends Action("Save") {

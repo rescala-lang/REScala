@@ -1,7 +1,6 @@
 package encrdtlib.encrypted.deltabased
 
-import rdts.base.Lattice._
-
+import rdts.base.Lattice.*
 import rdts.time.Dots
 
 import scala.collection.mutable

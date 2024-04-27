@@ -1,9 +1,8 @@
 package reswing.millgame.versions.signals
 
-import reswing.millgame._
-import reswing.millgame.types._
-
-import reactives.default._
+import reactives.default.*
+import reswing.millgame.*
+import reswing.millgame.types.*
 
 class MillBoard {
   /* wrap stones Var, to have the same interface as other versions */

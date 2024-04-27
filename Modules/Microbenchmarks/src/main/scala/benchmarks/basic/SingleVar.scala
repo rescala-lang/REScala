@@ -3,11 +3,11 @@ package benchmarks.basic
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 import reactives.core.Scheduler
+import reactives.default.global.State as BundleState
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
-import reactives.default.global.State as BundleState
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

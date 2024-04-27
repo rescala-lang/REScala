@@ -1,10 +1,9 @@
 package examples
 
+import reactives.default.*
+
 import java.awt.Point
-
-import reactives.default._
-
-import scala.swing.event._
+import scala.swing.event.*
 
 class Mouse {
 

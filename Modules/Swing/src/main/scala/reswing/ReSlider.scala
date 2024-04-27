@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Color, Dimension, Font, Label, Slider}
 import scala.swing.event.ValueChanged
+import scala.swing.{Color, Dimension, Font, Label, Slider}
 
 class ReSlider(
     val min: ReSwingValue[Int] = (),

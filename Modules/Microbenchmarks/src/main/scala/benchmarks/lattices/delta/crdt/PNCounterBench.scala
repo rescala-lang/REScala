@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import org.openjdk.jmh.annotations.*
 import rdts.base.Uid.asId
 import rdts.datatypes.PosNegCounter
-import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 

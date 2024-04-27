@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Color, Dimension, Font, TextComponent}
 import scala.swing.event.{CaretUpdate, ValueChanged}
+import scala.swing.{Color, Dimension, Font, TextComponent}
 
 class ReTextComponent(
     val text: ReSwingValue[String] = (),

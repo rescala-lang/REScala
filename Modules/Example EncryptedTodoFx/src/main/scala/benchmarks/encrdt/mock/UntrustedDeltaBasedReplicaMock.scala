@@ -1,16 +1,15 @@
 package benchmarks.encrdt.mock
 
-import benchmarks.encrdt.Codecs
+import benchmarks.encrdt.Codecs.dotSetCodec
+import benchmarks.encrdt.{Codecs, idFromString}
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 import rdts.time.Dots
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Path}
-import benchmarks.encrdt.Codecs.dotSetCodec
-import benchmarks.encrdt.idFromString
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 
 class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   override protected def prune(encryptedDeltaGroup: EncryptedDeltaGroup): Unit  = {}

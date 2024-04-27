@@ -17,7 +17,7 @@ class ChatBench {
 
   @Benchmark
   def chat(benchState: BenchState, threadParams: ThreadParams) = {
-    import benchState.stableEngine._
+    import benchState.stableEngine.*
     if (global.scheduler != reactives.scheduler.LevelbasedVariants.unmanaged) {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
     } else {
@@ -43,7 +43,7 @@ class BenchState {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var cs: ChatServer[stableEngine.type] = scala.compiletime.uninitialized
   var clients: Array[Evt[String]]       = scala.compiletime.uninitialized

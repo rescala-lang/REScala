@@ -1,14 +1,7 @@
 package reswing.reshapes.ui.dialogs
 
-import scala.swing.Action
-import scala.swing.BoxPanel
-import scala.swing.Button
-import scala.swing.CheckBox
-import scala.swing.Dialog
-import scala.swing.Label
-import scala.swing.Orientation
-import scala.swing.TextField
 import java.awt.Point
+import scala.swing.{Action, BoxPanel, Button, CheckBox, Dialog, Label, Orientation, TextField}
 
 abstract class CustomDialog extends Dialog {
   private var dialogResult = false

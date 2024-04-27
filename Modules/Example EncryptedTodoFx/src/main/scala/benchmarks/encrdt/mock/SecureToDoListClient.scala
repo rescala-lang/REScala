@@ -1,14 +1,14 @@
 package benchmarks.encrdt.mock
 
+import benchmarks.encrdt.Codecs.*
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import rdts.time.Dots
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
-import benchmarks.encrdt.Codecs._
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
-import rdts.dotted.{Dotted}
+import rdts.dotted.Dotted
+import rdts.time.Dots
 
 import java.util.UUID
 import scala.collection.mutable

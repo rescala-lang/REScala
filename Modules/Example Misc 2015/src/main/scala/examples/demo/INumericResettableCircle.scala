@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 
 /** We now begin to introduce user interaction. Currently, the
   * ball easily moves outside of the window and correcting its

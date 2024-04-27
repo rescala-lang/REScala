@@ -1,10 +1,8 @@
 package reswing.reshapes.figures
 
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Point
-
 import reswing.reshapes.drawing.DrawingSpaceState
+
+import java.awt.{Color, Graphics2D, Point}
 
 class Oval(
     drawingSpaceState: DrawingSpaceState,

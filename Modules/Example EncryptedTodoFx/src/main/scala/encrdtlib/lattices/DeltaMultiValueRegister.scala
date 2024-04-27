@@ -1,7 +1,7 @@
 package encrdtlib.lattices
 
-import rdts.base.{Uid, Lattice}
-import rdts.dotted.{Dotted}
+import rdts.base.{Lattice, Uid}
+import rdts.dotted.Dotted
 import rdts.time.{Dot, Dots}
 
 object DeltaMultiValueRegister {

@@ -1,14 +1,13 @@
 package todo
 
+import org.scalajs.dom
+import org.scalajs.dom.Element
+import org.scalajs.dom.html.{Input, LI}
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{DeltaBuffer, LocalReplicaId}
-import org.scalajs.dom
-import org.scalajs.dom.Element
-import org.scalajs.dom.html.{Input, LI}
 import reactives.default.*
-import reactives.default.act
 import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*

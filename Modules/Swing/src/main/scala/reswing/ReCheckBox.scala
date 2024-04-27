@@ -1,7 +1,6 @@
 package reswing
 
 import javax.swing.Icon
-
 import scala.swing.{Alignment, CheckBox, Color, Dimension, Font}
 
 class ReCheckBox(

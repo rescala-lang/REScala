@@ -1,8 +1,8 @@
 package reswing
 
-import scala.swing.{Color, Dimension, Font, Table}
 import scala.swing.Table.{AutoResizeMode, ElementMode, IntervalMode}
 import scala.swing.event.{TableChanged, TableColumnsSelected, TableRowsAdded, TableRowsRemoved, TableRowsSelected, TableStructureChanged, TableUpdated}
+import scala.swing.{Color, Dimension, Font, Table}
 
 class ReTable[A <: AnyRef](
     val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]](),

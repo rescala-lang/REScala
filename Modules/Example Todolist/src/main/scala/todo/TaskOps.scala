@@ -1,8 +1,8 @@
 package todo
 
-import rdts.dotted.Dotted
 import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedList
+import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import reactives.default.*
 

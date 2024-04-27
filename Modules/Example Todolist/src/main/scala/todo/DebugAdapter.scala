@@ -5,8 +5,8 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import reactives.core.Tracing.RawWrapper
 import reactives.core.{ReInfo, ReSource, Tracing}
 import reactives.structure.Pulse
-import scala.scalajs.js
 
+import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
 @JSExportTopLevel("DebugAdapter")

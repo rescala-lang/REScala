@@ -1,7 +1,7 @@
 package reswing
 
+import scala.swing.event.*
 import scala.swing.{Component, Dimension, Point, Rectangle, Window}
-import scala.swing.event.{UIElementMoved, UIElementResized, _}
 
 abstract class ReWindow(
     val contents: ReSwingValue[Component] = (),

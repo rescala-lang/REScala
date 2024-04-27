@@ -1,7 +1,7 @@
 package benchmarks.lattices
 
+import org.openjdk.jmh.annotations.*
 import rdts.time.ArrayRanges
-import org.openjdk.jmh.annotations._
 
 import java.util.concurrent.TimeUnit
 

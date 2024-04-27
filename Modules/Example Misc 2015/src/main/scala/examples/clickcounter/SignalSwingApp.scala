@@ -1,9 +1,9 @@
 package examples.clickcounter
 
-import reactives.default._
+import reactives.default.*
 
-import scala.swing._
-import scala.swing.event._
+import scala.swing.*
+import scala.swing.event.*
 
 // Wrap a bit of Swing, as if it were an FRP library
 trait ReactiveText {

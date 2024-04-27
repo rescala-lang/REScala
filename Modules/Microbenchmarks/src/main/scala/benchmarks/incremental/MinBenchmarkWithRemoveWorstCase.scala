@@ -1,9 +1,9 @@
 package benchmarks.incremental
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
-
 import reactives.default.*
 import reactives.extra.incremental.*
+
 import java.util.concurrent.TimeUnit
 
 /** @author gerizuna

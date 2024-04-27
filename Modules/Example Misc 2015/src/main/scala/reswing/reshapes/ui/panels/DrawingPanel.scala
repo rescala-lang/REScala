@@ -1,25 +1,14 @@
 package reswing.reshapes.ui.panels
 
-import java.awt.BasicStroke
-
-import scala.collection.mutable.ListBuffer
-import scala.swing.Color
-import scala.swing.Graphics2D
-import scala.swing.Panel
-import scala.swing.Point
-import scala.swing.event.MouseDragged
-import scala.swing.event.MousePressed
-import scala.swing.event.MouseReleased
-
-import reactives.default._
-import reswing.reshapes.drawing.Command
-import reswing.reshapes.drawing.CreateShape
-import reswing.reshapes.drawing.DrawingSpaceState
-import reswing.reshapes.drawing.EditShape
-import reswing.reshapes.figures.Movable
-import reswing.reshapes.figures.Resizable
-import reswing.reshapes.figures.Shape
+import reactives.default.*
+import reswing.reshapes.drawing.{Command, CreateShape, DrawingSpaceState, EditShape}
+import reswing.reshapes.figures.{Movable, Resizable, Shape}
 import reswing.reshapes.util.MathUtil
+
+import java.awt.BasicStroke
+import scala.collection.mutable.ListBuffer
+import scala.swing.{Color, Graphics2D, Panel, Point}
+import scala.swing.event.{MouseDragged, MousePressed, MouseReleased}
 
 /** Represents the panel where all shapes are drawn onto */
 class DrawingPanel(val state: DrawingSpaceState) extends Panel {

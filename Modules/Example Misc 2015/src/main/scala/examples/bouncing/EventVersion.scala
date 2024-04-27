@@ -1,9 +1,8 @@
 package examples.bouncing
 
+import reactives.default.*
+
 import java.awt.{Dimension, Graphics2D, Point}
-
-import reactives.default._
-
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object EventVersion extends SimpleSwingApplication {

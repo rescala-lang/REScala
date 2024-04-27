@@ -1,9 +1,9 @@
 package benchmarks
 
-import java.util.concurrent.{CountDownLatch, TimeUnit}
-
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, Blackhole}
+
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 @State(Scope.Benchmark)
 class BusyThreads {

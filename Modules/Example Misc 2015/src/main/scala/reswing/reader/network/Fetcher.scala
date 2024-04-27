@@ -1,15 +1,10 @@
 package reswing.reader.network
 
-import java.net.SocketException
-import java.net.SocketTimeoutException
-import java.net.URL
-import java.net.UnknownHostException
-
+import reactives.default.*
 import reswing.reader.Observable
 
-import scala.xml.NodeSeq
-import scala.xml.XML
-import reactives.default._
+import java.net.{SocketException, SocketTimeoutException, URL, UnknownHostException}
+import scala.xml.{NodeSeq, XML}
 
 /** The Fetcher is responsible to fetch the xml data
   * After fetching the data an event is triggered

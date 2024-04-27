@@ -1,11 +1,11 @@
 package examples.tempconverter
 
 // EScala lib + behaviour extensions
-import reactives.default._
+import reactives.default.*
 
 // Scala swing events
-import scala.swing._
-import scala.swing.event._
+import scala.swing.*
+import scala.swing.event.*
 
 object SignalTempConverter extends SimpleSwingApplication {
 

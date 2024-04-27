@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class ModifyBenchmark {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var reactor: Reactor[Int] = scala.compiletime.uninitialized
   var trigger: Evt[Unit]    = scala.compiletime.uninitialized

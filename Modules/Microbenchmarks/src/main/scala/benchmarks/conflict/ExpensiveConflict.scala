@@ -1,10 +1,11 @@
 package benchmarks.conflict
 
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
+
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @AuxCounters
 @State(Scope.Thread)
@@ -33,7 +34,7 @@ class ExpensiveConflict {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var cheapSource: Var[Int]     = scala.compiletime.uninitialized
   var expensiveSource: Var[Int] = scala.compiletime.uninitialized

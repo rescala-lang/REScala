@@ -1,8 +1,9 @@
 package benchmarks.lattices.delta
 
-import org.openjdk.jmh.annotations._
-import rdts.time.{Dots, Dot}
+import org.openjdk.jmh.annotations.*
 import rdts.base.Uid.asId
+import rdts.time.{Dot, Dots}
+
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

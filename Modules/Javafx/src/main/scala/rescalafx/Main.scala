@@ -1,12 +1,12 @@
 package rescalafx
 
+import reactives.default.*
+import rescalafx.JFXAdapter.*
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.application.{JFXApp3, Platform}
-import scalafx.scene.{Node, Scene}
 import scalafx.scene.control.{Label, Slider}
 import scalafx.scene.layout.VBox
-import rescalafx.JFXAdapter._
-import reactives.default._
+import scalafx.scene.{Node, Scene}
 
 object Main extends JFXApp3 {
   override def start(): Unit = {

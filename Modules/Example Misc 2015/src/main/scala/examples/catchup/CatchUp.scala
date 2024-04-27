@@ -1,11 +1,10 @@
 package examples.catchup
 
-import java.awt._
-
 import examples.Mouse
-import reactives.default._
+import reactives.default.*
 
-import scala.swing.event._
+import java.awt.*
+import scala.swing.event.*
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object CatchUp extends SimpleSwingApplication {

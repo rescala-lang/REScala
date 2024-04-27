@@ -1,14 +1,14 @@
 package benchmarks.philosophers
 
-import java.util.concurrent.atomic.AtomicInteger
-
-import benchmarks.philosophers.PhilosopherTable._
-import org.openjdk.jmh.infra.Blackhole;
+import benchmarks.philosophers.PhilosopherTable.*
+import org.openjdk.jmh.infra.Blackhole
 import reactives.operator.Interface
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface) {
 
-  import engine._
+  import engine.*
 
   val seatings = createTable(philosopherCount)
 

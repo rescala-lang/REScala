@@ -1,6 +1,6 @@
 package examples.meanwindow
 
-import reactives.default._
+import reactives.default.*
 
 object EventWindows extends App {
 

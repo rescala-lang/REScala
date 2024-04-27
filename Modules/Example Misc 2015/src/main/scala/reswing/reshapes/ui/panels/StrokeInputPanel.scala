@@ -1,18 +1,11 @@
 package reswing.reshapes.ui.panels
 
-import java.awt.Color
-
-import scala.swing.Action
-import scala.swing.BoxPanel
-import scala.swing.Button
-import scala.swing.Component
-import scala.swing.FlowPanel
-import scala.swing.Frame
-import scala.swing.Label
-import scala.swing.Orientation
-import javax.swing.JColorChooser
-import reactives.default._
+import reactives.default.*
 import reswing.{ReButton, ReSlider, ReSwingValue}
+
+import java.awt.Color
+import javax.swing.JColorChooser
+import scala.swing.{Action, BoxPanel, Button, Component, FlowPanel, Frame, Label, Orientation}
 
 /** Panel for various customization of the stroke. */
 class StrokeInputPanel extends FlowPanel {

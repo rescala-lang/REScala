@@ -1,13 +1,12 @@
 package benchmarks.lattices.delta
 
+import org.openjdk.jmh.annotations
+import org.openjdk.jmh.annotations.*
+import rdts.base.Uid.asId
 import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.time.{Dot, Dots}
-import org.openjdk.jmh.annotations
-import org.openjdk.jmh.annotations._
-
-import rdts.base.Uid.asId
-import rdts.datatypes.contextual.ReplicatedSet
 
 import java.util.concurrent.TimeUnit
 

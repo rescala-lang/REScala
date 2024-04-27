@@ -1,6 +1,6 @@
 package reswing.reader.data
 
-import reactives.default._
+import reactives.default.*
 
 /** The FeedStore stores RSSChannels and RSSItems.
   * More specifically, it stores the relation between an RSS Item and its channel

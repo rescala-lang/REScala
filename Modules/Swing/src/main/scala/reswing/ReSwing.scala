@@ -1,5 +1,4 @@
 import javax.swing.SwingUtilities
-
 import scala.swing.{Component, Swing}
 
 package object reswing {

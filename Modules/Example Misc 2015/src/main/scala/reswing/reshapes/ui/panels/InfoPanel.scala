@@ -1,10 +1,10 @@
 package reswing.reshapes.ui.panels
 
-import scala.swing.FlowPanel
-
-import reactives.default._
-import reswing.reshapes.ReShapes
+import reactives.default.*
 import reswing.ReLabel
+import reswing.reshapes.ReShapes
+
+import scala.swing.FlowPanel
 
 /** Small info panel which displays information like how many shapes are drawn
   * or which shape is currently selected

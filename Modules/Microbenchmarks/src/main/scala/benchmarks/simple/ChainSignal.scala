@@ -1,7 +1,7 @@
 package benchmarks.simple
 
 import benchmarks.{EngineParam, Size, Step, Workload}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -17,7 +17,7 @@ class ChainSignal {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var source: Var[Int]    = scala.compiletime.uninitialized
   var result: Signal[Int] = scala.compiletime.uninitialized

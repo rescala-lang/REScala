@@ -1,14 +1,13 @@
 package examples.demo
 
-import java.awt.event.KeyEvent
-
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui.{Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 import reactives.structure.Pulse
 
+import java.awt.event.KeyEvent
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
 import scala.util.Try
 

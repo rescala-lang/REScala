@@ -1,11 +1,11 @@
 package benchmarks.encrdt.mock.insecure
 
-import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.mock.insecure.AlternativeInsecureToDoListClient.ToDoListState
+import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
 
 import java.util.UUID
 

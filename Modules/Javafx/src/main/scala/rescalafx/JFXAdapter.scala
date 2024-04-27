@@ -1,7 +1,6 @@
 package rescalafx
 
-import reactives.default._
-
+import reactives.default.*
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, DoubleProperty, Property, StringProperty}
 

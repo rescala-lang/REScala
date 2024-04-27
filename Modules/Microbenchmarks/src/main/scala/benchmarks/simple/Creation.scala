@@ -1,7 +1,7 @@
 package benchmarks.simple
 
 import benchmarks.EngineParam
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -17,7 +17,7 @@ class Creation {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   @Setup
   def setup(engineParam: EngineParam) = {

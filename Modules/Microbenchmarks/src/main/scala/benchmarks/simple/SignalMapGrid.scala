@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class SignalMapGrid extends BusyThreads {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var source: Var[Int]        = scala.compiletime.uninitialized
   var leafs: Seq[Signal[Int]] = scala.compiletime.uninitialized

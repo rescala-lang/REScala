@@ -1,19 +1,13 @@
 package reswing.reshapes.ui.panels
 
-import scala.swing.BoxPanel
-import scala.swing.Color
-import scala.swing.Component
-import scala.swing.Label
-import scala.swing.Orientation
-import scala.swing.ScrollPane
-import reactives.default._
+import reactives.default.*
+import reswing.{ReBoxPanel, ReButton}
 import reswing.reshapes.ReShapes
-import reswing.reshapes.drawing.DeleteShape
-import reswing.reshapes.drawing.DrawingSpaceState
+import reswing.reshapes.drawing.{DeleteShape, DrawingSpaceState}
 import reswing.reshapes.figures.Shape
 import reswing.reshapes.util.ReactiveUtil.UnionEvent
-import reswing.ReBoxPanel
-import reswing.ReButton
+
+import scala.swing.{BoxPanel, Color, Component, Label, Orientation, ScrollPane}
 
 /** Lists all drawn shapes */
 class ShapePanel extends BoxPanel(Orientation.Vertical) {

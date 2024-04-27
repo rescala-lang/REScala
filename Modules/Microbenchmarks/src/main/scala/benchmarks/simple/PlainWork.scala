@@ -1,9 +1,9 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks.Workload
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MICROSECONDS)

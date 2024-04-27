@@ -1,7 +1,6 @@
 package benchmarks
 
 import java.io.FileWriter
-
 import scala.io.Source
 
 object JMHtoCSV {

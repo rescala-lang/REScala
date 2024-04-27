@@ -1,10 +1,9 @@
 package examples.demo
 
-import java.awt.Dimension
-
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.ShapesPanel
 
+import java.awt.Dimension
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
 abstract class Main extends SimpleSwingApplication {

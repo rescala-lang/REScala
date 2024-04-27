@@ -1,10 +1,9 @@
 package examples.elevator
 
+import reactives.default.*
+
 import java.awt.Color
-
-import reactives.default._
-
-import scala.swing._
+import scala.swing.*
 
 object ElevatorApplication extends SimpleSwingApplication {
 

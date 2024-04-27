@@ -6,7 +6,7 @@ import reactives.operator.Interface
 class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: Interface)
     extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine._
+  import engine.*
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
@@ -50,7 +50,7 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
     override val engine: Interface
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
-  import engine._
+  import engine.*
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

@@ -1,10 +1,11 @@
 package examples.demo.ui
 
-import java.awt.{Color, Graphics2D}
 import examples.demo.Pos
 import reactives.core.AdmissionTicket
 import reactives.default.*
 import reactives.default.global.State as BundleState
+
+import java.awt.{Color, Graphics2D}
 
 trait Shape extends Serializable {
   val changed: Event[Any]

@@ -1,11 +1,10 @@
 package examples.demo
 
-import java.awt.Dimension
-
 import examples.demo.ui.{Circle, Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 import reactives.structure.Diff
 
+import java.awt.Dimension
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
 /** As with the initial arithmetic trajectory, the numeric integration so far

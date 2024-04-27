@@ -1,9 +1,8 @@
 package encrdtlib.lattices
 
-import rdts.dotted.HasDots.*
+import rdts.dotted.HasDots.{mapInstance, *}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.Dots
-import HasDots.mapInstance
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object DeltaAddWinsMap {

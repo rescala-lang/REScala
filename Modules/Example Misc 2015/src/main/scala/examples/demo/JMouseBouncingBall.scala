@@ -2,7 +2,7 @@ package examples.demo
 
 import examples.demo.GModularClockCircle.Clock
 import examples.demo.ui.{Circle, Point, Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 
 /** Eventually, our Pong game will require a bouncing ball that moves
   * on a straight, rather than circular, trajectory. We begin making

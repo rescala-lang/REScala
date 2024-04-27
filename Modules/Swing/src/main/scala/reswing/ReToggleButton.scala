@@ -1,7 +1,6 @@
 package reswing
 
 import javax.swing.Icon
-
 import scala.swing.{Alignment, Color, Dimension, Font, ToggleButton}
 
 class ReToggleButton(

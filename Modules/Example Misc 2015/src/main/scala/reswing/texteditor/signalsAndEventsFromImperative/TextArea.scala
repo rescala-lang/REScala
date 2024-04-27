@@ -1,11 +1,11 @@
 package reswing.texteditor.signalsAndEventsFromImperative
 
-import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
-import java.awt.datatransfer.{DataFlavor, StringSelection}
-import reactives.default._
-import reswing.{ReComponent, ReSwingValue}
+import reactives.default.*
 import reswing.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
+import reswing.{ReComponent, ReSwingValue}
 
+import java.awt.datatransfer.{DataFlavor, StringSelection}
+import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}
 import scala.language.postfixOps
 import scala.math.{max, min}
 import scala.swing.Component

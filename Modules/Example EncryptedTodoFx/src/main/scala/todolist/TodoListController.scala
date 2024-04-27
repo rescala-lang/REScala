@@ -7,7 +7,7 @@ import scalafx.beans.property.ObjectProperty
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 
 object TodoListController {
   val replicaId: String = UUID.randomUUID().toString.substring(0, 4)

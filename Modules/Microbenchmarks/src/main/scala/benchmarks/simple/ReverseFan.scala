@@ -18,7 +18,7 @@ class ReverseFan {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var sources: Array[Var[Int]] = scala.compiletime.uninitialized
   var result: Signal[Int]      = scala.compiletime.uninitialized

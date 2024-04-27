@@ -1,10 +1,9 @@
 package examples.demo
 
-import java.awt.Dimension
-
 import examples.demo.ui.{Circle, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 
+import java.awt.Dimension
 import scala.swing.{MainFrame, SimpleSwingApplication, UIElement}
 
 /** We define a new Var angle. We modify the main method

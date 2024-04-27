@@ -1,7 +1,7 @@
 package benchmarks.reactor
 
 import benchmarks.EngineParam
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class BaselineEventPropagation {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var event: Evt[Int]     = scala.compiletime.uninitialized
   var signal: Signal[Int] = scala.compiletime.uninitialized

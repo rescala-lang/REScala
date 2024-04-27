@@ -1,10 +1,11 @@
 package benchmarks.lattices.delta.crdt
 
-import rdts.datatypes.alternatives.ResettableCounter
 import org.openjdk.jmh.annotations.*
-import rdts.dotted.Dotted
 import rdts.base.Uid.asId
+import rdts.datatypes.alternatives.ResettableCounter
+import rdts.dotted.Dotted
 import rdts.syntax.LocalReplicaId
+
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

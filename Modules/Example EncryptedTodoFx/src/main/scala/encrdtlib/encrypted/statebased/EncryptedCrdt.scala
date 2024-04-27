@@ -1,14 +1,14 @@
 package encrdtlib.encrypted.statebased
 
+import benchmarks.encrdt.Codecs.idKeyCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead
-import rdts.time.VectorClock
+import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import rdts.base.Lattice
-import rdts.base.Lattice._
-import DecryptedState.vectorClockJsonCodec
-import benchmarks.encrdt.Codecs.{idKeyCodec}
+import rdts.base.Lattice.*
 import rdts.datatypes.alternatives.MultiValueRegister
+import rdts.time.VectorClock
 
 import scala.util.{Failure, Success, Try}
 

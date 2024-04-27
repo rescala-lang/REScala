@@ -1,16 +1,12 @@
 package reswing.reshapes.ui.panels
 
-import scala.swing.BoxPanel
-import scala.swing.Component
-import scala.swing.Orientation
-import scala.swing.ScrollPane
-
-import reactives.default._
+import reactives.default.*
+import reswing.{ReBoxPanel, ReButton}
 import reswing.reshapes.ReShapes
 import reswing.reshapes.drawing.Command
 import reswing.reshapes.util.ReactiveUtil.UnionEvent
-import reswing.ReBoxPanel
-import reswing.ReButton
+
+import scala.swing.{BoxPanel, Component, Orientation, ScrollPane}
 
 /** The CommandPanel lists all executed commands and makes it possible to revert them */
 class CommandPanel extends BoxPanel(Orientation.Vertical) {

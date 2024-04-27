@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Component, RootPanel}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
+import scala.swing.{Component, RootPanel}
 
 trait ReRootPanel extends ReUIElement {
   protected def peer: RootPanel

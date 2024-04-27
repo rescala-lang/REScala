@@ -1,10 +1,10 @@
 package intermediaries_demo
 
+import com.google.crypto.tink.*
+import com.google.crypto.tink.aead.AeadConfig
+import encrdtlib.sync.client_server.TrustedReplicaWebSocketClient
 import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
 import todolist.{ConnectionManagerFactory, TodoListApp}
-import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.*
-import encrdtlib.sync.client_server.TrustedReplicaWebSocketClient
 
 import java.nio.file.{Files, Path, Paths}
 import scala.annotation.nowarn

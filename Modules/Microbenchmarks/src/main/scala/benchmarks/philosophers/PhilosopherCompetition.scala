@@ -1,8 +1,5 @@
 package benchmarks.philosophers
 
-import java.util
-import java.util.concurrent.locks.{Lock, ReentrantLock}
-import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import benchmarks.philosophers.PhilosopherTable.{Philosopher, Thinking}
 import benchmarks.{BusyThreads, EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
@@ -10,6 +7,9 @@ import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import reactives.core.PlanTransactionScope
 import reactives.parrp.Backoff
 
+import java.util
+import java.util.concurrent.locks.{Lock, ReentrantLock}
+import java.util.concurrent.{ThreadLocalRandom, TimeUnit}
 import scala.annotation.tailrec
 
 @BenchmarkMode(Array(Mode.Throughput))

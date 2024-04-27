@@ -1,8 +1,8 @@
 package reswing.dropdown
 
-import reactives.default._
-import reswing.ReTextField._
-import reswing._
+import reactives.default.*
+import reswing.*
+import reswing.ReTextField.*
 
 import scala.swing.{BoxPanel, FlowPanel, Label, MainFrame, Orientation, SimpleSwingApplication}
 

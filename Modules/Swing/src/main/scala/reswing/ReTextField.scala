@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Alignment, Color, Dimension, Font, TextField}
 import scala.swing.event.EditDone
+import scala.swing.{Alignment, Color, Dimension, Font, TextField}
 
 class ReTextField(
     text: ReSwingValue[String] = (),

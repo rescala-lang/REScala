@@ -1,12 +1,13 @@
 package benchmarks.chatserver
 
 import reactives.operator.Interface
+
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
 class ChatServer[Api <: Interface]()(val engine: Api) {
 
-  import engine._
+  import engine.*
 
   type Room        = Int
   type Client      = Event[String]

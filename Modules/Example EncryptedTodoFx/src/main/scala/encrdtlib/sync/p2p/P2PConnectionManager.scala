@@ -2,8 +2,8 @@ package encrdtlib.sync.p2p
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToString}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import P2PConnectionManager.{Message, State}
 import encrdtlib.sync.ConnectionManager
+import encrdtlib.sync.p2p.P2PConnectionManager.{Message, State}
 
 import java.net.{InetSocketAddress, URI}
 import java.util.concurrent.ConcurrentHashMap

@@ -1,10 +1,9 @@
 package examples.followmouse
 
-import java.awt.{Dimension, Graphics2D}
-
 import examples.Mouse
-import reactives.default._
+import reactives.default.*
 
+import java.awt.{Dimension, Graphics2D}
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object FollowMouse extends SimpleSwingApplication {

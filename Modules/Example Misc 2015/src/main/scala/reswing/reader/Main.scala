@@ -1,22 +1,16 @@
 package reswing.reader
 
-import java.net.URL
-
-import scala.io.Source
-import scala.swing.Dialog
-import scala.swing.Dialog.Message
-import scala.swing.Swing
-import scala.swing.Swing.EmptyIcon
-
-import reactives.default._
-import reswing.reader.connectors.CentralizedEvents
-import reswing.reader.connectors.SimpleReporter
-import reswing.reader.data.FeedStore
-import reswing.reader.data.RSSItem
-import reswing.reader.data.XmlParser
+import reactives.default.*
+import reswing.reader.connectors.{CentralizedEvents, SimpleReporter}
+import reswing.reader.data.{FeedStore, RSSItem, XmlParser}
 import reswing.reader.gui.GUI
-import reswing.reader.network.Fetcher
-import reswing.reader.network.UrlChecker
+import reswing.reader.network.{Fetcher, UrlChecker}
+
+import java.net.URL
+import scala.io.Source
+import scala.swing.Dialog.Message
+import scala.swing.{Dialog, Swing}
+import scala.swing.Swing.EmptyIcon
 
 object Main extends App {
   val tick    = Evt[Unit]() // #EVT

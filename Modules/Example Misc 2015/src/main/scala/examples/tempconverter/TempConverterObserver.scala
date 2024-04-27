@@ -1,7 +1,7 @@
 package examples.tempconverter
 
-import swing._
-import event._
+import scala.swing.*
+import scala.swing.event.*
 
 object TempConverterObserver extends SimpleSwingApplication {
   def top =

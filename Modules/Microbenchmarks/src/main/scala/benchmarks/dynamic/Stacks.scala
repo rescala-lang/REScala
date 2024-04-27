@@ -1,7 +1,7 @@
 package benchmarks.dynamic
 
 import benchmarks.{EngineParam, Size, Step, Workload}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import reactives.operator.Interface
 
@@ -16,7 +16,7 @@ class StackState {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var sources: Array[Var[Int]]     = scala.compiletime.uninitialized
   var results: Array[Signal[Int]]  = scala.compiletime.uninitialized
@@ -56,7 +56,7 @@ class Stacks {
 
   @Benchmark
   def run(state: StackState, step: Step, params: ThreadParams) = {
-    import state.stableEngine._
+    import state.stableEngine.*
     if (state.isManual)
       state.synchronized {
         val index = params.getThreadIndex % params.getThreadCount

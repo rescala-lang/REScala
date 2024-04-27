@@ -1,19 +1,11 @@
 package reswing.reshapes.figures
 
-import java.awt.BasicStroke
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Point
-
-import scala.xml.Attribute
-import scala.xml.Elem
-import scala.xml.Node
-import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.Null
-import scala.xml.Text
-
 import reswing.reshapes.drawing.DrawingSpaceState
 import reswing.reshapes.util.MathUtil
+
+import java.awt.{BasicStroke, Color, Graphics2D, Point}
+import scala.xml.NodeSeq.seqToNodeSeq
+import scala.xml.{Attribute, Elem, Node, Null, Text}
 
 abstract class Shape(
     val drawingSpaceState: DrawingSpaceState,

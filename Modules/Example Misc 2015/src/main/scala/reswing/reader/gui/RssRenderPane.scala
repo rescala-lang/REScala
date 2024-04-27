@@ -1,14 +1,12 @@
 package reswing.reader.gui
 
+import reactives.default.*
+import reswing.reader.data.RSSItem
+
 import java.awt.Desktop
 import java.io.IOException
-
+import javax.swing.event.{HyperlinkEvent, HyperlinkListener}
 import scala.swing.EditorPane
-
-import javax.swing.event.HyperlinkEvent
-import javax.swing.event.HyperlinkListener
-import reactives.default._
-import reswing.reader.data.RSSItem
 
 /** Displays the content of an single RSS Item */
 class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {

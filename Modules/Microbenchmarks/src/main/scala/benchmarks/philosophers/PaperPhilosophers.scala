@@ -1,9 +1,9 @@
 package benchmarks.philosophers
 
 import reactives.core.{CreationTicket, ReInfo, ReSource}
+import reactives.default.global.State as BundleState
 import reactives.operator.Interface
 import reactives.parrp.Backoff
-import reactives.default.global.State as BundleState
 
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{Executors, ThreadLocalRandom}

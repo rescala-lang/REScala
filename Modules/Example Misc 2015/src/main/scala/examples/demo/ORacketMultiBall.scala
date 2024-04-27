@@ -1,11 +1,11 @@
 package examples.demo
 
-import java.awt.Color
-
 import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ui.{Rectangle, Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
+
+import java.awt.Color
 
 /** Lastly, we implement a Racket module, that implements a Rectangle
   * positioned on either the left or right side of the field, and moving

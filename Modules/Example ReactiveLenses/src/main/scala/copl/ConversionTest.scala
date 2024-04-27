@@ -1,13 +1,12 @@
 package copl
 
-import org.scalajs.dom.html.{Input, Select}
 import org.scalajs.dom.document
+import org.scalajs.dom.html.{Input, Select}
 import reactives.default.*
 import reactives.extra.lenses.*
-import reactives.extra.lenses.toSignalLens
 import scalatags.JsDom
-import scalatags.JsDom.all.*
 import scalatags.JsDom.TypedTag
+import scalatags.JsDom.all.*
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 

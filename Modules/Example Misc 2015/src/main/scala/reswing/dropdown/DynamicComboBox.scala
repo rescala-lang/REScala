@@ -1,10 +1,9 @@
 package reswing.dropdown
 
+import reswing.*
+
 import java.awt.Color
 import javax.swing.{ComboBoxModel, JComboBox}
-
-import reswing.{ReSwingEvent, _}
-
 import scala.swing.ComboBox
 import scala.swing.event.SelectionChanged
 

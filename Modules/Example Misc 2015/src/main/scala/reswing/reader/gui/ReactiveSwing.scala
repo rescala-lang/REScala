@@ -1,8 +1,7 @@
 package reswing.reader.gui
 
-import reactives.default._
-import reswing.ReListView
-import reswing.ReSwingValue
+import reactives.default.*
+import reswing.{ReListView, ReSwingValue}
 
 class ReListViewEx[A](
     listData: ReSwingValue[Seq[A]],

@@ -1,11 +1,9 @@
 package reswing
 
 import java.awt.event.{HierarchyEvent, HierarchyListener}
-
 import scala.collection.mutable.{ListBuffer, Map}
-
-import scala.swing.{Publisher, Reactor, Swing, UIElement}
 import scala.swing.event.Event
+import scala.swing.{Publisher, Reactor, Swing, UIElement}
 
 /** Introduces methods to connect a ''Reactive Swing'' value ([[ReSwingValue]])
   * to the corresponding properties and events of the underlying `Swing` component.

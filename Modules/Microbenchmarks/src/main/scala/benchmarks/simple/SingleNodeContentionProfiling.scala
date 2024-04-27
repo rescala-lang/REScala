@@ -1,11 +1,11 @@
 package benchmarks.simple
 
-import java.util.concurrent.TimeUnit
-
-import benchmarks._
-import org.openjdk.jmh.annotations._
+import benchmarks.*
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 import reactives.operator.Interface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -17,7 +17,7 @@ import reactives.operator.Interface
 class SingleNodeContentionProfiling extends BusyThreads {
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var sources: Array[Var[Int]] = scala.compiletime.uninitialized
   var node: Signal[Unit]       = scala.compiletime.uninitialized

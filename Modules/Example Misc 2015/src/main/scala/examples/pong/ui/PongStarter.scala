@@ -1,11 +1,10 @@
 package examples.pong.ui
 
-import java.awt.{Color, Dimension, Font, Graphics2D}
-
 import examples.Mouse
-import examples.pong._
-import reactives.default._
+import examples.pong.*
+import reactives.default.*
 
+import java.awt.{Color, Dimension, Font, Graphics2D}
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 /** Exercise note: Do not edit any code in this file.

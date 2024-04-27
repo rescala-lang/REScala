@@ -17,7 +17,7 @@ class NaturalGraph {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var source: Var[Int]          = scala.compiletime.uninitialized
   var result: List[Signal[Int]] = scala.compiletime.uninitialized

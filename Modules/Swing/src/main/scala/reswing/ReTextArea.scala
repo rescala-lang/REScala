@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Color, Dimension, Font, TextArea}
 import scala.swing.event.ValueChanged
+import scala.swing.{Color, Dimension, Font, TextArea}
 
 class ReTextArea(
     text: ReSwingValue[String] = (),

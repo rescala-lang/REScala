@@ -1,11 +1,15 @@
 package todolist
 
+import benchmarks.encrdt.Codecs.*
+import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.sync.ConnectionManager
+import rdts.datatypes.LastWriterWins
 import rdts.time.Dot
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
-import benchmarks.encrdt.Codecs.*
 
 import java.net.URI
 import java.util.UUID
@@ -14,10 +18,6 @@ import scala.annotation.nowarn
 import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
-import benchmarks.encrdt.idFromString
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import encrdtlib.sync.ConnectionManager
-import rdts.datatypes.LastWriterWins
 
 class SyncedTodoListCrdt(val replicaId: String) {
 

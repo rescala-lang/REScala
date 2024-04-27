@@ -1,8 +1,7 @@
 package universe
 
-import universe.Animal._
-
 import reactives.default.*
+import universe.Animal.*
 
 class Carnivore(implicit world: World) extends Animal {
 

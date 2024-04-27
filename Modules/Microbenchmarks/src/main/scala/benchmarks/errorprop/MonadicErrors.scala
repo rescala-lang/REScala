@@ -1,7 +1,7 @@
 package benchmarks.errorprop
 
 import benchmarks.{EngineParam, Size, Step, Workload}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -18,7 +18,7 @@ class MonadicErrors {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var fire: Int => Unit       = scala.compiletime.uninitialized
   var finalresult: Event[Any] = scala.compiletime.uninitialized

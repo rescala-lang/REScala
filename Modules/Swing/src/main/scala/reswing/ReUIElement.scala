@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Dimension, UIElement}
 import scala.swing.event.{UIElementMoved, UIElementResized}
+import scala.swing.{Dimension, UIElement}
 
 abstract class ReUIElement(
     val minimumSize: ReSwingValue[Dimension] = (),

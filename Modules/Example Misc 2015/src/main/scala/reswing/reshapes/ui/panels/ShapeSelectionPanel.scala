@@ -1,17 +1,11 @@
 package reswing.reshapes.ui.panels
 
-import scala.swing.BoxPanel
-import scala.swing.Orientation
-
-import reactives.default._
-import reswing.reshapes.ReShapes
-import reswing.reshapes.figures.Freedraw
-import reswing.reshapes.figures.Line
-import reswing.reshapes.figures.Oval
-import reswing.reshapes.figures.Rectangle
-import reswing.reshapes.figures.Shape
-import reswing.reshapes.figures.Triangle
+import reactives.default.*
 import reswing.ReButton
+import reswing.reshapes.ReShapes
+import reswing.reshapes.figures.{Freedraw, Line, Oval, Rectangle, Shape, Triangle}
+
+import scala.swing.{BoxPanel, Orientation}
 
 /** Panel for selection of shapes to draw */
 class ShapeSelectionPanel extends BoxPanel(Orientation.Vertical) {

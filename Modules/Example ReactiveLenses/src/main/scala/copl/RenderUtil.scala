@@ -2,8 +2,8 @@ package copl
 
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, Select}
-import scalatags.JsDom.all.*
 import reactives.operator.*
+import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
 object RenderUtil {

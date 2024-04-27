@@ -1,10 +1,10 @@
 package examples.smashingparticles
 
-import reactives.default._
-import swing.{Swing, Panel, MainFrame, SimpleSwingApplication}
-import java.awt.{Graphics2D, Dimension}
-import java.awt.Point
+import reactives.default.*
+
+import java.awt.{Dimension, Graphics2D, Point}
 import scala.collection.mutable.ListBuffer
+import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object SmashingParticles extends SimpleSwingApplication {
   lazy val application = new SmashingParticles

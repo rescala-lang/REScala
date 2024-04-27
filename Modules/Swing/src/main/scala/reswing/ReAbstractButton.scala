@@ -1,9 +1,8 @@
 package reswing
 
 import javax.swing.Icon
-
-import scala.swing.{AbstractButton, Alignment, Color, Dimension, Font}
 import scala.swing.event.ButtonClicked
+import scala.swing.{AbstractButton, Alignment, Color, Dimension, Font}
 
 class ReAbstractButton(
     val text: ReSwingValue[String] = (),

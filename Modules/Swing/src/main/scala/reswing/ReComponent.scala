@@ -1,7 +1,7 @@
 package reswing
 
+import scala.swing.event.*
 import scala.swing.{Color, Component, Dimension, Font, Graphics2D}
-import scala.swing.event._
 
 abstract class ReComponent(
     val background: ReSwingValue[Color] = (),

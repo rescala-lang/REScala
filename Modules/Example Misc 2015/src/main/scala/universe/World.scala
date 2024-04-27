@@ -1,6 +1,7 @@
 package universe
 
 import reactives.default.*
+
 import scala.util.Random
 
 /** A World object unites a space (Board object), time (Time object), and a random object

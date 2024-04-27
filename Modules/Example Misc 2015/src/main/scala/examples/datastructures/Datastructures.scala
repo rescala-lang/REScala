@@ -1,6 +1,6 @@
 package examples.datastructures
 
-import reactives.default._
+import reactives.default.*
 
 import scala.collection.immutable.Queue
 

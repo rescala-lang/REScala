@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
+import org.openjdk.jmh.annotations.*
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 

@@ -1,6 +1,6 @@
 package examples.circularmotion
 
-import reactives.default._
+import reactives.default.*
 
 object SignalVersion extends App {
 

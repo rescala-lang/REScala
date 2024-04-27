@@ -4,11 +4,11 @@ package examples.tempconverter
 
 // Escala lib + behaviour extensions
 
-import reactives.default._
+import reactives.default.*
 
 // Scala swing events
-import scala.swing._
-import scala.swing.event._
+import scala.swing.*
+import scala.swing.event.*
 
 // could we actually use Reactive[Any] and use toString?
 trait ReactiveText extends Reactor {

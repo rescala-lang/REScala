@@ -1,9 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
+import org.openjdk.jmh.annotations.*
 import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.GrowOnlyMap.given
 import rdts.datatypes.contextual.EnableWinsFlag
-import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 

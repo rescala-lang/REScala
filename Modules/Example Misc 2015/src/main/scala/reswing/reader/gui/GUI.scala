@@ -1,13 +1,12 @@
 package reswing.reader.gui
 
+import reactives.default.*
+import reswing.*
+import reswing.reader.data.{FeedStore, RSSChannel, RSSItem}
+
 import java.awt.{Dimension, Point, Toolkit}
 import javax.swing.ImageIcon
-
-import reswing.reader.data.{FeedStore, RSSChannel, RSSItem}
-import reactives.default._
-import reswing._
-
-import scala.swing._
+import scala.swing.*
 
 /** Responsible for displaying the content of the given FeedStore
   * The connections between the displayed content is mainly coordinated

@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
-import rdts.datatypes.TwoPhaseSet
 import org.openjdk.jmh.annotations.*
+import rdts.datatypes.TwoPhaseSet
 
 import java.util.concurrent.TimeUnit
 

@@ -1,11 +1,12 @@
 package benchmarks.encrdt.mock.insecure
 
+import benchmarks.encrdt.idFromString
 import benchmarks.encrdt.mock.IntermediarySizeInfo
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
-import benchmarks.encrdt.idFromString
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+
 import java.util.UUID
 
 class AlternativeInsecureToDoListIntermediary(val intermediaryReplicaId: String)(

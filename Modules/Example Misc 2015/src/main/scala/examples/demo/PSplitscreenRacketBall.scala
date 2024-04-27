@@ -4,7 +4,7 @@ import examples.demo.LFullyModularBall.BouncingBall
 import examples.demo.MPlayingFieldBall.PlayingField
 import examples.demo.ORacketMultiBall.Racket
 import examples.demo.ui.{Shape, ShapesPanel}
-import reactives.default._
+import reactives.default.*
 
 import scala.swing.{Dimension, MainFrame, SimpleSwingApplication}
 

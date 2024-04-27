@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Component, LayoutContainer}
 import scala.swing.event.{ComponentAdded, ComponentRemoved}
+import scala.swing.{Component, LayoutContainer}
 
 trait ReLayoutContainer[Constraints] extends ReUIElement {
   protected def peer: LayoutContainer

@@ -1,9 +1,8 @@
 package examples.miscellanea
 
+import reactives.default.*
+
 import java.awt.{Dimension, Graphics2D, Point}
-
-import reactives.default._
-
 import scala.collection.mutable.ListBuffer
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 

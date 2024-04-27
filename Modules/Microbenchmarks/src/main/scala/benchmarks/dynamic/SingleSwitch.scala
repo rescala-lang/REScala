@@ -1,10 +1,10 @@
 package benchmarks.dynamic
 
-import java.util.concurrent.TimeUnit
-
 import benchmarks.{EngineParam, Step}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
+
+import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -17,7 +17,7 @@ class SingleSwitch {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   var source: Var[Int] = scala.compiletime.uninitialized
 

@@ -1,7 +1,7 @@
 package reswing
 
-import scala.swing.{Color, ComboBox, Dimension, Font}
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
+import scala.swing.{Color, ComboBox, Dimension, Font}
 
 class ReComboBox[A](
     val items: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]](),

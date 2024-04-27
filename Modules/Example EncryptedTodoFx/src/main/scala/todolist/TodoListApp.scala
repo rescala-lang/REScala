@@ -1,6 +1,6 @@
 package todolist
 
-import scalafx.Includes._
+import scalafx.Includes.*
 import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, ListView, TextField}

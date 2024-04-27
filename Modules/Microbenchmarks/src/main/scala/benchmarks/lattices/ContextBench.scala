@@ -1,11 +1,10 @@
 package benchmarks.lattices
 
-import rdts.time.{Dots, Dot}
+import org.openjdk.jmh.annotations.*
+import rdts.base.{Lattice, Uid}
+import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.TimeUnit
-import org.openjdk.jmh.annotations._
-import rdts.base.Lattice
-import rdts.base.Uid
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

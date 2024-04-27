@@ -1,16 +1,9 @@
 package reswing.reshapes
 
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
-import java.net.ConnectException
-import java.net.InetAddress
-import java.net.ServerSocket
-import java.net.Socket
-
-import scala.xml.Elem
+import java.io.{BufferedReader, InputStreamReader, OutputStreamWriter}
+import java.net.{ConnectException, InetAddress, ServerSocket, Socket}
 import scala.xml.NodeSeq.seqToNodeSeq
-import scala.xml.XML
+import scala.xml.{Elem, XML}
 
 object ReShapesServer {
   var clients: List[(InetAddress, Int)] = List.empty

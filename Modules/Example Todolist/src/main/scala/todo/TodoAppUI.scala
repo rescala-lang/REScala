@@ -1,20 +1,20 @@
 package todo
 
-import rdts.datatypes.contextual.ReplicatedList
-import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom
+import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{HTMLDivElement, KeyboardEvent, UIEvent, document, window}
+import rdts.datatypes.contextual.ReplicatedList
+import rdts.dotted.Dotted
+import rdts.syntax.DeltaBuffer
 import reactives.default.*
 import reactives.extra.Tags.*
+import reactives.structure.Pulse
 import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
 import todo.Todolist.replicaId
-import rdts.dotted.Dotted
-import rdts.syntax.DeltaBuffer
-import reactives.structure.Pulse
 
 import scala.annotation.targetName
 

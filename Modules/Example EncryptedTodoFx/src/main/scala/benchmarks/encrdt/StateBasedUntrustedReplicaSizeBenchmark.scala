@@ -3,9 +3,9 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import rdts.time.VectorClock
-import DeltaAddWinsLastWriterWinsMap.StateType
+import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.StateType
 import encrdtlib.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
+import rdts.time.VectorClock
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}

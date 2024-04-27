@@ -1,7 +1,6 @@
 package examples.bouncing
 
 import java.awt.{Dimension, Graphics2D, Point}
-
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication, Swing}
 
 object ImperativeVersion extends SimpleSwingApplication {

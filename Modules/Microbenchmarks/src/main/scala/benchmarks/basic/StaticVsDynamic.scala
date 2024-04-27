@@ -1,7 +1,7 @@
 package benchmarks.basic
 
 import benchmarks.{EngineParam, Step}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import reactives.operator.Interface
 
 import java.util.concurrent.TimeUnit
@@ -18,7 +18,7 @@ class StaticVsDynamic {
 
   var engine: Interface       = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
-  import stableEngine._
+  import stableEngine.*
 
   @Param(Array("true", "false"))
   var static: Boolean = scala.compiletime.uninitialized

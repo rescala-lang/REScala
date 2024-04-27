@@ -1,9 +1,8 @@
 package examples.path
 
 import java.awt.{Color, Graphics2D, Point, geom}
-
-import scala.swing.Swing._
-import scala.swing.event._
+import scala.swing.Swing.*
+import scala.swing.event.*
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 
 object LinePainting extends SimpleSwingApplication {

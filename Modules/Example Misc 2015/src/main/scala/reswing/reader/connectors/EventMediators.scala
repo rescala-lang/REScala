@@ -1,11 +1,8 @@
 package reswing.reader.connectors
 
-import reswing.reader.data.FeedStore
-import reswing.reader.data.XmlParser
-import reswing.reader.network.Fetcher
-import reswing.reader.network.UrlChecker
-
-import reactives.default._
+import reactives.default.*
+import reswing.reader.data.{FeedStore, XmlParser}
+import reswing.reader.network.{Fetcher, UrlChecker}
 
 trait EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit

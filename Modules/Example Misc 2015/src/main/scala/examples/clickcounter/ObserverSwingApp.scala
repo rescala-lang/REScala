@@ -1,7 +1,7 @@
 package examples.clickcounter
 
-import scala.swing._
-import scala.swing.event._
+import scala.swing.*
+import scala.swing.event.*
 
 object ObserverSwingApp extends SimpleSwingApplication {
   def top =

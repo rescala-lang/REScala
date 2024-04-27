@@ -1,8 +1,8 @@
 package todo
 
-import com.github.plokhotnyuk.jsoniter_scala.core._
+import com.github.plokhotnyuk.jsoniter_scala.core.*
 import org.scalajs.dom
-import reactives.default.{Signal}
+import reactives.default.Signal
 
 object Storing {
 

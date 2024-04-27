@@ -1,8 +1,7 @@
 package reswing.millgame.types
 
-import scala.Numeric.Implicits._
-
 import java.awt.Color
+import scala.Numeric.Implicits.*
 
 //
 // presentational attributes

@@ -1,10 +1,9 @@
 package examples.fisheye
 
-import java.awt.{Color, Dimension, Graphics2D, Rectangle}
-
 import examples.Mouse
-import reactives.default._
+import reactives.default.*
 
+import java.awt.{Color, Dimension, Graphics2D, Rectangle}
 import scala.swing.{MainFrame, Panel, SimpleSwingApplication}
 
 object Fisheye extends SimpleSwingApplication {

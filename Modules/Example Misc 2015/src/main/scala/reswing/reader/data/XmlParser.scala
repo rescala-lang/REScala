@@ -1,15 +1,12 @@
 package reswing.reader.data
 
-import java.net.{MalformedURLException, URI, URL}
-import java.text.ParseException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import reactives.default.*
 import reswing.reader.Observable
 
-import scala.xml.Node
-import scala.xml.NodeSeq
-import reactives.default.*
+import java.net.{MalformedURLException, URI, URL}
+import java.text.{ParseException, SimpleDateFormat}
+import java.util.{Date, Locale}
+import scala.xml.{Node, NodeSeq}
 
 /** The XMLParser is responsible for the translation of xml to the
   * internal represantation of the RSS Feed

@@ -5,7 +5,7 @@ import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.LastWriterWins
-import rdts.dotted.{Dotted}
+import rdts.dotted.Dotted
 import rdts.time.Dot
 
 import scala.collection.mutable.ArrayBuffer

@@ -1,8 +1,8 @@
 package examples.pong
 
-import java.awt.Rectangle
+import reactives.default.*
 
-import reactives.default._
+import java.awt.Rectangle
 
 object Racket {
   val Height = 80

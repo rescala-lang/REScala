@@ -1,7 +1,6 @@
 package reswing
 
 import javax.swing.Icon
-
 import scala.swing.{Action, Alignment, Color, Dimension, Font, MenuItem}
 
 class ReMenuItem(

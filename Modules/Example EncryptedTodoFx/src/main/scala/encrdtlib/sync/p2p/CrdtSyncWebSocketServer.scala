@@ -1,10 +1,10 @@
 package encrdtlib.sync.p2p
 
+import encrdtlib.sync.p2p.P2PConnectionManager.REPLICAID_HEADER
 import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.servlet.ServletContextHandler
 import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer
 import org.eclipse.jetty.websocket.server.{JettyServerUpgradeRequest, JettyServerUpgradeResponse, JettyWebSocketCreator}
-import P2PConnectionManager.REPLICAID_HEADER
 
 import java.net.URI
 import java.time.Duration
