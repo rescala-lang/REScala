@@ -20,7 +20,7 @@ class JettyTest extends munit.FunSuite {
 
     // echo server
     val echoServer = Async[Ctx] {
-      val connection = listening.connections.bind
+      val connection = listening.connections().bind
       println(s"connection received")
       val messageBuffer = connection.receive.bind
       println(s"received ${messageBuffer.asArray.length}bytes")

@@ -1,22 +1,22 @@
 package replication.fbdc
 
-import loci.communicator.ws.jetty.*
-import loci.communicator.ws.jetty.WS.Properties
-import loci.registry.Registry
-import org.eclipse.jetty.server.handler.{ContextHandler, ResourceHandler}
+import channel.BiChan
+import channel.jettywebsockets.JettyWsListener
+import org.eclipse.jetty.http.pathmap.PathSpec
+import org.eclipse.jetty.server.handler.ResourceHandler
 import org.eclipse.jetty.server.{Handler, Request, Response, Server, ServerConnector}
 import org.eclipse.jetty.util.Callback
 import org.eclipse.jetty.util.resource.ResourceFactory
 import org.eclipse.jetty.util.thread.QueuedThreadPool
-import org.eclipse.jetty.websocket.server.WebSocketUpgradeHandler
+import replication.DataManager
 
 import java.nio.file.Path
-import scala.concurrent.duration.*
+import scala.util.{Failure, Success}
 
 class JettyServer(
     staticPath: Option[Path],
     contextPath: String,
-    registry: Registry,
+    dataManager: DataManager[?],
     interface: String,
 ) {
 
@@ -36,8 +36,14 @@ class JettyServer(
     connector.setPort(port)
     jettyServer.addConnector(connector)
 
-    jettyServer.setHandler(new Handler.Sequence(mainHandler, staticResourceHandler, setupLociWebsocketContextHandler()))
     jettyServer.start()
+
+    val setup = JettyWsListener.fromServer(jettyServer, PathSpec.from("/ws"))
+
+    setup.connections(Some(new Handler.Sequence(mainHandler, staticResourceHandler))).run(using ()):
+      case Success(conn) => dataManager.addConnection(BiChan(conn, conn))
+      case Failure(t)    => t.printStackTrace()
+
   }
 
   val staticResourceHandler = {
@@ -52,22 +58,6 @@ class JettyServer(
     // Configure whether to accept range requests.
     handler.setAcceptRanges(true)
     handler
-  }
-
-  def setupLociWebsocketContextHandler() = {
-
-    val contextHandler   = new ContextHandler()
-    val webSocketHandler = WebSocketUpgradeHandler.from(jettyServer, contextHandler)
-
-    // add loci registry
-    val wspath     = "/ws"
-    val properties = Properties(heartbeatDelay = 3.seconds, heartbeatTimeout = 10.seconds)
-    registry.listen(WS(webSocketHandler, wspath, properties))
-
-    contextHandler.setContextPath(contextPath)
-    contextHandler.setHandler(webSocketHandler)
-
-    contextHandler
   }
 
   object mainHandler extends Handler.Abstract {

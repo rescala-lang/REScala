@@ -4,7 +4,7 @@ import channel.{ArrayMessageBuffer, InChan, MessageBuffer, OutChan, Prod}
 import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ContextHandler
-import org.eclipse.jetty.server.{Server, ServerConnector}
+import org.eclipse.jetty.server.{Handler, Server, ServerConnector}
 import org.eclipse.jetty.util.Callback as JettyUtilCallback
 import org.eclipse.jetty.websocket.api.Session.Listener
 import org.eclipse.jetty.websocket.api.{Session, Callback as JettyCallback}
@@ -25,9 +25,12 @@ object JettyWsListener {
     connector.setPort(port)
     server.addConnector(connector)
 
-    new JettyWsListener(server, pathSpec)
+    fromServer(server, pathSpec)
 
   }
+
+  def fromServer(server: Server, pathSpec: PathSpec) =
+    new JettyWsListener(server, pathSpec)
 
   def webSocketCreator(delayCallback: DelayCallback[JettyWsConnection]) =
     new WebSocketCreator {
@@ -45,10 +48,13 @@ object JettyWsListener {
 
 class JettyWsListener(val server: Server, val pathSpec: PathSpec) {
 
-  val connections: Async[Any, JettyWsConnection] = Async.fromCallback {
+  def connections(moreHandler: Option[Handler] = None): Async[Any, JettyWsConnection] = Async.fromCallback {
 
     val context = new ContextHandler()
-    server.setHandler(context)
+    server.setHandler:
+      moreHandler match
+        case None => context
+        case Some(more) => Handler.Sequence(context, more)
     val webSocketHandler = WebSocketUpgradeHandler.from(
       server,
       context,
@@ -115,7 +121,6 @@ class JettyWsHandler(connectionEstablished: DelayCallback[JettyWsConnection])
 
   override def onWebSocketBinary(buffer: ByteBuffer, callback: JettyCallback): Unit = {
 
-    // MessageBuffer has a .wrapByteBuffer method, but that does not seem to work here, maybe because it adapts the indices?
     val data = new Array[Byte](buffer.remaining())
     buffer.get(data)
 
