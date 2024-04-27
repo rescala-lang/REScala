@@ -60,14 +60,14 @@ object HTML {
                 td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
                 td(button(
                   "request",
-                  onclick := leftClickHandler {
-                    dataManager.requestMissingFrom(rr)
-                    ()
-                  }
+//                  onclick := leftClickHandler {
+//                    dataManager.requestMissingFrom(rr)
+//                    ()
+//                  }
                 )),
-                td(table().render.reattach(
-                  dataManager.contextOf(rr).map(dotsToRows)
-                ))
+//                td(table().render.reattach(
+//                  dataManager.contextOf(rr).map(dotsToRows)
+//                ))
               )
           ).render
         }

@@ -1,10 +1,9 @@
 package replication
 
+import channel.{ArrayMessageBuffer, BiChan, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import loci.registry.{Binding, Registry}
-import loci.serializer.jsoniterScala.given
-import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
+import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
@@ -12,39 +11,50 @@ import rdts.syntax.{LocalUid, PermCausalMutate}
 import rdts.time.Dots
 import reactives.default.{Event, Evt, Signal, Var}
 import replication.JsoniterCodecs.given
+import replication.ProtocolMessage.{Payload, Request}
 
+import java.nio.charset.StandardCharsets
 import java.util.Timer
 import scala.annotation.unused
 import scala.collection.{View, mutable}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
-type PushBinding[T] = Binding[T => Unit, T => Future[Unit]]
+import scala.util.{Failure, Success}
 
 class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])
 
 case class HMap(keys: Map[String, Key[?]], values: Map[String, Any])
 
+sealed trait ProtocolMessage[+T]
+object ProtocolMessage {
+  case class Request(sender: Uid, knows: Dots) extends ProtocolMessage[Nothing]
+  case class Payload[T](sender: Uid, data: T)  extends ProtocolMessage[T]
+}
+
 class DataManager[State](
     val replicaId: LocalUid,
-    val registry: Registry
 )(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State], hasDots: HasDots[State]) {
+
+  given protocolCodec: JsonValueCodec[ProtocolMessage[Dotted[State]]] = JsonCodecMaker.make
 
   given LocalUid = replicaId
 
   type TransferState = Dotted[State]
 
+  var connections: List[BiChan] = Nil
+
   val timer = new Timer()
+
+  val debugCallback: Callback[Any] =
+    case Success(value)     => ()
+    case Failure(exception) => exception.printStackTrace()
 
   timer.scheduleAtFixedRate(
     { () =>
-      registry.remotes.foreach(requestMissingFrom)
+      connections.foreach: con =>
+        con.out.send(missingRequestMessage).run(using ())(debugCallback)
     },
     10000,
     10000
   )
-
-  registry.remoteJoined.foreach(requestMissingFrom)
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
   private val lock: AnyRef                      = new {}
@@ -52,10 +62,10 @@ class DataManager[State](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  private val contexts: Var[Map[RemoteRef, Dots]]                            = Var(Map.empty)
-  private val filteredContexts: mutable.Map[RemoteRef, Signal[Option[Dots]]] = mutable.Map.empty
+  private val contexts: Var[Map[Uid, Dots]]                            = Var(Map.empty)
+  private val filteredContexts: mutable.Map[Uid, Signal[Option[Dots]]] = mutable.Map.empty
 
-  def contextOf(rr: RemoteRef) =
+  def contextOf(rr: Uid): Signal[Dots] =
     val internal = filteredContexts.getOrElseUpdate(rr, contexts.map(_.get(rr)))
     internal.map {
       case None       => Dots.empty
@@ -65,7 +75,7 @@ class DataManager[State](
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
   val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts }
-  val currentContext                = mergedState.map(_.context)
+  val currentContext: Signal[Dots]  = mergedState.map(_.context)
 
   val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 
@@ -94,66 +104,53 @@ class DataManager[State](
     View(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def requestMissingBinding: PushBinding[Dots] =
-    @unused // this is a lie, but sometimes the compiler is confused
-    given IdenticallyTransmittable[Dots] = IdenticallyTransmittable[Dots]()
-    Binding[Dots => Unit]("requestMissing")
-
-  val pushStateBinding: PushBinding[TransferState] =
-    given JsonValueCodec[TransferState] = JsonCodecMaker.make
-    @unused
-    given IdenticallyTransmittable[TransferState] = IdenticallyTransmittable[TransferState]()
-    Binding[TransferState => Unit]("pushState")
-
-  def updateRemoteContext(rr: RemoteRef, dots: Dots) = {
+  def updateRemoteContext(rr: Uid, dots: Dots) = {
     contexts.transform(_.updatedWith(rr)(curr => curr merge Some(dots)))
   }
 
-  registry.bindSbj(pushStateBinding) { (rr: RemoteRef, named: TransferState) =>
-    lock.synchronized {
-      updateRemoteContext(rr, named.context)
-      remoteDeltas = named :: remoteDeltas
-    }
-    changeEvt.fire(named)
+  def handleMessage(msg: ProtocolMessage[TransferState], biChan: BiChan) = {
+    msg match
+      case Request(uid, knows) =>
+        val contained = HasDots[State].dots(mergedState.now.data)
+        val cc        = currentContext.now
+        // we always send all the removals in addition to any other deltas
+        val removed  = cc subtract contained
+        val relevant = allDeltas.filterNot(dt => dt.context <= knows).concat(List(Dotted(Bottom.empty, removed)))
+        relevant.map(encodeDelta).foreach: msg =>
+          biChan.out.send(msg).run(using ())(debugCallback)
+        updateRemoteContext(uid, cc merge knows)
+      case Payload(uid, named) =>
+        lock.synchronized {
+          updateRemoteContext(uid, named.context)
+          remoteDeltas = named :: remoteDeltas
+        }
+        changeEvt.fire(named)
+
   }
 
-  registry.bindSbj(requestMissingBinding) { (rr: RemoteRef, knows: Dots) =>
-    val contained = HasDots[State].dots(mergedState.now.data)
-    val cc        = currentContext.now
-    // we always send all the removals in addition to any other deltas
-    val removed = cc subtract contained
-    pushDeltas(
-      allDeltas.filterNot(dt => dt.context <= knows).concat(List(Dotted(Bottom.empty, removed))),
-      rr
-    )
-    updateRemoteContext(rr, cc merge knows)
-  }
-
-  def disseminateLocalBuffer() =
+  def disseminateLocalBuffer() = {
     val deltas = lock.synchronized {
       val deltas = localBuffer
       localBuffer = Nil
       localDeltas = deltas ::: localDeltas
       deltas
     }
-    registry.remotes.foreach { remote =>
-      // val ctx = contexts.now.getOrElse(remote, Dots.empty)
-      pushDeltas(deltas.view, remote)
-    }
+    connections.foreach: con =>
+      deltas.foreach: delta =>
+        con.out.send(encodeDelta(delta))
+  }
+
+  def encodeDelta(delta: TransferState): MessageBuffer =
+    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta)))
 
   def disseminateFull() =
-    registry.remotes.foreach { remote =>
-      pushDeltas(List(mergedState.now).view, remote)
-    }
+    connections.foreach: con =>
+      con.out.send(encodeDelta(mergedState.now))
 
-  def requestMissingFrom(rr: RemoteRef) =
-    val req = registry.lookup(requestMissingBinding, rr)
-    req(currentContext.now)
+  def encodeNamed[A: JsonValueCodec](name: String, value: A) =
+    ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))
 
-  private def pushDeltas(deltas: View[TransferState], remote: RemoteRef): Unit = {
-    val push = registry.lookup(pushStateBinding, remote)
-    deltas.map(push).foreach(_.failed.foreach { cause =>
-      println(s"sending to $remote failed: ${cause.toString}")
-    })
-  }
+  def missingRequestMessage: MessageBuffer =
+    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, currentContext.now)))
+
 }

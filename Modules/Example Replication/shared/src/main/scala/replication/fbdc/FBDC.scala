@@ -60,16 +60,16 @@ object State:
     def modParticipants = Focus(dm)(_.providers, d => Bottom.empty.copy(providers = d))
 
 class FbdcExampleData {
-  val replicaId = Uid.gen()
+  val replicaId = LocalUid(Uid.gen())
   val registry  = new Registry
 
   val dataManager =
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    new DataManager[State](replicaId, registry)
+    new DataManager[State](replicaId)
 
   def addCapability(capability: String) =
     dataManager.modParticipants { part =>
-      part.observeRemoveMap.transform(replicaId)(_.add(using replicaId)(capability))
+      part.observeRemoveMap.transform(replicaId.uid)(_.add(using replicaId)(capability))
     }
 
   val requests = dataManager.mergedState.map(_.data.requests.values)
