@@ -52,8 +52,8 @@ class DataManager[State](
       connections.foreach: con =>
         con.out.send(missingRequestMessage).run(using ())(debugCallback)
     },
-    10000,
-    10000
+    1000,
+    1000
   )
 
   def addConnection(biChan: BiChan): Unit = {
