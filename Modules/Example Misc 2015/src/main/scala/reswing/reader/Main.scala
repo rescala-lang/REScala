@@ -46,6 +46,9 @@ object Main extends App {
 
   app.main(Array())
 
+  // TODO: this crashes because args is null
+  // which causes the below two lines to not be executed … which is good, because if they are executed the program just hangs
+  // I assume it’s because the feeds are no longer available, but the while loop also seems extremely sketchy
   val readUrls: Option[Seq[String]] = for {
     file <- args.headOption
     urls <- loadURLs(file)
