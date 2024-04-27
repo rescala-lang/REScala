@@ -1,7 +1,7 @@
 package replication
 
-import channel.{ArrayMessageBuffer, BiChan, MessageBuffer}
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
+import channel.{ArrayMessageBuffer, BiChan, Ctx, MessageBuffer}
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
@@ -55,6 +55,17 @@ class DataManager[State](
     10000,
     10000
   )
+
+  def addConnection(biChan: BiChan): Unit = {
+    lock.synchronized {
+      connections = biChan :: connections
+    }
+    biChan.in.receive.run(using Ctx()):
+      case Success(msg) =>
+        val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
+        handleMessage(res, biChan)
+      case Failure(error) => error.printStackTrace()
+  }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
   private val lock: AnyRef                      = new {}
