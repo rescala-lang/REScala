@@ -36,14 +36,13 @@ object PermMutate:
   * We provide it as it’s own opaque type, to make it obvious that this should not be just any ID.
   * Use [[Uid]] if you want to store an ID in a replicated data structure.
   */
-opaque type LocalReplicaId = Uid
+case class LocalReplicaId(uid: Uid)
 object LocalReplicaId:
-  given ordering: Ordering[LocalReplicaId]             = Uid.ordering
-  extension (id: LocalReplicaId) def uid: Uid          = id
-  def apply(id: Uid): LocalReplicaId                   = id
-  inline given fromId: Conversion[Uid, LocalReplicaId] = identity
+  given ordering: Ordering[LocalReplicaId]             = Uid.ordering.on(_.uid)
+  def apply(id: Uid): LocalReplicaId                   = LocalReplicaId(id)
+  inline given fromId: Conversion[Uid, LocalReplicaId] = apply
   def predefined(s: String): LocalReplicaId            = LocalReplicaId.fromId(Uid.predefined(s))
-  def unwrap(id: LocalReplicaId): Uid                  = id
+  def unwrap(id: LocalReplicaId): Uid                  = id.uid
   def gen(): LocalReplicaId                            = Uid.gen()
   def replicaId(using rid: LocalReplicaId): Uid        = rid.uid
 
