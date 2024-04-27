@@ -1,12 +1,12 @@
 package test.rdts.corestructs
 
-import rdts.base.Lattice
-import rdts.dotted.Dotted
-import rdts.time.{ArrayRanges, Dot, Dots}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import test.rdts.DataGenerator.{given, *}
+import rdts.base.Lattice
+import rdts.dotted.Dotted
 import rdts.dotted.HasDots.mapInstance
+import rdts.time.{ArrayRanges, Dot, Dots}
+import test.rdts.DataGenerator.{*, given}
 
 import scala.annotation.tailrec
 

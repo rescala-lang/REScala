@@ -2,9 +2,9 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.*
-import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
-import rdts.time.{Dot, Dots}
 import rdts.dotted.HasDots.mapInstance
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.time.{Dot, Dots}
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
   *

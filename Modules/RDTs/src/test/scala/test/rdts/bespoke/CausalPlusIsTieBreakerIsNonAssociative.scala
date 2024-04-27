@@ -1,12 +1,12 @@
 package test.rdts.bespoke
 
+import rdts.base.{Lattice, Uid}
 import rdts.datatypes.experiments.BoundedCounter
 import rdts.syntax.TestReplica
 import rdts.time.VectorClock
-import rdts.base.Uid
-import rdts.base.Lattice
 import test.rdts.given
-import math.Ordering.Implicits.infixOrderingOps
+
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /* This tests a pitfall, with an assumption about a causal clock with a tiebreaker */
 class CausalPlusIsTieBreakerIsNonAssociative extends munit.FunSuite {

@@ -1,5 +1,7 @@
 package test.rdts.baseproperties
 
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 import rdts.base.{Bottom, BottomOpt, Lattice}
 import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import rdts.datatypes.contextual.{CausalQueue, ReplicatedList}
@@ -7,11 +9,9 @@ import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.CausalStore
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.time.{Dots, Time, VectorClock, Dot}
-import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen, Shrink}
-import test.rdts.DataGenerator.{*, given}
+import rdts.time.{Dot, Dots, Time, VectorClock}
 import test.rdts.DataGenerator.RGAGen.given
+import test.rdts.DataGenerator.{*, given}
 import test.rdts.isGithubCi
 
 // TODO, or maybe a note:

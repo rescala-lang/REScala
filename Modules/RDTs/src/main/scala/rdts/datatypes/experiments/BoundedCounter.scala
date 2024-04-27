@@ -2,7 +2,7 @@ package rdts.datatypes.experiments
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.{GrowOnlyCounter, PosNegCounter}
-import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Uid])
 

@@ -1,6 +1,6 @@
 package rdts.datatypes.alternatives
 
-import rdts.base.{Bottom, Uid, Lattice}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.VectorClock
 
 import scala.annotation.tailrec

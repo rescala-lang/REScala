@@ -1,9 +1,9 @@
 package test.rdts.baseproperties
 
-import rdts.base.Uid
-import rdts.time.{ArrayRanges, Dots, VectorClock}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.base.Uid
+import rdts.time.{ArrayRanges, Dots, VectorClock}
 import test.rdts.DataGenerator.{*, given}
 
 import scala.collection.immutable.Queue

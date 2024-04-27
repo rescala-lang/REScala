@@ -4,8 +4,7 @@ import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.make
 import rdts.dotted.Dotted
-import rdts.syntax.OpsSyntaxHelper
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
 import rdts.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.

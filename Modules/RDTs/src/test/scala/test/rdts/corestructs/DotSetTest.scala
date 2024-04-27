@@ -1,10 +1,10 @@
 package test.rdts.corestructs
 
+import org.scalacheck.Prop
+import org.scalacheck.Prop.*
 import rdts.base.Lattice
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots}
-import org.scalacheck.Prop
-import org.scalacheck.Prop.*
 import test.rdts.DataGenerator.{*, given}
 import test.rdts.given
 

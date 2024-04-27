@@ -1,6 +1,6 @@
 package rdts.datatypes.experiments
 
-import rdts.base.{Uid, Lattice}
+import rdts.base.{Lattice, Uid}
 import rdts.datatypes.experiments.RaftState.*
 
 import scala.util.Try

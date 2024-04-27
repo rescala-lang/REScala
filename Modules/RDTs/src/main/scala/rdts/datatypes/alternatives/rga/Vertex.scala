@@ -1,7 +1,7 @@
 package rdts.datatypes.alternatives.rga
 
 import rdts.base.Uid
-import Vertex.Timestamp
+import rdts.datatypes.alternatives.rga.Vertex.Timestamp
 import rdts.time.Time
 
 case class Vertex(timestamp: Timestamp, id: Uid)

@@ -1,9 +1,9 @@
 package test.rdts.bespoke
 
-import rdts.datatypes.alternatives.MultiValueRegister
-import rdts.time.VectorClock
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.datatypes.alternatives.MultiValueRegister
+import rdts.time.VectorClock
 import test.rdts.DataGenerator.arbVectorClock
 
 import scala.Console.in

@@ -1,9 +1,9 @@
 package test.rdts.corestructs
 
+import org.scalacheck.Prop.*
 import rdts.base.{Lattice, Uid}
 import rdts.dotted.Dotted
 import rdts.time.{ArrayRanges, Dot, Dots, Time}
-import org.scalacheck.Prop.*
 import test.rdts.DataGenerator.*
 
 class CompactTest extends munit.ScalaCheckSuite {

@@ -1,5 +1,6 @@
 package test.rdts
 
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 import rdts.base.*
 import rdts.datatypes.*
 import rdts.datatypes.GrowOnlyList.Node
@@ -9,10 +10,9 @@ import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.{CausalDelta, CausalStore}
 import rdts.dotted.*
+import rdts.dotted.HasDots.mapInstance
 import rdts.syntax.LocalReplicaId
 import rdts.time.*
-import org.scalacheck.{Arbitrary, Gen, Shrink}
-import HasDots.mapInstance
 
 import scala.annotation.nowarn
 import scala.collection.immutable.Queue

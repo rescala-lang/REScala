@@ -1,6 +1,6 @@
 package rdts.datatypes.alternatives
 
-import rdts.base.{Uid, Lattice}
+import rdts.base.{Lattice, Uid}
 
 /** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ObserveRemoveSet[A](entries: Map[Uid, A], tombstones: Set[Uid]) {

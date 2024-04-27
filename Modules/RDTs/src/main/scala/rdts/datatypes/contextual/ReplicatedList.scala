@@ -2,10 +2,10 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.{Epoch, GrowOnlyList, LastWriterWins}
+import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, PermQuery, LocalReplicaId}
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper, PermQuery}
 import rdts.time.{Dot, Dots}
-import HasDots.mapInstance
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
   *

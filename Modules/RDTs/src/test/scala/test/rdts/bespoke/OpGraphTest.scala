@@ -3,7 +3,7 @@ package test.rdts.bespoke
 import rdts.base.Uid
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.{Entry, OpGraph}
 import rdts.datatypes.experiments.{BoundedCounter, CausalDelta, CausalStore}
-import rdts.dotted.{Dotted}
+import rdts.dotted.Dotted
 import rdts.syntax.TestReplica
 import rdts.time.{ArrayRanges, Dot, Dots}
 import test.rdts.DataGenerator.ExampleData

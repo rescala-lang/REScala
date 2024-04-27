@@ -1,8 +1,8 @@
 package test.rdts.corestructs
 
+import org.scalacheck.Prop.*
 import rdts.base.Uid
 import rdts.time.{Dot, Dots}
-import org.scalacheck.Prop.*
 import test.rdts.DataGenerator.given
 
 class DotsTest extends munit.ScalaCheckSuite {

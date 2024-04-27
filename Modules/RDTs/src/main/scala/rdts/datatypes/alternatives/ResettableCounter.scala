@@ -2,7 +2,7 @@ package rdts.datatypes.alternatives
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{OpsSyntaxHelper, LocalReplicaId}
+import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
 import rdts.time.{Dot, Dots}
 
 /** An ResettableCounter (Resettable Counter/Add Wins Counter) is a Delta CRDT modeling a counter.

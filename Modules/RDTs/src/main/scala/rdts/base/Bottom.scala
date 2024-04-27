@@ -1,11 +1,11 @@
 package rdts.base
 
-import rdts.dotted.{Dotted}
+import rdts.dotted.Dotted
 import rdts.time.Dots
 
 import scala.collection.immutable.Queue
-import scala.deriving.Mirror
 import scala.compiletime.{summonAll, summonInline}
+import scala.deriving.Mirror
 
 /** Provides an [[empty]] value of type [[A]]
   *

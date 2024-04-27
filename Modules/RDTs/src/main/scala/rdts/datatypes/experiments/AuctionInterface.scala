@@ -1,7 +1,6 @@
 package rdts.datatypes.experiments
 
-import rdts.base.Bottom
-import rdts.base.Lattice
+import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.experiments.AuctionInterface.Bid.User
 import rdts.dotted.HasDots
 import rdts.syntax.OpsSyntaxHelper

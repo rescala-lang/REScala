@@ -1,7 +1,7 @@
 package test.rdts
 
-import rdts.base.Uid
 import munit.Compare
+import rdts.base.Uid
 
 implicit def idFromString(s: String): rdts.base.Uid = rdts.base.Uid.predefined(s)
 

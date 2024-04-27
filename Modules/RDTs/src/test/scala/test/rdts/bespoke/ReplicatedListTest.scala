@@ -1,10 +1,10 @@
 package test.rdts.bespoke
-import rdts.datatypes.contextual.ReplicatedList
-import test.rdts.idFromString
 import rdts.base.Uid
 import rdts.datatypes.GrowOnlyList
+import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.time.Dot
+import test.rdts.idFromString
 
 class ReplicatedListTest extends munit.FunSuite {
 

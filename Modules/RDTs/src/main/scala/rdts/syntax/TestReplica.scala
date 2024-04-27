@@ -1,6 +1,6 @@
 package rdts.syntax
 
-import rdts.base.{Uid, Lattice}
+import rdts.base.{Lattice, Uid}
 
 import scala.annotation.targetName
 

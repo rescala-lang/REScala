@@ -1,7 +1,7 @@
 package rdts.dotted
 
 import rdts.base.{Bottom, Lattice}
-import rdts.syntax.{PermCausalMutate, PermMutate, LocalReplicaId}
+import rdts.syntax.{LocalReplicaId, PermCausalMutate, PermMutate}
 import rdts.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.

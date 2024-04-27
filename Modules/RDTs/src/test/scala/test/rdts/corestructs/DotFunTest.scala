@@ -1,13 +1,13 @@
 package test.rdts.corestructs
 
+import org.scalacheck.Prop.*
 import rdts.base.{Lattice, Uid}
+import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots}
-import org.scalacheck.Prop.*
-import test.rdts.DataGenerator.{given, *}
+import test.rdts.DataGenerator.{*, given}
 import test.rdts.bespoke.given
 import test.rdts.given
-import HasDots.mapInstance
 
 class DotFunTest extends munit.ScalaCheckSuite {
 

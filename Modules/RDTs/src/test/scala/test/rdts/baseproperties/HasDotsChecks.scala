@@ -1,14 +1,14 @@
 package test.rdts.baseproperties
 
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
 import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.datatypes.experiments.CausalStore
 import rdts.dotted.{Dotted, HasDots}
-import rdts.time.{ArrayRanges, Dots, VectorClock, Dot}
-import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen}
-import test.rdts.DataGenerator.{*, given}
+import rdts.time.{ArrayRanges, Dot, Dots, VectorClock}
 import test.rdts.DataGenerator.RGAGen.given
+import test.rdts.DataGenerator.{*, given}
 
 import scala.collection.immutable.Queue
 import scala.math.Ordering.Implicits.infixOrderingOps

@@ -3,7 +3,6 @@ package rdts.time
 import rdts.base.{Bottom, Lattice, Orderings}
 
 import java.util.concurrent.atomic.AtomicLong
-
 import scala.math.Ordering.Implicits.infixOrderingOps
 import scala.util.Random
 

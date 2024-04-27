@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments
 
 import rdts.base.Lattice.merge
-import rdts.base.{Uid, Lattice}
+import rdts.base.{Lattice, Uid}
 import rdts.time.VectorClock
 
 type Secret = String

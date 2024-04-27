@@ -1,7 +1,7 @@
 package rdts.syntax
 
 import rdts.base.Lattice
-import rdts.dotted.{Dotted}
+import rdts.dotted.Dotted
 import rdts.time.Dots
 
 /** ReactiveCRDTs are Delta CRDTs that store applied deltas in their deltaBuffer attribute. Middleware should regularly
