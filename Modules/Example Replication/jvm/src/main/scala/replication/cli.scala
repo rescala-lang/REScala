@@ -2,7 +2,6 @@ package replication
 
 import de.rmgk.options.*
 import rdts.base.Uid
-import replication.checkpointing.central.Checkpointer
 import replication.fbdc.{CliConnections, FbdcCli}
 
 import java.nio.file.{Files, Path}
@@ -44,30 +43,6 @@ object cli {
 
       subcommand("calendar", ""):
         new replication.calendar.Peer(Uid.predefined(id.value), listenPort.value, ipsAndPorts.value).run()
-      .value
-
-      subcommand("checkpointing", ""):
-        subcommand("decentral", ""):
-          new replication.checkpointing.decentral.Replica(
-            listenPort.value,
-            ipsAndPorts.value,
-            Uid.predefined(id.value),
-            named[Int]("--initSize", "").value
-          ).run()
-        .value
-      .value
-
-      subcommand("central", ""):
-        subcommand("peer", ""):
-          new replication.checkpointing.central.Peer(
-            Uid.predefined(id.value),
-            listenPort.value,
-            ipsAndPorts.value
-          ).run()
-        .value
-        subcommand("checkpointer", ""):
-          new Checkpointer(listenPort.value).run()
-        .value
       .value
 
       subcommand("dtn", ""):
