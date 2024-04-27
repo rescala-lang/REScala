@@ -63,7 +63,7 @@ lazy val reswing = project.in(file("Modules/Swing"))
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, noPublish, LocalSettings.scalaFxDependencies, fork := true)
+  .settings(scala3defaults, noPublish, LocalSettings.scalaFxDependencies, fork := true, Settings.javaOutputVersion(17))
 
 lazy val rdtsAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
@@ -240,6 +240,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     fork := true,
     Dependencies.jsoniterScala,
     LocalSettings.tink,
+    Settings.javaOutputVersion(17),
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
     libraryDependencies ++= {
       val jettyVersion = "11.0.20"
