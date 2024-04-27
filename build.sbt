@@ -46,7 +46,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-    LocalSetting.publishSonatype,
+    LocalSettings.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
   )
@@ -58,12 +58,12 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, LocalSetting.scalaSwing)
+  .settings(scala3defaults, noPublish, LocalSettings.scalaSwing)
   .dependsOn(reactives.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, noPublish, LocalSetting.scalaFxDependencies, fork := true)
+  .settings(scala3defaults, noPublish, LocalSettings.scalaFxDependencies, fork := true)
 
 lazy val rdtsAggregate =
   project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
@@ -81,7 +81,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .settings(
     scala3defaults,
     javaOutputVersion(8),
-    LocalSetting.publishSonatype,
+    LocalSettings.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
@@ -119,7 +119,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     Dependencies.munitCheck,
   )
   .jvmSettings(
-    LocalSetting.tink
+    LocalSettings.tink
   )
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
@@ -157,7 +157,7 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
     Dependencies.munit,
     Dependencies.munitCheck,
     Dependencies.jsoniterScala,
-    LocalSetting.tink,
+    LocalSettings.tink,
     libraryDependencies ++=
       List(
         "org.slf4j"         % "slf4j-jdk14"                  % "2.0.13",
@@ -216,18 +216,7 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
-    TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
-      val fastlink   = (Compile / fastLinkJS).value
-      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-      val bp         = baseDirectory.value.toPath
-      val tp         = target.value.toPath
-      val template   = IO.read(bp.resolve("index.template.html").toFile)
-      val targetpath = tp.resolve("index.html")
-      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
-      IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
-      IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
-      targetpath.toFile
-    }
+    LocalSettings.deployTask,
   )
 
 lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
@@ -237,18 +226,7 @@ lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))
     scala3defaults,
     noPublish,
     Dependencies.scalatags,
-    TaskKey[File]("deploy", "generates a correct index.template.html for the unitconversion app") := {
-      val fastlink   = (Compile / fastLinkJS).value
-      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-      val bp         = baseDirectory.value.toPath
-      val tp         = target.value.toPath
-      val template   = IO.read(bp.resolve("index.template.html").toFile)
-      val targetpath = tp.resolve("index.html")
-      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
-      IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
-      // IO.copyFile(bp.resolve("todolist.css").toFile, tp.resolve("todolist.css").toFile)
-      targetpath.toFile
-    }
+    LocalSettings.deployTask,
   )
 
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
@@ -257,10 +235,10 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .settings(
     scala3defaults,
     noPublish,
-    LocalSetting.scalaFxDependencies,
+    LocalSettings.scalaFxDependencies,
     fork := true,
     Dependencies.jsoniterScala,
-    LocalSetting.tink,
+    LocalSettings.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
     libraryDependencies ++= {
       val jettyVersion = "11.0.20"
@@ -298,15 +276,5 @@ lazy val replicationExamples =
     .jsSettings(
       Dependencies.scalatags,
       Dependencies.loci.wsWeb,
-      TaskKey[File]("deploy", "generates a correct index.template.html") := {
-        val fastlink   = (Compile / fastLinkJS).value
-        val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-        val bp         = baseDirectory.value.toPath
-        val tp         = jspath.toPath
-        val template   = IO.read(bp.resolve("index.template.html").toFile)
-        val targetpath = tp.resolve("index.template.html").toFile
-        IO.write(targetpath, template.replace("JSPATH", s"main.js"))
-        IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
-        targetpath
-      }
+      LocalSettings.deployTask,
     )
