@@ -5,7 +5,7 @@ import tests.rescala.testtools.RETests
 
 class LensTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("Bijective Lens Addition") {
       val a    = LVar[Int](3)

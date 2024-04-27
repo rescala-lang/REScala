@@ -1,8 +1,8 @@
 package reactives.extra.incremental
 
-import reactives.core._
-import reactives.operator.Interface.State
+import reactives.core.*
 import reactives.operator.*
+import reactives.operator.Interface.State
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}

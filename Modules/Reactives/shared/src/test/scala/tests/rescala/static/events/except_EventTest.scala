@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class except_EventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("handler Of except  Is Executed If Basic Event Fires") {
       var test         = 0

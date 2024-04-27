@@ -1,13 +1,14 @@
 package tests.rescala.static.events
 
-import java.util.concurrent.atomic.AtomicInteger
-import reactives.structure.RExceptions.ObservedException
 import reactives.structure.Pulse
+import reactives.structure.RExceptions.ObservedException
 import tests.rescala.testtools.RETests
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class OR_EventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("handler Of OR Is Executed If Any Of The Events Fires") {
       var test     = 0

@@ -4,10 +4,9 @@ import org.scalajs.dom
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, document}
 import reactives.core.{CreationTicket, Disconnectable, DynamicScope, PlanTransactionScope, Scheduler, Tracing}
-import reactives.operator.Interface
+import reactives.operator.*
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
-import reactives.operator.*
 
 import scala.annotation.targetName
 import scala.scalajs.js

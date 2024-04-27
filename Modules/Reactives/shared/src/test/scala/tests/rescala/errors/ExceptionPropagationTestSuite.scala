@@ -9,7 +9,7 @@ import scala.util.{Failure, Success, Try}
 
 class ExceptionPropagationTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     // we need this because scalajs does not throw exceptions
     def div(in: Int)            = div2(in, 100)

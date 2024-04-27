@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 class FromFutureTests extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     import scala.concurrent.ExecutionContext.Implicits.global
 

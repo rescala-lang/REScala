@@ -1,14 +1,14 @@
 package tests.rescala.misc
 
 import reactives.core.infiltration.Infiltrator
-import tests.rescala.testtools.RETests
 import reactives.operator.Interface
 import reactives.scheduler.Levelbased
+import tests.rescala.testtools.RETests
 
 class LevelPropagation extends RETests {
   multiEngined { engine =>
     val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
-    import ie.api._
+    import ie.api.*
     import ie.assertLevel
 
     test("works On Elements In Queue") {

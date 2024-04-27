@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class GlitchFreedomTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("no Glitches In Simple Case") {
 

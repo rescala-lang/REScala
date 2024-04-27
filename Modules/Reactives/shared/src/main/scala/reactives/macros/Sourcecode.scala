@@ -28,7 +28,7 @@ DEALINGS IN THE SOFTWARE.
  */
 
 import scala.language.implicitConversions
-import scala.quoted._
+import scala.quoted.*
 
 object Sourcecode {
 
@@ -97,7 +97,6 @@ object Sourcecode {
     }
 
     def enclosingImpl(using Quotes): Expr[Enclosing] = {
-      import quotes.reflect._
       val path = enclosing(machine = false)(!Util.isSynthetic(_))
       '{ Enclosing(${ Expr(path) }) }
     }

@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class Fold3Test extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("scala 3 fold expressions") {
 

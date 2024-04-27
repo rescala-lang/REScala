@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class map_EventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("handler Of map  Is Executed") {
       var test   = 0

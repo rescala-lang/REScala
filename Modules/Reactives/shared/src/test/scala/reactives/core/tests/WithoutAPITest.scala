@@ -1,13 +1,13 @@
 package reactives.core.tests
 
 import reactives.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
-import tests.rescala.testtools.RETests
 import reactives.operator.Interface
 import reactives.operator.Interface.State
+import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     class CustomSource[T](initState: State[T]) extends reactives.core.ReSource with ReadAs[T] {
       outer =>

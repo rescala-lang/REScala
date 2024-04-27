@@ -1,12 +1,12 @@
 package reactives.operator
 
 import reactives.core.*
+import reactives.default.act
 import reactives.macros.MacroAccess
 import reactives.operator.Interface.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
-import reactives.default.act
 
 import scala.annotation.nowarn
 import scala.collection.immutable.{LinearSeq, Queue}

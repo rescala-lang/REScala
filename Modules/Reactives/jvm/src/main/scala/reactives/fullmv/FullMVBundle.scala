@@ -2,8 +2,8 @@ package reactives.fullmv
 
 import reactives.core
 import reactives.core.{AdmissionTicket, Derived, DynamicTicket, Initializer, Observation, ReSource, ReadAs, SchedulerWithDynamicScope, Transaction}
-import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.*
 import reactives.fullmv.NotificationBranchResult.*
+import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.*
 import reactives.fullmv.mirrors.*
 import reactives.fullmv.sgt.synchronization.{SubsumableLock, SubsumableLockEntryPoint, SubsumableLockHostImpl, SubsumableLockImpl}
 import reactives.fullmv.tasks.{Framing, Notification, Reevaluation, SourceNotification}

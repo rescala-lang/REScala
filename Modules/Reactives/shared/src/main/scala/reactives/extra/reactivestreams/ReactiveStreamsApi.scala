@@ -1,12 +1,12 @@
 package reactives.extra.reactivestreams
 
-import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import reactives.core.{Base, Derived, DynamicScope, PlanTransactionScope, ReInfo, ReadAs, Scheduler}
 import reactives.operator.*
 import reactives.operator.Interface.State
 import reactives.structure.Pulse
 
 import java.util.Objects
+import java.util.concurrent.Flow.{Publisher, Subscriber, Subscription}
 import scala.util.{Failure, Success}
 
 class RESubscriber[T](evt: Evt[T]) extends Subscriber[T] {

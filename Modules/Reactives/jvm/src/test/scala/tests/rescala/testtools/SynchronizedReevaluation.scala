@@ -37,7 +37,7 @@ class SynchronizedReevaluation extends ManagedBlocker {
 }
 
 class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
-  import api._
+  import api.*
 
   def SynchronizedReevaluation[A](sig: Signal[A])(implicit
       turnSource: CreationTicket[State]

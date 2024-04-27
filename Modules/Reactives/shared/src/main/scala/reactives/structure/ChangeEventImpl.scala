@@ -1,7 +1,6 @@
 package reactives.structure
 
 import reactives.core.*
-
 import reactives.operator.Interface.State
 
 class ChangeEventImpl[T](

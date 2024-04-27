@@ -1,12 +1,11 @@
 package tests.rescala.jvm
 
-import java.lang.ref.{PhantomReference, ReferenceQueue}
-
+import reactives.default as engine
+import reactives.default.*
 import reactives.structure.Pulse
 import tests.rescala.testtools.RETests
 
-import reactives.default as engine
-import reactives.default.*
+import java.lang.ref.{PhantomReference, ReferenceQueue}
 
 class GarbageCollectionTest extends RETests {
 

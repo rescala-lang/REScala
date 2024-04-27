@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class MacroEventTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("simple") {
       val ev1 = Evt[Int]()

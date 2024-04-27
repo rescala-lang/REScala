@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class PredicateEventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("predicate Event Is Executed Only If The Predicate Is True") {
       var test = 0

@@ -6,7 +6,7 @@ import scala.collection.LinearSeq
 
 class FoldTests extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     /* fold */
     test("fold the Initial Value Is Set Correctly") {

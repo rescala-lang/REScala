@@ -9,7 +9,7 @@ import tests.rescala.testtools.RETests
 
 class OOPropertiesEventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("events Are Inherited") {
 

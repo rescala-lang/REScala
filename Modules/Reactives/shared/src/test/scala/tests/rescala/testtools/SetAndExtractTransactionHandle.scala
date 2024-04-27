@@ -1,12 +1,11 @@
 package tests.rescala.testtools
 
 import reactives.core.{Initializer, Scheduler}
-import reactives.operator.Interface
-import reactives.operator.Source
 import reactives.default.global.State as BundleState
+import reactives.operator.{Interface, Source}
 
 class SetAndExtractTransactionHandle[Api <: Interface](val api: Api) {
-  import api._
+  import api.*
   def SetAndExtractTransactionHandle[A, N](
       source: Source[A] { type State[V] = api.global.State[V] },
       value: A

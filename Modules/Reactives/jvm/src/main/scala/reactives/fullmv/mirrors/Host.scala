@@ -1,10 +1,9 @@
 package reactives.fullmv.mirrors
 
-import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, ThreadLocalRandom}
-
 import reactives.fullmv.mirrors.Host.GUID
 import reactives.fullmv.sgt.synchronization.SubsumableLock
 
+import java.util.concurrent.{ConcurrentHashMap, ConcurrentMap, ThreadLocalRandom}
 import scala.annotation.tailrec
 
 trait Hosted[R] {

@@ -1,8 +1,8 @@
 package reactives.fullmv
 
 import reactives.core.{InitialChange, ReSource}
-import reactives.fullmv.mirrors.{Host}
-import reactives.fullmv.sgt.synchronization._
+import reactives.fullmv.mirrors.Host
+import reactives.fullmv.sgt.synchronization.*
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import java.util.concurrent.locks.LockSupport

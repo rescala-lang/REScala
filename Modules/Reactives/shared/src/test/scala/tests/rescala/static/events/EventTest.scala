@@ -1,8 +1,7 @@
 package tests.rescala.static.events
 
-import tests.rescala.testtools.RETests
-
 import reactives.default.*
+import tests.rescala.testtools.RETests
 
 class EventTest extends RETests {
 

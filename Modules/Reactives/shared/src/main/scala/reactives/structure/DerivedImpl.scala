@@ -2,8 +2,8 @@ package reactives.structure
 
 import reactives.core.*
 import reactives.operator.Interface
-import reactives.structure.Pulse.NoChange
 import reactives.operator.Interface.State
+import reactives.structure.Pulse.NoChange
 
 abstract class DerivedImpl[T](
     initial: State[Pulse[T]],

@@ -1,7 +1,7 @@
 package reactives.fullmv;
 
-import scala.collection.immutable.List$;
 import scala.collection.immutable.List;
+import scala.collection.immutable.List$;
 
 import java.util.concurrent.atomic.AtomicReference;
 

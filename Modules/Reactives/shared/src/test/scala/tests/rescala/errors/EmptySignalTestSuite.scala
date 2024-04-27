@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class EmptySignalTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("basic Empty Signal Test") {
 

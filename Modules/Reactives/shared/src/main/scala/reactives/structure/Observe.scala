@@ -1,7 +1,6 @@
 package reactives.structure
 
 import reactives.core.*
-import reactives.core.Observation
 import reactives.operator.Interface.State
 
 /** observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */

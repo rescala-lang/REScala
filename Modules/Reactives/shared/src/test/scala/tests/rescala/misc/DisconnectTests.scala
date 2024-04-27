@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class DisconnectTests extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("remove incoming dependencies when disconnecting signals") {
       val v1 = Var(10)

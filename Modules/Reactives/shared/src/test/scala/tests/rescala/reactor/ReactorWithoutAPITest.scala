@@ -6,7 +6,7 @@ import reactives.extra.reactor.*
 class ReactorWithoutAPITest extends RETests {
 
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("Reactor has initial value") {
       val reactor = Reactor.once("Initial Value") { Stage() }

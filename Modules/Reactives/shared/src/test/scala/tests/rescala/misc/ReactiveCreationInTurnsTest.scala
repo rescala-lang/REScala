@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class ReactiveCreationInTurnsTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("evaluations Of Inner Signals") {
 

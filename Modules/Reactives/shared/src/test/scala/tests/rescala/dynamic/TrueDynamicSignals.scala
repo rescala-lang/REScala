@@ -1,16 +1,16 @@
 package tests.rescala.dynamic
 
-import reactives.core.{CreationTicket, DynamicTicket}
-import tests.rescala.testtools.RETests
 import reactives.core.infiltration.Infiltrator
+import reactives.core.{CreationTicket, DynamicTicket}
+import reactives.default.global.State as BundleState
 import reactives.operator.Interface
 import reactives.scheduler.Levelbased
-import reactives.default.global.State as BundleState
+import tests.rescala.testtools.RETests
 
 class TrueDynamicSignals extends RETests {
   val ie = new Infiltrator(reactives.default)
+  import ie.api.*
   import ie.assertLevel
-  import ie.api._
 
   test("signals Nested In Vars") {
 

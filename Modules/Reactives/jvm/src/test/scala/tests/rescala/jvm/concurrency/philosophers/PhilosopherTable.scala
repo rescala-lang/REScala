@@ -2,13 +2,13 @@ package tests.rescala.concurrency.philosophers
 
 import reactives.core.Transaction
 import reactives.operator.Interface
-
-import java.util.concurrent.atomic.AtomicInteger
 import reactives.parrp.Backoff
 
+import java.util.concurrent.atomic.AtomicInteger
+
 class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
-  import interface._
-  import tests.rescala.concurrency.philosophers.PhilosopherTable._
+  import interface.*
+  import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 
   val seatings: Seq[Seating] = createTable(philosopherCount)
 

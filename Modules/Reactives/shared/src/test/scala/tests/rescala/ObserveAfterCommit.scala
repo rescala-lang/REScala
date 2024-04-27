@@ -1,6 +1,6 @@
 package tests.rescala.misc
 
-import reactives.default._
+import reactives.default.*
 
 class ObserveAfterCommit extends munit.FunSuite {
 

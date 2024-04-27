@@ -1,8 +1,8 @@
 package tests.rescala.property
 
-import tests.rescala.testtools.RETests
 import org.scalacheck.Prop.*
 import reactives.default.*
+import tests.rescala.testtools.RETests
 
 class filter_EventTest extends munit.ScalaCheckSuite {
 

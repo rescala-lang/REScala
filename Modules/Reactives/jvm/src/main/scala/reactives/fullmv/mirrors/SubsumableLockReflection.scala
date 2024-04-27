@@ -2,7 +2,7 @@ package reactives.fullmv.mirrors
 
 import reactives.fullmv.FullMVUtil
 import reactives.fullmv.mirrors.Host.DEBUG
-import reactives.fullmv.sgt.synchronization._
+import reactives.fullmv.sgt.synchronization.*
 
 import scala.concurrent.Future
 

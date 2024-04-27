@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class ScheduledSetting extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("setting during inner event") {
 

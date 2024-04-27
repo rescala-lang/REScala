@@ -2,11 +2,11 @@ package tests.rescala.concurrency.philosophers
 
 import reactives.core.ReInfo
 import reactives.operator.Interface
-import tests.rescala.concurrency.philosophers.PhilosopherTable._
+import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 
 class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
     extends PhilosopherTable(philosopherCount)(ri) {
-  import interface.{Var, Signal}
+  import interface.{Signal, Var}
 
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize

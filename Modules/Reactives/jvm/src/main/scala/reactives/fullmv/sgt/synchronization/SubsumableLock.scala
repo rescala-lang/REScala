@@ -1,6 +1,6 @@
 package reactives.fullmv.sgt.synchronization
 
-import reactives.fullmv.mirrors._
+import reactives.fullmv.mirrors.*
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec

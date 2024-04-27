@@ -8,8 +8,8 @@ import tests.rescala.testtools.RETests
 
 class ReactorWithoutAPITest extends RETests {
 
-  import ReactorAction._
-  import reactives.default._
+  import ReactorAction.*
+  import reactives.default.*
 
   class Reactor[T](
       initState: State[ReactorStage[T]]
@@ -80,7 +80,7 @@ class ReactorWithoutAPITest extends RETests {
   }
 
   case class StageBuilder[T](actions: List[ReactorAction[T]] = Nil) {
-    import ReactorAction._
+    import ReactorAction.*
 
     private def addAction(newValue: ReactorAction[T]): StageBuilder[T] = {
       copy(actions = actions :+ newValue)

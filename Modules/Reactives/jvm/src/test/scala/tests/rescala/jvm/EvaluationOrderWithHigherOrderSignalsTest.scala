@@ -10,7 +10,7 @@ case object SetChanged   extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
   def run(engine: Interface, changeX: ChangeX): Unit = {
-    import engine._
+    import engine.*
 
     val initialX = "initialValue"
     val newX     = if (changeX == SetChanged) "changedValue" else initialX

@@ -6,7 +6,7 @@ import tests.rescala.testtools.RETests
 
 class VarTestSuite extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("get Val After Creation Returns Initialization Value") {
       val v = Var(1)

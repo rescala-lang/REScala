@@ -1,6 +1,6 @@
 package reactives.structure
 
-import RExceptions.EmptySignalControlThrowable
+import reactives.structure.RExceptions.EmptySignalControlThrowable
 
 final class Diff[+A](val from: Pulse[A], val to: Pulse[A]) {
 

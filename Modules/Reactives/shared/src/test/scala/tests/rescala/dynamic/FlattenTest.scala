@@ -6,7 +6,7 @@ import scala.concurrent.Future
 
 class FlattenTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("flatten var") {
       val sv = Signal { Var(10) }.flatten

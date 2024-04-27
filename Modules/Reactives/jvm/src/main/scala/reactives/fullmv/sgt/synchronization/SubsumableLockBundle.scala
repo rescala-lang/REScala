@@ -1,7 +1,7 @@
 package reactives.fullmv.sgt.synchronization
 
-import reactives.fullmv.{FullMVTurn, FullMVUtil}
 import reactives.fullmv.mirrors.*
+import reactives.fullmv.{FullMVTurn, FullMVUtil}
 import reactives.parrp.Backoff
 
 import java.util.concurrent.atomic.AtomicReference

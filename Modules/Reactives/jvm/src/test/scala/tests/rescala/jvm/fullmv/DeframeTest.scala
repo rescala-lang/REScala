@@ -1,13 +1,12 @@
 package tests.rescala.fullmv
 
-import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
-import reactives.fullmv.{FramingBranchResult, FullMVEngine, FullMVState, NotificationBranchResult}
 import reactives.core.{Derived, ReSource}
+import reactives.fullmv.NotificationBranchResult.ReevOutBranchResult.{NotifyAndNonReadySuccessor, PureNotifyOnly}
+import reactives.fullmv.tasks.{Framing, Notification, Reevaluation, SupersedeFraming}
+import reactives.fullmv.{FramingBranchResult, FullMVEngine, FullMVState, NotificationBranchResult, State}
 import reactives.structure.Pulse
 
 import scala.concurrent.duration.Duration
-import reactives.fullmv.tasks.{Framing, Notification, Reevaluation, SupersedeFraming}
-import reactives.fullmv.State
 
 class DeframeTest extends munit.FunSuite {
   if reactives.default.global.scheduler.isInstanceOf[FullMVEngine] then {

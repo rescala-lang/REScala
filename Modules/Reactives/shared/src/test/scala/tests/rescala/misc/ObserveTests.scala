@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class ObserveTests extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("can observe signals") {
       var result = List[Int]()

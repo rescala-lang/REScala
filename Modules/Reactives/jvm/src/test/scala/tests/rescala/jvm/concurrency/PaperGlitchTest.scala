@@ -1,11 +1,11 @@
 package tests.rescala.concurrency
 
-import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
-
 import tests.rescala.testtools.Spawn
 
+import java.util.concurrent.{ConcurrentLinkedQueue, CountDownLatch}
+
 // change here for FUN
-import reactives.default._
+import reactives.default.*
 
 import scala.util.Random
 

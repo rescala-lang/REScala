@@ -1,7 +1,7 @@
 package tests.rescala.fullmv
 
-import reactives.fullmv._
-import reactives.fullmv.sgt.synchronization._
+import reactives.fullmv.*
+import reactives.fullmv.sgt.synchronization.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

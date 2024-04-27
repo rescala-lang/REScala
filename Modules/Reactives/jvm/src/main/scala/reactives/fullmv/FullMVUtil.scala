@@ -3,7 +3,7 @@ package reactives.fullmv
 import reactives.operator.Interface
 
 import java.util.concurrent.ForkJoinPool
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 //class FullMVApi(val timeout: Duration, val schedulerName: String) extends FullMVBundle with Mirror

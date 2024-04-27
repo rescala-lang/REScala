@@ -1,9 +1,9 @@
 package tests.rescala.jvm
 
-import reactives.default._
+import reactives.default.*
 
 import java.time.temporal.ChronoField
-import java.time.{Clock, LocalDate => Date}
+import java.time.{Clock, LocalDate as Date}
 
 class PaperExampleSharedCalendar extends munit.FunSuite {
 

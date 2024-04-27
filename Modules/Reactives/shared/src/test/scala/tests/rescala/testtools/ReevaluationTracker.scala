@@ -1,11 +1,11 @@
 package tests.rescala.testtools
 
 import reactives.core.CreationTicket
-import reactives.operator.Interface
 import reactives.default.global.State as BundleState
+import reactives.operator.Interface
 
 class ReevaluationBundle[T <: Interface](val api: T) {
-  import api._
+  import api.*
 
   class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[BundleState])
       extends munit.FunSuite {

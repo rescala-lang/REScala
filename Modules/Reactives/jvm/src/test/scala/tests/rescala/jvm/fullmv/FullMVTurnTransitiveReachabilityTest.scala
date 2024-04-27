@@ -1,11 +1,10 @@
 package tests.rescala.fullmv
 
+import reactives.fullmv.sgt.synchronization.{Locked, Successful}
 import reactives.fullmv.{FullMVTurnImpl, FullMVUtil}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import reactives.fullmv.sgt.synchronization.{Locked, Successful}
-
 import scala.util.Random
 
 class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {

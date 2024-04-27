@@ -1,7 +1,6 @@
 package reactives.locking
 
 import java.util.concurrent.Semaphore
-
 import scala.collection.mutable.ArrayBuffer
 
 final class Key[InterTurn](val turn: InterTurn) {

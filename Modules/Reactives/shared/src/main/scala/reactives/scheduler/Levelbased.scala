@@ -139,7 +139,7 @@ trait Levelbased extends Twoversion {
     */
   final private[Levelbased] class LevelQueue(evaluator: LevelQueue.Evaluator) {
 
-    import LevelQueue._
+    import LevelQueue.*
 
     private val elements = new PriorityQueue[QueueElement]()
 

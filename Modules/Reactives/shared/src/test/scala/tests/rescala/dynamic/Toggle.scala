@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class Toggle extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     /* toggle */
     test("toggle the Initial Value Is Set Correctly") {

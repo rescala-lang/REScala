@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class AND_EventTest extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("handler Of AND Is NOT Executed If Events Fire Singularly") {
       var test      = 0

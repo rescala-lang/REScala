@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class ObserverCreation extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("add Event After") {
       var res   = 0

@@ -4,7 +4,7 @@ import tests.rescala.testtools.RETests
 
 class RecurringPropagation extends RETests {
   multiEngined { engine =>
-    import engine._
+    import engine.*
 
     test("can start propagation in observers") {
 
