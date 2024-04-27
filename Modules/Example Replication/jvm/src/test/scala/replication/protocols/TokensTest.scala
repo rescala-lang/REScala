@@ -32,7 +32,7 @@ class TokensTest extends munit.FunSuite {
     var updatedToken = token.merge(token.data.request(using replicas(1)))
     updatedToken = updatedToken.merge(updatedToken.data.request(using replicas(2)))
     // find biggest id in wants
-    val biggestIdIndex = replicas.indexOf(LocalReplicaId.predefined(updatedToken.data.wants.elements.max))
+    val biggestIdIndex = replicas.indexOf(LocalReplicaId(updatedToken.data.wants.elements.max))
     // replica 0, the current owner, calls upkeep
     updatedToken = updatedToken.merge(Dotted(updatedToken.data.upkeep(using replicas(0))))
     // assert that the new owner is the one with the biggest id

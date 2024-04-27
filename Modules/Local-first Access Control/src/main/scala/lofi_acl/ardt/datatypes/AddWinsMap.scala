@@ -4,6 +4,7 @@ import lofi_acl.ardt.base.{Bottom, Causal}
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap}
 import rdts.base.Lattice
+import rdts.syntax.LocalReplicaId
 
 import java.time.Instant
 import scala.language.implicitConversions
@@ -116,12 +117,12 @@ object AddWinsLastWriterWinsMap {
         map: AddWinsLastWriterWinsMap[K, V],
         key: K,
         value: V,
-        replicaId: String
+        replicaId: LocalReplicaId
     ): AddWinsLastWriterWinsMap[K, V] = {
       AddWinsMap.mutators.mutate(
         map,
         key,
-        MultiValueRegister.mutators.write(_, (value, (Instant.now(), replicaId)), replicaId)
+        MultiValueRegister.mutators.write(_, (value, (Instant.now(), replicaId.uid.delegate)), replicaId)
       )
     }
 

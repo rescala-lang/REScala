@@ -5,19 +5,19 @@ import scala.util.Random
 
 // opaque currently causes too many weird issues with library integrations, in particular the json libraries can no longer auto serialize
 /* opaque */
-type Uid = String
+case class Uid(delegate: String)
 
 object Uid:
-  given ordering: Ordering[Uid]  = Ordering.String
-  def predefined(s: String): Uid = s
-  def unwrap(id: Uid): String    = id
-  def zero: Uid                  = ""
+  given ordering: Ordering[Uid]  = Ordering.String.on(_.delegate)
+  def predefined(s: String): Uid = Uid(s)
+  def unwrap(id: Uid): String    = id.delegate
+  val zero: Uid                  = Uid("")
   private val random: Random     = scala.util.Random()
 
-  extension (s: String) def asId: Uid = s
+  extension (s: String) def asId: Uid = Uid(s)
 
   /** Generates unique identifiers for use by CRDTs */
   def gen(): Uid =
     val randomBytes = new Array[Byte](6)
     random.nextBytes(randomBytes)
-    Base64.getEncoder.encodeToString(randomBytes)
+    Uid(Base64.getEncoder.encodeToString(randomBytes))

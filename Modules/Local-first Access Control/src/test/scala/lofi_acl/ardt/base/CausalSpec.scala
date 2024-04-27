@@ -4,18 +4,18 @@ import lofi_acl.ardt.base.Causal.given
 import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.given
 import lofi_acl.ardt.causality.DotStore.{DotFun, DotSet}
 import munit.FunSuite
-import rdts.base.Lattice
+import rdts.base.{Lattice, Uid}
 import rdts.time.{Dot, Dots}
 
 class CausalSpec extends FunSuite {
-  def dot(time: Long, replicaId: String): Dot = Dot(replicaId, time)
+  def dot(time: Long, replicaId: String): Dot = Dot(Uid(replicaId), time)
 
   import scala.language.implicitConversions
 
   private given mapToSetOfDots: Conversion[Map[String, Int], Set[Dot]] =
     _.flatMap(tuple =>
       1 to tuple._2 map {
-        Dot(tuple._1, _)
+        Dot(Uid(tuple._1), _)
       }
     ).toSet
 
