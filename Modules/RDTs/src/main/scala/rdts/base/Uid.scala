@@ -4,8 +4,9 @@ import java.util.Base64
 import scala.util.Random
 
 // opaque currently causes too many weird issues with library integrations, in particular the json libraries can no longer auto serialize
-/* opaque */
-case class Uid(delegate: String)
+case class Uid(delegate: String) {
+  override def toString: String = s"🪪$delegate"
+}
 
 object Uid:
   given ordering: Ordering[Uid]  = Ordering.String.on(_.delegate)
