@@ -1,9 +1,8 @@
 package replication.webapp
 
-import loci.transmitter.RemoteRef
 import org.scalajs.dom
 import org.scalajs.dom.MouseEvent
-import org.scalajs.dom.html.Element
+import org.scalajs.dom.html.TableRow
 import rdts.base.Uid
 import reactives.default.*
 import reactives.extra.Tags.*
@@ -23,9 +22,6 @@ object HTML {
   }
 
   val RemoteRegex = raw"""^remote#(\d+).*""".r.anchored
-  def remotePrettyName(rr: RemoteRef) =
-    val RemoteRegex(res) = rr.toString: @unchecked
-    res
 
   def connectionManagement(ccm: ContentConnectionManager, fbdcExampleData: FbdcExampleData) = {
     import fbdcExampleData.dataManager
@@ -49,29 +45,7 @@ object HTML {
           td(),
           table().render.reattach(dataManager.currentContext.map(dotsToRows))
         )
-      ).render.reattach(ccm.connectedRemotes.map { all =>
-        all.toList.sortBy(_._1.toString).map { (rr, connected) =>
-          tr(
-            td(remotePrettyName(rr)),
-            if !connected
-            then td("disconnected")
-            else
-              List(
-                td(button("disconnect", onclick := leftClickHandler(rr.disconnect()))),
-                td(button(
-                  "request",
-//                  onclick := leftClickHandler {
-//                    dataManager.requestMissingFrom(rr)
-//                    ()
-//                  }
-                )),
-//                td(table().render.reattach(
-//                  dataManager.contextOf(rr).map(dotsToRows)
-//                ))
-              )
-          ).render
-        }
-      })),
+      )),
       section(aside(
         "remote url: ",
         ccm.wsUri,
@@ -80,10 +54,10 @@ object HTML {
     )
   }
 
-  def dotsToRows(dots: rdts.time.Dots) =
+  def dotsToRows(dots: rdts.time.Dots): List[TableRow] =
     dots.internal.toList.sortBy(t => Uid.unwrap(t._1)).map { (k, v) =>
       tr(td(Uid.unwrap(k)), td(v.toString)).render
-    }.toSeq
+    }
 
   def providers(exdat: FbdcExampleData) = {
     div(

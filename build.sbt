@@ -268,13 +268,11 @@ lazy val replicationExamples =
       Dependencies.jsoniterScala
     )
     .jvmSettings(
-      Dependencies.loci.wsJetty12,
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
       libraryDependencies += "com.outr" %% "scribe-slf4j2" % "3.10.7",
     )
     .jsSettings(
       Dependencies.scalatags,
-      Dependencies.loci.wsWeb,
       LocalSettings.deployTask,
     )

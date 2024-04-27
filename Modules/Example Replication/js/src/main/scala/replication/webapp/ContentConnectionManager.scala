@@ -22,8 +22,6 @@ class ContentConnectionManager(dataManager: DataManager[?]) {
     s"$wsProtocol://${dom.document.location.host}${parent}ws"
   }
 
-  val connectedRemotes = Fold(Map.empty[RemoteRef, Boolean])()
-
   def connect(): Unit = {
     tryConnect()
   }
