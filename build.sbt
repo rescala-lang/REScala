@@ -106,7 +106,6 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
-        "org.slf4j"                   % "slf4j-nop"                    % "2.0.12" % TestInternal
       )
     }
   )
@@ -160,7 +159,9 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
     LocalSettings.tink,
     libraryDependencies ++=
       List(
-        "org.slf4j"         % "slf4j-jdk14"                  % "2.0.13",
+        // Note, the below means JDK 1.4
+        "org.slf4j" % "slf4j-jdk14" % "2.0.13",
+        // Note, the below means JDK 1.8, aka Java 8
         "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
         "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
         "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
@@ -203,7 +204,7 @@ lazy val examples = project.in(file("Modules/Example Misc 2015"))
     fork := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
-      "org.scala-lang.modules"  %% "scala-swing" % "3.0.0"
+      "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
     )
   )
 
@@ -268,7 +269,6 @@ lazy val replicationExamples =
     .jvmSettings(
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
-      libraryDependencies += "com.outr" %% "scribe-slf4j2" % "3.10.7",
     )
     .jsSettings(
       Dependencies.scalatags,
