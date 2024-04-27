@@ -1,17 +1,17 @@
 package replication.webapp
 
+import loci.transmitter.RemoteRef
 import org.scalajs.dom
+import org.scalajs.dom.MouseEvent
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.{MouseEvent}
-import replication.DataManager
+import rdts.base.Uid
 import reactives.default.*
 import reactives.extra.Tags.*
+import replication.DataManager
+import replication.fbdc.{FbdcExampleData, Req}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.{aside, section}
-import rdts.base.Uid
-import loci.transmitter.RemoteRef
-import replication.fbdc.{FbdcExampleData, Req}
 
 object HTML {
 

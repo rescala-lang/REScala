@@ -2,12 +2,12 @@ package replication.checkpointing.decentral
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import rdts.base.Uid
-import rdts.datatypes.contextual.ReplicatedSet
-import rdts.dotted.Dotted
 import loci.registry.Binding
 import loci.serializer.jsoniterScala.*
 import loci.transmitter.IdenticallyTransmittable
+import rdts.base.Uid
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
 import replication.JsoniterCodecs.given
 
 import scala.concurrent.Future

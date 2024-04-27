@@ -1,11 +1,11 @@
 package replication.checkpointing.decentral
 
+import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalReplicaId}
-import loci.transmitter.{RemoteAccessException, RemoteRef}
-import Bindings.*
-import rdts.datatypes.contextual.ReplicatedSet
+import replication.checkpointing.decentral.Bindings.*
 
 import scala.concurrent.Future
 import scala.io.StdIn.readLine

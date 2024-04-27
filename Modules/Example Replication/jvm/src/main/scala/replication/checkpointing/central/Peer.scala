@@ -1,20 +1,19 @@
 package replication.checkpointing.central
 
-import Bindings.*
-import rdts.base.Lattice
-import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.Dotted
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import replication.checkpointing.central.Bindings.*
 
 import java.util.concurrent.*
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
-import rdts.base.Uid
-import rdts.datatypes.contextual.ReplicatedSet
 
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 

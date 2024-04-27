@@ -1,11 +1,10 @@
 package deltaAntiEntropy.tools
 
-import rdts.base.Lattice
+import rdts.base.{Lattice, Uid}
+import rdts.base.Uid.asId
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{PermCausalMutate, PermMutate}
 import rdts.time.Dots
-import rdts.base.Uid
-import rdts.base.Uid.asId
 
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of

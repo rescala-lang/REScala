@@ -2,15 +2,15 @@ package replication.fbdc
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import loci.registry.Registry
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.*
 import rdts.datatypes.contextual.CausalQueue.QueueElement
-import rdts.datatypes.contextual.{ReplicatedSet, CausalQueue, ObserveRemoveMap}
+import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{DeltaBuffer, PermCausalMutate, LocalReplicaId}
-import rdts.time.{Dots, VectorClock}
-import loci.registry.Registry
+import rdts.syntax.{DeltaBuffer, LocalReplicaId, PermCausalMutate}
+import rdts.time.VectorClock
 import replication.DataManager
 import replication.JsoniterCodecs.given
 

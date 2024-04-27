@@ -1,11 +1,11 @@
 package replication.checkpointing.central
 
-import Bindings._
+import loci.communicator.tcp.TCP
+import loci.registry.Registry
 import rdts.base.Lattice
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import loci.communicator.tcp.TCP
-import loci.registry.Registry
+import replication.checkpointing.central.Bindings.*
 
 import scala.io.StdIn.readLine
 

@@ -1,6 +1,6 @@
 package replication.calendar
 
-import rdts.base.{Uid, Lattice}
+import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted

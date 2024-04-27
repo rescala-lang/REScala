@@ -4,11 +4,11 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
 import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.syntax.LocalReplicaId
-import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.given
 import replication.dtn.Replica
 

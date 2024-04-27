@@ -1,10 +1,10 @@
 package replication.calendar
 
-import loci.registry.Binding
-import loci.transmitter.IdenticallyTransmittable
-import loci.serializer.jsoniterScala.*
-import com.github.plokhotnyuk.jsoniter_scala.macros.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
+import com.github.plokhotnyuk.jsoniter_scala.macros.*
+import loci.registry.Binding
+import loci.serializer.jsoniterScala.*
+import loci.transmitter.IdenticallyTransmittable
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted

@@ -2,16 +2,16 @@ package replication
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import rdts.base.Lattice.optionLattice
-import rdts.base.{Bottom, Lattice, Uid}
-import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{PermCausalMutate, LocalReplicaId}
-import rdts.time.Dots
 import loci.registry.{Binding, Registry}
 import loci.serializer.jsoniterScala.given
 import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
-import replication.JsoniterCodecs.given
+import rdts.base.Lattice.optionLattice
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.dotted.{Dotted, DottedLattice, HasDots}
+import rdts.syntax.{LocalReplicaId, PermCausalMutate}
+import rdts.time.Dots
 import reactives.default.{Event, Evt, Signal, Var}
+import replication.JsoniterCodecs.given
 
 import java.util.Timer
 import scala.annotation.unused

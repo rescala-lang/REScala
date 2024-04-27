@@ -1,15 +1,15 @@
 package replication.calendar
 
-import Bindings._
-import SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
-import rdts.base.{Lattice, Uid}
-import rdts.datatypes.contextual.ReplicatedSet
-import rdts.dotted.{DottedLattice, Dotted}
 import loci.communicator.tcp.TCP
 import loci.registry.Registry
 import loci.transmitter.{RemoteAccessException, RemoteRef}
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.contextual.ReplicatedSet
+import rdts.dotted.{Dotted, DottedLattice}
+import replication.calendar.Bindings.*
+import replication.calendar.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 
-import java.util.concurrent._
+import java.util.concurrent.*
 import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex

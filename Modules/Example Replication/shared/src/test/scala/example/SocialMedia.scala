@@ -4,11 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Uid
 import rdts.datatypes.contextual.{MultiVersionRegister, ReplicatedList}
-import rdts.dotted.Dotted
-import rdts.syntax.DeltaBuffer
 import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
-import rdts.syntax.LocalReplicaId
-
+import rdts.dotted.Dotted
+import rdts.syntax.{DeltaBuffer, LocalReplicaId}
 import reactives.default.*
 
 type ID = String

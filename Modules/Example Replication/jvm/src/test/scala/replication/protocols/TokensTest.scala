@@ -1,10 +1,10 @@
 package replication.protocols
 
-import rdts.time.Dots
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 import rdts.syntax.LocalReplicaId
+import rdts.time.Dots
 
 class TokensTest extends munit.FunSuite {
   given dots: Dots                  = Dots.empty

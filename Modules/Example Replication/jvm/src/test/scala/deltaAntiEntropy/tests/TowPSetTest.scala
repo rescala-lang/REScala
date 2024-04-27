@@ -4,9 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import rdts.datatypes.TwoPhaseSet
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.datatypes.TwoPhaseSet
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable

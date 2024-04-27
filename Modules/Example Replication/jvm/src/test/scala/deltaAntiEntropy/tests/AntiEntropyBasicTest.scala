@@ -4,15 +4,15 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
+import org.scalacheck.Prop.*
+import org.scalacheck.{Arbitrary, Gen}
 import rdts.base.Uid.asId
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.GrowOnlyList.Node.Elem
-import rdts.datatypes.{GrowOnlyList, LastWriterWins}
 import rdts.datatypes.contextual.ReplicatedList
+import rdts.datatypes.{GrowOnlyList, LastWriterWins}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{CausalTime, Dot}
-import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen}
 import replication.JsoniterCodecs.given
 import test.rdts.DataGenerator.RGAGen.{makeRGA, given}
 

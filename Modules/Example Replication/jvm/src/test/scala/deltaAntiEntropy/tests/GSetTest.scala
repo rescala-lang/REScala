@@ -4,10 +4,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import rdts.datatypes.GrowOnlySet
-import rdts.datatypes.GrowOnlySet.given
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.datatypes.GrowOnlySet
+import rdts.datatypes.GrowOnlySet.given
 import replication.JsoniterCodecs.{*, given}
 
 import scala.collection.mutable

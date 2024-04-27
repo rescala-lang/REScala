@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, Jso
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Uid
 import rdts.datatypes.alternatives.ResettableCounter
-import rdts.datatypes.contextual.{ReplicatedSet, EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList}
+import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList, ReplicatedSet}
 import rdts.datatypes.experiments.AuctionInterface.AuctionData
 import rdts.datatypes.{Epoch, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet}
 import rdts.dotted.Dotted

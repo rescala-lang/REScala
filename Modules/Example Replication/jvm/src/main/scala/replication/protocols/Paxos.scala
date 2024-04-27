@@ -1,16 +1,14 @@
 package replication.protocols
 
+import rdts.base.Lattice.setLattice
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.datatypes.GrowOnlyMap.*
+import rdts.datatypes.GrowOnlySet.*
+import rdts.datatypes.{GrowOnlyMap, GrowOnlySet, LastWriterWins}
+import rdts.dotted.Dotted
 import rdts.syntax.LocalReplicaId
 import rdts.syntax.LocalReplicaId.replicaId
-import rdts.datatypes.GrowOnlySet.*
-import rdts.base.Lattice.setLattice
-import rdts.datatypes.GrowOnlySet
-import rdts.datatypes.GrowOnlyMap.*
-import rdts.datatypes.GrowOnlyMap
-import rdts.datatypes.LastWriterWins
 import rdts.time.Dots
-import rdts.dotted.Dotted
 
 import scala.compiletime.{constValue, summonFrom}
 

@@ -2,9 +2,9 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import rdts.datatypes.GrowOnlyCounter
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.datatypes.GrowOnlyCounter
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable

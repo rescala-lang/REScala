@@ -2,9 +2,9 @@ package deltaAntiEntropy.tests
 
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
-import rdts.datatypes.contextual.EnableWinsFlag
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.datatypes.contextual.EnableWinsFlag
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable

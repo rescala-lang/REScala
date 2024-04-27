@@ -1,10 +1,10 @@
 package replication.calendar
 
-import reactives.default.*
 import rdts.base.{Bottom, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import reactives.default.*
 
 case class Appointment(start: Int, end: Int)
 

@@ -1,13 +1,12 @@
 package replication.protocols
 
+import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.{Epoch, LastWriterWins}
-import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.dotted.Dotted
-import rdts.syntax.LocalReplicaId.replicaId
-import rdts.time.Dots
 import rdts.syntax.LocalReplicaId
 import rdts.syntax.LocalReplicaId.replicaId
+import rdts.time.Dots
 
 case class Vote(owner: Uid, voter: Uid)
 

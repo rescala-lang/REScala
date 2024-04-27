@@ -5,8 +5,8 @@ import de.rmgk.delay.Async
 
 import java.net.{DatagramPacket, DatagramSocket, SocketAddress, SocketTimeoutException}
 import scala.concurrent.duration.Duration
+import scala.util.Success
 import scala.util.control.NonFatal
-import scala.util.{Failure, Success}
 
 class UDPOutChan(address: SocketAddress, val clientSocket: DatagramSocket) extends OutChan {
 

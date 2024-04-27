@@ -2,8 +2,7 @@ package replication.protocols
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.{Epoch, LastWriterWins}
-import rdts.dotted.Dotted
-import rdts.dotted.DottedLattice
+import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.LocalReplicaId
 import rdts.time.Dots
 

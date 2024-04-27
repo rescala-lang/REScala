@@ -2,11 +2,11 @@ package replication.checkpointing.central
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import loci.registry.Binding
+import loci.serializer.jsoniterScala.*
+import loci.transmitter.IdenticallyTransmittable
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import loci.registry.Binding
-import loci.transmitter.IdenticallyTransmittable
-import loci.serializer.jsoniterScala._
 import replication.JsoniterCodecs.given
 
 import scala.concurrent.Future
