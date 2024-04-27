@@ -125,7 +125,10 @@ class ReplicaListener[S: Lattice: JsonValueCodec](replica: Replica[S]) extends L
   }
 }
 
-class ReplicaMutator[S](val replica: Replica[S])
+class ReplicaMutator[S](val replica: Replica[S]) {
+  inline def apply(f: S => S)(using Lattice[S]): Unit =
+    replica.applyLocalDelta(f(replica.data))
+}
 
 given fullPermission[L: Lattice: Bottom]: PermMutate[ReplicaMutator[L], L] with {
   override def mutate(c: ReplicaMutator[L], delta: L): ReplicaMutator[L] =
@@ -163,7 +166,7 @@ def run(): Unit =
 
     Thread.sleep(1000)
 
-    replica.mut.add(10)
+    replica.mut(_.add(10))
 
   }.runToFuture(using ())
 

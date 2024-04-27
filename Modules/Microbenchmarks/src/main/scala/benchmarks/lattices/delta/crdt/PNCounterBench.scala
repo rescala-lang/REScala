@@ -22,7 +22,7 @@ class PNCounterBench {
 
   @Setup
   def setup(): Unit = {
-    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0".asId, PosNegCounter.zero).inc()(using "0".asId)) {
+    counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0".asId, PosNegCounter.zero).map(_.inc())) {
       case (c, n) =>
         given rid: rdts.syntax.LocalReplicaId = rdts.base.Uid.predefined(n.toString)
         val delta                             = PosNegCounter.zero.inc()
@@ -31,11 +31,11 @@ class PNCounterBench {
   }
 
   @Benchmark
-  def value(): Int = counter.value
+  def value(): Int = counter.state.value
 
   @Benchmark
-  def inc(): NamedDeltaBuffer[PosNegCounter] = counter.inc()(using counter.replicaID)
+  def inc(): NamedDeltaBuffer[PosNegCounter] = counter.map(_.inc())
 
   @Benchmark
-  def dec(): NamedDeltaBuffer[PosNegCounter] = counter.dec()(using counter.replicaID)
+  def dec(): NamedDeltaBuffer[PosNegCounter] = counter.map(_.dec())
 }
