@@ -39,16 +39,16 @@ object LocalSettings {
   }
 
   val deployTask = TaskKey[File]("deploy", "generates a correct index.template.html") := {
-        val fastlink   = (Compile / fastLinkJS).value
-        val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-        val bp         = baseDirectory.value.toPath
-        val tp         = jspath.toPath
-        val template   = IO.read(bp.resolve("index.template.html").toFile)
-        val targetpath = tp.resolve("index.html").toFile
-        IO.write(targetpath, template.replace("JSPATH", s"main.js"))
-        IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
-        targetpath
-      }
+    val fastlink   = (Compile / fastLinkJS).value
+    val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+    val bp         = baseDirectory.value.toPath
+    val tp         = jspath.toPath
+    val template   = IO.read(bp.resolve("index.template.html").toFile)
+    val targetpath = tp.resolve("index.html").toFile
+    IO.write(targetpath, template.replace("JSPATH", s"main.js"))
+    IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
+    targetpath
+  }
 
   // use `publishSigned` to publish
   // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
