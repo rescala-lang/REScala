@@ -3,12 +3,12 @@ package test.rdts.containers
 import rdts.base.Uid
 import rdts.datatypes.experiments.AuctionInterface.AuctionData
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalUid}
 
 class DeltaBufferContainerDottedTest extends munit.FunSuite {
 
   test("nested context removal") {
-    given LocalReplicaId = Uid.gen()
+    given LocalUid = Uid.gen()
 
     val initial = DeltaBufferContainer[Dotted[AuctionData]](DeltaBuffer(Dotted(AuctionData())))
 

@@ -2,7 +2,7 @@ package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.HasDots
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Lattice, Bottom {
   def value: Int =
@@ -10,11 +10,11 @@ case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Lat
     val negv = neg.value
     posv - negv
 
-  def inc()(using LocalReplicaId): PosNegCounter = add(1)
+  def inc()(using LocalUid): PosNegCounter = add(1)
 
-  def dec()(using LocalReplicaId): PosNegCounter = add(-1)
+  def dec()(using LocalUid): PosNegCounter = add(-1)
 
-  def add(delta: Int)(using LocalReplicaId): PosNegCounter = {
+  def add(delta: Int)(using LocalUid): PosNegCounter = {
     if (delta > 0) PosNegCounter(pos.add(delta), GrowOnlyCounter.zero)
     else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, neg.add(-delta))
     else PosNegCounter.zero

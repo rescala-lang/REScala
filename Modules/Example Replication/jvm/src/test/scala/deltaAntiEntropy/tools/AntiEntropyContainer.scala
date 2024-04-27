@@ -3,7 +3,7 @@ package deltaAntiEntropy.tools
 import rdts.base.{Lattice, Uid}
 import rdts.base.Uid.asId
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{LocalReplicaId, PermCausalMutate, PermMutate}
+import rdts.syntax.{LocalUid, PermCausalMutate, PermMutate}
 import rdts.time.Dots
 
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
@@ -16,14 +16,14 @@ import rdts.time.Dots
 class AntiEntropyContainer[State](
     protected val antiEntropy: AntiEntropy[State]
 ) {
-  val replicaID: LocalReplicaId = antiEntropy.replicaID.asId
+  val replicaID: LocalUid = antiEntropy.replicaID.asId
 
   def state: Dotted[State] = antiEntropy.state
 
   override def toString: String =
     s"AntiEntropy($replicaID, $state)"
 
-  inline def map(f: LocalReplicaId ?=> State => State)(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+  inline def map(f: LocalUid ?=> State => State)(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     applyDelta(Named(replicaID.uid, Dotted(f(using replicaID)(state.data))))
 
   def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =

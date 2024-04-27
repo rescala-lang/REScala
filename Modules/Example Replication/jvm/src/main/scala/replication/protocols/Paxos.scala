@@ -6,8 +6,8 @@ import rdts.datatypes.GrowOnlyMap.*
 import rdts.datatypes.GrowOnlySet.*
 import rdts.datatypes.{GrowOnlyMap, GrowOnlySet, LastWriterWins}
 import rdts.dotted.Dotted
-import rdts.syntax.LocalReplicaId
-import rdts.syntax.LocalReplicaId.replicaId
+import rdts.syntax.LocalUid
+import rdts.syntax.LocalUid.replicaId
 import rdts.time.Dots
 
 import scala.compiletime.{constValue, summonFrom}
@@ -26,7 +26,7 @@ case class Paxos[A, N <: Int](
 )(using quorum: N) {
   private def getQuorum: N = quorum
 
-  def prepare()(using LocalReplicaId, Bottom[A]): Paxos[A, N] =
+  def prepare()(using LocalUid, Bottom[A]): Paxos[A, N] =
     val proposalNumber = prepares.map(_.proposalNumber).maxOption.getOrElse(-1) + 1
     val prepare        = Prepare(proposalNumber)
 
@@ -34,7 +34,7 @@ case class Paxos[A, N <: Int](
       prepares = prepares.insert(prepare)
     )
 
-  def promise(prepareId: Int)(using LocalReplicaId): Paxos[A, N] =
+  def promise(prepareId: Int)(using LocalUid): Paxos[A, N] =
     val highestProposal        = prepares.maxByOption(_.proposalNumber)
     val myHighestPromiseNumber = promises.filter(_.acceptor == replicaId).map(_.proposalNumber).maxOption.getOrElse(-1)
     // check if I already promised for an equally high id
@@ -51,7 +51,7 @@ case class Paxos[A, N <: Int](
         promises = promises.insert(Promise(highestProposal.get.proposalNumber, value, replicaId))
       )
 
-  def accept(v: A)(using LocalReplicaId): Paxos[A, N] =
+  def accept(v: A)(using LocalUid): Paxos[A, N] =
     val highestProposalNumber = promises.map(_.proposalNumber).maxOption
     val promisesForProposal   = promises.filter(_.proposalNumber == highestProposalNumber.getOrElse(-1))
     // check if accepted
@@ -66,7 +66,7 @@ case class Paxos[A, N <: Int](
         accepts = accepts.insert(Accept(highestProposalNumber.get, value))
       )
 
-  def accepted()(using LocalReplicaId): Paxos[A, N] =
+  def accepted()(using LocalUid): Paxos[A, N] =
     // get highest accept message
     val highestAccept = accepts.maxByOption(_.proposalNumber)
     if highestAccept.isEmpty || // there are no accepts
@@ -84,7 +84,7 @@ case class Paxos[A, N <: Int](
         ))
       )
 
-  def upkeep()(using LocalReplicaId): Paxos[A, N] =
+  def upkeep()(using LocalUid): Paxos[A, N] =
     // check which phase we are in
     val newestPrepare = prepares.map(_.proposalNumber).maxOption
     val newestAccept  = accepts.map(_.proposalNumber).maxOption

@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromSubAr
 import de.rmgk.delay.Async
 import de.rmgk.delay.syntax.run
 import rdts.base.Uid
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import reactives.default.{act, current}
 import reactives.operator.{Evt, Fold, Signal}
 import replication.CMessage.{Identify, Payload}
@@ -49,7 +49,7 @@ class MessageCoder[T](codecs: Map[String, JsonValueCodec[T]]) {
       case Payload(ct, t) => encodePath(ct, t)(using codecs(ct))
 }
 
-class ConnectionManager(lrid: LocalReplicaId) {
+class ConnectionManager(lrid: LocalUid) {
 
   val addPeerRef: Evt[PeerRef[?]] = Evt()
 

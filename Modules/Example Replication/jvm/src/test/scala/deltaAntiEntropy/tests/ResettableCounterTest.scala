@@ -164,7 +164,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       assertEquals(ca0.value, cb0.value, s"${ca0.state}\n${cb0.state}")
 
       val ca1 =
-        given rdts.syntax.LocalReplicaId = ca0.replicaID
+        given rdts.syntax.LocalUid = ca0.replicaID
         if (op) ca0.fresh().increment() else ca0.fresh().decrement()
       val cb1 = cb0.reset()
 

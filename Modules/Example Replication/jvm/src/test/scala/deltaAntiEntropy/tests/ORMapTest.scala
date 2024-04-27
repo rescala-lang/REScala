@@ -15,7 +15,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("contains") {
-    given rdts.syntax.LocalReplicaId = rdts.syntax.LocalReplicaId.predefined("test")
+    given rdts.syntax.LocalUid = rdts.syntax.LocalUid.predefined("test")
     given Bottom[Int] with
       def empty = Int.MinValue
     forAll { (entries: List[Int]) =>

@@ -4,7 +4,7 @@ import rdts.base.Lattice.merge
 import rdts.datatypes.GrowOnlyMap.*
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap}
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 import replication.protocols.Paxos.*
 
@@ -13,9 +13,9 @@ class PaxosTest extends munit.FunSuite {
     override def empty: Int = Int.MinValue
 
   given dots: Dots = Dots.empty
-  val id1          = LocalReplicaId.gen()
-  val id2          = LocalReplicaId.gen()
-  val id3          = LocalReplicaId.gen()
+  val id1          = LocalUid.gen()
+  val id2          = LocalUid.gen()
+  val id3          = LocalUid.gen()
 
   test("Paxos for 3 participants without errors") {
     var a: Paxos[Int, 2] = Paxos.unchanged(using 2)

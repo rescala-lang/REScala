@@ -7,7 +7,7 @@ import rdts.datatypes.contextual.{EnableWinsFlag, ReplicatedSet}
 import rdts.datatypes.experiments.AuctionInterface
 import rdts.datatypes.experiments.AuctionInterface.{AuctionData, Bid}
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, DeltaBufferContainer, LocalUid}
 import test.rdts.UtilHacks.*
 import test.rdts.UtilHacks2.*
 
@@ -15,7 +15,7 @@ class ContainerTest extends munit.FunSuite {
 
   object helper {
 
-    given r: LocalReplicaId = "me".asId
+    given r: LocalUid = "me".asId
 
     given bottomString: Bottom[String] with {
       override def empty: String = ""
@@ -29,7 +29,7 @@ class ContainerTest extends munit.FunSuite {
 
   test("Dotted can contain contextual EnableWinsFlag") {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given LocalReplicaId             = "me".asId
+    given LocalUid             = "me".asId
 
     assertEquals(flag.read, false)
 

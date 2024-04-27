@@ -4,7 +4,7 @@ import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalUid}
 import replication.checkpointing.decentral.Bindings.*
 
 import scala.concurrent.Future
@@ -32,7 +32,7 @@ class Replica(val listenPort: Int, val connectTo: List[(String, Int)], id: Uid, 
 
   var unboundRemoteChanges: SetState = Dotted(ReplicatedSet.empty[Int])
 
-  given LocalReplicaId = id
+  given LocalUid = id
 
   def sendDeltaRecursive(
       remoteReceiveDelta: SetState => Future[Unit],

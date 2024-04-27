@@ -6,7 +6,7 @@ import rdts.base.Uid.asId
 import rdts.datatypes.contextual.EnableWinsFlag
 import rdts.dotted.HasDots.*
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.DataGenerator.*
 
@@ -15,7 +15,7 @@ class SyntaxTest extends munit.FunSuite {
   test("Manual Tests") {
 
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given LocalReplicaId             = "me".asId
+    given LocalUid             = "me".asId
 
     assert(!flag.read)
     val enabled = flag.enable()

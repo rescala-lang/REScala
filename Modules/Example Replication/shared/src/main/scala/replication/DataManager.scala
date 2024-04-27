@@ -8,7 +8,7 @@ import loci.transmitter.{IdenticallyTransmittable, RemoteRef, Transmittable}
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{LocalReplicaId, PermCausalMutate}
+import rdts.syntax.{LocalUid, PermCausalMutate}
 import rdts.time.Dots
 import reactives.default.{Event, Evt, Signal, Var}
 import replication.JsoniterCodecs.given
@@ -25,12 +25,12 @@ class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused 
 
 case class HMap(keys: Map[String, Key[?]], values: Map[String, Any])
 
-class DataManager[State: JsonValueCodec: DottedLattice: Bottom: HasDots](
-    val replicaId: Uid,
+class DataManager[State](
+    val replicaId: LocalUid,
     val registry: Registry
-) {
+)(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State], hasDots: HasDots[State]) {
 
-  given LocalReplicaId = replicaId
+  given LocalUid = replicaId
 
   type TransferState = Dotted[State]
 

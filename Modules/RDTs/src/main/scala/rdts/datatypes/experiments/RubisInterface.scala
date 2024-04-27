@@ -4,7 +4,7 @@ import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.AuctionInterface.Bid.User
 import rdts.dotted.Dotted
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -64,7 +64,7 @@ object RubisInterface {
       deltaState.make(auctions = newMap).mutator
     }
 
-    def requestRegisterUser(using LocalReplicaId)(userId: User): CausalMutator = {
+    def requestRegisterUser(using LocalUid)(userId: User): CausalMutator = {
       val (req, users, _) = current
       if (users.contains(userId)) Dotted(deltaState.make(), context).mutator
       else

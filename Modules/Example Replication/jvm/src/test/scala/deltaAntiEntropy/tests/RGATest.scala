@@ -9,7 +9,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import replication.JsoniterCodecs.given
 import test.rdts.DataGenerator.RGAGen.{makeRGA, given}
 

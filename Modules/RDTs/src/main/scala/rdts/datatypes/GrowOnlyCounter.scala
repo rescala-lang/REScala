@@ -3,13 +3,13 @@ package rdts.datatypes
 import rdts.base.Lattice.*
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.dotted.HasDots
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper, PermQuery}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper, PermQuery}
 
 case class GrowOnlyCounter(inner: Map[Uid, Int]) {
   lazy val value: Int = inner.valuesIterator.sum
 
-  def inc()(using localReplicaId: LocalReplicaId): GrowOnlyCounter = add(1)
-  def add(amount: Int)(using localReplicaId: LocalReplicaId): GrowOnlyCounter =
+  def inc()(using localReplicaId: LocalUid): GrowOnlyCounter = add(1)
+  def add(amount: Int)(using localReplicaId: LocalUid): GrowOnlyCounter =
     require(amount >= 0, "may not decrease counter")
     GrowOnlyCounter(Map(localReplicaId.uid -> (inner.getOrElse(localReplicaId.uid, 0) + amount)))
 }

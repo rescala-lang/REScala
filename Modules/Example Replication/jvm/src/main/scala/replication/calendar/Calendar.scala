@@ -3,7 +3,7 @@ package replication.calendar
 import rdts.base.{Bottom, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalUid}
 import reactives.default.*
 
 case class Appointment(start: Int, end: Int)
@@ -14,7 +14,7 @@ given intMaxBottom: Bottom[Int] with {
 
 class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  given LocalReplicaId = id
+  given LocalUid = id
 
   type Calendar = DeltaBuffer[Dotted[ReplicatedSet[Appointment]]]
 

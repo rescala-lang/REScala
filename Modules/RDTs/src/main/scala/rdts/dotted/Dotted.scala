@@ -1,7 +1,7 @@
 package rdts.dotted
 
 import rdts.base.{Bottom, Lattice}
-import rdts.syntax.{LocalReplicaId, PermCausalMutate, PermMutate}
+import rdts.syntax.{LocalUid, PermCausalMutate, PermMutate}
 import rdts.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.
@@ -16,7 +16,7 @@ case class Dotted[A](data: A, context: Dots) {
   def knows(dot: Dot): Boolean               = context.contains(dot)
   def deletions(using HasDots[A]): Dots      = context diff contained
   def contained(using HasDots[A]): Dots      = data.dots
-  def advanced(r: LocalReplicaId): Dotted[A] = Dotted(data, context.advanced(r.uid))
+  def advanced(r: LocalUid): Dotted[A] = Dotted(data, context.advanced(r.uid))
 }
 
 type DottedLattice[T] = Lattice[Dotted[T]]

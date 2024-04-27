@@ -4,7 +4,7 @@ import lofi_acl.ardt.base.Causal
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.DotFun
 import lofi_acl.ardt.base.Causal
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 import scala.language.implicitConversions
@@ -21,7 +21,7 @@ object MultiValueRegister:
   private[datatypes] given causalToReg[V]: Conversion[Causal[DotFun[V]], MultiValueRegister[V]] = identity
 
   object mutators:
-    def write[V](register: MultiValueRegister[V], value: V, replicaId: LocalReplicaId): MultiValueRegister[V] =
+    def write[V](register: MultiValueRegister[V], value: V, replicaId: LocalUid): MultiValueRegister[V] =
       val dot = register.causalContext.nextDot(replicaId.uid)
       Causal(
         Map(dot -> value),

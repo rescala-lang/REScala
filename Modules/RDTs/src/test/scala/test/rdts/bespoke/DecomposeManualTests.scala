@@ -5,14 +5,14 @@ import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.UtilHacks.*
 
 class DecomposeManualTests extends munit.ScalaCheckSuite {
 
-  val r1: LocalReplicaId = "r1".asId
-  val r2: LocalReplicaId = "r2".asId
+  val r1: LocalUid = "r1".asId
+  val r2: LocalUid = "r2".asId
 
   test("GrowOnlyCounter decomposition") {
     val empty: GrowOnlyCounter = Bottom[GrowOnlyCounter].empty

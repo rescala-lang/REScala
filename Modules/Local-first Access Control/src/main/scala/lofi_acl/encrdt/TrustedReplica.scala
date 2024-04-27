@@ -4,10 +4,10 @@ import lofi_acl.ardt.base.Bottom
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
 import rdts.base.Lattice
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 
-abstract class TrustedReplica[T: Lattice: Bottom: JsonValueCodec](val replicaId: LocalReplicaId, private val aead: Aead)(using
+abstract class TrustedReplica[T: Lattice: Bottom: JsonValueCodec](val replicaId: LocalUid, private val aead: Aead)(using
     dotSetJsonCodec: JsonValueCodec[Dots]
 ) extends Replica {
   private var crdt: T = Bottom[T].empty

@@ -3,15 +3,15 @@ import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 class VotingTests2Participants extends munit.FunSuite {
   given dots: Dots              = Dots.empty
   given Lattice[Dotted[Voting]] = Lattice.derived
   // create replicas for set of 2 participants
-  val id1: LocalReplicaId = LocalReplicaId.gen()
-  val id2: LocalReplicaId = LocalReplicaId.gen()
+  val id1: LocalUid = LocalUid.gen()
+  val id2: LocalUid = LocalUid.gen()
   var voting = Dotted(Voting(
     rounds = Epoch.empty[ReplicatedSet[Vote]],
     numParticipants = LastWriterWins.now(2)

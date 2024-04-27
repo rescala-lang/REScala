@@ -3,7 +3,7 @@ package lofi_acl.ardt.datatypes
 import lofi_acl.ardt.base.Causal
 import lofi_acl.ardt.causality.DotStore
 import lofi_acl.ardt.causality.DotStore.{DotMap, DotSet}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 opaque type AddWinsSet[E] = Causal[DotMap[E, DotSet]]
@@ -27,7 +27,7 @@ object AddWinsSet:
       * @return
       *   The delta of the add operation.
       */
-    def add[E](set: AddWinsSet[E], replicaId: LocalReplicaId, element: E): AddWinsSet[E] =
+    def add[E](set: AddWinsSet[E], replicaId: LocalUid, element: E): AddWinsSet[E] =
       val newDot                           = set.causalContext.nextDot(replicaId.uid)
       val deltaDotStore: DotMap[E, DotSet] = Map(element -> Dots.single(newDot))
       val deltaCausalContext = set.dotStore.get(element) match

@@ -5,8 +5,8 @@ import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.contextual.ReplicatedSet.syntax
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalReplicaId
-import rdts.syntax.LocalReplicaId.replicaId
+import rdts.syntax.LocalUid
+import rdts.syntax.LocalUid.replicaId
 import rdts.time.Dots
 
 case class Ownership(epoch: Long, owner: Uid)
@@ -21,15 +21,15 @@ object Ownership {
 
 case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
 
-  def isOwner(using LocalReplicaId): Boolean = replicaId == os.owner
+  def isOwner(using LocalUid): Boolean = replicaId == os.owner
 
-  def request(using LocalReplicaId, Dots): Dotted[Token] =
+  def request(using LocalUid, Dots): Dotted[Token] =
     wants.addElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
-  def release(using LocalReplicaId, Dots): Dotted[Token] =
+  def release(using LocalUid, Dots): Dotted[Token] =
     wants.removeElem(replicaId).map(w => Token(Ownership.unchanged, w))
 
-  def upkeep(using LocalReplicaId): Token =
+  def upkeep(using LocalUid): Token =
     if !isOwner then Token.unchanged
     else
       selectFrom(wants) match
@@ -37,7 +37,7 @@ case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
         case Some(nextOwner) =>
           Token(Ownership(os.epoch + 1, nextOwner), ReplicatedSet.empty)
 
-  def selectFrom(wants: ReplicatedSet[Uid])(using LocalReplicaId) =
+  def selectFrom(wants: ReplicatedSet[Uid])(using LocalUid) =
     // We find the “largest” ID that wants the token.
     // This is incredibly “unfair” but does prevent deadlocks in case someone needs multiple tokens.
     wants.elements.maxOption.filter(id => id != replicaId)
@@ -55,7 +55,7 @@ case class ExampleTokens(
 )
 
 case class Exclusive[T: Lattice: Bottom](token: Token, value: T) {
-  def transform(f: T => T)(using LocalReplicaId) =
+  def transform(f: T => T)(using LocalUid) =
     if token.isOwner then f(value) else Bottom.empty
 }
 

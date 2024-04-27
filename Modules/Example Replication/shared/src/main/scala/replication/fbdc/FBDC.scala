@@ -9,7 +9,7 @@ import rdts.datatypes.*
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{DeltaBuffer, LocalReplicaId, PermCausalMutate}
+import rdts.syntax.{DeltaBuffer, LocalUid, PermCausalMutate}
 import rdts.time.VectorClock
 import replication.DataManager
 import replication.JsoniterCodecs.given

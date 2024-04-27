@@ -3,7 +3,7 @@ package rdts.datatypes.contextual
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.*
 import rdts.dotted.HasDots.mapInstance
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 import rdts.time.{Dot, Dots}
 
 /** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
@@ -30,13 +30,13 @@ object ReplicatedSet {
 
     def contains(using IsQuery)(elem: E): Boolean = current.inner.contains(elem)
 
-    def addElem(using rid: LocalReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
+    def addElem(using rid: LocalUid, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
       Dotted(current, dots).add(using rid)(e)(using Dotted.syntaxPermissions)
 
-    def removeElem(using rid: LocalReplicaId, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
+    def removeElem(using rid: LocalUid, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
       Dotted(current, dots).remove(using Dotted.syntaxPermissions, Dotted.syntaxPermissions)(e)
 
-    def add(using LocalReplicaId)(e: E): CausalMutator = {
+    def add(using LocalUid)(e: E): CausalMutator = {
       val dm      = current.inner
       val nextDot = context.nextDot(replicaId)
       val v: Dots = dm.getOrElse(e, Dots.empty)
@@ -47,7 +47,7 @@ object ReplicatedSet {
       ).mutator
     }
 
-    def addAll(using LocalReplicaId, IsCausalMutator)(elems: Iterable[E]): C = {
+    def addAll(using LocalUid, IsCausalMutator)(elems: Iterable[E]): C = {
       val dm          = current.inner
       val cc          = context
       val nextCounter = cc.nextTime(replicaId)

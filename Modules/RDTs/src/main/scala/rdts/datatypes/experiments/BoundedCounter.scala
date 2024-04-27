@@ -2,7 +2,7 @@ package rdts.datatypes.experiments
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.{GrowOnlyCounter, PosNegCounter}
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 
 case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Uid])
 
@@ -25,11 +25,11 @@ object BoundedCounter {
     def addParticipants(part: Set[Uid])(using IsMutator): C = neutral.copy(participants = part).mutator
 
     def allocated(using IsQuery)(id: Uid): Int       = current.allocations.inner.getOrElse(id, 0)
-    def reserved(using LocalReplicaId, IsQuery): Int = reserved(replicaId)
+    def reserved(using LocalUid, IsQuery): Int = reserved(replicaId)
     def reserved(using IsQuery)(id: Uid): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
     def available(using IsQuery)(id: Uid): Int        = reserved(id) - allocated(id)
-    def available(using LocalReplicaId, IsQuery): Int = available(replicaId)
+    def available(using LocalUid, IsQuery): Int = available(replicaId)
 
     def allocate(value: Int): IdMutator = {
       if value < 0 || available(replicaId) < value then neutral

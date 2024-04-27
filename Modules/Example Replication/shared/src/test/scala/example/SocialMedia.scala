@@ -2,7 +2,7 @@ package example
 
 import rdts.base.Uid
 import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
-import rdts.syntax.LocalReplicaId
+import rdts.syntax.LocalUid
 import reactives.default.*
 
 type ID = String
@@ -25,12 +25,12 @@ object UI {
 }
 
 case class SocialMedia(sm: Map[ID, SocialPost] = Map.empty):
-  def like(post: ID)(using replicaId: LocalReplicaId): SocialMedia =
+  def like(post: ID)(using replicaId: LocalUid): SocialMedia =
     val increment = sm(post).likes.inc()
     SocialMedia(Map(post -> SocialPost(likes = increment)))
 
-  def comment(post: ID, text: String)(using replicaId: LocalReplicaId): SocialMedia = ???
-  def post(text: String)(using replicaId: LocalReplicaId): SocialMedia              = ???
+  def comment(post: ID, text: String)(using replicaId: LocalUid): SocialMedia = ???
+  def post(text: String)(using replicaId: LocalUid): SocialMedia              = ???
 
 case class SocialPost(
     message: Option[LWW[String]] = None,
@@ -41,7 +41,7 @@ case class SocialPost(
 
 object SocialMediaTest {
 
-  given LocalReplicaId = LocalReplicaId.fromId(Uid.gen())
+  given LocalUid = LocalUid.fromId(Uid.gen())
 
   val likeEvent: Event[ID]        = UI.likeButton.event.snap { UI.currentPostID.value }
   val commentEvent: Event[String] = UI.submitCommentButton.event.snap { UI.textInput.value }

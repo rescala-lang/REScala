@@ -2,7 +2,7 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 import rdts.time.{Dot, Dots}
 
 /** An MultiVersionRegister (Multi-Value Register) is a Delta CRDT modeling a register.
@@ -37,7 +37,7 @@ object MultiVersionRegister {
 
     def read(using IsQuery): Set[A] = current.repr.values.toSet
 
-    def write(using LocalReplicaId)(v: A): CausalMutator = {
+    def write(using LocalUid)(v: A): CausalMutator = {
       val nextDot = context.nextDot(replicaId)
 
       Dotted(

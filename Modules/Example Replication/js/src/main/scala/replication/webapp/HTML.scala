@@ -44,7 +44,7 @@ object HTML {
       section(table(
         thead(th("remote ref"), th("connection"), th("request"), th("dots")),
         tr(
-          td(Uid.unwrap(dataManager.replicaId)),
+          td(dataManager.replicaId.show),
           td(),
           td(),
           table().render.reattach(dataManager.currentContext.map(dotsToRows))

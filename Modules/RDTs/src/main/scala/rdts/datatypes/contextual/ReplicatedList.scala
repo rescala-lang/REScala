@@ -4,7 +4,7 @@ import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.{Epoch, GrowOnlyList, LastWriterWins}
 import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{LocalReplicaId, OpsSyntaxHelper, PermQuery}
+import rdts.syntax.{LocalUid, OpsSyntaxHelper, PermQuery}
 import rdts.time.{Dot, Dots}
 
 /** An RGA (Replicated Growable Array) is a Delta CRDT modeling a list.
@@ -87,7 +87,7 @@ object ReplicatedList {
         }.map(_._2).prepended(0).lift(n)
     }
 
-    def insert(using LocalReplicaId, IsCausalMutator)(i: Int, e: E): C = {
+    def insert(using LocalUid, IsCausalMutator)(i: Int, e: E): C = {
       val ReplicatedList(order, entries) = current
       val nextDot                        = context.nextDot(replicaId)
 
@@ -107,7 +107,7 @@ object ReplicatedList {
       }
     }.mutator
 
-    def insertAll(using LocalReplicaId, IsCausalMutator)(i: Int, elems: Iterable[E]): C = {
+    def insertAll(using LocalUid, IsCausalMutator)(i: Int, elems: Iterable[E]): C = {
       val ReplicatedList(fw, df) = current
       val nextDot                = context.nextDot(replicaId)
 
@@ -147,10 +147,10 @@ object ReplicatedList {
       }
     }
 
-    def update(using LocalReplicaId, IsCausalMutator)(i: Int, e: E): C =
+    def update(using LocalUid, IsCausalMutator)(i: Int, e: E): C =
       updateRGANode(current, i, Some(e)).mutator
 
-    def delete(using LocalReplicaId, IsCausalMutator)(i: Int): C = updateRGANode(current, i, None).mutator
+    def delete(using LocalUid, IsCausalMutator)(i: Int): C = updateRGANode(current, i, None).mutator
 
     private def updateRGANodeBy(
         state: ReplicatedList[E],
@@ -169,13 +169,13 @@ object ReplicatedList {
       deltaState[E].make(df = updates, cc = Dots.from(touched))
     }
 
-    def updateBy(using LocalReplicaId, IsCausalMutator)(cond: E => Boolean, e: E): C =
+    def updateBy(using LocalUid, IsCausalMutator)(cond: E => Boolean, e: E): C =
       updateRGANodeBy(current, cond, old => Some(old.write(e))).mutator
 
-    def deleteBy(using LocalReplicaId, IsCausalMutator)(cond: E => Boolean): C =
+    def deleteBy(using LocalUid, IsCausalMutator)(cond: E => Boolean): C =
       updateRGANodeBy(current, cond, _ => None).mutator
 
-    def purgeTombstones(using LocalReplicaId, IsCausalMutator)(): C = {
+    def purgeTombstones(using LocalUid, IsCausalMutator)(): C = {
       val ReplicatedList(epoche, df) = current
 
       val known: List[Dot] = epoche.value.growOnlyList.toList
@@ -198,13 +198,13 @@ object ReplicatedList {
       ).mutator
     }
 
-    def prepend(using LocalReplicaId, IsCausalMutator)(e: E): C = insert(0, e)
+    def prepend(using LocalUid, IsCausalMutator)(e: E): C = insert(0, e)
 
-    def append(using LocalReplicaId, IsCausalMutator)(e: E): C = insert(size, e)
+    def append(using LocalUid, IsCausalMutator)(e: E): C = insert(size, e)
 
-    def prependAll(using LocalReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(0, elems)
+    def prependAll(using LocalUid, IsCausalMutator)(elems: Iterable[E]): C = insertAll(0, elems)
 
-    def appendAll(using LocalReplicaId, IsCausalMutator)(elems: Iterable[E]): C = insertAll(size, elems)
+    def appendAll(using LocalUid, IsCausalMutator)(elems: Iterable[E]): C = insertAll(size, elems)
 
   }
 }

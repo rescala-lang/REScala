@@ -36,14 +36,17 @@ object PermMutate:
   * We provide it as it’s own opaque type, to make it obvious that this should not be just any ID.
   * Use [[Uid]] if you want to store an ID in a replicated data structure.
   */
-case class LocalReplicaId(uid: Uid)
-object LocalReplicaId:
-  given ordering: Ordering[LocalReplicaId]             = Uid.ordering.on(_.uid)
-  inline given fromId: Conversion[Uid, LocalReplicaId] = apply
-  def predefined(s: String): LocalReplicaId            = LocalReplicaId.fromId(Uid.predefined(s))
-  def unwrap(id: LocalReplicaId): Uid                  = id.uid
-  def gen(): LocalReplicaId                            = Uid.gen()
-  def replicaId(using rid: LocalReplicaId): Uid        = rid.uid
+case class LocalUid(uid: Uid) {
+  override def toString: String = show
+  def show: String = uid.show
+}
+object LocalUid:
+  given ordering: Ordering[LocalUid]             = Uid.ordering.on(_.uid)
+  inline given fromId: Conversion[Uid, LocalUid] = apply
+  def predefined(s: String): LocalUid            = LocalUid.fromId(Uid.predefined(s))
+  def unwrap(id: LocalUid): Uid                  = id.uid
+  def gen(): LocalUid                            = Uid.gen()
+  def replicaId(using rid: LocalUid): Uid        = rid.uid
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"
@@ -62,11 +65,11 @@ trait OpsTypes[DeltaContainer, Value] {
   final type IsCausalMutator = s.PermCausalMutate[DeltaContainer, Value]
   final type CausalMutator   = IsCausalMutator ?=> DeltaContainer
   final type Mutator         = IsMutator ?=> DeltaContainer
-  final type IdMutator       = LocalReplicaId ?=> Mutator
+  final type IdMutator       = LocalUid ?=> Mutator
 }
 class OpsSyntaxHelper[C, L](container: C) extends OpsTypes[C, L] {
   final protected[rdts] def current(using perm: IsQuery): L                = perm.query(container)
-  final protected[rdts] def replicaId(using perm: LocalReplicaId): Uid     = perm.uid
+  final protected[rdts] def replicaId(using perm: LocalUid): Uid            = perm.uid
   final protected[rdts] def context(using perm: IsCausalMutator): Dots     = perm.context(container)
   extension (l: L) def mutator: Mutator                                    = summon[IsMutator].mutate(container, l)
   extension (l: Dotted[L])(using perm: IsCausalMutator) def mutator: C     = perm.mutateContext(container, l)

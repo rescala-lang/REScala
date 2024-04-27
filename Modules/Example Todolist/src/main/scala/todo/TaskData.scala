@@ -6,7 +6,7 @@ import org.scalajs.dom.html.{Input, LI}
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalUid}
 import reactives.default.*
 import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
@@ -66,7 +66,7 @@ object TaskReferences {
 }
 
 class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
-  given fixedId: LocalReplicaId = replicaId
+  given fixedId: LocalUid = replicaId
 
   def createTaskRef(
       taskID: String,
