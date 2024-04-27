@@ -16,6 +16,8 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   lofiAcl,
   compileMacros.js,
   compileMacros.jvm,
+  channels.js,
+  channels.jvm,
   // examples, case studies, & eval
   microbenchmarks,
   examples,
