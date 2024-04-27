@@ -28,7 +28,7 @@ object EchoServerTestTCP {
     val echoServer: Prod[Unit] = Async[Ctx]:
       fork.bind
       println(s"serving")
-      listening = tcp.TCPListener.startListening(port, "0").run
+      listening = tcp.TCPListener.startListening(port, "0")
       val channel = listening.connections.bind
       println(s"new connection")
       fork.bind

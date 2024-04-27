@@ -2,9 +2,6 @@ package replication.calendar
 
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.*
-import loci.registry.Binding
-import loci.serializer.jsoniterScala.*
-import loci.transmitter.IdenticallyTransmittable
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
@@ -38,9 +35,5 @@ object Bindings {
 
   implicit val SyncMessageCodec: JsonValueCodec[SyncMessage] = JsonCodecMaker.make
 
-  implicit val transmittableSyncMessage: IdenticallyTransmittable[SyncMessage] = IdenticallyTransmittable()
-
-  val receiveSyncMessageBinding: Binding[SyncMessage => Unit, SyncMessage => Future[Unit]] =
-    Binding[SyncMessage => Unit]("receiveDelta")
 
 }

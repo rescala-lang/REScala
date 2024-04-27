@@ -1,23 +1,15 @@
 package replication.calendar
 
-import loci.communicator.tcp.TCP
-import loci.registry.Registry
-import loci.transmitter.{RemoteAccessException, RemoteRef}
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.{Dotted, DottedLattice}
 import replication.calendar.Bindings.*
 import replication.calendar.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
 
-import java.util.concurrent.*
-import scala.concurrent.Future
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
-import scala.util.{Failure, Success}
 
 class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
-
-  val registry = new Registry
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
@@ -26,8 +18,6 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
   val change: Regex = """change (\w+) (\d+) (\d+) (\d+) (\d+)""".r
 
   val calendar = new CalendarProgram(id, synchronizationPoint)
-
-  var remoteToAddress: Map[RemoteRef, (String, Int)] = Map()
 
   @volatile var tokens: RaftTokens = RaftTokens.init(id)
 
@@ -46,47 +36,23 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
     mine.map(_._2).foreach(_.apply())
   }
 
-  def connectToRemote(address: (String, Int)): Unit = address match {
-    case (ip, port) =>
-      new FutureTask[Unit](() => {
-        def attemptReconnect(): Unit = {
-          registry.connect(TCP(ip, port)).onComplete {
-            case Success(value) =>
-              remoteToAddress = remoteToAddress.updated(value, (ip, port))
-            case Failure(_) =>
-              Thread.sleep(1000)
-              attemptReconnect()
-          }
-        }
-
-        attemptReconnect()
-      }).run()
-  }
-
   def sendDeltas(): Unit = {
-    registry.remotes.foreach { rr =>
-      val remoteReceiveSyncMessage = registry.lookup(receiveSyncMessageBinding, rr)
 
-      calendar.replicated.foreach { case (id, set) =>
-        set.now.deltaBuffer.reduceOption(Lattice[CalendarState].merge).foreach(sendRecursive(
-          remoteReceiveSyncMessage,
-          _,
-          id
-        ))
-      }
+    calendar.replicated.foreach { case (id, set) =>
+      set.now.deltaBuffer.reduceOption(Lattice[CalendarState].merge).foreach(delta => delta)
+    }
 
-      tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[ReplicatedSet[Token]]].merge).foreach { state =>
-        remoteReceiveSyncMessage(WantMessage(state))
-      }
+    tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[ReplicatedSet[Token]]].merge).foreach { state =>
+      WantMessage(state)
+    }
 
-      tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[ReplicatedSet[Token]].merge).foreach { state =>
-        remoteReceiveSyncMessage(FreeMessage(state))
-      }
+    tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[ReplicatedSet[Token]].merge).foreach { state =>
+      FreeMessage(state)
+    }
 
-      remoteReceiveSyncMessage(RaftMessage(tokens.tokenAgreement))
+    val _ = RaftMessage(tokens.tokenAgreement)
 
     // calendar.replicated.foreach { case (id, r) => r.transform(_.resetDeltaBuffer()) }
-    }
   }
 
   def splitState(
@@ -102,29 +68,6 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
     (a.take(atomsSize / 2), a.drop(atomsSize / 2))
   }
 
-  def sendRecursive(
-      remoteReceiveSyncMessage: SyncMessage => Future[Unit],
-      delta: Dotted[ReplicatedSet[Appointment]],
-      crdtid: String,
-  ): Unit = new FutureTask[Unit](() => {
-    def attemptSend(atoms: Iterable[CalendarState], merged: CalendarState): Unit = {
-      remoteReceiveSyncMessage(AppointmentMessage(merged, crdtid)).failed.foreach {
-        case e: RemoteAccessException => e.reason match {
-            case RemoteAccessException.RemoteException(name, _) if name.contains("JsonReaderException") =>
-              val (firstHalf, secondHalf) = splitState(atoms, merged)
-
-              attemptSend(firstHalf, firstHalf.reduce(Lattice[CalendarState].merge))
-              attemptSend(secondHalf, secondHalf.reduce(Lattice[CalendarState].merge))
-            case _ => e.printStackTrace()
-          }
-
-        case e => e.printStackTrace()
-      }
-    }
-
-    attemptSend(List(), delta)
-  }).run()
-
   def printStatus() = {
     println(s"> Cal :\n  work: ${calendar.work.now.elements}\n  vaca: ${calendar.vacation.now.elements}")
     println(
@@ -138,7 +81,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
   val globalLock = new Object()
 
   def run(): Unit = {
-    registry.bindSbj(receiveSyncMessageBinding) { (remoteRef: RemoteRef, message: SyncMessage) =>
+    val _ = { (message: SyncMessage) =>
       globalLock.synchronized {
         println(s"> Recv: $message")
 
@@ -158,21 +101,6 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
       }
 
-    }
-
-    println(registry.listen(TCP(listenPort)))
-
-    connectTo.foreach(connectToRemote)
-
-    registry.remoteLeft.monitor { rr =>
-      remoteToAddress.get(rr) match {
-        case Some(address) =>
-          remoteToAddress = remoteToAddress.removed(rr)
-
-          connectToRemote(address)
-
-        case None =>
-      }
     }
 
     while (true) {
@@ -216,5 +144,6 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
       sendDeltas()
 
     }
+
   }
 }

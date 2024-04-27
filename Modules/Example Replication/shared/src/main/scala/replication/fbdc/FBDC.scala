@@ -2,7 +2,6 @@ package replication.fbdc
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import loci.registry.Registry
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.*
@@ -61,7 +60,6 @@ object State:
 
 class FbdcExampleData {
   val replicaId = LocalUid(Uid.gen())
-  val registry  = new Registry
 
   val dataManager =
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))

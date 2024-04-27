@@ -22,7 +22,7 @@ class TCPListener(val socket: ServerSocket) {
 
 object TCPListener {
 
-  def startListening(port: Int, interface: String): Sync[Any, TCPListener] = Sync {
+  def startListening(port: Int, interface: String): TCPListener = {
 
     val socket = new ServerSocket
 

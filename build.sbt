@@ -258,8 +258,6 @@ lazy val replicationExamples =
       run / fork         := true,
       run / connectInput := true,
       resolverJitpack,
-      Dependencies.loci.tcp,
-      Dependencies.loci.jsoniterScala,
       Dependencies.munitCheck,
       Dependencies.munit,
       Dependencies.scalacheck,
