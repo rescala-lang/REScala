@@ -49,12 +49,12 @@ class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedLis
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A](expensive: Boolean = false)(using
+abstract class LatticePropertyChecks[A](expensive: Boolean = false, orderAgreesWithStructuralEquals: Boolean = true)(using
     arbitrary: Arbitrary[A],
     lattice: Lattice[A],
     bottomOpt: BottomOpt[A],
     shrink: Shrink[A]
-) extends OrderTests(using Lattice.latticeOrder)(total = false) {
+) extends OrderTests(using Lattice.latticeOrder)(total = false, agreesWithEquals = orderAgreesWithStructuralEquals) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
 
