@@ -54,16 +54,21 @@ abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boo
     }
   }
 
-  property("order commutative"):
+  property("order commutative") {
     forAll: (a: A, b: A) =>
       val left  = pa.tryCompare(a, b)
       val right = pa.tryCompare(b, a)
-      assertEquals(left, right.map(x => -x), s"a: $a\nb: $b")
+      // negation is a bit weird in the sense that “not comparable” negates to “not comparable”
+      val invertedRight = right.map(x => -x)
+      assertEquals(left, invertedRight, s"a: $a\nb: $b")
+  }
 
-  property("sorts"):
-    if total
-    then
-      given Ordering[A] = pa.asInstanceOf[Ordering[A]]
-      forAll: (list: List[A]) =>
-        list.to(Queue).sorted == list.to(Queue).sorted.sorted
+  property("sorts") {
+    pa match
+      // this both checks that pa is a total order and that the total flag is set
+      case given Ordering[A] if total =>
+        forAll: (list: List[A]) =>
+          list.to(Queue).sorted == list.to(Queue).sorted.sorted
+      case other =>
+  }
 }
