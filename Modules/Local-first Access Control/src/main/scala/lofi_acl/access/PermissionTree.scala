@@ -1,121 +1,82 @@
 package lofi_acl.access
 
-import lofi_acl.access.Permission.{ALLOW, DENY}
+import lofi_acl.access.Permission.{ALLOW, PARTIAL}
+import rdts.base.{Bottom, Lattice}
 
-enum Permission:
-  case ALLOW
-  case DENY
+import scala.annotation.tailrec
 
-case class PermissionTree(permission: Permission, children: Map[String, PermissionTree]):
-  override def toString: String =
-    if children.isEmpty then
-      permission match
-        case Permission.ALLOW => "PermissionTree.allow"
-        case Permission.DENY  => "PermissionTree.deny"
-    else s"PermissionTree($permission, $children)"
+case class PermissionTree(permission: Permission, children: Map[String, PermissionTree])
 
-object PermissionTree:
+object PermissionTree {
   val allow: PermissionTree = PermissionTree(ALLOW, Map.empty)
-  val deny: PermissionTree  = PermissionTree(DENY, Map.empty)
+  val empty: PermissionTree = PermissionTree(PARTIAL, Map.empty)
 
-  def fromPermission(permission: Permission): PermissionTree = permission match
-    case Permission.ALLOW => allow
-    case Permission.DENY  => deny
+  given lattice: Lattice[PermissionTree] with
+    private val childrenLattice: Lattice[Map[String, PermissionTree]] =
+      Lattice.mapLattice(using (left, right) => mergeNonNormalizing(left, right)) // Note: merge-rec is non-normalizing
 
-  def fromPathList(permissionPath: List[(String, Permission)]): PermissionTree = {
-    val permissionPathsAsMap = preProcessRuleList(permissionPath).toMap
-    require(permissionPathsAsMap.size == permissionPath.size, "Duplicate path in path list")
-    permissionPathsAsMap.foreach { case (path, p) =>
-      require(!path.endsWith("."), s"Found trailing . in $path -> $p")
-    }
-    createPermissionTree(permissionPathsAsMap, DENY)
-  }
+    override def merge(left: PermissionTree, right: PermissionTree): PermissionTree =
+      val merged     = mergeNonNormalizing(left, right)
+      val normalized = normalizeWildcards(merged)
+      normalized
 
-  private def preProcessRuleList(ruleList: List[(String, Permission)]): List[(String, Permission)] = {
-    ruleList.foreach { case (path, _) =>
-      require(!path.startsWith(".*")) // ".*" as a prefix is not a valid path
-      require(!path.contains("**"))
-      require(!path.contains(".."))
-    }
-    ruleList.map { case (path, permission) =>
-      if path.equals("*") then "" -> permission
-      else path.stripSuffix(".*") -> permission // Strip out trailing .* (a.* has same meaning as a)
-    }
-  }
+    private[PermissionTree] def mergeNonNormalizing(left: PermissionTree, right: PermissionTree): PermissionTree =
+      (left, right) match
+        case (PermissionTree(ALLOW, _), PermissionTree(_, _)) => allow
+        case (PermissionTree(_, _), PermissionTree(ALLOW, _)) => allow
+        case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
+          PermissionTree(PARTIAL, childrenLattice.merge(leftChildren, rightChildren))
 
-  private def createPermissionTree(
-      permissionMap: Map[String, Permission],
-      inheritedPermission: Permission
-  ): PermissionTree = {
-    if permissionMap.isEmpty then return PermissionTree(inheritedPermission, Map.empty)
-
-    val topLevelPermission = permissionMap.getOrElse("", DENY)
-
-    // sort by ascending length of path (in this case, the length is the depth of tree, not the string length)
-    val sortedPermissions = permissionMap.toArray
-      // Path elements are terminated by '.'
-      .map { case (path, permission) => path.split('.').toList -> permission }
-      .sortInPlaceBy(_._1.length) // Sorts by length as described above
-
-    // Now we merge every rule into the permission tree in (shortest paths first, more specific paths later).
-    // This is required for longest-prefix-matching semantics.
-    val tree = sortedPermissions.foldLeft(fromPermission(topLevelPermission)) { case (tree, rule) =>
-      // Merges the more specific rule into the more general permission tree
-      mergeIntoTree(tree, path = rule._1, pathPermission = rule._2)
-    }
-
-    pruneTree(tree)._1
-    // TODO: Post process / normalize (i.e., merge * into non-* siblings)
-  }
-
-  // Creates a path that has the permission
-  private def pathToTree(path: List[String], inheritedPermission: Permission, permission: Permission): PermissionTree =
-    path.foldRight(PermissionTree.fromPermission(permission)) {
-      case (pathElement, subtree) => PermissionTree(inheritedPermission, Map(pathElement -> subtree))
-    }
-
-  /** This method assumes that the rules are <b>processed from shortest to longest prefix!</b> */
-  private def mergeIntoTree(tree: PermissionTree, path: List[String], pathPermission: Permission): PermissionTree = {
-    (tree, path) match
-      case (parent, pathPrefix :: Nil) => // We are at the end of the inserted path
-        require(
-          // We found a branch that is created by either a more specific path, or is the same path.
-          // But, we assumed that the rules are merged from shortest to longest prefix.
-          !parent.children.contains(pathPrefix)
-        )
-        PermissionTree(parent.permission, parent.children + (pathPrefix -> fromPermission(pathPermission)))
-      case (parent, pathPrefix :: pathSuffix) =>
-        // Check whether branch exists
-        parent.children.get(pathPrefix) match
-          case Some(existingSubtree) =>
-            // Branch already exists, merge into branch
-            PermissionTree(
-              parent.permission,
-              parent.children + (pathPrefix -> mergeIntoTree(existingSubtree, pathSuffix, pathPermission))
+    private[PermissionTree] def normalizeWildcards(tree: PermissionTree): PermissionTree = tree match
+      case PermissionTree(ALLOW, children)                                             => allow
+      case PermissionTree(_, children) if children.forall((_, child) => child.isEmpty) => empty
+      case PermissionTree(_, children) => children.get("*") match
+          case Some(PermissionTree(ALLOW, _)) => allow // Normalize trailing * -> allow
+          case Some(w) =>
+            val wildcardTree = normalizeWildcards(w)
+            // Merge all wildcard children into all children of siblings
+            var normalizedChildren = children.filterNot((label, _) => label == "*").map((label, child) =>
+              label -> normalizeWildcards(mergeNonNormalizing(child, wildcardTree))
             )
+
+            // Only add wildcard, if it is non-empty
+            if !wildcardTree.isEmpty then normalizedChildren += ("*" -> wildcardTree)
+
+            if normalizedChildren.forall((_, child) => child.isEmpty)
+            then empty // Normalize
+            else PermissionTree(PARTIAL, normalizedChildren)
           case None =>
-            // Branch doesn't exist, create new branch
-            val newSubtree = pathToTree(pathSuffix, parent.permission, pathPermission)
-            PermissionTree(parent.permission, parent.children + (pathPrefix -> newSubtree))
-      case (parent, Nil) => throw IllegalArgumentException("path should not be empty")
+            val normalizedChildren = tree.children.map((label, child) => label -> normalizeWildcards(child))
+            if normalizedChildren.forall((_, child) => child.isEmpty) then empty
+            else PermissionTree(PARTIAL, normalizedChildren)
+
+  given bottom: Bottom[PermissionTree] with
+    override val empty: PermissionTree = PermissionTree.empty
+
+  def fromPath(path: String): PermissionTree = {
+    require(!path.contains("..") && path != ".")
+
+    @tailrec
+    def removeWildcardSuffix(path: String): String =
+      val stripped = path.stripSuffix(".*")
+      if stripped eq path then path
+      else removeWildcardSuffix(stripped)
+
+    val shortenedPath = removeWildcardSuffix(path)
+    if shortenedPath == "*" || shortenedPath == "" then return allow
+
+    val tree = shortenedPath.split('.').foldRight(allow) {
+      case (pathElement, childTree) => PermissionTree(PARTIAL, Map(pathElement -> childTree))
+    }
+
+    lattice.normalizeWildcards(tree) // Ensure normalization
   }
 
-  /** Prunes redundant branches from the tree.
-    * A branch is redundant iff. the set of all permissions encountered on the branch is equal to the permission of the node.
-    * @return A tuple with the pruned tree and the set of permissions encountered in all branches and the node itself.
-    */
-  private def pruneTree(root: PermissionTree): (PermissionTree, Set[Permission]) = {
-    val rootPermission = Set(root.permission)
-    val (prunedChildren, collectedPermissions) =
-      root.children.foldLeft(Map.empty[String, PermissionTree], Set.empty[Permission]) {
-        case ((collectedSiblings, collectedPermissions), label -> child) =>
-          val (prunedChild, permissionsOnChildPath) = pruneTree(child)
-          val newSiblingPermissions                 = collectedPermissions ++ permissionsOnChildPath
-          // Is permission on child path identical to this levels permission?
-          if permissionsOnChildPath.equals(rootPermission)
-          then (collectedSiblings, newSiblingPermissions) // Filter out child, if it is redundant
-          else (collectedSiblings + (label -> prunedChild), newSiblingPermissions) // Else keep the child
-      }
-
-    (root.copy(children = prunedChildren), collectedPermissions union rootPermission)
+  def fromPathSet(paths: Set[String]): PermissionTree = {
+    val mergedTree = paths.foldLeft(empty) { (permissionTree, path) =>
+      lattice.mergeNonNormalizing(permissionTree, fromPath(path))
+    }
+    lattice.normalizeWildcards(mergedTree)
   }
+
+}

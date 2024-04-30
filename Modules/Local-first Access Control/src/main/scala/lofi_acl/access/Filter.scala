@@ -1,6 +1,7 @@
 package lofi_acl.access
 
-import lofi_acl.access.Permission.{ALLOW, DENY}
+import lofi_acl.access.Permission.{ALLOW, PARTIAL}
+import lofi_acl.access.PermissionTree
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import rdts.base.Bottom
 
@@ -47,17 +48,13 @@ object Filter:
       factorFilters: IArray[Filter[Any]]  // The Filter TypeClass instance for each factor
   ) extends Filter[T]:
     override def filter(delta: T, permissionTree: PermissionTree): T = {
-      if (permissionTree.children.isEmpty) {
-        // Terminal rule found (this is the longest prefix)
-        permissionTree.permission match
-          case ALLOW => delta
-          case DENY  => productBottom.empty
-      } else { // This isn't the longest prefix
-        // Apply filters to factors, if rule for factor is specified.
-        // Otherwise apply permission of this level to factors directly.
-        val filteredProduct = filterProduct(delta.asInstanceOf[Product], permissionTree)
-        pm.fromProduct(filteredProduct)
-      }
+      permissionTree match
+        case PermissionTree(ALLOW, _)          => delta
+        case PermissionTree(PARTIAL, children) =>
+          // Apply filters to factors, if rule for factor is specified.
+          // Otherwise use bottom for factor
+          val filteredProduct = filterProduct(delta.asInstanceOf[Product], permissionTree)
+          pm.fromProduct(filteredProduct)
     }
 
     private inline def filterProduct(product: Product, permissionTree: PermissionTree): Product = {
@@ -68,20 +65,17 @@ object Filter:
         factorIndex -> factorFilters(factorIndex).filter(factorOfDelta, permissionSubTree)
       }
 
-      // TODO: inline match?
-      permissionTree match
-        case PermissionTree(ALLOW, children) =>
-          new Product:
-            def canEqual(that: Any): Boolean = false
-            def productArity: Int            = factorBottoms.length
-            def productElement(i: Int): Any  = filteredFactors.getOrElse(i, () => product.productElement(i))
-        case PermissionTree(DENY, children) =>
-          new Product:
-            def canEqual(that: Any): Boolean = false
-            def productArity: Int            = factorBottoms.length
-            def productElement(i: Int): Any  = filteredFactors.getOrElse(i, () => factorBottoms(i))
+      new Product:
+        def canEqual(that: Any): Boolean = false
+        def productArity: Int            = factorBottoms.length
+        def productElement(i: Int): Any  = filteredFactors.getOrElse(i, () => factorBottoms(i))
     }
 
+    /** Checks whether all children labels are the field names of this product and validates the filters for the children.
+      *
+      * @param permissionTree The tree to check
+      *  @return Success(the validated permission tree) or a Failure(with the cause).
+      */
     def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
       permissionTree match
         case PermissionTree(_, children) =>
