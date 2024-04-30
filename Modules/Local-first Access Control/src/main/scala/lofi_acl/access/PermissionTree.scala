@@ -13,7 +13,7 @@ object PermissionTree {
 
   given lattice: Lattice[PermissionTree] with
     private val childrenLattice: Lattice[Map[String, PermissionTree]] =
-      Lattice.mapLattice(using (left, right) => mergeNonNormalizing(left, right)) // Note: merge-rec is non-normalizing
+      Lattice.mapLattice(using (left, right) => mergeNonNormalizing(left, right))
 
     override def merge(left: PermissionTree, right: PermissionTree): PermissionTree =
       val merged     = mergeNonNormalizing(left, right)
@@ -36,18 +36,23 @@ object PermissionTree {
             val wildcardTree = normalizeWildcards(w)
             if wildcardTree == allow then return allow
             // Merge all wildcard children into all children of siblings
-            var normalizedChildren = children.filterNot((label, _) => label == "*").map((label, child) =>
-              label -> normalizeWildcards(mergeNonNormalizing(child, wildcardTree))
-            )
+            var normalizedChildren = children
+              .filterNot((label, _) => label == "*") // Don't merge "*" into itself
+              .map((label, child) => label -> normalizeWildcards(child))
+              .filterNot(_._2.isEmpty) // Filter out empty children
+              .map((label, child) =>
+                label -> normalizeWildcards(mergeNonNormalizing(child, wildcardTree))
+              )
 
             // Only add wildcard, if it is non-empty
             if !wildcardTree.isEmpty then normalizedChildren += ("*" -> wildcardTree)
 
-            if normalizedChildren.forall((_, child) => child.isEmpty)
-            then empty // Normalize
+            if normalizedChildren.isEmpty then empty // We filtered out empty children -> empty map
             else PermissionTree(PARTIAL, normalizedChildren)
           case None =>
-            val normalizedChildren = tree.children.map((label, child) => label -> normalizeWildcards(child))
+            val normalizedChildren = tree.children
+              .map((label, child) => label -> normalizeWildcards(child))
+              .filterNot(_._2.isEmpty) // Remove empty branches
             if normalizedChildren.forall((_, child) => child.isEmpty) then empty
             else PermissionTree(PARTIAL, normalizedChildren)
 

@@ -1,9 +1,9 @@
 package lofi_acl.access
 
-import lofi_acl.access.Permission.PARTIAL
+import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree.{allow, empty}
 import munit.FunSuite
-import rdts.base.Bottom
+import rdts.base.{Bottom, Lattice}
 
 class PermissionTreeTest extends FunSuite {
   def partial(labelsWithTree: (String, PermissionTree)*): PermissionTree =
@@ -169,6 +169,52 @@ class PermissionTreeTest extends FunSuite {
       ),
       partial("a" -> allow)
     )
+
+    assertEquals(
+      PermissionTree.lattice.normalize(PermissionTree(
+        PARTIAL,
+        Map("a" -> PermissionTree(PARTIAL, Map("b" -> PermissionTree(PARTIAL, Map()))))
+      )),
+      empty
+    )
+
+    assertEquals(
+      PermissionTree.lattice.normalize(PermissionTree(
+        PARTIAL,
+        Map("*" -> PermissionTree(PARTIAL, Map("*" -> PermissionTree(PARTIAL, Map()))))
+      )),
+      empty
+    )
+
+    assertEquals(
+      Lattice[PermissionTree].normalize(
+        PermissionTree(
+          PARTIAL,
+          Map(
+            "a" -> PermissionTree(PARTIAL, Map("e" -> PermissionTree(PARTIAL, Map()))),
+            "b" -> PermissionTree(
+              PARTIAL,
+              Map("*" -> PermissionTree(
+                PARTIAL,
+                Map("*" -> PermissionTree(
+                  PARTIAL,
+                  Map(
+                    "*" -> PermissionTree(
+                      ALLOW,
+                      Map("*" -> PermissionTree(ALLOW, Map()), "e" -> PermissionTree(PARTIAL, Map()))
+                    ),
+                    "a" -> PermissionTree(PARTIAL, Map())
+                  )
+                ))
+              ))
+            ),
+            "c" -> PermissionTree(PARTIAL, Map())
+          )
+        )
+      ),
+      partial("b" -> allow)
+    )
+
   }
 
   test("bottom") {
@@ -218,13 +264,5 @@ class PermissionTreeTest extends FunSuite {
       ),
       partial()
     )
-  }
-
-  test("Normalized trees only have allow as leafs or are empty") {
-    ???
-  }
-
-  test("Non-wildcard siblings of wildcards are at least as permissive as wildcard sibling") {
-    ???
   }
 }
