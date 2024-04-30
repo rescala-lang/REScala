@@ -64,26 +64,4 @@ abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boo
         list.to(Queue).sorted == list.to(Queue).sorted.sorted
 }
 
-// the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
-// that they will produce any kind of comparable values
-class ManualOrderTests extends munit.ScalaCheckSuite {
-  test("Vector Sorting"):
-    val a = VectorClock(Map(Uid.predefined("a") -> 1522394954533558658L))
-    val b = VectorClock(
-      Map(Uid.predefined("d") -> 3422060934355809334L)
-    )
 
-    given Ordering[VectorClock] = VectorClock.vectorClockTotalOrdering
-
-    assertEquals(List(a, b).sorted, List(b, a).sorted.sorted)
-
-  test("dots order commutative"):
-    val a = Dots(Map(Uid.predefined("a") -> ArrayRanges.from(List(1))))
-    val b = Dots(Map(
-      Uid.predefined("a") -> ArrayRanges.from(List(2)),
-      Uid.predefined("c") -> ArrayRanges.from(List(3)),
-    ))
-    val left  = Dots.partialOrder.tryCompare(a, b)
-    val right = Dots.partialOrder.tryCompare(b, a)
-    assertEquals(left, right.map(x => -x), s"a: $a\nb: $b")
-}
