@@ -1,7 +1,7 @@
 # LoRe
 > Local-first reactive programming with verified safety guarantees 🌈
 
-This repository contains our prototype implementation of the LoRe language compiler as described [in this paper](https://doi.org/10.4230/LIPIcs.ECOOP.2023.12).
+This repository contains our prototype implementation of the LoRe language compiler as described [in this paper](https://doi.org/10.1145/3633769).
 
 
 # Artifact Getting Started Guide
