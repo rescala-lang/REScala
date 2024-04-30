@@ -220,10 +220,6 @@ class PermissionTreeTest extends FunSuite {
     )
   }
 
-  test("lattice properties") {
-    ???
-  }
-
   test("Normalized trees only have allow as leafs or are empty") {
     ???
   }

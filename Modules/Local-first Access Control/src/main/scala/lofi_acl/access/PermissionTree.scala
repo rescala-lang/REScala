@@ -28,12 +28,13 @@ object PermissionTree {
           PermissionTree(PARTIAL, childrenLattice.merge(leftChildren, rightChildren))
 
     private[PermissionTree] def normalizeWildcards(tree: PermissionTree): PermissionTree = tree match
-      case PermissionTree(ALLOW, children)                                             => allow
+      case PermissionTree(ALLOW, _)                                                    => allow
       case PermissionTree(_, children) if children.forall((_, child) => child.isEmpty) => empty
       case PermissionTree(_, children) => children.get("*") match
           case Some(PermissionTree(ALLOW, _)) => allow // Normalize trailing * -> allow
           case Some(w) =>
             val wildcardTree = normalizeWildcards(w)
+            if wildcardTree == allow then return allow
             // Merge all wildcard children into all children of siblings
             var normalizedChildren = children.filterNot((label, _) => label == "*").map((label, child) =>
               label -> normalizeWildcards(mergeNonNormalizing(child, wildcardTree))
