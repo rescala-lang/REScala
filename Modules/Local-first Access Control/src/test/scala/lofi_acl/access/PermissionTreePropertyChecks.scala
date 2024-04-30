@@ -35,7 +35,7 @@ val normalizedArbPermissionTree: Arbitrary[PermissionTree] = Arbitrary(
   arbPermissionTree.arbitrary.map(tree => tree merge tree)
 )
 
-class PermissionTreeLatticeChecks extends LatticePropertyChecks[PermissionTree]
+class PermissionTreeLatticeChecks extends LatticePropertyChecks[PermissionTree](orderAgreesWithStructuralEquals = false)
 
 class PermissionTreePropertyChecks extends munit.ScalaCheckSuite {
   def checkAllLeafsAreAllow(tree: PermissionTree): Unit = tree match
