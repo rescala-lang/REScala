@@ -42,7 +42,7 @@ object CrdtConnector {
       val bundle: Bundle = BundleCreation.createBundle(
         data = payload,
         full_destination_uri = cRDTGroupEndpoint,
-        full_source_url = cRDTGroupEndpoint
+        full_source_uri = cRDTGroupEndpoint
       )
       ws match
         case Some(value) => value.sendBundle(bundle)

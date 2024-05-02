@@ -170,6 +170,9 @@ object PayloadBlock {
 case class PreviousNodeBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: BlockProcessingControlFlags, crc_type: Int, data: Array[Byte]) extends CanonicalBlock {
   def previous_node_id: Endpoint = Cbor.decode(data).to[Endpoint].value
 }
+object PreviousNodeBlock {
+  def createFrom(node: Endpoint): PreviousNodeBlock = PreviousNodeBlock(CanonicalBlock.PREVIOUS_NODE_BLOCK_TYPE_CODE, 0, BlockProcessingControlFlags(), 0, Cbor.encode(node).toByteArray)
+}
 case class BundleAgeBlock(block_type_code: Int, block_number: Int, block_processing_control_flags: BlockProcessingControlFlags, crc_type: Int, data: Array[Byte]) extends CanonicalBlock {
   def age_milliseconds: Int = Cbor.decode(data).to[Int].value
 }

@@ -122,12 +122,13 @@ class WSEndpointClient(port: Int) extends WSConnection(port: Int) {
     ws.get.sendBinary(Cbor.encode(bundle).toByteArray)
   }
 
-  def registerEndpointAndSubscribe(service: String): Future[Unit] = {
+  def registerEndpointAndSubscribe(service: String): Future[WSEndpointClient] = {
     // register the endpoint on the DTN daemon
     CompatCode.uget(uri"${ConnectionInfo.http_api(port)}/register?$service").map(_ => {
       registeredServices = service :: registeredServices
       // subscribe to the registered endpoint with our websocket
       command(s"/subscribe $service")
+      this
     })
   }
 

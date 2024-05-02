@@ -18,8 +18,11 @@ import scala.util.Random
 
       what do we do:
 
-        the endpoint naming scheme is: dtn://node-id/~crdt-group-endpoint
-        but only for the source endpoint. the destination endpoint will be a global one, e.g. with no information on the destination-node list whatsoever
+        the endpoint naming scheme is: dtn://global/~rdt/app-name for the destination.
+        to be able to gather routing information the source will be like: dtn://node-id/~rdt/app-name
+        
+        this means that each rdt-app must subscribe to two endpoints.
+        currently bundles will be only addressed to the global one, but this may change.
 
         we have a map(~crdt-group-endpoint -> map(dtn://node-id -> Dots))
 
@@ -109,7 +112,7 @@ class RdtDotsRouter extends BaseRouter {
         var clas: ListBuffer[Sender] = ListBuffer()
         for ((cla_agent, cla_port) <- peer.cla_list) {
           if (packet.clas.contains(cla_agent)) {
-            selected_clas += Sender(remote = peer.addr, port = cla_port, agent = cla_agent, next_hop = peer.eid)
+            clas += Sender(remote = peer.addr, port = cla_port, agent = cla_agent, next_hop = peer.eid)
           }
         }
         clas.toList
