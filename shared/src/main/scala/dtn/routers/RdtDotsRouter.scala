@@ -1,7 +1,7 @@
 package dtn.routers
 
-import dtn.{BaseRouter, DtnPeer, Packet, Sender, WSEroutingClient}
-import scala.collection.mutable.{ListBuffer, Map}
+import dtn.{BaseRouter, Bundle, DtnPeer, Packet, Sender, WSEroutingClient}
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import dtn.Endpoint
@@ -55,34 +55,50 @@ import scala.util.Random
   */
 
 class RdtDotsRouter extends BaseRouter {
+  // all these states will grow indefinitely. there is currently no garbage collector
+
   val deliveryLikelyhoodState: DeliveryLikelyhoodState = DeliveryLikelyhoodState()
 
-  val tempBundleIdToDotSetMap: Map[String, Dots] = Map()  // todo: check if this grows indefinitely
+  val tempDotsStore: mutable.Map[String, Dots] = mutable.Map()  // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
+  val tempPreviousNodeStore: mutable.Map[String, Endpoint] = mutable.Map()  // same here
 
   val destinationDotsState: DestinationDotsState = DestinationDotsState()
+
+  val delivered: mutable.Set[String] = mutable.Set()
 
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
+    // CYCLIC FORWARDING PREVENTION: if we already successfully forwarded this package to some node we can safely delete it.
+    if (delivered.contains(packet.bp.id)) {
+      println("bundle was already seen and delivered. throwing away.")
+      return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
+    }
+
     // SHORT-CUT: on no known peers return an empty forwarding request
     if (peers.isEmpty) {
-      println("no known peers. returning early with empty response.")
+      println("no known peers. returning early with empty response. keeping bundle.")
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
     }
 
     // get all destination nodes to which we must forward this bundle
-    val destination_nodes: Set[Endpoint] = tempBundleIdToDotSetMap.get(packet.bp.id) match
+    val destination_nodes: Set[Endpoint] = tempDotsStore.get(packet.bp.id) match
       case None => Set()
-      case Some(dots) => {
-        destinationDotsState.getNodeEndpointsToForwardBundleTo(packet.bp.source, dots)
+      case Some(d) => {
+        destinationDotsState.getNodeEndpointsToForwardBundleTo(packet.bp.source, d)
       }
     
     // for these destination nodes select the ideal neighbours to forward this bundle to
-    var ideal_neighbours: Set[Endpoint] = Set()
+    val ideal_neighbours: mutable.Set[Endpoint] = mutable.Set()
     for (destination_node <- destination_nodes) {
       ideal_neighbours ++= deliveryLikelyhoodState.get_best_neighbours_for(destination_node)
     }
+
+    // remove previous node from ideal neighbours if available
+    tempPreviousNodeStore.get(packet.bp.id) match
+      case None => {}
+      case Some(previous_node) => ideal_neighbours.remove(previous_node)
 
     // use current-peers-list to try and get peer information for each ideal neighbour
     val targets: List[DtnPeer] = ideal_neighbours
@@ -91,7 +107,7 @@ class RdtDotsRouter extends BaseRouter {
       .toList
     
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
-    var selected_clas: ListBuffer[Sender] = ListBuffer()
+    var selected_clas: mutable.ListBuffer[Sender] = mutable.ListBuffer()
     for (target <- targets) {
       for ((cla_agent, cla_port) <- target.cla_list) {
         if (packet.clas.contains(cla_agent)) {
@@ -103,13 +119,21 @@ class RdtDotsRouter extends BaseRouter {
     // if we found at least one cla to forward to then return our forwarding response
     if (!selected_clas.isEmpty) {
       println("clas selected via multicast strategy")
+      delivered += packet.bp.id
+      tempDotsStore.remove(packet.bp.id)
+      tempPreviousNodeStore.remove(packet.bp.id)
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = true))
     }
 
     // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-    Random.shuffle(peers.values)
+    // if present, filter out the previous node from all available peers
+    val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
+      case None => peers.values
+      case Some(previous_node) => peers.values.filter(p => !p.eid.equals(previous_node))
+
+    Random.shuffle(filtered_peers)
       .map[List[Sender]](peer => {
-        var clas: ListBuffer[Sender] = ListBuffer()
+        val clas: mutable.ListBuffer[Sender] = mutable.ListBuffer()
         for ((cla_agent, cla_port) <- peer.cla_list) {
           if (packet.clas.contains(cla_agent)) {
             clas += Sender(remote = peer.addr, port = cla_port, agent = cla_agent, next_hop = peer.eid)
@@ -126,6 +150,9 @@ class RdtDotsRouter extends BaseRouter {
         }
         case Some(clas) => {
           println("clas selected via fallback strategy")
+          delivered += packet.bp.id
+          tempDotsStore.remove(packet.bp.id)
+          tempPreviousNodeStore.remove(packet.bp.id)
           Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = clas, delete_afterwards = true))
         }
   }
@@ -139,7 +166,8 @@ class RdtDotsRouter extends BaseRouter {
   }
 
   override def onSendingFailed(packet: Packet.SendingFailed): Unit = {
-    println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}. doing nothing.")
+    delivered -= packet.bid
+    println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}. removing delivered state.")
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
@@ -147,6 +175,12 @@ class RdtDotsRouter extends BaseRouter {
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
+    // CYCLIC FORWARDING PREVENTION: only update the scores (and dots, although this is only prevents processing time wasting), if we see a packet for the first time. todo: check if a packet may be received from multiple locations without being delivered.
+    if (delivered.contains(packet.bndl.id)) {
+      println("received bundle which was already delivered. not updating scores.")
+      return
+    }
+
     packet.bndl.other_blocks.collectFirst{
       case x: PreviousNodeBlock => x
     } match
@@ -158,6 +192,8 @@ class RdtDotsRouter extends BaseRouter {
         println(s"received incoming bundle with previous node block. source node ${source_node}. previous node ${previous_node}. increasing score.")
 
         deliveryLikelyhoodState.update_score(neighbour = previous_node, destination_node = source_node)
+
+        tempPreviousNodeStore += (packet.bndl.id -> previous_node)
       }
     
     packet.bndl.other_blocks.collectFirst{
@@ -168,16 +204,14 @@ class RdtDotsRouter extends BaseRouter {
         val bid = packet.bndl.id
         val dots = rdt_meta_block.dots
 
-        println(s"received incoming bundle ${bid} with rdt-meta block. dots ${dots}. merging and temp storing for forwarding request")
+        println(s"received incoming bundle ${bid} with rdt-meta block. dots ${dots}. merging.")
 
         // we can already merge here because the source is obviously excluded from the forwarding destinations selection for this bundle
         // and the information is already available for other maybe earlier forwarding requests
         destinationDotsState.mergeDots(packet.bndl.primary_block.source, dots)
-        tempBundleIdToDotSetMap += (bid -> dots)
+
+        tempDotsStore += (bid -> dots)
       }
-    
-    
-    // todo: collectFirst new DotSetBlock, add bundle-id -> Dots to tempBundleIdToDotSetMap
   }
 
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = {
@@ -199,13 +233,13 @@ object RdtDotsRouter {
 
 
 class DeliveryLikelyhoodState {
-  val neighbourLikelyhoodMap: Map[Endpoint, Map[Endpoint, Long]] = Map()
+  val neighbourLikelyhoodMap: mutable.Map[Endpoint, mutable.Map[Endpoint, Long]] = mutable.Map()
 
   def update_score(neighbour: Endpoint, destination_node: Endpoint): Unit = {
     var old_score: Long = 0;
 
     neighbourLikelyhoodMap.get(neighbour) match
-      case None => neighbourLikelyhoodMap(neighbour) = Map()
+      case None => neighbourLikelyhoodMap(neighbour) = mutable.Map()
       case Some(value) => old_score = value.getOrElse(destination_node, 0)
     
     if (Long.MaxValue - old_score < 11) {
@@ -243,7 +277,7 @@ class DeliveryLikelyhoodState {
 
 class DestinationDotsState {
   // structure: map[rdt-group-id, map[node-id, Dots]]
-  val map: Map[String, Map[Endpoint, Dots]] = Map()
+  val map: mutable.Map[String, mutable.Map[Endpoint, Dots]] = mutable.Map()
 
   /* 
     adds/merges this nodes' dots to the data structure.
@@ -253,7 +287,7 @@ class DestinationDotsState {
     val rdt_id = endpoint.extract_endpoint_id()
 
     map.get(rdt_id) match
-      case None => map(rdt_id) = Map(node_endpoint -> dots)
+      case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
       case Some(rdt_map) => rdt_map += node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots)
   }
 

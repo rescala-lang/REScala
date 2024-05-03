@@ -126,8 +126,17 @@ import kofre.base.Uid
 }
 
 
-@main def start_rdtdots_routing(): Unit = {
-  RdtDotsRouter.create(3000).flatMap(router => {
+@main def start_rdtdots_routing_3000(): Unit = {
+  start_rdtdots_routing(3000)
+}
+
+@main def start_rdtdots_routing_4000(): Unit = {
+  start_rdtdots_routing(4000)
+}
+
+
+def start_rdtdots_routing(port: Int): Unit = {
+  RdtDotsRouter.create(port).flatMap(router => {
     router.start_receiving()
   }).recover(throwable => println(throwable))
 
@@ -232,6 +241,64 @@ import kofre.base.Uid
       }
 
       Future(client)
+    }).recover(throwable => println(throwable))
+
+  while(true) {
+    Thread.sleep(200)
+  }
+}
+
+@main def send_one_rdt_package_3000(): Unit = {
+  send_one_rdt_package(3000)
+}
+
+@main def send_one_rdt_package_4000(): Unit = {
+  send_one_rdt_package(4000)
+}
+
+
+def send_one_rdt_package(port: Int): Unit = {
+  val global_rdt_testendpoint: String = "dtn://global/~rdt/testapp"
+  def node_rdt_testendpoint(nodeid: String): String = s"$nodeid~rdt/testapp"
+
+  WSEndpointClient.create(port)
+    .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
+    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId.get)))
+    .flatMap(client => {
+      val myUid = Uid.gen()
+      var dots: Dots = Dots.empty
+
+      // flush receive forever
+      def flush_receive(): Future[Bundle] = {
+        client.receiveBundle().flatMap(bundle => {
+          println(s"received bundle: $bundle")
+          
+          bundle.other_blocks.collectFirst({
+            case x: RdtMetaBlock => x
+          }) match
+            case None => println("did not contain rdt-meta data")
+            case Some(rdt_meta_block) => {
+              dots = dots.merge(rdt_meta_block.dots)
+              println(s"merged rdt-meta data, new dots: $dots")
+            }
+          
+          flush_receive()
+        })
+      }
+      flush_receive().recover(throwable => println(throwable))
+
+      dots = dots.add(Dot(myUid, Time.current()))
+
+      val bundle: Bundle = BundleCreation.createBundleRdt(
+        data = Array(),
+        dots = dots,
+        node = Endpoint.createFrom(client.nodeId.get),
+        full_destination_uri = global_rdt_testendpoint,
+        full_source_uri = node_rdt_testendpoint(client.nodeId.get)
+      )
+
+      println(s"sending bundle with new dots: $dots")
+      client.sendBundle(bundle)
     }).recover(throwable => println(throwable))
 
   while(true) {
