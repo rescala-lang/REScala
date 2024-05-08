@@ -44,9 +44,10 @@ val add_vacation = add_appointment.modifies(vacation)
 // UI.vacationDialog.onConfirm { a => add_vacation.apply(a) }
 
 
-
+/*
 def main(args: Array[String]): Unit = {
   Invariant {
     all_appointments.value.forall { a => a.start < a.end }
   }
 }
+ */

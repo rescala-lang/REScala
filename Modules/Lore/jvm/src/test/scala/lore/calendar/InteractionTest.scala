@@ -10,6 +10,8 @@ class InteractionTest extends munit.FunSuite {
     val v = Var(0)
     val e = Evt[Int]()
 
+    var t = 0
+
     val add10 =
       Interaction[Int, Int]
         .requires[Int]((t: Int, _) => t < 20)
@@ -18,8 +20,17 @@ class InteractionTest extends munit.FunSuite {
         .ensures[Int]((t, _) => t < 15)
         .actsOn(e)
 
-    add10(0)
-    
+    v.observe { it =>
+      t = it
+    }
+
+    e.fire(10)
+
+    assertEquals(t, 10)
+
+    intercept[IllegalStateException] {
+      e.fire(10)
+    }
   }
 
 }

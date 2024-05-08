@@ -35,6 +35,8 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
   extends Interaction[ST, A] {
 
   type T[_, _] = BoundInteraction[ST, S, A]
+  
+  event.observe { it => apply(it) }
 
   override inline def requires(inline pred: (ST, A) => Boolean): BoundInteraction[ST, S, A] =
     ${ constructBoundInteractionWithRequires('{ this }, '{ pred }) }
@@ -42,7 +44,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
   override inline def ensures(inline pred: (ST, A) => Boolean): BoundInteraction[ST, S, A] =
     ${ constructBoundInteractionWithEnsures('{ this }, '{ pred }) }
 
-  def apply(a: A)(using ClassTag[ST]): Unit = {
+  def apply(a: A): Unit = {
     val modList = modifies.toList.asInstanceOf[List[Var[?]]]
     transaction((modList ++ requires.flatMap(_.inputs) ++ ensures.flatMap(_.inputs)).asInstanceOf[Seq[Var[?]]] *) { implicit at =>
       val curr = modList.map(it => at.now(it))
