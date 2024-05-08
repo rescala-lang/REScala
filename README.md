@@ -1,3 +1,9 @@
+# Important Notice
+
+> [!IMPORTANT]
+> Development for this compiler plugin moved to a [repo under the STG at TU Darmstadt](https://github.com/stg-tud/LoRe-compiler-plugin).
+> For now, this repository will stay as is and the old readme is kept below.
+
 # LoRe-DSL
 > An internal Scala DSL for [LoRe](https://github.com/stg-tud/LoRe), a language for local-first reactive programming with verified safety guarantees
 
