@@ -1,8 +1,8 @@
 package lore.dsl
 
 import reactives.core.ReSource
+import reactives.operator.Event
 import reactives.operator.Interface.State as BundleState
-
 
 import scala.quoted.{Expr, Quotes, Type}
 
@@ -26,9 +26,10 @@ def constructUnboundInteractionWithEnsures[S <: Tuple, A](interaction: Expr[Unbo
 
 case class UnboundInteraction[S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
                                                  private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty)
-  extends Interaction[S, A] with CanExecute[S, A] {
+  extends Interaction[S, A] with CanExecute[S, A] with CanAct[S, A] {
   type T[_, _] = UnboundInteraction[S, A]
   type E[_, _] = InteractionWithExecutes[S, A]
+  type AO[_, _] = InteractionWithActs[S, A]
 
   override inline def requires(inline pred: (S, A) => Boolean): UnboundInteraction[S, A] =
     ${ constructUnboundInteractionWithRequires('{ this }, '{ pred }) }
@@ -38,4 +39,8 @@ case class UnboundInteraction[S <: Tuple, A] private[dsl](private[dsl] val requi
 
   override def executes(fun: (S, A) => S): InteractionWithExecutes[S, A] =
     InteractionWithExecutes(requires, ensures, fun)
+
+  override def actsOn(event: Event[A]): InteractionWithActs[S, A] =
+    InteractionWithActs(requires, ensures, event)
+
 }

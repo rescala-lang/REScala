@@ -30,7 +30,8 @@ def constructBoundInteractionWithEnsures[ST <: Tuple, S <: Tuple, A](interaction
 case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[ST, A]] = Seq.empty,
                                                                      private[dsl] val ensures: Seq[Ensures[ST, A]] = Seq.empty,
                                                                      private[dsl] val executes: (ST, A) => ST,
-                                                                     private[dsl] val modifies: S)
+                                                                     private[dsl] val modifies: S,
+                                                                     private[dsl] val event: Event[A])
   extends Interaction[ST, A] {
 
   type T[_, _] = BoundInteraction[ST, S, A]

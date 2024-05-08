@@ -5,7 +5,7 @@ import reactives.operator.Interface.State as BundleState
 
 import scala.quoted.{Expr, Quotes, Type}
 
-def constructInteractionWithExecutesWithRequires[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
+def constructIWEWithRequires[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
                                                        expr: Expr[(S, A) => Boolean])
                                                       (using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
   val (inputs, fun, isStatic) =
@@ -14,7 +14,7 @@ def constructInteractionWithExecutesWithRequires[S <: Tuple, A](interaction: Exp
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
 
-def constructInteractionWithExecutesWithEnsures[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
+def constructIWEWithEnsures[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
                                                       expr: Expr[(S, A) => Boolean])
                                                      (using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
   val (inputs, fun, isStatic) =
@@ -30,9 +30,9 @@ case class InteractionWithExecutes[S <: Tuple, A] private[dsl](private[dsl] val 
   type T[_, _] = InteractionWithExecutes[S, A]
 
   override inline def requires(inline pred: (S, A) => Boolean): InteractionWithExecutes[S, A] =
-    ${ constructInteractionWithExecutesWithRequires('{ this }, '{ pred }) }
+    ${ constructIWEWithRequires('{ this }, '{ pred }) }
 
   override inline def ensures(inline pred: (S, A) => Boolean): InteractionWithExecutes[S, A] =
-    ${ constructInteractionWithExecutesWithEnsures('{ this }, '{ pred }) }
+    ${ constructIWEWithEnsures('{ this }, '{ pred }) }
 
 }

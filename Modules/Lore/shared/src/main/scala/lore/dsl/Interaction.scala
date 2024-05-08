@@ -1,9 +1,12 @@
 package lore.dsl
 
 import lore.dsl.*
-import reactives.default.{Var as Source, *}
+import reactives.core.ReSource
 
-import scala.annotation.targetName
+import scala.annotation.{static, targetName}
+import scala.quoted.*
+import reactives.default.*
+import reactives.operator.Interface.State as BundleState
 
 trait Interaction[S <: Tuple, A] {
   type T[_ <: S, _ <: A] <: Interaction[S, A]
@@ -17,7 +20,6 @@ trait Interaction[S <: Tuple, A] {
 
   inline def ensures[B](inline pred: (B, A) => Boolean)(using S =:= Tuple1[B]): T[S, A] =
     ensures({ (s, a) => pred(s._1, a) })
-
 }
 
 object Interaction {
@@ -43,6 +45,12 @@ object Interaction {
 
 }
 
+trait CanAct[S <: Tuple, A] {
+  type AO[_ <: S, _ <: A] <: Interaction[S, A]
+
+  def actsOn(event: Event[A]): AO[S, A]
+}
+
 trait CanExecute[S <: Tuple, A] {
   type E[_ <: S, _ <: A] <: Interaction[S, A]
 
@@ -51,6 +59,10 @@ trait CanExecute[S <: Tuple, A] {
   inline def executes[B](inline fun: (B, A) => B)(using ev: S =:= Tuple1[B]): E[S, A] =
     executes({ (s, a) => ev.flip(Tuple1(fun(s._1, a))) })
 
+}
+
+trait Executes[S <: Tuple, A] {
+  val executes: (S, A) => S
 }
 
 implicit object Ex {
@@ -81,65 +93,178 @@ implicit object Ex {
   }
 
   extension [T, A](m: UnboundInteraction[Tuple1[T], A]) {
-    def modifies(source: Source[T]):
-    InteractionWithModifies[Tuple1[T], Tuple1[Source[T]], A] = {
+    def modifies(source: Var[T]): InteractionWithModifies[Tuple1[T], Tuple1[Var[T]], A] = {
       InteractionWithModifies(m.requires, m.ensures, Tuple1(source))
     }
   }
 
   extension [T1, T2, A](m: UnboundInteraction[(T1, T2), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2]):
-    InteractionWithModifies[(T1, T2), (Source[T1], Source[T2]), A] =
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2]
+    ): InteractionWithModifies[(T1, T2), (Var[T1], Var[T2]), A] =
       InteractionWithModifies(m.requires, m.ensures, (source1, source2))
   }
 
   extension [T1, T2, T3, A](m: UnboundInteraction[(T1, T2, T3), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3]):
-    InteractionWithModifies[(T1, T2, T3), (Source[T1], Source[T2], Source[T3]), A] =
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3]
+    ): InteractionWithModifies[(T1, T2, T3), (Var[T1], Var[T2], Var[T3]), A] =
       InteractionWithModifies(m.requires, m.ensures, (source1, source2, source3))
   }
 
   extension [T1, T2, T3, T4, A](m: UnboundInteraction[(T1, T2, T3, T4), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3], source4: Source[T4]):
-    InteractionWithModifies[(T1, T2, T3, T4), (Source[T1], Source[T2], Source[T3], Source[T4]), A] =
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4]
+    ): InteractionWithModifies[(T1, T2, T3, T4), (Var[T1], Var[T2], Var[T3], Var[T4]), A] =
       InteractionWithModifies(m.requires, m.ensures, (source1, source2, source3, source4))
   }
 
   extension [T1, T2, T3, T4, T5, A](m: UnboundInteraction[(T1, T2, T3, T4, T5), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3], source4: Source[T4], source5: Source[T5]):
-    InteractionWithModifies[(T1, T2, T3, T4, T5), (Source[T1], Source[T2], Source[T3], Source[T4], Source[T5]), A] =
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4],
+        source5: Var[T5]
+    ): InteractionWithModifies[(T1, T2, T3, T4, T5), (Var[T1], Var[T2], Var[T3], Var[T4], Var[T5]), A] =
       InteractionWithModifies(m.requires, m.ensures, (source1, source2, source3, source4, source5))
   }
 
   extension [T, A](m: InteractionWithExecutes[Tuple1[T], A]) {
-    def modifies(source: Source[T]):
-    BoundInteraction[Tuple1[T], Tuple1[Source[T]], A] = {
-      BoundInteraction(m.requires, m.ensures, m.executes, Tuple1(source))
+    def modifies(source: Var[T]): InteractionWithExecutesAndModifies[Tuple1[T], Tuple1[Var[T]], A] = {
+      InteractionWithExecutesAndModifies(m.requires, m.ensures, m.executes, Tuple1(source))
     }
   }
 
   extension [T1, T2, A](m: InteractionWithExecutes[(T1, T2), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2]):
-    BoundInteraction[(T1, T2), (Source[T1], Source[T2]), A] =
-      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2))
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2]
+    ): InteractionWithExecutesAndModifies[(T1, T2), (Var[T1], Var[T2]), A] =
+      InteractionWithExecutesAndModifies(m.requires, m.ensures, m.executes, (source1, source2))
   }
 
   extension [T1, T2, T3, A](m: InteractionWithExecutes[(T1, T2, T3), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3]):
-    BoundInteraction[(T1, T2, T3), (Source[T1], Source[T2], Source[T3]), A] =
-      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3))
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3]
+    ): InteractionWithExecutesAndModifies[(T1, T2, T3), (Var[T1], Var[T2], Var[T3]), A] =
+      InteractionWithExecutesAndModifies(m.requires, m.ensures, m.executes, (source1, source2, source3))
   }
 
   extension [T1, T2, T3, T4, A](m: InteractionWithExecutes[(T1, T2, T3, T4), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3], source4: Source[T4]):
-    BoundInteraction[(T1, T2, T3, T4), (Source[T1], Source[T2], Source[T3], Source[T4]), A] =
-      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4))
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4]
+    ): InteractionWithExecutesAndModifies[(T1, T2, T3, T4), (Var[T1], Var[T2], Var[T3], Var[T4]), A] =
+      InteractionWithExecutesAndModifies(m.requires, m.ensures, m.executes, (source1, source2, source3, source4))
   }
 
   extension [T1, T2, T3, T4, T5, A](m: InteractionWithExecutes[(T1, T2, T3, T4, T5), A]) {
-    def modifies(source1: Source[T1], source2: Source[T2], source3: Source[T3], source4: Source[T4], source5: Source[T5]):
-    BoundInteraction[(T1, T2, T3, T4, T5), (Source[T1], Source[T2], Source[T3], Source[T4], Source[T5]), A] =
-      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4, source5))
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4],
+        source5: Var[T5]
+    ): InteractionWithExecutesAndModifies[(T1, T2, T3, T4, T5), (Var[T1], Var[T2], Var[T3], Var[T4], Var[T5]), A] =
+      InteractionWithExecutesAndModifies(
+        m.requires,
+        m.ensures,
+        m.executes,
+        (source1, source2, source3, source4, source5)
+      )
+  }
+
+  extension [T, A](m: InteractionWithActs[Tuple1[T], A]) {
+    def modifies(source: Var[T]): InteractionWithModifiesAndActs[Tuple1[T], Tuple1[Var[T]], A] = {
+      InteractionWithModifiesAndActs(m.requires, m.ensures, Tuple1(source), m.event)
+    }
+  }
+
+  extension [T1, T2, A](m: InteractionWithActs[(T1, T2), A]) {
+    def modifies(source1: Var[T1], source2: Var[T2]): InteractionWithModifiesAndActs[(T1, T2), (Var[T1], Var[T2]), A] =
+      InteractionWithModifiesAndActs(m.requires, m.ensures, (source1, source2), m.event)
+  }
+
+  extension [T1, T2, T3, A](m: InteractionWithActs[(T1, T2, T3), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3]
+    ): InteractionWithModifiesAndActs[(T1, T2, T3), (Var[T1], Var[T2], Var[T3]), A] =
+      InteractionWithModifiesAndActs(m.requires, m.ensures, (source1, source2, source3), m.event)
+  }
+
+  extension [T1, T2, T3, T4, A](m: InteractionWithActs[(T1, T2, T3, T4), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4]
+    ): InteractionWithModifiesAndActs[(T1, T2, T3, T4), (Var[T1], Var[T2], Var[T3], Var[T4]), A] =
+      InteractionWithModifiesAndActs(m.requires, m.ensures, (source1, source2, source3, source4), m.event)
+  }
+
+  extension [T1, T2, T3, T4, T5, A](m: InteractionWithActs[(T1, T2, T3, T4, T5), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4],
+        source5: Var[T5]
+    ): InteractionWithModifiesAndActs[(T1, T2, T3, T4, T5), (Var[T1], Var[T2], Var[T3], Var[T4], Var[T5]), A] =
+      InteractionWithModifiesAndActs(m.requires, m.ensures, (source1, source2, source3, source4, source5), m.event)
+  }
+
+  extension [T, A](m: InteractionWithExecutesAndActs[Tuple1[T], A]) {
+    def modifies(source: Var[T]): BoundInteraction[Tuple1[T], Tuple1[Var[T]], A] = {
+      BoundInteraction(m.requires, m.ensures, m.executes, Tuple1(source), m.event)
+    }
+  }
+
+  extension [T1, T2, A](m: InteractionWithExecutesAndActs[(T1, T2), A]) {
+    def modifies(source1: Var[T1], source2: Var[T2]): BoundInteraction[(T1, T2), (Var[T1], Var[T2]), A] =
+      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2), m.event)
+  }
+
+  extension [T1, T2, T3, A](m: InteractionWithExecutesAndActs[(T1, T2, T3), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3]
+    ): BoundInteraction[(T1, T2, T3), (Var[T1], Var[T2], Var[T3]), A] =
+      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3), m.event)
+  }
+
+  extension [T1, T2, T3, T4, A](m: InteractionWithExecutesAndActs[(T1, T2, T3, T4), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4]
+    ): BoundInteraction[(T1, T2, T3, T4), (Var[T1], Var[T2], Var[T3], Var[T4]), A] =
+      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4), m.event)
+  }
+
+  extension [T1, T2, T3, T4, T5, A](m: InteractionWithExecutesAndActs[(T1, T2, T3, T4, T5), A]) {
+    def modifies(
+        source1: Var[T1],
+        source2: Var[T2],
+        source3: Var[T3],
+        source4: Var[T4],
+        source5: Var[T5]
+    ): BoundInteraction[(T1, T2, T3, T4, T5), (Var[T1], Var[T2], Var[T3], Var[T4], Var[T5]), A] =
+      BoundInteraction(m.requires, m.ensures, m.executes, (source1, source2, source3, source4, source5), m.event)
   }
 
   extension (left: Boolean) {

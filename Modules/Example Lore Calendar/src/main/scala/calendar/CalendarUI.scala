@@ -97,7 +97,7 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
       .modifies(workCalendarRDT)
 
     newWorkAppointment.submitEvent.observe { it =>
-      addInteraction.apply(it)
+      //addInteraction.apply(it)
     }
 
     /*

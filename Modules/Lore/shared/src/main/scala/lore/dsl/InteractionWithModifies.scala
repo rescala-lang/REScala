@@ -31,9 +31,10 @@ case class InteractionWithModifies[ST <: Tuple, S <: Tuple, A] private[dsl](priv
                                                           private[dsl] val ensures: Seq[Ensures[ST, A]] = Seq.empty,
                                                           private[dsl] val modifies: S)
   extends Interaction[ST, A]
-    with CanExecute[ST, A] {
+    with CanExecute[ST, A] with CanAct[ST, A] {
   type T[_, _] = InteractionWithModifies[ST, S, A]
-  type E[_, _] = BoundInteraction[ST, S, A]
+  type E[_, _] = InteractionWithExecutesAndModifies[ST, S, A]
+  type AO[_, _] = InteractionWithModifiesAndActs[ST, S, A]
 
   override inline def requires(inline pred: (ST, A) => Boolean): InteractionWithModifies[ST, S, A] =
     ${ constructInteractionWithModifiesWithRequires('{ this }, '{ pred }) }
@@ -41,6 +42,10 @@ case class InteractionWithModifies[ST <: Tuple, S <: Tuple, A] private[dsl](priv
   override inline def ensures(inline pred: (ST, A) => Boolean): InteractionWithModifies[ST, S, A] =
     ${ constructInteractionWithModifiesWithEnsures('{ this }, '{ pred }) }
 
-  override def executes(fun: (ST, A) => ST): BoundInteraction[ST, S, A] =
-    BoundInteraction(requires, ensures, fun, modifies)
+  override def executes(fun: (ST, A) => ST): InteractionWithExecutesAndModifies[ST, S, A] =
+    InteractionWithExecutesAndModifies(requires, ensures, fun, modifies)
+
+  override def actsOn(event: Event[A]): InteractionWithModifiesAndActs[ST, S, A] =
+    InteractionWithModifiesAndActs(requires, ensures, modifies, event)
+
 }
