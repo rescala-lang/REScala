@@ -1,1 +1,3959 @@
-[{"TTypeAl":{"name":"Calendar","_type":{"SimpleType":{"name":"AWSet","inner":[{"SimpleType":{"name":"Appointment"}}]}},"sourcePos":{"start":{"line":0,"col":0,"offset":0},"end":{"line":0,"col":34,"offset":34}}}},{"TTypeAl":{"name":"Invites","_type":{"SimpleType":{"name":"AWSet","inner":[{"TupleType":{"inner":[{"SimpleType":{"name":"Appointment"}},{"SimpleType":{"name":"User"}}]}}]}},"sourcePos":{"start":{"line":1,"col":0,"offset":35},"end":{"line":1,"col":41,"offset":76}}}},{"TAbs":{"name":"work","_type":{"SimpleType":{"name":"Source","inner":[{"SimpleType":{"name":"Calendar"}}]}},"body":{"TSource":{"body":{"TFunC":{"name":"AWSet","sourcePos":{"start":{"line":4,"col":36,"offset":127},"end":{"line":4,"col":43,"offset":134}}}},"sourcePos":{"start":{"line":4,"col":29,"offset":120},"end":{"line":4,"col":44,"offset":135}}}},"sourcePos":{"start":{"line":4,"col":0,"offset":91},"end":{"line":4,"col":44,"offset":135}}}},{"TAbs":{"name":"vacation","_type":{"SimpleType":{"name":"Source","inner":[{"SimpleType":{"name":"Calendar"}}]}},"body":{"TSource":{"body":{"TFunC":{"name":"AWSet","sourcePos":{"start":{"line":5,"col":40,"offset":176},"end":{"line":5,"col":47,"offset":183}}}},"sourcePos":{"start":{"line":5,"col":33,"offset":169},"end":{"line":5,"col":48,"offset":184}}}},"sourcePos":{"start":{"line":5,"col":0,"offset":136},"end":{"line":5,"col":48,"offset":184}}}},{"TAbs":{"name":"all_appointments","_type":{"SimpleType":{"name":"Derived","inner":[{"SimpleType":{"name":"Set","inner":[{"SimpleType":{"name":"Appointment"}}]}}]}},"body":{"TDerived":{"body":{"TFCall":{"parent":{"TFCall":{"parent":{"TVar":{"name":"work","sourcePos":{"start":{"line":7,"col":59,"offset":245},"end":{"line":7,"col":63,"offset":249}}}},"field":"toSet","sourcePos":{"start":{"line":7,"col":59,"offset":245},"end":{"line":7,"col":69,"offset":255}}}},"field":"union","args":[{"TFCall":{"parent":{"TVar":{"name":"vacation","sourcePos":{"start":{"line":7,"col":76,"offset":262},"end":{"line":7,"col":84,"offset":270}}}},"field":"toSet","sourcePos":{"start":{"line":7,"col":76,"offset":262},"end":{"line":7,"col":90,"offset":276}}}}],"sourcePos":{"start":{"line":7,"col":59,"offset":245},"end":{"line":7,"col":91,"offset":277}}}},"sourcePos":{"start":{"line":7,"col":50,"offset":236},"end":{"line":7,"col":93,"offset":279}}}},"sourcePos":{"start":{"line":7,"col":0,"offset":186},"end":{"line":7,"col":93,"offset":279}}}},{"TAbs":{"name":"remaining_vacation","_type":{"SimpleType":{"name":"Derived","inner":[{"SimpleType":{"name":"Int"}}]}},"body":{"TDerived":{"body":{"TSub":{"left":{"TNum":{"value":30,"sourcePos":{"start":{"line":8,"col":48,"offset":328},"end":{"line":8,"col":50,"offset":330}}}},"right":{"TFCall":{"parent":{"TFCall":{"parent":{"TFCall":{"parent":{"TVar":{"name":"vacation","sourcePos":{"start":{"line":8,"col":53,"offset":333},"end":{"line":8,"col":61,"offset":341}}}},"field":"toSet","sourcePos":{"start":{"line":8,"col":53,"offset":333},"end":{"line":8,"col":67,"offset":347}}}},"field":"map","args":[{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":8,"col":72,"offset":352},"end":{"line":8,"col":73,"offset":353}}}},"right":{"TFCall":{"parent":{"TVar":{"name":"a","sourcePos":{"start":{"line":8,"col":77,"offset":357},"end":{"line":8,"col":78,"offset":358}}}},"field":"days","sourcePos":{"start":{"line":8,"col":77,"offset":357},"end":{"line":8,"col":83,"offset":363}}}},"sourcePos":{"start":{"line":8,"col":72,"offset":352},"end":{"line":8,"col":83,"offset":363}}}}],"sourcePos":{"start":{"line":8,"col":53,"offset":333},"end":{"line":8,"col":84,"offset":364}}}},"field":"sum","sourcePos":{"start":{"line":8,"col":53,"offset":333},"end":{"line":8,"col":88,"offset":368}}}},"sourcePos":{"start":{"line":8,"col":48,"offset":328},"end":{"line":8,"col":88,"offset":368}}}},"sourcePos":{"start":{"line":8,"col":39,"offset":319},"end":{"line":8,"col":90,"offset":370}}}},"sourcePos":{"start":{"line":8,"col":0,"offset":280},"end":{"line":8,"col":90,"offset":370}}}},{"TAbs":{"name":"users","_type":{"SimpleType":{"name":"Source","inner":[{"SimpleType":{"name":"AWSet","inner":[{"SimpleType":{"name":"User"}}]}}]}},"body":{"TSource":{"body":{"TFunC":{"name":"AWSet","sourcePos":{"start":{"line":11,"col":40,"offset":421},"end":{"line":11,"col":47,"offset":428}}}},"sourcePos":{"start":{"line":11,"col":33,"offset":414},"end":{"line":11,"col":48,"offset":429}}}},"sourcePos":{"start":{"line":11,"col":0,"offset":381},"end":{"line":11,"col":48,"offset":429}}}},{"TAbs":{"name":"thisUser","_type":{"SimpleType":{"name":"Source","inner":[{"SimpleType":{"name":"Option","inner":[{"SimpleType":{"name":"User"}}]}}]}},"body":{"TSource":{"body":{"TVar":{"name":"None","sourcePos":{"start":{"line":12,"col":44,"offset":474},"end":{"line":12,"col":48,"offset":478}}}},"sourcePos":{"start":{"line":12,"col":37,"offset":467},"end":{"line":12,"col":49,"offset":479}}}},"sourcePos":{"start":{"line":12,"col":0,"offset":430},"end":{"line":12,"col":49,"offset":479}}}},{"TAbs":{"name":"invited","_type":{"SimpleType":{"name":"Source","inner":[{"SimpleType":{"name":"Invites"}}]}},"body":{"TSource":{"body":{"TFunC":{"name":"Map","sourcePos":{"start":{"line":13,"col":38,"offset":537},"end":{"line":13,"col":43,"offset":542}}}},"sourcePos":{"start":{"line":13,"col":31,"offset":530},"end":{"line":13,"col":44,"offset":543}}}},"sourcePos":{"start":{"line":13,"col":0,"offset":499},"end":{"line":13,"col":44,"offset":543}}}},{"TAbs":{"name":"login","_type":{"SimpleType":{"name":"Unit"}},"body":{"TFCall":{"parent":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TInteraction":{"reactiveType":{"SimpleType":{"name":"Option","inner":[{"SimpleType":{"name":"User"}}]}},"argumentType":{"TupleType":{"inner":[{"SimpleType":{"name":"User"}},{"SimpleType":{"name":"Password"}}]}},"sourcePos":{"start":{"line":16,"col":18,"offset":582},"end":{"line":16,"col":61,"offset":625}}}},"field":"requires","body":{"TArrow":{"left":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":17,"col":13,"offset":639},"end":{"line":17,"col":21,"offset":647}}}},"right":{"TArrow":{"left":{"TVar":{"name":"user","sourcePos":{"start":{"line":17,"col":26,"offset":652},"end":{"line":17,"col":30,"offset":656}}}},"right":{"TArrow":{"left":{"TVar":{"name":"pass","sourcePos":{"start":{"line":17,"col":32,"offset":658},"end":{"line":17,"col":36,"offset":662}}}},"right":{"TEq":{"left":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":17,"col":41,"offset":667},"end":{"line":17,"col":49,"offset":675}}}},"right":{"TVar":{"name":"None","sourcePos":{"start":{"line":17,"col":53,"offset":679},"end":{"line":17,"col":57,"offset":683}}}},"sourcePos":{"start":{"line":17,"col":41,"offset":667},"end":{"line":17,"col":57,"offset":683}}}},"sourcePos":{"start":{"line":17,"col":32,"offset":658},"end":{"line":17,"col":57,"offset":683}}}},"sourcePos":{"start":{"line":17,"col":26,"offset":652},"end":{"line":17,"col":57,"offset":683}}}},"sourcePos":{"start":{"line":17,"col":13,"offset":639},"end":{"line":17,"col":57,"offset":683}}}},"sourcePos":{"start":{"line":16,"col":18,"offset":582},"end":{"line":17,"col":58,"offset":684}}}},"field":"executes","body":{"TArrow":{"left":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":18,"col":13,"offset":698},"end":{"line":18,"col":21,"offset":706}}}},"right":{"TArrow":{"left":{"TVar":{"name":"user","sourcePos":{"start":{"line":18,"col":26,"offset":711},"end":{"line":18,"col":30,"offset":715}}}},"right":{"TArrow":{"left":{"TVar":{"name":"pass","sourcePos":{"start":{"line":18,"col":32,"offset":717},"end":{"line":18,"col":36,"offset":721}}}},"right":{"TIf":{"cond":{"TFunC":{"name":"is_correct","args":[{"TVar":{"name":"user","sourcePos":{"start":{"line":19,"col":20,"offset":746},"end":{"line":19,"col":24,"offset":750}}}},{"TVar":{"name":"pass","sourcePos":{"start":{"line":19,"col":25,"offset":751},"end":{"line":19,"col":29,"offset":755}}}}],"sourcePos":{"start":{"line":19,"col":9,"offset":735},"end":{"line":19,"col":30,"offset":756}}}},"_then":{"TFCall":{"parent":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":20,"col":8,"offset":770},"end":{"line":20,"col":16,"offset":778}}}},"field":"set","args":[{"TFunC":{"name":"Some","args":[{"TVar":{"name":"user","sourcePos":{"start":{"line":20,"col":26,"offset":788},"end":{"line":20,"col":30,"offset":792}}}}],"sourcePos":{"start":{"line":20,"col":21,"offset":783},"end":{"line":20,"col":31,"offset":793}}}}],"sourcePos":{"start":{"line":20,"col":8,"offset":770},"end":{"line":20,"col":32,"offset":794}}}},"sourcePos":{"start":{"line":19,"col":6,"offset":732},"end":{"line":20,"col":32,"offset":794}}}},"sourcePos":{"start":{"line":18,"col":32,"offset":717},"end":{"line":20,"col":32,"offset":794}}}},"sourcePos":{"start":{"line":18,"col":26,"offset":711},"end":{"line":20,"col":32,"offset":794}}}},"sourcePos":{"start":{"line":18,"col":13,"offset":698},"end":{"line":20,"col":32,"offset":794}}}},"sourcePos":{"start":{"line":16,"col":18,"offset":582},"end":{"line":21,"col":3,"offset":798}}}},"field":"ensures","body":{"TArrow":{"left":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":22,"col":11,"offset":810},"end":{"line":22,"col":19,"offset":818}}}},"right":{"TArrow":{"left":{"TVar":{"name":"user","sourcePos":{"start":{"line":22,"col":24,"offset":823},"end":{"line":22,"col":28,"offset":827}}}},"right":{"TArrow":{"left":{"TVar":{"name":"pass","sourcePos":{"start":{"line":22,"col":30,"offset":829},"end":{"line":22,"col":34,"offset":833}}}},"right":{"TParens":{"inner":{"TImpl":{"left":{"TEq":{"left":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":23,"col":7,"offset":845},"end":{"line":23,"col":15,"offset":853}}}},"right":{"TVar":{"name":"user","sourcePos":{"start":{"line":23,"col":19,"offset":857},"end":{"line":23,"col":23,"offset":861}}}},"sourcePos":{"start":{"line":23,"col":7,"offset":845},"end":{"line":23,"col":23,"offset":861}}}},"right":{"TFunC":{"name":"is_correct","args":[{"TVar":{"name":"user","sourcePos":{"start":{"line":23,"col":39,"offset":877},"end":{"line":23,"col":43,"offset":881}}}},{"TVar":{"name":"pass","sourcePos":{"start":{"line":23,"col":44,"offset":882},"end":{"line":23,"col":48,"offset":886}}}}],"sourcePos":{"start":{"line":23,"col":28,"offset":866},"end":{"line":23,"col":49,"offset":887}}}},"sourcePos":{"start":{"line":23,"col":7,"offset":845},"end":{"line":23,"col":49,"offset":887}}}},"sourcePos":{"start":{"line":23,"col":6,"offset":844},"end":{"line":23,"col":50,"offset":888}}}},"sourcePos":{"start":{"line":22,"col":30,"offset":829},"end":{"line":23,"col":50,"offset":888}}}},"sourcePos":{"start":{"line":22,"col":24,"offset":823},"end":{"line":23,"col":50,"offset":888}}}},"sourcePos":{"start":{"line":22,"col":11,"offset":810},"end":{"line":23,"col":50,"offset":888}}}},"sourcePos":{"start":{"line":16,"col":18,"offset":582},"end":{"line":23,"col":51,"offset":889}}}},"field":"modifies","args":[{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":24,"col":12,"offset":902},"end":{"line":24,"col":20,"offset":910}}}}],"sourcePos":{"start":{"line":16,"col":18,"offset":582},"end":{"line":24,"col":21,"offset":911}}}},"sourcePos":{"start":{"line":16,"col":0,"offset":564},"end":{"line":24,"col":21,"offset":911}}}},{"TAbs":{"name":"add_appointment","_type":{"SimpleType":{"name":"Unit"}},"body":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TInteraction":{"reactiveType":{"SimpleType":{"name":"Calendar"}},"argumentType":{"SimpleType":{"name":"Appointment"}},"sourcePos":{"start":{"line":27,"col":29,"offset":964},"end":{"line":27,"col":63,"offset":998}}}},"field":"requires","body":{"TArrow":{"left":{"TVar":{"name":"cal","sourcePos":{"start":{"line":28,"col":13,"offset":1065},"end":{"line":28,"col":16,"offset":1068}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":28,"col":20,"offset":1072},"end":{"line":28,"col":21,"offset":1073}}}},"right":{"TLt":{"left":{"TFunC":{"name":"get_start","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":28,"col":35,"offset":1087},"end":{"line":28,"col":36,"offset":1088}}}}],"sourcePos":{"start":{"line":28,"col":25,"offset":1077},"end":{"line":28,"col":37,"offset":1089}}}},"right":{"TFunC":{"name":"get_end","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":28,"col":48,"offset":1100},"end":{"line":28,"col":49,"offset":1101}}}}],"sourcePos":{"start":{"line":28,"col":40,"offset":1092},"end":{"line":28,"col":50,"offset":1102}}}},"sourcePos":{"start":{"line":28,"col":25,"offset":1077},"end":{"line":28,"col":50,"offset":1102}}}},"sourcePos":{"start":{"line":28,"col":20,"offset":1072},"end":{"line":28,"col":50,"offset":1102}}}},"sourcePos":{"start":{"line":28,"col":13,"offset":1065},"end":{"line":28,"col":50,"offset":1102}}}},"sourcePos":{"start":{"line":27,"col":29,"offset":964},"end":{"line":28,"col":52,"offset":1104}}}},"field":"requires","body":{"TArrow":{"left":{"TVar":{"name":"cal","sourcePos":{"start":{"line":29,"col":13,"offset":1118},"end":{"line":29,"col":16,"offset":1121}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":29,"col":20,"offset":1125},"end":{"line":29,"col":21,"offset":1126}}}},"right":{"TEq":{"left":{"TFunC":{"name":"get_creator","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":29,"col":37,"offset":1142},"end":{"line":29,"col":38,"offset":1143}}}}],"sourcePos":{"start":{"line":29,"col":25,"offset":1130},"end":{"line":29,"col":39,"offset":1144}}}},"right":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":29,"col":43,"offset":1148},"end":{"line":29,"col":51,"offset":1156}}}},"sourcePos":{"start":{"line":29,"col":25,"offset":1130},"end":{"line":29,"col":51,"offset":1156}}}},"sourcePos":{"start":{"line":29,"col":20,"offset":1125},"end":{"line":29,"col":51,"offset":1156}}}},"sourcePos":{"start":{"line":29,"col":13,"offset":1118},"end":{"line":29,"col":51,"offset":1156}}}},"sourcePos":{"start":{"line":27,"col":29,"offset":964},"end":{"line":29,"col":52,"offset":1157}}}},"field":"executes","body":{"TArrow":{"left":{"TVar":{"name":"cal","sourcePos":{"start":{"line":30,"col":13,"offset":1214},"end":{"line":30,"col":16,"offset":1217}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":30,"col":20,"offset":1221},"end":{"line":30,"col":21,"offset":1222}}}},"right":{"TFCall":{"parent":{"TVar":{"name":"cal","sourcePos":{"start":{"line":30,"col":25,"offset":1226},"end":{"line":30,"col":28,"offset":1229}}}},"field":"add","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":30,"col":33,"offset":1234},"end":{"line":30,"col":34,"offset":1235}}}}],"sourcePos":{"start":{"line":30,"col":25,"offset":1226},"end":{"line":30,"col":35,"offset":1236}}}},"sourcePos":{"start":{"line":30,"col":20,"offset":1221},"end":{"line":30,"col":35,"offset":1236}}}},"sourcePos":{"start":{"line":30,"col":13,"offset":1214},"end":{"line":30,"col":35,"offset":1236}}}},"sourcePos":{"start":{"line":27,"col":29,"offset":964},"end":{"line":30,"col":37,"offset":1238}}}},"field":"ensures","body":{"TArrow":{"left":{"TVar":{"name":"cal","sourcePos":{"start":{"line":31,"col":13,"offset":1252},"end":{"line":31,"col":16,"offset":1255}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":31,"col":20,"offset":1259},"end":{"line":31,"col":21,"offset":1260}}}},"right":{"TInSet":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":31,"col":25,"offset":1264},"end":{"line":31,"col":26,"offset":1265}}}},"right":{"TFCall":{"parent":{"TVar":{"name":"cal","sourcePos":{"start":{"line":31,"col":30,"offset":1269},"end":{"line":31,"col":33,"offset":1272}}}},"field":"toSet","sourcePos":{"start":{"line":31,"col":30,"offset":1269},"end":{"line":31,"col":39,"offset":1278}}}},"sourcePos":{"start":{"line":31,"col":25,"offset":1264},"end":{"line":31,"col":39,"offset":1278}}}},"sourcePos":{"start":{"line":31,"col":20,"offset":1259},"end":{"line":31,"col":39,"offset":1278}}}},"sourcePos":{"start":{"line":31,"col":13,"offset":1252},"end":{"line":31,"col":39,"offset":1278}}}},"sourcePos":{"start":{"line":27,"col":29,"offset":964},"end":{"line":31,"col":41,"offset":1280}}}},"sourcePos":{"start":{"line":27,"col":0,"offset":935},"end":{"line":31,"col":41,"offset":1280}}}},{"TAbs":{"name":"add_vacation","_type":{"SimpleType":{"name":"Unit"}},"body":{"TFCall":{"parent":{"TVar":{"name":"add_appointment","sourcePos":{"start":{"line":32,"col":26,"offset":1307},"end":{"line":32,"col":41,"offset":1322}}}},"field":"modifies","args":[{"TVar":{"name":"vacation","sourcePos":{"start":{"line":32,"col":51,"offset":1332},"end":{"line":32,"col":59,"offset":1340}}}}],"sourcePos":{"start":{"line":32,"col":26,"offset":1307},"end":{"line":32,"col":60,"offset":1341}}}},"sourcePos":{"start":{"line":32,"col":0,"offset":1281},"end":{"line":32,"col":60,"offset":1341}}}},{"TAbs":{"name":"add_work","_type":{"SimpleType":{"name":"Unit"}},"body":{"TFCall":{"parent":{"TVar":{"name":"add_appointment","sourcePos":{"start":{"line":33,"col":26,"offset":1368},"end":{"line":33,"col":41,"offset":1383}}}},"field":"modifies","args":[{"TVar":{"name":"work","sourcePos":{"start":{"line":33,"col":51,"offset":1393},"end":{"line":33,"col":55,"offset":1397}}}}],"sourcePos":{"start":{"line":33,"col":26,"offset":1368},"end":{"line":33,"col":56,"offset":1398}}}},"sourcePos":{"start":{"line":33,"col":0,"offset":1342},"end":{"line":33,"col":56,"offset":1398}}}},{"TAbs":{"name":"invite","_type":{"SimpleType":{"name":"Unit"}},"body":{"TFCall":{"parent":{"TFCurly":{"parent":{"TFCurly":{"parent":{"TInteraction":{"reactiveType":{"SimpleType":{"name":"Invites"}},"argumentType":{"TupleType":{"inner":[{"SimpleType":{"name":"Appointment"}},{"SimpleType":{"name":"User"}}]}},"sourcePos":{"start":{"line":35,"col":20,"offset":1420},"end":{"line":35,"col":61,"offset":1461}}}},"field":"requires","body":{"TArrow":{"left":{"TVar":{"name":"invites","sourcePos":{"start":{"line":36,"col":13,"offset":1475},"end":{"line":36,"col":20,"offset":1482}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":36,"col":25,"offset":1487},"end":{"line":36,"col":26,"offset":1488}}}},"right":{"TArrow":{"left":{"TVar":{"name":"u","sourcePos":{"start":{"line":36,"col":27,"offset":1489},"end":{"line":36,"col":28,"offset":1490}}}},"right":{"TEq":{"left":{"TFunC":{"name":"get_creator","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":36,"col":45,"offset":1507},"end":{"line":36,"col":46,"offset":1508}}}}],"sourcePos":{"start":{"line":36,"col":33,"offset":1495},"end":{"line":36,"col":47,"offset":1509}}}},"right":{"TVar":{"name":"thisUser","sourcePos":{"start":{"line":36,"col":51,"offset":1513},"end":{"line":36,"col":59,"offset":1521}}}},"sourcePos":{"start":{"line":36,"col":33,"offset":1495},"end":{"line":36,"col":59,"offset":1521}}}},"sourcePos":{"start":{"line":36,"col":27,"offset":1489},"end":{"line":36,"col":59,"offset":1521}}}},"sourcePos":{"start":{"line":36,"col":25,"offset":1487},"end":{"line":36,"col":59,"offset":1521}}}},"sourcePos":{"start":{"line":36,"col":13,"offset":1475},"end":{"line":36,"col":59,"offset":1521}}}},"sourcePos":{"start":{"line":35,"col":20,"offset":1420},"end":{"line":36,"col":60,"offset":1522}}}},"field":"executes","body":{"TArrow":{"left":{"TVar":{"name":"invites","sourcePos":{"start":{"line":37,"col":13,"offset":1575},"end":{"line":37,"col":20,"offset":1582}}}},"right":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":37,"col":25,"offset":1587},"end":{"line":37,"col":26,"offset":1588}}}},"right":{"TArrow":{"left":{"TVar":{"name":"u","sourcePos":{"start":{"line":37,"col":27,"offset":1589},"end":{"line":37,"col":28,"offset":1590}}}},"right":{"TFCall":{"parent":{"TVar":{"name":"invites","sourcePos":{"start":{"line":38,"col":4,"offset":1599},"end":{"line":38,"col":11,"offset":1606}}}},"field":"add","args":[{"TTuple":{"factors":[{"TVar":{"name":"a","sourcePos":{"start":{"line":38,"col":17,"offset":1612},"end":{"line":38,"col":18,"offset":1613}}}},{"TVar":{"name":"u","sourcePos":{"start":{"line":38,"col":19,"offset":1614},"end":{"line":38,"col":20,"offset":1615}}}}],"sourcePos":{"start":{"line":38,"col":16,"offset":1611},"end":{"line":38,"col":21,"offset":1616}}}}],"sourcePos":{"start":{"line":38,"col":4,"offset":1599},"end":{"line":38,"col":22,"offset":1617}}}},"sourcePos":{"start":{"line":37,"col":27,"offset":1589},"end":{"line":38,"col":22,"offset":1617}}}},"sourcePos":{"start":{"line":37,"col":25,"offset":1587},"end":{"line":38,"col":22,"offset":1617}}}},"sourcePos":{"start":{"line":37,"col":13,"offset":1575},"end":{"line":38,"col":22,"offset":1617}}}},"sourcePos":{"start":{"line":35,"col":20,"offset":1420},"end":{"line":39,"col":3,"offset":1621}}}},"field":"modifies","args":[{"TVar":{"name":"invited","sourcePos":{"start":{"line":40,"col":12,"offset":1634},"end":{"line":40,"col":19,"offset":1641}}}}],"sourcePos":{"start":{"line":35,"col":20,"offset":1420},"end":{"line":40,"col":20,"offset":1642}}}},"sourcePos":{"start":{"line":35,"col":0,"offset":1400},"end":{"line":40,"col":20,"offset":1642}}}},{"TFCall":{"parent":{"TVar":{"name":"UI","sourcePos":{"start":{"line":42,"col":0,"offset":1644},"end":{"line":42,"col":2,"offset":1646}}}},"field":"display","args":[{"TVar":{"name":"all_appointments","sourcePos":{"start":{"line":42,"col":11,"offset":1655},"end":{"line":42,"col":27,"offset":1671}}}},{"TVar":{"name":"remaining_vacation","sourcePos":{"start":{"line":42,"col":29,"offset":1673},"end":{"line":42,"col":47,"offset":1691}}}}],"sourcePos":{"start":{"line":42,"col":0,"offset":1644},"end":{"line":42,"col":48,"offset":1692}}}},{"TFCurly":{"parent":{"TFCall":{"parent":{"TVar":{"name":"UI","sourcePos":{"start":{"line":43,"col":0,"offset":1693},"end":{"line":43,"col":2,"offset":1695}}}},"field":"vacationDialog","sourcePos":{"start":{"line":43,"col":0,"offset":1693},"end":{"line":43,"col":17,"offset":1710}}}},"field":"onConfirm","body":{"TArrow":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":43,"col":28,"offset":1721},"end":{"line":43,"col":29,"offset":1722}}}},"right":{"TFCall":{"parent":{"TVar":{"name":"add_vacation","sourcePos":{"start":{"line":43,"col":33,"offset":1726},"end":{"line":43,"col":45,"offset":1738}}}},"field":"apply","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":43,"col":52,"offset":1745},"end":{"line":43,"col":53,"offset":1746}}}}],"sourcePos":{"start":{"line":43,"col":33,"offset":1726},"end":{"line":43,"col":54,"offset":1747}}}},"sourcePos":{"start":{"line":43,"col":28,"offset":1721},"end":{"line":43,"col":54,"offset":1747}}}},"sourcePos":{"start":{"line":43,"col":0,"offset":1693},"end":{"line":43,"col":55,"offset":1748}}}},{"TInvariant":{"condition":{"TForall":{"vars":[{"name":"a","_type":{"SimpleType":{"name":"Appointment"}}}],"body":{"TImpl":{"left":{"TInSet":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":47,"col":2,"offset":1818},"end":{"line":47,"col":3,"offset":1819}}}},"right":{"TVar":{"name":"all_appointments","sourcePos":{"start":{"line":47,"col":7,"offset":1823},"end":{"line":47,"col":23,"offset":1839}}}},"sourcePos":{"start":{"line":47,"col":2,"offset":1818},"end":{"line":47,"col":23,"offset":1839}}}},"right":{"TLt":{"left":{"TFunC":{"name":"get_start","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":47,"col":38,"offset":1854},"end":{"line":47,"col":39,"offset":1855}}}}],"sourcePos":{"start":{"line":47,"col":28,"offset":1844},"end":{"line":47,"col":40,"offset":1856}}}},"right":{"TFunC":{"name":"get_end","args":[{"TVar":{"name":"a","sourcePos":{"start":{"line":47,"col":51,"offset":1867},"end":{"line":47,"col":52,"offset":1868}}}}],"sourcePos":{"start":{"line":47,"col":43,"offset":1859},"end":{"line":47,"col":53,"offset":1869}}}},"sourcePos":{"start":{"line":47,"col":28,"offset":1844},"end":{"line":47,"col":53,"offset":1869}}}},"sourcePos":{"start":{"line":47,"col":2,"offset":1818},"end":{"line":47,"col":53,"offset":1869}}}},"sourcePos":{"start":{"line":46,"col":10,"offset":1791},"end":{"line":47,"col":53,"offset":1869}}}},"sourcePos":{"start":{"line":46,"col":0,"offset":1781},"end":{"line":47,"col":53,"offset":1869}}}},{"TInvariant":{"condition":{"TGeq":{"left":{"TVar":{"name":"remaining_vacation","sourcePos":{"start":{"line":50,"col":10,"offset":1933},"end":{"line":50,"col":28,"offset":1951}}}},"right":{"TNum":{"value":0,"sourcePos":{"start":{"line":50,"col":32,"offset":1955},"end":{"line":50,"col":33,"offset":1956}}}},"sourcePos":{"start":{"line":50,"col":10,"offset":1933},"end":{"line":50,"col":33,"offset":1956}}}},"sourcePos":{"start":{"line":50,"col":0,"offset":1923},"end":{"line":50,"col":33,"offset":1956}}}},{"TInvariant":{"condition":{"TForall":{"vars":[{"name":"a","_type":{"SimpleType":{"name":"Appointment"}}},{"name":"u","_type":{"SimpleType":{"name":"User"}}}],"body":{"TImpl":{"left":{"TInSet":{"left":{"TTuple":{"factors":[{"TVar":{"name":"a","sourcePos":{"start":{"line":54,"col":3,"offset":2078},"end":{"line":54,"col":4,"offset":2079}}}},{"TVar":{"name":"u","sourcePos":{"start":{"line":54,"col":6,"offset":2081},"end":{"line":54,"col":7,"offset":2082}}}}],"sourcePos":{"start":{"line":54,"col":2,"offset":2077},"end":{"line":54,"col":8,"offset":2083}}}},"right":{"TVar":{"name":"invitations","sourcePos":{"start":{"line":54,"col":12,"offset":2087},"end":{"line":54,"col":23,"offset":2098}}}},"sourcePos":{"start":{"line":54,"col":2,"offset":2077},"end":{"line":54,"col":23,"offset":2098}}}},"right":{"TInSet":{"left":{"TVar":{"name":"a","sourcePos":{"start":{"line":54,"col":28,"offset":2103},"end":{"line":54,"col":29,"offset":2104}}}},"right":{"TVar":{"name":"all_appointments","sourcePos":{"start":{"line":54,"col":33,"offset":2108},"end":{"line":54,"col":49,"offset":2124}}}},"sourcePos":{"start":{"line":54,"col":28,"offset":2103},"end":{"line":54,"col":49,"offset":2124}}}},"sourcePos":{"start":{"line":54,"col":2,"offset":2077},"end":{"line":54,"col":49,"offset":2124}}}},"sourcePos":{"start":{"line":53,"col":10,"offset":2041},"end":{"line":54,"col":49,"offset":2124}}}},"sourcePos":{"start":{"line":53,"col":0,"offset":2031},"end":{"line":54,"col":49,"offset":2124}}}},{"TInvariant":{"condition":{"TForall":{"vars":[{"name":"a1","_type":{"SimpleType":{"name":"Appointment"}}},{"name":"a2","_type":{"SimpleType":{"name":"Appointment"}}}],"body":{"TImpl":{"left":{"TConj":{"left":{"TInSet":{"left":{"TVar":{"name":"a1","sourcePos":{"start":{"line":58,"col":2,"offset":2265},"end":{"line":58,"col":4,"offset":2267}}}},"right":{"TVar":{"name":"all_appointments","sourcePos":{"start":{"line":58,"col":8,"offset":2271},"end":{"line":58,"col":24,"offset":2287}}}},"sourcePos":{"start":{"line":58,"col":2,"offset":2265},"end":{"line":58,"col":24,"offset":2287}}}},"right":{"TConj":{"left":{"TInSet":{"left":{"TVar":{"name":"a2","sourcePos":{"start":{"line":58,"col":28,"offset":2291},"end":{"line":58,"col":30,"offset":2293}}}},"right":{"TVar":{"name":"all_appointments","sourcePos":{"start":{"line":58,"col":34,"offset":2297},"end":{"line":58,"col":50,"offset":2313}}}},"sourcePos":{"start":{"line":58,"col":28,"offset":2291},"end":{"line":58,"col":50,"offset":2313}}}},"right":{"TConj":{"left":{"TLt":{"left":{"TFunC":{"name":"get_start","args":[{"TVar":{"name":"a2","sourcePos":{"start":{"line":59,"col":12,"offset":2329},"end":{"line":59,"col":14,"offset":2331}}}}],"sourcePos":{"start":{"line":59,"col":2,"offset":2319},"end":{"line":59,"col":15,"offset":2332}}}},"right":{"TAdd":{"left":{"TFunC":{"name":"get_end","args":[{"TVar":{"name":"a1","sourcePos":{"start":{"line":59,"col":26,"offset":2343},"end":{"line":59,"col":28,"offset":2345}}}}],"sourcePos":{"start":{"line":59,"col":18,"offset":2335},"end":{"line":59,"col":29,"offset":2346}}}},"right":{"TNum":{"value":30,"sourcePos":{"start":{"line":59,"col":32,"offset":2349},"end":{"line":59,"col":34,"offset":2351}}}},"sourcePos":{"start":{"line":59,"col":18,"offset":2335},"end":{"line":59,"col":34,"offset":2351}}}},"sourcePos":{"start":{"line":59,"col":2,"offset":2319},"end":{"line":59,"col":34,"offset":2351}}}},"right":{"TEq":{"left":{"TFunC":{"name":"get_room","args":[{"TVar":{"name":"a1","sourcePos":{"start":{"line":59,"col":47,"offset":2364},"end":{"line":59,"col":49,"offset":2366}}}}],"sourcePos":{"start":{"line":59,"col":38,"offset":2355},"end":{"line":59,"col":50,"offset":2367}}}},"right":{"TFunC":{"name":"get_room","args":[{"TVar":{"name":"a2","sourcePos":{"start":{"line":59,"col":63,"offset":2380},"end":{"line":59,"col":65,"offset":2382}}}}],"sourcePos":{"start":{"line":59,"col":54,"offset":2371},"end":{"line":59,"col":66,"offset":2383}}}},"sourcePos":{"start":{"line":59,"col":38,"offset":2355},"end":{"line":59,"col":66,"offset":2383}}}},"sourcePos":{"start":{"line":59,"col":2,"offset":2319},"end":{"line":59,"col":66,"offset":2383}}}},"sourcePos":{"start":{"line":58,"col":28,"offset":2291},"end":{"line":59,"col":66,"offset":2383}}}},"sourcePos":{"start":{"line":58,"col":2,"offset":2265},"end":{"line":59,"col":66,"offset":2383}}}},"right":{"TEq":{"left":{"TVar":{"name":"a1","sourcePos":{"start":{"line":60,"col":2,"offset":2390},"end":{"line":60,"col":4,"offset":2392}}}},"right":{"TVar":{"name":"a2","sourcePos":{"start":{"line":60,"col":8,"offset":2396},"end":{"line":60,"col":10,"offset":2398}}}},"sourcePos":{"start":{"line":60,"col":2,"offset":2390},"end":{"line":60,"col":10,"offset":2398}}}},"sourcePos":{"start":{"line":58,"col":2,"offset":2265},"end":{"line":60,"col":10,"offset":2398}}}},"sourcePos":{"start":{"line":57,"col":10,"offset":2220},"end":{"line":60,"col":10,"offset":2398}}}},"sourcePos":{"start":{"line":57,"col":0,"offset":2210},"end":{"line":60,"col":10,"offset":2398}}}}]
+[
+  {
+    "TTypeAl": {
+      "name": "Calendar",
+      "_type": {
+        "SimpleType": {
+          "name": "AWSet",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Appointment"
+              }
+            }
+          ]
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 0,
+          "col": 0,
+          "offset": 0
+        },
+        "end": {
+          "line": 0,
+          "col": 34,
+          "offset": 34
+        }
+      }
+    }
+  },
+  {
+    "TTypeAl": {
+      "name": "Invites",
+      "_type": {
+        "SimpleType": {
+          "name": "AWSet",
+          "inner": [
+            {
+              "TupleType": {
+                "inner": [
+                  {
+                    "SimpleType": {
+                      "name": "Appointment"
+                    }
+                  },
+                  {
+                    "SimpleType": {
+                      "name": "User"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 1,
+          "col": 0,
+          "offset": 35
+        },
+        "end": {
+          "line": 1,
+          "col": 41,
+          "offset": 76
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "work",
+      "_type": {
+        "SimpleType": {
+          "name": "Source",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Calendar"
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TSource": {
+          "body": {
+            "TFunC": {
+              "name": "AWSet",
+              "sourcePos": {
+                "start": {
+                  "line": 4,
+                  "col": 36,
+                  "offset": 127
+                },
+                "end": {
+                  "line": 4,
+                  "col": 43,
+                  "offset": 134
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 4,
+              "col": 29,
+              "offset": 120
+            },
+            "end": {
+              "line": 4,
+              "col": 44,
+              "offset": 135
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 4,
+          "col": 0,
+          "offset": 91
+        },
+        "end": {
+          "line": 4,
+          "col": 44,
+          "offset": 135
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "vacation",
+      "_type": {
+        "SimpleType": {
+          "name": "Source",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Calendar"
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TSource": {
+          "body": {
+            "TFunC": {
+              "name": "AWSet",
+              "sourcePos": {
+                "start": {
+                  "line": 5,
+                  "col": 40,
+                  "offset": 176
+                },
+                "end": {
+                  "line": 5,
+                  "col": 47,
+                  "offset": 183
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 5,
+              "col": 33,
+              "offset": 169
+            },
+            "end": {
+              "line": 5,
+              "col": 48,
+              "offset": 184
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 5,
+          "col": 0,
+          "offset": 136
+        },
+        "end": {
+          "line": 5,
+          "col": 48,
+          "offset": 184
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "all_appointments",
+      "_type": {
+        "SimpleType": {
+          "name": "Derived",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Set",
+                "inner": [
+                  {
+                    "SimpleType": {
+                      "name": "Appointment"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TDerived": {
+          "body": {
+            "TFCall": {
+              "parent": {
+                "TFCall": {
+                  "parent": {
+                    "TVar": {
+                      "name": "work",
+                      "sourcePos": {
+                        "start": {
+                          "line": 7,
+                          "col": 59,
+                          "offset": 245
+                        },
+                        "end": {
+                          "line": 7,
+                          "col": 63,
+                          "offset": 249
+                        }
+                      }
+                    }
+                  },
+                  "field": "toSet",
+                  "sourcePos": {
+                    "start": {
+                      "line": 7,
+                      "col": 59,
+                      "offset": 245
+                    },
+                    "end": {
+                      "line": 7,
+                      "col": 69,
+                      "offset": 255
+                    }
+                  }
+                }
+              },
+              "field": "union",
+              "args": [
+                {
+                  "TFCall": {
+                    "parent": {
+                      "TVar": {
+                        "name": "vacation",
+                        "sourcePos": {
+                          "start": {
+                            "line": 7,
+                            "col": 76,
+                            "offset": 262
+                          },
+                          "end": {
+                            "line": 7,
+                            "col": 84,
+                            "offset": 270
+                          }
+                        }
+                      }
+                    },
+                    "field": "toSet",
+                    "sourcePos": {
+                      "start": {
+                        "line": 7,
+                        "col": 76,
+                        "offset": 262
+                      },
+                      "end": {
+                        "line": 7,
+                        "col": 90,
+                        "offset": 276
+                      }
+                    }
+                  }
+                }
+              ],
+              "sourcePos": {
+                "start": {
+                  "line": 7,
+                  "col": 59,
+                  "offset": 245
+                },
+                "end": {
+                  "line": 7,
+                  "col": 91,
+                  "offset": 277
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 7,
+              "col": 50,
+              "offset": 236
+            },
+            "end": {
+              "line": 7,
+              "col": 93,
+              "offset": 279
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 7,
+          "col": 0,
+          "offset": 186
+        },
+        "end": {
+          "line": 7,
+          "col": 93,
+          "offset": 279
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "remaining_vacation",
+      "_type": {
+        "SimpleType": {
+          "name": "Derived",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Int"
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TDerived": {
+          "body": {
+            "TSub": {
+              "left": {
+                "TNum": {
+                  "value": 30,
+                  "sourcePos": {
+                    "start": {
+                      "line": 8,
+                      "col": 48,
+                      "offset": 328
+                    },
+                    "end": {
+                      "line": 8,
+                      "col": 50,
+                      "offset": 330
+                    }
+                  }
+                }
+              },
+              "right": {
+                "TFCall": {
+                  "parent": {
+                    "TFCall": {
+                      "parent": {
+                        "TFCall": {
+                          "parent": {
+                            "TVar": {
+                              "name": "vacation",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 8,
+                                  "col": 53,
+                                  "offset": 333
+                                },
+                                "end": {
+                                  "line": 8,
+                                  "col": 61,
+                                  "offset": 341
+                                }
+                              }
+                            }
+                          },
+                          "field": "toSet",
+                          "sourcePos": {
+                            "start": {
+                              "line": 8,
+                              "col": 53,
+                              "offset": 333
+                            },
+                            "end": {
+                              "line": 8,
+                              "col": 67,
+                              "offset": 347
+                            }
+                          }
+                        }
+                      },
+                      "field": "map",
+                      "args": [
+                        {
+                          "TArrow": {
+                            "left": {
+                              "TVar": {
+                                "name": "a",
+                                "sourcePos": {
+                                  "start": {
+                                    "line": 8,
+                                    "col": 72,
+                                    "offset": 352
+                                  },
+                                  "end": {
+                                    "line": 8,
+                                    "col": 73,
+                                    "offset": 353
+                                  }
+                                }
+                              }
+                            },
+                            "right": {
+                              "TFCall": {
+                                "parent": {
+                                  "TVar": {
+                                    "name": "a",
+                                    "sourcePos": {
+                                      "start": {
+                                        "line": 8,
+                                        "col": 77,
+                                        "offset": 357
+                                      },
+                                      "end": {
+                                        "line": 8,
+                                        "col": 78,
+                                        "offset": 358
+                                      }
+                                    }
+                                  }
+                                },
+                                "field": "days",
+                                "sourcePos": {
+                                  "start": {
+                                    "line": 8,
+                                    "col": 77,
+                                    "offset": 357
+                                  },
+                                  "end": {
+                                    "line": 8,
+                                    "col": 83,
+                                    "offset": 363
+                                  }
+                                }
+                              }
+                            },
+                            "sourcePos": {
+                              "start": {
+                                "line": 8,
+                                "col": 72,
+                                "offset": 352
+                              },
+                              "end": {
+                                "line": 8,
+                                "col": 83,
+                                "offset": 363
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "sourcePos": {
+                        "start": {
+                          "line": 8,
+                          "col": 53,
+                          "offset": 333
+                        },
+                        "end": {
+                          "line": 8,
+                          "col": 84,
+                          "offset": 364
+                        }
+                      }
+                    }
+                  },
+                  "field": "sum",
+                  "sourcePos": {
+                    "start": {
+                      "line": 8,
+                      "col": 53,
+                      "offset": 333
+                    },
+                    "end": {
+                      "line": 8,
+                      "col": 88,
+                      "offset": 368
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 8,
+                  "col": 48,
+                  "offset": 328
+                },
+                "end": {
+                  "line": 8,
+                  "col": 88,
+                  "offset": 368
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 8,
+              "col": 39,
+              "offset": 319
+            },
+            "end": {
+              "line": 8,
+              "col": 90,
+              "offset": 370
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 8,
+          "col": 0,
+          "offset": 280
+        },
+        "end": {
+          "line": 8,
+          "col": 90,
+          "offset": 370
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "users",
+      "_type": {
+        "SimpleType": {
+          "name": "Source",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "AWSet",
+                "inner": [
+                  {
+                    "SimpleType": {
+                      "name": "User"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TSource": {
+          "body": {
+            "TFunC": {
+              "name": "AWSet",
+              "sourcePos": {
+                "start": {
+                  "line": 11,
+                  "col": 40,
+                  "offset": 421
+                },
+                "end": {
+                  "line": 11,
+                  "col": 47,
+                  "offset": 428
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 11,
+              "col": 33,
+              "offset": 414
+            },
+            "end": {
+              "line": 11,
+              "col": 48,
+              "offset": 429
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 11,
+          "col": 0,
+          "offset": 381
+        },
+        "end": {
+          "line": 11,
+          "col": 48,
+          "offset": 429
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "thisUser",
+      "_type": {
+        "SimpleType": {
+          "name": "Source",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Option",
+                "inner": [
+                  {
+                    "SimpleType": {
+                      "name": "User"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TSource": {
+          "body": {
+            "TVar": {
+              "name": "None",
+              "sourcePos": {
+                "start": {
+                  "line": 12,
+                  "col": 44,
+                  "offset": 474
+                },
+                "end": {
+                  "line": 12,
+                  "col": 48,
+                  "offset": 478
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 12,
+              "col": 37,
+              "offset": 467
+            },
+            "end": {
+              "line": 12,
+              "col": 49,
+              "offset": 479
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 12,
+          "col": 0,
+          "offset": 430
+        },
+        "end": {
+          "line": 12,
+          "col": 49,
+          "offset": 479
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "invited",
+      "_type": {
+        "SimpleType": {
+          "name": "Source",
+          "inner": [
+            {
+              "SimpleType": {
+                "name": "Invites"
+              }
+            }
+          ]
+        }
+      },
+      "body": {
+        "TSource": {
+          "body": {
+            "TFunC": {
+              "name": "Map",
+              "sourcePos": {
+                "start": {
+                  "line": 13,
+                  "col": 38,
+                  "offset": 537
+                },
+                "end": {
+                  "line": 13,
+                  "col": 43,
+                  "offset": 542
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 13,
+              "col": 31,
+              "offset": 530
+            },
+            "end": {
+              "line": 13,
+              "col": 44,
+              "offset": 543
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 13,
+          "col": 0,
+          "offset": 499
+        },
+        "end": {
+          "line": 13,
+          "col": 44,
+          "offset": 543
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "login",
+      "_type": {
+        "SimpleType": {
+          "name": "Unit"
+        }
+      },
+      "body": {
+        "TFCall": {
+          "parent": {
+            "TFCurly": {
+              "parent": {
+                "TFCurly": {
+                  "parent": {
+                    "TFCurly": {
+                      "parent": {
+                        "TInteraction": {
+                          "reactiveType": {
+                            "SimpleType": {
+                              "name": "Option",
+                              "inner": [
+                                {
+                                  "SimpleType": {
+                                    "name": "User"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "argumentType": {
+                            "TupleType": {
+                              "inner": [
+                                {
+                                  "SimpleType": {
+                                    "name": "User"
+                                  }
+                                },
+                                {
+                                  "SimpleType": {
+                                    "name": "Password"
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 16,
+                              "col": 18,
+                              "offset": 582
+                            },
+                            "end": {
+                              "line": 16,
+                              "col": 61,
+                              "offset": 625
+                            }
+                          }
+                        }
+                      },
+                      "field": "requires",
+                      "body": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "thisUser",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 17,
+                                  "col": 13,
+                                  "offset": 639
+                                },
+                                "end": {
+                                  "line": 17,
+                                  "col": 21,
+                                  "offset": 647
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TArrow": {
+                              "left": {
+                                "TVar": {
+                                  "name": "user",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 17,
+                                      "col": 26,
+                                      "offset": 652
+                                    },
+                                    "end": {
+                                      "line": 17,
+                                      "col": 30,
+                                      "offset": 656
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TArrow": {
+                                  "left": {
+                                    "TVar": {
+                                      "name": "pass",
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 17,
+                                          "col": 32,
+                                          "offset": 658
+                                        },
+                                        "end": {
+                                          "line": 17,
+                                          "col": 36,
+                                          "offset": 662
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "TEq": {
+                                      "left": {
+                                        "TVar": {
+                                          "name": "thisUser",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 17,
+                                              "col": 41,
+                                              "offset": 667
+                                            },
+                                            "end": {
+                                              "line": 17,
+                                              "col": 49,
+                                              "offset": 675
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "right": {
+                                        "TVar": {
+                                          "name": "None",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 17,
+                                              "col": 53,
+                                              "offset": 679
+                                            },
+                                            "end": {
+                                              "line": 17,
+                                              "col": 57,
+                                              "offset": 683
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 17,
+                                          "col": 41,
+                                          "offset": 667
+                                        },
+                                        "end": {
+                                          "line": 17,
+                                          "col": 57,
+                                          "offset": 683
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 17,
+                                      "col": 32,
+                                      "offset": 658
+                                    },
+                                    "end": {
+                                      "line": 17,
+                                      "col": 57,
+                                      "offset": 683
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 17,
+                                  "col": 26,
+                                  "offset": 652
+                                },
+                                "end": {
+                                  "line": 17,
+                                  "col": 57,
+                                  "offset": 683
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 17,
+                              "col": 13,
+                              "offset": 639
+                            },
+                            "end": {
+                              "line": 17,
+                              "col": 57,
+                              "offset": 683
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 16,
+                          "col": 18,
+                          "offset": 582
+                        },
+                        "end": {
+                          "line": 17,
+                          "col": 58,
+                          "offset": 684
+                        }
+                      }
+                    }
+                  },
+                  "field": "executes",
+                  "body": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "thisUser",
+                          "sourcePos": {
+                            "start": {
+                              "line": 18,
+                              "col": 13,
+                              "offset": 698
+                            },
+                            "end": {
+                              "line": 18,
+                              "col": 21,
+                              "offset": 706
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "user",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 18,
+                                  "col": 26,
+                                  "offset": 711
+                                },
+                                "end": {
+                                  "line": 18,
+                                  "col": 30,
+                                  "offset": 715
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TArrow": {
+                              "left": {
+                                "TVar": {
+                                  "name": "pass",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 18,
+                                      "col": 32,
+                                      "offset": 717
+                                    },
+                                    "end": {
+                                      "line": 18,
+                                      "col": 36,
+                                      "offset": 721
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TIf": {
+                                  "cond": {
+                                    "TFunC": {
+                                      "name": "is_correct",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "user",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 19,
+                                                "col": 20,
+                                                "offset": 746
+                                              },
+                                              "end": {
+                                                "line": 19,
+                                                "col": 24,
+                                                "offset": 750
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "TVar": {
+                                            "name": "pass",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 19,
+                                                "col": 25,
+                                                "offset": 751
+                                              },
+                                              "end": {
+                                                "line": 19,
+                                                "col": 29,
+                                                "offset": 755
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 19,
+                                          "col": 9,
+                                          "offset": 735
+                                        },
+                                        "end": {
+                                          "line": 19,
+                                          "col": 30,
+                                          "offset": 756
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "_then": {
+                                    "TFCall": {
+                                      "parent": {
+                                        "TVar": {
+                                          "name": "thisUser",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 20,
+                                              "col": 8,
+                                              "offset": 770
+                                            },
+                                            "end": {
+                                              "line": 20,
+                                              "col": 16,
+                                              "offset": 778
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "field": "set",
+                                      "args": [
+                                        {
+                                          "TFunC": {
+                                            "name": "Some",
+                                            "args": [
+                                              {
+                                                "TVar": {
+                                                  "name": "user",
+                                                  "sourcePos": {
+                                                    "start": {
+                                                      "line": 20,
+                                                      "col": 26,
+                                                      "offset": 788
+                                                    },
+                                                    "end": {
+                                                      "line": 20,
+                                                      "col": 30,
+                                                      "offset": 792
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            ],
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 20,
+                                                "col": 21,
+                                                "offset": 783
+                                              },
+                                              "end": {
+                                                "line": 20,
+                                                "col": 31,
+                                                "offset": 793
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 20,
+                                          "col": 8,
+                                          "offset": 770
+                                        },
+                                        "end": {
+                                          "line": 20,
+                                          "col": 32,
+                                          "offset": 794
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 19,
+                                      "col": 6,
+                                      "offset": 732
+                                    },
+                                    "end": {
+                                      "line": 20,
+                                      "col": 32,
+                                      "offset": 794
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 18,
+                                  "col": 32,
+                                  "offset": 717
+                                },
+                                "end": {
+                                  "line": 20,
+                                  "col": 32,
+                                  "offset": 794
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 18,
+                              "col": 26,
+                              "offset": 711
+                            },
+                            "end": {
+                              "line": 20,
+                              "col": 32,
+                              "offset": 794
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 18,
+                          "col": 13,
+                          "offset": 698
+                        },
+                        "end": {
+                          "line": 20,
+                          "col": 32,
+                          "offset": 794
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 16,
+                      "col": 18,
+                      "offset": 582
+                    },
+                    "end": {
+                      "line": 21,
+                      "col": 3,
+                      "offset": 798
+                    }
+                  }
+                }
+              },
+              "field": "ensures",
+              "body": {
+                "TArrow": {
+                  "left": {
+                    "TVar": {
+                      "name": "thisUser",
+                      "sourcePos": {
+                        "start": {
+                          "line": 22,
+                          "col": 11,
+                          "offset": 810
+                        },
+                        "end": {
+                          "line": 22,
+                          "col": 19,
+                          "offset": 818
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "user",
+                          "sourcePos": {
+                            "start": {
+                              "line": 22,
+                              "col": 24,
+                              "offset": 823
+                            },
+                            "end": {
+                              "line": 22,
+                              "col": 28,
+                              "offset": 827
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "pass",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 22,
+                                  "col": 30,
+                                  "offset": 829
+                                },
+                                "end": {
+                                  "line": 22,
+                                  "col": 34,
+                                  "offset": 833
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TParens": {
+                              "inner": {
+                                "TImpl": {
+                                  "left": {
+                                    "TEq": {
+                                      "left": {
+                                        "TVar": {
+                                          "name": "thisUser",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 23,
+                                              "col": 7,
+                                              "offset": 845
+                                            },
+                                            "end": {
+                                              "line": 23,
+                                              "col": 15,
+                                              "offset": 853
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "right": {
+                                        "TVar": {
+                                          "name": "user",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 23,
+                                              "col": 19,
+                                              "offset": 857
+                                            },
+                                            "end": {
+                                              "line": 23,
+                                              "col": 23,
+                                              "offset": 861
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 23,
+                                          "col": 7,
+                                          "offset": 845
+                                        },
+                                        "end": {
+                                          "line": 23,
+                                          "col": 23,
+                                          "offset": 861
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "TFunC": {
+                                      "name": "is_correct",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "user",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 23,
+                                                "col": 39,
+                                                "offset": 877
+                                              },
+                                              "end": {
+                                                "line": 23,
+                                                "col": 43,
+                                                "offset": 881
+                                              }
+                                            }
+                                          }
+                                        },
+                                        {
+                                          "TVar": {
+                                            "name": "pass",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 23,
+                                                "col": 44,
+                                                "offset": 882
+                                              },
+                                              "end": {
+                                                "line": 23,
+                                                "col": 48,
+                                                "offset": 886
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 23,
+                                          "col": 28,
+                                          "offset": 866
+                                        },
+                                        "end": {
+                                          "line": 23,
+                                          "col": 49,
+                                          "offset": 887
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 23,
+                                      "col": 7,
+                                      "offset": 845
+                                    },
+                                    "end": {
+                                      "line": 23,
+                                      "col": 49,
+                                      "offset": 887
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 23,
+                                  "col": 6,
+                                  "offset": 844
+                                },
+                                "end": {
+                                  "line": 23,
+                                  "col": 50,
+                                  "offset": 888
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 22,
+                              "col": 30,
+                              "offset": 829
+                            },
+                            "end": {
+                              "line": 23,
+                              "col": 50,
+                              "offset": 888
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 22,
+                          "col": 24,
+                          "offset": 823
+                        },
+                        "end": {
+                          "line": 23,
+                          "col": 50,
+                          "offset": 888
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 22,
+                      "col": 11,
+                      "offset": 810
+                    },
+                    "end": {
+                      "line": 23,
+                      "col": 50,
+                      "offset": 888
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 16,
+                  "col": 18,
+                  "offset": 582
+                },
+                "end": {
+                  "line": 23,
+                  "col": 51,
+                  "offset": 889
+                }
+              }
+            }
+          },
+          "field": "modifies",
+          "args": [
+            {
+              "TVar": {
+                "name": "thisUser",
+                "sourcePos": {
+                  "start": {
+                    "line": 24,
+                    "col": 12,
+                    "offset": 902
+                  },
+                  "end": {
+                    "line": 24,
+                    "col": 20,
+                    "offset": 910
+                  }
+                }
+              }
+            }
+          ],
+          "sourcePos": {
+            "start": {
+              "line": 16,
+              "col": 18,
+              "offset": 582
+            },
+            "end": {
+              "line": 24,
+              "col": 21,
+              "offset": 911
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 16,
+          "col": 0,
+          "offset": 564
+        },
+        "end": {
+          "line": 24,
+          "col": 21,
+          "offset": 911
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "add_appointment",
+      "_type": {
+        "SimpleType": {
+          "name": "Unit"
+        }
+      },
+      "body": {
+        "TFCurly": {
+          "parent": {
+            "TFCurly": {
+              "parent": {
+                "TFCurly": {
+                  "parent": {
+                    "TFCurly": {
+                      "parent": {
+                        "TInteraction": {
+                          "reactiveType": {
+                            "SimpleType": {
+                              "name": "Calendar"
+                            }
+                          },
+                          "argumentType": {
+                            "SimpleType": {
+                              "name": "Appointment"
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 27,
+                              "col": 29,
+                              "offset": 964
+                            },
+                            "end": {
+                              "line": 27,
+                              "col": 63,
+                              "offset": 998
+                            }
+                          }
+                        }
+                      },
+                      "field": "requires",
+                      "body": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "cal",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 28,
+                                  "col": 13,
+                                  "offset": 1065
+                                },
+                                "end": {
+                                  "line": 28,
+                                  "col": 16,
+                                  "offset": 1068
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TArrow": {
+                              "left": {
+                                "TVar": {
+                                  "name": "a",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 28,
+                                      "col": 20,
+                                      "offset": 1072
+                                    },
+                                    "end": {
+                                      "line": 28,
+                                      "col": 21,
+                                      "offset": 1073
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TLt": {
+                                  "left": {
+                                    "TFunC": {
+                                      "name": "get_start",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "a",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 28,
+                                                "col": 35,
+                                                "offset": 1087
+                                              },
+                                              "end": {
+                                                "line": 28,
+                                                "col": 36,
+                                                "offset": 1088
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 28,
+                                          "col": 25,
+                                          "offset": 1077
+                                        },
+                                        "end": {
+                                          "line": 28,
+                                          "col": 37,
+                                          "offset": 1089
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "TFunC": {
+                                      "name": "get_end",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "a",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 28,
+                                                "col": 48,
+                                                "offset": 1100
+                                              },
+                                              "end": {
+                                                "line": 28,
+                                                "col": 49,
+                                                "offset": 1101
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 28,
+                                          "col": 40,
+                                          "offset": 1092
+                                        },
+                                        "end": {
+                                          "line": 28,
+                                          "col": 50,
+                                          "offset": 1102
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 28,
+                                      "col": 25,
+                                      "offset": 1077
+                                    },
+                                    "end": {
+                                      "line": 28,
+                                      "col": 50,
+                                      "offset": 1102
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 28,
+                                  "col": 20,
+                                  "offset": 1072
+                                },
+                                "end": {
+                                  "line": 28,
+                                  "col": 50,
+                                  "offset": 1102
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 28,
+                              "col": 13,
+                              "offset": 1065
+                            },
+                            "end": {
+                              "line": 28,
+                              "col": 50,
+                              "offset": 1102
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 27,
+                          "col": 29,
+                          "offset": 964
+                        },
+                        "end": {
+                          "line": 28,
+                          "col": 52,
+                          "offset": 1104
+                        }
+                      }
+                    }
+                  },
+                  "field": "requires",
+                  "body": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "cal",
+                          "sourcePos": {
+                            "start": {
+                              "line": 29,
+                              "col": 13,
+                              "offset": 1118
+                            },
+                            "end": {
+                              "line": 29,
+                              "col": 16,
+                              "offset": 1121
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "a",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 29,
+                                  "col": 20,
+                                  "offset": 1125
+                                },
+                                "end": {
+                                  "line": 29,
+                                  "col": 21,
+                                  "offset": 1126
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TEq": {
+                              "left": {
+                                "TFunC": {
+                                  "name": "get_creator",
+                                  "args": [
+                                    {
+                                      "TVar": {
+                                        "name": "a",
+                                        "sourcePos": {
+                                          "start": {
+                                            "line": 29,
+                                            "col": 37,
+                                            "offset": 1142
+                                          },
+                                          "end": {
+                                            "line": 29,
+                                            "col": 38,
+                                            "offset": 1143
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 29,
+                                      "col": 25,
+                                      "offset": 1130
+                                    },
+                                    "end": {
+                                      "line": 29,
+                                      "col": 39,
+                                      "offset": 1144
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TVar": {
+                                  "name": "thisUser",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 29,
+                                      "col": 43,
+                                      "offset": 1148
+                                    },
+                                    "end": {
+                                      "line": 29,
+                                      "col": 51,
+                                      "offset": 1156
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 29,
+                                  "col": 25,
+                                  "offset": 1130
+                                },
+                                "end": {
+                                  "line": 29,
+                                  "col": 51,
+                                  "offset": 1156
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 29,
+                              "col": 20,
+                              "offset": 1125
+                            },
+                            "end": {
+                              "line": 29,
+                              "col": 51,
+                              "offset": 1156
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 29,
+                          "col": 13,
+                          "offset": 1118
+                        },
+                        "end": {
+                          "line": 29,
+                          "col": 51,
+                          "offset": 1156
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 27,
+                      "col": 29,
+                      "offset": 964
+                    },
+                    "end": {
+                      "line": 29,
+                      "col": 52,
+                      "offset": 1157
+                    }
+                  }
+                }
+              },
+              "field": "executes",
+              "body": {
+                "TArrow": {
+                  "left": {
+                    "TVar": {
+                      "name": "cal",
+                      "sourcePos": {
+                        "start": {
+                          "line": 30,
+                          "col": 13,
+                          "offset": 1214
+                        },
+                        "end": {
+                          "line": 30,
+                          "col": 16,
+                          "offset": 1217
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "a",
+                          "sourcePos": {
+                            "start": {
+                              "line": 30,
+                              "col": 20,
+                              "offset": 1221
+                            },
+                            "end": {
+                              "line": 30,
+                              "col": 21,
+                              "offset": 1222
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TFCall": {
+                          "parent": {
+                            "TVar": {
+                              "name": "cal",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 30,
+                                  "col": 25,
+                                  "offset": 1226
+                                },
+                                "end": {
+                                  "line": 30,
+                                  "col": 28,
+                                  "offset": 1229
+                                }
+                              }
+                            }
+                          },
+                          "field": "add",
+                          "args": [
+                            {
+                              "TVar": {
+                                "name": "a",
+                                "sourcePos": {
+                                  "start": {
+                                    "line": 30,
+                                    "col": 33,
+                                    "offset": 1234
+                                  },
+                                  "end": {
+                                    "line": 30,
+                                    "col": 34,
+                                    "offset": 1235
+                                  }
+                                }
+                              }
+                            }
+                          ],
+                          "sourcePos": {
+                            "start": {
+                              "line": 30,
+                              "col": 25,
+                              "offset": 1226
+                            },
+                            "end": {
+                              "line": 30,
+                              "col": 35,
+                              "offset": 1236
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 30,
+                          "col": 20,
+                          "offset": 1221
+                        },
+                        "end": {
+                          "line": 30,
+                          "col": 35,
+                          "offset": 1236
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 30,
+                      "col": 13,
+                      "offset": 1214
+                    },
+                    "end": {
+                      "line": 30,
+                      "col": 35,
+                      "offset": 1236
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 27,
+                  "col": 29,
+                  "offset": 964
+                },
+                "end": {
+                  "line": 30,
+                  "col": 37,
+                  "offset": 1238
+                }
+              }
+            }
+          },
+          "field": "ensures",
+          "body": {
+            "TArrow": {
+              "left": {
+                "TVar": {
+                  "name": "cal",
+                  "sourcePos": {
+                    "start": {
+                      "line": 31,
+                      "col": 13,
+                      "offset": 1252
+                    },
+                    "end": {
+                      "line": 31,
+                      "col": 16,
+                      "offset": 1255
+                    }
+                  }
+                }
+              },
+              "right": {
+                "TArrow": {
+                  "left": {
+                    "TVar": {
+                      "name": "a",
+                      "sourcePos": {
+                        "start": {
+                          "line": 31,
+                          "col": 20,
+                          "offset": 1259
+                        },
+                        "end": {
+                          "line": 31,
+                          "col": 21,
+                          "offset": 1260
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TInSet": {
+                      "left": {
+                        "TVar": {
+                          "name": "a",
+                          "sourcePos": {
+                            "start": {
+                              "line": 31,
+                              "col": 25,
+                              "offset": 1264
+                            },
+                            "end": {
+                              "line": 31,
+                              "col": 26,
+                              "offset": 1265
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TFCall": {
+                          "parent": {
+                            "TVar": {
+                              "name": "cal",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 31,
+                                  "col": 30,
+                                  "offset": 1269
+                                },
+                                "end": {
+                                  "line": 31,
+                                  "col": 33,
+                                  "offset": 1272
+                                }
+                              }
+                            }
+                          },
+                          "field": "toSet",
+                          "sourcePos": {
+                            "start": {
+                              "line": 31,
+                              "col": 30,
+                              "offset": 1269
+                            },
+                            "end": {
+                              "line": 31,
+                              "col": 39,
+                              "offset": 1278
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 31,
+                          "col": 25,
+                          "offset": 1264
+                        },
+                        "end": {
+                          "line": 31,
+                          "col": 39,
+                          "offset": 1278
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 31,
+                      "col": 20,
+                      "offset": 1259
+                    },
+                    "end": {
+                      "line": 31,
+                      "col": 39,
+                      "offset": 1278
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 31,
+                  "col": 13,
+                  "offset": 1252
+                },
+                "end": {
+                  "line": 31,
+                  "col": 39,
+                  "offset": 1278
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 27,
+              "col": 29,
+              "offset": 964
+            },
+            "end": {
+              "line": 31,
+              "col": 41,
+              "offset": 1280
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 27,
+          "col": 0,
+          "offset": 935
+        },
+        "end": {
+          "line": 31,
+          "col": 41,
+          "offset": 1280
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "add_vacation",
+      "_type": {
+        "SimpleType": {
+          "name": "Unit"
+        }
+      },
+      "body": {
+        "TFCall": {
+          "parent": {
+            "TVar": {
+              "name": "add_appointment",
+              "sourcePos": {
+                "start": {
+                  "line": 32,
+                  "col": 26,
+                  "offset": 1307
+                },
+                "end": {
+                  "line": 32,
+                  "col": 41,
+                  "offset": 1322
+                }
+              }
+            }
+          },
+          "field": "modifies",
+          "args": [
+            {
+              "TVar": {
+                "name": "vacation",
+                "sourcePos": {
+                  "start": {
+                    "line": 32,
+                    "col": 51,
+                    "offset": 1332
+                  },
+                  "end": {
+                    "line": 32,
+                    "col": 59,
+                    "offset": 1340
+                  }
+                }
+              }
+            }
+          ],
+          "sourcePos": {
+            "start": {
+              "line": 32,
+              "col": 26,
+              "offset": 1307
+            },
+            "end": {
+              "line": 32,
+              "col": 60,
+              "offset": 1341
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 32,
+          "col": 0,
+          "offset": 1281
+        },
+        "end": {
+          "line": 32,
+          "col": 60,
+          "offset": 1341
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "add_work",
+      "_type": {
+        "SimpleType": {
+          "name": "Unit"
+        }
+      },
+      "body": {
+        "TFCall": {
+          "parent": {
+            "TVar": {
+              "name": "add_appointment",
+              "sourcePos": {
+                "start": {
+                  "line": 33,
+                  "col": 26,
+                  "offset": 1368
+                },
+                "end": {
+                  "line": 33,
+                  "col": 41,
+                  "offset": 1383
+                }
+              }
+            }
+          },
+          "field": "modifies",
+          "args": [
+            {
+              "TVar": {
+                "name": "work",
+                "sourcePos": {
+                  "start": {
+                    "line": 33,
+                    "col": 51,
+                    "offset": 1393
+                  },
+                  "end": {
+                    "line": 33,
+                    "col": 55,
+                    "offset": 1397
+                  }
+                }
+              }
+            }
+          ],
+          "sourcePos": {
+            "start": {
+              "line": 33,
+              "col": 26,
+              "offset": 1368
+            },
+            "end": {
+              "line": 33,
+              "col": 56,
+              "offset": 1398
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 33,
+          "col": 0,
+          "offset": 1342
+        },
+        "end": {
+          "line": 33,
+          "col": 56,
+          "offset": 1398
+        }
+      }
+    }
+  },
+  {
+    "TAbs": {
+      "name": "invite",
+      "_type": {
+        "SimpleType": {
+          "name": "Unit"
+        }
+      },
+      "body": {
+        "TFCall": {
+          "parent": {
+            "TFCurly": {
+              "parent": {
+                "TFCurly": {
+                  "parent": {
+                    "TInteraction": {
+                      "reactiveType": {
+                        "SimpleType": {
+                          "name": "Invites"
+                        }
+                      },
+                      "argumentType": {
+                        "TupleType": {
+                          "inner": [
+                            {
+                              "SimpleType": {
+                                "name": "Appointment"
+                              }
+                            },
+                            {
+                              "SimpleType": {
+                                "name": "User"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 35,
+                          "col": 20,
+                          "offset": 1420
+                        },
+                        "end": {
+                          "line": 35,
+                          "col": 61,
+                          "offset": 1461
+                        }
+                      }
+                    }
+                  },
+                  "field": "requires",
+                  "body": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "invites",
+                          "sourcePos": {
+                            "start": {
+                              "line": 36,
+                              "col": 13,
+                              "offset": 1475
+                            },
+                            "end": {
+                              "line": 36,
+                              "col": 20,
+                              "offset": 1482
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "a",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 36,
+                                  "col": 25,
+                                  "offset": 1487
+                                },
+                                "end": {
+                                  "line": 36,
+                                  "col": 26,
+                                  "offset": 1488
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TArrow": {
+                              "left": {
+                                "TVar": {
+                                  "name": "u",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 36,
+                                      "col": 27,
+                                      "offset": 1489
+                                    },
+                                    "end": {
+                                      "line": 36,
+                                      "col": 28,
+                                      "offset": 1490
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TEq": {
+                                  "left": {
+                                    "TFunC": {
+                                      "name": "get_creator",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "a",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 36,
+                                                "col": 45,
+                                                "offset": 1507
+                                              },
+                                              "end": {
+                                                "line": 36,
+                                                "col": 46,
+                                                "offset": 1508
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 36,
+                                          "col": 33,
+                                          "offset": 1495
+                                        },
+                                        "end": {
+                                          "line": 36,
+                                          "col": 47,
+                                          "offset": 1509
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "TVar": {
+                                      "name": "thisUser",
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 36,
+                                          "col": 51,
+                                          "offset": 1513
+                                        },
+                                        "end": {
+                                          "line": 36,
+                                          "col": 59,
+                                          "offset": 1521
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 36,
+                                      "col": 33,
+                                      "offset": 1495
+                                    },
+                                    "end": {
+                                      "line": 36,
+                                      "col": 59,
+                                      "offset": 1521
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 36,
+                                  "col": 27,
+                                  "offset": 1489
+                                },
+                                "end": {
+                                  "line": 36,
+                                  "col": 59,
+                                  "offset": 1521
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 36,
+                              "col": 25,
+                              "offset": 1487
+                            },
+                            "end": {
+                              "line": 36,
+                              "col": 59,
+                              "offset": 1521
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 36,
+                          "col": 13,
+                          "offset": 1475
+                        },
+                        "end": {
+                          "line": 36,
+                          "col": 59,
+                          "offset": 1521
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 35,
+                      "col": 20,
+                      "offset": 1420
+                    },
+                    "end": {
+                      "line": 36,
+                      "col": 60,
+                      "offset": 1522
+                    }
+                  }
+                }
+              },
+              "field": "executes",
+              "body": {
+                "TArrow": {
+                  "left": {
+                    "TVar": {
+                      "name": "invites",
+                      "sourcePos": {
+                        "start": {
+                          "line": 37,
+                          "col": 13,
+                          "offset": 1575
+                        },
+                        "end": {
+                          "line": 37,
+                          "col": 20,
+                          "offset": 1582
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TArrow": {
+                      "left": {
+                        "TVar": {
+                          "name": "a",
+                          "sourcePos": {
+                            "start": {
+                              "line": 37,
+                              "col": 25,
+                              "offset": 1587
+                            },
+                            "end": {
+                              "line": 37,
+                              "col": 26,
+                              "offset": 1588
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TArrow": {
+                          "left": {
+                            "TVar": {
+                              "name": "u",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 37,
+                                  "col": 27,
+                                  "offset": 1589
+                                },
+                                "end": {
+                                  "line": 37,
+                                  "col": 28,
+                                  "offset": 1590
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TFCall": {
+                              "parent": {
+                                "TVar": {
+                                  "name": "invites",
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 38,
+                                      "col": 4,
+                                      "offset": 1599
+                                    },
+                                    "end": {
+                                      "line": 38,
+                                      "col": 11,
+                                      "offset": 1606
+                                    }
+                                  }
+                                }
+                              },
+                              "field": "add",
+                              "args": [
+                                {
+                                  "TTuple": {
+                                    "factors": [
+                                      {
+                                        "TVar": {
+                                          "name": "a",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 38,
+                                              "col": 17,
+                                              "offset": 1612
+                                            },
+                                            "end": {
+                                              "line": 38,
+                                              "col": 18,
+                                              "offset": 1613
+                                            }
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "TVar": {
+                                          "name": "u",
+                                          "sourcePos": {
+                                            "start": {
+                                              "line": 38,
+                                              "col": 19,
+                                              "offset": 1614
+                                            },
+                                            "end": {
+                                              "line": 38,
+                                              "col": 20,
+                                              "offset": 1615
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "sourcePos": {
+                                      "start": {
+                                        "line": 38,
+                                        "col": 16,
+                                        "offset": 1611
+                                      },
+                                      "end": {
+                                        "line": 38,
+                                        "col": 21,
+                                        "offset": 1616
+                                      }
+                                    }
+                                  }
+                                }
+                              ],
+                              "sourcePos": {
+                                "start": {
+                                  "line": 38,
+                                  "col": 4,
+                                  "offset": 1599
+                                },
+                                "end": {
+                                  "line": 38,
+                                  "col": 22,
+                                  "offset": 1617
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 37,
+                              "col": 27,
+                              "offset": 1589
+                            },
+                            "end": {
+                              "line": 38,
+                              "col": 22,
+                              "offset": 1617
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 37,
+                          "col": 25,
+                          "offset": 1587
+                        },
+                        "end": {
+                          "line": 38,
+                          "col": 22,
+                          "offset": 1617
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 37,
+                      "col": 13,
+                      "offset": 1575
+                    },
+                    "end": {
+                      "line": 38,
+                      "col": 22,
+                      "offset": 1617
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 35,
+                  "col": 20,
+                  "offset": 1420
+                },
+                "end": {
+                  "line": 39,
+                  "col": 3,
+                  "offset": 1621
+                }
+              }
+            }
+          },
+          "field": "modifies",
+          "args": [
+            {
+              "TVar": {
+                "name": "invited",
+                "sourcePos": {
+                  "start": {
+                    "line": 40,
+                    "col": 12,
+                    "offset": 1634
+                  },
+                  "end": {
+                    "line": 40,
+                    "col": 19,
+                    "offset": 1641
+                  }
+                }
+              }
+            }
+          ],
+          "sourcePos": {
+            "start": {
+              "line": 35,
+              "col": 20,
+              "offset": 1420
+            },
+            "end": {
+              "line": 40,
+              "col": 20,
+              "offset": 1642
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 35,
+          "col": 0,
+          "offset": 1400
+        },
+        "end": {
+          "line": 40,
+          "col": 20,
+          "offset": 1642
+        }
+      }
+    }
+  },
+  {
+    "TFCall": {
+      "parent": {
+        "TVar": {
+          "name": "UI",
+          "sourcePos": {
+            "start": {
+              "line": 42,
+              "col": 0,
+              "offset": 1644
+            },
+            "end": {
+              "line": 42,
+              "col": 2,
+              "offset": 1646
+            }
+          }
+        }
+      },
+      "field": "display",
+      "args": [
+        {
+          "TVar": {
+            "name": "all_appointments",
+            "sourcePos": {
+              "start": {
+                "line": 42,
+                "col": 11,
+                "offset": 1655
+              },
+              "end": {
+                "line": 42,
+                "col": 27,
+                "offset": 1671
+              }
+            }
+          }
+        },
+        {
+          "TVar": {
+            "name": "remaining_vacation",
+            "sourcePos": {
+              "start": {
+                "line": 42,
+                "col": 29,
+                "offset": 1673
+              },
+              "end": {
+                "line": 42,
+                "col": 47,
+                "offset": 1691
+              }
+            }
+          }
+        }
+      ],
+      "sourcePos": {
+        "start": {
+          "line": 42,
+          "col": 0,
+          "offset": 1644
+        },
+        "end": {
+          "line": 42,
+          "col": 48,
+          "offset": 1692
+        }
+      }
+    }
+  },
+  {
+    "TFCurly": {
+      "parent": {
+        "TFCall": {
+          "parent": {
+            "TVar": {
+              "name": "UI",
+              "sourcePos": {
+                "start": {
+                  "line": 43,
+                  "col": 0,
+                  "offset": 1693
+                },
+                "end": {
+                  "line": 43,
+                  "col": 2,
+                  "offset": 1695
+                }
+              }
+            }
+          },
+          "field": "vacationDialog",
+          "sourcePos": {
+            "start": {
+              "line": 43,
+              "col": 0,
+              "offset": 1693
+            },
+            "end": {
+              "line": 43,
+              "col": 17,
+              "offset": 1710
+            }
+          }
+        }
+      },
+      "field": "onConfirm",
+      "body": {
+        "TArrow": {
+          "left": {
+            "TVar": {
+              "name": "a",
+              "sourcePos": {
+                "start": {
+                  "line": 43,
+                  "col": 28,
+                  "offset": 1721
+                },
+                "end": {
+                  "line": 43,
+                  "col": 29,
+                  "offset": 1722
+                }
+              }
+            }
+          },
+          "right": {
+            "TFCall": {
+              "parent": {
+                "TVar": {
+                  "name": "add_vacation",
+                  "sourcePos": {
+                    "start": {
+                      "line": 43,
+                      "col": 33,
+                      "offset": 1726
+                    },
+                    "end": {
+                      "line": 43,
+                      "col": 45,
+                      "offset": 1738
+                    }
+                  }
+                }
+              },
+              "field": "apply",
+              "args": [
+                {
+                  "TVar": {
+                    "name": "a",
+                    "sourcePos": {
+                      "start": {
+                        "line": 43,
+                        "col": 52,
+                        "offset": 1745
+                      },
+                      "end": {
+                        "line": 43,
+                        "col": 53,
+                        "offset": 1746
+                      }
+                    }
+                  }
+                }
+              ],
+              "sourcePos": {
+                "start": {
+                  "line": 43,
+                  "col": 33,
+                  "offset": 1726
+                },
+                "end": {
+                  "line": 43,
+                  "col": 54,
+                  "offset": 1747
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 43,
+              "col": 28,
+              "offset": 1721
+            },
+            "end": {
+              "line": 43,
+              "col": 54,
+              "offset": 1747
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 43,
+          "col": 0,
+          "offset": 1693
+        },
+        "end": {
+          "line": 43,
+          "col": 55,
+          "offset": 1748
+        }
+      }
+    }
+  },
+  {
+    "TInvariant": {
+      "condition": {
+        "TForall": {
+          "vars": [
+            {
+              "name": "a",
+              "_type": {
+                "SimpleType": {
+                  "name": "Appointment"
+                }
+              }
+            }
+          ],
+          "body": {
+            "TImpl": {
+              "left": {
+                "TInSet": {
+                  "left": {
+                    "TVar": {
+                      "name": "a",
+                      "sourcePos": {
+                        "start": {
+                          "line": 47,
+                          "col": 2,
+                          "offset": 1818
+                        },
+                        "end": {
+                          "line": 47,
+                          "col": 3,
+                          "offset": 1819
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TVar": {
+                      "name": "all_appointments",
+                      "sourcePos": {
+                        "start": {
+                          "line": 47,
+                          "col": 7,
+                          "offset": 1823
+                        },
+                        "end": {
+                          "line": 47,
+                          "col": 23,
+                          "offset": 1839
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 47,
+                      "col": 2,
+                      "offset": 1818
+                    },
+                    "end": {
+                      "line": 47,
+                      "col": 23,
+                      "offset": 1839
+                    }
+                  }
+                }
+              },
+              "right": {
+                "TLt": {
+                  "left": {
+                    "TFunC": {
+                      "name": "get_start",
+                      "args": [
+                        {
+                          "TVar": {
+                            "name": "a",
+                            "sourcePos": {
+                              "start": {
+                                "line": 47,
+                                "col": 38,
+                                "offset": 1854
+                              },
+                              "end": {
+                                "line": 47,
+                                "col": 39,
+                                "offset": 1855
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "sourcePos": {
+                        "start": {
+                          "line": 47,
+                          "col": 28,
+                          "offset": 1844
+                        },
+                        "end": {
+                          "line": 47,
+                          "col": 40,
+                          "offset": 1856
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TFunC": {
+                      "name": "get_end",
+                      "args": [
+                        {
+                          "TVar": {
+                            "name": "a",
+                            "sourcePos": {
+                              "start": {
+                                "line": 47,
+                                "col": 51,
+                                "offset": 1867
+                              },
+                              "end": {
+                                "line": 47,
+                                "col": 52,
+                                "offset": 1868
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "sourcePos": {
+                        "start": {
+                          "line": 47,
+                          "col": 43,
+                          "offset": 1859
+                        },
+                        "end": {
+                          "line": 47,
+                          "col": 53,
+                          "offset": 1869
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 47,
+                      "col": 28,
+                      "offset": 1844
+                    },
+                    "end": {
+                      "line": 47,
+                      "col": 53,
+                      "offset": 1869
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 47,
+                  "col": 2,
+                  "offset": 1818
+                },
+                "end": {
+                  "line": 47,
+                  "col": 53,
+                  "offset": 1869
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 46,
+              "col": 10,
+              "offset": 1791
+            },
+            "end": {
+              "line": 47,
+              "col": 53,
+              "offset": 1869
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 46,
+          "col": 0,
+          "offset": 1781
+        },
+        "end": {
+          "line": 47,
+          "col": 53,
+          "offset": 1869
+        }
+      }
+    }
+  },
+  {
+    "TInvariant": {
+      "condition": {
+        "TGeq": {
+          "left": {
+            "TVar": {
+              "name": "remaining_vacation",
+              "sourcePos": {
+                "start": {
+                  "line": 50,
+                  "col": 10,
+                  "offset": 1933
+                },
+                "end": {
+                  "line": 50,
+                  "col": 28,
+                  "offset": 1951
+                }
+              }
+            }
+          },
+          "right": {
+            "TNum": {
+              "value": 0,
+              "sourcePos": {
+                "start": {
+                  "line": 50,
+                  "col": 32,
+                  "offset": 1955
+                },
+                "end": {
+                  "line": 50,
+                  "col": 33,
+                  "offset": 1956
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 50,
+              "col": 10,
+              "offset": 1933
+            },
+            "end": {
+              "line": 50,
+              "col": 33,
+              "offset": 1956
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 50,
+          "col": 0,
+          "offset": 1923
+        },
+        "end": {
+          "line": 50,
+          "col": 33,
+          "offset": 1956
+        }
+      }
+    }
+  },
+  {
+    "TInvariant": {
+      "condition": {
+        "TForall": {
+          "vars": [
+            {
+              "name": "a",
+              "_type": {
+                "SimpleType": {
+                  "name": "Appointment"
+                }
+              }
+            },
+            {
+              "name": "u",
+              "_type": {
+                "SimpleType": {
+                  "name": "User"
+                }
+              }
+            }
+          ],
+          "body": {
+            "TImpl": {
+              "left": {
+                "TInSet": {
+                  "left": {
+                    "TTuple": {
+                      "factors": [
+                        {
+                          "TVar": {
+                            "name": "a",
+                            "sourcePos": {
+                              "start": {
+                                "line": 54,
+                                "col": 3,
+                                "offset": 2078
+                              },
+                              "end": {
+                                "line": 54,
+                                "col": 4,
+                                "offset": 2079
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "TVar": {
+                            "name": "u",
+                            "sourcePos": {
+                              "start": {
+                                "line": 54,
+                                "col": 6,
+                                "offset": 2081
+                              },
+                              "end": {
+                                "line": 54,
+                                "col": 7,
+                                "offset": 2082
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "sourcePos": {
+                        "start": {
+                          "line": 54,
+                          "col": 2,
+                          "offset": 2077
+                        },
+                        "end": {
+                          "line": 54,
+                          "col": 8,
+                          "offset": 2083
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TVar": {
+                      "name": "invitations",
+                      "sourcePos": {
+                        "start": {
+                          "line": 54,
+                          "col": 12,
+                          "offset": 2087
+                        },
+                        "end": {
+                          "line": 54,
+                          "col": 23,
+                          "offset": 2098
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 54,
+                      "col": 2,
+                      "offset": 2077
+                    },
+                    "end": {
+                      "line": 54,
+                      "col": 23,
+                      "offset": 2098
+                    }
+                  }
+                }
+              },
+              "right": {
+                "TInSet": {
+                  "left": {
+                    "TVar": {
+                      "name": "a",
+                      "sourcePos": {
+                        "start": {
+                          "line": 54,
+                          "col": 28,
+                          "offset": 2103
+                        },
+                        "end": {
+                          "line": 54,
+                          "col": 29,
+                          "offset": 2104
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TVar": {
+                      "name": "all_appointments",
+                      "sourcePos": {
+                        "start": {
+                          "line": 54,
+                          "col": 33,
+                          "offset": 2108
+                        },
+                        "end": {
+                          "line": 54,
+                          "col": 49,
+                          "offset": 2124
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 54,
+                      "col": 28,
+                      "offset": 2103
+                    },
+                    "end": {
+                      "line": 54,
+                      "col": 49,
+                      "offset": 2124
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 54,
+                  "col": 2,
+                  "offset": 2077
+                },
+                "end": {
+                  "line": 54,
+                  "col": 49,
+                  "offset": 2124
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 53,
+              "col": 10,
+              "offset": 2041
+            },
+            "end": {
+              "line": 54,
+              "col": 49,
+              "offset": 2124
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 53,
+          "col": 0,
+          "offset": 2031
+        },
+        "end": {
+          "line": 54,
+          "col": 49,
+          "offset": 2124
+        }
+      }
+    }
+  },
+  {
+    "TInvariant": {
+      "condition": {
+        "TForall": {
+          "vars": [
+            {
+              "name": "a1",
+              "_type": {
+                "SimpleType": {
+                  "name": "Appointment"
+                }
+              }
+            },
+            {
+              "name": "a2",
+              "_type": {
+                "SimpleType": {
+                  "name": "Appointment"
+                }
+              }
+            }
+          ],
+          "body": {
+            "TImpl": {
+              "left": {
+                "TConj": {
+                  "left": {
+                    "TInSet": {
+                      "left": {
+                        "TVar": {
+                          "name": "a1",
+                          "sourcePos": {
+                            "start": {
+                              "line": 58,
+                              "col": 2,
+                              "offset": 2265
+                            },
+                            "end": {
+                              "line": 58,
+                              "col": 4,
+                              "offset": 2267
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TVar": {
+                          "name": "all_appointments",
+                          "sourcePos": {
+                            "start": {
+                              "line": 58,
+                              "col": 8,
+                              "offset": 2271
+                            },
+                            "end": {
+                              "line": 58,
+                              "col": 24,
+                              "offset": 2287
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 58,
+                          "col": 2,
+                          "offset": 2265
+                        },
+                        "end": {
+                          "line": 58,
+                          "col": 24,
+                          "offset": 2287
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TConj": {
+                      "left": {
+                        "TInSet": {
+                          "left": {
+                            "TVar": {
+                              "name": "a2",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 58,
+                                  "col": 28,
+                                  "offset": 2291
+                                },
+                                "end": {
+                                  "line": 58,
+                                  "col": 30,
+                                  "offset": 2293
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TVar": {
+                              "name": "all_appointments",
+                              "sourcePos": {
+                                "start": {
+                                  "line": 58,
+                                  "col": 34,
+                                  "offset": 2297
+                                },
+                                "end": {
+                                  "line": 58,
+                                  "col": 50,
+                                  "offset": 2313
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 58,
+                              "col": 28,
+                              "offset": 2291
+                            },
+                            "end": {
+                              "line": 58,
+                              "col": 50,
+                              "offset": 2313
+                            }
+                          }
+                        }
+                      },
+                      "right": {
+                        "TConj": {
+                          "left": {
+                            "TLt": {
+                              "left": {
+                                "TFunC": {
+                                  "name": "get_start",
+                                  "args": [
+                                    {
+                                      "TVar": {
+                                        "name": "a2",
+                                        "sourcePos": {
+                                          "start": {
+                                            "line": 59,
+                                            "col": 12,
+                                            "offset": 2329
+                                          },
+                                          "end": {
+                                            "line": 59,
+                                            "col": 14,
+                                            "offset": 2331
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 59,
+                                      "col": 2,
+                                      "offset": 2319
+                                    },
+                                    "end": {
+                                      "line": 59,
+                                      "col": 15,
+                                      "offset": 2332
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TAdd": {
+                                  "left": {
+                                    "TFunC": {
+                                      "name": "get_end",
+                                      "args": [
+                                        {
+                                          "TVar": {
+                                            "name": "a1",
+                                            "sourcePos": {
+                                              "start": {
+                                                "line": 59,
+                                                "col": 26,
+                                                "offset": 2343
+                                              },
+                                              "end": {
+                                                "line": 59,
+                                                "col": 28,
+                                                "offset": 2345
+                                              }
+                                            }
+                                          }
+                                        }
+                                      ],
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 59,
+                                          "col": 18,
+                                          "offset": 2335
+                                        },
+                                        "end": {
+                                          "line": 59,
+                                          "col": 29,
+                                          "offset": 2346
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "right": {
+                                    "TNum": {
+                                      "value": 30,
+                                      "sourcePos": {
+                                        "start": {
+                                          "line": 59,
+                                          "col": 32,
+                                          "offset": 2349
+                                        },
+                                        "end": {
+                                          "line": 59,
+                                          "col": 34,
+                                          "offset": 2351
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 59,
+                                      "col": 18,
+                                      "offset": 2335
+                                    },
+                                    "end": {
+                                      "line": 59,
+                                      "col": 34,
+                                      "offset": 2351
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 59,
+                                  "col": 2,
+                                  "offset": 2319
+                                },
+                                "end": {
+                                  "line": 59,
+                                  "col": 34,
+                                  "offset": 2351
+                                }
+                              }
+                            }
+                          },
+                          "right": {
+                            "TEq": {
+                              "left": {
+                                "TFunC": {
+                                  "name": "get_room",
+                                  "args": [
+                                    {
+                                      "TVar": {
+                                        "name": "a1",
+                                        "sourcePos": {
+                                          "start": {
+                                            "line": 59,
+                                            "col": 47,
+                                            "offset": 2364
+                                          },
+                                          "end": {
+                                            "line": 59,
+                                            "col": 49,
+                                            "offset": 2366
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 59,
+                                      "col": 38,
+                                      "offset": 2355
+                                    },
+                                    "end": {
+                                      "line": 59,
+                                      "col": 50,
+                                      "offset": 2367
+                                    }
+                                  }
+                                }
+                              },
+                              "right": {
+                                "TFunC": {
+                                  "name": "get_room",
+                                  "args": [
+                                    {
+                                      "TVar": {
+                                        "name": "a2",
+                                        "sourcePos": {
+                                          "start": {
+                                            "line": 59,
+                                            "col": 63,
+                                            "offset": 2380
+                                          },
+                                          "end": {
+                                            "line": 59,
+                                            "col": 65,
+                                            "offset": 2382
+                                          }
+                                        }
+                                      }
+                                    }
+                                  ],
+                                  "sourcePos": {
+                                    "start": {
+                                      "line": 59,
+                                      "col": 54,
+                                      "offset": 2371
+                                    },
+                                    "end": {
+                                      "line": 59,
+                                      "col": 66,
+                                      "offset": 2383
+                                    }
+                                  }
+                                }
+                              },
+                              "sourcePos": {
+                                "start": {
+                                  "line": 59,
+                                  "col": 38,
+                                  "offset": 2355
+                                },
+                                "end": {
+                                  "line": 59,
+                                  "col": 66,
+                                  "offset": 2383
+                                }
+                              }
+                            }
+                          },
+                          "sourcePos": {
+                            "start": {
+                              "line": 59,
+                              "col": 2,
+                              "offset": 2319
+                            },
+                            "end": {
+                              "line": 59,
+                              "col": 66,
+                              "offset": 2383
+                            }
+                          }
+                        }
+                      },
+                      "sourcePos": {
+                        "start": {
+                          "line": 58,
+                          "col": 28,
+                          "offset": 2291
+                        },
+                        "end": {
+                          "line": 59,
+                          "col": 66,
+                          "offset": 2383
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 58,
+                      "col": 2,
+                      "offset": 2265
+                    },
+                    "end": {
+                      "line": 59,
+                      "col": 66,
+                      "offset": 2383
+                    }
+                  }
+                }
+              },
+              "right": {
+                "TEq": {
+                  "left": {
+                    "TVar": {
+                      "name": "a1",
+                      "sourcePos": {
+                        "start": {
+                          "line": 60,
+                          "col": 2,
+                          "offset": 2390
+                        },
+                        "end": {
+                          "line": 60,
+                          "col": 4,
+                          "offset": 2392
+                        }
+                      }
+                    }
+                  },
+                  "right": {
+                    "TVar": {
+                      "name": "a2",
+                      "sourcePos": {
+                        "start": {
+                          "line": 60,
+                          "col": 8,
+                          "offset": 2396
+                        },
+                        "end": {
+                          "line": 60,
+                          "col": 10,
+                          "offset": 2398
+                        }
+                      }
+                    }
+                  },
+                  "sourcePos": {
+                    "start": {
+                      "line": 60,
+                      "col": 2,
+                      "offset": 2390
+                    },
+                    "end": {
+                      "line": 60,
+                      "col": 10,
+                      "offset": 2398
+                    }
+                  }
+                }
+              },
+              "sourcePos": {
+                "start": {
+                  "line": 58,
+                  "col": 2,
+                  "offset": 2265
+                },
+                "end": {
+                  "line": 60,
+                  "col": 10,
+                  "offset": 2398
+                }
+              }
+            }
+          },
+          "sourcePos": {
+            "start": {
+              "line": 57,
+              "col": 10,
+              "offset": 2220
+            },
+            "end": {
+              "line": 60,
+              "col": 10,
+              "offset": 2398
+            }
+          }
+        }
+      },
+      "sourcePos": {
+        "start": {
+          "line": 57,
+          "col": 0,
+          "offset": 2210
+        },
+        "end": {
+          "line": 60,
+          "col": 10,
+          "offset": 2398
+        }
+      }
+    }
+  }
+]
