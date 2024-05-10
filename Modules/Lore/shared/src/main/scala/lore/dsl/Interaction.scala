@@ -48,6 +48,9 @@ trait CanExecute[S <: Tuple, A] {
 
   def executes(fun: (S, A) => S): E[S, A]
 
+  inline def executes[B](inline fun: (B, A) => B)(using ev: S =:= Tuple1[B]): E[S, A] =
+    executes({ (s, a) => ev.flip(Tuple1(fun(s._1, a))) })
+
 }
 
 implicit object Ex {
@@ -141,12 +144,12 @@ implicit object Ex {
 
   extension (left: Boolean) {
     infix def implies(right: Boolean): Boolean = !left || right
-    
+
     @targetName("impliesOp")
     def ==>(right: Boolean): Boolean = !left || right
 
     infix def equiv(right: Boolean): Boolean = left == right
-    
+
     @targetName("equivOP")
     def <==>(right: Boolean): Boolean = left == right
   }

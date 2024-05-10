@@ -1,16 +1,16 @@
 package lore
 
-import cats.effect._
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path, Paths}
-import com.monovore.decline._
-import cats.implicits._
 import cats.data.NonEmptyList
-import lore.ast.Term
-import java.nio.file.NoSuchFileException
+import cats.effect.*
+import cats.implicits.*
+import com.monovore.decline.*
 import lore.Parser.ParsingException
+import lore.ast.Term
 import lore.backends.ViperBackend
-import lore.cli._
+import lore.cli.*
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, NoSuchFileException, Path, Paths}
 
 object Compiler extends IOApp {
 

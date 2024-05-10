@@ -12,7 +12,8 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   rdts.native,
   aead.js,
   aead.jvm,
-  lore,
+  lore.jvm,
+  lore.js,
   lofiAcl,
   compileMacros.js,
   compileMacros.jvm,
@@ -26,6 +27,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   encryptedTodo,
   replicationExamples.js,
   replicationExamples.jvm,
+  loCal,
 )
 
 lazy val reactivesAggregate =
@@ -127,24 +129,29 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
-lazy val lore = (project in file("Modules/Lore"))
+
+
+val circeVersion = "0.14.5"
+
+lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
+  .in(file("Modules/Lore"))
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "org.typelevel" %% "cats-core"   % "2.10.0",
-    libraryDependencies += "org.typelevel" %% "cats-effect" % "3.5.4",
-    libraryDependencies += "com.monovore"  %% "decline"     % "2.4.1",
-    libraryDependencies += "org.typelevel" %% "cats-parse"  % "1.0.0",
-    libraryDependencies += ("com.lihaoyi"  %% "fansi"       % "0.5.0"),
+    libraryDependencies += "org.typelevel" %%% "cats-core"   % "2.10.0",
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.5.4",
+    libraryDependencies += "com.monovore"  %%% "decline"     % "2.4.1",
+    libraryDependencies += "org.typelevel" %%% "cats-parse"  % "1.0.0",
+    libraryDependencies += ("com.lihaoyi"  %%% "fansi"       % "0.5.0"),
     // optics dependencies
     libraryDependencies ++= Seq(
-      "dev.optics" %% "monocle-core" % "3.2.0"
+      "dev.optics" %%% "monocle-core" % "3.2.0"
     ),
     // test dependencies
     Dependencies.munit
   )
-  .dependsOn(reactives.jvm)
+  .dependsOn(reactives)
   .settings(Compile / mainClass := Some("lore.Compiler"))
 
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
@@ -218,6 +225,29 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
     LocalSettings.deployTask,
+  )
+
+lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
+  .enablePlugins(ScalaJSPlugin)
+  .dependsOn(rdts.js, reactives.js, channels.js, lore.js)
+  .settings(
+    scala3defaults,
+    noPublish,
+    resolverJitpack,
+    Dependencies.scalatags,
+    Dependencies.jsoniterScala,
+    TaskKey[File]("deploy", "generates a correct index.html for the lore calendar app") := {
+      val fastlink   = (Compile / fastLinkJS).value
+      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
+      val bp         = baseDirectory.value.toPath
+      val tp         = target.value.toPath
+      val template   = IO.read(bp.resolve("index.template.html").toFile)
+      val targetpath = tp.resolve("index.html")
+      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
+      IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
+      IO.copyFile(bp.resolve("calendar.css").toFile, tp.resolve("calendar.css").toFile)
+      targetpath.toFile
+    }
   )
 
 lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))

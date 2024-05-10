@@ -64,7 +64,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
         }
       }
 
-      modifies.zip(res).asInstanceOf[Seq[(Var[Any], Any)]].map { case (source, v) => source.set(v) }
+      modifies.zip(res).toList.asInstanceOf[Seq[(Var[Any], Any)]].map { case (source, v) => source.set(v) }
       ()
     }
 
