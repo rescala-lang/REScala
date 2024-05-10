@@ -11,7 +11,7 @@ import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag, all}
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalReplicaId}
+import rdts.syntax.{DeltaBuffer, LocalUid}
 import reactives.structure.Pulse
 import calendar.Codecs.given
 import rdts.base.Uid
@@ -80,7 +80,7 @@ class NewAppointment(private val typeName: String) {
 
 class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
 
-  given LocalReplicaId = replicaId
+  given LocalUid = replicaId
 
   def getContents(): Div = {
     val newWorkAppointment = new NewAppointment("Work")
