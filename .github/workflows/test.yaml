@@ -34,17 +34,7 @@ jobs:
     - name: install jsdom
       run: npm install jsdom
 
-    # Compile all modules, before starting any tests.
-    # Compilation should not fail spuriously, therefore fail the overall test and don't retry compilation.
-    - name: Compile
-      run: sbt Test/compile
+    - name: compile and test
+      run: sbt "Test/compile; test"
 
-    # Run tests once, but allow failures.
-    # Some tests may fail spuriously, therefore continue on error and retry with the next step
-    - name: Run tests
-      continue-on-error: true
-      run: sbt test
 
-    # Run all failed test cases, this time failing the overall test
-    - name: Run tests again for added reliability
-      run: sbt testQuick
