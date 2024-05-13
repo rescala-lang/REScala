@@ -125,17 +125,22 @@ import kofre.base.Uid
   */
 }
 
+// our main method
+@main def start_rdtdots_routing(): Unit = {
+  start_rdtdots_routing_3000()
+}
+
+
 
 @main def start_rdtdots_routing_3000(): Unit = {
-  start_rdtdots_routing(3000)
+  start_rdtdots_routing_port(3000)
 }
 
 @main def start_rdtdots_routing_4000(): Unit = {
-  start_rdtdots_routing(4000)
+  start_rdtdots_routing_port(4000)
 }
 
-
-def start_rdtdots_routing(port: Int): Unit = {
+def start_rdtdots_routing_port(port: Int): Unit = {
   RdtDotsRouter.create(port).flatMap(router => {
     router.start_receiving()
   }).recover(throwable => println(throwable))
