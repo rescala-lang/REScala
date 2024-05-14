@@ -32,18 +32,19 @@ object JarExport extends sbt.AutoPlugin {
       }
       // the return value is what `show stageJars` will display
       targetpath.toFile
+    },
+
+    // write the classpath into a file that can be passed to java as a commandline argument file
+    writeClasspath := {
+      val cp = (Compile / fullClasspathAsJars).value
+      val cpstring = cp.map { at =>
+        val pathstring = at.data.toString.replace("\\", "/")
+        s"""-cp "${pathstring}"\n"""
+      }.mkString("")
+      val targetpath = target.value.toPath.resolve("classpath.txt")
+      IO.write(targetpath.toFile, cpstring)
+      targetpath.toFile
     }
   )
 
-  // write the classpath into a file that can be passed to java as a commandline argument file
-  writeClasspath := {
-    val cp = (Compile / fullClasspathAsJars).value
-    val cpstring = cp.map { at =>
-      val pathstring = at.data.toString.replace("\\", "/")
-      s"""-cp "${pathstring}"\n"""
-    }.mkString("")
-    val targetpath = target.value.toPath.resolve("classpath.txt")
-    IO.write(targetpath.toFile, cpstring)
-    targetpath.toFile
-  },
 }
