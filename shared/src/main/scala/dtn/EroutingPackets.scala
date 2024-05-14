@@ -34,8 +34,11 @@ enum PeerType derives Codec:
   case Static
   case Dynamic
 
+// example encoded: {"secs": ..., "nanos": ...}  // no class type info
+case class Duration(secs: Int, nanos: Int) derives Codec
+
 // example encoded: {"eid": ..., "addr": ...}  // no class type info
-case class DtnPeer(eid: Endpoint, addr: PeerAddress, con_type: PeerType, period: Option[Int], cla_list: List[Tuple2[String, Option[Int]]], services: Map[Int, String], last_contact: Int, fails: Int) derives Codec
+case class DtnPeer(eid: Endpoint, addr: PeerAddress, con_type: PeerType, period: Option[Duration], cla_list: List[Tuple2[String, Option[Int]]], services: Map[Int, String], last_contact: Int, fails: Int) derives Codec
 
 // example encoded: {"source": ..., "destination": ...}  // no class type info
 case class BundlePack(source: Endpoint, destination: Endpoint, received_time: Long, creation_time: Long, lifetime: Long, id: String, administrative: Boolean, size: Int, constraints: List[Constraint]) derives Codec
