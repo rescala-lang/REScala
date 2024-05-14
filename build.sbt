@@ -300,6 +300,7 @@ lazy val replicationExamples =
     .jvmSettings(
       Dependencies.slips.script,
       Dependencies.sqliteJdbc,
+      libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13",
     )
     .jsSettings(
       Dependencies.scalatags,
