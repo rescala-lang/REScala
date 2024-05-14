@@ -8,7 +8,7 @@ import rdts.syntax.{DeltaBuffer, LocalUid}
 
 import scala.util.Random
 
-case class Token(id: Long, owner: Uid, value: String) {
+case class Token(id: Long, owner: Uid, value: String) derives CanEqual {
   def same(other: Token) = owner == other.owner && value == other.value
 }
 

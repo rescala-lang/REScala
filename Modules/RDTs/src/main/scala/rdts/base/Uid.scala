@@ -1,10 +1,11 @@
 package rdts.base
 
 import java.util.Base64
+import scala.CanEqual
 import scala.util.Random
 
 // opaque currently causes too many weird issues with library integrations, in particular the json libraries can no longer auto serialize
-case class Uid(delegate: String) {
+case class Uid(delegate: String) derives CanEqual {
   override def toString: String = show
   def show: String = s"🪪$delegate"
 }

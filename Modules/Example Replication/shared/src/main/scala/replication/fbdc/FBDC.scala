@@ -10,9 +10,11 @@ import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
 import rdts.syntax.{DeltaBuffer, LocalUid, PermCausalMutate}
 import rdts.time.VectorClock
+import reactives.operator.Signal
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
+import scala.collection.immutable.Queue
 import scala.reflect.ClassTag
 
 enum Req:
@@ -66,12 +68,12 @@ class FbdcExampleData {
 
   val requests = dataManager.mergedState.map(_.data.requests.data.values)
   val myRequests =
-    val r = requests.map(_.filter(_.value.executor == replicaId))
+    val r = requests.map(_.filter(_.value.executor == replicaId.uid))
     r.observe { reqs =>
       if reqs.nonEmpty
       then
         dataManager.modReq { aws =>
-          aws.removeBy { (req: Req) => req.executor == replicaId }
+          aws.removeBy { (req: Req) => req.executor == replicaId.uid }
         }
     }
     r
@@ -85,7 +87,12 @@ class FbdcExampleData {
     case res: Res.Northwind => res
   })
 
-  def requestsOf[T: ClassTag] = myRequests.map(_.collect {
+  myRequests.observe: reqs =>
+    println(s"my reqs changes to:")
+    reqs.foreach(println)
+    println(s"==========f")
+
+  def requestsOf[T: ClassTag]: Signal[Queue[QueueElement[T]]] = myRequests.map(_.collect {
     case req @ QueueElement(x: T, _, _) => req.copy(value = x)
   })
 

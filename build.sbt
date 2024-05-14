@@ -295,7 +295,8 @@ lazy val replicationExamples =
       Dependencies.scalacheck,
       Dependencies.slips.options,
       Dependencies.slips.delay,
-      Dependencies.jsoniterScala
+      Dependencies.jsoniterScala,
+      Settings.strictEquality,
     )
     .jvmSettings(
       Dependencies.slips.script,

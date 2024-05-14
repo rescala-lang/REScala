@@ -29,6 +29,8 @@ object Settings {
     )
   )
 
+  val strictEquality = List(scalacOptions += "-language:strictEquality")
+
   val commonScalacOptions =
     fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
 
