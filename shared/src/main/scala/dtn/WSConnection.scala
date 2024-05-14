@@ -160,7 +160,7 @@ class WSEroutingClient(port: Int) extends WSConnection(port: Int) {
   def receivePacket(): Future[Packet] = {    
     receiveWholeMessage().flatMap {
       case s: String => {
-        println("received packet")
+        println(s"received packet: $s")
         Future(Json.decode(s.getBytes(StandardCharsets.UTF_8)).to[Packet].value)
       }
       case b: Array[Byte] => {
