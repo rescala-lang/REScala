@@ -2,6 +2,7 @@ package replication.fbdc
 
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
+import rdts.syntax.DeltaBuffer
 
 import java.nio.file.{Files, Path}
 import java.sql.*
@@ -42,12 +43,12 @@ object Northwind {
 
       exampleData.requestsOf[Req.Northwind].observe { queries =>
         dataManager.modRes { res =>
-          val ress = res.mutable
+          val ress = DeltaBuffer(res).mutable
           queries.foreach { q =>
             val resp = Res.Northwind(q.value, query(q.value.query))
             ress.observeRemoveMap.update("northwind", Some(LastWriterWins.now(resp)))
           }
-          ress.result
+          ress.result.state
         }
       }
 

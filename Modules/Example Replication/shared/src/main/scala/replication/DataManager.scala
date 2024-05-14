@@ -29,15 +29,18 @@ object ProtocolMessage {
   case class Payload[T](sender: Uid, data: T)  extends ProtocolMessage[T]
 }
 
+case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bottom
+
 class DataManager[State](
     val replicaId: LocalUid,
-)(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State], hasDots: HasDots[State]) {
+)(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
 
-  given protocolCodec: JsonValueCodec[ProtocolMessage[Dotted[State]]] = JsonCodecMaker.make
+  given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
+  given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]] = JsonCodecMaker.make
 
   given LocalUid = replicaId
 
-  type TransferState = Dotted[State]
+  type TransferState = ProtocolDots[State]
 
   var connections: List[BiChan] = Nil
 
@@ -55,17 +58,19 @@ class DataManager[State](
       connections.foreach: con =>
         con.out.send(missingRequestMessage).run(using ())(debugCallback)
     },
-    1000,
-    1000
+    4000,
+    4000
   )
 
   def addConnection(biChan: BiChan): Unit = {
+    println(s"adding connection to data manager")
     lock.synchronized {
       connections = biChan :: connections
     }
     biChan.in.receive.run(using Ctx()):
       case Success(msg) =>
         val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
+        println(s"$res")
         handleMessage(res, biChan)
       case Failure(error) => error.printStackTrace()
   }
@@ -86,34 +91,24 @@ class DataManager[State](
 
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
-  val mergedState                   = changes.fold(Bottom.empty[Dotted[State]]) { (curr, ts) => curr merge ts }
+  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr merge ts }
   val currentContext: Signal[Dots]  = mergedState.map(_.context)
 
   val encodedStateSize = mergedState.map(s => writeToArray(s).size)
 
-  def applyLocalDelta(dotted: Dotted[State]): Unit = lock.synchronized {
+  def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
     changeEvt.fire(dotted)
     disseminateLocalBuffer()
   }
 
-  class ManagedPermissions extends PermCausalMutate[State, State] {
-    override def query(c: State): State = c
-
-    override def mutateContext(container: State, withContext: Dotted[State]): State =
-      applyLocalDelta(withContext)
-      container
-
-    override def context(c: State): Dots = currentContext.now
-  }
-
-  def transform(fun: Dotted[State] => Dotted[State]) = lock.synchronized {
+  def transform(fun: State => State) = lock.synchronized {
     val current = mergedState.now
-    applyLocalDelta(fun(current))
+    applyLocalDelta(ProtocolDots(fun(current.data), Dots.single(current.context.nextDot(replicaId.uid))))
   }
 
-  def allDeltas: View[Dotted[State]] = lock.synchronized {
-    View(localBuffer, remoteDeltas, localDeltas).flatten
+  def allDeltas: List[ProtocolDots[State]] = lock.synchronized {
+    List(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
   def updateRemoteContext(rr: Uid, dots: Dots) = {
@@ -123,14 +118,10 @@ class DataManager[State](
   def handleMessage(msg: ProtocolMessage[TransferState], biChan: BiChan) = {
     msg match
       case Request(uid, knows) =>
-        val contained = HasDots[State].dots(mergedState.now.data)
-        val cc        = currentContext.now
-        // we always send all the removals in addition to any other deltas
-        val removed  = cc subtract contained
-        val relevant = allDeltas.filterNot(dt => dt.context <= knows).concat(List(Dotted(Bottom.empty, removed)))
+        val relevant = allDeltas.filterNot(dt => dt.context <= knows)
         relevant.map(encodeDelta).foreach: msg =>
           biChan.out.send(msg).run(using ())(debugCallback)
-        updateRemoteContext(uid, cc merge knows)
+        updateRemoteContext(uid, currentContext.now merge knows)
       case Payload(uid, named) =>
         lock.synchronized {
           updateRemoteContext(uid, named.context)

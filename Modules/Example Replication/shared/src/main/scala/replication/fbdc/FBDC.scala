@@ -24,18 +24,11 @@ enum Res:
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
-class Focus[Inner: DottedLattice, Outer](dm: DataManager[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
+class Focus[Inner: Lattice, Outer](dm: DataManager[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
 
-  type Cont[T] = DeltaBuffer[Dotted[T]]
-
-  type Mod[T, C] = PermCausalMutate[C, T] ?=> C => C
-
-  def apply(using pcm: PermCausalMutate[Dotted[Outer], Outer])(fun: Mod[Inner, Cont[Inner]]): Unit = {
+  def apply(fun: Inner => Inner): Unit = {
     dm.transform { outer =>
-      val resBuffer = fun(DeltaBuffer(outer.map(extract)))
-      resBuffer.deltaBuffer.reduceLeftOption(_ merge _) match
-        case None        => outer
-        case Some(delta) => pcm.mutateContext(outer, delta.map(wrap))
+      wrap(fun(extract(outer)))
     }
   }
 }
@@ -47,12 +40,13 @@ given HasDots[RespValue]       = HasDots.noDots
 given DottedLattice[RespValue] = Dotted.lattice
 
 case class State(
-    requests: CausalQueue[Req],
-    responses: ObserveRemoveMap[String, RespValue],
-    providers: ObserveRemoveMap[Uid, ReplicatedSet[String]]
-) derives DottedLattice, HasDots, Bottom
+    requests: Dotted[CausalQueue[Req]],
+    responses: Dotted[ObserveRemoveMap[String, RespValue]],
+    providers: Dotted[ObserveRemoveMap[Uid, ReplicatedSet[String]]]
+) derives Lattice, Bottom
 
 object State:
+
   extension (dm: DataManager[State])
     def modReq          = Focus(dm)(_.requests, d => Bottom.empty.copy(requests = d))
     def modRes          = Focus(dm)(_.responses, d => Bottom.empty.copy(responses = d))
@@ -70,7 +64,7 @@ class FbdcExampleData {
       part.observeRemoveMap.transform(replicaId.uid)(_.add(using replicaId)(capability))
     }
 
-  val requests = dataManager.mergedState.map(_.data.requests.values)
+  val requests = dataManager.mergedState.map(_.data.requests.data.values)
   val myRequests =
     val r = requests.map(_.filter(_.value.executor == replicaId))
     r.observe { reqs =>
