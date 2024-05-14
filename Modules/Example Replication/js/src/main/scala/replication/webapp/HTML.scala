@@ -28,7 +28,9 @@ object HTML {
     List(
       h1("connection management"),
       section(table(
+        tr(td("self id"), td(dataManager.replicaId.show)),
         tr(td("total state size")).render.reattach(dataManager.encodedStateSize.map(s => td(s).render)),
+        tr(td("tick")).render.reattach(dataManager.tick.map(td(_).render)),
         tr(
           td("request queue"),
         ).render.reattach(dataManager.mergedState.map(v => td(v.data.requests.elements.size).render)),
@@ -38,14 +40,19 @@ object HTML {
         button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
       ),
       section(table(
-        thead(th("remote ref"), th("connection"), th("request"), th("dots")),
+        thead(th("remote ref"), th("dots")),
         tr(
           td(dataManager.replicaId.show),
-          td(),
-          td(),
-          table().render.reattach(dataManager.currentContext.map(dotsToRows))
+          td(table().render.reattach(dataManager.currentContext.map(dotsToRows)))
         )
-      )),
+      ).render.reattach(Signal {
+        val peers = dataManager.peerids.value
+        peers.toList.map: peer =>
+          tr(
+            td(peer.show),
+            td(table().render.reattach(dataManager.contextOf(peer).map(dotsToRows)))
+          ).render
+      })),
       section(aside(
         "remote url: ",
         ccm.wsUri,

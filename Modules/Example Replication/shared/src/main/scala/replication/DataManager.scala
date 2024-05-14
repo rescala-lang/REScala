@@ -43,12 +43,15 @@ class DataManager[State](
 
   val timer = new Timer()
 
+  val tick: Var[Int] = Var(0)
+
   val debugCallback: Callback[Any] =
     case Success(value)     => ()
     case Failure(exception) => exception.printStackTrace()
 
   timer.scheduleAtFixedRate(
     { () =>
+      tick.transform(_ + 1)
       connections.foreach: con =>
         con.out.send(missingRequestMessage).run(using ())(debugCallback)
     },
@@ -76,12 +79,10 @@ class DataManager[State](
   private val contexts: Var[Map[Uid, Dots]]                            = Var(Map.empty)
   private val filteredContexts: mutable.Map[Uid, Signal[Option[Dots]]] = mutable.Map.empty
 
-  def contextOf(rr: Uid): Signal[Dots] =
-    val internal = filteredContexts.getOrElseUpdate(rr, contexts.map(_.get(rr)))
-    internal.map {
-      case None       => Dots.empty
-      case Some(dots) => dots
-    }
+  def peerids: Signal[Set[Uid]] = contexts.map(_.keySet)
+  def contextOf(rr: Uid): Signal[Dots] = Signal {
+    contexts.value.getOrElse(rr, Dots.empty)
+  }
 
   private val changeEvt             = Evt[TransferState]()
   val changes: Event[TransferState] = changeEvt
