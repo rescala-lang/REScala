@@ -103,7 +103,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
     Dependencies.scalatags,
   ).jvmSettings(
     libraryDependencies ++= {
-      val jettyVersion = "12.0.6"
+      val jettyVersion = "12.0.9"
       Seq(
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
@@ -171,8 +171,8 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
         // Note, the below means JDK 1.8, aka Java 8
         "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
         "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
-        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.4",
-        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.4",
+        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.5",
+        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.5",
       )
   ).dependsOn(rdts.jvm % "compile->compile;test->test")
 
