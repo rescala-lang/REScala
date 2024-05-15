@@ -1,7 +1,7 @@
 package channel.webrtc
 
 import channel.broadcastchannel.BroadcastChannelConnector
-import channel.{ArrayMessageBuffer, Ctx, MessageBuffer}
+import channel.{ArrayMessageBuffer, Abort, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.syntax.toAsync
@@ -87,11 +87,11 @@ object Example {
     var autoconnections: Map[Long, WebRTCHandling] = Map.empty
     val selfId                                     = Random.nextLong()
 
-    Async[Ctx] {
+    Async[Abort] {
       val msg                                   = broadcast.receive.bind
       val communication: BroadcastCommunication = msg.convert
-      Async[Ctx].bind:
-        Async[Ctx].fromCallback:
+      Async[Abort].bind:
+        Async[Abort].fromCallback:
           communication match
             case BroadcastCommunication.Hello(id) =>
               val handling = WebRTCHandling(Some {
@@ -114,7 +114,7 @@ object Example {
             case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
               autoconnections.get(from).foreach: handling =>
                 handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
-    }.run(using Ctx())(errorReporter)
+    }.run(using Abort())(errorReporter)
 
     broadcast.send(BroadcastCommunication.Hello(selfId).convert).run(using ())(errorReporter)
 
@@ -124,7 +124,7 @@ object Example {
     def handleConnection: Callback[WebRTCConnection] =
       case Success(connection) =>
         println("adding connection!!!!")
-        connection.receive.run(using Ctx()):
+        connection.receive.run(using Abort()):
           case Success(msg) =>
             val res = new String(msg.asArray)
             println(s"received $res")

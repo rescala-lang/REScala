@@ -1,6 +1,6 @@
 package replication
 
-import channel.{ArrayMessageBuffer, BiChan, Ctx, MessageBuffer}
+import channel.{ArrayMessageBuffer, BiChan, Abort, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
@@ -67,7 +67,7 @@ class DataManager[State](
     lock.synchronized {
       connections = biChan :: connections
     }
-    biChan.in.receive.run(using Ctx()):
+    biChan.in.receive.run(using Abort()):
       case Success(msg) =>
         val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
         println(s"$res")

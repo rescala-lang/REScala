@@ -1,82 +1,61 @@
 package channel
 
-import channel.tcp.{TCPConnection, TCPListener}
-import channel.{ArrayMessageBuffer, BiChan}
-import de.rmgk.delay.Async
+import channel.tcp.TCP
 import de.rmgk.delay.syntax.run
+import de.rmgk.delay.{Async, Callback}
 
-import java.text.Bidi
-import java.util.concurrent.TimeUnit
-import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, SECONDS}
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {
     val port = 54467
 
-    var listening: TCPListener = null
+    given abort: Abort = Abort()
 
-    def fork: Async[Any, Unit] = Async.fromCallback:
-      val t = new Thread(() =>
-        Async.handler.succeed(())
-      )
-      t.setDaemon(true)
-      println(s"starting thread")
-      t.start()
 
-    val echoServer: Prod[Unit] = Async[Ctx]:
-      fork.bind
-      println(s"serving")
-      listening = tcp.TCPListener.startListening(port, "0")
-      val channel = listening.connections.bind
-      println(s"new connection")
-      fork.bind
-      val msg = channel.receive.bind
-      println(s"echoing")
-      channel.send(msg).bind
-      println(s"done")
+    def printErrors[T](cb: T => Unit): Callback[T] =
+      case Success(mb) => cb(mb)
+      case Failure(ex) => ex.printStackTrace()
 
-    val client: Prod[TCPConnection] =
-      val bidiA = Async:
-        fork.bind
-        println(s"connecting")
-        channel.tcp.connect("localhost", port).bind
-      .runToAsync
+    // need an execution context that generates new tasks as TCP does lots of blocking
+    val executor = Executors.newCachedThreadPool()
+    val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-      val sending = Async: (_: Any) ?=>
-        val bidi = bidiA.bind
-        println(s"sending")
-        fork.bind
-        bidi.send(ArrayMessageBuffer(Array(1, 2, 3, 4))).bind
-        bidi.send(ArrayMessageBuffer(Array(5, 6, 7, 8))).bind
+    val echoServer: Prod[ConnectionContext] =
+      TCP.prepareListening("0", port, ec).establish: conn =>
+        printErrors: mb =>
+          println(s"echoing")
+          conn.send(mb).runToFuture
 
-      val receiving = Async[Ctx]:
-        val bidi = bidiA.bind
-        fork.bind
-        println(s"receiving")
-        val response = bidi.receive.bind
-        println(response.asArray.mkString("[", ", ", "]"))
+    val client: Prod[ConnectionContext] =
+      TCP.prepareConnect("localhost", port, ec).establish: conn =>
+        printErrors: mb =>
+          println(s"received")
+          println(mb.asArray.mkString("[", ", ", "]"))
 
-      Async[Ctx]:
-        sending.bind
-        receiving.bind
-        bidiA.bind
 
-    var bidi: TCPConnection = null
+    echoServer.run:
+      printErrors: conn =>
+        ()
 
-    echoServer.run(using Ctx()): res =>
-      println(s"echo res: $res")
-    client.run(using Ctx()):
-      case Success(res) => bidi = res
-      case Failure(e)   => throw e
+    val sending = Async: (_: Abort) ?=>
+      val conn = client.bind
+      println(s"sending")
+      conn.send(ArrayMessageBuffer(Array(1, 2, 3, 4))).bind
+      println(s"sending")
+      conn.send(ArrayMessageBuffer(Array(5, 6, 7, 8))).bind
+      Thread.sleep(1000)
+      println(s"done sleeping!")
+      abort.closeRequest = true
+      conn.close()
+      executor.shutdownNow()
 
-    Thread.sleep(1000)
+    sending.run:
+      printErrors: conn =>
+        ()
 
-    println(s"done sleeping!")
-
-    listening.socket.close()
-    bidi.close()
 
   }
 }

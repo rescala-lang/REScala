@@ -1,7 +1,7 @@
 package channel
 
 import channel.jettywebsockets.{JettyWsConnection, JettyWsListener}
-import channel.{ArrayMessageBuffer, Ctx}
+import channel.{ArrayMessageBuffer, Abort}
 import de.rmgk.delay.Async
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ContextHandler
@@ -19,13 +19,13 @@ class JettyTest extends munit.FunSuite {
     val listening = JettyWsListener.startListen(port, PathSpec.from("/registry/*"))
 
     // echo server
-    val echoServer = Async[Ctx] {
+    val echoServer = Async[Abort] {
       val connection = listening.connections().bind
       println(s"connection received")
       val messageBuffer = connection.receive.bind
       println(s"received ${messageBuffer.asArray.length}bytes")
       connection.send(messageBuffer).bind
-    }.run(using Ctx())(println)
+    }.run(using Abort())(println)
 
     listening.server.start()
 
@@ -33,13 +33,13 @@ class JettyTest extends munit.FunSuite {
 
     Thread.sleep(100)
 
-    val connect = Async[Ctx] {
+    val connect = Async[Abort] {
       val outgoing = JettyWsConnection.connect(URI.create(s"ws://localhost:$port/registry/")).bind
       outgoing.send(ArrayMessageBuffer("hello world".getBytes)).bind
       println(s"send successfull")
       val answer = outgoing.receive.bind
       println(new String(answer.asArray))
-    }.run(using Ctx()) { res =>
+    }.run(using Abort()) { res =>
       println(s"stopping!")
       println(res)
       listening.server.stop()

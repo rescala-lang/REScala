@@ -1,23 +1,77 @@
 package channel.tcp
 
-import channel.{ArrayMessageBuffer, InChan, MessageBuffer, OutChan}
-import de.rmgk.delay.Async
+import channel.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer, OutChan}
+import de.rmgk.delay
+import de.rmgk.delay.{Async, Callback}
 
 import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException}
-import java.net.Socket
+import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
+import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-def connect(host: String, port: Int): Async[Any, TCPConnection] = Async.fromCallback {
-  try
-    Async.handler.succeed:
-      new TCPConnection(new Socket(host, port))
-  catch
-    case NonFatal(exception) =>
-      Async.handler.fail(exception)
+object TCP {
+
+  inline def syncAttempt[T](inline x: T): Async[Any, T] = Async.fromCallback {
+    try Async.handler.succeed(x)
+    catch case NonFatal(exception) => Async.handler.fail(exception)
+  }
+
+  def handleConnection(socket: Socket, incoming: Incoming, executionContext: ExecutionContext): TCPConnection = {
+    val conn = new TCPConnection(socket)
+    executionContext.execute: () =>
+      conn.handleReceivedMessages(incoming(conn))
+    conn
+  }
+
+  def prepareConnect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+    new LatentConnection {
+      override def establish(incoming: Incoming): Async[Any, ConnectionContext] =
+        TCP.syncAttempt {
+          TCP.handleConnection(new Socket(host, port), incoming, executionContext)
+        }
+    }
+
+  def prepareListening(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+    new LatentConnection {
+      override def establish(incoming: ConnectionContext => delay.Callback[MessageBuffer])
+          : Async[Abort, ConnectionContext] =
+        Async.fromCallback { abort ?=>
+          try
+            val socket = new ServerSocket
+
+            try socket.setReuseAddress(true)
+            catch {
+              case _: SocketException =>
+              // some implementations may not allow SO_REUSEADDR to be set
+            }
+
+            socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
+
+            executionContext.execute { () =>
+              try
+                while (!abort.closeRequest) {
+                  val connection = socket.accept()
+                  if connection != null
+                  then
+                    Async.handler.succeed {
+                      TCP.handleConnection(connection, incoming, executionContext)
+                    }
+                }
+              catch {
+                case exception: SocketException =>
+                  Async.handler.fail(exception)
+              }
+            }
+
+          catch
+            case NonFatal(ex) => Async.handler.fail(ex)
+        }
+    }
+
 }
 
-class TCPConnection(socket: Socket) extends InChan with OutChan {
+class TCPConnection(socket: Socket) extends OutChan with ConnectionContext {
 
   // socket streams
 
@@ -45,13 +99,9 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
 
   def close(): Unit = socket.close()
 
-  // heartbeat
-
-  // socket.setSoTimeout(timeout)
-
   // frame parsing
 
-  override def receive: Async[Any, MessageBuffer] = Async.fromCallback {
+  def handleReceivedMessages(handler: Callback[MessageBuffer]) = {
 
     def readNextByte() = {
       val byte = inputStream.read
@@ -68,7 +118,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
             val bytes = new Array[Byte](size)
             inputStream.readFully(bytes, 0, size)
 
-            Async.handler.succeed(ArrayMessageBuffer(bytes))
+            handler.succeed(ArrayMessageBuffer(bytes))
 
           case _ =>
             throw IOException("unexpected read")
@@ -77,7 +127,7 @@ class TCPConnection(socket: Socket) extends InChan with OutChan {
     catch {
       case ioe: IOException =>
         close()
-        Async.handler.fail(ioe)
+        handler.fail(ioe)
     }
   }
 

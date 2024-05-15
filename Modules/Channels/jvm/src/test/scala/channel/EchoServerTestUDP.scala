@@ -27,7 +27,7 @@ object EchoServerTestUDP {
       println(s"starting thread")
       t.start()
 
-    val echoServer: Prod[Unit] = Async[Ctx]:
+    val echoServer: Prod[Unit] = Async[Abort]:
       fork.bind
       println(s"serving")
       val msg = listener.receive.bind
@@ -46,7 +46,7 @@ object EchoServerTestUDP {
       sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 9)).getBytes())).bind
       sender.send(ArrayMessageBuffer(("X" * ((1 << 16) - 8)).getBytes())).bind
 
-    given ctx: Ctx = Ctx()
+    given ctx: Abort = Abort()
 
     echoServer.run: res =>
       println(s"echo res: $res")
