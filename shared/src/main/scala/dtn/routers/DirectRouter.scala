@@ -65,8 +65,8 @@ class DirectRouter extends BaseRouter {
   }
 }
 object DirectRouter {
-  def create(port: Int): Future[DirectRouter] = {
-    val router = DirectRouter()
+  def apply(port: Int): Future[DirectRouter] = {
+    val router = new DirectRouter()
 
     WSEroutingClient.create(port).map(ws => {
       router.ws = Option(ws)

@@ -19,7 +19,7 @@ import scala.util.Random
       what do we do:
 
         the endpoint naming scheme is: dtn://global/~rdt/app-name for the destination.
-        to be able to gather routing information the source will be like: dtn://node-id/~rdt/app-name
+        to be able to gather routing information the source will be like: dtn://node-id/rdt/app-name
         
         this means that each rdt-app must subscribe to two endpoints.
         currently bundles will be only addressed to the global one, but this may change.
@@ -86,7 +86,9 @@ class RdtDotsRouter extends BaseRouter {
     val destination_nodes: Set[Endpoint] = tempDotsStore.get(packet.bp.id) match
       case None => Set()
       case Some(d) => {
-        destinationDotsState.getNodeEndpointsToForwardBundleTo(packet.bp.source, d)
+        val source_node_endpoint = packet.bp.source.extract_node_endpoint()
+        val rdt_id = packet.bp.destination.extract_endpoint_id()
+        destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node_endpoint, rdt_id, d)
       }
     
     // for these destination nodes select the ideal neighbours to forward this bundle to
@@ -208,7 +210,9 @@ class RdtDotsRouter extends BaseRouter {
 
         // we can already merge here because the source is obviously excluded from the forwarding destinations selection for this bundle
         // and the information is already available for other maybe earlier forwarding requests
-        destinationDotsState.mergeDots(packet.bndl.primary_block.source, dots)
+        val source_node_endpoint = packet.bndl.primary_block.source.extract_node_endpoint()
+        val rdt_id = packet.bndl.primary_block.destination.extract_endpoint_id()
+        destinationDotsState.mergeDots(source_node_endpoint, rdt_id, dots)
 
         tempDotsStore += (bid -> dots)
       }
@@ -221,8 +225,8 @@ class RdtDotsRouter extends BaseRouter {
   }
 }
 object RdtDotsRouter {
-  def create(port: Int): Future[RdtDotsRouter] = {
-    val router = RdtDotsRouter()
+  def apply(port: Int): Future[RdtDotsRouter] = {
+    val router = new RdtDotsRouter()
 
     WSEroutingClient.create(port).map(ws => {
       router.ws = Option(ws)
@@ -282,10 +286,7 @@ class DestinationDotsState {
   /* 
     adds/merges this nodes' dots to the data structure.
   */
-  def mergeDots(endpoint: Endpoint, dots: Dots): Unit = {
-    val node_endpoint = endpoint.extract_node_endpoint()
-    val rdt_id = endpoint.extract_endpoint_id()
-
+  def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
     map.get(rdt_id) match
       case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
       case Some(rdt_map) => rdt_map += node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots)
@@ -294,10 +295,7 @@ class DestinationDotsState {
   /* 
     finds all nodes for which this nodes' dots are bigger than the other nodes' dots
   */
-  def getNodeEndpointsToForwardBundleTo(endpoint: Endpoint, dots: Dots): Set[Endpoint] = {
-    val node_endpoint = endpoint.extract_node_endpoint()
-    val rdt_id = endpoint.extract_endpoint_id()
-
+  def getNodeEndpointsToForwardBundleTo(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Set[Endpoint] = {
     map.get(rdt_id) match
       case None => Set()
       case Some(rdt_map) => {

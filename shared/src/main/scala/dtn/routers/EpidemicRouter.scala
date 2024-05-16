@@ -54,8 +54,8 @@ class EpidemicRouter extends BaseRouter {
   }
 }
 object EpidemicRouter {
-  def create(port: Int): Future[EpidemicRouter] = {
-    val router = EpidemicRouter()
+  def apply(port: Int): Future[EpidemicRouter] = {
+    val router = new EpidemicRouter()
 
     WSEroutingClient.create(port).map(ws => {
       router.ws = Option(ws)
