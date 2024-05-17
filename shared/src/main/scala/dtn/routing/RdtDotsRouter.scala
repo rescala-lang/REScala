@@ -54,7 +54,7 @@ import scala.util.Random
         on equal highest scores, a random neighbour from those highest scores is picked
   */
 
-class RdtDotsRouter extends BaseRouter {
+class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   // all these states will grow indefinitely. there is currently no garbage collector
 
   val deliveryLikelyhoodState: DeliveryLikelyhoodState = DeliveryLikelyhoodState()
@@ -225,14 +225,7 @@ class RdtDotsRouter extends BaseRouter {
   }
 }
 object RdtDotsRouter {
-  def apply(host: String, port: Int): Future[RdtDotsRouter] = {
-    val router = new RdtDotsRouter()
-
-    WSEroutingClient(host, port).map(ws => {
-      router.ws = Option(ws)
-      router
-    })
-  }
+  def apply(host: String, port: Int): Future[RdtDotsRouter] = WSEroutingClient(host, port).map(ws => new RdtDotsRouter(ws))
 }
 
 

@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-class DirectRouter extends BaseRouter {
+class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   var delivered: Map[String, Boolean] = Map()  // will grow indefinitely as we do not garbage collect here
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
@@ -65,13 +65,6 @@ class DirectRouter extends BaseRouter {
   }
 }
 object DirectRouter {
-  def apply(host: String, port: Int): Future[DirectRouter] = {
-    val router = new DirectRouter()
-
-    WSEroutingClient(host, port).map(ws => {
-      router.ws = Option(ws)
-      router
-    })
-  }
+  def apply(host: String, port: Int): Future[DirectRouter] = WSEroutingClient(host, port).map(ws => new DirectRouter(ws))
 }
 

@@ -22,14 +22,12 @@ trait Routing {
   def onServiceState(packet: Packet.ServiceState): Unit
 }
 
-abstract class BaseRouter extends Routing {
+abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
   var peers: Map[String, DtnPeer] = Map()
   var services: Map[Int, String] = Map()
 
-  var ws: Option[WSEroutingClient] = None
-
   def start_receiving(): Future[Unit] = {
-    ws.get.receivePacket().flatMap(packet => {
+    ws.receivePacket().flatMap(packet => {
       on_packet_received(packet)
       start_receiving()
     })
@@ -38,12 +36,9 @@ abstract class BaseRouter extends Routing {
   def on_packet_received(packet: Packet): Unit = {
     packet match
       case p: Packet.RequestSenderForBundle => {
-        ws match {
-          case None => println("warning: received RequestSenderForBundle but no websocket is connected. this should never be the case. cannot send response.")
-          case Some(websocket) => onRequestSenderForBundle(p) match {
-            case None => {}  // nothing to send
-            case Some(response) => websocket.sendPacket(response)
-          }
+        onRequestSenderForBundle(p) match {
+          case None => {}  // nothing to send
+          case Some(response) => ws.sendPacket(response)
         }
       }
       case p: Packet.Error => onError(p)
