@@ -17,7 +17,7 @@ object RdtConnector {
 
   private var onChangedUpdateFunc: Array[Byte] => Unit = x => {}
   
-  def connectToWS(port: Int): Unit = {
+  def connectToWS(host: String, port: Int): Unit = {
     def receiveBundle(): Unit = {
       ws.get.receiveBundle().onComplete(bundle => {
         for (block <- bundle.get.other_blocks) {
@@ -29,7 +29,7 @@ object RdtConnector {
       })
     }
     
-    WSEndpointClient.create(port).flatMap(conn => {
+    WSEndpointClient(host, port).flatMap(conn => {
       ws = Some(conn)
       ws.get.registerEndpointAndSubscribe(cRDTGroupEndpoint)
     }).onComplete(_ => receiveBundle())

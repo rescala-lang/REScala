@@ -51,7 +51,7 @@ object ChatApp {
   def getConnectorContents(): HTMLElement = {
     val portInput = input(placeholder := "dtnd ws port").render
     val connectButton = button(onclick := {() => {
-      RdtConnector.connectToWS(portInput.value.toInt)
+      RdtConnector.connectToWS("127.0.0.1", portInput.value.toInt)
     }}).render
     connectButton.textContent = "Connect"
 

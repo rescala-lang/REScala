@@ -225,10 +225,10 @@ class RdtDotsRouter extends BaseRouter {
   }
 }
 object RdtDotsRouter {
-  def apply(port: Int): Future[RdtDotsRouter] = {
+  def apply(host: String, port: Int): Future[RdtDotsRouter] = {
     val router = new RdtDotsRouter()
 
-    WSEroutingClient.create(port).map(ws => {
+    WSEroutingClient(host, port).map(ws => {
       router.ws = Option(ws)
       router
     })
