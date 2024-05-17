@@ -15,16 +15,11 @@ import io.bullet.borer.{Cbor, Json}
 import java.nio.charset.StandardCharsets
 
 
-class WSConnection(host: String, port: Int) {
-  var nodeId: Option[String] = None
-
+class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
 
-  // todo: check if exception on ws internal access is comprehensible, e.g. create() was not used to instantiate the class
-  var ws: Option[WebSocket[Future]] = None
-
   def command(text: String): Unit = {
-    ws.get.sendText(text)
+    ws.sendText(text)
   }
 
   def receiveWholeMessage(): Future[String | Array[Byte]] = {
@@ -41,7 +36,7 @@ class WSConnection(host: String, port: Int) {
       }
     }
     
-    ws.get.receive().flatMap {
+    ws.receive().flatMap {
       case Binary(payload: Array[Byte], finalFragment: Boolean, rsv: Option[Int]) => {
         if (finalFragment) {
           Future(payload)
@@ -60,11 +55,9 @@ class WSConnection(host: String, port: Int) {
         // js FetchBackend and jvm HttpClientFutureBackend seem to answer these automatically 
         // HttpClientFutureBackend forwards these messages to us, FetchBackend does not
         // in either case, no actions are required
-        println("received ping")
         receiveWholeMessage()
       }
       case Pong(payload: Array[Byte]) => {
-        println("received pong")
         receiveWholeMessage()
       }
       case _ => {
@@ -73,23 +66,21 @@ class WSConnection(host: String, port: Int) {
       }
     }
   }
+
+  def sendBinary(payload: Array[Byte]): Future[Unit] = ws.sendBinary(payload)
+
+  def sendText(payload: String): Future[Unit] = ws.sendText(payload)
+
+  def close(): Future[Unit] = ws.close()
 }
-
-object WSEndpointClient {
-  def apply(host: String, port: Int): Future[WSEndpointClient] = {
-    val conn: WSEndpointClient = new WSEndpointClient(host, port)
-
-    CompatCode.uget(uri"http://${host}:${port}/status/nodeid")
-      .map(nodeId => {
-        println(s"connected to DTN node: $nodeId"); 
-        conn.nodeId = Option(nodeId)
-        if (nodeId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
-      })  // set node-id and check for supported dtn URI scheme
-      .flatMap(_ => CompatCode.backend.send(basicRequest.get(uri"ws://${host}:${port}/ws}").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
-      .map(_ => {conn.command("/bundle"); conn})  // select raw bundle communication and return Dtn7RsWsConn object
+object WSConnection {
+  def apply(url: Uri): Future[WSConnection] = {
+    CompatCode.backend.send(basicRequest.get(url).response(asWebSocketAlwaysUnsafe)).map(x => new WSConnection(x.body))
   }
 }
-class WSEndpointClient(host: String, port: Int) extends WSConnection(host: String, port: Int) {
+
+
+class WSEndpointClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   protected var registeredServices: List[String] = List()
 
   def receiveBundle(): Future[Bundle] = {
@@ -101,7 +92,7 @@ class WSEndpointClient(host: String, port: Int) extends WSConnection(host: Strin
     Not ideal, but should be sufficient for now.
     */
     
-    receiveWholeMessage().flatMap {
+    connection.receiveWholeMessage().flatMap {
       case s: String => {
         // string responses should always start with 200
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
@@ -111,15 +102,13 @@ class WSEndpointClient(host: String, port: Int) extends WSConnection(host: Strin
         receiveBundle()
       }
       case b: Array[Byte] => {
-        println(s"received bundle")
         Future(Cbor.decode(b).to[Bundle].value)
       }
     }
   }
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
-    println("in sendBundle: start sending")
-    ws.get.sendBinary(Cbor.encode(bundle).toByteArray)
+    connection.sendBinary(Cbor.encode(bundle).toByteArray)
   }
 
   def registerEndpointAndSubscribe(service: String): Future[WSEndpointClient] = {
@@ -127,7 +116,7 @@ class WSEndpointClient(host: String, port: Int) extends WSConnection(host: Strin
     CompatCode.uget(uri"http://${host}:${port}/register?${service}").map(_ => {
       registeredServices = service :: registeredServices
       // subscribe to the registered endpoint with our websocket
-      command(s"/subscribe $service")
+      connection.command(s"/subscribe $service")
       this
     })
   }
@@ -136,31 +125,33 @@ class WSEndpointClient(host: String, port: Int) extends WSConnection(host: Strin
     // currently unused method so we do not unregister atm todo: check when we actually want to unregister
     registeredServices.foreach(service => CompatCode.uget(uri"http://${host}:${port}/unregister?${service}"))
     registeredServices = List()
-    ws.get.close()
+    connection.close()
     // todo: do I need to make sure each uget is done before leaving this method?
   }
 }
-
-
-object WSEroutingClient {
-  def apply(host: String, port: Int): Future[WSEroutingClient] = {
-    val conn: WSEroutingClient = new WSEroutingClient(host, port)
+object WSEndpointClient {
+  def apply(host: String, port: Int): Future[WSEndpointClient] = {
+    var nodeId: Option[String] = None
 
     CompatCode.uget(uri"http://${host}:${port}/status/nodeid")
-      .map(nodeId => {
-        println(s"connected to DTN node: $nodeId"); 
-        conn.nodeId = Option(nodeId)
-        if (nodeId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
-      })  // set node-id and check for supported dtn URI scheme
-      .flatMap(_ => CompatCode.backend.send(basicRequest.get(uri"ws://${host}:${port}/ws/erouting").response(asWebSocketAlwaysUnsafe)).map(x => conn.ws = Option(x.body)))  // request a websocket
-      .map(_ => conn)
+      .flatMap(nId => {
+        println(s"connected to DTN node: $nId");
+        nodeId = Option(nId)
+        if (nId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
+        WSConnection(uri"ws://${host}:${port}/ws")
+      })
+      .map(connection => {
+        connection.command("/bundle")
+        new WSEndpointClient(host, port, connection, nodeId.get)
+      })
   }
 }
-class WSEroutingClient(host: String, port: Int) extends WSConnection(host: String, port: Int) {
+
+
+class WSEroutingClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   def receivePacket(): Future[Packet] = {    
-    receiveWholeMessage().flatMap {
+    connection.receiveWholeMessage().flatMap {
       case s: String => {
-        println(s"received packet: $s")
         Future(Json.decode(s.getBytes(StandardCharsets.UTF_8)).to[Packet].value)
       }
       case b: Array[Byte] => {
@@ -171,6 +162,20 @@ class WSEroutingClient(host: String, port: Int) extends WSConnection(host: Strin
   }
 
   def sendPacket(packet: Packet): Future[Unit] = {
-    ws.get.sendText(Json.encode(packet).toUtf8String)
+    connection.sendText(Json.encode(packet).toUtf8String)
+  }
+}
+object WSEroutingClient {
+  def apply(host: String, port: Int): Future[WSEroutingClient] = {
+    var nodeId: Option[String] = None
+
+    CompatCode.uget(uri"http://${host}:${port}/status/nodeid")
+      .flatMap(nId => {
+        println(s"connected to DTN node: $nId"); 
+        nodeId = Option(nId)
+        if (nId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
+        WSConnection(uri"ws://${host}:${port}/ws/erouting")
+      })
+      .map(connection => new WSEroutingClient(host, port, connection, nodeId.get))
   }
 }

@@ -55,7 +55,7 @@ def send_one_rdt_package(host: String, port: Int): Unit = {
 
   WSEndpointClient(host, port)
     .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
-    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId.get)))
+    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId)))
     .flatMap(client => {
       val myUid = Uid.gen()
       var dots: Dots = Dots.empty
@@ -84,9 +84,9 @@ def send_one_rdt_package(host: String, port: Int): Unit = {
       val bundle: Bundle = BundleCreation.createBundleRdt(
         data = Array(),
         dots = dots,
-        node = Endpoint.createFrom(client.nodeId.get),
+        node = Endpoint.createFrom(client.nodeId),
         full_destination_uri = global_rdt_testendpoint,
-        full_source_uri = node_rdt_testendpoint(client.nodeId.get)
+        full_source_uri = node_rdt_testendpoint(client.nodeId)
       )
 
       println(s"sending bundle with new dots: $dots")
@@ -105,7 +105,7 @@ def send_continuous_rdt_packages(host: String, port: Int): Unit = {
 
   WSEndpointClient(host, port)
     .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
-    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId.get)))
+    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId)))
     .flatMap(client => {
       val myUid = Uid.gen()
       var dots: Dots = Dots.empty
@@ -138,9 +138,9 @@ def send_continuous_rdt_packages(host: String, port: Int): Unit = {
         val bundle: Bundle = BundleCreation.createBundleRdt(
           data = Array(),
           dots = dots,
-          node = Endpoint.createFrom(client.nodeId.get),
+          node = Endpoint.createFrom(client.nodeId),
           full_destination_uri = global_rdt_testendpoint,
-          full_source_uri = node_rdt_testendpoint(client.nodeId.get)
+          full_source_uri = node_rdt_testendpoint(client.nodeId)
         )
 
         println(s"sending bundle with new dots: $dots")
@@ -171,7 +171,7 @@ def send_one_rdt_package_with_random_dots_and_checker(host: String, port: Int): 
 
   WSEndpointClient(host, port)
     .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
-    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId.get)))
+    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId)))
     .flatMap(client => {
       // flush receive forever and send dots to checker
       def flush_receive(): Future[Bundle] = {
@@ -197,9 +197,9 @@ def send_one_rdt_package_with_random_dots_and_checker(host: String, port: Int): 
       val bundle: Bundle = BundleCreation.createBundleRdt(
         data = Array(),
         dots = dots,
-        node = Endpoint.createFrom(client.nodeId.get),
+        node = Endpoint.createFrom(client.nodeId),
         full_destination_uri = global_rdt_testendpoint,
-        full_source_uri = node_rdt_testendpoint(client.nodeId.get)
+        full_source_uri = node_rdt_testendpoint(client.nodeId)
       )
 
       println(s"sending bundle with new dots: $dots")
