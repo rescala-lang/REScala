@@ -8,10 +8,10 @@ import java.util.concurrent.LinkedBlockingQueue
 
 
 class TCPConnection(socket: Socket) {
-
   val inputStream  = new DataInputStream(new BufferedInputStream(socket.getInputStream))
   val outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream))
 
+  val remoteHostName: String = socket.getInetAddress().getHostName()
 
   def send(data: Array[Byte]): Unit = {
     try {
@@ -47,12 +47,11 @@ object TCPConnection {
 }
 
 
-class TCPServer(socket: ServerSocket) {
-  // first queue: messages to send, second queue: messages received
-  val connections: ConcurrentHashMap[TCPConnection, Tuple2[LinkedBlockingQueue[Array[Byte]], LinkedBlockingQueue[Array[Byte]]]] = ConcurrentHashMap()
+class TCPReadonlyServer(socket: ServerSocket) {
+  // this queue must be read externally in regular intervals to not block the senders
+  val queue: LinkedBlockingQueue[Tuple2[TCPConnection, Array[Byte]]] = new LinkedBlockingQueue(2000)
 
-  val runnables: ConcurrentHashMap[TCPConnection, Tuple2[SenderRunnable, ReceiverRunnable]] = ConcurrentHashMap()
-
+  val runnables: ConcurrentHashMap[TCPConnection, ReceiverRunnable] = ConcurrentHashMap()
   var listenerRunnable: Option[ListenerRunnable] = None
 
 
@@ -61,9 +60,7 @@ class TCPServer(socket: ServerSocket) {
 
     listenerRunnable = Option(ListenerRunnable())
 
-    println("starting listener")
     new Thread(listenerRunnable.get).start()
-    println("started listener")
   }
 
   def stop(): Unit = {
@@ -73,15 +70,8 @@ class TCPServer(socket: ServerSocket) {
       case None => println("server was never started")
       case Some(value) => value.keepRunning = false
 
-    runnables.values().forEach((senderRunnable: SenderRunnable, receiverRunnable: ReceiverRunnable) => {
-      senderRunnable.keepRunning = false
-      receiverRunnable.keepRunning = false
-    })
-
-    runnables.keySet().forEach((connection: TCPConnection) => {
-      connection.close()
-    })
-
+    runnables.values().forEach((receiverRunnable: ReceiverRunnable) => receiverRunnable.keepRunning = false)
+    runnables.keySet().forEach((connection: TCPConnection) => connection.close())
     socket.close()
 
     println("requested all threads to stop and closed sockets")
@@ -93,20 +83,15 @@ class TCPServer(socket: ServerSocket) {
     override def run(): Unit = {
       try {
         while(keepRunning) {
-          println("before accept")
           val connection = new TCPConnection(socket.accept())
-          println("after accept")
 
-          val senderQueue: LinkedBlockingQueue[Array[Byte]] = new LinkedBlockingQueue
-          val receiverQueue: LinkedBlockingQueue[Array[Byte]] = new LinkedBlockingQueue
-          val senderRunnable = SenderRunnable(connection, senderQueue)
-          val receiverRunnable = ReceiverRunnable(connection, receiverQueue)
+          val receiverRunnable = ReceiverRunnable(connection)
 
-          runnables.put(connection, (senderRunnable, receiverRunnable))
-          connections.put(connection, (senderQueue, receiverQueue))
+          runnables.put(connection, receiverRunnable)
 
-          new Thread(senderRunnable).start()
           new Thread(receiverRunnable).start()
+
+          println(s"added new connection: ${connection.remoteHostName}")
         }
       } catch {
         case e: SocketException => println(s"server socket accept failed: $e")
@@ -114,32 +99,18 @@ class TCPServer(socket: ServerSocket) {
     }
   }
 
-  class ReceiverRunnable(connection: TCPConnection, queue: LinkedBlockingQueue[Array[Byte]]) extends Runnable {
-    var keepRunning: Boolean = true
-
-    override def run(): Unit = {
-      println("receiver running")
-      while(keepRunning) {
-        queue.put(connection.receive)
-        println("received message")
-      }
-    }
-  }
-
-  class SenderRunnable(connection: TCPConnection, queue: LinkedBlockingQueue[Array[Byte]]) extends Runnable {
+  class ReceiverRunnable(connection: TCPConnection) extends Runnable {
     var keepRunning: Boolean = true
 
     override def run(): Unit = {
       while(keepRunning) {
-        val data = queue.take()
-        connection.send(data)
-        println("sent message")
+        queue.put((connection, connection.receive))
       }
     }
   }
 }
-object TCPServer {
-  def apply(port: Int, interface: String): TCPServer = {
+object TCPReadonlyServer {
+  def apply(port: Int, interface: String): TCPReadonlyServer = {
     val socket = new ServerSocket
 
     try socket.setReuseAddress(true)
@@ -150,7 +121,7 @@ object TCPServer {
 
     socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
 
-    new TCPServer(socket)
+    new TCPReadonlyServer(socket)
   }
 }
 
