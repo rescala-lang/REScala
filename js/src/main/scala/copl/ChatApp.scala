@@ -13,7 +13,7 @@ import rescala.default
 import rescala.default.*
 import rescala.extra.Tags.*
 import rescala.extra.distribution.Network
-import dtn.CrdtConnector
+import dtn.RdtConnector
 import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
 
@@ -51,7 +51,7 @@ object ChatApp {
   def getConnectorContents(): HTMLElement = {
     val portInput = input(placeholder := "dtnd ws port").render
     val connectButton = button(onclick := {() => {
-      CrdtConnector.connectToWS(portInput.value.toInt)
+      RdtConnector.connectToWS(portInput.value.toInt)
     }}).render
     connectButton.textContent = "Connect"
 
@@ -88,7 +88,7 @@ object ChatApp {
       }
 
     //Network.replicate(history, registry)(Binding("history"))
-    CrdtConnector.connectGraph(history)
+    RdtConnector.connectGraph(history)
 
     val chatDisplay = Signal.dynamic {
       val reversedHistory = history.value.payload.toList.reverse

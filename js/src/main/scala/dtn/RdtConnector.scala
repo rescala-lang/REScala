@@ -10,8 +10,8 @@ import scala.concurrent.Future
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 
 
-object CrdtConnector {
-  private val cRDTGroupEndpoint: String = "dtn://global/~crdt/app1"
+object RdtConnector {
+  private val cRDTGroupEndpoint: String = "dtn://global/~rdt/app1"
 
   private var ws: Option[WSEndpointClient] = None
 
