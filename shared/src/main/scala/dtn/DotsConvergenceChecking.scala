@@ -12,7 +12,9 @@ class DotsConvergenceChecker(server: TCPReadonlyServer) {
       while(true) {
         val (connection, data) = server.queue.take()
 
-        state += (connection -> Cbor.decode(data).to[Dots].value)
+        val old_dots = state.getOrElse(connection, Dots.empty)
+
+        state += (connection -> old_dots.merge(Cbor.decode(data).to[Dots].value))
 
         if (Set(state.values).size == 1) {
           println("states are equal")

@@ -14,10 +14,10 @@ import io.bullet.borer.Cbor
 
 @main def send_ping_to_node4000_from_3000(): Unit = send_ping_to_node4000("127.0.0.1", 3000)
 
-@main def send_one_rdt_package_from_3000(): Unit = send_one_rdt_package("127.0.0.1", 3000)
-@main def send_one_rdt_package_from_4000(): Unit = send_one_rdt_package("127.0.0.1", 4000)
+@main def send_one_rdt_package_from_3000(): Unit = send_one_rdt_package("127.0.0.1", 3000, "127.0.0.1", 5000)
+@main def send_one_rdt_package_from_4000(): Unit = send_one_rdt_package("127.0.0.1", 4000, "127.0.0.1", 5000)
 
-@main def send_continuous_rdt_packages_from_3000(): Unit = send_continuous_rdt_packages("127.0.0.1", 3000)
+@main def send_continuous_rdt_packages_from_3000(): Unit = send_continuous_rdt_packages("127.0.0.1", 3000, "127.0.0.1", 5000)
 
 //@main def send_one_rdt_package_with_random_dots_and_checker_from_3000(): Unit = send_one_rdt_package_with_random_dots_and_checker("127.0.0.1", 3000)
 
@@ -49,12 +49,12 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 }
 
 
-def send_one_rdt_package(host: String, port: Int): Unit = {
+def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   val myUid = Uid.gen()
   var dots: Dots = Dots.empty
   dots = dots.add(Dot(myUid, Time.current()))
 
-  RdtClient(host, port, "testapp").flatMap(client => {
+  RdtClient(host, port, "testapp", checkerHost, checkerPort).flatMap(client => {
     client.registerOnReceive((payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
@@ -69,11 +69,11 @@ def send_one_rdt_package(host: String, port: Int): Unit = {
 }
 
 
-def send_continuous_rdt_packages(host: String, port: Int): Unit = {
+def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   val myUid = Uid.gen()
   var dots: Dots = Dots.empty
 
-  RdtClient(host, port, "testapp").map(client => {
+  RdtClient(host, port, "testapp", checkerHost, checkerPort).map(client => {
     client.registerOnReceive((payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")

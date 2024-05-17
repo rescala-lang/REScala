@@ -25,7 +25,9 @@ class RdtClient(ws: WSEndpointClient, appName: String) {
   }
 }
 object RdtClient {
-  def apply(host: String, port: Int, appName: String): Future[RdtClient] = {
+  def apply(host: String, port: Int, appName: String, checkerHost: String, checkerPort: Int): Future[RdtClient] = {
+    val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
+
     WSEndpointClient(host, port)
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"dtn://global/~rdt/${appName}"))
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"${ws.nodeId}rdt/${appName}"))
@@ -43,6 +45,8 @@ object RdtClient {
             if (payload.isEmpty || dots. isEmpty) {
               println("did not contain dots or payload. bundle is no rdt bundle. ignoring bundle.")
             } else {
+              checkerClient.send(dots.get)
+
               client._callback match
                 case None => println("no callback set. could not deliver rdt data. ignoring bundle.")
                 case Some(callback) => callback(payload.get, dots.get)
