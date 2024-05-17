@@ -1,6 +1,6 @@
-package dtn.routers
+package dtn.routing
 
-import dtn.{BaseRouter, Bundle, DtnPeer, Packet, Sender, WSEroutingClient}
+import dtn.{Bundle, DtnPeer, Packet, Sender, WSEroutingClient}
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

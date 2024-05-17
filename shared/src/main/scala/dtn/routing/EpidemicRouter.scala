@@ -1,9 +1,10 @@
-package dtn.routers
+package dtn.routing
 
-import dtn.{BaseRouter, DtnPeer, Packet, Sender, WSEroutingClient}
+import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+
 
 class EpidemicRouter extends BaseRouter {
   var delivered: Map[String, Set[String]] = Map()  // will grow indefinitely as we do not garbage collect here

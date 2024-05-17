@@ -1,7 +1,8 @@
-package dtn
+package dtn.routing
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import dtn.{DtnPeer, Packet, WSEroutingClient}
 
 
 trait Routing {
