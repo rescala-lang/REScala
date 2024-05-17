@@ -2,7 +2,7 @@ package test.rdts.corestructs
 
 import org.scalacheck.Prop.*
 import rdts.base.Uid
-import rdts.time.{Dot, Dots}
+import rdts.time.{Dot, Dots, ArrayRanges, Time}
 import test.rdts.DataGenerator.given
 
 class DotsTest extends munit.ScalaCheckSuite {
@@ -118,5 +118,22 @@ class DotsTest extends munit.ScalaCheckSuite {
 
       assertEquals(left.disjunct(right), leftSet.intersect(rightSet).isEmpty)
     }
+  }
+
+  test("head throws with empty Dots") {
+    intercept[NoSuchElementException](Dots(Map.empty).head)
+    intercept[NoSuchElementException](Dots(Map(Uid("a") -> ArrayRanges.empty)).head)
+    intercept[NoSuchElementException](
+      Dots(Map(
+        Uid("a") -> ArrayRanges.empty,
+        Uid("b") -> ArrayRanges.empty
+      )).head
+    )
+  }
+
+  test("head works with nonempty Dots") {
+    assertEquals(Dots(Map(Uid("a") -> new ArrayRanges(Array(1, 3, 6, 9), 4))).head, Dot(Uid("a"), 1))
+
+    assertEquals(Dots(Map(Uid("a") -> ArrayRanges.empty, Uid("b") -> new ArrayRanges(Array(1, 3, 6, 9), 4))).head, Dot(Uid("b"), 1))
   }
 }

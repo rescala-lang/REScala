@@ -266,4 +266,15 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
     }
   }
 
+  test("head throws NoSuchElementException when empty") {
+    intercept[NoSuchElementException](new ArrayRanges(Array.empty[Time], 0).head)
+    intercept[NoSuchElementException](new ArrayRanges(Array[Time](1, 2, 6, 9), 0).head)
+  }
+
+  test("head works with nonempty ranges") {
+    assertEquals(new ArrayRanges(Array(1, 3, 6, 9), 4).head, 1.asInstanceOf[Time])
+    assertEquals(new ArrayRanges(Array(7, 9), 2).head, 7.asInstanceOf[Time])
+    assertEquals(new ArrayRanges(Array(7, 9, 10, 11), 2).head, 7.asInstanceOf[Time])
+  }
+
 }

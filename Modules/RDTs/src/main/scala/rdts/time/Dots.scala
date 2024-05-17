@@ -15,6 +15,16 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def isEmpty: Boolean = internal.forall((_, r) => r.isEmpty)
 
+  /** Retrieves the first Dot that is included in this set of dots.
+    *
+    *  @return the first included Dot.
+    *  @throws NoSuchElementException if this collection is empty.
+    */
+  def head: Dot =
+    internal.find(!_._2.isEmpty)
+      .map((uid, times) => Dot(uid, times.head))
+      .get
+
   def rangeAt(replicaId: Uid): ArrayRanges = internal.getOrElse(replicaId, ArrayRanges.empty)
 
   def clockOf(replicaId: Uid): Option[Dot] = max(replicaId)

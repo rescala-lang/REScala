@@ -119,6 +119,10 @@ class ArrayRanges(
       res
   }
 
+  def head: Time =
+    if used == 0 then throw new NoSuchElementException()
+    else inner(0)
+
   /** Traverses both ranges simultaneously to produce output ranges.
     * Only allocates a single result array (size is the sum of the used size),
     * and traverses each input once fully.
