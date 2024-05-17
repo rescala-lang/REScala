@@ -19,7 +19,7 @@ import io.bullet.borer.Cbor
 
 @main def send_continuous_rdt_packages_from_3000(): Unit = send_continuous_rdt_packages("127.0.0.1", 3000)
 
-@main def send_one_rdt_package_with_random_dots_and_checker_from_3000(): Unit = send_one_rdt_package_with_random_dots_and_checker("127.0.0.1", 3000)
+//@main def send_one_rdt_package_with_random_dots_and_checker_from_3000(): Unit = send_one_rdt_package_with_random_dots_and_checker("127.0.0.1", 3000)
 
 
 
@@ -50,48 +50,18 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 
 
 def send_one_rdt_package(host: String, port: Int): Unit = {
-  val global_rdt_testendpoint: String = "dtn://global/~rdt/testapp"
-  def node_rdt_testendpoint(nodeid: String): String = s"${nodeid}rdt/testapp"
+  val myUid = Uid.gen()
+  var dots: Dots = Dots.empty
+  dots = dots.add(Dot(myUid, Time.current()))
 
-  WSEndpointClient(host, port)
-    .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
-    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId)))
-    .flatMap(client => {
-      val myUid = Uid.gen()
-      var dots: Dots = Dots.empty
+  RdtClient(host, port, "testapp").flatMap(client => {
+    client.registerOnReceive((payload: Array[Byte], dots: Dots) => {
+      println(s"received dots: $dots")
+    })
 
-      // flush receive forever
-      def flush_receive(): Future[Bundle] = {
-        client.receiveBundle().flatMap(bundle => {
-          println(s"received bundle: $bundle")
-          
-          bundle.other_blocks.collectFirst({
-            case x: RdtMetaBlock => x
-          }) match
-            case None => println("did not contain rdt-meta data")
-            case Some(rdt_meta_block) => {
-              dots = dots.merge(rdt_meta_block.dots)
-              println(s"merged rdt-meta data, new dots: $dots")
-            }
-          
-          flush_receive()
-        })
-      }
-      flush_receive().recover(throwable => println(throwable))
-
-      dots = dots.add(Dot(myUid, Time.current()))
-
-      val bundle: Bundle = BundleCreation.createBundleRdt(
-        data = Array(),
-        dots = dots,
-        node = Endpoint.createFrom(client.nodeId),
-        full_destination_uri = global_rdt_testendpoint,
-        full_source_uri = node_rdt_testendpoint(client.nodeId)
-      )
-
-      println(s"sending bundle with new dots: $dots")
-      client.sendBundle(bundle)
-    }).recover(throwable => println(throwable))
+    println(s"sending dots: $dots")
+    client.send(payload = Array(), dots = dots)
+  }).recover(throwable => println(throwable))
 
   while(true) {
     Thread.sleep(200)
@@ -100,55 +70,24 @@ def send_one_rdt_package(host: String, port: Int): Unit = {
 
 
 def send_continuous_rdt_packages(host: String, port: Int): Unit = {
-  val global_rdt_testendpoint: String = "dtn://global/~rdt/testapp"
-  def node_rdt_testendpoint(nodeid: String): String = s"${nodeid}rdt/testapp"
+  val myUid = Uid.gen()
+  var dots: Dots = Dots.empty
 
-  WSEndpointClient(host, port)
-    .flatMap(client => client.registerEndpointAndSubscribe(global_rdt_testendpoint))
-    .flatMap(client => client.registerEndpointAndSubscribe(node_rdt_testendpoint(client.nodeId)))
-    .flatMap(client => {
-      val myUid = Uid.gen()
-      var dots: Dots = Dots.empty
+  RdtClient(host, port, "testapp").map(client => {
+    client.registerOnReceive((payload: Array[Byte], d: Dots) => {
+      dots = dots.merge(d)
+      println(s"merged rdt-meta data, new dots: $dots")
+    })
 
-      // flush receive forever
-      def flush_receive(): Future[Bundle] = {
-        client.receiveBundle().flatMap(bundle => {
-          println(s"received bundle: $bundle")
-          
-          bundle.other_blocks.collectFirst({
-            case x: RdtMetaBlock => x
-          }) match
-            case None => println("did not contain rdt-meta data")
-            case Some(rdt_meta_block) => {
-              dots = dots.merge(rdt_meta_block.dots)
-              println(s"merged rdt-meta data, new dots: $dots")
-            }
-          
-          flush_receive()
-        })
-      }
-      flush_receive().recover(throwable => println(throwable))
+    while(true) {
+      Thread.sleep(5000)
 
-      // send a bundle with new dots at regular interval
-      while(true) {
-        Thread.sleep(5000)
+      dots = dots.add(Dot(myUid, Time.current()))
 
-        dots = dots.add(Dot(myUid, Time.current()))
-
-        val bundle: Bundle = BundleCreation.createBundleRdt(
-          data = Array(),
-          dots = dots,
-          node = Endpoint.createFrom(client.nodeId),
-          full_destination_uri = global_rdt_testendpoint,
-          full_source_uri = node_rdt_testendpoint(client.nodeId)
-        )
-
-        println(s"sending bundle with new dots: $dots")
-        client.sendBundle(bundle)
-      }
-
-      Future(client)
-    }).recover(throwable => println(throwable))
+      println(s"sending new dots: $dots")
+      client.send(Array(), dots)
+    }
+  }).recover(throwable => println(throwable))
 
   while(true) {
     Thread.sleep(200)
@@ -156,7 +95,7 @@ def send_continuous_rdt_packages(host: String, port: Int): Unit = {
 }
 
 
-
+/*
 def send_one_rdt_package_with_random_dots_and_checker(host: String, port: Int): Unit = {
   val global_rdt_testendpoint: String = "dtn://global/~rdt/testapp"
   def node_rdt_testendpoint(nodeid: String): String = s"${nodeid}rdt/testapp"
@@ -212,5 +151,5 @@ def send_one_rdt_package_with_random_dots_and_checker(host: String, port: Int): 
     Thread.sleep(200)
   }
 }
-
+*/
 
