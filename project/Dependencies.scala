@@ -11,7 +11,7 @@ object Dependencies {
   def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.17.2"
   def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.0-RC1" % Test
   def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.0.0-RC1" % Test
-  def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.8.1"
+  def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.9.0"
   def quicklens     = libraryDependencies += "com.softwaremill.quicklens" %%% "quicklens"        % "1.9.0"
   def scalacheck    = libraryDependencies += "org.scalacheck"             %%% "scalacheck"       % "1.18.0"    % Test
   def scalaJavaTime = libraryDependencies += "io.github.cquiroz"          %%% "scala-java-time"  % "2.3.0"
@@ -19,7 +19,7 @@ object Dependencies {
   def scalatags     = libraryDependencies += "com.lihaoyi"                %%% "scalatags"        % "0.13.1"
   def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.3.1"
   def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.45.3.0"
-  def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.3.0"
+  def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.3.1"
   def jsoniterScala =
     libraryDependencies ++= Seq(
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.28.5",

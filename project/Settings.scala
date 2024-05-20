@@ -9,7 +9,7 @@ import sbt.Keys._
 object Settings {
 
   object Versions {
-    val scala3 = "3.4.1"
+    val scala3 = "3.4.2"
   }
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
