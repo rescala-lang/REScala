@@ -1,6 +1,6 @@
 package replication
 
-import channel.{ArrayMessageBuffer, BiChan, Abort, MessageBuffer}
+import channel.{Abort, ArrayMessageBuffer, BiChan, LatentConnection, MessageBuffer, OutChan}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
@@ -36,13 +36,13 @@ class DataManager[State](
 )(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
 
   given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
-  given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]] = JsonCodecMaker.make
+  given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]]              = JsonCodecMaker.make
 
   given LocalUid = replicaId
 
   type TransferState = ProtocolDots[State]
 
-  var connections: List[BiChan] = Nil
+  var connections: List[OutChan] = Nil
 
   val timer = new Timer()
 
@@ -56,23 +56,36 @@ class DataManager[State](
     { () =>
       tick.transform(_ + 1)
       connections.foreach: con =>
-        con.out.send(missingRequestMessage).run(using ())(debugCallback)
+        con.send(missingRequestMessage).run(using ())(debugCallback)
     },
     4000,
     4000
   )
 
+  private def messageBufferCallback(outChan: OutChan): Callback[MessageBuffer] =
+    case Success(msg) =>
+      val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
+      println(s"$res")
+      handleMessage(res, outChan)
+    case Failure(error) => error.printStackTrace()
+
+  def addPreparation(latentConnection: LatentConnection): Unit = {
+    println(s"activating latent connection in data manager")
+    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using Abort()):
+      case Success(conn) =>
+        lock.synchronized {
+          connections = conn :: connections
+        }
+      case Failure(ex) => ex.printStackTrace()
+  }
+
   def addConnection(biChan: BiChan): Unit = {
     println(s"adding connection to data manager")
     lock.synchronized {
-      connections = biChan :: connections
+      connections = biChan.out :: connections
     }
-    biChan.in.receive.run(using Abort()):
-      case Success(msg) =>
-        val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
-        println(s"$res")
-        handleMessage(res, biChan)
-      case Failure(error) => error.printStackTrace()
+    biChan.in.receive.run(using Abort())(messageBufferCallback(biChan.out))
+
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
@@ -115,12 +128,12 @@ class DataManager[State](
     contexts.transform(_.updatedWith(rr)(curr => curr merge Some(dots)))
   }
 
-  def handleMessage(msg: ProtocolMessage[TransferState], biChan: BiChan) = {
+  def handleMessage(msg: ProtocolMessage[TransferState], biChan: OutChan) = {
     msg match
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot(dt => dt.context <= knows)
         relevant.map(encodeDelta).foreach: msg =>
-          biChan.out.send(msg).run(using ())(debugCallback)
+          biChan.send(msg).run(using ())(debugCallback)
         updateRemoteContext(uid, currentContext.now merge knows)
       case Payload(uid, named) =>
         lock.synchronized {
@@ -140,7 +153,7 @@ class DataManager[State](
     }
     connections.foreach: con =>
       deltas.foreach: delta =>
-        con.out.send(encodeDelta(delta))
+        con.send(encodeDelta(delta))
   }
 
   def encodeDelta(delta: TransferState): MessageBuffer =
@@ -148,7 +161,7 @@ class DataManager[State](
 
   def disseminateFull() =
     connections.foreach: con =>
-      con.out.send(encodeDelta(mergedState.now))
+      con.send(encodeDelta(mergedState.now))
 
   def encodeNamed[A: JsonValueCodec](name: String, value: A) =
     ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))

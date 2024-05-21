@@ -33,7 +33,7 @@ trait OutChan {
   def send(message: MessageBuffer): Async[Any, Unit]
 }
 
-trait ConnectionContext {
+trait ConnectionContext extends OutChan {
   def send(message: MessageBuffer): Async[Any, Unit]
   def close(): Unit
 }
