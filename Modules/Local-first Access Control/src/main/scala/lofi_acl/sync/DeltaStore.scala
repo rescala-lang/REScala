@@ -1,6 +1,6 @@
 package lofi_acl.sync
 
-import rdts.base.Bottom
+import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
 import scala.collection.mutable
@@ -11,6 +11,8 @@ class DeltaStore[RDT: Bottom] {
 
   private val deltaMap: mutable.Map[Dot, (Dots, RDT)] = mutable.Map.empty
   private var unionOfDots: Dots                       = Dots.empty
+
+  def storedDots: Dots = unionOfDots
 
   def writePrefix(dots: Dots, delta: RDT): Unit =
     // Prune entries that are in the written prefix (dots) but not in the old prefix (prefixDots) that were written before (unionOfDots)
@@ -23,29 +25,50 @@ class DeltaStore[RDT: Bottom] {
     prefixDots = dots
     unionOfDots = unionOfDots.union(dots)
 
+  def writePrefixIfContainsPreviousPrefix(dots: Dots, delta: RDT): Boolean =
+    if !dots.contains(prefixDots) then false
+    else
+      writePrefix(dots, delta)
+      true
+
+  def mergeIntoPrefix(dots: Dots, delta: RDT)(using Lattice[RDT]): Unit =
+    val mergedPrefix = prefix.merge(delta)
+    val mergedDots   = prefixDots.merge(dots)
+
+    unionOfDots.intersect(dots).removeDots(prefixDots) match
+      case Some(toRemove) => toRemove.iterator.foreach { dot =>
+          deltaMap.remove(dot)
+        }
+      case None =>
+
+    prefix = mergedPrefix
+    prefixDots = mergedDots
+    unionOfDots = unionOfDots.union(dots)
+
   def writeIfNotPresent(dots: Dots, delta: RDT): Unit =
-    if unionOfDots.contains(dots) then return
-    val tuple = (dots, delta)
-    dots.iterator.foreach { dot =>
+    val tuple       = (dots, delta)
+    val missingDots = dots.subtract(unionOfDots)
+    missingDots.iterator.foreach { dot =>
       val _ = deltaMap.put(dot, tuple)
     }
-    unionOfDots = unionOfDots.merge(dots)
+    unionOfDots = unionOfDots.merge(missingDots)
 
-  def readAvailableDeltas(dots: Dots): Seq[(Dots, RDT)] =
+  def readAvailableDeltas(dots: Dots): List[(Dots, RDT)] =
     var remaining = dots.intersect(unionOfDots) // Ensures that we only try to read available deltas
 
-    var deltas = Seq.empty[(Dots, RDT)]
+    var deltas = List.empty[(Dots, RDT)]
 
+    // Prefix has overlap with dots
     if !prefixDots.intersect(dots).isEmpty then
-      if prefixDots.contains(dots) then return Seq(prefixDots -> prefix)
+      if prefixDots.contains(dots) then return List(prefixDots -> prefix)
       else
-        deltas = Seq(prefixDots -> prefix)
+        deltas = List(prefixDots -> prefix)
         remaining = remaining.subtract(prefixDots)
 
     while (!remaining.isEmpty) {
       val dottedDelta @ (dots, _) = deltaMap(remaining.head)
       remaining = remaining.subtract(dots)
-      deltas = dottedDelta +: deltas
+      deltas = dottedDelta :: deltas
     }
     deltas
 }
