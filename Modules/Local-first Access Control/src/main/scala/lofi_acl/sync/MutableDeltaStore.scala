@@ -5,7 +5,7 @@ import rdts.time.{Dot, Dots}
 
 import scala.collection.mutable
 
-class DeltaStore[RDT: Bottom] {
+class MutableDeltaStore[RDT: Bottom] {
   private var prefixDots: Dots = Dots.empty
   private var prefix: RDT      = Bottom[RDT].empty
 

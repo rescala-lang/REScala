@@ -4,7 +4,7 @@ import munit.FunSuite
 import rdts.base.Uid
 import rdts.time.{ArrayRanges, Dot, Dots}
 
-class DeltaStoreTest extends FunSuite {
+class MutableDeltaStoreTest extends FunSuite {
 
   private val a = Uid("a")
   private val b = Uid("b")
@@ -12,7 +12,7 @@ class DeltaStoreTest extends FunSuite {
   private val d = Uid("d")
 
   test("writePrefix prunes deltas") {
-    val store = DeltaStore[Set[Int]]()
+    val store = MutableDeltaStore[Set[Int]]()
 
     store.writeIfNotPresent(Dot(a, 0).dots, Set(0))
     store.writeIfNotPresent(Dot(a, 1).dots, Set(1))
@@ -44,7 +44,7 @@ class DeltaStoreTest extends FunSuite {
   }
 
   test("write is readable without prefix") {
-    val store = DeltaStore[Set[Int]]()
+    val store = MutableDeltaStore[Set[Int]]()
 
     store.writeIfNotPresent(Dot(a, 0).dots, Set(0))
     assertEquals(store.readAvailableDeltas(Dot(a, 0).dots), Seq(Dot(a, 0).dots -> Set(0)))
@@ -61,7 +61,7 @@ class DeltaStoreTest extends FunSuite {
   }
 
   test("readAvailable ignores missing deltas") {
-    val store = DeltaStore[Set[Int]]()
+    val store = MutableDeltaStore[Set[Int]]()
 
     assertEquals(store.readAvailableDeltas(Dot(a, 0).dots), Seq.empty)
 
@@ -78,9 +78,9 @@ class DeltaStoreTest extends FunSuite {
     assertEquals(store.readAvailableDeltas(Dot(b, 20).dots), Seq.empty)
 
     // Works with prefix
-    val aRange = new ArrayRanges(Array(0, 6), 2)
-    val bRange = new ArrayRanges(Array(0, 7), 2) // (b,42) is not included
-    val cRange = new ArrayRanges(Array(4711, 4712, 10_000, 20_000), 4)
+    val aRange     = new ArrayRanges(Array(0, 6), 2)
+    val bRange     = new ArrayRanges(Array(0, 7), 2) // (b,42) is not included
+    val cRange     = new ArrayRanges(Array(4711, 4712, 10_000, 20_000), 4)
     val prefixDots = Dots(Map(a -> aRange, b -> bRange, c -> cRange))
     store.writePrefix(prefixDots, Set.empty)
 
