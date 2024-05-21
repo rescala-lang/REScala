@@ -40,7 +40,7 @@ class JettyServer(
 
     jettyServer.setHandler(new Handler.Sequence(setup.handlers, staticResourceHandler))
 
-    dataManager.addPreparation(setup.listen(PathSpec.from("/ws")))
+    dataManager.addLatentConnection(setup.listen(PathSpec.from("/ws")))
 
     jettyServer.start()
 

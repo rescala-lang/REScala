@@ -26,7 +26,7 @@ object cli {
     val id         = named[String]("--id", "")
     val listenPort = named[Int]("--listenPort", "")
 
-    val ipAndPort = """([\d.]*):(\d*)""".r
+    val ipAndPort = """(.*):(\d*)""".r
 
     given argValParser: ArgumentValueParser[(String, Int)] with
       override def apply(args: List[String]): (Option[(String, Int)], List[String]) =

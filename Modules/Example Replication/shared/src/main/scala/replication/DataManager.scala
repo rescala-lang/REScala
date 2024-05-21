@@ -69,7 +69,7 @@ class DataManager[State](
       handleMessage(res, outChan)
     case Failure(error) => error.printStackTrace()
 
-  def addPreparation(latentConnection: LatentConnection): Unit = {
+  def addLatentConnection(latentConnection: LatentConnection): Unit = {
     println(s"activating latent connection in data manager")
     latentConnection.prepare(conn => messageBufferCallback(conn)).run(using Abort()):
       case Success(conn) =>

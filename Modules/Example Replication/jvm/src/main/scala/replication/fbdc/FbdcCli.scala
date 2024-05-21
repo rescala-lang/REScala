@@ -1,10 +1,11 @@
 package replication.fbdc
 
 import channel.BiChan
-import channel.tcp.{TCPConnection}
+import channel.tcp.{TCP, TCPConnection}
 
 import java.nio.file.Path
-import scala.concurrent.Future
+import java.util.concurrent.Executors
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 case class CliConnections(
@@ -21,16 +22,14 @@ class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
 
+  val executor = Executors.newCachedThreadPool()
+  val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
+
   def start() =
     settings.`tcp-listen-port` match
       case None =>
       case Some(port) =>
-//        val listening = TCPListener.startListening(port, "0")
-//        new Thread(() =>
-//          listening.connections.run(using ()):
-//            case Success(conn) => exData.dataManager.addConnection(BiChan(conn, conn))
-//            case Failure(ex)   => ex.printStackTrace()
-//        ).start()
+        exData.dataManager.addLatentConnection(TCP.listen("0", port, ec))
     settings.`webserver-listen-port` match
       case None =>
       case Some(port) =>
@@ -40,11 +39,7 @@ class FbdcCli(settings: CliConnections) {
       case (ip, port) =>
         (ip.trim, port)
     }.foreach: (ip, port) =>
-      // TODO: the added connection here will hijack whatever thread calls .receive which is really not what one would want in this case
-//      channel.tcp.connect(ip, port).run(using ()):
-//        case Success(conn) => exData.dataManager.addConnection(BiChan(conn, conn))
-//        case Failure(ex)   => ex.printStackTrace()
-      ()
+      exData.dataManager.addLatentConnection(TCP.connect(ip, port, ec))
     settings.`northwind-path` match
       case None    =>
       case Some(p) => Northwind.enableConditional(exData, p)
