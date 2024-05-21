@@ -32,9 +32,10 @@ class DotsConvergenceChecker(server: TCPReadonlyServer) {
   
 }
 object DotsConvergenceChecker {
-  def apply(port: Int, interface: String): DotsConvergenceChecker = {
-    val server = TCPReadonlyServer(port, interface)
+  def apply(interface: String, port: Int): DotsConvergenceChecker = {
+    val server = TCPReadonlyServer(interface, port)
     server.start()
+    println(s"convergence checker started under ${interface}:${port}")
     new DotsConvergenceChecker(server)
   }
 }

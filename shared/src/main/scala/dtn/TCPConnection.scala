@@ -110,7 +110,7 @@ class TCPReadonlyServer(socket: ServerSocket) {
   }
 }
 object TCPReadonlyServer {
-  def apply(port: Int, interface: String): TCPReadonlyServer = {
+  def apply(interface: String, port: Int): TCPReadonlyServer = {
     val socket = new ServerSocket
 
     try socket.setReuseAddress(true)
