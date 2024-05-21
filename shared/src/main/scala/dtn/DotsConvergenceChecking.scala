@@ -16,11 +16,7 @@ class DotsConvergenceChecker(server: TCPReadonlyServer) {
 
         state += (connection -> old_dots.merge(Cbor.decode(data).to[Dots].value))
 
-        if (Set(state.values).size == 1) {
-          println("states are equal")
-        } else {
-          println("states not equal")
-        }
+        println(s"states are equal? ${Set.from(state.values).size == 1} ${state.values.drop(1).forall(d => d == state.values.head)}")
       }
     } catch {
       case e: java.lang.Exception => {

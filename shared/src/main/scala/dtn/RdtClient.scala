@@ -5,7 +5,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-class RdtClient(ws: WSEndpointClient, appName: String) {
+class RdtClient(ws: WSEndpointClient, cc: DotsConvergenceClient, appName: String) {
   var _callback: Option[(Array[Byte], Dots) => Unit] = None
 
   def send(payload: Array[Byte], dots: Dots): Future[Unit] = {
@@ -16,6 +16,8 @@ class RdtClient(ws: WSEndpointClient, appName: String) {
       full_destination_uri = s"dtn://global/~rdt/${appName}",
       full_source_uri = s"${ws.nodeId}rdt/${appName}"
     )
+
+    cc.send(dots)
 
     ws.sendBundle(bundle)
   }
@@ -32,7 +34,7 @@ object RdtClient {
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"dtn://global/~rdt/${appName}"))
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"${ws.nodeId}rdt/${appName}"))
       .map(ws => {
-        val client = new RdtClient(ws, appName)
+        val client = new RdtClient(ws, checkerClient, appName)
 
         // flush receive forever and call callback if available
         def flush_receive(): Future[Bundle] = {
