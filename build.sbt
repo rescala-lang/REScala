@@ -109,7 +109,8 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
       )
-    }
+    },
+    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
   )
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
@@ -128,8 +129,6 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
       "libsodium-wrappers" -> "0.7.13",
     )
   )
-
-
 
 val circeVersion = "0.14.5"
 

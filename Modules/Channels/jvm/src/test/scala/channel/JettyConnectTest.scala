@@ -8,17 +8,19 @@ import java.net.URI
 
 object JettyConnectTest {
 
-  val port = 8080
-
   def main(args: Array[String]): Unit = {
+
+    val prepared = JettyWsConnection.connect(URI.create(s"wss://echo.websocket.org/")).prepare: conn =>
+      println(s"established connection")
+      msg =>
+        println(s"received ${msg.map(_.show)}")
+
     val connect = Async[Abort] {
-      val outgoing = JettyWsConnection.connect(URI.create(s"ws://localhost:$port/registry/")).bind
+      val outgoing = prepared.bind
       outgoing.send(ArrayMessageBuffer("hello world".getBytes)).bind
       println(s"send successfull")
-      val answer = outgoing.receive.bind
-      println(new String(answer.asArray))
     }.run(using Abort()) { res =>
-      println(s"stopping!")
+      println(s"done!")
       println(res)
     }
   }

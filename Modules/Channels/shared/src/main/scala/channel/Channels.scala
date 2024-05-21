@@ -7,6 +7,7 @@ import scala.util.{Failure, Success, Try}
 
 trait MessageBuffer {
   def asArray: Array[Byte]
+  def show: String = asArray.mkString("[",", ","]")
 }
 
 object MessageBuffer {

@@ -8,6 +8,11 @@ import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
+
+def printErrors[T](cb: T => Unit): Callback[T] =
+  case Success(mb) => cb(mb)
+  case Failure(ex) => ex.printStackTrace()
+
 object EchoServerTestTCP {
   def main(args: Array[String]): Unit = {
     val port = 54467
@@ -15,9 +20,6 @@ object EchoServerTestTCP {
     given abort: Abort = Abort()
 
 
-    def printErrors[T](cb: T => Unit): Callback[T] =
-      case Success(mb) => cb(mb)
-      case Failure(ex) => ex.printStackTrace()
 
     // need an execution context that generates new tasks as TCP does lots of blocking
     val executor = Executors.newCachedThreadPool()
