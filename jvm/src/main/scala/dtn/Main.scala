@@ -117,9 +117,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 }
 
 def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
-  val myUid = Uid.gen()
-  var dots: Dots = Dots.empty
-  dots = dots.add(Dot(myUid, Time.current()))
+  val dots: Dots = DotsCreation.generate_pseudo_random_dots()
 
   RdtClient(host, port, "testapp", checkerHost, checkerPort).flatMap(client => {
     client.registerOnReceive((payload: Array[Byte], dots: Dots) => {
@@ -136,7 +134,6 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
 }
 
 def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
-  val myUid = Uid.gen()
   var dots: Dots = Dots.empty
 
   RdtClient(host, port, "testapp", checkerHost, checkerPort).map(client => {
@@ -148,7 +145,7 @@ def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, c
     while(true) {
       Thread.sleep(5000)
 
-      dots = dots.add(Dot(myUid, Time.current()))
+      // add dots here
 
       println(s"sending new dots: $dots")
       client.send(Array(), dots)
