@@ -24,13 +24,13 @@ object EchoServerTestTCP {
     val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
     val echoServer: Prod[ConnectionContext] =
-      TCP.prepareListening("0", port, ec).establish: conn =>
+      TCP.listen("0", port, ec).prepare: conn =>
         printErrors: mb =>
           println(s"echoing")
           conn.send(mb).runToFuture
 
     val client: Prod[ConnectionContext] =
-      TCP.prepareConnect("localhost", port, ec).establish: conn =>
+      TCP.connect("localhost", port, ec).prepare: conn =>
         printErrors: mb =>
           println(s"received")
           println(mb.asArray.mkString("[", ", ", "]"))

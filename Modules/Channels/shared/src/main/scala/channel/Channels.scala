@@ -46,7 +46,7 @@ type Incoming = ConnectionContext => Callback[MessageBuffer]
   * Implementations should make it safe to establish multiple times, though the semantics of that is unclear.
   */
 trait LatentConnection {
-  def establish(incoming: Incoming): Async[Abort, ConnectionContext]
+  def prepare(incoming: Incoming): Async[Abort, ConnectionContext]
 }
 
 case class BiChan(in: InChan, out: OutChan)

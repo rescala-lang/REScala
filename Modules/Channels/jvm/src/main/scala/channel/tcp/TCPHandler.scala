@@ -24,17 +24,17 @@ object TCP {
     conn
   }
 
-  def prepareConnect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+  def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection =
     new LatentConnection {
-      override def establish(incoming: Incoming): Async[Any, ConnectionContext] =
+      override def prepare(incoming: Incoming): Async[Any, ConnectionContext] =
         TCP.syncAttempt {
           TCP.handleConnection(new Socket(host, port), incoming, executionContext)
         }
     }
 
-  def prepareListening(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+  def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection =
     new LatentConnection {
-      override def establish(incoming: ConnectionContext => delay.Callback[MessageBuffer])
+      override def prepare(incoming: ConnectionContext => delay.Callback[MessageBuffer])
           : Async[Abort, ConnectionContext] =
         Async.fromCallback { abort ?=>
           try
