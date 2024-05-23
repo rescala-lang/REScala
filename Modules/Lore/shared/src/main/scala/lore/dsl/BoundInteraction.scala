@@ -35,7 +35,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
   extends Interaction[ST, A] {
 
   type T[_, _] = BoundInteraction[ST, S, A]
-  
+
   event.observe { it => apply(it) }
 
   override inline def requires(inline pred: (ST, A) => Boolean): BoundInteraction[ST, S, A] =
@@ -67,8 +67,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
         }
       }
 
-      modifies.zip(res).toList.asInstanceOf[Seq[(Var[Any], Any)]].map { case (source, v) => source.set(v) }
-      ()
+      modifies.zip(res).toList.asInstanceOf[Seq[(Var[Any], Any)]].foreach { case (source, v) => source.set(v) }
     }
 
   }

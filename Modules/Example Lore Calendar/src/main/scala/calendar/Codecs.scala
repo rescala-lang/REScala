@@ -12,7 +12,6 @@ import rdts.time.Dot
 object Codecs {
 
   given taskRefCodec: JsonValueCodec[Appointment] = JsonCodecMaker.make
-  given idCodec: JsonValueCodec[Uid]          = JsonCodecMaker.make[String].asInstanceOf
   given codecState: JsonValueCodec[Dotted[ReplicatedSet[Appointment]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   given codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedSet[Appointment]]]] =

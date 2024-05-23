@@ -260,18 +260,7 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
     resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
-    TaskKey[File]("deploy", "generates a correct index.html for the lore calendar app") := {
-      val fastlink   = (Compile / fastLinkJS).value
-      val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-      val bp         = baseDirectory.value.toPath
-      val tp         = target.value.toPath
-      val template   = IO.read(bp.resolve("index.template.html").toFile)
-      val targetpath = tp.resolve("index.html")
-      val jsrel      = targetpath.getParent.relativize(jspath.toPath)
-      IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
-      IO.copyFile(bp.resolve("calendar.css").toFile, tp.resolve("calendar.css").toFile)
-      targetpath.toFile
-    }
+    LocalSettings.deployTask
   )
 
 lazy val unitConversion = project.in(file("Modules/Example ReactiveLenses"))

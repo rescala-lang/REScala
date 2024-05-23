@@ -1,7 +1,6 @@
-package lore.calendar
+package lore.dsl
 
-import lore.dsl.*
-import lore.dsl.Ex
+import lore.dsl.{Ex, *}
 import reactives.default.*
 
 class InteractionTest extends munit.FunSuite {

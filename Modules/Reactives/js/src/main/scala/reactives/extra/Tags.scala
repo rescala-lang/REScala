@@ -2,11 +2,13 @@ package reactives.extra
 
 import org.scalajs.dom
 import org.scalajs.dom.html.Input
-import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, document}
+import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, console, document}
 import reactives.core.{CreationTicket, Disconnectable, DynamicScope, PlanTransactionScope, Scheduler, Tracing}
 import reactives.operator.*
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
+
+import console.log as println
 
 import scala.annotation.targetName
 import scala.scalajs.js
@@ -30,7 +32,7 @@ object Tags {
     }
 
   extension [A <: dom.Element](anchor: A)
-    def reattach[T](signal: Signal[T])(using
+    def reattach[T](signal: Signal[T], removeOnContainerMismatch: Boolean = false)(using
         splicer: RangeSplice[A, T],
         creationTicket: CreationTicket[Interface.State]
     ): anchor.type = {
@@ -39,12 +41,22 @@ object Tags {
       range.collapse(toStart = false)
       Observe.strong(signal, true) {
         tagObserver(anchor, signal) { v =>
+          println("branch ", range.commonAncestorContainer != anchor)
+          println("else ", range.commonAncestorContainer == anchor)
+
           if range.commonAncestorContainer != anchor then
             println(
-              s"weird state $anchor; $range; ${range.commonAncestorContainer} ${range.startContainer}; ${range.endContainer}"
+              "weird state",
+              anchor,
+              range,
+              range.commonAncestorContainer,
+              range.startContainer,
+              range.endContainer
             )
-          range.extractContents()
-          splicer.splice(anchor, range, v)
+
+          if range.commonAncestorContainer == anchor || !removeOnContainerMismatch then
+            range.extractContents()
+            splicer.splice(anchor, range, v)
         }
       }
       anchor
