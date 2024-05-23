@@ -11,12 +11,13 @@ object LocalSettings {
     val fastlink   = (Compile / fastLinkJS).value
     val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
     val bp         = baseDirectory.value.toPath
-    val tp         = jspath.toPath
+    val tp         = target.value.toPath
     val template   = IO.read(bp.resolve("index.template.html").toFile)
-    val targetpath = tp.resolve("index.html").toFile
-    IO.write(targetpath, template.replace("JSPATH", s"main.js"))
+    val targetpath = tp.resolve("index.html")
+    val jsrel      = targetpath.getParent.relativize(jspath.toPath)
+    IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
     IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
-    targetpath
+    targetpath.toFile
   }
 
   // use `publishSigned` to publish
