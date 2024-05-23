@@ -25,7 +25,7 @@ case class DeltaStore[RDT] private /* private to ensure invariant (see from(…)
     addressableDeltas: Dots, // Note that there might be delta groups with dots that are not addressable but stored
     deltas: Map[Dot, (Dots, RDT)]
 ):
-  private lazy val retrievableDots: Dots = prefixDots.union(addressableDeltas)
+  lazy val retrievableDots: Dots = prefixDots.union(addressableDeltas)
 
   def contains(dots: Dots): Boolean = {
     retrievableDots.contains(dots)
@@ -48,6 +48,13 @@ case class DeltaStore[RDT] private /* private to ensure invariant (see from(…)
     }
 
     collectedDeltas
+  }
+
+  def readAvailableDeltasAsSingleDelta(dots: Dots)(using lattice: Lattice[RDT]): Option[(Dots, RDT)] = {
+    readAvailableDeltas(dots).reduceOption {
+      case ((lDots, lDelta), (rDots, rDelta)) =>
+        (lDots.union(rDots), lattice.merge(lDelta, rDelta))
+    }
   }
 
   def replacePrefixPruningDeltas(dots: Dots, delta: RDT): DeltaStore[RDT] = {

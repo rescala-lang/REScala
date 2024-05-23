@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
 
 class ConnectionManager[MSG](
     privateIdentity: PrivateIdentity,
-    messageHandler: MessageHandler[MSG]
+    messageHandler: MessageReceiver[MSG]
 )(using msgCodec: JsonValueCodec[MSG]) {
   private val executor               = Executors.newCachedThreadPool()
   private given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
@@ -40,16 +40,22 @@ class ConnectionManager[MSG](
     * @return true if a connections exists, otherwise false.
     */
   def send(user: PublicIdentity, msg: MSG): Boolean = {
+    sendMultiple(user, msg)
+  }
+
+  def sendMultiple(user: PublicIdentity, msgs: MSG*): Boolean = {
     if stopped then return false
-    // TODO: Check if read from volatile outputStreams is sufficient
     outputStreams.get(user) match
       case Some(outputStream) =>
         Future {
-          val encodedMsg = writeToArray(msg)
+          val encodedMsgs = msgs.map { msg =>
+            writeToArray(msg)
+          }
           outputStream.synchronized {
-            outputStream.writeInt(encodedMsg.length)
-            outputStream.write(encodedMsg)
-            // TODO: Flush?
+            encodedMsgs.foreach { encodedMsg =>
+              outputStream.writeInt(encodedMsg.length)
+              outputStream.write(encodedMsg)
+            }
           }
         }
         true
@@ -69,7 +75,12 @@ class ConnectionManager[MSG](
             running = false
             sys.error("Stopping listener")
           case Success((socket, peerIdentity)) =>
-            connectionEstablished(socket, peerIdentity, establishedByRemote = true)
+            if peerIdentity == localPublicId
+            then // We don't want to connect to ourselves.
+              try { socket.close() }
+              catch case e: IOException => {}
+            else connectionEstablished(socket, peerIdentity, establishedByRemote = true)
+
             acceptConnection()
         }
 
@@ -100,12 +111,19 @@ class ConnectionManager[MSG](
 
   def connectTo(host: String, port: Int): Unit = {
     connector.connect(host, port).onComplete {
-      case Failure(exception)        => exception.printStackTrace()
-      case Success((socket, peerId)) => connectionEstablished(socket, peerId, establishedByRemote = false)
+      case Failure(exception) => exception.printStackTrace()
+      case Success((socket, peerId)) =>
+        if peerId == localPublicId
+        then // We don't want to connect to ourselves.
+          try { socket.close() }
+          catch case e: IOException => {}
+        else connectionEstablished(socket, peerId, establishedByRemote = false)
     }
   }
 
   def connectToExpectingUserIfNoConnectionExists(host: String, port: Int, expectedUser: PublicIdentity): Unit = {
+    if expectedUser == localPublicId then return
+
     this.synchronized {
       if connections.contains(expectedUser) then return
     }
@@ -121,6 +139,10 @@ class ConnectionManager[MSG](
           } catch
             case e: IOException => e.printStackTrace()
     }
+  }
+  
+  def connectedUsers: Set[PublicIdentity] = {
+    connections.keySet
   }
 
   private def connectionEstablished(
