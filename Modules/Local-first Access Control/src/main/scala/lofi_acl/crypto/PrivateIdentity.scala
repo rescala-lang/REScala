@@ -1,7 +1,8 @@
 package lofi_acl.crypto
 
-import X509Util.toPem
+import lofi_acl.crypto.X509Util.toPem
 import org.bouncycastle.cert.X509CertificateHolder
+import rdts.base.Uid
 
 import java.nio.charset.StandardCharsets
 import java.security.{KeyPair, PublicKey}
@@ -21,6 +22,8 @@ case class PublicIdentity(id: String) {
   require(id != null && id.length == 44 && id.endsWith("="))
 
   def publicKey: PublicKey = Ed25519Util.base64PublicKeyBytesToPublicKey(id)
+
+  def toUid: Uid = Uid(id)
 }
 
 case class PrivateKeyPem(pemString: String) {
