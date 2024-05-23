@@ -14,6 +14,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   aead.jvm,
   lore.jvm,
   lore.js,
+  loreCompilerPlugin,
   lofiAcl,
   compileMacros.js,
   compileMacros.jvm,
@@ -153,7 +154,7 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .dependsOn(reactives)
   .settings(Compile / mainClass := Some("lore.Compiler"))
 
-lazy val LoReCompilerPlugin = (project in file("Modules/LoRe Compiler Plugin"))
+lazy val loreCompilerPlugin = (project in file("Modules/LoRe Compiler Plugin"))
   .settings(
     scala3defaults,
     name                                    := "lore-dsl",
@@ -162,6 +163,17 @@ lazy val LoReCompilerPlugin = (project in file("Modules/LoRe Compiler Plugin"))
     sbtPlugin                               := false,
     libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.1" % "provided",
     // test dependencies
+    Dependencies.munit
+  )
+  .dependsOn(lore.jvm)
+
+lazy val loreCompilerPluginExamples = (project in file("Modules/LoRe Compiler Plugin/examples"))
+  .settings(
+    scala3defaults,
+    name                := "source-examples",
+    autoCompilerPlugins := true,
+    addCompilerPlugin("de.tu-darmstadt.stud" %% "lore-dsl" % "0.0.1-SNAPSHOT"),
+    publish / skip := true,
     Dependencies.munit
   )
   .dependsOn(lore.jvm)
