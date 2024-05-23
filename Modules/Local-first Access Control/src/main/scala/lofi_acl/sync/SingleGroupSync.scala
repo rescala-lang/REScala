@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.SingleGroupSyncMessage.*
 import rdts.base.{Bottom, Lattice}
-import rdts.time.Dots
+import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
@@ -21,28 +21,37 @@ enum SingleGroupSyncMessage[RDT]:
 
 class SingleGroupSync[RDT](
     private val localIdentity: PrivateIdentity,
-    private val rdtReference: AtomicReference[(Dots, RDT)]
+    initialRdt: (Dots, RDT),
+    initialPermissions: (Dots, Set[PublicIdentity]) // Should contain local identity
 )(using
     lattice: Lattice[RDT],
     bottom: Bottom[RDT],
     msgJsonCode: JsonValueCodec[SingleGroupSyncMessage[RDT]]
 ) extends CausalityCheckingMessageHandler[SingleGroupSyncMessage[RDT]] {
-  @volatile private var users: Set[PublicIdentity] = Set.empty
-  @volatile private var localPermissionTime: Dots  = Dots.empty
+
+  private val localPublicId = localIdentity.getPublic
+
+  private val rdtReference: AtomicReference[(Dots, RDT)] = AtomicReference(initialRdt)
+  private val lastLocalRdtDot: AtomicReference[Dot] =
+    AtomicReference(initialRdt._1.max(localPublicId.toUid).getOrElse(Dot(localPublicId.toUid, -1)))
+  private val permissionsReference: AtomicReference[(Dots, Set[PublicIdentity])] = AtomicReference(initialPermissions)
+  private val lastLocalPermissionsDot: AtomicReference[Dot] =
+    AtomicReference(initialPermissions._1.max(localPublicId.toUid).getOrElse(Dot(localPublicId.toUid, -1)))
 
   @volatile private var stopped = false
 
   private var remoteTimes: Map[PublicIdentity, Dots] = Map.empty
 
   // Only ever modified by a single thread
-  @volatile private var rdtDeltaStore: DeltaStore[RDT] = DeltaStore.empty()
-  @volatile private var receivedRdtDots: Dots          = Dots.empty
+  @volatile private var rdtDeltaStore: DeltaStore[RDT] =
+    DeltaStore.from(initialRdt._1, initialRdt._2, Dots.empty, Map.empty)
+  @volatile private var receivedRdtDots: Dots      = initialRdt._1
+  @volatile private var maxReferencedRdtDots: Dots = initialRdt._1
 
-  @volatile private var permissionDeltaStore: DeltaStore[Set[PublicIdentity]] = DeltaStore.empty()
-  @volatile private var receivedPermissionDots: Dots                          = Dots.empty
-
-  @volatile private var maxReferencedRdtDots: Dots        = Dots.empty
-  @volatile private var maxReferencedPermissionDots: Dots = Dots.empty
+  @volatile private var permissionDeltaStore: DeltaStore[Set[PublicIdentity]] =
+    DeltaStore.from(initialPermissions._1, initialPermissions._2, Dots.empty, Map.empty)
+  @volatile private var receivedPermissionDots: Dots      = initialPermissions._1
+  @volatile private var maxReferencedPermissionDots: Dots = initialPermissions._1
 
   private val connectionManager: ConnectionManager[SingleGroupSyncMessage[RDT]] =
     ConnectionManager(localIdentity, this)
@@ -50,9 +59,30 @@ class SingleGroupSync[RDT](
   private val executor               = Executors.newCachedThreadPool()
   private given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-  /** Called by the connection manager. Thread safe. */
+  def addUser(user: PublicIdentity): Unit = {
+    val dot                 = lastLocalPermissionsDot.updateAndGet(dot => dot.advance)
+    val (dots, permissions) = rdtReference.get()
+    val addUsersMsg         = AddUsers[RDT](Set(user), dot.dots, dots)
+    receivedMessage(addUsersMsg, localPublicId)
+    val _ = connectionManager.broadcast(addUsersMsg)
+  }
+
+  def mutateRdt(deltaMutator: RDT => RDT): Unit = {
+    val dot         = lastLocalRdtDot.updateAndGet(dot => dot.advance)
+    val (dots, rdt) = rdtReference.get()
+    // Handing the message over to receivedMessage has the downside of the message not being merged immediately.
+    val delta =
+      Delta(delta = deltaMutator(rdt), dots = dot.dots, rdtCC = dots, permCC = permissionsReference.get()._1)
+    receivedMessage(
+      delta,
+      localIdentity.getPublic
+    )
+    val _ = connectionManager.broadcast(delta)
+  }
+
+  /** Thread safe. */
   override def receivedMessage(msg: SingleGroupSyncMessage[RDT], sender: PublicIdentity): Unit = {
-    if users.contains(sender)
+    if permissionsReference.get()._2.contains(sender)
     then msgQueue.put((msg, sender))
 
     // If user is not known, we drop the message for now
@@ -84,11 +114,11 @@ class SingleGroupSync[RDT](
       case Time(_, _)                => true
       case AddUsers(users, dots, cc) =>
         // TODO: It isn't really necessary to enforce causal consistency of group membership in this scenario
-        localPermissionTime.contains(cc)
+        permissionDeltaStore.contains(cc)
       case Delta(_, _, rdtCC, permCC) =>
         // Checking the delta stores is semantically equivalent to checking the AtomicRef[(Dots, _)], since we only store
         // merged deltas in store
-        rdtDeltaStore.retrievableDots.contains(rdtCC) && localPermissionTime.contains(permCC)
+        rdtDeltaStore.contains(rdtCC) && permissionDeltaStore.contains(permCC)
       case AnnouncePeers(peers)       => true
       case RequestMissing(_, _, _, _) => true
   }
@@ -101,24 +131,23 @@ class SingleGroupSync[RDT](
         }
         return false
 
-      case AddUsers(newUsers, permissionDots, _) =>
-        users = users.union(newUsers)
-        val oldPermissionTime = localPermissionTime
-        val newPermissionTime = oldPermissionTime.merge(permissionDots)
-        localPermissionTime = newPermissionTime
+      case AddUsers(newUsers, permissionDots, _) => // cc inclusion already checked in canHandleMessage
+        val (oldPermDots, _) = permissionsReference.getAndUpdate {
+          case (dots, users) => (permissionDots.union(dots), users.union(newUsers))
+        }
         permissionDeltaStore = permissionDeltaStore.addDeltaIfNew(permissionDots, newUsers)
-        return oldPermissionTime == newPermissionTime
+        receivedPermissionDots = receivedPermissionDots.union(permissionDots)
+        return oldPermDots.contains(permissionDots)
 
       case Delta(delta, dots, _, _) => // rdtCC and permCC are already checked in canHandleMessage
-        val (localRdtTime, _) = rdtReference.updateAndGet { case (oldRdtTime, oldRdt) =>
+        val (oldRdtDots, _) = rdtReference.getAndUpdate { case (oldRdtTime, oldRdt) =>
           (oldRdtTime.union(dots), lattice.merge(oldRdt, delta))
         }
-        val oldDeltaStore = rdtDeltaStore
-        rdtDeltaStore = oldDeltaStore.addDeltaIfNew(dots, delta)
+        rdtDeltaStore = rdtDeltaStore.addDeltaIfNew(dots, delta)
         receivedRdtDots = receivedRdtDots.merge(dots)
         // Send remote information about which updates the remote might have missed
-        connectionManager.send(sender, Time(localRdtTime, localPermissionTime))
-        return oldDeltaStore.retrievableDots.contains(dots)
+        connectionManager.send(sender, Time(rdtDeltaStore.retrievableDots, permissionDeltaStore.retrievableDots))
+        return oldRdtDots.contains(dots)
 
       case Time(remoteRdtTime, remotePermissionTime) =>
         maxReferencedRdtDots = maxReferencedRdtDots.union(remoteRdtTime)
@@ -159,7 +188,7 @@ class SingleGroupSync[RDT](
         return false
   }
 
-  def requestDeltasIfStillMissingAfterDelay(
+  private def requestDeltasIfStillMissingAfterDelay(
       remote: PublicIdentity,
       rdtDots: Dots,
       permDots: Dots,

@@ -62,6 +62,12 @@ class ConnectionManager[MSG](
       case None => false
   }
 
+  def broadcast(msg: MSG*): Boolean = {
+    connectedUsers.forall { user =>
+      sendMultiple(user, msg*)
+    }
+  }
+
   def acceptIncomingConnections(): Unit = {
     println(s"$localPublicId is accepting connections on port ${connector.listenPort}")
 
@@ -140,7 +146,7 @@ class ConnectionManager[MSG](
             case e: IOException => e.printStackTrace()
     }
   }
-  
+
   def connectedUsers: Set[PublicIdentity] = {
     connections.keySet
   }
