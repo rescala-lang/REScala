@@ -272,7 +272,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     Settings.javaOutputVersion(17),
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
     libraryDependencies ++= {
-      val jettyVersion = "11.0.20"
+      val jettyVersion = "11.0.21"
       Seq(
         "org.eclipse.jetty.websocket" % "websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "websocket-jetty-client" % jettyVersion,
