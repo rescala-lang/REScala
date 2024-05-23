@@ -153,6 +153,19 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .dependsOn(reactives)
   .settings(Compile / mainClass := Some("lore.Compiler"))
 
+lazy val LoReCompilerPlugin = (project in file("Modules/LoRe Compiler Plugin"))
+  .settings(
+    scala3defaults,
+    name                                    := "lore-dsl",
+    organization                            := "de.tu-darmstadt.stud",
+    version                                 := "0.0.1-SNAPSHOT",
+    sbtPlugin                               := false,
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.1" % "provided",
+    // test dependencies
+    Dependencies.munit
+  )
+  .dependsOn(lore.jvm)
+
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
     scala3defaults,
