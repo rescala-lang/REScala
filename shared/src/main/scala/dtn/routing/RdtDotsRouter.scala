@@ -106,13 +106,14 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
       case None => {}
       case Some(previous_node) => ideal_neighbours.remove(previous_node)
 
-    println(s"ideal neighbours without previous node: $ideal_neighbours")
+    println(s"ideal neighbours without previous and source node: $ideal_neighbours")
 
     // use current-peers-list to try and get peer information for each ideal neighbour
     val targets: List[DtnPeer] = ideal_neighbours
       .map[Option[DtnPeer]](x => peers.get(x.extract_node_name()))
       .collect({ case Some(value) => value })
       .toList
+    println(s"targets: $targets")
     
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
     var selected_clas: mutable.ListBuffer[Sender] = mutable.ListBuffer()
@@ -123,6 +124,7 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
         }
       }
     }
+    println(s"selected clas: $selected_clas")
 
     // if we found at least one cla to forward to then return our forwarding response
     if (!selected_clas.isEmpty) {
