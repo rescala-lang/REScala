@@ -39,7 +39,7 @@ object RdtClient {
         // flush receive forever and call callback if available
         def flush_receive(): Future[Bundle] = {
           ws.receiveBundle().flatMap(bundle => {
-            println(s"received bundle: $bundle")
+            println(s"received bundle: ${bundle.id}")
 
             val payload: Option[Array[Byte]] = bundle.other_blocks.collectFirst({ case x: PayloadBlock => x.data })
             val dots: Option[Dots] = bundle.other_blocks.collectFirst({ case x: RdtMetaBlock => x.dots })

@@ -164,7 +164,7 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
   }
 
   override def onTimeout(packet: Packet.Timeout): Unit = {
-    println(s"sending ran into timeout for bundle-forward-response ${packet.bp}. doing nothing.")
+    println(s"sending ran into timeout for bundle-forward-response ${packet.bp.id}. doing nothing.")
   }
 
   override def onSendingFailed(packet: Packet.SendingFailed): Unit = {
@@ -206,7 +206,7 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
         val bid = packet.bndl.id
         val dots = rdt_meta_block.dots
 
-        println(s"received incoming bundle ${bid} with rdt-meta block. dots ${dots}. merging.")
+        println(s"received incoming bundle ${bid} with rdt-meta block. merging.")
 
         // we can already merge here because the source is obviously excluded from the forwarding destinations selection for this bundle
         // and the information is already available for other maybe earlier forwarding requests
