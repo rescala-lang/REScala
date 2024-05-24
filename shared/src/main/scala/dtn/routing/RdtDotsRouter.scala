@@ -90,17 +90,21 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
         val rdt_id = packet.bp.destination.extract_endpoint_id()
         destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node_endpoint, rdt_id, d)
       }
+    println(s"destination nodes: $destination_nodes")
     
     // for these destination nodes select the ideal neighbours to forward this bundle to
     val ideal_neighbours: mutable.Set[Endpoint] = mutable.Set()
     for (destination_node <- destination_nodes) {
       ideal_neighbours ++= deliveryLikelyhoodState.get_best_neighbours_for(destination_node)
     }
+    println(s"ideal neighbours: $ideal_neighbours")
 
     // remove previous node from ideal neighbours if available
     tempPreviousNodeStore.get(packet.bp.id) match
       case None => {}
       case Some(previous_node) => ideal_neighbours.remove(previous_node)
+
+    println(s"ideal neighbours without previous node: $ideal_neighbours")
 
     // use current-peers-list to try and get peer information for each ideal neighbour
     val targets: List[DtnPeer] = ideal_neighbours
