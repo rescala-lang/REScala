@@ -70,6 +70,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
+    val source_node: Endpoint = packet.bp.source.extract_node_endpoint()
+
     // CYCLIC FORWARDING PREVENTION: if we already successfully forwarded this package to some node we can safely delete it.
     if (delivered.contains(packet.bp.id)) {
       println("bundle was already seen and delivered. throwing away.")
@@ -86,9 +88,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     val destination_nodes: Set[Endpoint] = tempDotsStore.get(packet.bp.id) match
       case None => Set()
       case Some(d) => {
-        val source_node_endpoint = packet.bp.source.extract_node_endpoint()
         val rdt_id = packet.bp.destination.extract_endpoint_id()
-        destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node_endpoint, rdt_id, d)
+        destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node, rdt_id, d)
       }
     println(s"destination nodes: $destination_nodes")
     
@@ -99,7 +100,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     }
     println(s"ideal neighbours: $ideal_neighbours")
 
-    // remove previous node from ideal neighbours if available
+    // remove previous node and source node from ideal neighbours if available
+    ideal_neighbours.remove(source_node)
     tempPreviousNodeStore.get(packet.bp.id) match
       case None => {}
       case Some(previous_node) => ideal_neighbours.remove(previous_node)
@@ -132,10 +134,10 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     }
 
     // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-    // if present, filter out the previous node from all available peers
+    // if present, filter out the previous node and source node from all available peers
     val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
-      case None => peers.values
-      case Some(previous_node) => peers.values.filter(p => !p.eid.equals(previous_node))
+      case None => peers.values.filter(p => !p.eid.equals(source_node))
+      case Some(previous_node) => peers.values.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
     Random.shuffle(filtered_peers)
       .map[List[Sender]](peer => {
