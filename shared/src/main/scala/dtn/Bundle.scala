@@ -103,6 +103,8 @@ object Endpoint {
       case _ => throw Exception(s"unknown dtn uri scheme: $scheme")
     }
   }
+
+  def createFromName(node_name: String): Endpoint = Endpoint(DTN_URI_SCHEME_ENCODED, s"//${node_name}/")
 }
 
 case class CreationTimestamp(bundle_creation_time: ZonedDateTime, sequence_number: Int) {

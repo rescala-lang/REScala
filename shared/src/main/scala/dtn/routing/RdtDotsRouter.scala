@@ -61,8 +61,11 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
 
   val tempDotsStore: mutable.Map[String, Dots] = mutable.Map()  // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
   val tempPreviousNodeStore: mutable.Map[String, Endpoint] = mutable.Map()  // same here
+  val tempRdtIdStore: mutable.Map[String, String] = mutable.Map()  // same here
 
   val destinationDotsState: DestinationDotsState = DestinationDotsState()
+
+  val neighbourDotsState: NeighbourDotsState = NeighbourDotsState()
 
   val deliveredNum: mutable.Map[String, Int] = mutable.Map()
 
@@ -71,12 +74,16 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     println(s"received sender-request for bundle: ${packet.bp}")
 
     val source_node: Endpoint = packet.bp.source.extract_node_endpoint()
+    val rdt_id = packet.bp.destination.extract_endpoint_id()
+    val dots = tempDotsStore.getOrElse(packet.bp.id, Dots.empty)
+
 
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
     if (deliveredNum.getOrElse(packet.bp.id, 0) >= 1000) {
       println("bundle was forwarded to enough unique neighbours. deleting.")
       tempDotsStore.remove(packet.bp.id)
       tempPreviousNodeStore.remove(packet.bp.id)
+      tempRdtIdStore.remove(packet.bp.id)
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
     }
 
@@ -87,28 +94,27 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     }
 
     // get all destination nodes to which we must forward this bundle
-    val destination_nodes: Set[Endpoint] = tempDotsStore.get(packet.bp.id) match
-      case None => Set()
-      case Some(d) => {
-        val rdt_id = packet.bp.destination.extract_endpoint_id()
-        destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node, rdt_id, d)
-      }
+    val destination_nodes: Set[Endpoint] = destinationDotsState.getNodeEndpointsToForwardBundleTo(source_node, rdt_id, dots)
     println(s"destination nodes: $destination_nodes")
     
     // for these destination nodes select the ideal neighbours to forward this bundle to
-    val ideal_neighbours: mutable.Set[Endpoint] = mutable.Set()
+    var ideal_neighbours: Set[Endpoint] = Set()
     for (destination_node <- destination_nodes) {
       ideal_neighbours ++= deliveryLikelyhoodState.get_best_neighbours_for(destination_node)
     }
     println(s"ideal neighbours: $ideal_neighbours")
 
     // remove previous node and source node from ideal neighbours if available
-    ideal_neighbours.remove(source_node)
+    ideal_neighbours -= source_node
     tempPreviousNodeStore.get(packet.bp.id) match
       case None => {}
-      case Some(previous_node) => ideal_neighbours.remove(previous_node)
+      case Some(previous_node) => ideal_neighbours -= previous_node
 
     println(s"ideal neighbours without previous and source node: $ideal_neighbours")
+
+    // remove neighbours which already know the state
+    ideal_neighbours = neighbourDotsState.filterNeighboursToNotForwardTo(ideal_neighbours, rdt_id, dots)
+    println(s"ideal neighbours without neighbours that already know the state: $ideal_neighbours")
 
     // use current-peers-list to try and get peer information for each ideal neighbour
     val targets: List[DtnPeer] = ideal_neighbours
@@ -186,7 +192,15 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
-    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. doing nothing.")
+    val dots = tempDotsStore.get(packet.bid)
+    val rdt_id = tempRdtIdStore.get(packet.bid)
+
+    if (dots.isDefined && rdt_id.isDefined) {
+      println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. merging dots.")
+      neighbourDotsState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id.get, dots.get)
+    } else {
+      println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. could not merge dots because dots or rdt_id are no longer available in temp-store.")
+    }
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
@@ -228,6 +242,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
         destinationDotsState.mergeDots(source_node_endpoint, rdt_id, dots)
 
         tempDotsStore += (bid -> dots)
+
+        tempRdtIdStore += (bid -> rdt_id)  // only needed in combination with the dots on successful forward, so add it here
       }
   }
 
@@ -310,6 +326,34 @@ class DestinationDotsState {
           .collect[Endpoint]((n: Endpoint, d: Dots) => n)
           .toSet
       }
+  }
+}
+
+
+class NeighbourDotsState {
+  // structure: map[rdt-group-id, map[node-id, Dots]]
+  val map: mutable.Map[String, mutable.Map[Endpoint, Dots]] = mutable.Map()
+
+  /* 
+    adds/merges this nodes' dots to the data structure.
+  */
+  def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
+    map.get(rdt_id) match
+      case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
+      case Some(rdt_map) => rdt_map += node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots)
+  }
+
+  /* 
+    return all neighbours for which the provided dots are not already known to them
+  */
+  def filterNeighboursToNotForwardTo(neighbour_node_endpoints: Set[Endpoint], rdt_id: String, dots: Dots): Set[Endpoint] = {
+    neighbour_node_endpoints.filter(endpoint => {
+      val d = map.get(rdt_id) match
+        case None => Dots.empty
+        case Some(node_map) => node_map.getOrElse(endpoint, Dots.empty)
+
+      !(dots <= d)
+    })
   }
 }
 
