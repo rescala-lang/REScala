@@ -75,6 +75,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
     if (deliveredNum.getOrElse(packet.bp.id, 0) >= 1000) {
       println("bundle was forwarded to enough unique neighbours. deleting.")
+      tempDotsStore.remove(packet.bp.id)
+      tempPreviousNodeStore.remove(packet.bp.id)
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
     }
 
@@ -130,8 +132,6 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     if (!selected_clas.isEmpty) {
       println("clas selected via multicast strategy")
       deliveredNum.put(packet.bp.id, deliveredNum.getOrElse(packet.bp.id, 0) + selected_clas.size)
-      tempDotsStore.remove(packet.bp.id)
-      tempPreviousNodeStore.remove(packet.bp.id)
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = false))
     }
 
@@ -163,8 +163,6 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
           case Some(clas) => {
             println("clas selected via fallback strategy")
             deliveredNum.put(packet.bp.id, deliveredNum.getOrElse(packet.bp.id, 0) + clas.size)
-            tempDotsStore.remove(packet.bp.id)
-            tempPreviousNodeStore.remove(packet.bp.id)
             Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = clas, delete_afterwards = false))
           }
     }
@@ -304,7 +302,6 @@ class DestinationDotsState {
     finds all nodes for which this nodes' dots are bigger than the other nodes' dots
   */
   def getNodeEndpointsToForwardBundleTo(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Set[Endpoint] = {
-    println(s"requested endpoints for ${node_endpoint} ${rdt_id}, state: ${map}")
     map.get(rdt_id) match
       case None => Set()
       case Some(rdt_map) => {
