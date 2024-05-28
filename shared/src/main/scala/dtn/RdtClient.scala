@@ -17,8 +17,6 @@ class RdtClient(ws: WSEndpointClient, cc: DotsConvergenceClient, appName: String
       full_source_uri = s"${ws.nodeId}rdt/${appName}"
     )
 
-    cc.send(dots)
-
     ws.sendBundle(bundle)
   }
 
