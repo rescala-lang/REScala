@@ -304,6 +304,7 @@ class DestinationDotsState {
     finds all nodes for which this nodes' dots are bigger than the other nodes' dots
   */
   def getNodeEndpointsToForwardBundleTo(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Set[Endpoint] = {
+    println(s"requested endpoints for ${node_endpoint} ${rdt_id}, state: ${map}")
     map.get(rdt_id) match
       case None => Set()
       case Some(rdt_map) => {
