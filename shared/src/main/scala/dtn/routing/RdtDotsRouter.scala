@@ -64,7 +64,7 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
 
   val destinationDotsState: DestinationDotsState = DestinationDotsState()
 
-  val delivered: mutable.Set[String] = mutable.Set()
+  val deliveredNum: mutable.Map[String, Int] = mutable.Map()
 
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
@@ -72,9 +72,9 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
 
     val source_node: Endpoint = packet.bp.source.extract_node_endpoint()
 
-    // CYCLIC FORWARDING PREVENTION: if we already successfully forwarded this package to some node we can safely delete it.
-    if (delivered.contains(packet.bp.id)) {
-      println("bundle was already seen and delivered. throwing away.")
+    // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
+    if (deliveredNum.getOrElse(packet.bp.id, 0) >= 1000) {
+      println("bundle was forwarded to enough unique neighbours. deleting.")
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
     }
 
@@ -129,42 +129,49 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     // if we found at least one cla to forward to then return our forwarding response
     if (!selected_clas.isEmpty) {
       println("clas selected via multicast strategy")
-      delivered += packet.bp.id
+      deliveredNum.put(packet.bp.id, deliveredNum.getOrElse(packet.bp.id, 0) + selected_clas.size)
       tempDotsStore.remove(packet.bp.id)
       tempPreviousNodeStore.remove(packet.bp.id)
-      return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = true))
+      return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = false))
     }
 
-    // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-    // if present, filter out the previous node and source node from all available peers
-    val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
+    // if we did not forward this bundle at all so far do the fallback strategy
+    if (deliveredNum.getOrElse(packet.bp.id, 0) <= 0) {
+      // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
+      // if present, filter out the previous node and source node from all available peers
+      val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
       case None => peers.values.filter(p => !p.eid.equals(source_node))
       case Some(previous_node) => peers.values.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
-    Random.shuffle(filtered_peers)
-      .map[List[Sender]](peer => {
-        val clas: mutable.ListBuffer[Sender] = mutable.ListBuffer()
-        for ((cla_agent, cla_port) <- peer.cla_list) {
-          if (packet.clas.contains(cla_agent)) {
-            clas += Sender(remote = peer.addr, port = cla_port, agent = cla_agent, next_hop = peer.eid)
+      return Random.shuffle(filtered_peers)
+        .map[List[Sender]](peer => {
+          val clas: mutable.ListBuffer[Sender] = mutable.ListBuffer()
+          for ((cla_agent, cla_port) <- peer.cla_list) {
+            if (packet.clas.contains(cla_agent)) {
+              clas += Sender(remote = peer.addr, port = cla_port, agent = cla_agent, next_hop = peer.eid)
+            }
           }
-        }
-        clas.toList
-      })
-      .collectFirst({
-        case head :: next => head :: next
-      }) match
-        case None => {
-          println("could not find any cla to forward to via fallback strategy")
-          Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
-        }
-        case Some(clas) => {
-          println("clas selected via fallback strategy")
-          delivered += packet.bp.id
-          tempDotsStore.remove(packet.bp.id)
-          tempPreviousNodeStore.remove(packet.bp.id)
-          Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = clas, delete_afterwards = true))
-        }
+          clas.toList
+        })
+        .collectFirst({
+          case head :: next => head :: next
+        }) match
+          case None => {
+            println("could not find any cla to forward to via fallback strategy")
+            Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
+          }
+          case Some(clas) => {
+            println("clas selected via fallback strategy")
+            deliveredNum.put(packet.bp.id, deliveredNum.getOrElse(packet.bp.id, 0) + clas.size)
+            tempDotsStore.remove(packet.bp.id)
+            tempPreviousNodeStore.remove(packet.bp.id)
+            Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = clas, delete_afterwards = false))
+          }
+    }
+    
+    // else wait for new peers
+    println("forwarded at least once. waiting for new peers.")
+    return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
   }
 
   override def onError(packet: Packet.Error): Unit = {
@@ -176,7 +183,7 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
   }
 
   override def onSendingFailed(packet: Packet.SendingFailed): Unit = {
-    delivered -= packet.bid
+    deliveredNum.put(packet.bid, deliveredNum.getOrElse(packet.bid, 0) - 1)
     println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}. removing delivered state.")
   }
 
@@ -185,9 +192,9 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
-    // CYCLIC FORWARDING PREVENTION: only update the scores (and dots, although this is only prevents processing time wasting), if we see a packet for the first time. todo: check if a packet may be received from multiple locations without being delivered.
-    if (delivered.contains(packet.bndl.id)) {
-      println("received bundle which was already delivered. not updating scores.")
+    // prevent unnecessary merging on cyclic forwarding: only update the scores (and dots, although this is only prevents processing time wasting), if we see a packet for the first time. todo: check if a packet may be received from multiple locations without being delivered.
+    if (deliveredNum.contains(packet.bndl.id)) {
+      println("received bundle which was already seen. not updating scores.")
       return
     }
 
