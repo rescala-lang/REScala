@@ -3,11 +3,13 @@ package dtn.routing
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import dtn.{DtnPeer, Packet, WSEroutingClient}
+import java.util.concurrent.ConcurrentHashMap
+import scala.jdk.CollectionConverters._
 
 
 trait Routing {
-  def peers: Map[String, DtnPeer]
-  def services: Map[Int, String]
+  def peers: ConcurrentHashMap[String, DtnPeer]
+  def services: ConcurrentHashMap[Int, String]
 
   def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle]
   def onError(packet: Packet.Error): Unit
@@ -23,8 +25,8 @@ trait Routing {
 }
 
 abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
-  var peers: Map[String, DtnPeer] = Map()
-  var services: Map[Int, String] = Map()
+  val peers: ConcurrentHashMap[String, DtnPeer] = ConcurrentHashMap()
+  val services: ConcurrentHashMap[Int, String] = ConcurrentHashMap()
 
   def start_receiving(): Future[Unit] = {
     ws.receivePacket().flatMap(packet => {
@@ -65,18 +67,20 @@ abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
     if (!peers.contains(packet.name)) {
       println(s"encountered new peer: ${packet.name}")  // limit log file spam
     }
-    peers += (packet.name -> packet.peer)
+    peers.put(packet.name, packet.peer)
   }
   override def onDroppedPeer(packet: Packet.DroppedPeer): Unit = {
     println(s"dropped peer: ${packet.name}")
-    peers -= packet.name
+    peers.remove(packet.name)
   }
   override def onPeerState(packet: Packet.PeerState): Unit = {
     println(s"received initial peer list: ${packet.peers}")
-    peers = packet.peers
+    peers.clear()
+    peers.putAll(packet.peers.asJava)
   }
   override def onServiceState(packet: Packet.ServiceState): Unit = {
     println(s"received initial service list: ${packet.service_list}")
-    services = packet.service_list
+    services.clear()
+    services.putAll(packet.service_list.asJava)
   }
 }

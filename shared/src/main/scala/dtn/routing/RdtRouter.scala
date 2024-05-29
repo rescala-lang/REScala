@@ -10,6 +10,7 @@ import kofre.time.Dots
 import dtn.RdtMetaBlock
 import scala.util.Random
 import math.max
+import scala.jdk.CollectionConverters._
 
 
 /*
@@ -72,8 +73,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     println(s"received sender-request for bundle: ${packet.bp}")
 
     val source_node: Endpoint = packet.bp.source.extract_node_endpoint()
-    val rdt_id = packet.bp.destination.extract_endpoint_id()
-    val dots = tempDotsStore.getOrElse(packet.bp.id, Dots.empty)
+    val rdt_id: String = packet.bp.destination.extract_endpoint_id()
+    val dots: Dots = tempDotsStore.getOrElse(packet.bp.id, Dots.empty)
 
 
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
@@ -114,8 +115,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
     // use current-peers-list to try and get peer information for each ideal neighbour
     val targets: List[DtnPeer] = ideal_neighbours
-      .map[Option[DtnPeer]](x => peers.get(x.extract_node_name()))
-      .collect({ case Some(value) => value })
+      .map(x => peers.get(x.extract_node_name()))
+      .filter(x => x != null)
       .toList
     println(s"targets: $targets")
     
@@ -141,8 +142,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
       // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
       // if present, filter out the previous node and source node from all available peers
       val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
-      case None => peers.values.filter(p => !p.eid.equals(source_node))
-      case Some(previous_node) => peers.values.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
+      case None => peers.values.asScala.filter(p => !p.eid.equals(source_node))
+      case Some(previous_node) => peers.values.asScala.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
       return Random
         .shuffle(filtered_peers)
@@ -258,7 +259,7 @@ class DeliveryLikelyhoodState {
 
     // increase score by 10 for this node combination    
     val old_score: Long = neighbourLikelyhoodMap(neighbour_node).getOrElse(destination_node, 0)
-    
+
     if (Long.MaxValue - old_score < 11) {
       neighbourLikelyhoodMap(neighbour_node)(destination_node) = Long.MaxValue  // highest value (minus one in the next step, i dont care) is Long.MaxValue
     } else {
@@ -270,7 +271,7 @@ class DeliveryLikelyhoodState {
       .values
       .foreach(destination_map => {
         destination_map.get(destination_node) match
-          case None => {}
+          case None => ()
           case Some(value) => destination_map(destination_node) = max(0, value-1)  // lowest value is 0
       })
   }

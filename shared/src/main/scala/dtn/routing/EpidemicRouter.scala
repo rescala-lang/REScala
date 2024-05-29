@@ -4,16 +4,18 @@ import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.concurrent.ConcurrentHashMap
+import scala.jdk.CollectionConverters._
 
 
 class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
-  var delivered: Map[String, Set[String]] = Map()  // will grow indefinitely as we do not garbage collect here
+  val delivered = ConcurrentHashMap[String, Set[String]]()  // will grow indefinitely as we do not garbage collect here
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
-    val selected_clas = peers
-      .filter((peer_name, peer) => !delivered.getOrElse(packet.bp.id, Set()).contains(peer_name))
+    val selected_clas = peers.asScala
+      .filter((peer_name, peer) => !delivered.getOrDefault(packet.bp.id, Set()).contains(peer_name))
       .map((peer_name, peer) => {
         peer.cla_list
           .filter((agent, port_option) => packet.clas.contains(agent))
@@ -39,8 +41,8 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
     delivered.get(packet.bid) match {
-      case None => delivered += (packet.bid -> Set(packet.cla_sender))
-      case Some(set) => delivered += (packet.bid -> (set + packet.cla_sender))
+      case null => delivered.put(packet.bid, Set(packet.cla_sender))
+      case x: Set[String] => delivered.put(packet.bid, (x + packet.cla_sender))
     }
     println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle ${packet.bid} -> ${delivered.get(packet.bid)}")
   }
