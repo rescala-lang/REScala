@@ -1,6 +1,6 @@
 package dtn
 
-import dtn.routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtDotsRouter}
+import dtn.routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
 import kofre.time.{Dots, Dot, Time}
 import kofre.base.Uid
 import scala.concurrent.Future
@@ -40,7 +40,7 @@ commandline options:
       case "checker" => start_checker_server(host_address, host_port)
       case "routing.direct" => _route_forever(DirectRouter(host_address, host_port))
       case "routing.epidemic" => _route_forever(EpidemicRouter(host_address, host_port))
-      case "routing.rdt" => _route_forever(RdtDotsRouter(host_address, host_port))
+      case "routing.rdt" => _route_forever(RdtRouter(host_address, host_port))
       case "client.once" => send_one_rdt_package(host_address, host_port, convergence_checker_address, convergence_checker_port)
       case "client.continuous" => send_continuous_rdt_packages(host_address, host_port, convergence_checker_address, convergence_checker_port)
       case s => throw Exception(s"could not partse commandline. unknown method: $s")
@@ -55,9 +55,9 @@ commandline options:
 
 
 
-@main def start_rdtdots_routing(): Unit = _route_forever(RdtDotsRouter("127.0.0.1", 3000))
-@main def start_rdtdots_routing_3000(): Unit = _route_forever(RdtDotsRouter("127.0.0.1", 3000))
-@main def start_rdtdots_routing_4000(): Unit = _route_forever(RdtDotsRouter("127.0.0.1", 4000))
+@main def start_rdtdots_routing(): Unit = _route_forever(RdtRouter("127.0.0.1", 3000))
+@main def start_rdtdots_routing_3000(): Unit = _route_forever(RdtRouter("127.0.0.1", 3000))
+@main def start_rdtdots_routing_4000(): Unit = _route_forever(RdtRouter("127.0.0.1", 4000))
 
 @main def start_epidemic_routing(): Unit = _route_forever(EpidemicRouter("127.0.0.1", 3000))
 

@@ -54,7 +54,7 @@ import scala.util.Random
         on equal highest scores, a random neighbour from those highest scores is picked
   */
 
-class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   val deliveryLikelyhoodState: DeliveryLikelyhoodState = DeliveryLikelyhoodState()  // state will grow indefinitely. there is currently no garbage collector
 
   val destinationDotsState: DestinationDotsState = DestinationDotsState()  // same here
@@ -242,8 +242,8 @@ class RdtDotsRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClien
     println("received incoming bundle without previous node. information not used for routing. ignoring.")
   }
 }
-object RdtDotsRouter {
-  def apply(host: String, port: Int): Future[RdtDotsRouter] = WSEroutingClient(host, port).map(ws => new RdtDotsRouter(ws))
+object RdtRouter {
+  def apply(host: String, port: Int): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws))
 }
 
 
