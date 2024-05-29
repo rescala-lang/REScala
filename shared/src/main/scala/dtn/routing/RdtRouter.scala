@@ -9,6 +9,7 @@ import dtn.PreviousNodeBlock
 import kofre.time.Dots
 import dtn.RdtMetaBlock
 import scala.util.Random
+import math.max
 
 
 /*
@@ -255,20 +256,22 @@ class DeliveryLikelyhoodState {
       neighbourLikelyhoodMap += (neighbour_node -> mutable.Map())
     }
 
+    // increase score by 10 for this node combination    
     val old_score: Long = neighbourLikelyhoodMap(neighbour_node).getOrElse(destination_node, 0)
     
     if (Long.MaxValue - old_score < 11) {
       neighbourLikelyhoodMap(neighbour_node)(destination_node) = Long.MaxValue  // highest value (minus one in the next step, i dont care) is Long.MaxValue
     } else {
       neighbourLikelyhoodMap(neighbour_node)(destination_node) = old_score + 11  // gets decreased by one in the next loop
-    }    
+    }
 
+    // decrease score by 1 for all other node combinations with that destination
     neighbourLikelyhoodMap
       .values
       .foreach(destination_map => {
         destination_map.get(destination_node) match
           case None => {}
-          case Some(value) => destination_map(destination_node) = if (value <= 0) 0 else value-1  // lowest value is 0
+          case Some(value) => destination_map(destination_node) = max(0, value-1)  // lowest value is 0
       })
   }
 
@@ -302,7 +305,7 @@ class DestinationDotsState {
   def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
     map.get(rdt_id) match
       case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
-      case Some(rdt_map) => rdt_map += node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots)
+      case Some(rdt_map) => rdt_map += (node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots))
   }
 
   /* 
@@ -331,7 +334,7 @@ class NeighbourDotsState {
   def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
     map.get(rdt_id) match
       case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
-      case Some(rdt_map) => rdt_map += node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots)
+      case Some(rdt_map) => rdt_map += (node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots))
   }
 
   /* 
