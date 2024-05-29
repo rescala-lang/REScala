@@ -12,18 +12,17 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
-    var selected_clas: ListBuffer[Sender] = ListBuffer()
-
-    for ((peer_name, peer) <- peers) {
-      if (!delivered.contains(packet.bp.id) || !delivered.get(peer_name).get.contains(peer_name)) {
-        for (cla <- peer.cla_list) {
-          if (packet.clas.contains(cla(0))) {
-            selected_clas += Sender(remote = peer.addr, port = cla(1), agent = cla(0), next_hop = peer.eid)
-          }
-        }
-      }
-    }
-    Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = true))
+    val selected_clas = peers
+      .filter((peer_name, peer) => !delivered.getOrElse(packet.bp.id, Set()).contains(peer_name))
+      .map((peer_name, peer) => {
+        peer.cla_list
+          .filter((agent, port_option) => packet.clas.contains(agent))
+          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
+      })
+      .flatten
+      .toList
+    
+    Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
   }
 
   override def onError(packet: Packet.Error): Unit = {
@@ -47,11 +46,11 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
-    println(s"received incoming bundle. information not used for routing. ignoring. message: ${packet}")
+    println("received incoming bundle. information not used for routing. ignoring.")
   }
 
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = {
-    println(s"received incoming bundle without previous node. information not used for routing. ignoring. message: $packet")
+    println("received incoming bundle without previous node. information not used for routing. ignoring.")
   }
 }
 object EpidemicRouter {

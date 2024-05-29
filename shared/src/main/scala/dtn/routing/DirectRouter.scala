@@ -7,33 +7,31 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
-  var delivered: Map[String, Boolean] = Map()  // will grow indefinitely as we do not garbage collect here
+  var delivered: Set[String] = Set()  // will grow indefinitely as we do not garbage collect here
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
-    if (delivered.get(packet.bp.id) == Some(true)) {
-      println("bundle was already delivered")
-      return None
+    if (delivered.contains(packet.bp.id)) {
+      println("bundle was already delivered. deleting.")
+      return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
     }
 
     val target_node_name: String = packet.bp.destination.extract_node_name()
-    val target: Option[DtnPeer] = peers.get(target_node_name)
 
-    var selected_clas: ListBuffer[Sender] = ListBuffer()
-
-    target match
+    peers.get(target_node_name) match
       case None => {
-        println(s"peer $target_node_name not directly known")
-        None
+        println(s"peer $target_node_name not directly known. not routing.")
+        Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
       }
       case Some(peer) => {
-        for (cla <- peer.cla_list) {
-          if (packet.clas.contains(cla(0))) {
-            selected_clas += Sender(remote = peer.addr, port = cla(1), agent = cla(0), next_hop = peer.eid)
-          }
-        }
-        Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = true))
+        val selected_clas = peer.cla_list
+          .filter((agent, port_option) => packet.clas.contains(agent))
+          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
+          .toList
+
+        println(s"selected clas: ${selected_clas}")
+        Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = true))
       }
   }
 
@@ -42,26 +40,24 @@ class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient
   }
 
   override def onTimeout(packet: Packet.Timeout): Unit = {
-    println(s"sending ran into timeout for bundle-forward-response ${packet.bp}. setting delivered[${packet.bp.id}]=false")
-    delivered += (packet.bp.id -> false)
+    println(s"sending ran into timeout for bundle-forward-response ${packet.bp}.")
   }
 
   override def onSendingFailed(packet: Packet.SendingFailed): Unit = {
-    println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}. setting delivered[${packet.bid}]=false")
-    delivered += (packet.bid -> false)
+    println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}.")
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
-    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. setting delivered[${packet.bid}]=true")
-    delivered += (packet.bid -> true)
+    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}.")
+    delivered += packet.bid
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
-    println(s"received incoming bundle. information not used for routing. ignoring. message: ${packet}")
+    println("received incoming bundle. information not used for routing. ignoring.")
   }
 
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = {
-    println(s"received incoming bundle without previous node. information not used for routing. ignoring. message: $packet")
+    println("received incoming bundle without previous node. information not used for routing. ignoring.")
   }
 }
 object DirectRouter {
