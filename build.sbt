@@ -1,4 +1,4 @@
-import Settings.{scala3defaults, javaOutputVersion, resolverJitpack}
+import Settings.scala3defaults
 
 lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   aead.js,
@@ -133,7 +133,7 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
   .dependsOn(rdts.js, reactives.js, channels.js, lore.js)
   .settings(
     scala3defaults,
-    resolverJitpack,
+    Settings.resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
     LocalSettings.deployTask
@@ -142,7 +142,7 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
     scala3defaults,
-    javaOutputVersion(11),
+    Settings.javaOutputVersion(11),
     Settings.safeInit(Compile / compile, Test / compile),
     Dependencies.munit,
     Dependencies.munitCheck,
@@ -214,7 +214,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .settings(
     scala3defaults,
     Settings.safeInit(Compile / compile),
-    javaOutputVersion(8),
+    Settings.javaOutputVersion(8),
     LocalSettings.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
@@ -226,7 +226,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
 lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     scala3defaults,
-    javaOutputVersion(9),
+    Settings.javaOutputVersion(9),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -248,14 +248,14 @@ lazy val replicationExamples =
       scala3defaults,
       run / fork         := true,
       run / connectInput := true,
-      resolverJitpack,
+      Settings.resolverJitpack,
       Dependencies.munitCheck,
       Dependencies.munit,
       Dependencies.scalacheck,
       Dependencies.slips.options,
       Dependencies.slips.delay,
       Dependencies.jsoniterScala,
-      Settings.strictEquality,
+      Settings.strictEquality(Compile / compile, Test / test),
     )
     .jvmSettings(
       Dependencies.slips.script,
@@ -280,7 +280,7 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .dependsOn(rdts.js, reactives.js, channels.js)
   .settings(
     scala3defaults,
-    resolverJitpack,
+    Settings.resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
     LocalSettings.deployTask,

@@ -32,8 +32,6 @@ object Settings {
     )
   )
 
-  val strictEquality = List(scalacOptions += "-language:strictEquality")
-
   val commonScalacOptions =
     fatalWarnings(Compile / compile, Test / compile) ++ featureOptions ++ valueDiscard(Compile / compile)
 
@@ -59,6 +57,9 @@ object Settings {
   def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c =>
     c / scalacOptions += setting
   }
+
+  // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
+  def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf*)
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
   def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf*)
