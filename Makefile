@@ -11,10 +11,10 @@ publishSigned:
 	sbt --client 'reactivesAggregate / publishSigned'
 
 runSimpleCaseStudy:
-	sbtn 'examples / run'
+	sbt --client 'examples / run'
 
 buildReplication:
-	sbtn 'replicationExamplesJVM/stageJars'
+	sbt --client 'replicationExamplesJVM/stageJars'
 
 runReplication: buildReplication
 	java -cp "Modules/Example Replication/jvm/target/jars/*" replication.cli --help
