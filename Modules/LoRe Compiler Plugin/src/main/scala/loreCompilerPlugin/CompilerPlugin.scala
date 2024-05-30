@@ -1,4 +1,4 @@
-package loreDSL
+package loreCompilerPlugin
 
 import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
@@ -14,17 +14,17 @@ import lore.ast.*
 
 import scala.util.matching.Regex
 
-class DSL extends StandardPlugin:
-  val name: String        = "DSL"
+class CompilerPlugin extends StandardPlugin:
+  val name: String        = "LoRe Compiler Plugin"
   val description: String = "Constructs a LoRe AST from the given Scala AST"
 
   override def init(options: List[String]): List[PluginPhase] =
-    (new DSLPhase) :: Nil
-end DSL
+    (new LoRePhase) :: Nil
+end CompilerPlugin
 
-class DSLPhase extends PluginPhase:
+class LoRePhase extends PluginPhase:
   import tpd.*
-  val phaseName: String = "DSL"
+  val phaseName: String = "LoRe"
 
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Staging.name)
@@ -33,13 +33,13 @@ class DSLPhase extends PluginPhase:
   private val loreReactives: List[String] = List(
     "rescala.default.Var",    // Source
     "rescala.default.Signal", // Derived
-    "lore.DSL.InteractionWithTypes",
-    "lore.DSL.InteractionWithRequires",
-    "lore.DSL.InteractionWithRequiresAndModifies"
+    "lore.dsl.InteractionWithTypes",
+    "lore.dsl.InteractionWithRequires",
+    "lore.dsl.InteractionWithRequiresAndModifies"
   )
   private val reactiveSourcePattern: Regex      = """rescala\.default\.Var\[(\w+)\]""".r
   private val reactiveDerivedPattern: Regex     = """rescala\.default\.Signal\[(\w+)\]""".r
-  private val reactiveInteractionPattern: Regex = """lore\.DSL\.InteractionWithTypes\[(\w+), (\w+)\]""".r
+  private val reactiveInteractionPattern: Regex = """lore\.dsl\.InteractionWithTypes\[(\w+), (\w+)\]""".r
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
     * @param tree The Scala AST Tree node for a RHS expression to convert
@@ -168,8 +168,7 @@ class DSLPhase extends PluginPhase:
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs)
-          if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
+      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
         // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
         loreTerms = loreTerms :+ TAbs(
@@ -220,4 +219,4 @@ class DSLPhase extends PluginPhase:
       case _ => () // All other ValDefs not covered above are ignored
     tree // Return the original tree to further compiler phases
   end transformValDef
-end DSLPhase
+end LoRePhase

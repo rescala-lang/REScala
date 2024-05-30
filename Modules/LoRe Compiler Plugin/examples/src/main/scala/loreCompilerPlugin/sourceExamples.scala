@@ -1,4 +1,4 @@
-package loreDSL
+package loreCompilerPlugin
 
 import lore.dsl.*
 import reactives.default.Var as Source

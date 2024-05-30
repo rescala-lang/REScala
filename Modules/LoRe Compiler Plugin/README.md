@@ -1,19 +1,11 @@
-# Important Notice
-
-> [!IMPORTANT]
-> Development for this compiler plugin moved to a [repo under the STG at TU Darmstadt](https://github.com/stg-tud/LoRe-compiler-plugin).
-> For now, this repository will stay as is and the old readme is kept below.
-
-# LoRe-DSL
-> An internal Scala DSL for [LoRe](https://github.com/stg-tud/LoRe), a language for local-first reactive programming with verified safety guarantees
+# LoRe Compiler Plugin
+> A Scala compiler plugin for compiling LoRe code written in Scala into plain LoRe.
 
 ## Usage
 
-This is a scala 3 sbt project. To start, compile and publish the DSL plugin locally via `sbt publishPluginLocal`. This is a custom command invoking the `clean`, `compile`, `package` and `publishLocal` commands successively. Once this is done, you can import the sbt project in your editor of choice.
+This is a scala 3 sbt project. To start, compile and publish the compiler plugin locally via `sbt clean;compile;package;publishLocal`. Once this is done, you can import the sbt project in your editor of choice.
 
-Afterward, you can try compiling the given examples (via e.g. `sbt sourceExamples/clean sourceExamples/compile`) to test the plugin. The plugin will verbosely output logs describing the definitions it is processing to the console, but does not yet do anything else with these values.
-
-If you receive errors about the [LoRe](https://github.com/stg-tud/LoRe) dependency not being found, clone its repository and publish it locally (via `sbt publishLocal`), then resume above instructions.
+Afterward, you can try compiling the given examples via `sbt loreCompilerPluginExamples/clean loreCompilerPluginExamples/compile` to test the plugin. The plugin will verbosely output logs describing the definitions it is processing to the console, but does not yet do anything else with these values.
 
 For more information on the sbt-dotty plugin, see the
 [scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
@@ -47,4 +39,4 @@ For more information on the sbt-dotty plugin, see the
 
 ## Examples
 
-- The `sourceExamples` example contains around 50 example definitions using various syntax with Sources across integers, strings and booleans
+- The `sourceExamples` file contains around 50 example definitions using various syntax with Sources across integers, strings and booleans
