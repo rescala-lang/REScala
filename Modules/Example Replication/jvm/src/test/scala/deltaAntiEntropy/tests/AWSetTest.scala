@@ -46,7 +46,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
   implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("add") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
-      given LocalUid                                = set.replicaID
+      given LocalUid                                      = set.replicaID
       val added: AntiEntropyContainer[ReplicatedSet[Int]] = set.add(e)
 
       val elems = added.elements
@@ -58,7 +58,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
   }
   property("remove") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
-      given LocalUid    = set.replicaID
+      given LocalUid          = set.replicaID
       val removedNotContained = set.remove(e)
       val added               = set.add(e)
       val removed             = added.remove(e)

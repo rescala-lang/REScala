@@ -24,11 +24,11 @@ object BoundedCounter {
 
     def addParticipants(part: Set[Uid])(using IsMutator): C = neutral.copy(participants = part).mutator
 
-    def allocated(using IsQuery)(id: Uid): Int       = current.allocations.inner.getOrElse(id, 0)
+    def allocated(using IsQuery)(id: Uid): Int = current.allocations.inner.getOrElse(id, 0)
     def reserved(using LocalUid, IsQuery): Int = reserved(replicaId)
     def reserved(using IsQuery)(id: Uid): Int =
       current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
-    def available(using IsQuery)(id: Uid): Int        = reserved(id) - allocated(id)
+    def available(using IsQuery)(id: Uid): Int  = reserved(id) - allocated(id)
     def available(using LocalUid, IsQuery): Int = available(replicaId)
 
     def allocate(value: Int): IdMutator = {

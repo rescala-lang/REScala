@@ -169,7 +169,7 @@ object CalculusLike {
       // because REScala allows the creation of new reactives during propagation.
       // their correctness is ensured by the creation method
       if knownReactives == processed then this // snapshots are handled elsewhere
-      else {                                // reevaluate or skip
+      else {                                   // reevaluate or skip
 
         // if there is anything to skip, we just skip all of them at once
         val toSkip = ready -- outdated

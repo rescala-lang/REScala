@@ -3,7 +3,7 @@ package lore.cli
 import com.monovore.decline.*
 
 private val languageName: String = "LoRe"
-private val commandName: String = "lore"
+private val commandName: String  = "lore"
 
 val mainCommand: Command[Subcommand] = Command(
   name = commandName,

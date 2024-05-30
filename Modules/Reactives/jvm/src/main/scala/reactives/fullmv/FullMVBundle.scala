@@ -167,10 +167,11 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
       // admission phase
       val admissionTicket = new AdmissionTicket[State](transaction, declaredWrites)
       val admissionResult = Try { admissionPhase(admissionTicket) }
-      if FullMVUtil.DEBUG then admissionResult match {
-        case scala.util.Failure(e) => e.printStackTrace()
-        case _                     =>
-      }
+      if FullMVUtil.DEBUG then
+        admissionResult match {
+          case scala.util.Failure(e) => e.printStackTrace()
+          case _                     =>
+        }
       assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get()} tasks undone.")
 
       // propagation phase

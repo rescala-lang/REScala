@@ -7,7 +7,7 @@ import scala.util.Random
 // opaque currently causes too many weird issues with library integrations, in particular the json libraries can no longer auto serialize
 case class Uid(delegate: String) derives CanEqual {
   override def toString: String = show
-  def show: String = s"🪪$delegate"
+  def show: String              = s"🪪$delegate"
 }
 
 object Uid:

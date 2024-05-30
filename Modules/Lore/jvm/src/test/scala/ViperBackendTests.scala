@@ -9,7 +9,9 @@ class ViperBackendSuite extends FunSuite {
     import java.nio.charset.StandardCharsets
 
     val compiled = ViperBackend.compileAsSingleFile(List(TViperImport(Path.of("deps/calendar_header.vpr"))))
-    val expectation = String(getClass.getClassLoader.getResourceAsStream("importstest.viper").readAllBytes,  StandardCharsets.UTF_8)
+    val expectation =
+      String(getClass.getClassLoader.getResourceAsStream("importstest.viper").readAllBytes, StandardCharsets.UTF_8)
 
-    assertEquals(compiled, expectation)  }
+    assertEquals(compiled, expectation)
+  }
 }

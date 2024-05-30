@@ -78,8 +78,8 @@ trait Female extends Animal {
     val male        = world.randomness.nextBoolean()
     val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
     val herbivore =
-      if nHerbivores == 0 then false         // both parents are a carnivores, child is carnivore
-      else if nHerbivores == 2 then true     // both parents are herbivores, child is herbivore
+      if nHerbivores == 0 then false      // both parents are a carnivores, child is carnivore
+      else if nHerbivores == 2 then true  // both parents are herbivores, child is herbivore
       else world.randomness.nextBoolean() // mixed parents, random
 
     world.newAnimal(herbivore, male)

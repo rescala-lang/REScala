@@ -76,10 +76,11 @@ object DataGenerator {
   })
 
   given arbMVR[A: Arbitrary]: Arbitrary[MultiValueRegister[A]] =
-    val pairgen = for
-      version <- arbVectorClock.arbitrary
-      value   <- Arbitrary.arbitrary[A]
-    yield (version, value)
+    val pairgen =
+      for
+        version <- arbVectorClock.arbitrary
+        value   <- Arbitrary.arbitrary[A]
+      yield (version, value)
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
     Arbitrary(map)
 
@@ -91,15 +92,17 @@ object DataGenerator {
             list.map: (dot, value) =>
               QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
 
-  val genDot: Gen[Dot] = for
-    id    <- Gen.oneOf('a' to 'g')
-    value <- Gen.oneOf(0 to 100)
-  yield Dot(Uid.predefined(id.toString), value)
+  val genDot: Gen[Dot] =
+    for
+      id    <- Gen.oneOf('a' to 'g')
+      value <- Gen.oneOf(0 to 100)
+    yield Dot(Uid.predefined(id.toString), value)
 
-  val uniqueDot: Gen[Dot] = for
-    id    <- Gen.oneOf('a' to 'g')
-    value <- Gen.long
-  yield Dot(Uid.predefined(id.toString), value)
+  val uniqueDot: Gen[Dot] =
+    for
+      id    <- Gen.oneOf('a' to 'g')
+      value <- Gen.long
+    yield Dot(Uid.predefined(id.toString), value)
 
   given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 
@@ -112,11 +115,12 @@ object DataGenerator {
     yield ArrayRanges.from(x.map(_.toLong))
   )
 
-  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] = for
-    n      <- Gen.choose(0, 10)
-    dots   <- Gen.containerOfN[List, Dot](n, genDot)
-    values <- Gen.containerOfN[List, A](n, g.arbitrary)
-  yield (dots zip values).toMap
+  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] =
+    for
+      n      <- Gen.choose(0, 10)
+      dots   <- Gen.containerOfN[List, Dot](n, genDot)
+      values <- Gen.containerOfN[List, A](n, g.arbitrary)
+    yield (dots zip values).toMap
 
   implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
@@ -201,15 +205,16 @@ object DataGenerator {
       }
     }
 
-    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for
-      nInserted       <- Gen.choose(0, 20)
-      insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
-      insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
-      removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
-      id              <- Gen.oneOf('a' to 'g')
-    yield {
-      makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
-    }
+    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] =
+      for
+        nInserted       <- Gen.choose(0, 20)
+        insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
+        insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
+        removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
+        id              <- Gen.oneOf('a' to 'g')
+      yield {
+        makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
+      }
 
     implicit def arbRGA[E](implicit
         e: Arbitrary[E],

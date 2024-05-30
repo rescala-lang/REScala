@@ -151,7 +151,7 @@ val children: Fold[Term, Term] =
     def foldMap[M: Monoid](f: Term => M)(t: Term): M =
       t match {
         case _: (TViperImport | TArgT | TVar | TTypeAl | TNum | TTrue | TFalse |
-              TString) =>
+            TString) =>
           Monoid[M].empty
         case TAbs(name, _type, body, sourcePos) => f(body)
         case x: TTuple =>
@@ -160,8 +160,8 @@ val children: Fold[Term, Term] =
           Monoid[M].combineAll(
             (List(cond, _then).map(Some(_)) :+ _else).flatten.map(f)
           )
-        case TSeq(body, sourcePos) => Monoid[M].combineAll(body.toList.map(f))
-        case t: BinaryOp           => f(t.left) combine f(t.right)
+        case TSeq(body, sourcePos)     => Monoid[M].combineAll(body.toList.map(f))
+        case t: BinaryOp               => f(t.left) combine f(t.right)
         case TAssert(body, sourcePos)  => f(body)
         case TAssume(body, sourcePos)  => f(body)
         case TSource(body, sourcePos)  => f(body)

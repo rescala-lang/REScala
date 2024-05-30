@@ -12,22 +12,23 @@ import scala.collection.mutable
 import scala.util.Random
 
 object RCounterGenerators {
-  def genRCounter: Gen[AntiEntropyContainer[ResettableCounter]] = for
-    num <- Gen.choose(0, 100)
-    ops <- Gen.listOfN(num, Gen.chooseNum(0, 3))
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer())
+  def genRCounter: Gen[AntiEntropyContainer[ResettableCounter]] =
+    for
+      num <- Gen.choose(0, 100)
+      ops <- Gen.listOfN(num, Gen.chooseNum(0, 3))
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer())
 
-    ops.foldLeft(AntiEntropyContainer[ResettableCounter](ae)) {
-      case (c, 0) => c.increment(using c.replicaID)()
-      case (c, 1) => c.decrement(using c.replicaID)()
-      case (c, 2) => c.reset()
-      case (c, 3) => c.fresh(using c.replicaID)()
-      // default case is only needed to stop the compiler from complaining about non-exhaustive match
-      case (c, _) => c
+      ops.foldLeft(AntiEntropyContainer[ResettableCounter](ae)) {
+        case (c, 0) => c.increment(using c.replicaID)()
+        case (c, 1) => c.decrement(using c.replicaID)()
+        case (c, 2) => c.reset()
+        case (c, 3) => c.fresh(using c.replicaID)()
+        // default case is only needed to stop the compiler from complaining about non-exhaustive match
+        case (c, _) => c
+      }
     }
-  }
 
   implicit def arbRCounter: Arbitrary[AntiEntropyContainer[ResettableCounter]] = Arbitrary(genRCounter)
 }
@@ -174,7 +175,8 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val cb2 = cb1.processReceivedDeltas()
 
       sequential.reset()
-      if op then sequential.increment(using sequential.replicaID)() else sequential.decrement(using sequential.replicaID)()
+      if op then sequential.increment(using sequential.replicaID)()
+      else sequential.decrement(using sequential.replicaID)()
 
       assertEquals(
         ca2.value,

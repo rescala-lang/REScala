@@ -17,8 +17,7 @@ case class FromFile(path: Path) extends SourceType
 
 case class SourcePos(start: Caret, end: Caret, _type: SourceType = Unknown)
 
-/** The abstract syntax of the LoRe language.
-  */
+/** The abstract syntax of the LoRe language. */
 sealed trait Term {
   def sourcePos: Option[SourcePos]
 }

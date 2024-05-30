@@ -35,5 +35,4 @@ object Bindings {
 
   implicit val SyncMessageCodec: JsonValueCodec[SyncMessage] = JsonCodecMaker.make
 
-
 }

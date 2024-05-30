@@ -13,16 +13,17 @@ import replication.JsoniterCodecs.{*, given}
 import scala.collection.mutable
 
 object GSetGenerators {
-  def genGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlySet[E]]] = for
-    elements <- Gen.containerOf[List, E](e.arbitrary)
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GrowOnlySet[E]]("a", network, mutable.Buffer())
+  def genGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlySet[E]]] =
+    for
+      elements <- Gen.containerOf[List, E](e.arbitrary)
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[GrowOnlySet[E]]("a", network, mutable.Buffer())
 
-    elements.foldLeft(AntiEntropyContainer[GrowOnlySet[E]](ae)) {
-      case (set, e) => set.insert(e)
+      elements.foldLeft(AntiEntropyContainer[GrowOnlySet[E]](ae)) {
+        case (set, e) => set.insert(e)
+      }
     }
-  }
 
   implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlySet[E]]] =
     Arbitrary(genGSet)

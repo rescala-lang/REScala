@@ -18,9 +18,12 @@ object JFXAdapter {
   implicit class SignalToStringProperty(s: Signal[String]) {
     def toProperty: StringProperty = {
       val p = StringProperty(s.now)
-      s.observe({ v =>
-        Platform.runLater(p.update(v))
-      }, fireImmediately = false)
+      s.observe(
+        { v =>
+          Platform.runLater(p.update(v))
+        },
+        fireImmediately = false
+      )
       p
     }
   }
@@ -28,9 +31,12 @@ object JFXAdapter {
   implicit class SignalToDoubleProperty(s: Signal[Double]) {
     def toProperty: DoubleProperty = {
       val p = DoubleProperty(s.now)
-      s.observe({ v =>
-        Platform.runLater(p.update(v))
-      }, fireImmediately = false)
+      s.observe(
+        { v =>
+          Platform.runLater(p.update(v))
+        },
+        fireImmediately = false
+      )
       p
     }
   }
@@ -38,9 +44,12 @@ object JFXAdapter {
   implicit class SignalToBooleanProperty(s: Signal[Boolean]) {
     def toProperty: BooleanProperty = {
       val p = BooleanProperty(s.now)
-      s.observe({ v =>
-        Platform.runLater(p.update(v))
-      }, fireImmediately = false)
+      s.observe(
+        { v =>
+          Platform.runLater(p.update(v))
+        },
+        fireImmediately = false
+      )
       p
     }
   }

@@ -151,10 +151,10 @@ object ViperBackend {
         graph: Map[String, (TReactive, Type)],
         name: ID
     ): String = {
-      val (d, _) = graph(name)
+      val (d, _)        = graph(name)
       val usedReactives = uses(d).filter(r => graph.keys.toSet.contains(r))
-      val body = expressionToViper(d.body)(using ctx)
-      val argsString = usedReactives.toSeq.sorted.mkString(", ")
+      val body          = expressionToViper(d.body)(using ctx)
+      val argsString    = usedReactives.toSeq.sorted.mkString(", ")
 
       s"define $name($argsString) $body"
     }
@@ -201,9 +201,9 @@ object ViperBackend {
       // only compile interactions that modify some reactives and have some guarantees or affect an invariant
       .filter((_, i) =>
         !i.modifies.isEmpty &&
-          (!i.ensures.isEmpty || !OverlapAnalysis
-            .overlappingInvariants(i)(using ctx)
-            .isEmpty)
+        (!i.ensures.isEmpty || !OverlapAnalysis
+          .overlappingInvariants(i)(using ctx)
+          .isEmpty)
       )
       .map((name, i) => (name, interactionToMethod(name, i)(using ctx)))
       .toList
@@ -303,8 +303,8 @@ object ViperBackend {
           ((inner
             .take(inner.length - 1)
             .map(expressionToViper) :+
-            bodyAssignment(assignment)) ++
-            end.map(expressionToViper)).mkString("\n")
+          bodyAssignment(assignment)) ++
+          end.map(expressionToViper)).mkString("\n")
         case t => bodyAssignment(t)
         // case t => (List(), t)
       }
@@ -312,7 +312,7 @@ object ViperBackend {
     // collect read/write permissions
     // collect explicitly mentioned source reactives
     val mentioned = uses(interaction).filter(ctx.sources.keySet.contains)
-    val writes = interaction.modifies
+    val writes    = interaction.modifies
     val reads =
       (overlappingInvariants.flatMap(
         ctx.reactivesPerInvariant(_)
@@ -360,7 +360,7 @@ object ViperBackend {
     val transformed = term match {
       case t: TArrow =>
         // extract argument names
-        val allNames = t.args
+        val allNames                       = t.args
         val (reactiveNames, argumentNames) = allNames.splitAt(modifies.length)
         // insert reactives names
         val reactivesInserted =

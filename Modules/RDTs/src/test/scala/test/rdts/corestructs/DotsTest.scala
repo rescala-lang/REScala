@@ -134,6 +134,9 @@ class DotsTest extends munit.ScalaCheckSuite {
   test("head works with nonempty Dots") {
     assertEquals(Dots(Map(Uid("a") -> new ArrayRanges(Array(1, 3, 6, 9), 4))).head, Dot(Uid("a"), 1))
 
-    assertEquals(Dots(Map(Uid("a") -> ArrayRanges.empty, Uid("b") -> new ArrayRanges(Array(1, 3, 6, 9), 4))).head, Dot(Uid("b"), 1))
+    assertEquals(
+      Dots(Map(Uid("a") -> ArrayRanges.empty, Uid("b") -> new ArrayRanges(Array(1, 3, 6, 9), 4))).head,
+      Dot(Uid("b"), 1)
+    )
   }
 }

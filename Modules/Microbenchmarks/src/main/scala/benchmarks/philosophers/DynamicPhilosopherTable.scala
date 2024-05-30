@@ -13,20 +13,21 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
 
     val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for i <- 0 until tableSize yield {
-      val nextCircularIndex = mod(i + 1)
-      Signal.dynamic {
-        phils(i).value match {
-          case Eating => Taken(i.toString)
-          case Thinking =>
-            phils(nextCircularIndex).value match {
-              case Eating   => Taken(nextCircularIndex.toString)
-              case Thinking => Free
-            }
+    val forks =
+      for i <- 0 until tableSize yield {
+        val nextCircularIndex = mod(i + 1)
+        Signal.dynamic {
+          phils(i).value match {
+            case Eating => Taken(i.toString)
+            case Thinking =>
+              phils(nextCircularIndex).value match {
+                case Eating   => Taken(nextCircularIndex.toString)
+                case Thinking => Free
+              }
+          }
         }
-      }
 
-    }
+      }
 
     for i <- 0 until tableSize yield {
       val ownName = i.toString
@@ -57,10 +58,11 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 
     val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for i <- 0 until tableSize yield {
-      val nextCircularIndex = mod(i + 1)
-      Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
-    }
+    val forks =
+      for i <- 0 until tableSize yield {
+        val nextCircularIndex = mod(i + 1)
+        Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      }
 
     for i <- 0 until tableSize yield {
       val ownName = i.toString
@@ -91,20 +93,21 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 
     val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for i <- 0 until tableSize yield {
-      val nextCircularIndex = mod(i + 1)
-      Signal.dynamic {
-        phils(i).value match {
-          case Eating => Taken(i.toString)
-          case Thinking =>
-            phils(nextCircularIndex).value match {
-              case Eating   => Taken(nextCircularIndex.toString)
-              case Thinking => Free
-            }
+    val forks =
+      for i <- 0 until tableSize yield {
+        val nextCircularIndex = mod(i + 1)
+        Signal.dynamic {
+          phils(i).value match {
+            case Eating => Taken(i.toString)
+            case Thinking =>
+              phils(nextCircularIndex).value match {
+                case Eating   => Taken(nextCircularIndex.toString)
+                case Thinking => Free
+              }
+          }
         }
-      }
 
-    }
+      }
 
     for i <- 0 until tableSize yield {
       val vision = Signal.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))

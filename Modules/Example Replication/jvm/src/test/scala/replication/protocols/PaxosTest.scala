@@ -43,43 +43,43 @@ class PaxosTest extends munit.FunSuite {
 
   test("No changes for older proposals") {
     var testPaxosObject1 = emptyPaxosObject
-    //replica 1 sends prepare
+    // replica 1 sends prepare
     testPaxosObject1 = testPaxosObject1.merge(testPaxosObject1.prepare()(using id1))
-    //replica 2 sends prepare
+    // replica 2 sends prepare
     testPaxosObject1 = testPaxosObject1.merge(testPaxosObject1.prepare()(using id2))
-    testPaxosObject1 = testPaxosObject1.merge(testPaxosObject1.upkeep()(using id1)).
-      merge(testPaxosObject1.upkeep()(using id2))
+    testPaxosObject1 =
+      testPaxosObject1.merge(testPaxosObject1.upkeep()(using id1)).merge(testPaxosObject1.upkeep()(using id2))
     var testPaxosObject2 = emptyPaxosObject
-    //replica 3 sends prepare, with smaller proposal number
+    // replica 3 sends prepare, with smaller proposal number
     testPaxosObject2 = testPaxosObject2.merge(testPaxosObject2.prepare()(using id3))
-    //replica 1 receives 3's prepare
+    // replica 1 receives 3's prepare
     testPaxosObject1 = testPaxosObject1.merge(testPaxosObject2)
-    //assert that the object before and after replica 1 calls upkeep is the same
+    // assert that the object before and after replica 1 calls upkeep is the same
     assertEquals(testPaxosObject1, testPaxosObject1.merge(testPaxosObject1.upkeep()(using id1)))
   }
 
   test("promise sends previously accepted value") {
     var testPaxosObject = emptyPaxosObject
 
-    //replica 1 sends prepare
+    // replica 1 sends prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id1))
-    //replica 2 and 3 receive prepare
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id2)).
-      merge(testPaxosObject.upkeep()(using id3))
-    //replica 1 receives 2 and 3's promise
+    // replica 2 and 3 receive prepare
+    testPaxosObject =
+      testPaxosObject.merge(testPaxosObject.upkeep()(using id2)).merge(testPaxosObject.upkeep()(using id3))
+    // replica 1 receives 2 and 3's promise
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1))
-    //replica 1 sends accept(1)
+    // replica 1 sends accept(1)
     testPaxosObject = testPaxosObject.merge(testPaxosObject.accept(1)(using id1))
-    //replica 2 and 3 recieve accept
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id2)).
-      merge(testPaxosObject.upkeep()(using id3))
-    //replica 1 receives accepted
+    // replica 2 and 3 recieve accept
+    testPaxosObject =
+      testPaxosObject.merge(testPaxosObject.upkeep()(using id2)).merge(testPaxosObject.upkeep()(using id3))
+    // replica 1 receives accepted
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1))
-    //replica 2 sends prepare to propose a new value
+    // replica 2 sends prepare to propose a new value
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id2))
-    //replica 1 receives 2's new prepare, get the value in 1's promise
+    // replica 1 receives 2's new prepare, get the value in 1's promise
     val promiseValue = testPaxosObject.upkeep()(using id1).promises.head.value.get
-    //assert the promise contains the previously accepted value
+    // assert the promise contains the previously accepted value
     assertEquals(promiseValue, 1)
   }
 
@@ -99,26 +99,24 @@ class PaxosTest extends munit.FunSuite {
   test("accept contains value of promise with highest proposal number") {
     assert(true)
     var testPaxosObject = emptyPaxosObject
-    //replica 1 sends prepare
+    // replica 1 sends prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id1))
-    //1, 2 and 3 receive prepare
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).
-      merge(testPaxosObject.upkeep()(using id2)).
-      merge(testPaxosObject.upkeep()(using id3))
-    //1 sends accept
+    // 1, 2 and 3 receive prepare
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+    id2)).merge(testPaxosObject.upkeep()(using id3))
+    // 1 sends accept
     testPaxosObject = testPaxosObject.merge(testPaxosObject.accept(1)(using id1))
-    //1,2 and 3 receive accept
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).
-      merge(testPaxosObject.upkeep()(using id2)).
-      merge(testPaxosObject.upkeep()(using id3))
-    //replica 2 sends prepare
+    // 1,2 and 3 receive accept
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+    id2)).merge(testPaxosObject.upkeep()(using id3))
+    // replica 2 sends prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id2))
-    //1 and 2 receives 2's prepare
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).
-      merge(testPaxosObject.upkeep()(using id2))
-    //2 sends accept, which should contain the value of 1's promise and not the value "2"
+    // 1 and 2 receives 2's prepare
+    testPaxosObject =
+      testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using id2))
+    // 2 sends accept, which should contain the value of 1's promise and not the value "2"
     val acceptValue = testPaxosObject.accept(2)(using id2).accepts.head.value
-    //assert that the value in 2's accept message is the value of 1's promise
+    // assert that the value in 2's accept message is the value of 1's promise
     assertEquals(acceptValue, 1)
   }
 }

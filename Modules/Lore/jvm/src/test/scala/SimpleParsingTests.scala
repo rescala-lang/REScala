@@ -124,7 +124,7 @@ class SimpleParsing extends ParserSuite {
   }
 
   test("arithmetic expression") {
-    val p = Parser.arithmExpr
+    val p    = Parser.arithmExpr
     val expr = "1 + 5 * 20 / (4 + 10)"
 
     assertParsingResult(
@@ -189,7 +189,7 @@ class SimpleParsing extends ParserSuite {
 
   test("typename") {
     val expr = "List[Int]"
-    val p = Parser.typeName
+    val p    = Parser.typeName
     assertParses(p, expr)
 
     val expr2 = "AWSet[Appointment]"
@@ -201,13 +201,13 @@ class SimpleParsing extends ParserSuite {
 
   test("complex typename") {
     val expr = "Map[Int, String]"
-    val p = Parser.typeName
+    val p    = Parser.typeName
     assertParses(p, expr)
   }
 
   test("type alias") {
     val expr = "type Calendar = AWSet[Appointment]"
-    val p = Parser.typeAlias
+    val p    = Parser.typeAlias
     assertParsingResult(
       p,
       expr,

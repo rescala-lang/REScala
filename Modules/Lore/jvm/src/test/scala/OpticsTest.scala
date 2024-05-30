@@ -7,7 +7,7 @@ import lore.optics.{_, given}
 
 class OpticsSuite extends FunSuite {
   test("Playground") {
-    val a = Parser.prog.parseAll("((12))")
+    val a                = Parser.prog.parseAll("((12))")
     val replaceSourcePos = Subtree.modify(sourcePosLens.replace(None))
     // println(Children.getAll(a.getOrElse(NonEmptyList.one(TVar("a"))).head))
     for

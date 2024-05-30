@@ -28,8 +28,8 @@ object Parser {
   // helper definition for parsing sequences of expressions with operators as strings
   private def parseSeq(factor: P[Term], separator: P[String]) =
     (factor ~
-      (((wsOrNl.with1.soft *> separator <* wsOrNl))
-        ~ factor).rep0)
+    (((wsOrNl.with1.soft *> separator <* wsOrNl))
+    ~ factor).rep0)
   // helper for boolean expressions with two sides
   private def boolTpl(factor: P[Term], separator: P[Unit]) =
     factor ~ ((wsOrNl.soft ~ separator.backtrack ~ wsOrNl) *> factor).?
@@ -40,15 +40,15 @@ object Parser {
     Set("Interaction", "assert", "assume", "true", "false", "forall", "exists")
   val ws: P0[Unit] = wsp.rep0.void // whitespace
   // any amount of whitespace, newlines or comments
-  val wsOrNl = (wsp | P.defer(comment) | lf | crlf).rep0
+  val wsOrNl    = (wsp | P.defer(comment) | lf | crlf).rep0
   val id: P[ID] = (alpha ~ (alpha | digit | P.char('_').as('_')).rep0).string
   // types
   val typeName: P[Type] = P.recursive { rec =>
     (
       tupleType(rec).map(TupleType(_)) | // tuple
-        (id ~ (P.char('[') *> innerType(rec) <* P.char(
-          ']'
-        )).?) // type with optional params
+      (id ~ (P.char('[') *> innerType(rec) <* P.char(
+        ']'
+      )).?) // type with optional params
     )
       .map {
         case (outer, Some(inner)) =>
@@ -147,15 +147,15 @@ object Parser {
     ).map((i, s) => TParens(inner = i, sourcePos = Some(s)))
   val boolFactor: P[Term] =
     boolParens.backtrack
-      | neg
-      | P.defer(inSet)
-      | P.defer(numComp)
-      | tru.backtrack
-      | fls.backtrack
-      | P.defer(arithmExpr)
-      | P.defer(fieldAcc)
-      | P.defer(functionCall)
-      | _var
+    | neg
+    | P.defer(inSet)
+    | P.defer(numComp)
+    | tru.backtrack
+    | fls.backtrack
+    | P.defer(arithmExpr)
+    | P.defer(fieldAcc)
+    | P.defer(functionCall)
+    | _var
 
   val biImplication: P[Term] =
     P.defer(boolTpl(implication, P.string("<==>"))).map {
@@ -303,8 +303,8 @@ object Parser {
   // interactions
   val typeParam: P[Type] =
     P.char('[') ~ ws *> P.defer0(typeName.surroundedBy(ws))
-      <* P
-        .char(']')
+    <* P
+      .char(']')
 
   val interaction: P[TInteraction] =
     withSourcePos(P.string("Interaction") ~ ws *> typeParam ~ (ws *> typeParam))
@@ -334,7 +334,7 @@ object Parser {
       }
 
   // object orientation (e.g. dot syntax)
-  private val args = P.defer0(term.repSep0(P.char(',') ~ wsOrNl))
+  private val args      = P.defer0(term.repSep0(P.char(',') ~ wsOrNl))
   private val objFactor = P.defer(interaction | functionCall | _var)
   val fieldAcc: P[TFAcc] =
     P.defer(
@@ -351,7 +351,7 @@ object Parser {
       inner: P0[A]
   ) =
     ((wsOrNl.with1.soft ~ P.char('.') *> id <* wsOrNl).soft <* open) ~
-      (wsOrNl *> inner <* wsOrNl) <* close
+    (wsOrNl *> inner <* wsOrNl) <* close
   private val round =
     callBuilder(P.char('(').as('('), P.char(')'), args).map((f, a) =>
       (callType.round, f, a)
@@ -390,7 +390,7 @@ object Parser {
   val functionCall: P[TFunC] =
     withSourcePos(
       P.not(P.stringIn(keywords)).with1
-        *> (id.soft ~ (P.char('(') ~ wsOrNl *> args) <* wsOrNl ~ P.char(')'))
+      *> (id.soft ~ (P.char('(') ~ wsOrNl *> args) <* wsOrNl ~ P.char(')'))
     )
       .map { case ((id, arg), s) =>
         TFunC(name = id, args = arg, sourcePos = Some(s))
@@ -399,7 +399,7 @@ object Parser {
   val assertAssume: P[Term] =
     withSourcePos(
       ((P.string("assert").string | P.string("assume").string)
-        <* P.char('(') ~ wsOrNl) ~ P.defer(booleanExpr) <* (wsOrNl ~ P.char(
+      <* P.char('(') ~ wsOrNl) ~ P.defer(booleanExpr) <* (wsOrNl ~ P.char(
         ')'
       ))
     )
@@ -414,7 +414,7 @@ object Parser {
     (P.char('(') ~ ws *> _var.repSep(ws ~ P.char(',') ~ ws) <* P.char(
       ')'
     )) |
-      _var.map(NonEmptyList.one(_))
+    _var.map(NonEmptyList.one(_))
   val lambdaFun: P[TArrow] =
     ((((lambdaVars.backtrack <* wsOrNl).soft <* P.string("=>")) <* wsOrNl).rep ~
       P.defer(term))
@@ -460,8 +460,8 @@ object Parser {
   val ifThenElse: P[TIf] =
     withSourcePos(
       (P.string("if") ~ wsOrNl *> P.defer(term) <* wsOrNl) ~
-        (P.string("then") ~ wsOrNl *> P.defer(term)) ~
-        (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?
+      (P.string("then") ~ wsOrNl *> P.defer(term)) ~
+      (wsOrNl.soft ~ P.string("else") *> P.defer(term)).?
     )
       .map { case (((cond, _then), _else), s) =>
         TIf(cond, _then, _else, Some(s))

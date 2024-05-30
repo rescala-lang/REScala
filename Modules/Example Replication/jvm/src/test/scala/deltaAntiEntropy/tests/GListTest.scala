@@ -14,13 +14,14 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] = for
-    elems <- Gen.listOfN(20, e.arbitrary)
-  yield {
-    elems.foldLeft(GrowOnlyList.empty[E]) {
-      case (list, el) => list merge list.insertGL(0, el)
+  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] =
+    for
+      elems <- Gen.listOfN(20, e.arbitrary)
+    yield {
+      elems.foldLeft(GrowOnlyList.empty[E]) {
+        case (list, el) => list merge list.insertGL(0, el)
+      }
     }
-  }
 
   implicit def arbGList[E: JsonValueCodec: HasDots](implicit
       e: Arbitrary[E]

@@ -12,7 +12,7 @@ class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
 
   private def findDisagreements[T](nodes: Set[T], trees: Map[T, FullMVTurnImpl], transitiveClosure: Map[T, Set[T]]) = {
     for from <- nodes; to <- nodes if transitiveClosure(from)(to) != trees(from).isTransitivePredecessor(trees(to))
-      yield Disagreement(from, to, transitiveClosure(from)(to), trees(from).isTransitivePredecessor(trees(to)))
+    yield Disagreement(from, to, transitiveClosure(from)(to), trees(from).isTransitivePredecessor(trees(to)))
   }
 
   private def computeTransitiveClosure[T](nodes: Set[T], edges: Map[T, Set[T]]) = {

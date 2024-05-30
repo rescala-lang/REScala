@@ -562,14 +562,15 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn](init: T, val valuePe
       version.changed > 0 || (version.changed == 0 && maybeValue.isEmpty),
       s"$turn cannot write changed=${maybeValue.isDefined} in $this"
     )
-    if NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG then maybeValue match {
-      case Some(Pulse.Exceptional(t)) =>
-        throw new Exception(
-          s"Glitch-free reevaluation result for $version is exceptional",
-          maybeValue.get.asInstanceOf[Pulse.Exceptional].throwable
-        )
-      case _ => // ignore
-    }
+    if NonblockingSkipListVersionHistory.DEBUG || FullMVUtil.DEBUG then
+      maybeValue match {
+        case Some(Pulse.Exceptional(t)) =>
+          throw new Exception(
+            s"Glitch-free reevaluation result for $version is exceptional",
+            maybeValue.get.asInstanceOf[Pulse.Exceptional].throwable
+          )
+        case _ => // ignore
+      }
     synchronized {
       val stabilizeTo =
         if maybeValue.isDefined then {

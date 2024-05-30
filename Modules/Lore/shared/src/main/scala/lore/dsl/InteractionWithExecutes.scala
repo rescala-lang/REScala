@@ -5,28 +5,41 @@ import reactives.operator.Interface.State as BundleState
 
 import scala.quoted.{Expr, Quotes, Type}
 
-def constructIWEWithRequires[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
-                                                       expr: Expr[(S, A) => Boolean])
-                                                      (using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
+def constructIWEWithRequires[S <: Tuple, A](
+    interaction: Expr[InteractionWithExecutes[S, A]],
+    expr: Expr[(S, A) => Boolean]
+)(using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
   val (inputs, fun, isStatic) =
-    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[
+      (S, A) => Boolean,
+      ReSource.of[BundleState],
+      reactives.core.StaticTicket[BundleState],
+      true
+    ]($expr)
 
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
 
-def constructIWEWithEnsures[S <: Tuple, A](interaction: Expr[InteractionWithExecutes[S, A]],
-                                                      expr: Expr[(S, A) => Boolean])
-                                                     (using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
+def constructIWEWithEnsures[S <: Tuple, A](
+    interaction: Expr[InteractionWithExecutes[S, A]],
+    expr: Expr[(S, A) => Boolean]
+)(using Quotes, Type[S], Type[A]): Expr[InteractionWithExecutes[S, A]] = '{
   val (inputs, fun, isStatic) =
-    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[
+      (S, A) => Boolean,
+      ReSource.of[BundleState],
+      reactives.core.StaticTicket[BundleState],
+      true
+    ]($expr)
 
   $interaction.copy(ensures = $interaction.ensures :+ Ensures(inputs, fun, ${ showPredicateCode(expr) }))
 }
 
-case class InteractionWithExecutes[S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
-                                                      private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty,
-                                                      private[dsl] val executes: (S, A) => S)
-  extends Interaction[S, A] {
+case class InteractionWithExecutes[S <: Tuple, A] private[dsl] (
+    private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
+    private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty,
+    private[dsl] val executes: (S, A) => S
+) extends Interaction[S, A] {
   type T[_, _] = InteractionWithExecutes[S, A]
 
   override inline def requires(inline pred: (S, A) => Boolean): InteractionWithExecutes[S, A] =

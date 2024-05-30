@@ -22,7 +22,7 @@ class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
 
-  val executor = Executors.newCachedThreadPool()
+  val executor             = Executors.newCachedThreadPool()
   val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
   def start() =

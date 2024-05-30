@@ -10,21 +10,22 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object PosNegCounterGenerator {
-  val genPosNegCounter: Gen[AntiEntropyContainer[PosNegCounter]] = for
-    nInc <- Gen.posNum[Int]
-    nDec <- Gen.posNum[Int]
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
+  val genPosNegCounter: Gen[AntiEntropyContainer[PosNegCounter]] =
+    for
+      nInc <- Gen.posNum[Int]
+      nDec <- Gen.posNum[Int]
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
 
-    val inced = (0 to nInc).foldLeft(AntiEntropyContainer(ae)) {
-      case (c, _) => c.map(_.inc())
-    }
+      val inced = (0 to nInc).foldLeft(AntiEntropyContainer(ae)) {
+        case (c, _) => c.map(_.inc())
+      }
 
-    (0 to nDec).foldLeft(inced) {
-      case (c, _) => c.map(_.dec())
+      (0 to nDec).foldLeft(inced) {
+        case (c, _) => c.map(_.dec())
+      }
     }
-  }
 
   implicit val arbPosNegCounter: Arbitrary[AntiEntropyContainer[PosNegCounter]] = Arbitrary(genPosNegCounter)
 }
@@ -33,7 +34,6 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
   import PosNegCounterGenerator.*
 
   extension (aec: AntiEntropyContainer[PosNegCounter]) def value = aec.state.data.value
-
 
   property("inc") {
     forAll { (counter: AntiEntropyContainer[PosNegCounter]) =>

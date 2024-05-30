@@ -19,7 +19,7 @@ def sumDays(cal: Calendar): Int = {
   ???
 }
 
-val work: Source[Calendar] = Source(AWSet())
+val work: Source[Calendar]     = Source(AWSet())
 val vacation: Source[Calendar] = Source(AWSet())
 
 val all_appointments: Derived[Set[Appointment]] = Derived {
@@ -42,7 +42,6 @@ val add_vacation = add_appointment.modifies(vacation)
 
 // UI.display(all_appointments, remaining_vacation)
 // UI.vacationDialog.onConfirm { a => add_vacation.apply(a) }
-
 
 /*
 def main(args: Array[String]): Unit = {

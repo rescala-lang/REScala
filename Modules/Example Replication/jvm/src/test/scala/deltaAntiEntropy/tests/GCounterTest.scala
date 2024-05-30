@@ -10,23 +10,23 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object GCounterGenerators {
-  val genGCounter: Gen[AntiEntropyContainer[GrowOnlyCounter]] = for
-    n <- Gen.posNum[Int]
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
+  val genGCounter: Gen[AntiEntropyContainer[GrowOnlyCounter]] =
+    for
+      n <- Gen.posNum[Int]
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 
-    (0 until n).foldLeft(AntiEntropyContainer[GrowOnlyCounter](ae)) {
-      case (c, _) => c.map(_.inc())
+      (0 until n).foldLeft(AntiEntropyContainer[GrowOnlyCounter](ae)) {
+        case (c, _) => c.map(_.inc())
+      }
     }
-  }
 
   implicit val arbGCounter: Arbitrary[AntiEntropyContainer[GrowOnlyCounter]] = Arbitrary(genGCounter)
 }
 
 class GCounterTest extends munit.ScalaCheckSuite {
   import GCounterGenerators.*
-
 
   extension (aec: AntiEntropyContainer[GrowOnlyCounter]) def value = aec.state.data.value
 

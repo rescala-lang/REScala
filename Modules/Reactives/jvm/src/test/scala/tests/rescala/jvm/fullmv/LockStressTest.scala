@@ -40,10 +40,11 @@ class LockStressTest extends munit.FunSuite {
               } else {
                 val pick = random.nextInt(numWorkers)
                 @tailrec def reTryLock(): Unit = {
-                  if running then SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
-                    case LockedSameSCC(lock) => lock.asyncUnlock()
-                    case _                   => reTryLock()
-                  }
+                  if running then
+                    SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
+                      case LockedSameSCC(lock) => lock.asyncUnlock()
+                      case _                   => reTryLock()
+                    }
                 }
                 reTryLock()
               }

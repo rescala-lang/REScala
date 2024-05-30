@@ -18,7 +18,7 @@ class ToDoListInteractionGenerator(pruningCompletedToDoThreshold: Int = 50, numK
           val randomInteraction = random.nextInt(2)
           if randomInteraction == 0 then { // 0 => Add random to do entry
             chosenInteraction = Some(state.addRandomEntry())
-          } else if randomInteraction == 1 then {              // 1 => Complete random (existing) to do entry
+          } else if randomInteraction == 1 then {           // 1 => Complete random (existing) to do entry
             chosenInteraction = state.completeRandomEntry() // Might return None, this means another iteration
           } else {
             ??? // This interaction does not *yet* exist and this statement is never reached

@@ -29,7 +29,7 @@ class ContainerTest extends munit.FunSuite {
 
   test("Dotted can contain contextual EnableWinsFlag") {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
-    given LocalUid             = "me".asId
+    given LocalUid                   = "me".asId
 
     assertEquals(flag.read, false)
 

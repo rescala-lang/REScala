@@ -75,10 +75,10 @@ class ReTable[A <: AnyRef](
           model.getRowData
         case model =>
           for r <- 0 to model.getRowCount()
-            yield {
-              for c <- 0 to model.getColumnCount()
-                yield (model.getValueAt(r, c)).asInstanceOf[A]
-            }
+          yield {
+            for c <- 0 to model.getColumnCount()
+            yield (model.getValueAt(r, c)).asInstanceOf[A]
+          }
       }
     },
     { rowData =>
@@ -105,7 +105,7 @@ class ReTable[A <: AnyRef](
           model.getColumnNames
         case model =>
           for c <- 0 to model.getColumnCount()
-            yield model `getColumnName` c
+          yield model `getColumnName` c
       }
     },
     { columnNames =>

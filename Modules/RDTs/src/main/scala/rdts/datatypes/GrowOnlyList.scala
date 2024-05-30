@@ -102,10 +102,11 @@ object GrowOnlyList {
         i: Int
     ): Option[Node[LastWriterWins[E]]] = {
       if i == 0 then Some(current)
-      else state.inner.get(current) match {
-        case None       => None
-        case Some(elem) => findNth(state, elem, i - 1)
-      }
+      else
+        state.inner.get(current) match {
+          case None       => None
+          case Some(elem) => findNth(state, elem, i - 1)
+        }
     }
 
     def read(using IsQuery)(i: Int): Option[E] =

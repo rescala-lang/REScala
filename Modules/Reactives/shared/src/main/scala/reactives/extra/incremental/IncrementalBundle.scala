@@ -229,7 +229,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
         if deletionIndex > 0 then { // must be more than two elements to make sense to change minimum
           var min = trackingSequence(deletionIndex)._2
           if deletionIndex == trackingSequence.size - 1 then // last element
-            min = trackingSequence(deletionIndex - 1)._1  // new min will be same as the element on the left
+            min = trackingSequence(deletionIndex - 1)._1     // new min will be same as the element on the left
           else
             min =
               trackingSequence(

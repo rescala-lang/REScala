@@ -174,19 +174,21 @@ trait Twoversion {
     override def schedule(commitable: ReSource): Unit = { toCommit += commitable; () }
 
     def observe(f: Observation): Unit = {
-      if commitStarted then throw new IllegalStateException(
-        s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
-        s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
-      )
+      if commitStarted then
+        throw new IllegalStateException(
+          s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
+          s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
+        )
       observers += f
       ()
     }
 
     override def followup(obs: Observation): Unit = {
-      if commitStarted then throw new IllegalStateException(
-        s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
-        s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
-      )
+      if commitStarted then
+        throw new IllegalStateException(
+          s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
+          s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
+        )
       followups += obs
       ()
     }

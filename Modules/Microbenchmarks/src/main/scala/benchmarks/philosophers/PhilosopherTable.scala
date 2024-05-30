@@ -27,10 +27,11 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface)
 
     val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for i <- 0 until tableSize yield {
-      val nextCircularIndex = mod(i + 1)
-      Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
-    }
+    val forks =
+      for i <- 0 until tableSize yield {
+        val nextCircularIndex = mod(i + 1)
+        Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
+      }
 
     for i <- 0 until tableSize yield {
       val vision = Signal.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))

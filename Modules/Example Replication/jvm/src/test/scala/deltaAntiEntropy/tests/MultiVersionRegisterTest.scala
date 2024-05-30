@@ -17,20 +17,21 @@ object MVRegisterGenerators {
   def genMVRegister[A: Lattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] = for
-    values <- Gen.containerOf[List, A](a.arbitrary)
-    nClear <- Gen.posNum[Short]
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[MultiVersionRegister[A]]("a", network, mutable.Buffer())
+  ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] =
+    for
+      values <- Gen.containerOf[List, A](a.arbitrary)
+      nClear <- Gen.posNum[Short]
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[MultiVersionRegister[A]]("a", network, mutable.Buffer())
 
-    val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
+      val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
-    ops.foldLeft(AntiEntropyContainer[MultiVersionRegister[A]](ae)) {
-      case (r, -1) => r.clear()
-      case (r, n)  => r.write(using r.replicaID)(values(n))
+      ops.foldLeft(AntiEntropyContainer[MultiVersionRegister[A]](ae)) {
+        case (r, -1) => r.clear()
+        case (r, n)  => r.write(using r.replicaID)(values(n))
+      }
     }
-  }
 
   implicit def arbMVRegister[A: Lattice](implicit
       a: Arbitrary[A],

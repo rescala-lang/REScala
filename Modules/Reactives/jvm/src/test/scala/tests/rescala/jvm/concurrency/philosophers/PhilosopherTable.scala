@@ -43,12 +43,13 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
 
     val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(s"Phil($i)")
 
-    val forks = for i <- 0 until tableSize yield {
-      val nextCircularIndex = mod(i + 1)
-      interface.Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
-        using s"Fork($i, $nextCircularIndex)"
-      )
-    }
+    val forks =
+      for i <- 0 until tableSize yield {
+        val nextCircularIndex = mod(i + 1)
+        interface.Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
+          using s"Fork($i, $nextCircularIndex)"
+        )
+      }
 
     for i <- 0 until tableSize yield {
       val previousCircularIndex = mod(i - 1)

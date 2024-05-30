@@ -8,7 +8,6 @@ import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-
 def printErrors[T](cb: T => Unit): Callback[T] =
   case Success(mb) => cb(mb)
   case Failure(ex) => ex.printStackTrace()
@@ -19,10 +18,8 @@ object EchoServerTestTCP {
 
     given abort: Abort = Abort()
 
-
-
     // need an execution context that generates new tasks as TCP does lots of blocking
-    val executor = Executors.newCachedThreadPool()
+    val executor             = Executors.newCachedThreadPool()
     val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
     val echoServer: Prod[ConnectionContext] =
@@ -36,7 +33,6 @@ object EchoServerTestTCP {
         printErrors: mb =>
           println(s"received")
           println(mb.asArray.mkString("[", ", ", "]"))
-
 
     echoServer.run:
       printErrors: conn =>
@@ -57,7 +53,6 @@ object EchoServerTestTCP {
     sending.run:
       printErrors: conn =>
         ()
-
 
   }
 }

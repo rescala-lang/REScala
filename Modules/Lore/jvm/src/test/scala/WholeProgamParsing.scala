@@ -36,7 +36,7 @@ class WholeProgramParsing extends FunSuite {
   }
 
   test("imports") {
-    val prog = "//> viperimport deps/calendar_header.vpr"
+    val prog   = "//> viperimport deps/calendar_header.vpr"
     val astStr = readResource("viperimport.ast")
     Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure
@@ -57,7 +57,7 @@ class WholeProgramParsing extends FunSuite {
   }
 
   test("calendar new") {
-    val prog = readResource("calendar_new.lore")
+    val prog   = readResource("calendar_new.lore")
     val astStr = readResource("calendar_new.ast")
     Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure
@@ -78,7 +78,7 @@ class WholeProgramParsing extends FunSuite {
   }
 
   test("calendar advanced") {
-    val prog = readResource("calendar_advanced.lore")
+    val prog   = readResource("calendar_advanced.lore")
     val astStr = readResource("calendar_advanced.ast")
     Parser.prog.parseAll(prog) match {
       case Left(e)       => fail(e.show) // parsing failure

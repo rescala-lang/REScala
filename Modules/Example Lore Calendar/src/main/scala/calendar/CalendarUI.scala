@@ -207,8 +207,10 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
     val workCalList: Signal[List[Appointment]] = workCalendarRDT.map { it => it.elements.toList.sortBy(_.start) }
     val workCalTags: Signal[List[Div]]         = workCalList.map { it => it.map { _.toTag } }
 
-    val vacationCalList: Signal[List[Appointment]] = vacationCalendarRDT.map { it => it.elements.toList.sortBy(_.start) }
-    val vacationCalTags: Signal[List[Div]]         = vacationCalList.map { it => it.map { _.toTag } }
+    val vacationCalList: Signal[List[Appointment]] = vacationCalendarRDT.map { it =>
+      it.elements.toList.sortBy(_.start)
+    }
+    val vacationCalTags: Signal[List[Div]] = vacationCalList.map { it => it.map { _.toTag } }
 
     div(
       h1("LoRe Calendar"),

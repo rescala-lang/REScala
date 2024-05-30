@@ -6,12 +6,12 @@ import lore.optics.given
 import scala.annotation.tailrec
 
 // type definitions
-private type Graph[R] = Map[String, (R, Type)]
+private type Graph[R]          = Map[String, (R, Type)]
 private type CompilationResult = (CompilationContext, Seq[String])
 
 private case class CompilationContext(
-                                       ast: Seq[Term]
-                                     ) {
+    ast: Seq[Term]
+) {
   val graph: Graph[TReactive] = allReactives(ast)
   val sources: Graph[TSource] = graph.collect {
     case (name: String, (s: TSource, t: Type)) => (name, (s, t))
@@ -29,7 +29,7 @@ private case class CompilationContext(
   }.toMap
 
   def viperImports: List[TViperImport] = ast.collect {
-    case i@TViperImport(_, _) => i
+    case i @ TViperImport(_, _) => i
   }.toList
 
   def reactivesPerInvariant: Map[TInvariant, Set[ID]] = invariants
@@ -60,7 +60,7 @@ def flattenInteractions(ctx: CompilationContext): CompilationContext = {
           case i: TInteraction =>
             curly.field match {
               case "requires" => i.copy(requires = i.requires :+ curly.body)
-              case "ensures" => i.copy(ensures = i.ensures :+ curly.body)
+              case "ensures"  => i.copy(ensures = i.ensures :+ curly.body)
               case "executes" => i.copy(executes = Some(curly.body))
               case wrongField =>
                 throw Exception(s"Invalid call on Interaction: $wrongField")
@@ -104,16 +104,16 @@ def flattenInteractions(ctx: CompilationContext): CompilationContext = {
 }
 
 /** Applies a transformer function to every node in the subgraph, starting from
- * a given node and traversing downwards from there.
- *
- * @param node
- * @param transformer
- * @return
- */
+  * a given node and traversing downwards from there.
+  *
+  * @param node
+  * @param transformer
+  * @return
+  */
 def traverseFromNode[A <: Term](
-                                 node: A,
-                                 transformer: Term => Term
-                               ): A = {
+    node: A,
+    transformer: Term => Term
+): A = {
   // apply transformer to start node
   val transformed = transformer(node)
   val result =
@@ -248,7 +248,7 @@ def traverseFromNode[A <: Term](
       case t: TAssume =>
         t.copy(body = traverseFromNode(t.body, transformer))
       case t: (TArgT | TVar | TTypeAl | TNum | TTrue | TFalse | TString |
-        TViperImport) =>
+          TViperImport) =>
         transformed // don't traverse in cases without children
       // case TArgT(_, _, _) | TVar(_, _) | TTypeAl(_, _, _) | TNum(_) | TTrue |
       //     TFalse | TString(_) | TViperImport(_) =>
@@ -262,21 +262,21 @@ def traverseFromNode[A <: Term](
 }
 
 /** Replaces all occurences of the ID `from` with the ID `to` in the given term.
- * This function currently does not consider scoping.
- *
- * @param from
- * the id to be renamed
- * @param to
- * the new name
- * @param term
- * the term to be modifier
- * @return
- * a version of the term where the ID is renamed
- */
+  * This function currently does not consider scoping.
+  *
+  * @param from
+  * the id to be renamed
+  * @param to
+  * the new name
+  * @param term
+  * the term to be modifier
+  * @return
+  * a version of the term where the ID is renamed
+  */
 def rename(from: ID, to: ID, term: Term): Term = {
   val transformer: Term => Term = {
     case t: TArgT => if t.name == from then TArgT(to, t._type) else t
-    case t: TVar => if t.name == from then TVar(to) else t
+    case t: TVar  => if t.name == from then TVar(to) else t
     case t: TAbs =>
       val newName = if t.name == from then to else t.name
       TAbs(newName, t._type, rename(from, to, t.body))
@@ -295,31 +295,30 @@ private def allInteractions(ast: Seq[Term]): Map[String, TInteraction] =
     (name, t)
   }.toMap
 
-/** Returns all ids that are used in a term.
- */
+/** Returns all ids that are used in a term. */
 def uses: Term => Set[ID] = {
   // these cases mark usage of an id
   case t: TInteraction =>
     t.modifies.toSet ++ t.children.flatMap(uses).toSet
-  case TVar("_", _) => Set.empty
+  case TVar("_", _)  => Set.empty
   case TVar(name, _) => Set(name)
-  case t: TFunC => t.args.flatMap(uses).toSet
+  case t: TFunC      => t.args.flatMap(uses).toSet
   // these cases do not
   case t: (TNum | TString | TTrue | TFalse | TArgT | TTypeAl | TViperImport) =>
     Set.empty
   // in these cases we have to traverse into the child nodes
   case t: (TInvariant | TAbs | TTuple | TReactive | TFCall | TFCurly | TParens |
-    TForall | TExists | TNeg | BinaryOp | TIf | TSeq | TAssert | TAssume) =>
+      TForall | TExists | TNeg | BinaryOp | TIf | TSeq | TAssert | TAssume) =>
     t.children.flatMap(uses).toSet
 }
 
 /** Given the name of a reactive and the registry of all reactives, this
- * function returns all reactives that this one (transitively) depends on.
- */
+  * function returns all reactives that this one (transitively) depends on.
+  */
 def getSubgraph(
-                 reactiveName: ID,
-                 graph: Map[String, TReactive]
-               ): Set[ID] = {
+    reactiveName: ID,
+    graph: Map[String, TReactive]
+): Set[ID] = {
   val reactive = graph.get(reactiveName)
   reactive match {
     case Some(s: TSource) => Set(reactiveName)

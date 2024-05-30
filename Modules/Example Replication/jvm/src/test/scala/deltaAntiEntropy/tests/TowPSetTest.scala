@@ -12,20 +12,22 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object TwoPSetGenerators {
-  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyContainer[TwoPhaseSet[E]]] = for
-    added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
-    n       <- Gen.choose(0, added.size)
-    removed <- Gen.pick(n, added)
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae = new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
-    val setAdded = added.foldLeft(AntiEntropyContainer[TwoPhaseSet[E]](ae)) {
-      case (set, e) => set.insert(e)
+  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyContainer[TwoPhaseSet[E]]] =
+    for
+      added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
+      n       <- Gen.choose(0, added.size)
+      removed <- Gen.pick(n, added)
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae =
+        new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
+      val setAdded = added.foldLeft(AntiEntropyContainer[TwoPhaseSet[E]](ae)) {
+        case (set, e) => set.insert(e)
+      }
+      removed.foldLeft(setAdded) {
+        case (set, e) => set.remove(e)
+      }
     }
-    removed.foldLeft(setAdded) {
-      case (set, e) => set.remove(e)
-    }
-  }
 
   implicit def arbTwoPSet[E: Arbitrary](implicit
       c: JsonValueCodec[E]

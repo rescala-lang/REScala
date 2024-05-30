@@ -11,22 +11,23 @@ import scala.collection.mutable
 import scala.util.Random
 
 object EWFlagGenerators {
-  def genEWFlag: Gen[AntiEntropyContainer[EnableWinsFlag]] = for
-    nEnable  <- Gen.posNum[Int]
-    nDisable <- Gen.posNum[Int]
-  yield {
-    val network = new Network(0, 0, 0)
-    val ae      = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer())
+  def genEWFlag: Gen[AntiEntropyContainer[EnableWinsFlag]] =
+    for
+      nEnable  <- Gen.posNum[Int]
+      nDisable <- Gen.posNum[Int]
+    yield {
+      val network = new Network(0, 0, 0)
+      val ae      = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer())
 
-    val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
+      val ops = Random.shuffle(List.fill(nEnable)(1) ++ List.fill(nDisable)(0))
 
-    ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
-      case (f, 0) => f.disable()
-      case (f, 1) => f.enable(using rdts.base.Uid.predefined(ae.replicaID))()
-      // default case is only needed to stop the compiler from complaining about non-exhaustive match
-      case (f, _) => f
+      ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
+        case (f, 0) => f.disable()
+        case (f, 1) => f.enable(using rdts.base.Uid.predefined(ae.replicaID))()
+        // default case is only needed to stop the compiler from complaining about non-exhaustive match
+        case (f, _) => f
+      }
     }
-  }
 
   implicit def arbEWFlag: Arbitrary[AntiEntropyContainer[EnableWinsFlag]] = Arbitrary(genEWFlag)
 }

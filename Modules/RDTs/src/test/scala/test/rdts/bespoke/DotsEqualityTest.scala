@@ -11,7 +11,7 @@ class DotsEqualityTest extends munit.FunSuite {
     val uid2 = Uid.predefined("def")
 
     val dots = List(
-      Dots.from(List(Dot(uid1, 123), Dot(uid1, 1234),  Dot(uid2, 12345), Dot(uid2, 123456))),
+      Dots.from(List(Dot(uid1, 123), Dot(uid1, 1234), Dot(uid2, 12345), Dot(uid2, 123456))),
       Dots.from(List(Dot(uid1, 123), Dot(uid1, 12345), Dot(uid2, 123), Dot(uid2, 1234)))
     )
 

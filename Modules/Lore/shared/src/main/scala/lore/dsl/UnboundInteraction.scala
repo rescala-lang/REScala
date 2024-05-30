@@ -6,29 +6,42 @@ import reactives.operator.Interface.State as BundleState
 
 import scala.quoted.{Expr, Quotes, Type}
 
-def constructUnboundInteractionWithRequires[S <: Tuple, A](interaction: Expr[UnboundInteraction[S, A]],
-                                                  expr: Expr[(S, A) => Boolean])
-                                                 (using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
+def constructUnboundInteractionWithRequires[S <: Tuple, A](
+    interaction: Expr[UnboundInteraction[S, A]],
+    expr: Expr[(S, A) => Boolean]
+)(using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
   val (inputs, fun, isStatic) =
-    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[
+      (S, A) => Boolean,
+      ReSource.of[BundleState],
+      reactives.core.StaticTicket[BundleState],
+      true
+    ]($expr)
 
   $interaction.copy(requires = $interaction.requires :+ Requires(inputs, fun, ${ showPredicateCode(expr) }))
 }
 
-def constructUnboundInteractionWithEnsures[S <: Tuple, A](interaction: Expr[UnboundInteraction[S, A]],
-                                                 expr: Expr[(S, A) => Boolean])
-                                                (using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
+def constructUnboundInteractionWithEnsures[S <: Tuple, A](
+    interaction: Expr[UnboundInteraction[S, A]],
+    expr: Expr[(S, A) => Boolean]
+)(using Quotes, Type[S], Type[A]): Expr[UnboundInteraction[S, A]] = '{
   val (inputs, fun, isStatic) =
-    reactives.macros.MacroLegos.getDependencies[(S, A) => Boolean, ReSource.of[BundleState], reactives.core.StaticTicket[BundleState], true]($expr)
+    reactives.macros.MacroLegos.getDependencies[
+      (S, A) => Boolean,
+      ReSource.of[BundleState],
+      reactives.core.StaticTicket[BundleState],
+      true
+    ]($expr)
 
   $interaction.copy(ensures = $interaction.ensures :+ Ensures(inputs, fun, ${ showPredicateCode(expr) }))
 }
 
-case class UnboundInteraction[S <: Tuple, A] private[dsl](private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
-                                                 private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty)
-  extends Interaction[S, A] with CanExecute[S, A] with CanAct[S, A] {
-  type T[_, _] = UnboundInteraction[S, A]
-  type E[_, _] = InteractionWithExecutes[S, A]
+case class UnboundInteraction[S <: Tuple, A] private[dsl] (
+    private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
+    private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty
+) extends Interaction[S, A] with CanExecute[S, A] with CanAct[S, A] {
+  type T[_, _]  = UnboundInteraction[S, A]
+  type E[_, _]  = InteractionWithExecutes[S, A]
   type AO[_, _] = InteractionWithActs[S, A]
 
   override inline def requires(inline pred: (S, A) => Boolean): UnboundInteraction[S, A] =

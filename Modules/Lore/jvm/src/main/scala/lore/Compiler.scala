@@ -17,13 +17,14 @@ object Compiler extends IOApp {
   private def readFile(path: Path): IO[String] =
     IO.blocking(String(Files.readAllBytes(path), StandardCharsets.UTF_8))
 
-  private def writeFile(path: Path, content: String): IO[Unit] = for
-    // create parent directories
-    _ <- IO.blocking(Files.createDirectories(path.getParent)).attempt
-    _ <- IO.blocking(
-      Files.write(path, content.getBytes(StandardCharsets.UTF_8))
-    )
-  yield ()
+  private def writeFile(path: Path, content: String): IO[Unit] =
+    for
+      // create parent directories
+      _ <- IO.blocking(Files.createDirectories(path.getParent)).attempt
+      _ <- IO.blocking(
+        Files.write(path, content.getBytes(StandardCharsets.UTF_8))
+      )
+    yield ()
 
   def toScala(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
     ???
@@ -49,7 +50,7 @@ object Compiler extends IOApp {
       case _ =>
         val result = ViperBackend.compileAsSingleFile(ast.toList)
         options.toFile match {
-          case None => IO.println(result)
+          case None       => IO.println(result)
           case Some(path) => writeFile(path, result)
         }
     }
@@ -58,7 +59,7 @@ object Compiler extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
     // parse arguments and combine requested actions
     val subcommand: Subcommand = mainCommand.parse(args) match {
-      case h@Left(Help(errors, _, _, _)) =>
+      case h @ Left(Help(errors, _, _, _)) =>
         if errors.isEmpty
         then
           return IO.println(h.value).as(ExitCode.Success) // --help flag given
@@ -71,31 +72,32 @@ object Compiler extends IOApp {
     }
     val options = subcommand.options
 
-    val result = for
-      // read program
-      program <-
-        if options.file.isDefined
-        then (readFile(options.file.get))
-        else IO((options.inline.get))
-      // parse program
-      ast <- Parser.parse(program) match {
-        case Left(e) =>
-          IO.raiseError(Parser.ParsingException(e.show))
-        case Right(a) => IO.pure(a)
-      }
-      // perform requested subcommand
-      result <-
-        subcommand match {
-          case ToREScala(_) => toScala(ast, options)
-          case ToViper(_) => toViper(ast, options)
-          case Parse(_) =>
-            // we already parsed, simply produce output
-            options.toFile.match {
-              case None => IO.println(ast.toString)
-              case Some(path) => writeFile(path, ast.toString)
-            }
+    val result =
+      for
+        // read program
+        program <-
+          if options.file.isDefined
+          then (readFile(options.file.get))
+          else IO((options.inline.get))
+        // parse program
+        ast <- Parser.parse(program) match {
+          case Left(e) =>
+            IO.raiseError(Parser.ParsingException(e.show))
+          case Right(a) => IO.pure(a)
         }
-    yield result
+        // perform requested subcommand
+        result <-
+          subcommand match {
+            case ToREScala(_) => toScala(ast, options)
+            case ToViper(_)   => toViper(ast, options)
+            case Parse(_)     =>
+              // we already parsed, simply produce output
+              options.toFile.match {
+                case None       => IO.println(ast.toString)
+                case Some(path) => writeFile(path, ast.toString)
+              }
+          }
+      yield result
 
     // check if anything went wrong: print error messages and set return code
     for
