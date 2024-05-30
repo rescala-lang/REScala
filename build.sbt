@@ -195,8 +195,9 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
     // seems to be needed to make sbt autoconfigure the use of compiler plugins on the classpath
     autoCompilerPlugins := true,
     Dependencies.munit,
+    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / exportedProductJars).value.head.data}"
   )
-  .dependsOn(lore.jvm, loreCompilerPlugin % "plugin->default(compile)")
+  .dependsOn(lore.jvm)
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
