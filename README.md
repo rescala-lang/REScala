@@ -30,8 +30,10 @@ There are two IDE choices for Scala (and generally, the use of an IDE is recomme
 
 Generally, we recommend starting sbt from the command line (see above) first, and then using IntelliJ (with the Scala plugin) to open the project folder (the root folder, not any of the submodules). This should allow you to select `bsp` as the import type (instead of sbt). Using [bsp](https://www.scala-lang.org/blog/2020/10/27/bsp-in-sbt.html) means that IntelliJ is communicating directly with sbt to send commands to compile/test/run your code, providing the best compatibility.
 Note that Scala support int IntelliJ is not perfect, it is possible that the IDE believes some correct code to not compile, or does not flag some errors. Fall back to trying the sbt command line directly if you have issues.
+See https://youtrack.jetbrains.com/issue/SCL-12945/correctly-handle-cross-projects for a list of crossproject related issuess.
 
 Metals also allows using [sbt as a bsp server](https://scalameta.org/metals/docs/build-tools/sbt/#sbt-build-server), but we don’t have much experience if this is necessary over the default import.
+
 
 ## Running the tests
 
