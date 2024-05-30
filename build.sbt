@@ -130,8 +130,6 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
-val circeVersion = "0.14.5"
-
 lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .in(file("Modules/Lore"))
   .settings(
