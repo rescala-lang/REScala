@@ -166,8 +166,6 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "org.typelevel" %%% "cats-core"   % "2.12.0",
-    libraryDependencies += "org.typelevel" %%% "cats-effect" % "3.5.4",
     libraryDependencies += "com.monovore"  %%% "decline"     % "2.4.1",
     libraryDependencies += "org.typelevel" %%% "cats-parse"  % "1.0.0",
     libraryDependencies += ("com.lihaoyi"  %%% "fansi"       % "0.5.0"),

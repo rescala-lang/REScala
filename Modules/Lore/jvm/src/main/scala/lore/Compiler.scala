@@ -1,8 +1,7 @@
 package lore
 
 import cats.data.NonEmptyList
-import cats.effect.*
-import cats.implicits.*
+import cats.syntax.show.toShow
 import com.monovore.decline.*
 import lore.Parser.ParsingException
 import lore.ast.Term
@@ -10,23 +9,16 @@ import lore.backends.ViperBackend
 import lore.cli.*
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, NoSuchFileException, Path, Paths}
+import java.nio.file.{Files, NoSuchFileException, Path, Paths, StandardOpenOption}
 
-object Compiler extends IOApp {
+object Compiler {
 
-  private def readFile(path: Path): IO[String] =
-    IO.blocking(String(Files.readAllBytes(path), StandardCharsets.UTF_8))
+  private def writeFile(path: Path, content: String): Unit =
+    Files.createDirectories(path.getParent)
+    Files.writeString(path, content, StandardCharsets.UTF_8, StandardOpenOption.CREATE)
+    ()
 
-  private def writeFile(path: Path, content: String): IO[Unit] =
-    for
-      // create parent directories
-      _ <- IO.blocking(Files.createDirectories(path.getParent)).attempt
-      _ <- IO.blocking(
-        Files.write(path, content.getBytes(StandardCharsets.UTF_8))
-      )
-    yield ()
-
-  def toScala(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
+  def toScala(ast: NonEmptyList[Term], options: Options): Unit = {
     ???
     // for
     //   result <- IO(ScalaBackend.toAmm(ast))
@@ -36,94 +28,83 @@ object Compiler extends IOApp {
     // yield result
   }
 
-  def toViper(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
+  def toViper(ast: NonEmptyList[Term], options: Options): Unit = {
     ViperBackend.compileAsSingleFile(ast.toList)
     options.outputOptions match {
       case OutputOptions.SplitMode(outDir) =>
         ViperBackend
           .compileAsSeparateFiles(ast.toList)
-          .map((filename, program) =>
+          .foreach((filename, program) =>
             writeFile(Paths.get(outDir.toString, filename ++ ".vpr"), program)
           )
-          .parSequence
-          .as(())
       case _ =>
         val result = ViperBackend.compileAsSingleFile(ast.toList)
         options.toFile match {
-          case None       => IO.println(result)
+          case None       => println(result)
           case Some(path) => writeFile(path, result)
         }
     }
   }
 
-  def run(args: List[String]): IO[ExitCode] = {
+  def main(args: Array[String]): Unit = {
     // parse arguments and combine requested actions
-    val subcommand: Subcommand = mainCommand.parse(args) match {
+    val subcommand: Subcommand = mainCommand.parse(args.toList) match {
       case h @ Left(Help(errors, _, _, _)) =>
         if errors.isEmpty
         then
-          return IO.println(h.value).as(ExitCode.Success) // --help flag given
+          return println(h.value) // --help flag given
         else
-          return IO
-            .println(h.value)
-            .as(ExitCode.Error) // parsing subcommands error
+          return println(h.value)
       case Right(s) =>
         s
     }
     val options = subcommand.options
 
-    val result =
-      for
-        // read program
-        program <-
-          if options.file.isDefined
-          then (readFile(options.file.get))
-          else IO((options.inline.get))
+    def result() = {
+      val program =
+        if options.file.isDefined
+        then Files.readString(options.file.get, StandardCharsets.UTF_8)
+        else options.inline.get
         // parse program
-        ast <- Parser.parse(program) match {
-          case Left(e) =>
-            IO.raiseError(Parser.ParsingException(e.show))
-          case Right(a) => IO.pure(a)
-        }
-        // perform requested subcommand
-        result <-
-          subcommand match {
-            case ToREScala(_) => toScala(ast, options)
-            case ToViper(_)   => toViper(ast, options)
-            case Parse(_)     =>
-              // we already parsed, simply produce output
-              options.toFile.match {
-                case None       => IO.println(ast.toString)
-                case Some(path) => writeFile(path, ast.toString)
-              }
+      val ast = Parser.parse(program) match {
+        case Left(e) =>
+          throw Parser.ParsingException(e.show)
+        case Right(a) => a
+      }
+      // perform requested subcommand
+      subcommand match {
+        case ToREScala(_) => toScala(ast, options)
+        case ToViper(_)   => toViper(ast, options)
+        case Parse(_)     =>
+          // we already parsed, simply produce output
+          options.toFile.match {
+            case None       => println(ast.toString)
+            case Some(path) => writeFile(path, ast.toString)
           }
-      yield result
+      }
+    }
 
     // check if anything went wrong: print error messages and set return code
-    for
-      resultWithErrors <- result.attempt
-      exitCode <- resultWithErrors match {
-        case Left(e: NoSuchFileException) =>
-          IO.println(
-            fansi.Color
-              .Red(s"Error! No such file: ${e.getFile()}")
-              .overlay(fansi.Bold.On, 0, 6)
-          ).as(ExitCode.Error)
-        case Left(e: ParsingException) =>
-          IO.println(
-            fansi.Color
-              .Red((s"Parsing error!\n${e.getMessage()}"))
-              .overlay(fansi.Bold.On, 0, 14)
-          ).as(ExitCode.Error)
-        case Left(e: Throwable) =>
-          IO.println(
-            fansi.Color
-              .Red(s"Unknown error!")
-              .overlay(fansi.Bold.On)
-          ) >> IO(e.printStackTrace())
-            .as(ExitCode.Error)
-        case Right(io) => IO(io).as(ExitCode.Success)
-      }
-    yield exitCode
+    try result()
+    catch
+      case e: NoSuchFileException =>
+        println(
+          fansi.Color
+            .Red(s"Error! No such file: ${e.getFile()}")
+            .overlay(fansi.Bold.On, 0, 6)
+        )
+      case e: ParsingException =>
+        println(
+          fansi.Color
+            .Red((s"Parsing error!\n${e.getMessage()}"))
+            .overlay(fansi.Bold.On, 0, 14)
+        )
+      case e: Throwable =>
+        println(
+          fansi.Color
+            .Red(s"Unknown error!")
+            .overlay(fansi.Bold.On)
+        )
+        throw e
   }
 }
