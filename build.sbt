@@ -194,6 +194,11 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
     scala3defaults,
     Dependencies.munit,
     scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / assembly).value}"
+    // bits below from various experiments to add the correct classpath …
+    // autoCompilerPlugins := true,
+    // libraryDependencies += (loreCompilerPlugin / projectID).value % "plugin->compile"
+    // Compile / unmanagedJars :=  (loreCompilerPlugin / Compile / fullClasspathAsJars).value,
+    // scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / packageBin).value}"
   )
   .dependsOn(lore.jvm, loreCompilerPlugin)
 
