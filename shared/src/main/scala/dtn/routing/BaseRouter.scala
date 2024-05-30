@@ -64,7 +64,7 @@ abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = ???
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = ???
   override def onEncounteredPeer(packet: Packet.EncounteredPeer): Unit = {
-    if (!peers.contains(packet.name)) {
+    if (!peers.containsKey(packet.name)) {
       println(s"encountered new peer: ${packet.name}, peers: ${peers.size()}")  // limit log file spam
     }
     peers.put(packet.name, packet.peer)

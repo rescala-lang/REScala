@@ -196,7 +196,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
     // prevent unnecessary merging on cyclic forwarding: only update the scores (and dots, although this is only prevents processing time wasting), if we see a packet for the first time.
     // if we have already seen the bundle, it must either be delivered, or we have extracted information and put the in, for example, the dots store
-    if (delivered.contains(packet.bndl.id) || tempDotsStore.contains(packet.bndl.id)) {
+    if (delivered.containsKey(packet.bndl.id) || tempDotsStore.containsKey(packet.bndl.id)) {
       println("received bundle which was already seen. not updating scores.")
       return
     }
@@ -258,7 +258,7 @@ class DeliveryLikelyhoodState {
 
     // decrease score by 1 for all other node combinations with that destination
     map.values().forEach(destination_map => {
-      if (destination_map.contains(destination_node)) {  // only merge if that combination was already seen to save space
+      if (destination_map.containsKey(destination_node)) {  // only merge if that combination was already seen to save space
         destination_map.merge(destination_node, -1, (x1, x2) => max(0, x1 + x2))  // lowest value is 0
       }
     })
