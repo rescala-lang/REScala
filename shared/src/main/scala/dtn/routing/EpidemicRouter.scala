@@ -8,23 +8,19 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters._
 
 
+/* 
+  Includes the standalone EpidemicRouter and the extracted EpidemicStrategy for use in other routers.
+*/
+
+
 class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
-  val delivered = ConcurrentHashMap[String, Set[String]]()  // will grow indefinitely as we do not garbage collect here
+
+  val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
-    val selected_clas = peers.asScala
-      .filter((peer_name, peer) => !delivered.getOrDefault(packet.bp.id, Set()).contains(peer_name))
-      .map((peer_name, peer) => {
-        peer.cla_list
-          .filter((agent, port_option) => packet.clas.contains(agent))
-          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
-      })
-      .flatten
-      .toList
-    
-    Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
+    epidemicStrategy.onRequestSenderForBundle(peers, services, packet)
   }
 
   override def onError(packet: Packet.Error): Unit = {
@@ -40,11 +36,8 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
-    delivered.get(packet.bid) match {
-      case null => delivered.put(packet.bid, Set(packet.cla_sender))
-      case x: Set[String] => delivered.put(packet.bid, (x + packet.cla_sender))
-    }
-    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle ${packet.bid} -> ${delivered.get(packet.bid)}")
+    epidemicStrategy.onSendingSucceeded(packet)
+    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle.")
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
@@ -57,4 +50,30 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
 }
 object EpidemicRouter {
   def apply(host: String, port: Int): Future[EpidemicRouter] = WSEroutingClient(host, port).map(ws => new EpidemicRouter(ws))
+}
+
+
+class EpidemicStrategy {
+  val delivered = ConcurrentHashMap[String, Set[String]]()  // will grow indefinitely as we do not garbage collect here
+
+  def onRequestSenderForBundle(peers: ConcurrentHashMap[String, DtnPeer], services: ConcurrentHashMap[Int, String], packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
+    val selected_clas = peers.asScala
+      .filter((peer_name, peer) => !delivered.getOrDefault(packet.bp.id, Set()).contains(peer_name))
+      .map((peer_name, peer) => {
+        peer.cla_list
+          .filter((agent, port_option) => packet.clas.contains(agent))
+          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
+      })
+      .flatten
+      .toList
+    
+    Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
+  }
+
+  def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
+    delivered.get(packet.bid) match {
+      case null => delivered.put(packet.bid, Set(packet.cla_sender))
+      case x: Set[String] => delivered.put(packet.bid, (x + packet.cla_sender))
+    }
+  }
 }

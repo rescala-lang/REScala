@@ -7,6 +7,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import java.util.concurrent.ConcurrentHashMap
 
 
+/* 
+    Includes the standalone DirectRouter, but, no DirectStrategy because it cannot handle and will not deliver to group-endpoints, so, this routing-strategy has no use in our rdt-setting.
+*/
+
+
 class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   val delivered = ConcurrentHashMap.newKeySet[String]()  // will grow indefinitely as we do not garbage collect here
 

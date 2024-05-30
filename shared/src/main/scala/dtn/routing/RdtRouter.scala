@@ -1,16 +1,14 @@
 package dtn.routing
 
-import dtn.{Bundle, DtnPeer, Packet, Sender, WSEroutingClient}
+import dtn.{Bundle, DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient}
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import dtn.Endpoint
-import dtn.PreviousNodeBlock
-import kofre.time.Dots
-import dtn.RdtMetaBlock
-import scala.util.Random
-import math.max
+import scala.util.{Random, Try}
 import scala.jdk.CollectionConverters._
+import kofre.time.Dots
+import math.{max, addExact}
+import java.util.concurrent.ConcurrentHashMap
 
 
 /*
@@ -62,11 +60,11 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   val destinationDotsState: DestinationDotsState = DestinationDotsState()  // same here
   val neighbourDotsState: NeighbourDotsState = NeighbourDotsState()  // same here
 
-  val tempDotsStore: mutable.Map[String, Dots] = mutable.Map()  // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
-  val tempPreviousNodeStore: mutable.Map[String, Endpoint] = mutable.Map()  // same here
-  val tempRdtIdStore: mutable.Map[String, String] = mutable.Map()  // same here
+  val tempDotsStore: ConcurrentHashMap[String, Dots] = ConcurrentHashMap()  // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
+  val tempPreviousNodeStore: ConcurrentHashMap[String, Endpoint] = ConcurrentHashMap()  // same here
+  val tempRdtIdStore: ConcurrentHashMap[String, String] = ConcurrentHashMap()  // same here
 
-  val delivered: mutable.Map[String, Int] = mutable.Map()  // shows the number of nodes we have delivered a bundle to
+  val delivered: ConcurrentHashMap[String, Int] = ConcurrentHashMap()  // shows the number of nodes we have delivered a bundle to
 
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
@@ -74,11 +72,11 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
     val source_node: Endpoint = packet.bp.source.extract_node_endpoint()
     val rdt_id: String = packet.bp.destination.extract_endpoint_id()
-    val dots: Dots = tempDotsStore.getOrElse(packet.bp.id, Dots.empty)
+    val dots: Dots = tempDotsStore.getOrDefault(packet.bp.id, Dots.empty)
 
 
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
-    if (delivered.getOrElse(packet.bp.id, 0) >= 1000) {
+    if (delivered.getOrDefault(packet.bp.id, 0) >= 1000) {
       println("bundle was forwarded to enough unique neighbours. deleting.")
       tempDotsStore.remove(packet.bp.id)
       tempPreviousNodeStore.remove(packet.bp.id)
@@ -105,8 +103,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     // remove previous node and source node from ideal neighbours if available
     ideal_neighbours -= source_node
     ideal_neighbours = tempPreviousNodeStore.get(packet.bp.id) match
-      case None => ideal_neighbours
-      case Some(previous_node) => ideal_neighbours - previous_node
+      case null => ideal_neighbours
+      case previous_node: Endpoint => ideal_neighbours - previous_node
     println(s"ideal neighbours without previous and source node: $ideal_neighbours")
 
     // remove neighbours which already know the state
@@ -133,17 +131,16 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     // if we found at least one cla to forward to then return our forwarding response
     if (!selected_clas.isEmpty) {
       println("clas selected via multicast strategy")
-      delivered.put(packet.bp.id, delivered.getOrElse(packet.bp.id, 0) + selected_clas.size)
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = false))
     }
 
     // if we did not forward this bundle at all so far do the fallback strategy
-    if (delivered.getOrElse(packet.bp.id, 0) <= 0) {
+    if (delivered.getOrDefault(packet.bp.id, 0) <= 0) {
       // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
       // if present, filter out the previous node and source node from all available peers
       val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
-      case None => peers.values.asScala.filter(p => !p.eid.equals(source_node))
-      case Some(previous_node) => peers.values.asScala.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
+        case null => peers.values.asScala.filter(p => !p.eid.equals(source_node))
+        case previous_node: Endpoint => peers.values.asScala.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
       return Random
         .shuffle(filtered_peers)
@@ -161,7 +158,6 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
           }
           case Some(selected_clas) => {
             println("clas selected via fallback strategy")
-            delivered.put(packet.bp.id, delivered.getOrElse(packet.bp.id, 0) + selected_clas.size)
             Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
           }
     }
@@ -180,17 +176,18 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   }
 
   override def onSendingFailed(packet: Packet.SendingFailed): Unit = {
-    delivered.put(packet.bid, delivered.getOrElse(packet.bid, 0) - 1)
     println(s"sending failed for bundle ${packet.bid} on cla ${packet.cla_sender}.")
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
+    delivered.merge(packet.bid, 1, (x1, x2) => x1 + x2)
+
     val dots = tempDotsStore.get(packet.bid)
     val rdt_id = tempRdtIdStore.get(packet.bid)
 
-    if (dots.isDefined && rdt_id.isDefined) {
+    if (dots != null && rdt_id != null) {
       println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. merging dots.")
-      neighbourDotsState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id.get, dots.get)
+      neighbourDotsState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, dots)
     } else {
       println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. could not merge dots because dots or rdt_id are no longer available in temp-store.")
     }
@@ -216,7 +213,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
         deliveryLikelyhoodState.update_score(neighbour_node = previous_node, destination_node = source_node)
 
-        tempPreviousNodeStore += (packet.bndl.id -> previous_node)
+        tempPreviousNodeStore.put(packet.bndl.id, previous_node)
       }
     
     packet.bndl.other_blocks.collectFirst{
@@ -233,8 +230,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
         // and the information is already available for other maybe earlier forwarding requests
         destinationDotsState.mergeDots(source_node_endpoint, rdt_id, rdt_meta_block.dots)
 
-        tempDotsStore += (packet.bndl.id -> rdt_meta_block.dots)
-        tempRdtIdStore += (packet.bndl.id -> rdt_id)  // only needed in combination with the dots on successful forward, so add it here
+        tempDotsStore.put(packet.bndl.id, rdt_meta_block.dots)
+        tempRdtIdStore.put(packet.bndl.id, rdt_id)  // only needed in combination with the dots on successful forward, so add it here
       }
   }
 
@@ -250,38 +247,29 @@ object RdtRouter {
 
 
 class DeliveryLikelyhoodState {
-  var neighbourLikelyhoodMap: Map[Endpoint, mutable.Map[Endpoint, Long]] = Map()
+  // structure: map[neighbour-node, map[destination-node, score]]
+  val map: ConcurrentHashMap[Endpoint, ConcurrentHashMap[Endpoint, Long]] = ConcurrentHashMap()
 
   def update_score(neighbour_node: Endpoint, destination_node: Endpoint): Unit = {
-    if (!neighbourLikelyhoodMap.contains(neighbour_node)) {
-      neighbourLikelyhoodMap += (neighbour_node -> mutable.Map())
-    }
+    map.putIfAbsent(neighbour_node, ConcurrentHashMap())
 
-    // increase score by 10 for this node combination    
-    val old_score: Long = neighbourLikelyhoodMap(neighbour_node).getOrElse(destination_node, 0)
-
-    if (Long.MaxValue - old_score < 11) {
-      neighbourLikelyhoodMap(neighbour_node)(destination_node) = Long.MaxValue  // highest value (minus one in the next step, i dont care) is Long.MaxValue
-    } else {
-      neighbourLikelyhoodMap(neighbour_node)(destination_node) = old_score + 11  // gets decreased by one in the next loop
-    }
+    // increase score by 10 for this node combination (gets decremented by 1 in the next step)
+    map.get(neighbour_node).merge(destination_node, 11, (x1, x2) => Try(addExact(x1, x2)).getOrElse(Long.MaxValue))
 
     // decrease score by 1 for all other node combinations with that destination
-    neighbourLikelyhoodMap
-      .values
-      .foreach(destination_map => {
-        destination_map.get(destination_node) match
-          case None => ()
-          case Some(value) => destination_map(destination_node) = max(0, value-1)  // lowest value is 0
-      })
+    map.values().forEach(destination_map => {
+      if (destination_map.contains(destination_node)) {  // only merge if that combination was already seen to save space
+        destination_map.merge(destination_node, -1, (x1, x2) => max(0, x1 + x2))  // lowest value is 0
+      }
+    })
   }
 
   def get_best_neighbours_for(destination_node: Endpoint): Set[Endpoint] = {
     var highscore: Long = 0
     var highscore_nodes: Set[Endpoint] = Set()
 
-    for((neighbour, destination_map) <- neighbourLikelyhoodMap) {
-      val score: Long = destination_map.getOrElse(destination_node, 0)
+    for((neighbour, destination_map) <- map.asScala) {  // should be fine because we only read here
+      val score: Long = destination_map.getOrDefault(destination_node, 0)
 
       if (score == highscore) {
         highscore_nodes += neighbour
@@ -298,15 +286,14 @@ class DeliveryLikelyhoodState {
 
 class DestinationDotsState {
   // structure: map[rdt-group-id, map[node-id, Dots]]
-  val map: mutable.Map[String, mutable.Map[Endpoint, Dots]] = mutable.Map()
+  val map: ConcurrentHashMap[String, ConcurrentHashMap[Endpoint, Dots]] = ConcurrentHashMap()
 
   /* 
     adds/merges this nodes' dots to the data structure.
   */
   def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
-    map.get(rdt_id) match
-      case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
-      case Some(rdt_map) => rdt_map += (node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots))
+    map.putIfAbsent(rdt_id, ConcurrentHashMap())
+    map.get(rdt_id).merge(node_endpoint, dots, (x1, x2) => x1.merge(x2))
   }
 
   /* 
@@ -314,9 +301,9 @@ class DestinationDotsState {
   */
   def getNodeEndpointsToForwardBundleTo(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Set[Endpoint] = {
     map.get(rdt_id) match
-      case None => Set()
-      case Some(rdt_map) => {
-        rdt_map
+      case null => Set()
+      case rdt_map: ConcurrentHashMap[Endpoint, Dots] => {
+        rdt_map.asScala
           .filter((n: Endpoint, d: Dots) => !n.equals(node_endpoint) && !(dots <= d))
           .collect[Endpoint]((n: Endpoint, d: Dots) => n)
           .toSet
@@ -327,15 +314,14 @@ class DestinationDotsState {
 
 class NeighbourDotsState {
   // structure: map[rdt-group-id, map[node-id, Dots]]
-  val map: mutable.Map[String, mutable.Map[Endpoint, Dots]] = mutable.Map()
+  val map: ConcurrentHashMap[String, ConcurrentHashMap[Endpoint, Dots]] = ConcurrentHashMap()
 
   /* 
     adds/merges this nodes' dots to the data structure.
   */
   def mergeDots(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Unit = {
-    map.get(rdt_id) match
-      case None => map(rdt_id) = mutable.Map(node_endpoint -> dots)
-      case Some(rdt_map) => rdt_map += (node_endpoint -> rdt_map.getOrElse(node_endpoint, Dots.empty).merge(dots))
+    map.putIfAbsent(rdt_id, ConcurrentHashMap())
+    map.get(rdt_id).merge(node_endpoint, dots, (x1, x2) => x1.merge(x2))
   }
 
   /* 
@@ -344,11 +330,10 @@ class NeighbourDotsState {
   def filterNeighboursToNotForwardTo(neighbour_node_endpoints: Set[Endpoint], rdt_id: String, dots: Dots): Set[Endpoint] = {
     neighbour_node_endpoints.filter(endpoint => {
       val d = map.get(rdt_id) match
-        case None => Dots.empty
-        case Some(node_map) => node_map.getOrElse(endpoint, Dots.empty)
+        case null => Dots.empty
+        case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(endpoint, Dots.empty)
 
       !(dots <= d)
     })
   }
 }
-
