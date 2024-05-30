@@ -1,6 +1,7 @@
 package loreDSL
 
-import lore.DSL.*
+import lore.dsl.*
+import reactives.default.Var as Source
 
 object sourceExamples:
   @main def main(): Unit =
