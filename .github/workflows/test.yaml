@@ -10,10 +10,6 @@ on:
         required: false
         type: string
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   build:
 
