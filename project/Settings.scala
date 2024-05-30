@@ -27,6 +27,8 @@ object Settings {
       // set a specific source level for warnings/rewrites/features
       "-source",
       "3.4",
+      // Explain errors in more detail. (I think this is a lie, but let’s see …)
+      "-explain"
     )
   )
 
