@@ -12,29 +12,45 @@ on:
 
 jobs:
   build:
+
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
         os: [macOS-12, ubuntu-22.04, windows-2022]
         java-version: [17, 21]
+
     env:
       JAVA_OPTS: -Xmx4g
+
     steps:
+
     - uses: actions/checkout@v4
-    # - uses: coursier/cache-action@v6
-    #   continue-on-error: true
+
     - uses: actions/setup-java@v4
       with:
         java-version: ${{ matrix.java-version}}
         distribution: 'zulu'
+
     - uses: actions/setup-node@v3
       with:
         node-version: '18'
+
     - name: install jsdom
       run: npm install jsdom
 
-    - name: compile and test
-      run: sbt "Test/compile; test"
 
+    - name: compile
+      run: sbt -Dsbt.log.noformat=true --client compile
+
+    - name: compile tests
+      run: sbt -Dsbt.log.noformat=true --client Test/compile
+
+    - name: test
+      continue-on-error: true
+      run: sbt -Dsbt.log.noformat=true --client test
+
+    - name: test again (quick)
+      run: sbt -Dsbt.log.noformat=true --client testQuick
 
