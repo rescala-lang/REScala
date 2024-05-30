@@ -134,37 +134,39 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas.toList, delete_afterwards = false))
     }
 
-    // if we did not forward this bundle at all so far do the fallback strategy
-    if (delivered.getOrDefault(packet.bp.id, 0) <= 0) {
-      // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-      // if present, filter out the previous node and source node from all available peers
-      val filtered_peers: Iterable[DtnPeer] = tempPreviousNodeStore.get(packet.bp.id) match
-        case null => peers.values.asScala.filter(p => !p.eid.equals(source_node))
-        case previous_node: Endpoint => peers.values.asScala.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
-      return Random
-        .shuffle(filtered_peers)
-        .map(peer => {
-          peer.cla_list
-            .filter((agent, port_option) => packet.clas.contains(agent))
-            .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
-        })
-        .collectFirst({
-          case head :: next => head :: next
-        }) match
-          case None => {
-            println("could not find any cla to forward to via fallback strategy")
-            Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
-          }
-          case Some(selected_clas) => {
-            println("clas selected via fallback strategy")
-            Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
-          }
-    }
+    // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
+    println("doing fallback strategy")
+
+    var filtered_peers: Iterable[DtnPeer] = peers.values().asScala
+
+    // remove previous node and source node from peers if available
+    filtered_peers = tempPreviousNodeStore.get(packet.bp.id) match
+      case null => filtered_peers.filter(p => !p.eid.equals(source_node))
+      case previous_node: Endpoint => filtered_peers.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
     
-    // else wait for new peers
-    println("forwarded at least once. waiting for new peers.")
-    return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
+    // remove peers which already know the state
+    filtered_peers = neighbourDotsState.filterPeersToNotForwardTo(filtered_peers, rdt_id, dots)
+
+    // choose one peer at random
+    return Random
+      .shuffle(filtered_peers)
+      .map(peer => {
+        peer.cla_list
+          .filter((agent, port_option) => packet.clas.contains(agent))
+          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
+      })
+      .collectFirst({
+        case head :: next => head :: next
+      }) match
+        case None => {
+          println("could not find any cla to forward to via fallback strategy")
+          Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
+        }
+        case Some(selected_clas) => {
+          println("clas selected via fallback strategy")
+          Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
+        }
   }
 
   override def onError(packet: Packet.Error): Unit = {
@@ -332,6 +334,16 @@ class NeighbourDotsState {
       val d = map.get(rdt_id) match
         case null => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(endpoint, Dots.empty)
+
+      !(dots <= d)
+    })
+  }
+
+  def filterPeersToNotForwardTo(peers: Iterable[DtnPeer], rdt_id: String, dots: Dots): Iterable[DtnPeer] = {
+    peers.filter(peer => {
+      val d = map.get(rdt_id) match
+        case null => Dots.empty
+        case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(peer.eid, Dots.empty)
 
       !(dots <= d)
     })
