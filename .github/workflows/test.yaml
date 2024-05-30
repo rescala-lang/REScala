@@ -10,6 +10,10 @@ on:
         required: false
         type: string
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
 
@@ -19,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macOS-12, ubuntu-22.04, windows-2022]
-        java-version: [17, 21]
+        java-version: [17, 22]
 
     env:
       JAVA_OPTS: -Xmx4g
@@ -42,15 +46,15 @@ jobs:
 
 
     - name: compile
-      run: sbt -Dsbt.log.noformat=true --client compile
+      run: sbt --client compile
 
     - name: compile tests
-      run: sbt -Dsbt.log.noformat=true --client Test/compile
+      run: sbt --client Test/compile
 
     - name: test
       continue-on-error: true
-      run: sbt -Dsbt.log.noformat=true --client test
+      run: sbt --client test
 
     - name: test again (quick)
-      run: sbt -Dsbt.log.noformat=true --client testQuick
+      run: sbt --client testQuick
 
