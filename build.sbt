@@ -193,14 +193,9 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
   .settings(
     scala3defaults,
     Dependencies.munit,
-    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / assembly).value}"
-    // bits below from various experiments to add the correct classpath …
-    // autoCompilerPlugins := true,
-    // libraryDependencies += (loreCompilerPlugin / projectID).value % "plugin->compile"
-    // Compile / unmanagedJars :=  (loreCompilerPlugin / Compile / fullClasspathAsJars).value,
-    // scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / packageBin).value}"
+    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / fullClasspathAsJars).value.map(at => at.data).mkString(":")}",
   )
-  .dependsOn(lore.jvm, loreCompilerPlugin)
+  .dependsOn(lore.jvm)
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
