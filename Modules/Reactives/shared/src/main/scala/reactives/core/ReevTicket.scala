@@ -45,8 +45,8 @@ final class ReevTicket[State[_], V](tx: Transaction[State], private var _before:
   def trackStatic(): ReevTicket[State, V]             = { collectedDependencies = null; this }
   def withPropagate(p: Boolean): ReevTicket[State, V] = { _propagate = p; this }
   def withValue(v: V): ReevTicket[State, V] = {
-    require(v != null, "value must not be null");
-    value = v;
+    require(v != null, "value must not be null")
+    value = v
     _propagate = true;
     this
   }
