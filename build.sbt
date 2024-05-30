@@ -219,6 +219,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
+    Settings.safeInit(Compile / compile),
     javaOutputVersion(8),
     LocalSettings.publishSonatype,
     Dependencies.munit,
