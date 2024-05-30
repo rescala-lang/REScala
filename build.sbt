@@ -154,29 +154,22 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .dependsOn(reactives)
   .settings(Compile / mainClass := Some("lore.Compiler"))
 
-lazy val loreCompilerPlugin = (project in file("Modules/LoRe Compiler Plugin"))
+lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
   .settings(
     scala3defaults,
-    name                                    := "lore-dsl",
-    organization                            := "de.tu-darmstadt.stud",
-    version                                 := "0.0.1-SNAPSHOT",
-    sbtPlugin                               := false,
-    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % "3.3.1" % "provided",
-    // test dependencies
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
     Dependencies.munit
   )
   .dependsOn(lore.jvm)
 
-lazy val loreCompilerPluginExamples = (project in file("Modules/LoRe Compiler Plugin/examples"))
+lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plugin/examples"))
   .settings(
     scala3defaults,
-    name                := "source-examples",
+    // seems to be needed to make sbt autoconfigure the use of compiler plugins on the classpath
     autoCompilerPlugins := true,
-    addCompilerPlugin("de.tu-darmstadt.stud" %% "lore-dsl" % "0.0.1-SNAPSHOT"),
-    publish / skip := true,
-    Dependencies.munit
+    Dependencies.munit,
   )
-  .dependsOn(lore.jvm)
+  .dependsOn(lore.jvm, loreCompilerPlugin % "plugin->default(compile)")
 
 lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
