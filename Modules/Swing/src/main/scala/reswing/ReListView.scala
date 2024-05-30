@@ -39,9 +39,9 @@ class ReListView[A](
   }
 
   def modelChanged(): Unit = {
-    if (model != null)
+    if model != null then
       model `removeListDataListener` modelListener
-    if (javaPeer.getModel != null)
+    if javaPeer.getModel != null then
       javaPeer.getModel `addListDataListener` modelListener
     model = javaPeer.getModel
   }
@@ -53,7 +53,7 @@ class ReListView[A](
     { () => peer.listData.toSeq },
     { listData =>
       val selected =
-        if (selection.listDataSync.get) javaPeer.getSelectedValuesList.asScala.toSet
+        if selection.listDataSync.get then javaPeer.getSelectedValuesList.asScala.toSet
         else null
 
       (javaPeer.getModel match {
@@ -65,7 +65,7 @@ class ReListView[A](
           model
       })() = listData
 
-      if (selected != null)
+      if selected != null then
         javaPeer `setSelectedIndices` (listData.zipWithIndex collect {
           case (el, index) if selected contains el => index
         }).toArray
@@ -141,9 +141,9 @@ object ReListView {
       val additional = listData.size - itemsSize
       items = listData
 
-      if (additional > 0)
+      if additional > 0 then
         fireIntervalAdded(this, itemsSize, listData.size - 1)
-      if (additional < 0)
+      if additional < 0 then
         fireIntervalRemoved(this, listData.size, itemsSize - 1)
       fireContentsChanged(this, 0, listData.size)
     }

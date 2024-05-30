@@ -14,7 +14,7 @@ object RenderUtil {
     // observer to prevent form submit and empty content
     handler.event.observe { (e: UIEvent) =>
       e.preventDefault()
-      if (clear) todoInputField.value = ""
+      if clear then todoInputField.value = ""
     }
 
     // note that the accessed value is NOT a reactive, there is a name clash with the JS library :-)

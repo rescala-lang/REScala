@@ -25,19 +25,19 @@ class PhilosopherCompetition {
     import comp.stableTable.Seating
     val myBlock = comp.blocks(params.getThreadIndex % comp.blocks.length)
     val bo      = new Backoff()
-    while ({
+    while {
       val seating: Seating = myBlock(ThreadLocalRandom.current().nextInt(myBlock.length))
-      if (comp.manualLocking)
+      if comp.manualLocking then
         manualLocking(comp)(seating)
       else
         tryUpdateCycle(comp)(seating)
-    }) { bo.backoff() }
+    } do { bo.backoff() }
 
   }
 
   def tryUpdateCycle(comp: Competition)(seating: comp.stableTable.Seating): Boolean = {
     val res = comp.stableTable.tryEat(seating)
-    if (res) seating.philosopher.set(Thinking)
+    if res then seating.philosopher.set(Thinking)
     !res
   }
 
@@ -62,7 +62,7 @@ class PhilosopherCompetition {
           } finally { thirdLock.unlock() }
         } finally { secondLock.unlock() }
       } finally { firstLock.unlock() }
-    if (res) {
+    if res then {
       firstLock.lock()
       try {
         secondLock.lock()
@@ -103,7 +103,7 @@ class Competition extends BusyThreads {
   @Setup
   def setup(params: BenchmarkParams, work: Workload, engineParam: EngineParam) = {
     manualLocking = engineParam.engineName == "unmanaged" && layout != "noconflict"
-    if (manualLocking) {
+    if manualLocking then {
       locks = Array.fill(philosophers)(new ReentrantLock())
     }
     table = tableType match {

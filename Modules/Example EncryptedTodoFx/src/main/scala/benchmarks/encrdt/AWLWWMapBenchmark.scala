@@ -64,7 +64,7 @@ class AWLWWMapBenchmark {
   @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
   def putAndSerializeManyTimes(blackhole: Blackhole, putBenchmarkState: PutManyBenchmarkState): Unit = {
     val crdt = new AddWinsLastWriterWinsMap[String, String](replicaId)
-    for (entry <- putBenchmarkState.dummyKeyValuePairs) {
+    for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
       crdt.put(entry._1, entry._2)
       // Serialize to JSON (as byte array)
@@ -86,7 +86,7 @@ class AWLWWMapBenchmark {
     val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
     val aead                       = aeadState.aead
 
-    for (entry <- putBenchmarkState.dummyKeyValuePairs) {
+    for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
       crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt
@@ -134,7 +134,7 @@ class SerializeOnlyBenchmarkState {
     val replicaId                  = "TestReplica"
     val crdt                       = new AddWinsLastWriterWinsMap[String, String](replicaId)
 
-    for (entry <- dummyKeyValuePairs) {
+    for entry <- dummyKeyValuePairs do {
       // Update crdt
       crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt

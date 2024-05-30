@@ -15,5 +15,5 @@ object Tracing {
 
   var observer: Data => Unit = null
 
-  @inline def observe(data: => Data): Unit = if (observer != null) observer(data)
+  @inline def observe(data: => Data): Unit = if observer != null then observer(data)
 }

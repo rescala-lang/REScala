@@ -26,10 +26,10 @@ class ChatServer[Api <: Interface]()(val engine: Api) {
     val clients: Clients = Var(Nil)
     val newMessages: NewMessages = Event.dynamic {
       val messages: List[String] = clients.value.flatMap(_.value)
-      if (messages.isEmpty) None else Some(messages)
+      if messages.isEmpty then None else Some(messages)
     }
     val history: History = newMessages.fold(Queue[String]()) { (queue, v) =>
-      if (queue.length >= 100) queue.tail.enqueueAll(v) else queue.enqueueAll(v)
+      if queue.length >= 100 then queue.tail.enqueueAll(v) else queue.enqueueAll(v)
     }
 
     rooms.putIfAbsent(room, clients) == null &&

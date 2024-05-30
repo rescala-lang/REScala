@@ -27,7 +27,7 @@ class ChainSignalNoChange {
     engine = engineParam.engine
     source = Var(0)
     result = source
-    for (_ <- Range(0, size.size)) {
+    for _ <- Range(0, size.size) do {
       result = result.map { v =>
         val r = v + 1; work.consume(); r
       }

@@ -29,7 +29,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
       current.clearDeltas().deleteBy { (taskref: TaskRef) =>
         val isDone = taskref.task.value.state.data.read.exists(_.done)
         // todo, move to observer, disconnect during transaction does not respect rollbacks
-        if (isDone) taskref.task.disconnect()
+        if isDone then taskref.task.disconnect()
         isDone
       }
 
@@ -37,7 +37,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
     state.clearDeltas().deleteBy { (taskref: TaskRef) =>
       val delete = taskref.id == id
       // todo, move to observer, disconnect during transaction does not respect rollbacks
-      if (delete) taskref.task.disconnect()
+      if delete then taskref.task.disconnect()
       delete
     }
   }

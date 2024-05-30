@@ -228,7 +228,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     }
 
   private def compileUpdates(reSources: List[ReSource], toRelease: Set[ReSource]): List[CStmt] = {
-    if (reSources.isEmpty) return Nil
+    if reSources.isEmpty then return Nil
 
     val condition             = updateConditions(reSources.head)
     val (sameCond, otherCond) = reSources.span { r => updateConditions(r) == condition }

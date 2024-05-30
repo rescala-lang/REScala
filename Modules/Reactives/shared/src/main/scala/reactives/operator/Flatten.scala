@@ -85,6 +85,6 @@ object Flatten {
   ] = sig =>
     Event.dynamic {
       val all = sig.value map { (r: Event[B]) => r.value }
-      if (all.exists(_.isDefined)) Some(all) else None
+      if all.exists(_.isDefined) then Some(all) else None
     }
 }

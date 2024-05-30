@@ -10,7 +10,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
 
   protected var versionVector: VectorClock = scala.compiletime.uninitialized
   versionVector = {
-    if (initialStates.isEmpty) VectorClock.zero
+    if initialStates.isEmpty then VectorClock.zero
     else initialStates.map(_.versionVector).reduce((l, r) => l.merge(r))
   }
 
@@ -21,18 +21,18 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 
   def receive(newState: EncryptedState): Unit = {
-    if (!VectorClock.vectorClockOrdering.lteq(newState.versionVector, versionVector)) {
+    if !VectorClock.vectorClockOrdering.lteq(newState.versionVector, versionVector) then {
       // Update VersionVector
       versionVector = versionVector.merge(newState.versionVector)
       // newState is actually new (i.e., contains new updates)
       disseminate(newState)
     } else {
       // received state may already be subsumed by some state in the stateStore
-      if (
+      if
         stateStore.exists(oldState =>
           VectorClock.vectorClockOrdering.lteq(newState.versionVector, oldState.versionVector)
         )
-      ) {
+      then {
         // The newState is already subsumed by a single state in the stateStore
         return
       }
@@ -48,7 +48,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   }
 
   private def leastUpperBound(states: Set[EncryptedState]): Set[EncryptedState] = {
-    if (states.size <= 1) return states
+    if states.size <= 1 then return states
 
     @inline
     def subsetIsUpperBound(subset: Set[(EncryptedState, Int)], state: EncryptedState): Boolean = {
@@ -67,16 +67,16 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
         subsetIsUpperBound(subset.filterNot(_._2 == index), state)
       }.toList
 
-      if (removable.isEmpty) return subset.map(_._1)
+      if removable.isEmpty then return subset.map(_._1)
 
       // Optimization: Don't test removal of states with a lower index of the state that was removed by caller of rec()
       // Requires that removable is traversed according to natural order
       var optimalSubtree = subset.map(_._1)
       removable.foreach { case (state, i) =>
         val subsetWithoutState = subset.filter(_._2 == i)
-        if (subsetIsUpperBound(subsetWithoutState, state)) {
+        if subsetIsUpperBound(subsetWithoutState, state) then {
           val result = rec(subsetWithoutState)
-          if (result.size < optimalSubtree.size) optimalSubtree = result
+          if result.size < optimalSubtree.size then optimalSubtree = result
         }
       }
 

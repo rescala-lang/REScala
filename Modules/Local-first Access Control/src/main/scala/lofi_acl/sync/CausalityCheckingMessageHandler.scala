@@ -11,11 +11,11 @@ private[sync] trait CausalityCheckingMessageHandler[MSG] extends Runnable with M
 
   override def run(): Unit =
     val backlog = new mutable.Queue[(MSG, PublicIdentity)]()
-    while (!stopped) {
+    while !stopped do {
       try {
         val msgTuple @ (msg, sender) = msgQueue.take()
-        if (canHandleMessage(msg)) {
-          if (handleMessage(msg, sender)) {
+        if canHandleMessage(msg) then {
+          if handleMessage(msg, sender) then {
             val backlogMessages = backlog.removeAll()
             val unhandledMessages = backlogMessages.filter { (msg, sender) =>
               if !canHandleMessage(msg) then false

@@ -18,10 +18,10 @@ class FeedStore(
   }
 
   val itemAdded: Event[RSSItem] = addItem && { item => // #EVT //#EF
-    (for {
+    (for
       channel <- item.srcChannel
       items   <- channels.value get channel
       if !(items.value contains item)
-    } yield ()).isDefined
+    yield ()).isDefined
   }
 }

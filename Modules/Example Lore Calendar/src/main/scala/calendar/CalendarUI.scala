@@ -106,7 +106,7 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
 
         cal1.elements.forall { a =>
           cal2.elements.forall { b =>
-            if (a != b) {
+            if a != b then {
               a.end < b.start || a.start > b.end
             } else true
           }

@@ -21,13 +21,13 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
     g.fillRect(0, 0, size.width, size.height)
 
     g.setColor(java.awt.Color.BLACK)
-    if (currentShape != null) {
+    if currentShape != null then {
       currentShape.draw(g)
-      for (shape <- state.shapes.now)
-        if (!shape.selected)
+      for shape <- state.shapes.now do
+        if !shape.selected then
           shape.draw(g)
     } else
-      for (shape <- state.shapes.now)
+      for shape <- state.shapes.now do
         shape.draw(g)
   }
 
@@ -56,9 +56,9 @@ class DrawingPanel(val state: DrawingSpaceState) extends Panel {
         case null =>
           currentShape = currentShape.copy(path = e.point :: currentShape.path)
         case _ =>
-          if (resizingMode && currentShape.isInstanceOf[Resizable])
+          if resizingMode && currentShape.isInstanceOf[Resizable] then
             currentShape = currentShape.asInstanceOf[Resizable].resizedShape(point, e.point)
-          else if (currentShape.isInstanceOf[Movable])
+          else if currentShape.isInstanceOf[Movable] then
             currentShape = currentShape.asInstanceOf[Movable].movedShape(point, e.point)
       }
       point = e.point
@@ -89,20 +89,20 @@ trait ShowIntersection extends DrawingPanel {
     super.paint(g)
     g.setColor(new Color(255, 0, 0))
     g.setStroke(new BasicStroke)
-    for (point <- getIntersectionPoints())
+    for point <- getIntersectionPoints() do
       g.drawOval(point.x - 3, point.y - 3, 6, 6)
   }
 
   def getIntersectionPoints() = {
     val points = new ListBuffer[Point]
 
-    for (shape <- state.shapes.now)
-      for (otherShape <- state.shapes.now)
-        if (shape != otherShape)
-          for (line <- shape.toLines())
-            for (otherLine <- otherShape.toLines()) {
+    for shape <- state.shapes.now do
+      for otherShape <- state.shapes.now do
+        if shape != otherShape then
+          for line <- shape.toLines() do
+            for otherLine <- otherShape.toLines() do {
               val intersection = MathUtil.getIntersectionsOfTwoLines(line, otherLine)
-              if (intersection != null)
+              if intersection != null then
                 points += intersection
             }
 
@@ -118,12 +118,12 @@ trait ShowCoordinateSystem extends DrawingPanel {
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke)
 
-    for (i <- 0 until size.height if i % 20 == 0) {
+    for i <- 0 until size.height if i % 20 == 0 do {
       g.drawLine(0, i, size.width, i)
       g.drawString((i / 20).toString, 0, i)
     }
 
-    for (i <- 0 until size.width if i % 20 == 0) {
+    for i <- 0 until size.width if i % 20 == 0 do {
       g.drawLine(i, 0, i, size.height)
       g.drawString((i / 20).toString, i, 10)
     }
@@ -138,7 +138,7 @@ trait ShowNameLabels extends DrawingPanel {
     g.setColor(new Color(200, 200, 200))
     g.setStroke(new BasicStroke)
 
-    for (shape <- state.shapes.now)
+    for shape <- state.shapes.now do
       g.drawString(shape.toString, shape.start.x, shape.start.y)
   }
 }

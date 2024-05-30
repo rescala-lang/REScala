@@ -48,7 +48,7 @@ object CalculusLike {
 
       reactive.state.inputs = incoming
 
-      if (needsReevaluation || requiresReev(reactive)) {
+      if needsReevaluation || requiresReev(reactive) then {
         println(s"creation evaluation $reactive")
         // evaluate immediately to support some higher order + creation nonsense
         Reevaluate.evaluate(reactive, _ => true, FTransaction(this))
@@ -57,7 +57,7 @@ object CalculusLike {
     }
 
     def requiresReev(reSource: ReSource.of[State]): Boolean = {
-      if (FScheduler.currentPropagation == null) false
+      if FScheduler.currentPropagation == null then false
       else
         FScheduler.currentPropagation.isReady(reSource) &&
         FScheduler.currentPropagation.isOutdated(reSource)
@@ -97,7 +97,7 @@ object CalculusLike {
         // some broken user code may start a new transaction during an ongoing one
         // this is not supported by this propagation algorithm,
         // and is detected here because it leads to weird behaviour otherwise
-        if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
+        if !idle then throw new IllegalStateException("Scheduler is not reentrant")
         idle = false
         try {
           println(s"\nexecuting turn from $initialWrites")
@@ -126,7 +126,7 @@ object CalculusLike {
 
             // wrapup, this is for a rarely used rescala features, where transactions can
             // do some cleanup when they complete. Not supported in the formalization
-            if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction)
+            if admissionTicket.wrapUp != null then admissionTicket.wrapUp(transaction)
 
             // commit cleans up some internal state
             result.commit()
@@ -168,12 +168,12 @@ object CalculusLike {
       // we may process more than just the known initial reactives,
       // because REScala allows the creation of new reactives during propagation.
       // their correctness is ensured by the creation method
-      if (knownReactives == processed) this // snapshots are handled elsewhere
+      if knownReactives == processed then this // snapshots are handled elsewhere
       else {                                // reevaluate or skip
 
         // if there is anything to skip, we just skip all of them at once
         val toSkip = ready -- outdated
-        if (toSkip.nonEmpty) {
+        if toSkip.nonEmpty then {
           // println(s"skipping: $toSkip")
           Propagation(active, processed ++ toSkip, knownReactives, transaction).run()
         }
@@ -195,12 +195,12 @@ object CalculusLike {
           }
 
           val newReactives = FScheduler.allReactives -- knownReactives
-          if (newReactives.nonEmpty) {
+          if newReactives.nonEmpty then {
             println(s"created reactives $newReactives")
           }
 
-          if (evaluated) {
-            val nextActive = if (propagate) active + r else active
+          if evaluated then {
+            val nextActive = if propagate then active + r else active
             Propagation(nextActive, processed + r, knownReactives, transaction).run()
           } else {
             println(s"redoing \n$oldRstring\nto\n${r.state.inputs}")
@@ -267,7 +267,7 @@ object CalculusLike {
           finishReevaluation()
         case Some(inputs) => // dynamic reactive
           reactive.state.inputs = inputs
-          if (dynamicOk(reactive)) finishReevaluation()
+          if dynamicOk(reactive) then finishReevaluation()
           else (false, reev.activate)
 
       }

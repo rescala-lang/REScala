@@ -29,10 +29,10 @@ class MonadicErrors {
   @Setup
   def setup(size: Size, engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
-    if (isMonadic) {
+    if isMonadic then {
       val source                  = Evt[Try[Int]]()
       var result: Event[Try[Int]] = source
-      for (_ <- Range(1, size.size)) {
+      for _ <- Range(1, size.size) do {
         result = result.map { (t: Try[Int]) =>
           t.map { v =>
             val r = v + 1; work.consume(); r
@@ -44,7 +44,7 @@ class MonadicErrors {
     } else {
       val source             = Evt[Int]()
       var result: Event[Int] = source
-      for (_ <- Range(1, size.size)) {
+      for _ <- Range(1, size.size) do {
         result = result.map { v =>
           val r = v + 1; work.consume(); r
         }

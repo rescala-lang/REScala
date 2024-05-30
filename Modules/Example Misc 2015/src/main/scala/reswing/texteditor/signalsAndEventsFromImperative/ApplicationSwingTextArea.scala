@@ -19,7 +19,7 @@ object ApplicationSwingTextArea extends SimpleSwingApplication {
   })
 
   val selectionLabel = new ReLabel(
-    Signal { "Sel " + (if (textArea.selected.value != null) textArea.selected.value.length() else 0) }
+    Signal { "Sel " + (if textArea.selected.value != null then textArea.selected.value.length() else 0) }
   )
 
   val charCountLabel = new ReLabel(Signal { "Ch " + textArea.text.value.length() })

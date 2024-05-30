@@ -11,9 +11,9 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex = mod(i + 1)
       Signal.dynamic {
         phils(i).value match {
@@ -28,7 +28,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
 
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val ownName = i.toString
       val vision = Signal.dynamic {
         forks(i).value match {
@@ -55,14 +55,14 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex = mod(i + 1)
       Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val ownName = i.toString
       val vision = Signal.dynamic {
         forks(i).value match {
@@ -89,9 +89,9 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex = mod(i + 1)
       Signal.dynamic {
         phils(i).value match {
@@ -106,7 +106,7 @@ class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val vision = Signal.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }

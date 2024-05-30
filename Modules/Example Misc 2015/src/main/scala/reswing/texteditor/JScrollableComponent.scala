@@ -13,7 +13,7 @@ class JScrollableComponent extends JComponent with Scrollable {
 
   override def setPreferredSize(preferredSize: Dimension): Unit = {
     super.setPreferredSize(preferredSize)
-    if (getParent != null)
+    if getParent != null then
       getParent.doLayout()
   }
 
@@ -25,8 +25,8 @@ class JScrollableComponent extends JComponent with Scrollable {
     getParent.isInstanceOf[JViewport] && getParent.asInstanceOf[JViewport].getWidth > getPreferredSize.width
 
   def getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int) =
-    if (orientation == SwingConstants.HORIZONTAL) visibleRect.width else visibleRect.height
+    if orientation == SwingConstants.HORIZONTAL then visibleRect.width else visibleRect.height
 
   def getScrollableUnitIncrement(visibleRect: Rectangle, orientation: Int, direction: Int) =
-    if (orientation == SwingConstants.HORIZONTAL) unitWidth else unitHeight
+    if orientation == SwingConstants.HORIZONTAL then unitWidth else unitHeight
 }

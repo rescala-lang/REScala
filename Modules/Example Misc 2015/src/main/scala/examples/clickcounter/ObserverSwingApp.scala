@@ -28,7 +28,7 @@ object ObserverSwingApp extends SimpleSwingApplication {
         case ButtonClicked(b) =>
           nClicks += 1
           label.text = "Number of button clicks: " + nClicks
-          if (nClicks > 0)
+          if nClicks > 0 then
             button.text = "Click me again"
       }
     }

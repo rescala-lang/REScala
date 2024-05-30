@@ -41,7 +41,7 @@ class TodoListApp extends JFXApp3 {
     }
     localAddressTextField.focusedProperty.addListener(_ =>
       Platform.runLater {
-        if (localAddressTextField.isFocused) {
+        if localAddressTextField.isFocused then {
           localAddressTextField.selectAll()
         }
       }
@@ -50,7 +50,7 @@ class TodoListApp extends JFXApp3 {
     val addConnectionButton = new Button("Connect")
     addConnectionButton.onAction = () => {
       val connectionString = connectionTextField.getText
-      if (!connectionString.forall(Character.isWhitespace))
+      if !connectionString.forall(Character.isWhitespace) then
         TodoListController.connect(connectionString)
     }
 

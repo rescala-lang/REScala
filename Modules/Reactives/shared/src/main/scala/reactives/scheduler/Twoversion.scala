@@ -26,10 +26,10 @@ trait Twoversion {
       owner = token
     }
     def base(token: Token): V = current
-    def get(token: Token): V  = { if (token eq owner) update else current }
+    def get(token: Token): V  = { if token eq owner then update else current }
 
     def commit(r: V => V): Unit = {
-      if (update != null) current = r(update)
+      if update != null then current = r(update)
       release()
     }
     def release(): Unit = {
@@ -96,7 +96,7 @@ trait Twoversion {
             tx.initializationPhase(admissionTicket.initialChanges)
             tracePhase("propagation")
             tx.propagationPhase()
-            if (admissionTicket.wrapUp != null)
+            if admissionTicket.wrapUp != null then
               tracePhase("wrapUp")
               admissionTicket.wrapUp(tx)
             admissionResult
@@ -174,7 +174,7 @@ trait Twoversion {
     override def schedule(commitable: ReSource): Unit = { toCommit += commitable; () }
 
     def observe(f: Observation): Unit = {
-      if (commitStarted) throw new IllegalStateException(
+      if commitStarted then throw new IllegalStateException(
         s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
         s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
       )
@@ -183,7 +183,7 @@ trait Twoversion {
     }
 
     override def followup(obs: Observation): Unit = {
-      if (commitStarted) throw new IllegalStateException(
+      if commitStarted then throw new IllegalStateException(
         s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
         s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
       )
@@ -207,13 +207,13 @@ trait Twoversion {
       // find some failure and rethrow the contained exception
       // we should probably aggregate all of the exceptions,
       // but this is not the place to invent exception aggregation
-      if (failure != null) throw failure
+      if failure != null then throw failure
 
       followups.foreach { n =>
         try n.execute()
         catch { case NonFatal(e) => failure = e }
       }
-      if (failure != null) throw failure
+      if failure != null then throw failure
     }
 
     final def commitDependencyDiff(node: Derived, current: Set[ReSource])(updated: Set[ReSource]): Unit = {

@@ -11,7 +11,7 @@ object FoldVersion extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait { application.tick.fire() }
       Thread `sleep` 20
     }
@@ -28,11 +28,11 @@ class FoldVersion {
   val tick = Evt[Unit]()
   // Implementing switch with fold
   val xx: Signal[Int] = tick.fold(initPosition.x) { (pos, _) =>
-    pos + (if (xSwitch.now) speed.x else -speed.x)
+    pos + (if xSwitch.now then speed.x else -speed.x)
   }
 
   val yy: Signal[Int] = tick.fold(initPosition.y) { (pos, _) =>
-    pos + (if (ySwitch.now) speed.y else -speed.y)
+    pos + (if ySwitch.now then speed.y else -speed.y)
   }
 
   val xSwitch = (xx.changed && (x => x < 0 || x + Size > Max_X)).fold(false) { (a, _) => !a }

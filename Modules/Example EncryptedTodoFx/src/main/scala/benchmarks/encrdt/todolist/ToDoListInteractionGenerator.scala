@@ -10,15 +10,15 @@ class ToDoListInteractionGenerator(pruningCompletedToDoThreshold: Int = 50, numK
     val state  = new GeneratorState(random, 70, 140)
 
     0 until numberInteractions map (_ => {
-      if (state.numberOfCurrentlyCompletedEntries >= pruningCompletedToDoThreshold) { // Pruning
+      if state.numberOfCurrentlyCompletedEntries >= pruningCompletedToDoThreshold then { // Pruning
         RemoveToDoItems(state.pruneTodos(state.numberOfCurrentlyCompletedEntries - numKeptCompletedToDos))
       } else { // Normal Interactions
         var chosenInteraction: Option[ToDoListInteraction] = None
-        while (chosenInteraction.isEmpty) {
+        while chosenInteraction.isEmpty do {
           val randomInteraction = random.nextInt(2)
-          if (randomInteraction == 0) { // 0 => Add random to do entry
+          if randomInteraction == 0 then { // 0 => Add random to do entry
             chosenInteraction = Some(state.addRandomEntry())
-          } else if (randomInteraction == 1) {              // 1 => Complete random (existing) to do entry
+          } else if randomInteraction == 1 then {              // 1 => Complete random (existing) to do entry
             chosenInteraction = state.completeRandomEntry() // Might return None, this means another iteration
           } else {
             ??? // This interaction does not *yet* exist and this statement is never reached
@@ -42,7 +42,7 @@ private class GeneratorState(random: Random, val textLengthMin: Int, val textLen
   def numberOfCurrentlyCompletedEntries: Int               = completedEntries.length
 
   def completeRandomEntry(): Option[CompleteToDoItem] = {
-    if (uncompletedEntries.isEmpty) return None
+    if uncompletedEntries.isEmpty then return None
     val completedEntryIndex = random.nextInt(uncompletedEntries.length)
     val completedEntryUuid  = uncompletedEntries.remove(completedEntryIndex)
     completedEntries.enqueue(completedEntryUuid)
@@ -63,7 +63,7 @@ private class GeneratorState(random: Random, val textLengthMin: Int, val textLen
   }
 
   def pruneTodos(numberOfPrunedToDos: Int): Seq[UUID] = {
-    if (numberOfPrunedToDos > completedEntries.size) {
+    if numberOfPrunedToDos > completedEntries.size then {
       throw new IllegalArgumentException(
         s"Cannot prune $numberOfPrunedToDos todos, since only ${completedEntries.size} are completed"
       )

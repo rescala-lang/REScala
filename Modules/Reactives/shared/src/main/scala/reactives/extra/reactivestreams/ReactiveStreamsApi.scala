@@ -63,8 +63,8 @@ class SubscriptionReactive[T](
       case None => rein
       case Some(tryValue) =>
         synchronized {
-          while (requested <= 0 && !cancelled) wait(100)
-          if (cancelled) {
+          while requested <= 0 && !cancelled do wait(100)
+          if cancelled then {
             rein.trackDependencies(Set.empty)
             rein
           } else {

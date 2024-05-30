@@ -9,7 +9,7 @@ object Storing {
   def storedAs[A: JsonValueCodec](key: String, default: => A)(create: A => Signal[A]): Signal[A] = {
     val init: A = {
       val item = dom.window.localStorage.getItem(key)
-      if (item == null) default
+      if item == null then default
       else {
         val res =
           try { readFromString[A](item) }

@@ -8,14 +8,14 @@ import scala.util.Random
 
 object Board {
   def proximity(pos: Pos, range: Int): IndexedSeq[Pos] = square(range).map(pos + _).sortBy(pos.distance)
-  def square(range: Int): IndexedSeq[Pos] = for (x <- -range to range; y <- -range to range) yield Pos(x, y)
+  def square(range: Int): IndexedSeq[Pos] = for x <- -range to range; y <- -range to range yield Pos(x, y)
 }
 
 /** Mutable data structure which stores board elements in 2-dimensional coordinates.
   * A Board is infinite, but width and height specify the area being displayed.
   */
 class Board(val width: Int, val height: Int) {
-  val allPositions                     = (for (x <- 0 to width; y <- 0 to height) yield Pos(x, y)).toSet
+  val allPositions                     = (for x <- 0 to width; y <- 0 to height yield Pos(x, y)).toSet
   val elementSpawned                   = Evt[BoardElement]()
   val elementRemoved                   = Evt[BoardElement]()
   val animalSpawned                    = elementSpawned && (_.isAnimal)
@@ -35,7 +35,7 @@ class Board(val width: Int, val height: Int) {
   def removeDead() = {
     elements = elements.filter {
       case (p, be) =>
-        if (be.isDead.readValueOnce) {
+        if be.isDead.readValueOnce then {
           elementRemoved.fire(be)
           false
         } else true
@@ -57,7 +57,7 @@ class Board(val width: Int, val height: Int) {
   /** moves pos in direction dir if possible (when target is free) */
   def moveIfPossible(pos: Pos, dir: Pos): Unit = {
     val newPos = pos + dir
-    if (isFree(newPos) && !isFree(pos)) {
+    if isFree(newPos) && !isFree(pos) then {
       val e = clear(pos)
       elements.put(newPos, e.get)
       ()
@@ -86,13 +86,13 @@ class Board(val width: Int, val height: Int) {
       be match {
         case None                                       => '.'
         case Some(m: Male) if m.isAdult.readValueOnce   => 'm'
-        case Some(f: Female) if f.isAdult.readValueOnce => if (f.isPregnant.readValueOnce) 'F' else 'f'
+        case Some(f: Female) if f.isAdult.readValueOnce => if f.isPregnant.readValueOnce then 'F' else 'f'
         case Some(x: Animal)                            => 'x'
         case Some(p: Plant)                             => '#'
         case Some(_)                                    => '?'
       }
     val lines =
-      for (y <- 0 to height)
+      for y <- 0 to height
         yield (0 to width).map(x => repr(elements.get(Pos(x, y)))).mkString
     lines.mkString("\n")
   }

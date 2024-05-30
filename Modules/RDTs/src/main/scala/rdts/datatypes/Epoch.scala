@@ -48,8 +48,8 @@ object Epoch {
     /** By assumption: associative, commutative, idempotent. */
     override def merge(left: Epoch[E], right: Epoch[E]): Epoch[E] = (left, right) match {
       case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
-        if (cLeft > cRight) left
-        else if (cRight > cLeft) right
+        if cLeft > cRight then left
+        else if cRight > cLeft then right
         else Epoch(cLeft, Lattice[E].merge(vLeft, vRight))
     }
   }

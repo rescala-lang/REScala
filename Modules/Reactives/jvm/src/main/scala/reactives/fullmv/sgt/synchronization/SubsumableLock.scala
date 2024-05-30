@@ -80,9 +80,9 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
 
   @tailrec final def tryLocalAddRefs(refs: Int): Boolean = {
     val before = refCount.get()
-    if (before == 0) {
+    if before == 0 then {
       false
-    } else if (refCount.compareAndSet(before, before + refs)) {
+    } else if refCount.compareAndSet(before, before + refs) then {
       true
     } else {
       tryLocalAddRefs(refs)
@@ -93,13 +93,13 @@ trait SubsumableLock extends SubsumableLockProxy with Hosted[SubsumableLock] {
     assert(refs > 0)
     val before = refCount.get()
     assert(before > 0, s"cannot add refs on gc'd $this")
-    if (!refCount.compareAndSet(before, before + refs)) localAddRefs(refs)
+    if !refCount.compareAndSet(before, before + refs) then localAddRefs(refs)
   }
 
   def localSubRefs(refs: Int): Unit = {
     assert(refs > 0)
     val remaining = refCount.addAndGet(-refs)
-    if (remaining == 0) {
+    if remaining == 0 then {
       host.dropInstance(guid, this)
       dumped()
     } else {

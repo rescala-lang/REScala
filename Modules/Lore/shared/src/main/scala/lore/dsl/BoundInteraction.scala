@@ -50,8 +50,8 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
 
       val t = Tuple.fromArray(curr.toArray).asInstanceOf[ST]
 
-      for (req <- requires) {
-        if (!req.fun(at.tx.preconditionTicket)(t, a)) {
+      for req <- requires do {
+        if !req.fun(at.tx.preconditionTicket)(t, a) then {
           val message = s"Interaction violated requirement: ${req.representation} with argument ($curr, $a) evaluated to false!"
           throw new IllegalStateException(message)
         }
@@ -59,8 +59,8 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
 
       val res = executes(t, a)
 
-      for (ens <- ensures) {
-        if (!ens.fun(at.tx.preconditionTicket)(res, a)) {
+      for ens <- ensures do {
+        if !ens.fun(at.tx.preconditionTicket)(res, a) then {
           val message = s"Interaction violated post-condition: ${ens.representation} with argument (($curr), $a) evaluated to false!"
           throw new IllegalStateException(message)
         }

@@ -31,13 +31,13 @@ class SingleVar {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)
-    if (engineParam.engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged)
+    if engineParam.engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then
       lock = new ReentrantReadWriteLock()
   }
 
   @Benchmark
   def write(): Unit = {
-    if (lock == null) {
+    if lock == null then {
       current = !current
       source.set(current)
     } else {
@@ -51,7 +51,7 @@ class SingleVar {
 
   @Benchmark
   def read(): Boolean = {
-    if (lock == null) {
+    if lock == null then {
       source.readValueOnce
     } else {
       lock.readLock().lock()

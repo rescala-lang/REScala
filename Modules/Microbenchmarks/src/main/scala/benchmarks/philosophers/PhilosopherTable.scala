@@ -16,7 +16,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface)
 
   seatings.foreach { seating =>
     seating.vision.observe { state =>
-      if (state == Done) {
+      if state == Done then {
         Blackhole.consumeCPU(work)
       }
     }
@@ -25,14 +25,14 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface)
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (_ <- 0 until tableSize) yield Var[Philosopher](Thinking)
+    val phils = for _ <- 0 until tableSize yield Var[Philosopher](Thinking)
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex = mod(i + 1)
       Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val vision = Signal.lift(forks(i), forks(mod(i - 1)))(calcVision(i.toString))
       Seating(i, phils(i), forks(i), forks(mod(i - 1)), vision)
     }
@@ -41,10 +41,10 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface)
   def tryEat(seating: Seating): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { t =>
       val forksAreFree = t.now(seating.vision) == Ready
-      if (forksAreFree) seating.philosopher.admit(Eating)(t)
+      if forksAreFree then seating.philosopher.admit(Eating)(t)
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, t) =>
-      if (forksWereFree) assert(t.now(seating.vision) == Done, s"philosopher should be done after turn")
+      if forksWereFree then assert(t.now(seating.vision) == Done, s"philosopher should be done after turn")
       forksWereFree
     }
 

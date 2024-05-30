@@ -11,7 +11,7 @@ object SignalVersion extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait { application.tick.transform(_ + 1) }
       Thread `sleep` 20
     }
@@ -32,12 +32,12 @@ class SignalVersion {
   val x = Signal {
     val width = Max_X - Size
     val d     = speed.x * tick.value + initPosition.x
-    if ((d / width) % 2 == 0) d % width else width - d % width
+    if (d / width) % 2 == 0 then d % width else width - d % width
   }
   val y = Signal {
     val width = Max_Y - Size
     val d     = speed.y * tick.value + initPosition.y
-    if ((d / width) % 2 == 0) d % width else width - d % width
+    if (d / width) % 2 == 0 then d % width else width - d % width
   }
 
   tick.changed observe ((_: Int) => frame.repaint())

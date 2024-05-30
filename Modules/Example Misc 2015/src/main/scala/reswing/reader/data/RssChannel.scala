@@ -17,10 +17,10 @@ import java.util.Date
 case class RSSChannel(title: String, link: Option[URL], description: String, pubDate: Option[Date], source: Option[URL])
     extends Ordered[RSSChannel] {
   def compare(that: RSSChannel) = {
-    val result = for {
+    val result = for
       thisDate <- this.pubDate
       thatDate <- that.pubDate
-    } yield { thisDate `compareTo` thatDate }
+    yield { thisDate `compareTo` thatDate }
 
     result getOrElse 0
   }

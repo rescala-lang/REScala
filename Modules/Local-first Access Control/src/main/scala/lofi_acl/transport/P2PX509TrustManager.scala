@@ -9,9 +9,9 @@ class P2PX509TrustManager extends X509TrustManager {
 
   /** Verifies that the certificate is signed by subject unique identifier of self-signed certificate. */
   private def verifyP2PCertificate(certificate: X509Certificate): Unit = {
-    if ("Ed25519" != certificate.getSigAlgName)
+    if "Ed25519" != certificate.getSigAlgName then
       throw CertificateException("Only Ed25519 is supported as signature algo")
-    if (certificate.getVersion != 3) throw CertificateException("Only X509v3 Certificates are supported")
+    if certificate.getVersion != 3 then throw CertificateException("Only X509v3 Certificates are supported")
 
     // Certificate still valid?
     certificate.checkValidity()
@@ -19,14 +19,14 @@ class P2PX509TrustManager extends X509TrustManager {
     // Self issued?
     val subject = certificate.getSubjectX500Principal
     val issuer  = certificate.getIssuerX500Principal
-    if (!subject.equals(issuer)) throw CertificateException("certificate not self-issued")
+    if !subject.equals(issuer) then throw CertificateException("certificate not self-issued")
 
     // Verifies that certificate is actually signed by identity in certificate
     val id = X509Util.certificateToPublicIdentity(certificate)
   }
 
   override def checkClientTrusted(chain: Array[X509Certificate], authType: String): Unit = {
-    if (chain.length != 1) {
+    if chain.length != 1 then {
       throw CertificateException("Only single entry certificate chain is supported")
     }
 
@@ -34,7 +34,7 @@ class P2PX509TrustManager extends X509TrustManager {
   }
 
   override def checkServerTrusted(chain: Array[X509Certificate], authType: String): Unit = {
-    if (chain.length != 1) {
+    if chain.length != 1 then {
       throw CertificateException("Only single entry certificate chain is supported")
     }
 

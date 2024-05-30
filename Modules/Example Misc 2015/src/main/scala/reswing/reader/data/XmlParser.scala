@@ -61,7 +61,7 @@ class XmlParser {
     (args: (NodeSeq, Option[URL])) =>
       val (xmlNode, url) = args
 
-      if (xmlNode.size == 1) {
+      if xmlNode.size == 1 then {
         val meta = extractInformation(xmlNode)
         val date = extractDate(xmlNode)
         val link = tryToCreateURL(meta(Symbol("link")))
@@ -88,7 +88,7 @@ class XmlParser {
 
   // does not fire events after parsing
   private def parseItemSilent(xmlNode: Node): Option[RSSItem] = {
-    if (xmlNode.size != 1)
+    if xmlNode.size != 1 then
       return None
 
     val meta = extractInformation(xmlNode)
@@ -117,15 +117,15 @@ class XmlParser {
     // NOTE: we are not using parseItem
     //       because of the call to RSSItem.changeSource below
     def sequence[A](l: List[Option[A]]) =
-      if (l contains None) None else Some(l.flatten)
+      if l contains None then None else Some(l.flatten)
     val itemsOpt = sequence((itemXML map { parseItemSilent(_) }).toList)
 
-    for {
+    for
       channel <- parseChannel((channelXML, Some(url)))
       items <- itemsOpt.map { items =>
         items.map { i => RSSItem.changeSource(i, Some(channel)) }
       }
-    } yield {
+    yield {
       items foreach { explicitItemParsed.fire(_) }
       (channel, items)
     }
@@ -141,7 +141,7 @@ class XmlParser {
   private def extractDate(xml: NodeSeq): Option[Date] = {
     val res = xml \ "pubDate"
 
-    if (res.isEmpty)
+    if res.isEmpty then
       None
     else
       try Some(dateFormat `parse` res.text)

@@ -47,7 +47,7 @@ object RRecovery extends Main {
     new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed)
   )
 
-  for (bouncingBall <- balls) {
+  for bouncingBall <- balls do {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)
@@ -71,7 +71,7 @@ object RRecovery extends Main {
       }
     )
 
-    for (bouncingBall <- balls) {
+    for bouncingBall <- balls do {
       bouncingBall.horizontalBounceSources.transform(racket2.collisionWith(bouncingBall.shape) :: _)
     }
   }

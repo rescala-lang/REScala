@@ -20,7 +20,7 @@ import java.time.{ZoneId, ZonedDateTime}
 import java.util.{Base64, Date}
 
 object X509Util {
-  if (Security.getProvider("BC") == null) {
+  if Security.getProvider("BC") == null then {
     val _ = Security.addProvider(new BouncyCastleProvider())
   }
 
@@ -45,13 +45,13 @@ object X509Util {
     */
   def generateCustomP2PX509Certificate(identityKeyPair: KeyPair, certificateKeyPair: KeyPair): X509CertificateHolder = {
 
-    if (!List("Ed25519", "EdDSA").contains(identityKeyPair.getPublic.getAlgorithm)) {
+    if !List("Ed25519", "EdDSA").contains(identityKeyPair.getPublic.getAlgorithm) then {
       throw IllegalArgumentException("Only Ed25519 keys are accepted as the identityKeyPair")
     }
 
     val identityBytes = Ed25519Util.publicKeyToRawPublicKeyBytes(identityKeyPair.getPublic)
     // Check that the identityKeyPair is in fact an Ed25519 key and not an Ed448 Key (SunEC used EdDSA algorithm identifier fo both Ed25519 and Ed448)
-    if (identityBytes.length != 32) {
+    if identityBytes.length != 32 then {
       throw IllegalArgumentException("Only Ed25519 keys are accepted as the identityKeyPair")
     }
     val identityBase64 = Base64.getEncoder.encodeToString(identityBytes)
@@ -88,13 +88,13 @@ object X509Util {
     val subject = certificate.getSubjectX500Principal
     val issuer  = certificate.getIssuerX500Principal
 
-    if (!subject.equals(issuer)) throw new CertificateException("certificate not self issued")
+    if !subject.equals(issuer) then throw new CertificateException("certificate not self issued")
 
     val uniqueIdRDNs = JcaX500NameUtil.getSubject(certificate).getRDNs(BCStyle.UNIQUE_IDENTIFIER)
-    if (
+    if
       uniqueIdRDNs.isEmpty || uniqueIdRDNs(0).size() != 1 || !uniqueIdRDNs(0).getFirst.getValue
         .isInstanceOf[DERUTF8String]
-    ) {
+    then {
       throw new CertificateException("Subject does not contain a UNIQUE_IDENTIFIER")
     }
 

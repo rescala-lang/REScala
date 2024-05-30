@@ -26,7 +26,7 @@ object Universe {
       )
       ()
 
-    for (repetition <- 0 to repetitions) {
+    for repetition <- 0 to repetitions do {
       println(s"rep: $repetition")
 
       System.gc()
@@ -36,13 +36,13 @@ object Universe {
       world.batchSpawn(nAnimals, nPlants)
 
       val start = System.nanoTime()
-      while (world.time.week.readValueOnce < 2) {
+      while world.time.week.readValueOnce < 2 do {
         world.tick()
         world.runPlan()
       }
       val duration = (System.nanoTime() - start) / 1e9d
-      if (!genCsv) println(s"duration: $duration")
-      if (repetition > 0 && genCsv) {
+      if !genCsv then println(s"duration: $duration")
+      if repetition > 0 && genCsv then {
         Files.write(
           Paths.get(outfile),
           s"""$repetition,$duration,"${reactives.default.global.scheduler.schedulerName}","UniverseCaseStudy",$height,$width,$nAnimals,$nPlants${"\n"}""".getBytes(),

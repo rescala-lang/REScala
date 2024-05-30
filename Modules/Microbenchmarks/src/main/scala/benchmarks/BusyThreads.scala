@@ -14,7 +14,7 @@ class BusyThreads {
   var threads: Array[Thread]     = scala.compiletime.uninitialized
   @Setup(Level.Iteration)
   def bootBusyThreads(params: BenchmarkParams): Unit = {
-    if (runBusyThreads) {
+    if runBusyThreads then {
       running = true
       val numProcs   = Runtime.getRuntime.availableProcessors()
       val idleProcs  = numProcs - params.getThreads
@@ -23,27 +23,27 @@ class BusyThreads {
         val t = new Thread(s"busy-idler-$i") {
           override def run(): Unit = {
             startLatch.countDown()
-            while (running) Blackhole.consumeCPU(1000L)
+            while running do Blackhole.consumeCPU(1000L)
           }
         }
         t.start()
         t
       }
       println(s"starting $idleProcs busy threads...")
-      if (!startLatch.await(1000, TimeUnit.MILLISECONDS)) {
+      if !startLatch.await(1000, TimeUnit.MILLISECONDS) then {
         println(startLatch.getCount.toString + " busy threads failed to start")
       }
     }
   }
   @TearDown(Level.Iteration)
   def stopBusyThreads(): Unit = {
-    if (runBusyThreads) {
+    if runBusyThreads then {
       println("stopping busy threads...")
       val timeout = System.currentTimeMillis() + 1000
       running = false
-      for (t <- threads) {
+      for t <- threads do {
         t.join(timeout - System.currentTimeMillis())
-        if (t.isAlive) println(t.getName + " did not terminate!")
+        if t.isAlive then println(t.getName + " did not terminate!")
       }
     }
   }

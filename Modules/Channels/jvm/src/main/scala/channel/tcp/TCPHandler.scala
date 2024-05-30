@@ -50,7 +50,7 @@ object TCP {
 
             executionContext.execute { () =>
               try
-                while (!abort.closeRequest) {
+                while !abort.closeRequest do {
                   val connection = socket.accept()
                   if connection != null
                   then
@@ -110,7 +110,7 @@ class TCPConnection(socket: Socket) extends OutChan with ConnectionContext {
       else byte.toByte
     }
 
-    try while (true) {
+    try while true do {
         readNextByte() match {
           case `sizedContent` =>
             val size = inputStream.readInt()

@@ -29,7 +29,7 @@ case class Appointment(name: String, start: Int, end: Int) {
   }
 
   val tagSignal: Signal[LI] = currentlyEditing.map { c =>
-    if (!c) li(span(s"$name: $start -> $end").render, br().render, removeButton.data, editButton.data).render
+    if !c then li(span(s"$name: $start -> $end").render, br().render, removeButton.data, editButton.data).render
     else li(nameInput, span(": ").render, startInput, span(" -> ").render, endInput, commitChange.data).render
   }
 

@@ -13,7 +13,7 @@ import scala.swing.{BoxPanel, Color, Component, Label, Orientation, ScrollPane}
 class ShapePanel extends BoxPanel(Orientation.Vertical) {
   def state = ReShapes.drawingSpaceState
 
-  val shapes = Signal.dynamic { if (state.value != null) state.value.shapes.value else List.empty } // #SIG
+  val shapes = Signal.dynamic { if state.value != null then state.value.shapes.value else List.empty } // #SIG
 
   val shapeViews = Signal { shapes.value map { shape => new ShapeView(shape, state.value) } } // #SIG
 
@@ -46,10 +46,10 @@ class ShapeView(shape: Shape, state: DrawingSpaceState) extends ReBoxPanel(Orien
   peer.contents += deleteButton
 
   mouse.clicks.clicked observe { _ => // #HDL
-    state.select.fire(if (state.selectedShape.now != shape) shape else null)
+    state.select.fire(if state.selectedShape.now != shape then shape else null)
   }
 
   state.selectedShape.changed observe { selected => // #HDL
-    peer.background = if (selected == shape) SELECTED_COLOR else NOT_SELECTED_COLOR
+    peer.background = if selected == shape then SELECTED_COLOR else NOT_SELECTED_COLOR
   }
 }

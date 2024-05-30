@@ -60,7 +60,7 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
       merged: CalendarState
   ): (Iterable[CalendarState], Iterable[CalendarState]) = {
     val a =
-      if (atoms.isEmpty) Lattice[CalendarState].decompose(merged)
+      if atoms.isEmpty then Lattice[CalendarState].decompose(merged)
       else atoms
 
     val atomsSize = a.size
@@ -103,22 +103,22 @@ class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
     }
 
-    while (true) {
+    while true do {
       val line = readLine()
       globalLock.synchronized {
         line match {
           case add(c, start, end) =>
-            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val cal         = if c == "work" then calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.add_appointment(cal, appointment)
 
           case remove(c, start, end) =>
-            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val cal         = if c == "work" then calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.remove_appointment(cal, appointment)
 
           case change(c, start, end, nstart, nend) =>
-            val cal         = if (c == "work") calendar.work else calendar.vacation
+            val cal         = if c == "work" then calendar.work else calendar.vacation
             val appointment = Appointment(start.toInt, end.toInt)
             calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
 

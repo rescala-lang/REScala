@@ -40,7 +40,7 @@ private[reswing] trait ReSwingEventConnection {
 
   final protected implicit class EventConnector[T] private[ReSwingEventConnection] (value: ReSwingEvent[T]) {
     def using(setter: T => Unit): ReSwingEvent[T] = {
-      if (value.isInstanceOf[ReSwingEventIn[?]])
+      if value.isInstanceOf[ReSwingEventIn[?]] then
         delayedInitEvents += { () =>
           value observe { v => inSyncEDT { setter(v) } }
           ()
@@ -48,7 +48,7 @@ private[reswing] trait ReSwingEventConnection {
       value
     }
     def using(setter: () => Unit): ReSwingEvent[T] = {
-      if (value.isInstanceOf[ReSwingEventIn[?]])
+      if value.isInstanceOf[ReSwingEventIn[?]] then
         delayedInitEvents += { () =>
           value observe { _ => inSyncEDT { setter() } }
           ()
@@ -67,7 +67,7 @@ private[reswing] trait ReSwingEventConnection {
           reactor listenTo publisher
           reactor.reactions += {
             case e =>
-              if (reaction `isInstance` e)
+              if reaction `isInstance` e then
                 event(e.asInstanceOf[T])
           }
           ()
@@ -82,14 +82,14 @@ private[reswing] trait ReSwingEventConnection {
 
   peer.peer.addHierarchyListener(new HierarchyListener {
     def hierarchyChanged(e: HierarchyEvent) =
-      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+      if (e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 then {
         initReSwingEventConnection()
         peer.peer.removeHierarchyListener(this)
       }
   })
 
   protected def initReSwingEventConnection(): Unit = {
-    for (init <- delayedInitEvents)
+    for init <- delayedInitEvents do
       init()
     delayedInitEvents.clear()
   }

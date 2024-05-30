@@ -50,7 +50,7 @@ class Fisheye {
 
   var boxes: List[Box] = Nil
   def addBox(color: java.awt.Color): Unit = {
-    boxes ::= new Box(color, if (boxes.isEmpty) initPoint else boxes.head.rightmostPoint)
+    boxes ::= new Box(color, if boxes.isEmpty then initPoint else boxes.head.rightmostPoint)
   }
 
   addBox(Color.BLUE)
@@ -76,7 +76,7 @@ class Fisheye {
       preferredSize = new Dimension(Max_X, Max_Y)
       // val scoreFont = new Font("Tahoma", java.awt.Font.PLAIN, 32)
       override def paintComponent(g: Graphics2D): Unit = {
-        for (box <- boxes) {
+        for box <- boxes do {
           g.setColor(box.effectiveColor.now)
           g.fill(box.area.now)
         }

@@ -19,7 +19,7 @@ class MillBoard {
   /* lines mapped to owners */
   val lineOwners: Signal[Vector[Slot]] = Signal { // #SIG
     (lines.value map { line => // #EF
-      if (line forall { _ == line.head }) line.head else Empty
+      if line forall { _ == line.head } then line.head else Empty
     }).toVector
   }
 
@@ -101,7 +101,7 @@ class MillBoard {
   val millOpenedOrClosed = lineOwners.change.map { // #EVT //#IF
     change =>
       // / NOTE: Workaround because change event fires (null, new) tuple
-      if (change._1 eq null) change._2.find(_ != Empty).get
+      if change._1 eq null then change._2.find(_ != Empty).get
       else (change._1 zip change._2).collectFirst { case (old, n) if old != n => n }.get
   }
 

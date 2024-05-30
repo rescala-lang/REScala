@@ -28,17 +28,17 @@ class World(val width: Int = 100, val height: Int = 100) {
 
   /** batch spawns n Animals and m Plants */
   def batchSpawn(nAnimals: Int, mPlants: Int): Unit = {
-    for (_ <- 1 to nAnimals) spawn(newAnimal)
-    for (_ <- 1 to mPlants) spawn(new Plant)
+    for _ <- 1 to nAnimals do spawn(newAnimal)
+    for _ <- 1 to mPlants do spawn(new Plant)
   }
 
   /** returns an animal at random */
   def newAnimal: Animal = newAnimal(randomness.nextBoolean(), randomness.nextBoolean())
   def newAnimal(isHerbivore: Boolean, isMale: Boolean): Animal = {
-    if (isHerbivore) {
-      if (isMale) new MaleHerbivore else new FemaleHerbivore
+    if isHerbivore then {
+      if isMale then new MaleHerbivore else new FemaleHerbivore
     } else {
-      if (isMale) new MaleCarnivore else new FemaleCarnivore
+      if isMale then new MaleCarnivore else new FemaleCarnivore
     }
   }
 

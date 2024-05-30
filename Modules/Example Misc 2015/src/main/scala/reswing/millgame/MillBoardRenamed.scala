@@ -5,7 +5,7 @@ import reswing.millgame.types.SlotIndex
 object MillBoardRenamed {
   val borders = (0 to 23 by 2) map { init =>
     List.iterate(init, 3) { x =>
-      (x + 1) - (if ((x + 1) % ((init / 8 + 1) * 8) == 0) 8 else 0)
+      (x + 1) - (if (x + 1) % ((init / 8 + 1) * 8) == 0 then 8 else 0)
     } map { SlotIndex(_) }
   }
 

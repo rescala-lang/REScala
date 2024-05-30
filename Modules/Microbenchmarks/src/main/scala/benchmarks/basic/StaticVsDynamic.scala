@@ -38,10 +38,10 @@ class StaticVsDynamic {
     a = stableEngine.Var { 10 }
     b = stableEngine.Var { 20 }
 
-    res = if (static) Signal.static(source, a, b) { st =>
-      if (st.dependStatic(source)) st.dependStatic(a) else st.dependStatic(b)
+    res = if static then Signal.static(source, a, b) { st =>
+      if st.dependStatic(source) then st.dependStatic(a) else st.dependStatic(b)
     }
-    else Signal.dynamic { if (source.value) a.value else b.value }
+    else Signal.dynamic { if source.value then a.value else b.value }
 
   }
 

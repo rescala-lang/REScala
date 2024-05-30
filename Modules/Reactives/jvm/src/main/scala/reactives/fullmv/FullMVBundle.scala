@@ -134,7 +134,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
     instances.put(Host.dummyGuid, dummy)
     dummy.beginExecuting()
     dummy.completeExecuting()
-    if (Host.DEBUG || SubsumableLockImpl.DEBUG || FullMVUtil.DEBUG)
+    if Host.DEBUG || SubsumableLockImpl.DEBUG || FullMVUtil.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this SETUP COMPLETE")
     dummy
   }
@@ -154,11 +154,11 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
     val turn        = newTurn()
     val transaction = TransactionHandle(turn)
     dynamicScope.withDynamicInitializer(transaction) {
-      if (declaredWrites.nonEmpty) {
+      if declaredWrites.nonEmpty then {
         // framing phase
         turn.beginFraming()
         turn.activeBranchDifferential(TurnPhase.Framing, declaredWrites.size)
-        for (i <- declaredWrites) threadPool.submit(new Framing(turn, i))
+        for i <- declaredWrites do threadPool.submit(new Framing(turn, i))
         turn.completeFraming()
       } else {
         turn.beginExecuting()
@@ -167,17 +167,17 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
       // admission phase
       val admissionTicket = new AdmissionTicket[State](transaction, declaredWrites)
       val admissionResult = Try { admissionPhase(admissionTicket) }
-      if (FullMVUtil.DEBUG) admissionResult match {
+      if FullMVUtil.DEBUG then admissionResult match {
         case scala.util.Failure(e) => e.printStackTrace()
         case _                     =>
       }
       assert(turn.activeBranches.get == 0, s"Admission phase left ${turn.activeBranches.get()} tasks undone.")
 
       // propagation phase
-      if (declaredWrites.nonEmpty) {
+      if declaredWrites.nonEmpty then {
         turn.initialChanges = admissionTicket.initialChanges
         turn.activeBranchDifferential(TurnPhase.Executing, declaredWrites.size)
-        for (write <- declaredWrites)
+        for write <- declaredWrites do
           threadPool.submit(new SourceNotification(
             turn,
             write,
@@ -190,7 +190,7 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
 
       // wrap-up "phase"
       val transactionResult =
-        if (admissionTicket.wrapUp == null) {
+        if admissionTicket.wrapUp == null then {
           admissionResult
         } else {
           admissionResult.map { i =>
@@ -225,11 +225,11 @@ trait FullMVTurn
   val waiters = new ConcurrentHashMap[Thread, TurnPhase.Type]()
   def wakeWaitersAfterPhaseSwitch(newPhase: TurnPhase.Type): Unit = {
     val it = waiters.entrySet().iterator()
-    while (it.hasNext) {
+    while it.hasNext do {
       val waiter = it.next()
-      if (FullMVUtil.DEBUG)
+      if FullMVUtil.DEBUG then
         println(s"[${Thread.currentThread().getName}] $this phase switch unparking ${waiter.getKey.getName}.")
-      if (waiter.getValue <= newPhase) LockSupport.unpark(waiter.getKey)
+      if waiter.getValue <= newPhase then LockSupport.unpark(waiter.getKey)
     }
   }
 
@@ -251,13 +251,13 @@ trait FullMVTurn
       replicator: FullMVTurnPhaseReflectionProxy,
       knownPhase: TurnPhase.Type
   ): Unit = {
-    if (phase < TurnPhase.Completed) {
+    if phase < TurnPhase.Completed then {
       val added = FullMVTurn.atomicAdd(phaseReplicators, replicator)
       assert(
         added || phase == TurnPhase.Completed,
         s"phase replicator addition should only return failure, if $this is completed"
       )
-      if (knownPhase < phase) replicator.asyncNewPhase(phase)
+      if knownPhase < phase then replicator.asyncNewPhase(phase)
     } else {
       replicator.asyncNewPhase(TurnPhase.Completed)
     }
@@ -272,9 +272,9 @@ trait FullMVTurn
       startAt: TransactionSpanningTreeNode[FullMVTurn],
       clock: Int
   ): Unit = {
-    if (phase < TurnPhase.Completed) {
+    if phase < TurnPhase.Completed then {
       val added = FullMVTurn.atomicAdd(predecessorReplicators, replicator)
-      if (!added) {
+      if !added then {
         assert(
           phase == TurnPhase.Completed,
           s"phase replicator addition should only return failure, if $this is completed"
@@ -282,7 +282,7 @@ trait FullMVTurn
       } else {
         ensurePredecessorReplication(startAt, clock)
         val (knownPreds, knownClock) = clockedPredecessors
-        if (clock < knownClock) {
+        if clock < knownClock then {
           replicator.newPredecessors(knownPreds, knownClock)
           ()
         }
@@ -318,7 +318,7 @@ trait FullMVTurn
       needsReevaluation: Boolean
   ): Unit = {
 //    assert(Thread.currentThread() == userlandThread, s"$this ignition of $reactive on different thread ${Thread.currentThread().getName}")
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this igniting $reactive on $incoming")
     incoming.foreach { discover =>
       discover.state.dynamicAfter(this) // TODO should we get rid of this?
       val (successorWrittenVersions, maybeFollowFrame) = discover.state.discover(this, reactive)
@@ -336,26 +336,26 @@ trait FullMVTurn
     val ignitionNotification = new Notification(this, reactive, changed = needsReevaluation)
     ignitionNotification.deliverNotification() match {
       case (true, DoNothing) =>
-        if (FullMVUtil.DEBUG)
+        if FullMVUtil.DEBUG then
           println(s"[${Thread.currentThread().getName}] $this initialize $reactive spawned a branch.")
       case (false, DoNothing) =>
-        if (FullMVUtil.DEBUG)
+        if FullMVUtil.DEBUG then
           println(
             s"[${Thread.currentThread().getName}] $this initialize $reactive did not spawn a branch or reevaluation."
           )
         activeBranchDifferential(TurnPhase.Executing, -1)
       case (retainBranch, ReevaluationReady) =>
-        if (FullMVUtil.DEBUG)
+        if FullMVUtil.DEBUG then
           println(s"[${Thread.currentThread().getName}] $this initialize $reactive spawned reevaluation.")
         new Reevaluation(this, reactive).doReevaluation(retainBranch)
       case (true, NotifyAndReevaluationReadySuccessor(out, succTxn)) if out.isEmpty =>
-        if (FullMVUtil.DEBUG)
+        if FullMVUtil.DEBUG then
           println(
             s"[${Thread.currentThread().getName}] $this initialize $reactive spawned reevaluation for successor $succTxn."
           )
         activeBranchDifferential(TurnPhase.Executing, -1)
         val succReev = new Reevaluation(succTxn, reactive)
-        if (ForkJoinTask.inForkJoinPool()) {
+        if ForkJoinTask.inForkJoinPool() then {
           succReev.fork()
           ()
         } else {
@@ -374,7 +374,7 @@ trait FullMVTurn
   def discover(node: ReSource.of[State], addOutgoing: Derived.of[State]): Unit = {
     val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.discover(this, addOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: discover $node -> $addOutgoing retrofits $r from ${node.state}")
-    if (FullMVUtil.DEBUG)
+    if FullMVUtil.DEBUG then
       println(
         s"[${Thread.currentThread().getName}] Reevaluation($this,$addOutgoing) discovering $node -> $addOutgoing re-queueing $successorWrittenVersions and re-framing $maybeFollowFrame"
       )
@@ -385,7 +385,7 @@ trait FullMVTurn
   def drop(node: ReSource.of[State], removeOutgoing: Derived.of[State]): Unit = {
     val /*r @*/ (successorWrittenVersions, maybeFollowFrame) = node.state.drop(this, removeOutgoing)
 //    assert((successorWrittenVersions ++ maybeFollowFrame).forall(retrofit => retrofit == this || retrofit.isTransitivePredecessor(this)), s"$this retrofitting contains predecessors: drop $node -> $removeOutgoing retrofits $r from ${node.state}")
-    if (FullMVUtil.DEBUG)
+    if FullMVUtil.DEBUG then
       println(
         s"[${Thread.currentThread().getName}] Reevaluation($this,$removeOutgoing) dropping $node -> $removeOutgoing de-queueing $successorWrittenVersions and de-framing $maybeFollowFrame"
       )
@@ -410,8 +410,8 @@ object FullMVTurn {
   def atomicAdd[T](list: AtomicReference[List[T]], element: T): Boolean = {
     @tailrec def tryAdd(): Boolean = {
       val before = list.get()
-      if (before != null) {
-        if (!list.compareAndSet(before, element :: before)) {
+      if before != null then {
+        if !list.compareAndSet(before, element :: before) then {
           tryAdd()
         } else {
           true

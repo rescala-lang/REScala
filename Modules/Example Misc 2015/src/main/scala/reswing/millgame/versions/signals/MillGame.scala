@@ -74,7 +74,7 @@ class MillGame {
 
   board.numStonesChanged observe { // #HDL
     case (color, n) =>
-      if (remainCount.now.apply(color) == 0 && n < 3) {
+      if remainCount.now.apply(color) == 0 && n < 3 then {
         stateVar set GameOver(color.other)
       }
   }
@@ -86,8 +86,8 @@ class MillGame {
   } // #EVT //#EF
 
   private def nextState(player: Slot): Gamestate =
-    if (remainCount.now.apply(player) > 0) PlaceStone(player)
-    else if (board.numStones.now.apply(player) == 3) JumpStoneSelect(player)
+    if remainCount.now.apply(player) > 0 then PlaceStone(player)
+    else if board.numStones.now.apply(player) == 3 then JumpStoneSelect(player)
     else MoveStoneSelect(player)
 
   private def decrementCount(player: Slot): Unit = {
@@ -98,7 +98,7 @@ class MillGame {
     state match {
 
       case PlaceStone(player) =>
-        if (board.canPlace.now.apply(i)) {
+        if board.canPlace.now.apply(i) then {
           stateVar set nextState(player.other)
           decrementCount(player)
           board.place(i, player)
@@ -106,20 +106,20 @@ class MillGame {
         } else false
 
       case remove @ RemoveStone(player) =>
-        if (board(i) == remove.color) {
+        if board(i) == remove.color then {
           board.remove(i)
           stateVar set nextState(player.other)
           true
         } else false
 
       case MoveStoneSelect(player) =>
-        if (board(i) == player) {
+        if board(i) == player then {
           stateVar set MoveStoneDrop(player, i)
           true
         } else false
 
       case MoveStoneDrop(player, stone) =>
-        if (board.canMove.now.apply(stone, i)) {
+        if board.canMove.now.apply(stone, i) then {
           stateVar set nextState(player.other)
           board.move(stone, i)
           true
@@ -129,13 +129,13 @@ class MillGame {
         }
 
       case JumpStoneSelect(player) =>
-        if (board(i) == player) {
+        if board(i) == player then {
           stateVar set JumpStoneDrop(player, i)
           true
         } else false
 
       case JumpStoneDrop(player, stone) =>
-        if (board.canJump.now.apply(stone, i)) {
+        if board.canJump.now.apply(stone, i) then {
           stateVar set nextState(player.other)
           board.move(stone, i)
           true

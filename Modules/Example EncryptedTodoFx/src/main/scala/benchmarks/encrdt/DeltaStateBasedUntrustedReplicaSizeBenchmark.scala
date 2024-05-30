@@ -18,7 +18,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
 
   val minElementExponent = 1 // 10 ** this as minimum tested total elements added to CRDT
   val maxElementExponent = 3 // 10 ** this as maximum tested total elements added to CRDT
-  for (totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10d, i.toDouble).toInt)) {
+  for totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10d, i.toDouble).toInt) do {
     // val totalElements     = 10_000 // Commment out, if using the loop above
     val maxParallelStates = 4
     val elementsInCommon  = totalElements - maxParallelStates
@@ -28,7 +28,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
     val benchmarkSharedCrdt: DeltaAddWinsLastWriterWinsMap[String, String] =
       new DeltaAddWinsLastWriterWinsMap[String, String]("0")
 
-    for (i <- 0 until elementsInCommon) {
+    for i <- 0 until elementsInCommon do {
       val entry = dummyKeyValuePairs(i)
       benchmarkSharedCurrentDot = benchmarkSharedCurrentDot.advance
       val delta    = benchmarkSharedCrdt.putDelta(entry._1, entry._2)
@@ -36,14 +36,14 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
       benchmarkSharedUntrustedReplica.receive(encDelta)
     }
 
-    for (parallelStates <- 1 to maxParallelStates) {
+    for parallelStates <- 1 to maxParallelStates do {
       val crdt =
         new DeltaAddWinsLastWriterWinsMap[String, String]("0", benchmarkSharedCrdt.state, benchmarkSharedCrdt.deltas)
       val untrustedReplica = benchmarkSharedUntrustedReplica.copy()
       var localDot         = Dot("0", 0);
       // Populate CRDT with missing elements (before adding concurrent updates)
       {
-        for (i <- elementsInCommon until (totalElements - parallelStates)) {
+        for i <- elementsInCommon until (totalElements - parallelStates) do {
           val entry = dummyKeyValuePairs(i)
           localDot = localDot.advance
           val delta    = crdt.putDelta(entry._1, entry._2)
@@ -52,7 +52,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
         }
 
         var unmergedDeltas = List.empty[DeltaAddWinsLastWriterWinsMap.StateType[String, String]]
-        for (replicaId <- 1 to parallelStates) {
+        for replicaId <- 1 to parallelStates do {
           val entry = dummyKeyValuePairs(totalElements - replicaId)
           val replicaSpecificCrdt =
             new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, crdt.state, crdt.deltas)
@@ -95,14 +95,14 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
   val untrustedReplica = new UntrustedDeltaBasedReplicaMock()
 
   val totalElements = 10_000
-  for (i <- 0 until totalElements) {
+  for i <- 0 until totalElements do {
     val entry = dummyKeyValuePairs(i)
     val delta = crdt.putDelta(entry._1, entry._2)
     currentDot = currentDot.advance
     val encDelta = DecryptedDeltaGroup(delta, Dots.single(currentDot)).encrypt(aead)
     untrustedReplica.receive(encDelta)
 
-    if ((i + 1) % 1_000 == 0) {
+    if (i + 1) % 1_000 == 0 then {
       val serializedInternalCrdt = writeToArray(crdt.state)
       val encrdtFullyMerged      = DecryptedDeltaGroup(crdt.state, untrustedReplica.getCausalContext).encrypt(aead)
       val encrdtFullyMergedSize =
@@ -122,7 +122,7 @@ trait DeltaStateUntrustedReplicaSizeBenchEnvironment {
   val csvHeader = "concurrentUpdates,commonElements,uniqueElements,untrustedReplicaSize,mergedSize,mergedEncryptedSize"
 
   val outDir: Path = Paths.get("./", "benchmarks", "results")
-  if (!outDir.toFile.exists())
+  if !outDir.toFile.exists() then
     outDir.toFile.mkdirs()
     ()
   val aead: Aead                                  = Helper.setupAead("AES128_GCM")

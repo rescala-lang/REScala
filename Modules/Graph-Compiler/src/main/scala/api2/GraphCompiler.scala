@@ -78,7 +78,7 @@ class GraphCompiler(using Quotes)(
   }
 
   private def computeSubGraph(startNodes: Set[CompiledReactive]): Set[CompiledReactive] = {
-    if (startNodes.isEmpty) {
+    if startNodes.isEmpty then {
       Set()
     } else {
       val activatedNext = startNodes.flatMap { n =>
@@ -437,7 +437,7 @@ class GraphCompiler(using Quotes)(
         )
     }
 
-    val body = if (hasOutputReactives) {
+    val body = if hasOutputReactives then {
       val outputMsgDecl =
         CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
 
@@ -479,7 +479,7 @@ class GraphCompiler(using Quotes)(
     val eDecl              = CParmVarDecl("e", CPointerType(DyadH.dyad_Event))
     val assignClientStream = CAssignmentExpr(clientStream.ref, CMemberExpr(eDecl.ref, DyadH.remoteField, true))
 
-    val body = if (hasExternalSources) {
+    val body = if hasExternalSources then {
       CCompoundStmt(List(
         CCallExpr(
           DyadH.dyad_addListener.ref,
@@ -508,7 +508,7 @@ class GraphCompiler(using Quotes)(
       case v: CVarDecl => release(v, CFalseLiteral)
     }.flatten
 
-    val body = if (isConnected) {
+    val body = if isConnected then {
       val checkArgs = CIfStmt(
         CLessThanExpr(argc.ref, 2.lit),
         CCompoundStmt(List(
@@ -530,7 +530,7 @@ class GraphCompiler(using Quotes)(
         )
       )
 
-      val updateFromLocalSources = if (!hasExternalSources) {
+      val updateFromLocalSources = if !hasExternalSources then {
         val outputMsgDecl =
           CVarDecl("outputMsg", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
 

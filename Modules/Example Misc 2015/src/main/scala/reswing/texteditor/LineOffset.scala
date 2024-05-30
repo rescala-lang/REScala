@@ -4,18 +4,18 @@ class LineIterator(it: Iterator[Char]) extends Iterator[String] {
   private var blank            = !it.hasNext
   private var ch: Option[Char] = None
   private def nextChar =
-    if (ch.nonEmpty) { val c = ch.get; ch = None; c }
+    if ch.nonEmpty then { val c = ch.get; ch = None; c }
     else it.next()
 
   def hasNext = blank || !ch.isEmpty || it.hasNext
   def next(): String = {
-    if (blank) { blank = false; return "" }
+    if blank then { blank = false; return "" }
 
     val sb = new StringBuilder
-    while (hasNext)
+    while hasNext do
       nextChar match {
         case '\r' =>
-          if (hasNext)
+          if hasNext then
             it.next() match {
               case '\n' => blank = !hasNext; return sb.toString + "\r\n"
               case c    => ch = Some(c)
@@ -45,8 +45,8 @@ object Position {
 object LineOffset {
   def position(it: Iterator[Char], offset: Int): Position = {
     var (row, col, prev) = (0, 0, ' ')
-    for (ch <- it.slice(0, offset)) {
-      if (ch != '\n' || prev != '\r')
+    for ch <- it.slice(0, offset) do {
+      if ch != '\n' || prev != '\r' then
         ch match {
           case '\n' | '\r' => col = 0; row += 1
           case _           => col += 1
@@ -61,10 +61,10 @@ object LineOffset {
 
   def offset(it: Iterator[Char], position: Position): Int = {
     var (row, col, off, prev) = (0, 0, 0, ' ')
-    while (it.hasNext) {
+    while it.hasNext do {
       val ch = it.next()
-      if (ch != '\n' || prev != '\r') {
-        if (position == Position(row, col) || (position.row == row && (ch == '\n' || ch == '\r')))
+      if ch != '\n' || prev != '\r' then {
+        if position == Position(row, col) || (position.row == row && (ch == '\n' || ch == '\r')) then
           return off
 
         ch match {

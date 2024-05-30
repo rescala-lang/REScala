@@ -27,12 +27,12 @@ class ChainSignalHalfChange {
     engine = engineParam.engine
     source = Var(step.run())
     result = source
-    for (_ <- Range(0, size.size)) {
+    for _ <- Range(0, size.size) do {
       result = result.map { v =>
         val r = v + 1; work.consume(); r
       }
     }
-    for (_ <- Range(0, size.size)) {
+    for _ <- Range(0, size.size) do {
       result = result.map { v =>
         v + 1; work.consume(); 0
       }

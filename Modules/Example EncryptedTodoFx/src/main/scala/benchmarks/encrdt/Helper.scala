@@ -10,7 +10,7 @@ import java.util.UUID
 object Helper {
   def uuidKeyValuePairs(size: Int): Array[(String, String)] = {
     val arr = new Array[(String, String)](size)
-    for (i <- arr.indices) {
+    for i <- arr.indices do {
       arr(i) = UUID.randomUUID().toString -> UUID.randomUUID().toString
     }
     arr
@@ -18,14 +18,14 @@ object Helper {
 
   def dummyKeyValuePairs(size: Int): Array[(String, String)] = {
     val arr = new Array[(String, String)](size)
-    for (i <- arr.indices) {
+    for i <- arr.indices do {
       arr(i) = scala.util.Random.nextString(10) -> scala.util.Random.nextString(10)
     }
     arr
   }
 
   def setupAead(keyTemplateString: String): Aead = {
-    if (Conscrypt.isAvailable) {
+    if Conscrypt.isAvailable then {
       Conscrypt.checkAvailability()
       Security.addProvider(Conscrypt.newProvider)
     } else

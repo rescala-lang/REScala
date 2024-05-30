@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
 class ContentConnectionManager(dataManager: DataManager[?]) {
 
   val wsUri: String = {
-    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
+    val wsProtocol = if dom.document.location.protocol == "https:" then "wss" else "ws"
     val path       = dom.document.location.pathname
     val li         = path.lastIndexOf('/')
     val parent =

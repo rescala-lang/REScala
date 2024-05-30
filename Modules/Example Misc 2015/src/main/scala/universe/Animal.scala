@@ -50,7 +50,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
   private val statePos: Signal[(AnimalState, Pos)] = step.fold((Idling: AnimalState, Pos(0, 0))) { (p1, p2) =>
     (p1, p2) match {
       case ((oldState, oldPos), (newPos, prey)) =>
-        if (prey) (FallPrey, oldPos)
+        if prey then (FallPrey, oldPos)
         else (nextAction(newPos), newPos)
     }
   }
@@ -90,7 +90,7 @@ abstract class Animal(implicit world: World) extends BoardElement {
         world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFood.readValueOnce) match {
           case Some(target) =>
             val destination = world.board.getPosition(target)
-            if (destination.isDefined)
+            if destination.isDefined then
               Moving(pos.directionTo(destination.get))
             else
               randomMove

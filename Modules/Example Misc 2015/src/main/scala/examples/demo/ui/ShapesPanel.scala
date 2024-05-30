@@ -21,7 +21,7 @@ class ShapesPanel(val shapes: Signal[Iterable[Shape]]) extends Panel {
       g.fillRect(0, 0, size.width, size.height)
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g.translate(size.width / 2, size.height / 2)
-      for (shape <- turn.now(shapes)) {
+      for shape <- turn.now(shapes) do {
         try {
           shape.drawSnapshot(g)
         } catch {

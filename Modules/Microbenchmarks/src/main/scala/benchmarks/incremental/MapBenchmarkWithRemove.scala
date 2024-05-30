@@ -47,7 +47,7 @@ class MapBenchmarkWithRemove {
   @Benchmark
   def testSeq(blackHole: Blackhole): Unit = {
     var toRemove = Random.nextInt(arg)
-    if (toRemove < 1)
+    if toRemove < 1 then
       toRemove = 1
 
     removeEvent.fire(toRemove)
@@ -58,7 +58,7 @@ class MapBenchmarkWithRemove {
   @Benchmark
   def testReactSeq(blackHole: Blackhole): Unit = {
     var toRemove = Random.nextInt(arg)
-    if (toRemove < 1)
+    if toRemove < 1 then
       toRemove = 1
 
     reactSeq.remove(toRemove)

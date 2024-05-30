@@ -73,7 +73,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
     val xFactors = List.fill(3)(List(-1, -1, -1, 0, 1, 1, 1, 0)).flatten
     val yFactors = List.fill(3)(List(-1, 0, 1, 1, 1, 0, -1, -1)).flatten
 
-    for (((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex) yield {
+    for ((xF, yF), i) <- (xFactors zip yFactors).zipWithIndex yield {
       val distance: Int =
         (i / 8 match {
           case 0 => InnerPercent * squareSize.value.toFloat
@@ -116,7 +116,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
 
   val moveLines = Signal { // #SIG
     val possibleMoves =
-      if (selectedIndex.value == SlotIndex(-1))
+      if selectedIndex.value == SlotIndex(-1) then
         game.possibleNextMoves.value filter {
           case (from, to) => from == highlightedIndex.value || to == highlightedIndex.value
         }
@@ -159,7 +159,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       case (color, i) if color != Empty =>
         Presentation(
           Circle(coordinates.value(i), StoneRadius),
-          color = if (color == Black) Color.BLACK else Color.WHITE
+          color = if color == Black then Color.BLACK else Color.WHITE
         )
     })
   }
@@ -176,7 +176,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
       RenderingHints.VALUE_ANTIALIAS_ON
     )
 
-    for (p <- presentation.now)
+    for p <- presentation.now do
       p match {
         case Presentation(shape, color, width) =>
           g.setColor(color)

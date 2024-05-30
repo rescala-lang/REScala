@@ -26,7 +26,7 @@ class SimplePhil {
 
   def buildPhil(): (Var[Philosopher], Signal[Vision]) = {
     val p: Var[Philosopher] = Var(Thinking)
-    val f1, f2              = p.map(s => if (s == Thinking) Free else Taken("me"))
+    val f1, f2              = p.map(s => if s == Thinking then Free else Taken("me"))
     val v                   = Signal.lift(f1, f2) { calcVision("me") }
     (p, v)
   }

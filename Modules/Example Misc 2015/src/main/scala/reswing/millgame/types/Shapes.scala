@@ -42,7 +42,7 @@ case class Point[@specialized(Int, Double) T: Numeric](x: T, y: T) extends Shape
   def /(d: Double)   = Point(x.toDouble / d, y.toDouble / d)
 
   def euclidian                   = math.sqrt((x * x + y * y).toDouble)
-  def normalize                   = if (x == 0 && y == 0) this else this / euclidian
+  def normalize                   = if x == 0 && y == 0 then this else this / euclidian
   infix def distance(p: Point[T]) = (p - this).euclidian
   def directionTo(p: Point[T])    = (p - this).normalize
 }

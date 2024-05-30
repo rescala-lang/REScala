@@ -213,7 +213,7 @@ class SingleGroupSync[RDT](
   private val antiEntropyThread = executor.submit(new Runnable:
     private val rand = Random()
     override def run(): Unit =
-      while (!stopped) {
+      while !stopped do {
         Thread.sleep(Duration(30, SECONDS).toMillis)
 
         val users                        = connectionManager.connectedUsers

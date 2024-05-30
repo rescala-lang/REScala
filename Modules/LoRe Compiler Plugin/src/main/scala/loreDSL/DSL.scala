@@ -52,25 +52,25 @@ class DSLPhase extends PluginPhase:
   ): Term =
     tree match
       case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal integer value $num")
         else
           println(s"${"\t".repeat(indentLevel)}The parameter is the literal integer value $num")
         TNum(num)
       case Literal(Constant(str: String)) => // Basic string values like "foo"
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal string value $str")
         else
           println(s"${"\t".repeat(indentLevel)}The parameter is the literal string value $str")
         TString(str)
       case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal boolean value $bool")
         else
           println(s"${"\t".repeat(indentLevel)}The parameter is the literal boolean value $bool")
-        if (bool) TTrue() else TFalse()
+        if bool then TTrue() else TFalse()
       case Ident(referenceName: Name) => // References to variables (any type)
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a reference to \"$referenceName\"")
         else
           println(s"${"\t".repeat(indentLevel)}The parameter is a reference to \"$referenceName\"")
@@ -79,7 +79,7 @@ class DSLPhase extends PluginPhase:
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
       case Select(arg, op) => // Unary operator application, proceeds recursively
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(
             s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
           )
@@ -96,7 +96,7 @@ class DSLPhase extends PluginPhase:
             )        // No access to sourcePos here due to LazyTree
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
-        if (operandSide.nonEmpty)
+        if operandSide.nonEmpty then
           println(
             s"${"\t".repeat(indentLevel)}The $operandSide parameter is an operator application of the form \"left ${op.show} right\""
           )
@@ -184,7 +184,7 @@ class DSLPhase extends PluginPhase:
           case reactiveSourcePattern(typeArg) =>
             println(s"Detected Source definition with $typeArg type parameter")
             // Only Int, String and Boolean type parameters are supported
-            if (!typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean")) {
+            if !typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean") then {
               report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
             }
             rhs match

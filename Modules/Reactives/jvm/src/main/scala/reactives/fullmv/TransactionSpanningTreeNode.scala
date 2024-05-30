@@ -36,7 +36,7 @@ class MutableTransactionSpanningTreeNode[T](val txn: T) extends TransactionSpann
   // iterator() is thread-safe following this pattern in that first calling hasNext() compares against size, and calling next() afterwards is then safe.
   // concurrent writes may or may not be visible, clients must manually implement according synchronization if required.
   def addChild(child: MutableTransactionSpanningTreeNode[T]): Unit = {
-    if (children.length == size) {
+    if children.length == size then {
       val newChildren = new Array[MutableTransactionSpanningTreeNode[T]](children.length + (children.length >> 1))
       System.arraycopy(children, 0, newChildren, 0, size)
       children = newChildren

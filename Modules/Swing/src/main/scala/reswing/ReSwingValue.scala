@@ -19,11 +19,11 @@ sealed abstract class ReSwingValue[T] {
   private[reswing] def get: T
   private[reswing] def use(setter: T => Unit): Unit
 
-  final private[reswing] def update(value: T): Unit = { latestValue = value; if (event.isDefined) event().fire(value) }
+  final private[reswing] def update(value: T): Unit = { latestValue = value; if event.isDefined then event().fire(value) }
   final private[reswing] def initLazily(initLazily: ReSwingValue[T] => Unit): Unit = {
-    if (signal.isDefined) initLazily(this) else init = initLazily
+    if signal.isDefined then initLazily(this) else init = initLazily
   }
-  final private[reswing] def initPerform(): Unit = { if (init != null) { init(this); init = null } }
+  final private[reswing] def initPerform(): Unit = { if init != null then { init(this); init = null } }
 }
 
 final case class ReSwingNoValue[T]() extends ReSwingValue[T] {
@@ -45,7 +45,7 @@ final case class ReSwingEventValue[T](private val value: Lazy[Event[T]]) extends
   private[reswing] def fixed = false
   private[reswing] def get   = latestValue
   private[reswing] def use(setter: T => Unit) = {
-    value() observe { value => if (get != value) setter(value) }
+    value() observe { value => if get != value then setter(value) }
     ()
   }
 }

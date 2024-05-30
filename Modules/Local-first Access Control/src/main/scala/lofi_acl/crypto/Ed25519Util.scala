@@ -15,7 +15,7 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
 object Ed25519Util {
-  if (Security.getProvider("BC") == null) {
+  if Security.getProvider("BC") == null then {
     val _ = Security.addProvider(new BouncyCastleProvider())
   }
 
@@ -50,7 +50,7 @@ object Ed25519Util {
   private[crypto] def keyPairToKeyParameters(
       keyPair: KeyPair
   ): (Ed25519PublicKeyParameters, Ed25519PrivateKeyParameters) = {
-    if ("Ed25519" != keyPair.getPrivate.getAlgorithm && "EdDSA" != keyPair.getPrivate.getAlgorithm) {
+    if "Ed25519" != keyPair.getPrivate.getAlgorithm && "EdDSA" != keyPair.getPrivate.getAlgorithm then {
       throw IllegalArgumentException(s"Not an Ed25519 key, but a ${keyPair.getPrivate.getAlgorithm}")
     }
 
@@ -76,21 +76,21 @@ object Ed25519Util {
   }
 
   def publicKeyToRawPublicKeyBytes(publicKey: PublicKey): Array[Byte] = {
-    if ("Ed25519" != publicKey.getAlgorithm && "EdDSA" != publicKey.getAlgorithm) {
+    if "Ed25519" != publicKey.getAlgorithm && "EdDSA" != publicKey.getAlgorithm then {
       throw IllegalArgumentException(s"Expected an Ed25519 key, got ${publicKey.getAlgorithm}")
     }
     val asn1Primitive = new ASN1InputStream(new ByteArrayInputStream(publicKey.getEncoded)).readObject()
     val bytes         = SubjectPublicKeyInfo.getInstance(asn1Primitive).getPublicKeyData.getBytes
-    if (bytes.length != 32)
+    if bytes.length != 32 then
       throw IllegalArgumentException(s"Ed25519 public keys are 32 bytes long, got ${bytes.length}")
     bytes
   }
 
   def privateKeyToPkcs8EncodedPrivateKeyBytes(ed25519PrivateKey: PrivateKey): Array[Byte] = {
-    if (!List("Ed25519", "EdDSA").contains(ed25519PrivateKey.getAlgorithm)) {
+    if !List("Ed25519", "EdDSA").contains(ed25519PrivateKey.getAlgorithm) then {
       throw IllegalArgumentException(s"Expected an Ed25519 or EdDSA key, got ${ed25519PrivateKey.getAlgorithm}")
     }
-    if ("PKCS#8" != ed25519PrivateKey.getFormat) {
+    if "PKCS#8" != ed25519PrivateKey.getFormat then {
       throw RuntimeException(s"privateKey does not support PKCS#8 encoding, but uses ${ed25519PrivateKey.getFormat}")
     }
     ed25519PrivateKey.getEncoded
@@ -104,7 +104,7 @@ object Ed25519Util {
     *   the PKCS#8-PEM encoded private key
     */
   def privateKeyToPem(privateKey: PrivateKey): PrivateKeyPem = {
-    if ("PKCS#8" != privateKey.getFormat) throw RuntimeException("Given private key doesn't use PKCS#8 encoding")
+    if "PKCS#8" != privateKey.getFormat then throw RuntimeException("Given private key doesn't use PKCS#8 encoding")
     val writer    = new StringWriter()
     val pemWriter = new PemWriter(writer)
     pemWriter.writeObject(new PemObject("PRIVATE KEY", privateKey.getEncoded))

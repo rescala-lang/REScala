@@ -33,7 +33,7 @@ class Reactor[T](
       }
 
       def nextAction[E](event: Event[E], handler: E => Stage[T]): ReactorState[T] = {
-        if (progressedNextAction) {
+        if progressedNextAction then {
           return currentState
         }
 
@@ -49,7 +49,7 @@ class Reactor[T](
 
       def loopAction(loopStage: Stage[T], initialStage: Stage[T]): ReactorState[T] = {
         val resultState = processActions(currentState.copy(currentStage = loopStage))
-        if (resultState.currentStage.actions.isEmpty) {
+        if resultState.currentStage.actions.isEmpty then {
           return processActions(resultState.copy(currentStage = initialStage))
         }
 

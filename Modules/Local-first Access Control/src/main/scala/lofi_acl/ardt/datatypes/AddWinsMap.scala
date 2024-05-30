@@ -86,15 +86,15 @@ object AddWinsMap:
 
 object AddWinsLastWriterWinsMap {
   private given lwwLattice: Lattice[(Instant, String)] = (left, right) =>
-    if (left == right) left
-    else if (left._1.isAfter(right._1)) left
-    else if (right._1.isAfter(left._1)) right
-    else if (left._2 > right._2) left
-    else if (right._2 > left._2) right
+    if left == right then left
+    else if left._1.isAfter(right._1) then left
+    else if right._1.isAfter(left._1) then right
+    else if left._2 > right._2 then left
+    else if right._2 > left._2 then right
     else throw new IllegalArgumentException()
 
   private given timestampedValueLattice[V]: Lattice[(V, (Instant, String))] = (left, right) => {
-    if (Lattice.merge(left._2, right._2) == left._2) left
+    if Lattice.merge(left._2, right._2) == left._2 then left
     else right
   }
 

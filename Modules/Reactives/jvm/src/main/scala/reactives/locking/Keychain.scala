@@ -23,7 +23,7 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
   def removeFallthrough(key: Key[InterTurn]): Unit =
     synchronized {
       val old = fallthrough.getOrElse(key, 0)
-      if (old <= 1) fallthrough -= key
+      if old <= 1 then fallthrough -= key
       else fallthrough = fallthrough.updated(key, old - 1)
     }
 
@@ -32,7 +32,7 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     assert(Thread.holdsLock(this), s"tried to append $this and $other without holding lock on $this")
     assert(Thread.holdsLock(other), s"tried to append $this and $other without holding lock on $other")
     val it = other.keys.iterator()
-    while (it.hasNext()) {
+    while it.hasNext() do {
       it.next().keychain = this
     }
     other.fallthrough.foreach { case (k, a) => addFallthrough(k, a) }
@@ -46,7 +46,7 @@ class Keychain[InterTurn](init: Key[InterTurn]) {
     assert(head eq key, s"tried to drop $key from $this but is not head! ($keys)")
     val locks = key.grabLocks()
     assert(locks.toSet.size == locks.size, s"duplicated locks detected")
-    if (keys.isEmpty) {
+    if keys.isEmpty then {
       locks.foreach(_.transfer(null, key))
     } else {
       val target = keys.peek()

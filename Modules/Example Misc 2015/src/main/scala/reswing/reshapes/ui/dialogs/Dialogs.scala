@@ -9,7 +9,7 @@ abstract class CustomDialog extends Dialog {
   modal = true;
 
   def showDialog(position: Point = null) = {
-    if (position != null)
+    if position != null then
       location = position
     dialogResult = false
     visible = true

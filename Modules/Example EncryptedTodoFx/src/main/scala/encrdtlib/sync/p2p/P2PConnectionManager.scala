@@ -49,7 +49,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
   def connectToNewPeers(peers: Map[String, String]): Unit = {
     peers.filter { case (rId, rAddrUri) =>
       // don't connect to invalid replica (shouldn't happen)
-      if (rAddrUri == null) {
+      if rAddrUri == null then {
         println(s"Received no URI for replica $rId")
         false
       } else
@@ -65,7 +65,7 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
   }
 
   def addPendingConnection(remoteReplicaId: String, handler: CrdtSyncWebSocketHandler[S]): Boolean = {
-    if (!handlers.contains(remoteReplicaId))
+    if !handlers.contains(remoteReplicaId) then
       handler == pendingConnections.computeIfAbsent(
         remoteReplicaId,
         new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
@@ -77,16 +77,16 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   def promoteHandler(handler: CrdtSyncWebSocketHandler[S]): Boolean = {
     val remoteReplicaId = handler.remoteReplicaId
-    if (pendingConnections.get(remoteReplicaId) == handler) {
-      if (
+    if pendingConnections.get(remoteReplicaId) == handler then {
+      if
         handler == handlers.computeIfAbsent(
           remoteReplicaId,
           new function.Function[Any, CrdtSyncWebSocketHandler[S]] {
             override def apply(t: Any): CrdtSyncWebSocketHandler[S] = handler
           }
         )
-      ) {
-        if (pendingConnections.remove(remoteReplicaId, handler)) {
+      then {
+        if pendingConnections.remove(remoteReplicaId, handler) then {
           println(s"Promoted handler for $remoteReplicaId")
           return true
         }
@@ -105,11 +105,11 @@ class P2PConnectionManager[S](val localReplicaId: String, localStateProvider: ()
 
   def removeHandler(handler: CrdtSyncWebSocketHandler[S]): Boolean = {
     var removed = false
-    if (pendingConnections.remove(handler.remoteReplicaId, handler)) {
+    if pendingConnections.remove(handler.remoteReplicaId, handler) then {
       println(s"Removing pending handler for ${handler.remoteReplicaId}")
       removed = true
     }
-    if (handlers.remove(handler.remoteReplicaId, handler)) {
+    if handlers.remove(handler.remoteReplicaId, handler) then {
       println(s"Removing handler for ${handler.remoteReplicaId}")
       removed = true
     }

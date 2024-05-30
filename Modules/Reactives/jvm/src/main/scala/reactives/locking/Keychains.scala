@@ -8,13 +8,13 @@ object Keychains {
       k1: Key[InterTurn],
       k2: Key[InterTurn]
   )(f: (Keychain[InterTurn], Keychain[InterTurn]) => R): R = {
-    while (true) {
+    while true do {
       val kc1             = k1.keychain
       val kc2             = k2.keychain
-      val (first, second) = if (kc1.id < kc2.id) (kc1, kc2) else (kc2, kc1)
+      val (first, second) = if kc1.id < kc2.id then (kc1, kc2) else (kc2, kc1)
       first.synchronized {
         second.synchronized {
-          if (k1.keychain == kc1 && k2.keychain == kc2) return f(kc1, kc2)
+          if k1.keychain == kc1 && k2.keychain == kc2 then return f(kc1, kc2)
         }
       }
     }
@@ -34,7 +34,7 @@ object Keychains {
     val oldOwner = lock.tryLock(requester, write = false)
 
     val res: Result[Key[ParRPInterTurn]] =
-      if (oldOwner eq requester) Done(requester)
+      if oldOwner eq requester then Done(requester)
       else {
         Keychains.lockKeychains(requester, oldOwner) { (kcRequester, kcOwner) =>
           // be aware that the owner of the lock could change at any time.

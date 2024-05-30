@@ -16,7 +16,7 @@ object ElevatorApplication extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait { elevator.tick.fire() }
       Thread `sleep` 50
     }
@@ -29,7 +29,7 @@ class ElevatorApplication(val elevator: Elevator) {
     contents = new GridPanel(0, 2) {
       contents += new ElevatorPainter(elevator)
       contents += new GridPanel(elevator.nFloors, 1) {
-        for (i <- 0 until elevator.nFloors) {
+        for i <- 0 until elevator.nFloors do {
           vGap = 8
           contents += new Button {
             this.bounds

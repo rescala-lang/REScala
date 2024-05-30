@@ -43,10 +43,10 @@ object InteropTest extends App {
 
   var loopCond = true
 
-  while (loopCond) {
+  while loopCond do {
     val str = readLine()
 
-    if (str.equals("exit")) {
+    if str.equals("exit") then {
       loopCond = false
     } else {
       str.toIntOption match {

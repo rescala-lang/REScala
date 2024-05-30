@@ -41,7 +41,7 @@ case class DeltaStore[RDT] private /* private to ensure invariant (see from(…)
     else
       List.empty[(Dots, RDT)]
 
-    while (!remaining.isEmpty) {
+    while !remaining.isEmpty do {
       val dottedDelta @ (dotsOfDelta, _) = deltas(remaining.head)
       remaining = remaining.subtract(dotsOfDelta)
       collectedDeltas = dottedDelta :: collectedDeltas
@@ -137,7 +137,7 @@ case class DeltaStore[RDT] private /* private to ensure invariant (see from(…)
     var newPrefixDots = prefixDots
     var mergedDeltas  = bottom.empty
     val deltaIterator = deltas.iterator
-    while (deltaIterator.hasNext) {
+    while deltaIterator.hasNext do {
       val (dot, (dots, delta)) = deltaIterator.next()
       if !newPrefixDots.contains(dot) then
         newPrefixDots = newPrefixDots.union(dots)

@@ -28,7 +28,7 @@ object ToDoAppBenchmark extends App {
   private var aead: Aead                                 = scala.compiletime.uninitialized
   private var clientReplica: ToDoListClient              = scala.compiletime.uninitialized
 
-  if (USE_ENCRYPTION) {
+  if USE_ENCRYPTION then {
     aead = Helper.setupAead("AES128_GCM")
     val intermediaryReplica = new ToDoListIntermediary
     intermediarySizeInfo = intermediaryReplica
@@ -40,7 +40,7 @@ object ToDoAppBenchmark extends App {
   }
 
   val csvFileF =
-    if (USE_ENCRYPTION) Paths.get("./benchmarks/results/todoapp_benchmark.csv")
+    if USE_ENCRYPTION then Paths.get("./benchmarks/results/todoapp_benchmark.csv")
     else Paths.get("./benchmarks/results/todoapp_benchmark trusted intermediary.csv")
   Files.createDirectories(csvFileF.getParent)
   val csvFile = new PrintWriter(csvFileF.toFile)
@@ -58,7 +58,7 @@ object ToDoAppBenchmark extends App {
     performInteraction(interaction)
     counter += 1
 
-    if (counter % 100 == 0) {
+    if counter % 100 == 0 then {
       val checkPointStartNanoTime        = System.nanoTime()
       val nanoTimeForLast100Interactions = checkPointStartNanoTime - lastCheckPointEndNanoTime
       val last100DisseminationStatDiff   = clientReplica.disseminationStats - lastDisseminationStats
@@ -76,7 +76,7 @@ object ToDoAppBenchmark extends App {
         s"$counter,${causalitySize + rawDeltaSize},$causalitySize,$rawDeltaSize,$storedDeltasOnIntermediary,${completedEntries.size},${uncompletedEntries.size},$nanoTimeForLast100Interactions,${last100DisseminationStatDiff.total},${last100DisseminationStatDiff.addition},${last100DisseminationStatDiff.completion},${last100DisseminationStatDiff.removal}"
       )
 
-      if (counter % 1_000 == 0) {
+      if counter % 1_000 == 0 then {
         println(
           s"$counter/$numInteractions interactions completed / avg over last 100: ${(checkPointStartNanoTime - lastCheckPointEndNanoTime) / (1_000_000.0 * 100)}ms"
         )

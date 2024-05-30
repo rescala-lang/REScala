@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class PaperPhilosopherCompetition {
   @Benchmark
   def eatOnce(comp: PaperCompetition, params: ThreadParams): Unit = {
-    if (comp.philosophers > 0) {
+    if comp.philosophers > 0 then {
       comp.table.eatRandomOnce(params.getThreadIndex, params.getThreadCount)
     } else {
       comp.table.eatOnce(params.getThreadIndex * -comp.philosophers)
@@ -48,7 +48,7 @@ class PaperCompetition extends BusyThreads {
       true
     }
     assert(captureAssertionsEnabled)
-    println("Running on " + Runtime.getRuntime.availableProcessors() + " cores with assertions " + (if (assertions)
+    println("Running on " + Runtime.getRuntime.availableProcessors() + " cores with assertions " + (if assertions then
                                                                                                       "enabled."
                                                                                                     else "disabled."))
   }
@@ -62,9 +62,9 @@ class PaperCompetition extends BusyThreads {
       case "static"      => Dynamicity.Static
       case otherwise     => throw new IllegalArgumentException("not a valid dynamicity: " + otherwise)
     }
-    val size = if (philosophers > 0) philosophers else Math.max(3, -philosophers * params.getThreads)
+    val size = if philosophers > 0 then philosophers else Math.max(3, -philosophers * params.getThreads)
     table =
-      if (engineParam.engineName == "unmanaged") {
+      if engineParam.engineName == "unmanaged" then {
         topper match {
           case "event" =>
             new PaperPhilosophers(size, engineParam.engine, dynamic) with EventPyramidTopper with ManualLocking

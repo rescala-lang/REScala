@@ -34,12 +34,12 @@ class Circle(
     val x = turn.now(centerX) - d / 2
     val y = turn.now(centerY) - d / 2
     val f = turn.now(fill)
-    if (f.isDefined) {
+    if f.isDefined then {
       g.setColor(f.get)
       g.fillOval(x, y, d, d)
     }
     val b = turn.now(border)
-    if (b.isDefined) {
+    if b.isDefined then {
       g.setColor(b.get)
       g.drawOval(x, y, d, d)
     }
@@ -62,12 +62,12 @@ class Rectangle(
     val x = turn.now(centerX) - w / 2
     val y = turn.now(centerY) - h / 2
     val f = turn.now(fill)
-    if (f.isDefined) {
+    if f.isDefined then {
       g.setColor(f.get)
       g.fillRect(x, y, w, h)
     }
     val b = turn.now(border)
-    if (b.isDefined) {
+    if b.isDefined then {
       g.setColor(b.get)
       g.drawRect(x, y, w, h)
     }

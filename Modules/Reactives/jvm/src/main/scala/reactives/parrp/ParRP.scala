@@ -73,13 +73,13 @@ trait ParRP extends Levelbased {
       initialWrites.foreach(offer)
       val priorKey = priorTurn.fold[Key[ParRPInterTurn]](null)(_.key)
 
-      while (!toVisit.isEmpty) {
+      while !toVisit.isEmpty do {
         val reactive = toVisit.pop()
         val owner    = reactive.state.lock.getOwner
-        if ((priorKey ne null) && (owner eq priorKey))
+        if (priorKey ne null) && (owner eq priorKey) then
           throw new IllegalStateException(s"$this tried to lock reactive $reactive owned by its parent $priorKey")
-        if (owner ne key) {
-          if (reactive.state.lock.tryLock(key) eq key)
+        if owner ne key then {
+          if reactive.state.lock.tryLock(key) eq key then
             reactive.state.outgoing.foreach { offer }
           else {
             key.reset()
@@ -101,9 +101,9 @@ trait ParRP extends Levelbased {
       */
     override def discover(source: ReSource, sink: Derived): Unit = {
       val owner = acquireShared(source)
-      if (owner ne key) {
+      if owner ne key then {
         owner.turn.discover(source, sink)
-        if (source.state.lock.isWriteLock) {
+        if source.state.lock.isWriteLock then {
           owner.turn.admit(sink)
           key.lockKeychain { _.addFallthrough(owner) }
         }
@@ -115,16 +115,16 @@ trait ParRP extends Levelbased {
     /** this is for cases where we register and then unregister the same dependency in a single turn */
     override def drop(source: ReSource, sink: Derived): Unit = {
       val owner = acquireShared(source)
-      if (owner ne key) {
+      if owner ne key then {
         owner.turn.drop(source, sink)
-        if (source.state.lock.isWriteLock) {
+        if source.state.lock.isWriteLock then {
           key.lockKeychain(_.removeFallthrough(owner))
-          if (
+          if
             !sink.state.incoming.exists { inc =>
               val lock = inc.state.lock
               lock.isOwner(owner) && lock.isWriteLock
             }
-          ) owner.turn.forget(sink)
+          then owner.turn.forget(sink)
         }
       } else super.drop(source, sink)
     }

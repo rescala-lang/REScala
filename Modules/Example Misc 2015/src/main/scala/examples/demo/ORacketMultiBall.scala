@@ -27,7 +27,7 @@ object ORacketMultiBall extends Main {
     val height = Var(100)
     val width  = Var(10)
 
-    val posX = fieldWidth.map(w => (if (isRight) 1 else -1) * (w / 2 - 25))
+    val posX = fieldWidth.map(w => (if isRight then 1 else -1) * (w / 2 - 25))
     val posY = {
       Signal {
         math.max(
@@ -52,7 +52,7 @@ object ORacketMultiBall extends Main {
       shapeInsideRacket.changed.filter(_ == true)
     }
 
-    val shape = new Rectangle(posX, posY, width, height, fill = Var(Some(if (isRight) Color.BLUE else Color.RED)))
+    val shape = new Rectangle(posX, posY, width, height, fill = Var(Some(if isRight then Color.BLUE else Color.RED)))
   }
 
   val shapes = Var[List[Shape]](List.empty)
@@ -67,7 +67,7 @@ object ORacketMultiBall extends Main {
     new BouncingBall(-200d, 100d, Var(50), panel.Mouse.middleButton.pressed)
   )
 
-  for (bouncingBall <- balls) {
+  for bouncingBall <- balls do {
     shapes.transform(bouncingBall.shape :: _)
 
     val fieldCollisions = playingField.colliders(bouncingBall.shape)

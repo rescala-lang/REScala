@@ -193,7 +193,7 @@ class ConnectionManager[MSG](
       new Runnable:
         override def run(): Unit = {
           val input = new DataInputStream(socket.getInputStream)
-          while (!stopped)
+          while !stopped do
             try {
               val lengthOfMessage = input.readInt() // Length of message is sent before message itself.
               val message         = input.readNBytes(lengthOfMessage)

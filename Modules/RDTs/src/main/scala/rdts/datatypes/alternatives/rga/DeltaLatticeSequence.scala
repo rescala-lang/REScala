@@ -38,7 +38,7 @@ object DeltaSequence {
         case None        => DeltaSequenceOrder(Map(left -> insertee))
         case Some(right) =>
           // sort order during merge based on most recent on towards start
-          if (right.timestamp > insertee.timestamp) addRightEdgeDelta(right, insertee)
+          if right.timestamp > insertee.timestamp then addRightEdgeDelta(right, insertee)
           else DeltaSequenceOrder(Map((left -> insertee), (insertee -> right)))
       }
     }
@@ -54,7 +54,7 @@ object DeltaSequence {
       current.edges.inner.get(v) match {
         case None => None
         case Some(u) =>
-          if (current.vertices.contains(u)) Some(u) else successor(u)
+          if current.vertices.contains(u) then Some(u) else successor(u)
       }
     }
 
@@ -126,13 +126,13 @@ object DeltaSequence {
 
         // build map of old insertion positions of the new vertices
         val oldPositions = right.edges.inner.foldLeft(Map.empty[Vertex, Vertex]) {
-          case (m, (u, v)) => if (newVertices.contains(v)) { m + (v -> u) }
+          case (m, (u, v)) => if newVertices.contains(v) then { m + (v -> u) }
             else m
         }
 
         val newEdges = newVertices.foldLeft(left.edges) {
           case (merged, v) =>
-            if (v == Vertex.start) merged
+            if v == Vertex.start then merged
             else merged.addRightEdge(oldPositions(v), v)
         }
         val vertices = left.vertices merge right.vertices

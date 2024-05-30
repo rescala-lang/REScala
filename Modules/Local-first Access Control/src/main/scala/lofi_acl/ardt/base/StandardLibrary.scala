@@ -122,7 +122,7 @@ object StandardLibrary:
         else
           permissionTree.children.foldLeft[(String, Try[PermissionTree])]("" -> Success(permissionTree)) {
             case (prevKeyPath -> prevResult, keyPath -> pt) =>
-              if (prevResult.isFailure) prevKeyPath -> prevResult
+              if prevResult.isFailure then prevKeyPath -> prevResult
               else keyPath                          -> Filter[V].validatePermissionTree(pt)
           } match
             case keyPath -> Failure(InvalidPathException(subPath)) => Failure(InvalidPathException(keyPath :: subPath))

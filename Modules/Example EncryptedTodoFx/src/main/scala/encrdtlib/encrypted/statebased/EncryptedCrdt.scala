@@ -19,7 +19,7 @@ class EncryptedCrdt(initialState: MultiValueRegister[EncryptedState] = MultiValu
   def state: MultiValueRegister[EncryptedState] = _state
 
   def currentTime: VectorClock =
-    if (state.versions.isEmpty) VectorClock.zero
+    if state.versions.isEmpty then VectorClock.zero
     else state.versions.keys.reduce((a, b) => a.merge(b))
 
   def unseal[T: Lattice](aead: Aead)(implicit jsonValueCodec: JsonValueCodec[T]): Try[DecryptedState[T]] =

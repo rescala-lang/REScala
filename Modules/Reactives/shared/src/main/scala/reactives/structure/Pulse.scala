@@ -133,7 +133,7 @@ object Pulse {
     oldPulse match {
       case NoChange => Value(newValue)
       case Value(oldValue) =>
-        if (newValue == oldValue) NoChange
+        if newValue == oldValue then NoChange
         else Value(newValue)
       case ex @ Exceptional(t) => Value(newValue)
     }

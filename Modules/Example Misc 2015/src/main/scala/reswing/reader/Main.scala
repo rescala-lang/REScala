@@ -49,14 +49,14 @@ object Main extends App {
   // TODO: this crashes because args is null
   // which causes the below two lines to not be executed … which is good, because if they are executed the program just hangs
   // I assume it’s because the feeds are no longer available, but the while loop also seems extremely sketchy
-  val readUrls: Option[Seq[String]] = for {
+  val readUrls: Option[Seq[String]] = for
     file <- args.headOption
     urls <- loadURLs(file)
-  } yield urls
+  yield urls
 
   (readUrls getOrElse defaultURLs) foreach (checker.check(_))
 
-  while (true) { Swing.onEDTWait { tick.fire() }; Thread.sleep(sleepTime) }
+  while true do { Swing.onEDTWait { tick.fire() }; Thread.sleep(sleepTime) }
 
   // ---------------------------------------------------------------------------
 

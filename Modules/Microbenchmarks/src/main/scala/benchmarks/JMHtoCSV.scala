@@ -18,9 +18,9 @@ object JMHtoCSV {
 
   def main(args: Array[String]): Unit = {
     try {
-      for (fileName <- args) {
+      for fileName <- args do {
         println("processing " + fileName)
-        for ((line, lineNo) <- Source.fromFile(fileName).getLines().zipWithIndex) {
+        for (line, lineNo) <- Source.fromFile(fileName).getLines().zipWithIndex do {
           line match {
             case BENCHMARK(benchmarkName) =>
               benchmark = benchmarkName
@@ -30,7 +30,7 @@ object JMHtoCSV {
               mode = modeText
             case PARAMETERS(allParams) =>
               parameters = allParams.substring(allParams.indexOf('=') + 2).replaceAll(", [^=]+ = ", "\t")
-              if (!outfiles.contains(benchmark)) {
+              if !outfiles.contains(benchmark) then {
                 outfiles += benchmark -> new FileWriter(benchmark + ".txt")
                 outfiles(benchmark).write("srcfile\tthreads\t" + allParams.substring(
                   0,
@@ -46,7 +46,7 @@ object JMHtoCSV {
         }
       }
     } finally {
-      for (writer <- outfiles.values) writer.close()
+      for writer <- outfiles.values do writer.close()
     }
     println("done, written files:\n" + outfiles.keySet.mkString(".txt\n") + ".txt")
   }

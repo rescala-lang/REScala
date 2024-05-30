@@ -48,12 +48,12 @@ object MathUtil {
         y3 - y4
       )
 
-      if (
+      if
         x >= math.min(x1, x2) && x <= math.max(x1, x2) &&
         y >= math.min(y1, y2) && y <= math.max(y1, y2) &&
         x >= math.min(x3, x4) && x <= math.max(x3, x4) &&
         y >= math.min(y3, y4) && y <= math.max(y3, y4)
-      )
+      then
         new Point(x, y)
       else
         null

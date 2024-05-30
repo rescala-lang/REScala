@@ -52,7 +52,7 @@ object LinePaintingEScala extends SimpleSwingApplication {
       g.setColor(new Color(100, 100, 100))
       g.drawString(
         "Press left mouse button and drag to paint." +
-        (if (hasFocus) " Press 'c' to clear." else ""),
+        (if hasFocus then " Press 'c' to clear." else ""),
         10,
         size.height - 10
       )

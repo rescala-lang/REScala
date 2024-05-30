@@ -91,7 +91,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def ||[U >: T](other: Event[U])(implicit ticket: CreationTicket[State]): Event[U] = {
     Event.Impl.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.collectStatic(this)
-      if (tp.isChange) tp else st.collectStatic(other)
+      if tp.isChange then tp else st.collectStatic(other)
     }
   }
 
@@ -152,11 +152,11 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def list[A >: T](n: Int)(implicit ticket: CreationTicket[State]): Signal[LinearSeq[A]] = {
-    if (n < 0) throw new IllegalArgumentException(s"length must be positive")
-    else if (n == 0) Var(Nil)
+    if n < 0 then throw new IllegalArgumentException(s"length must be positive")
+    else if n == 0 then Var(Nil)
     else
       fold(Queue[A]()) { (queue: Queue[A], v: T) =>
-        if (queue.lengthCompare(n) >= 0) queue.tail.enqueue(v) else queue.enqueue(v)
+        if queue.lengthCompare(n) >= 0 then queue.tail.enqueue(v) else queue.enqueue(v)
       }
   }
 

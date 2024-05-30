@@ -33,9 +33,9 @@ class ReComboBox[A](
   }
 
   def modelChanged() = {
-    if (model != null)
+    if model != null then
       model `removeListDataListener` modelListener
-    if (javaPeer.getModel != null)
+    if javaPeer.getModel != null then
       javaPeer.getModel `addListDataListener` modelListener
     model = javaPeer.getModel
   }
@@ -47,7 +47,7 @@ class ReComboBox[A](
     { () =>
       javaPeer.getModel match {
         case model: ReComboBox.ReComboBoxModel[A] => model.getItems
-        case model                                => for (i <- 0 until model.getSize) yield model.getElementAt(i)
+        case model                                => for i <- 0 until model.getSize yield model.getElementAt(i)
       }
     },
     { items =>
@@ -98,11 +98,11 @@ object ReComboBox {
       val additional: Int = listData.size - itemsSize
       items = listData
 
-      if (!items.contains[Any](selected)) selected = null
+      if !items.contains[Any](selected) then selected = null
 
-      if (additional > 0)
+      if additional > 0 then
         fireIntervalAdded(this, itemsSize, listData.size - 1)
-      if (additional < 0)
+      if additional < 0 then
         fireIntervalRemoved(this, listData.size, itemsSize - 1)
 
       fireContentsChanged(this, 0, listData.size)
@@ -115,11 +115,11 @@ object ReComboBox {
     private var selected: AnyRef = scala.compiletime.uninitialized
     def getSelectedItem: AnyRef  = selected
     def setSelectedItem(item: AnyRef): Unit = {
-      if (
+      if
         (item == null || (items contains item)) &&
         ((selected != null && selected != item) ||
         (selected == null && item != null))
-      ) {
+      then {
         selected = item
         fireContentsChanged(this, -1, -1)
       }

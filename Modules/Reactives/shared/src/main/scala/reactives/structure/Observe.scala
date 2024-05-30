@@ -29,7 +29,7 @@ object Observe {
           override protected[reactives] def guardedReevaluate(dt: ReIn): Rout = {
             val v  = dt.collectStatic(dependency)
             val oi = fun(v)
-            if (oi.checkExceptionAndRemoval()) dt.trackDependencies(Set.empty)
+            if oi.checkExceptionAndRemoval() then dt.trackDependencies(Set.empty)
             else dt.withEffect(oi)
           }
         }

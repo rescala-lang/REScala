@@ -30,15 +30,15 @@ class SingleSwitch {
     val d1 = Var("true")
     val d2 = Var("false")
     Signal.dynamic {
-      if (step.test(source.value)) d1.value else d2.value
+      if step.test(source.value) then d1.value else d2.value
     }
 
-    if (engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) isManual = true
+    if engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then isManual = true
 
   }
 
   @Benchmark
   def run(step: Step): Unit =
-    if (isManual) synchronized { source.set(step.run()) }
+    if isManual then synchronized { source.set(step.run()) }
     else source.set(step.run())
 }

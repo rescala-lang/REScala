@@ -48,7 +48,7 @@ case class RaftState[T](
   def supportProposal(me: Uid): RaftState[T] = Lattice.merge(this, supportProposalDelta(me))
 
   def proposeDelta(me: Uid, value: T): RaftState[T] = {
-    if (me != leader) RaftState[T]()
+    if me != leader then RaftState[T]()
     else {
       RaftState[T](valueProposals = Set(Propose(currentTerm, me, nextProposal, value)))
     }
@@ -65,9 +65,9 @@ case class RaftState[T](
 
   def supportLeaderDelta(me: Uid): RaftState[T] = {
     val votes = leaderVotes.filter(candidate => candidate.term == maxTerm)
-    if (votes.exists(_.voter == me)) RaftState[T]()
+    if votes.exists(_.voter == me) then RaftState[T]()
     else {
-      if (votes.isEmpty) RaftState[T]()
+      if votes.isEmpty then RaftState[T]()
       else {
         val bestCandidate = votes.groupBy(_.leader).maxBy(_._2.size)._1
         RaftState[T](leaderVotes = Set(Vote(maxTerm, bestCandidate, me)))
@@ -88,13 +88,13 @@ case class RaftState[T](
     def decision(proposals: Set[Propose[T]]): Option[Option[T]] = {
       val (size, value) =
         proposals.groupBy(_.value).map(g => (g._2.size, Some(g._1))).maxByOption(_._1).getOrElse((0, None))
-      if (size >= consensusSize) Some(value)
+      if size >= consensusSize then Some(value)
       else {
         val term = proposals.headOption.fold(-1)(_.term)
-        if (term != currentTerm) DecisionImpossible
+        if term != currentTerm then DecisionImpossible
         else {
           val undecided = participants.size - proposals.size
-          if (undecided + size >= consensusSize) Undecided
+          if undecided + size >= consensusSize then Undecided
           else {
             DecisionImpossible
           }

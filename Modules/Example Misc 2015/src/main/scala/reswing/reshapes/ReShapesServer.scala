@@ -10,7 +10,7 @@ object ReShapesServer {
   var currentShapes: Elem               = null
 
   def main(args: Array[String]): Unit = {
-    if (args.size >= 2) {
+    if args.size >= 2 then {
       val commandThreadPort = args(0).toInt
       val updateThreadPort  = args(1).toInt
 
@@ -22,11 +22,11 @@ object ReShapesServer {
 
   /** Registers a client to the server if not already registered. */
   def registerClient(inetAddress: InetAddress, port: Int) =
-    if (!(clients contains ((inetAddress, port)))) {
+    if !(clients contains ((inetAddress, port))) then {
       clients ::= ((inetAddress, port))
       println("ReshapesServer register new client (%s, %d)".format(inetAddress, port))
       println("\t registered clients: ")
-      for (client <- clients)
+      for client <- clients do
         println("\t  (%s, %d)".format(client._1, client._2))
       println()
       sendToClient((inetAddress, port))
@@ -42,8 +42,8 @@ object ReShapesServer {
   /** Sends the given shapes to all registered clients except the original sender */
   def sendUpdateToClients(shapes: Elem, sender: (InetAddress, Int)): Unit = {
     currentShapes = shapes
-    for (client <- clients)
-      if (client != sender && !sendToClient(client))
+    for client <- clients do
+      if client != sender && !sendToClient(client) then
         removeClient(client)
   }
 
@@ -52,7 +52,7 @@ object ReShapesServer {
     */
   def sendToClient(client: (InetAddress, Int)) = {
     try {
-      if (currentShapes != null) {
+      if currentShapes != null then {
         val socket = new Socket(client._1, client._2)
         val writer = new OutputStreamWriter(socket.getOutputStream)
         XML.write(writer, currentShapes, "", false, null)
@@ -73,7 +73,7 @@ class CommandThread(port: Int) extends Runnable {
   override def run(): Unit = {
     println("start CommandThread")
     val listener = new ServerSocket(port)
-    while (true) {
+    while true do {
       val clientSocket = listener.accept
       val in           = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
 
@@ -98,7 +98,7 @@ class UpdateThread(port: Int) extends Runnable {
   override def run(): Unit = {
     println("start UpdateThread")
     val listener = new ServerSocket(port)
-    while (true) {
+    while true do {
       val socket = listener.accept
       val shapes = XML.load(socket.getInputStream)
 

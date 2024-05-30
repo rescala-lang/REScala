@@ -13,7 +13,7 @@ object CatchUp extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait { application.tick.fire() }
       Thread `sleep` 50
     }
@@ -91,7 +91,7 @@ class CatchUp {
           // val fontMetrics = g.getFontMetrics(myFont)
           g.setColor(java.awt.Color.DARK_GRAY)
           g.fill(t.now(catchBox))
-          if (t.now(caught))
+          if t.now(caught) then
             g.setColor(java.awt.Color.RED)
           g.fill(t.now(upBox))
           g.setColor(java.awt.Color.WHITE)

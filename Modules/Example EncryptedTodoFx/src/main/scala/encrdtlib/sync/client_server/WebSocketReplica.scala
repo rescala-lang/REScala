@@ -57,7 +57,7 @@ trait WebSocketReplica extends Replica {
   }
 
   def start(): Unit = {
-    if (server != null) throw new IllegalStateException("Server already running")
+    if server != null then throw new IllegalStateException("Server already running")
     server = new Server()
     val connector = new ServerConnector(server)
     server.addConnector(connector)
@@ -82,14 +82,14 @@ trait WebSocketReplica extends Replica {
   }
 
   def stop(): Unit = {
-    if (server == null) return
+    if server == null then return
     replicas.foreach(session => session.disconnect())
     server.stop()
     println("Server stopped")
   }
 
   def uri: URI = {
-    if (server == null || server.getURI == null) null
+    if server == null || server.getURI == null then null
     else URI.create(server.getURI.toString.replace("http", "ws"))
   }
 

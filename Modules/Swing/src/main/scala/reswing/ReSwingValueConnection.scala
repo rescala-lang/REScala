@@ -83,43 +83,43 @@ private[reswing] trait ReSwingValueConnection {
       using(getter, Some(setter), names)
 
     private def using(getter: () => T, setter: Option[T => Unit], names: Seq[ChangingProperty]): ReSwingValue[T] = {
-      if (value != null)
+      if value != null then
         inSyncEDT {
           value() = getter()
           value initLazily { _ => inSyncEDT { initReSwingValueConnection() } }
 
           delayedInitValues += { () =>
             var updatingSwingNotification = false
-            if (setter.isDefined) {
+            if setter.isDefined then {
               val set = setter.get
               value use { v =>
-                if (updatingSwingNotification)
+                if updatingSwingNotification then
                   Swing onEDT { set(v) }
                 else
                   inSyncEDT { set(v) }
               }
 
-              if (value.fixed)
-                for (name <- names)
+              if value.fixed then
+                for name <- names do
                   name match {
                     case Left(name) =>
                       changingProperties.getOrElseUpdate(name, ListBuffer()) += { () =>
-                        if (getter() != value.get)
-                          Swing onEDT { if (getter() != value.get) set(value.get) }
+                        if getter() != value.get then
+                          Swing onEDT { if getter() != value.get then set(value.get) }
                       }
 
                     case Right((publisher, reaction)) =>
                       reactor listenTo publisher
                       changingReactions.getOrElseUpdate(reaction, ListBuffer()) += { () =>
-                        if (getter() != value.get)
-                          Swing onEDT { if (getter() != value.get) set(value.get) }
+                        if getter() != value.get then
+                          Swing onEDT { if getter() != value.get then set(value.get) }
                       }
                   }
             }
 
-            if (!value.fixed) {
+            if !value.fixed then {
               value() = getter()
-              for (name <- names)
+              for name <- names do
                 name match {
                   case Left(name) =>
                     changingProperties.getOrElseUpdate(name, ListBuffer()) += { () =>
@@ -148,7 +148,7 @@ private[reswing] trait ReSwingValueConnection {
       * i.e. a value that should not be changed by the library.
       */
     def force[U](name: String, setter: U => Unit, forcedValue: U): ReSwingValue[T] = {
-      if (value != null && value.fixed)
+      if value != null && value.fixed then
         inSyncEDT {
           setter(forcedValue)
           enforcedProperties += name -> { () => Swing onEDT { setter(forcedValue) } }
@@ -166,7 +166,7 @@ private[reswing] trait ReSwingValueConnection {
   private val reactor: Reactor = new Reactor {
     reactions += {
       case e: Event =>
-        for (signals <- changingReactions get e.getClass; signal <- signals)
+        for signals <- changingReactions get e.getClass; signal <- signals do
           signal()
     }
   }
@@ -176,7 +176,7 @@ private[reswing] trait ReSwingValueConnection {
       enforcedProperties get e.getPropertyName match {
         case Some(setter) => setter()
         case _ => changingProperties get e.getPropertyName match {
-            case Some(signals) => for (signal <- signals) signal()
+            case Some(signals) => for signal <- signals do signal()
             case _             =>
           }
       }
@@ -185,14 +185,14 @@ private[reswing] trait ReSwingValueConnection {
 
   peer.peer.addHierarchyListener(new HierarchyListener {
     def hierarchyChanged(e: HierarchyEvent): Unit =
-      if ((e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+      if (e.getChangeFlags & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0 then {
         initReSwingValueConnection()
         peer.peer.removeHierarchyListener(this)
       }
   })
 
   protected def initReSwingValueConnection(): Unit = {
-    for (init <- delayedInitValues)
+    for init <- delayedInitValues do
       init()
     delayedInitValues.clear()
   }

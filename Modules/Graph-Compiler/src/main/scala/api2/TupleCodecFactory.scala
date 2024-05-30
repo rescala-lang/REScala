@@ -122,7 +122,7 @@ object TupleCodecFactory {
   ): JsonValueCodec[OptionsFromTuple[T]] =
     new JsonValueCodec[OptionsFromTuple[T]] {
       override def decodeValue(in: JsonReader, default: OptionsFromTuple[T]): OptionsFromTuple[T] =
-        if (in.isNextToken(91)) {
+        if in.isNextToken(91) then {
           val res = summon[TupleCodec[T]].decodeValue(codecs, in, default, false)
 
           if in.isNextToken(93) then res else in.arrayEndError()

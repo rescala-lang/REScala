@@ -111,21 +111,21 @@ object ReShapes extends SimpleSwingApplication {
   reactions += {
     case SelectionChanged(ui.tabbedPane) =>
       drawingSpaceState.set(
-        if (
+        if
           ui.tabbedPane.selection.index != -1
           && (panelDrawingSpaceStates contains ui.tabbedPane.selection.page)
-        )
+        then
           panelDrawingSpaceStates(ui.tabbedPane.selection.page)._1
         else
           null
       )
 
-      if (ui.tabbedPane.pages.size > 0)
+      if ui.tabbedPane.pages.size > 0 then
         menu.update.fire()
   }
 
   def addTab(networkSpaceState: DrawingSpaceState => NetworkSpaceState = { _ => null }): Unit = {
-    if (newTabDialog.showDialog(ui.locationOnScreen)) {
+    if newTabDialog.showDialog(ui.locationOnScreen) then {
       val (state, panel) = bilateralValues { value =>
         lazy val panel = generateDrawingPanel(
           newTabDialog.showIntersections.selected,
@@ -179,7 +179,7 @@ object ReShapes extends SimpleSwingApplication {
   }
 
   def addNetworkTab(): Unit = {
-    if (serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid())
+    if serverDialog.showDialog(ui.locationOnScreen) && serverDialog.inputIsValid() then
       try addTab({ drawingSpaceState =>
           new NetworkSpaceState(
             drawingSpaceState,
@@ -203,9 +203,9 @@ object ReShapes extends SimpleSwingApplication {
   }
 
   def removeCurrentTab(): Unit = {
-    if (ui.tabbedPane.pages.size > 0) {
+    if ui.tabbedPane.pages.size > 0 then {
       val (_, networkSpaceState) = panelDrawingSpaceStates(ui.tabbedPane.selection.page)
-      if (networkSpaceState != null)
+      if networkSpaceState != null then
         networkSpaceState.dispose()
       panelDrawingSpaceStates remove ui.tabbedPane.selection.page
       ui.tabbedPane.pages remove ui.tabbedPane.selection.index

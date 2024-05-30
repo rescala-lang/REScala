@@ -68,12 +68,12 @@ trait TopoBundle {
       val requiresReev = incoming.exists(_.state.dirty) && predecessorsDone
       // if discovered, we are mid reevaluation
       val discovered = incoming.exists(_.state.discovered)
-      if (discovered && !predecessorsDone) {
+      if discovered && !predecessorsDone then {
         // do nothing, this reactive is reached by normal propagation later
-      } else if (needsReevaluation || requiresReev) {
+      } else if needsReevaluation || requiresReev then {
         Util.evaluate(reactive, TopoTransaction(this), afterCommitObservers)
         ()
-      } else if (predecessorsDone) reactive.state.done = true
+      } else if predecessorsDone then reactive.state.done = true
     }
 
     def observe(obs: Observation): Unit = afterCommitObservers.append(obs)
@@ -104,7 +104,7 @@ trait TopoBundle {
 
     override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R =
       synchronized {
-        if (!idle) throw new IllegalStateException("Scheduler is not reentrant")
+        if !idle then throw new IllegalStateException("Scheduler is not reentrant")
         idle = false
         val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
         val res =
@@ -149,7 +149,7 @@ trait TopoBundle {
               sorted.foreach(reset)
 
               // wrapup
-              if (admissionTicket.wrapUp != null) admissionTicket.wrapUp(transaction)
+              if admissionTicket.wrapUp != null then admissionTicket.wrapUp(transaction)
               admissionResult
             }
           } finally {
@@ -169,7 +169,7 @@ trait TopoBundle {
       val sorted = ArrayBuffer[Derived]()
 
       def _toposort(rem: Derived): Unit = {
-        if (rem.state.discovered) ()
+        if rem.state.discovered then ()
         else {
           rem.state.discovered = true
           rem.state.outgoing.foreach(_toposort)
@@ -191,8 +191,8 @@ trait TopoBundle {
     ): Seq[Derived] = {
       // first one where evaluation detects glitch
       val glitched = evaluatees.reverseIterator.find { r =>
-        if (r.state.done) false
-        else if (r.state.dirty) {
+        if r.state.done then false
+        else if r.state.dirty then {
           Util.evaluate(r, creation, afterCommitObservers)
         } else false
       }
@@ -216,7 +216,7 @@ trait TopoBundle {
         reactive.state.value,
         new AccessHandler[State] {
           override def dynamicAccess(input: ReSource): input.Value = {
-            if (input.state.discovered && !input.state.done) {
+            if input.state.discovered && !input.state.done then {
               potentialGlitch = true
             }
             input.state.value
@@ -238,9 +238,9 @@ trait TopoBundle {
         }
       }
 
-      if (potentialGlitch) true
+      if potentialGlitch then true
       else {
-        if (reev.activate) reactive.state.outgoing.foreach(_.state.dirty = true)
+        if reev.activate then reactive.state.outgoing.foreach(_.state.dirty = true)
         reev.forValue(reactive.state.value = _)
         reev.forEffect(o => afterCommitObservers.append(o))
         reactive.state.done = true

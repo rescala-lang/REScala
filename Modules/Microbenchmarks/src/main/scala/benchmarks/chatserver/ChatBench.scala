@@ -18,7 +18,7 @@ class ChatBench {
   @Benchmark
   def chat(benchState: BenchState, threadParams: ThreadParams) = {
     import benchState.stableEngine.*
-    if (global.scheduler != reactives.scheduler.LevelbasedVariants.unmanaged) {
+    if global.scheduler != reactives.scheduler.LevelbasedVariants.unmanaged then {
       benchState.clients(threadParams.getThreadIndex).fire("hello")
     } else {
       val ti    = threadParams.getThreadIndex
@@ -59,7 +59,7 @@ class BenchState {
     Range(0, size.size).foreach(cs.create)
 
     clients = Array.fill(threads)(Evt[String]())
-    for ((client, i) <- clients.zipWithIndex) {
+    for (client, i) <- clients.zipWithIndex do {
       val room1 = i                   % size.size
       val room2 = (i + size.size / 2) % size.size
       cs.join(client, room1)
@@ -68,7 +68,7 @@ class BenchState {
       cs.histories.get(room2).observe(v => work.consume())
     }
 
-    if (engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) {
+    if engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then {
       locks = Array.fill(size.size)(new ReentrantLock())
     }
 

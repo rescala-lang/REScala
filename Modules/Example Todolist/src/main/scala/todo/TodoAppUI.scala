@@ -79,7 +79,7 @@ class TodoAppUI(val storagePrefix: String) {
         `class` := "todoapp",
         header(
           `class` := "header",
-          h1(if (largeheader.nonEmpty) largeheader else "todos"),
+          h1(if largeheader.nonEmpty then largeheader else "todos"),
           todoInputTag
         ),
         section(
@@ -100,7 +100,7 @@ class TodoAppUI(val storagePrefix: String) {
               println(s"remaining observer")
               List(
                 strong(remainingTasks.toString).render,
-                span(if (remainingTasks == 1)
+                span(if remainingTasks == 1 then
                   " item left"
                 else " items left").render
               )
@@ -110,7 +110,7 @@ class TodoAppUI(val storagePrefix: String) {
           .reattach {
             Signal {
               removeAll.data(
-                `class` := s"clear-completed${if (!tasksData.value.exists(_.done)) " hidden" else ""}"
+                `class` := s"clear-completed${if !tasksData.value.exists(_.done) then " hidden" else ""}"
               ).render
             }
           }

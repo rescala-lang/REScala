@@ -49,7 +49,7 @@ class ReButton(
     ) {
   override protected lazy val peer: Button & ComponentMixin = new Button with ComponentMixin
 
-  if (action != null)
+  if action != null then
     peer.action = action
 }
 

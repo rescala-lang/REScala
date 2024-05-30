@@ -76,7 +76,7 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
     ticket.recordChange(new InitialChange[State] {
       override val source: Var.this.type = Var.this
       override def writeValue(base: Pulse[A], writeCallback: Pulse[A] => Unit): Boolean =
-        if (base != pulse) { writeCallback(pulse); true }
+        if base != pulse then { writeCallback(pulse); true }
         else false
     })
   }

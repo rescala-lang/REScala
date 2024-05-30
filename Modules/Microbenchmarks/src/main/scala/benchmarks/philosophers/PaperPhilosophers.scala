@@ -29,7 +29,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
   case object Thinking extends Philosopher
 
   val phils =
-    for (idx <- 0 until size) yield {
+    for idx <- 0 until size yield {
       Var[Philosopher](Thinking)(CreationTicket.fromName(s"phil(${idx + 1})"))
     }
 
@@ -40,7 +40,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
   case class Taken(by: Int) extends Fork
 
   val forks =
-    for (idx <- 0 until size) yield {
+    for idx <- 0 until size yield {
       implicit val ct: CreationTicket[BundleState] = (CreationTicket.fromName(s"fork(${idx + 1})"))
       Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
@@ -63,7 +63,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
 
   // Dynamic Sight
   val sights =
-    for (avoidStaticOptimization <- 0 until size) yield {
+    for avoidStaticOptimization <- 0 until size yield {
       dynamicity match {
         case Dynamicity.Dynamic => Signal.dynamic[Sight] {
             val idx     = avoidStaticOptimization
@@ -75,7 +75,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
                   case Free            => Ready
                 }
               case Taken(by) =>
-                if (by == idx) {
+                if by == idx then {
                   assert(forks(idx).value == Taken(idx), s"sight ${idx + 1} glitched")
                   Done
                 } else {
@@ -116,14 +116,14 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
   }
 
   val sightChngs: Seq[Event[Sight]] =
-    for (i <- 0 until size) yield sights(i).changed
-  val successes = for (i <- 0 until size) yield sightChngs(i).filter(_ == Done)
+    for i <- 0 until size yield sights(i).changed
+  val successes = for i <- 0 until size yield sightChngs(i).filter(_ == Done)
 
   def manuallyLocked[T](idx: Int)(f: => T): T = synchronized { f }
 
   def maybeEat(idx: Int): Unit = {
     transaction(phils(idx)) { implicit t =>
-      if (t.now(sights(idx)) == Ready) phils(idx).admit(Eating)
+      if t.now(sights(idx)) == Ready then phils(idx).admit(Eating)
     }
   }
   def hasEaten(idx: Int): Boolean = {
@@ -134,7 +134,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
   }
 
   def eatRandomOnce(threadIndex: Int, threadCount: Int): Unit = {
-    val seatsServed  = size / threadCount + (if (threadIndex < size % threadCount) 1 else 0)
+    val seatsServed  = size / threadCount + (if threadIndex < size % threadCount then 1 else 0)
     val seating: Int = threadIndex + ThreadLocalRandom.current().nextInt(seatsServed) * threadCount
     eatOnce(seating)
   }
@@ -143,7 +143,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
     val bo = new Backoff()
     @tailrec def retryEating(): Unit = {
       maybeEat(seating)
-      if (hasEaten(seating)) {
+      if hasEaten(seating) then {
         rest(seating)
       } else {
         bo.backoff()
@@ -171,7 +171,7 @@ trait IndividualCounts {
   import engine.*
 
   val individualCounts: Seq[Signal[Int]] =
-    for (idx <- 0 until size) yield {
+    for idx <- 0 until size yield {
       successes(idx).fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"count(${idx + 1})"))
     }
 }
@@ -182,9 +182,9 @@ trait NoTopper extends IndividualCounts {
   val locks = Array.fill(size) { new ReentrantLock() }
   override def manuallyLocked[T](idx: Int)(f: => T): T = {
     val (lock1, lock2, lock3) =
-      if (idx == 0) {
+      if idx == 0 then {
         (locks(0), locks(1), locks(size - 1))
-      } else if (idx == size - 1) {
+      } else if idx == size - 1 then {
         (locks(0), locks(size - 2), locks(size - 1))
       } else {
         (locks(idx - 1), locks(idx), locks(idx + 1))
@@ -237,9 +237,9 @@ trait ManualLocking extends PaperPhilosophers {
 
 object PaperPhilosophers {
   def main(args: Array[String]): Unit = {
-    val tableSize   = if (args.length >= 1) Integer.parseInt(args(0)) else 5
-    val threadCount = if (args.length >= 2) Integer.parseInt(args(1)) else tableSize
-    val duration    = if (args.length >= 3) Integer.parseInt(args(2)) else 0
+    val tableSize   = if args.length >= 1 then Integer.parseInt(args(0)) else 5
+    val threadCount = if args.length >= 2 then Integer.parseInt(args(1)) else tableSize
+    val duration    = if args.length >= 3 then Integer.parseInt(args(2)) else 0
 
     object engine extends reactives.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
     val table =
@@ -250,7 +250,7 @@ object PaperPhilosophers {
 //    println("====================================================================================================")
 
     val continue: () => Boolean =
-      if (duration == 0) {
+      if duration == 0 then {
         println("Running in interactive mode: press <Enter> to terminate.")
         () => System.in.available() <= 0
       } else {
@@ -263,7 +263,7 @@ object PaperPhilosophers {
     def driver(idx: Int): Int = {
       try {
         var localCount = 0
-        while (!abort && continue()) {
+        while !abort && continue() do {
           table.eatRandomOnce(idx, threadCount)
           localCount += 1
         }
@@ -278,16 +278,16 @@ object PaperPhilosophers {
 
     val executor    = Executors.newFixedThreadPool(threadCount)
     val execContext = scala.concurrent.ExecutionContext.fromExecutor(executor)
-    val threads     = for (i <- 0 until threadCount) yield Future { driver(i) }(execContext)
+    val threads     = for i <- 0 until threadCount yield Future { driver(i) }(execContext)
 
-    while (threads.exists(!_.isCompleted) && !abort && continue()) { Thread.sleep(10) }
+    while threads.exists(!_.isCompleted) && !abort && continue() do { Thread.sleep(10) }
     val timeout = System.currentTimeMillis() + 3000
     val scores = threads.map { t =>
       Try { Await.result(t, (timeout - System.currentTimeMillis()).millis) }
     }
     executor.shutdown()
 
-    if (scores.exists(_.isFailure)) {
+    if scores.exists(_.isFailure) then {
       println("Philosophers done with failures:")
       scores.zipWithIndex.foreach {
         case (Failure(_: TimeoutException), idx) =>
@@ -307,7 +307,7 @@ object PaperPhilosophers {
       println(
         "\t" + scores.zipWithIndex.map { case (count, idx) => (idx + 1).toString + ": " + count }.mkString("\n\t")
       )
-      if (table.total == individualsSum) {
+      if table.total == individualsSum then {
         println("Total score: " + table.total + " (matches individual scores' sum)")
       } else {
         println("Total score: " + table.total + " (differs from individual scores' sum of " + individualsSum + ")")

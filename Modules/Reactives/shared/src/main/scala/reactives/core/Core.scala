@@ -138,7 +138,7 @@ trait DisconnectableImpl extends Derived with Disconnectable {
   }
 
   final override protected[reactives] def reevaluate(rein: ReIn): Rout = {
-    if (disconnected) {
+    if disconnected then {
       rein.trackDependencies(Set.empty)
       rein
     } else {

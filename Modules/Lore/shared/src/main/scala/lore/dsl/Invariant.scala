@@ -32,7 +32,7 @@ object Invariant {
     val invariant = createInvariant { () => pred }
 
     x.observe { it =>
-      if (!it) {
+      if !it then {
         throw new IllegalStateException(s"Violated Invariant ${invariant.representation}")
       }
     }

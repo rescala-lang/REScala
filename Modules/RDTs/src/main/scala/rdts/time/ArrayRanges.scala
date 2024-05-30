@@ -44,7 +44,7 @@ class ArrayRanges(
     var leftIndex  = 0
     var rightIndex = 0
 
-    while (leftIndex < this.used && rightIndex < right.used) {
+    while leftIndex < this.used && rightIndex < right.used do {
       val leftLower  = this.inner(leftIndex)
       val leftUpper  = this.inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
@@ -63,21 +63,21 @@ class ArrayRanges(
 
   @scala.annotation.targetName("lteq")
   def <=(right: ArrayRanges): Boolean = {
-    if (isEmpty) return true
-    if (right.isEmpty) return false
+    if isEmpty then return true
+    if right.isEmpty then return false
 
     var leftIndex  = 0
     var rightIndex = 0
 
-    while (leftIndex < used) {
-      if (rightIndex >= right.used) return false
+    while leftIndex < used do {
+      if rightIndex >= right.used then return false
       val leftLower  = inner(leftIndex)
       val leftUpper  = inner(leftIndex + 1)
       val rightLower = right.inner(rightIndex)
       val rightUpper = right.inner(rightIndex + 1)
 
-      if (leftLower > rightUpper) rightIndex += 2
-      else if (leftLower < rightLower || leftUpper > rightUpper) return false
+      if leftLower > rightUpper then rightIndex += 2
+      else if leftLower < rightLower || leftUpper > rightUpper then return false
       else leftIndex += 2
     }
 
@@ -148,7 +148,7 @@ class ArrayRanges(
 
     def findNextRange(): Unit =
       val selection =
-        if (!lok) (rstart, rend)
+        if !lok then (rstart, rend)
         else if !rok || lstart < rstart then
           (lstart, lend)
         else
@@ -181,15 +181,15 @@ class ArrayRanges(
     var lIndex = 0
     var rIndex = 0
 
-    while (lIndex < used && rIndex < right.used) {
+    while lIndex < used && rIndex < right.used do {
       val lMin = inner(lIndex)
       val lMax = inner(lIndex + 1) - 1
       val rMin = right.inner(rIndex)
       val rMax = right.inner(rIndex + 1) - 1
 
-      if (lMin > rMax) {
+      if lMin > rMax then {
         rIndex += 2
-      } else if (rMin > lMax) {
+      } else if rMin > lMax then {
         lIndex += 2
       } else {
         val newMin: Time = Math.max(lMin, rMin)
@@ -199,8 +199,8 @@ class ArrayRanges(
         newInner(newInnerNextIndex + 1) = newMax + 1 // to newMax (but range is exclusive, so +1)
         newInnerNextIndex += 2
 
-        if (newMax == rMax) rIndex += 2
-        if (newMax == lMax) lIndex += 2
+        if newMax == rMax then rIndex += 2
+        if newMax == lMax then lIndex += 2
       }
     }
 
@@ -208,8 +208,8 @@ class ArrayRanges(
   }
 
   infix def subtract(right: ArrayRanges): ArrayRanges = {
-    if (right.isEmpty) return this
-    if (isEmpty) return this
+    if right.isEmpty then return this
+    if isEmpty then return this
 
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
@@ -224,7 +224,7 @@ class ArrayRanges(
     var lMax   = inner(1) - 1
     def nextLeft(): Boolean = {
       lIndex += 2
-      if (lIndex < used) {
+      if lIndex < used then {
         lMin = inner(lIndex)
         lMax = inner(lIndex + 1) - 1
         true
@@ -238,7 +238,7 @@ class ArrayRanges(
     var rMax   = right.inner(1) - 1
     def nextRightOrAddAllFromLeft(): Boolean = {
       rIndex += 2
-      if (rIndex < right.used) {
+      if rIndex < right.used then {
         rMin = right.inner(rIndex)
         rMax = right.inner(rIndex + 1) - 1
         true
@@ -247,7 +247,7 @@ class ArrayRanges(
         includeRangeInclusive(lMin, lMax)
         lIndex += 2
         // Add rest of left
-        while (lIndex < used) {
+        while lIndex < used do {
           newInner(newInnerNextIndex) = inner(lIndex)
           newInner(newInnerNextIndex + 1) = inner(lIndex + 1)
           newInnerNextIndex += 2
@@ -310,7 +310,7 @@ object ArrayRanges {
 
   def from(it: Iterable[Time]): ArrayRanges = {
     val sorted = it.toArray.sortInPlace() // TODO: could be optimized further, but should be fast if already sorted
-    if (sorted.isEmpty) return ArrayRanges.empty
+    if sorted.isEmpty then return ArrayRanges.empty
 
     var newInternalNextIndex = 0
     val newInternal          = new Array[Time](sorted.length * 2)
@@ -318,8 +318,8 @@ object ArrayRanges {
     var lastMin = sorted(0)
     var lastMax = sorted(0) - 1
 
-    for (time <- sorted) {
-      if (time <= lastMax + 1) {
+    for time <- sorted do {
+      if time <= lastMax + 1 then {
         lastMax = time
       } else {
         newInternal(newInternalNextIndex) = lastMin         // from lastMin

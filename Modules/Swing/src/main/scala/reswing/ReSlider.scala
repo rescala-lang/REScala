@@ -40,7 +40,7 @@ class ReSlider(
   majorTickSpacing.using({ () => peer.majorTickSpacing }, peer.majorTickSpacing_=, "majorTickSpacing")
 
   labels.using(
-    { () => if (peer.peer.getLabelTable != null) peer.labels.toMap else null },
+    { () => if peer.peer.getLabelTable != null then peer.labels.toMap else null },
     peer.labels_=,
     "labelTable"
   )

@@ -58,7 +58,7 @@ object Sourcecode {
         Quotes
     )(owner: quotes.reflect.Symbol, skipIf: quotes.reflect.Symbol => Boolean): quotes.reflect.Symbol = {
       var owner0 = owner
-      while (skipIf(owner0)) owner0 = owner0.owner
+      while skipIf(owner0) do owner0 = owner0.owner
       owner0
     }
 
@@ -78,7 +78,7 @@ object Sourcecode {
 
     private def adjustName(s: String): String =
       // Required to get the same name from dotty
-      if (s.startsWith("<local ") && s.endsWith("$>"))
+      if s.startsWith("<local ") && s.endsWith("$>") then
         s.stripSuffix("$>") + ">"
       else
         s
@@ -113,13 +113,13 @@ object Sourcecode {
       import quotes.reflect._
 
       var current = Symbol.spliceOwner
-      if (!machine)
+      if !machine then
         current = actualOwner(current)
       else
         current = nonMacroOwner(current)
       var path = List.empty[Chunk]
-      while (current != Symbol.noSymbol && current != defn.RootPackage && current != defn.RootClass) {
-        if (filter(current)) {
+      while current != Symbol.noSymbol && current != defn.RootPackage && current != defn.RootClass do {
+        if filter(current) then {
 
           val chunk = current match {
             case sym if

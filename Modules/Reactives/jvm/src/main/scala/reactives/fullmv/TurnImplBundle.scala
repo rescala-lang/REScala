@@ -40,7 +40,7 @@ class FullMVTurnImpl(
   }
 
   override def asyncRemoteBranchComplete(forPhase: TurnPhase.Type): Unit = {
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this branch on some remote completed")
     activeBranchDifferential(forPhase, -1)
   }
 
@@ -49,21 +49,21 @@ class FullMVTurnImpl(
     assert(differential != 0, s"$this received 0 branch diff")
     assert(activeBranches.get + differential >= 0, s"$this received branch diff into negative count")
     val remaining = activeBranches.addAndGet(differential)
-    if (remaining == 0) {
+    if remaining == 0 then {
       LockSupport.unpark(userlandThread)
     }
   }
 
   override def newBranchFromRemote(forPhase: TurnPhase.Type): Unit = {
     assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
-    if (FullMVUtil.DEBUG)
+    if FullMVUtil.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this new branch on remote is actually loop-back to local")
     // technically, move one remote branch to a local branch, but as we don't count these separately, currently doing nothing.
   }
 
   override def addRemoteBranch(forPhase: TurnPhase.Type): Future[Unit] = {
     assert(phase == forPhase, s"$this received branch differential for wrong state ${TurnPhase.toString(forPhase)}")
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this new branch on some remote")
     activeBranches.getAndIncrement()
     Future.successful(())
   }
@@ -125,8 +125,8 @@ class FullMVTurnImpl(
         parkAfter: Long,
         registeredForWaiting: FullMVTurn
     ): Unit = {
-      if (activeBranches.get() > 0) {
-        if (registeredForWaiting != null) {
+      if activeBranches.get() > 0 then {
+        if registeredForWaiting != null then {
           registeredForWaiting.waiters.remove(this.userlandThread)
           ()
 //          parkRestart.add(head.asInstanceOf[ReevaluationResultHandling[ReSource[FullMVStruct]]].node.toString)
@@ -135,14 +135,14 @@ class FullMVTurnImpl(
         }
         awaitBranchCountZero()
         awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, null)
-      } else if (firstUnknownPredecessorIndex == selfNode.size) {
+      } else if firstUnknownPredecessorIndex == selfNode.size then {
         assert(
           registeredForWaiting == null,
           s"$this is still registered on $registeredForWaiting as waiter despite having finished waiting for it"
         )
         // make thread-safe sure that we haven't received any new predecessors that might
         // not be in the next phase yet. Only then can we phase switch.
-        if (firstUnknownPredecessorIndex == selfNode.size) {
+        if firstUnknownPredecessorIndex == selfNode.size then {
           assert(activeBranches.get() == 0, s"should be impossible to regain a branch at this point")
           this.phase = newPhase
         } else {
@@ -150,28 +150,28 @@ class FullMVTurnImpl(
         }
       } else {
         val currentUnknownPredecessor = selfNode.children(firstUnknownPredecessorIndex).txn
-        if (currentUnknownPredecessor.phase < newPhase) {
-          if (registeredForWaiting != null) {
-            if (FullMVUtil.DEBUG)
+        if currentUnknownPredecessor.phase < newPhase then {
+          if registeredForWaiting != null then {
+            if FullMVUtil.DEBUG then
               println(s"[${Thread.currentThread().getName}] $this parking for $currentUnknownPredecessor.")
             val timeBefore = System.nanoTime()
             LockSupport.parkNanos(currentUnknownPredecessor, 10000L * 1000 * 1000)
-            if (System.nanoTime() - timeBefore > 7500L * 1000 * 1000) {
-              throw new Exception(if (activeBranches.get == 0 && currentUnknownPredecessor.phase < newPhase) {
+            if System.nanoTime() - timeBefore > 7500L * 1000 * 1000 then {
+              throw new Exception(if activeBranches.get == 0 && currentUnknownPredecessor.phase < newPhase then {
                 s"${Thread.currentThread().getName} $this stalled waiting for transition to ${TurnPhase.toString(newPhase)} of $currentUnknownPredecessor"
               } else {
                 s"${Thread.currentThread().getName} $this stalled due do missing wake-up after transition to ${TurnPhase.toString(newPhase)} of $currentUnknownPredecessor"
               })
             }
-            if (FullMVUtil.DEBUG)
+            if FullMVUtil.DEBUG then
               println(
                 s"[${Thread.currentThread().getName}] $this unparked with ${activeBranches.get} tasks in queue."
               )
             awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, currentUnknownPredecessor)
           } else {
             val now        = System.nanoTime()
-            val parkAfter2 = if (parkAfter > 0) parkAfter else now + FullMVTurnImpl.PARK_AFTER
-            if (now > parkAfter2) {
+            val parkAfter2 = if parkAfter > 0 then parkAfter else now + FullMVTurnImpl.PARK_AFTER
+            if now > parkAfter2 then {
               currentUnknownPredecessor.waiters.put(this.userlandThread, newPhase)
               awaitAndSwitchPhase0(firstUnknownPredecessorIndex, 0L, currentUnknownPredecessor)
             } else {
@@ -180,7 +180,7 @@ class FullMVTurnImpl(
             }
           }
         } else {
-          if (registeredForWaiting != null) {
+          if registeredForWaiting != null then {
             currentUnknownPredecessor.waiters.remove(this.userlandThread)
             ()
 //            parkSwitch += 1
@@ -197,11 +197,11 @@ class FullMVTurnImpl(
     wakeWaitersAfterPhaseSwitch(newPhase)
     phaseReplicators.get.foreach(_.asyncNewPhase(newPhase))
 
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this switched phase.")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this switched phase.")
   }
 
   private def awaitBranchCountZero(): Unit = {
-    while (activeBranches.get > 0) {
+    while activeBranches.get > 0 do {
       LockSupport.park(this)
     }
   }
@@ -211,7 +211,7 @@ class FullMVTurnImpl(
     assert(activeBranches.get() == 0, s"$this cannot begin $phase: ${activeBranches.get()} branches active!")
     assert(selfNode.size == 0, s"$this cannot begin $phase: already has predecessors!")
     this.phase = phase
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this begun.")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this begun.")
   }
 
   def beginFraming(): Unit   = beginPhase(TurnPhase.Framing)
@@ -258,7 +258,7 @@ class FullMVTurnImpl(
     successorsIncludingSelf = null
     selfNode = null
     val l = subsumableLock.getAndSet(null)
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this deallocating, dropping reference on $l.")
     l.localSubRefs(1)
     host.dropInstance(guid, this)
@@ -291,13 +291,13 @@ class FullMVTurnImpl(
 
   @tailrec final def acquireRemoteBranchIfPhaseAtMost(maxPhase: TurnPhase.Type): Future[TurnPhase.Type] = {
     val pOptimistic = phase
-    if (pOptimistic > maxPhase) {
+    if pOptimistic > maxPhase then {
       Future.successful(pOptimistic)
     } else {
       val before = activeBranches.get()
-      if (before != 0 && activeBranches.compareAndSet(before, before + 1)) {
+      if before != 0 && activeBranches.compareAndSet(before, before + 1) then {
         val pSecure = phase
-        if (pSecure > maxPhase) asyncRemoteBranchComplete(pSecure)
+        if pSecure > maxPhase then asyncRemoteBranchComplete(pSecure)
         Future.successful(pSecure)
       } else {
         Thread.`yield`()
@@ -325,8 +325,8 @@ class FullMVTurnImpl(
 
   def addPredecessor(predecessorSpanningTree: TransactionSpanningTreeNode[FullMVTurn]): Future[Boolean] = {
     val predecessor = predecessorSpanningTree.txn
-    if (predecessor.phase == TurnPhase.Completed) {
-      if (FullMVUtil.DEBUG)
+    if predecessor.phase == TurnPhase.Completed then {
+      if FullMVUtil.DEBUG then
         println(
           s"[${Thread.currentThread().getName}] $this aborting predecessor addition of known completed $predecessor"
         )
@@ -338,7 +338,7 @@ class FullMVTurnImpl(
         !isTransitivePredecessor(predecessor),
         s"attempted to establish already existing predecessor relation $predecessor -> $this"
       )
-      if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
+      if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this adding predecessor $predecessor.")
 
       FullMVUtil.broadcast(successorsIncludingSelf)(_.maybeNewReachableSubtree(this, predecessorSpanningTree)).map(_ =>
         predecessor.phase == TurnPhase.Completed
@@ -351,7 +351,7 @@ class FullMVTurnImpl(
       attachBelow: FullMVTurn,
       spanningSubTreeRoot: TransactionSpanningTreeNode[FullMVTurn]
   ): Future[Unit] = {
-    if (!isTransitivePredecessor(spanningSubTreeRoot.txn)) {
+    if !isTransitivePredecessor(spanningSubTreeRoot.txn) then {
       val incompleteCallsAccumulator = FullMVUtil.newAccumulator()
 
       // accumulate all changes offline and then batch-publish them in a single volatile write.
@@ -391,7 +391,7 @@ class FullMVTurnImpl(
       s"new predecessor $newTransitivePredecessor of $this is hosted on ${newTransitivePredecessor.host} different from $host"
     )
     // last chance to check if predecessor completed concurrently
-    if (newTransitivePredecessor.phase != TurnPhase.Completed) {
+    if newTransitivePredecessor.phase != TurnPhase.Completed then {
       val newSuccessorCall = newTransitivePredecessor.newSuccessor(this)
       var updatedAccu      = FullMVUtil.accumulateFuture(newSuccessorCallsAccumulator, newSuccessorCall)
 
@@ -401,9 +401,9 @@ class FullMVTurnImpl(
       updatedBufferPredecessorSpanningTreeNodes(attachBelow).addChild(copiedSpanningTreeNode)
 
       val it = spanningSubTreeRoot.iterator()
-      while (it.hasNext) {
+      while it.hasNext do {
         val child = it.next()
-        if (!isTransitivePredecessor(child.txn)) {
+        if !isTransitivePredecessor(child.txn) then {
           val (updated2Buffer, updated2Accu) = copySubTreeRootAndAssessChildren(
             updatedBufferPredecessorSpanningTreeNodes,
             newTransitivePredecessor,
@@ -426,7 +426,7 @@ class FullMVTurnImpl(
       s"new successor $successor of $this is hosted on ${successor.host} different from $host"
     )
     val before = successorsIncludingSelf
-    if (before != null) {
+    if before != null then {
       // this isn't thread-safe in that it may overwrite concurrent changes unnoticed.
       // that doesn't matter though, as accesses are synchronized except for turn completion,
       // which writes null to support garbage collection, and if the change to null is overwritten
@@ -440,7 +440,7 @@ class FullMVTurnImpl(
 
   override def getLockedRoot: Future[LockStateResult] = {
     val l = subsumableLock.get
-    if (l == null) {
+    if l == null then {
       assert(phase == TurnPhase.Completed, s"lock was deallocated although $this is still active?")
       CompletedState.futured
     } else {
@@ -452,28 +452,28 @@ class FullMVTurnImpl(
     }
   }
   override def tryLock(): Future[TryLockResult] = {
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this dispatching local tryLock request")
     tryLock0(0)
   }
 
   def tryLock0(hopCount: Int): Future[TryLockResult] = {
     val l = subsumableLock.get()
-    if (l == null) {
+    if l == null then {
       Deallocated.futured
     } else {
       l.tryLock0(hopCount).flatMap {
         case Locked0(failedRefChanges, newLockedRoot) =>
           val finalFailedRefChanges = failedRefChanges + trySwap(l, newLockedRoot)
-          if (SubsumableLockImpl.DEBUG)
+          if SubsumableLockImpl.DEBUG then
             println(
               s"[${Thread.currentThread().getName}] $this tryLocked $newLockedRoot, correcting $finalFailedRefChanges failed ref changes (thread reference is retained and passed out)"
             )
-          if (finalFailedRefChanges > 0) newLockedRoot.localSubRefs(finalFailedRefChanges)
+          if finalFailedRefChanges > 0 then newLockedRoot.localSubRefs(finalFailedRefChanges)
           Future.successful(Locked(newLockedRoot))
         case Blocked0(failedRefChanges, newRoot) =>
           val finalFailedRefChanges = 1 + failedRefChanges + trySwap(l, newRoot)
-          if (SubsumableLockImpl.DEBUG)
+          if SubsumableLockImpl.DEBUG then
             println(
               s"[${Thread.currentThread().getName}] $this tryLock blocked under $newRoot, correcting $finalFailedRefChanges failed ref changes (includes thread reference)"
             )
@@ -487,28 +487,28 @@ class FullMVTurnImpl(
   }
 
   override def trySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this dispatching local trySubsume $lockedNewParent request")
     trySubsume0(0, lockedNewParent)
   }
 
   private def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
     val l = subsumableLock.get()
-    if (l == null) {
+    if l == null then {
       Deallocated.futured
     } else {
       l.trySubsume0(hopCount, lockedNewParent).flatMap {
         case Successful0(failedRefChanges) =>
           val finalFailedRefChanges = failedRefChanges + trySwap(l, lockedNewParent)
-          if (SubsumableLockImpl.DEBUG)
+          if SubsumableLockImpl.DEBUG then
             println(
               s"[${Thread.currentThread().getName}] $this trySubsumed under $lockedNewParent, correcting $finalFailedRefChanges failed ref changes"
             )
-          if (finalFailedRefChanges > 0) lockedNewParent.localSubRefs(finalFailedRefChanges)
+          if finalFailedRefChanges > 0 then lockedNewParent.localSubRefs(finalFailedRefChanges)
           Successful.futured
         case Blocked0(failedRefChanges, newRoot) =>
           val finalFailedRefChanges = 1 + failedRefChanges + trySwap(l, newRoot)
-          if (SubsumableLockImpl.DEBUG)
+          if SubsumableLockImpl.DEBUG then
             println(
               s"[${Thread.currentThread().getName}] $this trySubsume blocked under $newRoot, correcting $finalFailedRefChanges failed ref changes (includes thread reference)"
             )
@@ -522,10 +522,10 @@ class FullMVTurnImpl(
   }
 
   override def remoteTryLock(): Future[TryLockResult] = {
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this dispatching remote tryLock request")
     tryLock0(0).map { res =>
-      if (SubsumableLockImpl.DEBUG)
+      if SubsumableLockImpl.DEBUG then
         println(
           s"[${Thread.currentThread().getName}] $this returning tryLock result $res to remote (retaining thread reference as remote transfer reference)"
         )
@@ -533,10 +533,10 @@ class FullMVTurnImpl(
     }(FullMVUtil.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this dispatching remote trySubsume $lockedNewParent request")
     trySubsume0(0, lockedNewParent).map { res =>
-      if (SubsumableLockImpl.DEBUG)
+      if SubsumableLockImpl.DEBUG then
         println(
           s"[${Thread.currentThread().getName}] $this returning trySubsume $lockedNewParent request to remote, dropping remote parameter reference and retaining thread reference as remote transfer reference on result"
         )
@@ -546,15 +546,15 @@ class FullMVTurnImpl(
   }
 
   private def trySwap(from: SubsumableLock, to: SubsumableLock): Int = {
-    if (from == to) {
+    if from == to then {
       0
-    } else if (subsumableLock.compareAndSet(from, to)) {
-      if (SubsumableLockImpl.DEBUG)
+    } else if subsumableLock.compareAndSet(from, to) then {
+      if SubsumableLockImpl.DEBUG then
         println(s"[${Thread.currentThread().getName}] $this parent cas $from to $to succeeded, dropping ref")
       from.localSubRefs(1)
       0
     } else {
-      if (SubsumableLockImpl.DEBUG)
+      if SubsumableLockImpl.DEBUG then
         println(s"[${Thread.currentThread().getName}] $this parent cas $from to $to failed due to contention")
       1
     }
@@ -564,7 +564,7 @@ class FullMVTurnImpl(
 
   override def toString: String =
     s"FullMVTurn($guid on $host, ${TurnPhase.toString(phase)}${
-        if (activeBranches.get != 0) s"(${activeBranches.get})"
+        if activeBranches.get != 0 then s"(${activeBranches.get})"
         else ""
       })"
 }

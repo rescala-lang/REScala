@@ -15,7 +15,7 @@ class Triangle(
     with Resizable {
 
   override def doDraw(g: Graphics2D) =
-    for ((a, b) <- toLines())
+    for (a, b) <- toLines() do
       g.drawLine(a.x, a.y, b.x, b.y)
 
   override def toLines() =

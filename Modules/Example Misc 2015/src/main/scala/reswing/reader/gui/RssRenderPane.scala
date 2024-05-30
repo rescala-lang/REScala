@@ -15,11 +15,11 @@ class RssItemRenderPane(item: Signal[Option[RSSItem]]) extends EditorPane {
 
   peer.addHyperlinkListener(new HyperlinkListener() {
     def hyperlinkUpdate(e: HyperlinkEvent) =
-      if (e.getEventType == HyperlinkEvent.EventType.ENTERED)
+      if e.getEventType == HyperlinkEvent.EventType.ENTERED then
         peer.setToolTipText(e.getDescription)
-      else if (e.getEventType == HyperlinkEvent.EventType.EXITED)
+      else if e.getEventType == HyperlinkEvent.EventType.EXITED then
         peer.setToolTipText(null)
-      else if (e.getEventType == HyperlinkEvent.EventType.ACTIVATED)
+      else if e.getEventType == HyperlinkEvent.EventType.ACTIVATED then
         try Desktop.getDesktop.browse(e.getURL.toURI)
         catch {
           case e: IOException => e.printStackTrace

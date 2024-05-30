@@ -26,7 +26,7 @@ case class RaftTokens(
     val owners = tokenAgreement.values.filter(t => t.value == value && !freed.contains(t))
     val mine   = owners.filter(_.owner == replicaID)
     // return all ownership tokens if this replica owns the oldest one
-    if (mine.headOption == owners.headOption) mine else Nil
+    if mine.headOption == owners.headOption then mine else Nil
   }
 
   def isOwned(value: String): Boolean = owned(value).nonEmpty
@@ -35,7 +35,7 @@ case class RaftTokens(
     val token = Token(Random.nextLong(), replicaID, value)
 
     // conditional is only an optimization
-    if (!(tokenAgreement.values.iterator ++ want.elements.iterator).exists(_.same(token))) {
+    if !(tokenAgreement.values.iterator ++ want.elements.iterator).exists(_.same(token)) then {
       copy(want = want.add(token))
     } else this
   }
@@ -47,7 +47,7 @@ case class RaftTokens(
   def update(): RaftTokens = {
     val generalDuties = tokenAgreement.supportLeader(replicaID).supportProposal(replicaID)
 
-    if (tokenAgreement.leader == replicaID) {
+    if tokenAgreement.leader == replicaID then {
       val unwanted = want.removeAll(want.elements.filter(generalDuties.values.contains))
       unwanted.elements.headOption match {
         case None => copy(tokenAgreement = generalDuties, want = unwanted)

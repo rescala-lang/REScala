@@ -20,7 +20,7 @@ object PongStarter extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait { application.tick.fire() }
       Thread `sleep` 20
     }

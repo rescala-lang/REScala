@@ -34,11 +34,11 @@ class SyncedTodoListCrdt(val replicaId: String) {
 
   def connect(connectionString: String): Unit = {
     val parts = connectionString.split("@")
-    if (parts.length == 2) {
+    if parts.length == 2 then {
       val uri = Try {
         URI.create(parts(1))
       }
-      if (uri.isSuccess) {
+      if uri.isSuccess then {
         connectionManager.connectToReplica(parts(0), uri.get)
         return
       }

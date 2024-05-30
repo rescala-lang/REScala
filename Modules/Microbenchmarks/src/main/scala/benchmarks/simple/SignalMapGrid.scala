@@ -30,9 +30,9 @@ class SignalMapGrid extends BusyThreads {
   def setup(engineParam: EngineParam, work: Workload) = {
     engine = engineParam.engine
     source = Var(0)
-    leafs = for (w <- 1 to width) yield {
+    leafs = for w <- 1 to width yield {
       var result: Signal[Int] = source
-      for (d <- 1 to depth) {
+      for d <- 1 to depth do {
         result = {
           result.map { v =>
             work.consume(); v + 1

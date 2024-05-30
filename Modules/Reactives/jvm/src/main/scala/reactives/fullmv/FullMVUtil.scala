@@ -30,7 +30,7 @@ object FullMVUtil {
 
   def myAwait[T](future: Future[T], timeout: Duration): T = {
 //    Await.result(future, timeout)
-    if (!future.isCompleted) {
+    if !future.isCompleted then {
       val blocker = new java.util.concurrent.ForkJoinPool.ManagedBlocker {
         override def isReleasable: Boolean = future.isCompleted
         override def block(): Boolean      = { Await.ready(future, timeout); true }
@@ -52,7 +52,7 @@ object FullMVUtil {
     collection.foldLeft(accumulator) { (acc, elem) => accumulateFuture(acc, makeCall(elem)) }
   }
   def accumulateFuture[T](accumulator: CallAccumulator[T], call: Future[T]): CallAccumulator[T] = {
-    if (!call.isCompleted || call.value.get.isFailure) {
+    if !call.isCompleted || call.value.get.isFailure then {
       call :: accumulator
     } else {
       accumulator

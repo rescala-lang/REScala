@@ -101,7 +101,7 @@ object GrowOnlyList {
         current: Node[LastWriterWins[E]],
         i: Int
     ): Option[Node[LastWriterWins[E]]] = {
-      if (i == 0) Some(current)
+      if i == 0 then Some(current)
       else state.inner.get(current) match {
         case None       => None
         case Some(elem) => findNth(state, elem, i - 1)
@@ -144,7 +144,7 @@ object GrowOnlyList {
     }.mutator
 
     def insertAllGL(i: Int, elems: Iterable[E]): Mutator = {
-      if (elems.isEmpty)
+      if elems.isEmpty then
         GrowOnlyList.empty[E]
       else
         GrowOnlyList(findNth(current, Head, i) match {

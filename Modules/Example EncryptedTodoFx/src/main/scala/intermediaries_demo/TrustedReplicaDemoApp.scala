@@ -12,7 +12,7 @@ import scala.annotation.nowarn
 object TrustedReplicaDemoApp extends TodoListApp {
   AeadConfig.register()
   private val keysetFilePath: Path = Paths.get(".", "demokey.json")
-  if (!Files.exists(keysetFilePath)) {
+  if !Files.exists(keysetFilePath) then {
     val keyset: KeysetHandle = KeysetHandle.generateNew(KeyTemplates.get("XCHACHA20_POLY1305"))
     CleartextKeysetHandle.write(keyset, JsonKeysetWriter.withFile(keysetFilePath.toFile): @nowarn)
   }

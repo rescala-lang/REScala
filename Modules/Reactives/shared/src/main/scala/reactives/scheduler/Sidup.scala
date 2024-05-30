@@ -70,11 +70,11 @@ trait Sidup extends Twoversion {
       // is set by the call above, but makes no sense for new reactives
       reactive.state.sourcesChanged = false
 
-      if (needsReevaluation || incoming.exists(_.state.done)) {
+      if needsReevaluation || incoming.exists(_.state.done) then {
         // somewhat strange workaround to force activation
         reactive.state.activate = true
         // immediate evaluation helps break dynamic creation cycle … sometimes
-        if (currentTx.sources != null)
+        if currentTx.sources != null then
           currentTx.evaluateIn(reactive)(currentTx.makeDynamicReevaluationTicket(reactive.state.base(currentTx.token)))
         else currentTx.pokeLater(reactive)
       }
@@ -88,7 +88,7 @@ trait Sidup extends Twoversion {
     override def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit = {
       val initsources = initialChanges.flatMap { case (s, ic) =>
         val isChange = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
-        if (isChange) {
+        if isChange then {
           s.state.activate = true
           s.state.done = true
           schedule(s)
@@ -112,18 +112,18 @@ trait Sidup extends Twoversion {
     /** Overrides the evaluator, this is essentially an inlined callback */
     def evaluate(r: Derived): Unit = evaluateIn(r)(reevaluationTicket.reset(r.state.base(token)))
     def evaluateIn(reactive: Derived)(dt: ReevTicket[State, reactive.Value]): Unit = {
-      if (!reactive.state.done) {
+      if !reactive.state.done then {
         val rinc = relevantIncoming(reactive)
-        if (rinc.forall(_.state.done)) {
+        if rinc.forall(_.state.done) then {
           // if the state of the reactive itself is activation, this means it has just been created and MUST be evaluated
-          if (reactive.state.activate || rinc.exists(_.state.activate)) {
+          if reactive.state.activate || rinc.exists(_.state.activate) then {
             val reevRes                             = reactive.reevaluate(dt)
             val dependencies: Option[Set[ReSource]] = reevRes.inputs()
             dependencies.foreach(commitDependencyDiff(reactive, reactive.state.incoming))
             // recompute relevant dependencies if there were dynamic changes
             val inc = dependencies.fold(rinc)(_ => relevantIncoming(reactive))
-            if (inc.forall(_.state.done)) {
-              if (inc.exists(_.state.sourcesChanged)) reactive.state.refreshSources()
+            if inc.forall(_.state.done) then {
+              if inc.exists(_.state.sourcesChanged) then reactive.state.refreshSources()
               reevRes.forValue(writeState(reactive))
               reevRes.forEffect(observe)
               markDone(reactive, reevRes.activate)
@@ -154,12 +154,12 @@ trait Sidup extends Twoversion {
     override def preparationPhase(initialWrites: Set[ReSource]): Unit           = ()
     @tailrec
     final override def propagationPhase(): Unit = {
-      if (evaluating.nonEmpty) {
+      if evaluating.nonEmpty then {
         val ev = evaluating
         evaluating = List.empty
         ev.foreach(evaluate)
         propagationPhase()
-      } else if (evaluatingLater.nonEmpty) {
+      } else if evaluatingLater.nonEmpty then {
         evaluating = evaluatingLater
         evaluatingLater = List.empty
         propagationPhase()

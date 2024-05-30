@@ -11,7 +11,7 @@ class Carnivore(implicit world: World) extends Animal {
   // only adult carnivores with min energy can hunt, others eat plants
   override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = Signal.lift(isAdult, canHunt) {
     (isAdult, canHunt) =>
-      if (isAdult && canHunt) { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
+      if isAdult && canHunt then { case p: Herbivore => p }: PartialFunction[BoardElement, BoardElement]
       else { case p: Plant => p }: PartialFunction[BoardElement, BoardElement]
   }
 
@@ -22,7 +22,7 @@ class Carnivore(implicit world: World) extends Animal {
     }
 
   override protected def nextAction(pos: Pos): AnimalState = {
-    if (sleepy.readValueOnce) Sleeping
+    if sleepy.readValueOnce then Sleeping
     else super.nextAction(pos)
   }
 }
@@ -49,7 +49,7 @@ trait Female extends Animal {
   private val becomePregnant: Event[Any] = isPregnant.changed.filter(_ == true) // #EVT //#IF
   private val pregnancyTime: Signal[Int] = Fold(Animal.PregnancyTime)(
     becomePregnant act { _ => Animal.PregnancyTime },
-    world.time.hour.changed act { _ => Fold.current - (if (isPregnant.readValueOnce) 1 else 0) }
+    world.time.hour.changed act { _ => Fold.current - (if isPregnant.readValueOnce then 1 else 0) }
   )
   private val giveBirth: Event[Any] = pregnancyTime.changed.filter(_ == 0)         // #EVT //#IF
   final override val isFertile      = Signal.lift(isAdult, isPregnant) { _ && !_ } // #SIG
@@ -70,7 +70,7 @@ trait Female extends Animal {
     }
   }
   final def procreate(father: Animal): Unit = {
-    if (isPregnant.readValueOnce) return
+    if isPregnant.readValueOnce then return
     mate.set(Some(father))
   }
 
@@ -78,8 +78,8 @@ trait Female extends Animal {
     val male        = world.randomness.nextBoolean()
     val nHerbivores = List(this, father).map(_.isInstanceOf[Herbivore]).count(_ == true)
     val herbivore =
-      if (nHerbivores == 0) false         // both parents are a carnivores, child is carnivore
-      else if (nHerbivores == 2) true     // both parents are herbivores, child is herbivore
+      if nHerbivores == 0 then false         // both parents are a carnivores, child is carnivore
+      else if nHerbivores == 2 then true     // both parents are herbivores, child is herbivore
       else world.randomness.nextBoolean() // mixed parents, random
 
     world.newAnimal(herbivore, male)
@@ -90,7 +90,7 @@ trait Male extends Animal {
   private val seeksMate = Signal.lift(isFertile, energy) { _ && _ > Animal.ProcreateThreshold }
 
   final override def nextAction(pos: Pos): AnimalState = {
-    if (seeksMate.readValueOnce) {
+    if seeksMate.readValueOnce then {
       val findFemale: PartialFunction[BoardElement, Female] = {
         case f: Female if f.isFertile.readValueOnce => f
       }
@@ -103,7 +103,7 @@ trait Male extends Animal {
           world.board.nearby(pos, Animal.ViewRadius).collectFirst(findFemale) match {
             case Some(target) =>
               val destination = world.board.getPosition(target)
-              if (destination.isDefined) Moving(pos.directionTo(destination.get))
+              if destination.isDefined then Moving(pos.directionTo(destination.get))
               else super.nextAction(pos)
             case None => super.nextAction(pos)
           }

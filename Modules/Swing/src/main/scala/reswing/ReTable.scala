@@ -39,13 +39,13 @@ class ReTable[A <: AnyRef](
       peer publish (
         e.getType match {
           case javax.swing.event.TableModelEvent.UPDATE =>
-            if (
+            if
               e.getFirstRow == 0 &&
               e.getLastRow == Int.MaxValue &&
               e.getColumn == javax.swing.event.TableModelEvent.ALL_COLUMNS
-            )
+            then
               TableChanged(peer)
-            else if (e.getFirstRow == javax.swing.event.TableModelEvent.HEADER_ROW)
+            else if e.getFirstRow == javax.swing.event.TableModelEvent.HEADER_ROW then
               TableStructureChanged(peer)
             else
               TableUpdated(peer, e.getFirstRow to e.getLastRow, e.getColumn)
@@ -58,9 +58,9 @@ class ReTable[A <: AnyRef](
   }
 
   def modelChanged(): Unit = {
-    if (model != null)
+    if model != null then
       model `removeTableModelListener` modelListener
-    if (peer.peer.getModel != null)
+    if peer.peer.getModel != null then
       peer.peer.getModel `addTableModelListener` modelListener
     model = peer.peer.getModel
   }
@@ -74,9 +74,9 @@ class ReTable[A <: AnyRef](
         case model: ReTable.ReTableModel[A @unchecked] =>
           model.getRowData
         case model =>
-          for (r <- 0 to model.getRowCount())
+          for r <- 0 to model.getRowCount()
             yield {
-              for (c <- 0 to model.getColumnCount())
+              for c <- 0 to model.getColumnCount()
                 yield (model.getValueAt(r, c)).asInstanceOf[A]
             }
       }
@@ -104,7 +104,7 @@ class ReTable[A <: AnyRef](
         case model: ReTable.ReTableModel[?] =>
           model.getColumnNames
         case model =>
-          for (c <- 0 to model.getColumnCount())
+          for c <- 0 to model.getColumnCount()
             yield model `getColumnName` c
       }
     },
@@ -166,13 +166,13 @@ class ReTable[A <: AnyRef](
   selectionBackground.using({ () => peer.selectionBackground }, peer.selectionBackground = _, "selectionBackground")
 
   selectColumnInterval using { range =>
-    if (range._1 == -1 || range._2 == -1)
+    if range._1 == -1 || range._2 == -1 then
       peer.peer.clearSelection
     else
       peer.peer.setColumnSelectionInterval(range._1, range._2)
   }
   selectRowInterval using { range =>
-    if (range._1 == -1 || range._2 == -1)
+    if range._1 == -1 || range._2 == -1 then
       peer.peer.clearSelection
     else
       peer.peer.setRowSelectionInterval(range._1, range._2)
@@ -279,9 +279,9 @@ object ReTable {
     def getRowCount    = rowData.length
     def getColumnCount = columnNames.length
     def getValueAt(row: Int, col: Int) = {
-      if (rowData.isDefinedAt(row)) {
+      if rowData.isDefinedAt(row) then {
         val data = rowData(row)
-        if (data.isDefinedAt(col))
+        if data.isDefinedAt(col) then
           data(col)
         else
           null
@@ -291,7 +291,7 @@ object ReTable {
 
     override def getColumnName(column: Int) = columnNames(column).toString
     override def isCellEditable(row: Int, column: Int) =
-      if (editable != null)
+      if editable != null then
         editable(row, column)
       else
         false

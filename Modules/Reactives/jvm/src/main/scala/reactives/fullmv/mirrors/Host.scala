@@ -36,48 +36,48 @@ trait HostImpl[T] extends Host[T] {
   override def getCachedOrReceiveRemote[U <: T](guid: Host.GUID, instantiateReflection: => U): CacheResult[T, U] = {
     @inline @tailrec def findOrReserveInstance(): T = {
       val found = instances.putIfAbsent(guid, dummy)
-      if (found != dummy) {
+      if found != dummy then {
         found
       } else {
-        if (Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cache contended for $guid")
+        if Host.DEBUG then println(s"[${Thread.currentThread().getName}] on $this cache contended for $guid")
         Thread.`yield`()
         findOrReserveInstance()
       }
     }
     val known = findOrReserveInstance()
-    if (known != null) {
-      if (Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cache hit $known")
+    if known != null then {
+      if Host.DEBUG then println(s"[${Thread.currentThread().getName}] on $this cache hit $known")
       Found(known)
     } else {
-      if (Host.DEBUG)
+      if Host.DEBUG then
         println(s"[${Thread.currentThread().getName}] on $this cache miss for $guid, invoking instantiation...")
       val instance = instantiateReflection
       val replaced = instances.replace(guid, dummy, instance)
       assert(replaced, s"someone stole the dummy placeholder while instantiating remotely received $guid on $this!")
-      if (Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this cached newly instantiated $instance")
+      if Host.DEBUG then println(s"[${Thread.currentThread().getName}] on $this cached newly instantiated $instance")
       Instantiated(instance)
     }
   }
   override def dropInstance(guid: GUID, instance: T): Unit = {
     val removed = instances.remove(guid, instance)
     assert(removed, s"removal of $instance on $this failed")
-    if (Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this evicted $instance")
+    if Host.DEBUG then println(s"[${Thread.currentThread().getName}] on $this evicted $instance")
   }
   override def createLocal[U <: T](create: GUID => U): U = {
     @inline @tailrec def redoId(): GUID = {
       val id = ThreadLocalRandom.current().nextLong()
-      if (id == Host.dummyGuid) {
+      if id == Host.dummyGuid then {
         redoId()
       } else {
         val known = instances.putIfAbsent(id, dummy)
-        if (known == null) id else redoId()
+        if known == null then id else redoId()
       }
     }
     val guid     = redoId()
     val instance = create(guid)
     val replaced = instances.replace(guid, dummy, instance)
     assert(replaced, s"someone stole the dummy placeholder while creating new instance $guid on $this!")
-    if (Host.DEBUG) println(s"[${Thread.currentThread().getName}] on $this created local instance $instance")
+    if Host.DEBUG then println(s"[${Thread.currentThread().getName}] on $this created local instance $instance")
     instance
   }
 }
@@ -88,15 +88,15 @@ trait SubsumableLockHost extends Host[SubsumableLock] {
         case ins: Instantiated[_, _] =>
           ins.instance
         case Found(instance) =>
-          if (instance.tryLocalAddRefs(1)) {
-            if (Host.DEBUG)
+          if instance.tryLocalAddRefs(1) then {
+            if Host.DEBUG then
               println(
                 s"[${Thread.currentThread().getName}] $this secured new local ref on cached $instance, dropping connection establishment remote reference."
               )
             remoteProxy.asyncRemoteRefDropped()
             instance
           } else {
-            if (Host.DEBUG)
+            if Host.DEBUG then
               println(
                 s"[${Thread.currentThread().getName}] $this remotely received $instance cache hit was concurrently deallocated; retrying cache lookup."
               )

@@ -17,9 +17,9 @@ class CrdtSyncWebSocketHandler[S](
 )(implicit valueCodec: JsonValueCodec[S]) extends WebSocketAdapter {
 
   override def onWebSocketConnect(sess: Session): Unit = {
-    if (sess.getBehavior == WebSocketBehavior.CLIENT) {
+    if sess.getBehavior == WebSocketBehavior.CLIENT then {
       val rIdFromHeader = sess.getUpgradeResponse.getHeader(REPLICAID_HEADER)
-      if (rIdFromHeader != remoteReplicaId) {
+      if rIdFromHeader != remoteReplicaId then {
         println(
           s"Closing connection to ${sess.getRemoteAddress}, because replicaId doesn't match ${rIdFromHeader} != ${remoteReplicaId}"
         )
@@ -32,7 +32,7 @@ class CrdtSyncWebSocketHandler[S](
 
     super.onWebSocketConnect(sess)
 
-    if (!connectionManager.promoteHandler(this)) {
+    if !connectionManager.promoteHandler(this) then {
       println(s"Can't promote handler for $remoteReplicaId")
       connectionManager.removeHandler(this)
       close(duplicateCloseStatus)
@@ -81,7 +81,7 @@ class CrdtSyncWebSocketHandler[S](
   }
 
   override def onWebSocketError(cause: Throwable): Unit = {
-    if (cause.isInstanceOf[WebSocketTimeoutException]) {
+    if cause.isInstanceOf[WebSocketTimeoutException] then {
       println(s"Connection to $remoteReplicaId timed out")
     } else {
       println(s"websocket received error (removing handler): $cause")
@@ -95,12 +95,12 @@ class CrdtSyncWebSocketHandler[S](
   }
 
   def close(closeStatus: CloseStatus): Unit = {
-    if (getSession == null) println(s"session with $remoteReplicaId already closed, not closing")
+    if getSession == null then println(s"session with $remoteReplicaId already closed, not closing")
     else getSession.close(closeStatus)
   }
 
   def sendMessage(message: Message): Unit = {
-    if (isConnected) {
+    if isConnected then {
       getSession.getRemote.sendString(writeToString(message))
       println(s"Sending to $remoteReplicaId: $message")
     } else {

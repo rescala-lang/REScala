@@ -78,13 +78,13 @@ trait Levelbased extends Twoversion {
       val dependencies: Option[Set[ReSource]] = reevRes.inputs()
       val minimalLevel                        = dependencies.fold(0)(nextLevel)
       val redo                                = head.state.level() < minimalLevel
-      if (redo) {
+      if redo then {
         levelQueue.enqueue(minimalLevel)(head)
       } else {
         dependencies.foreach(commitDependencyDiff(head, head.state.incoming))
         reevRes.forValue(writeState(head))
         reevRes.forEffect(observe)
-        if (reevRes.activate) enqueueOutgoing(head, minimalLevel)
+        if reevRes.activate then enqueueOutgoing(head, minimalLevel)
       }
     }
 
@@ -95,7 +95,7 @@ trait Levelbased extends Twoversion {
     }
 
     private def nextLevel(dependencies: Set[ReSource]): Int =
-      if (dependencies.isEmpty) 0 else dependencies.map(_.state.level()).max + 1
+      if dependencies.isEmpty then 0 else dependencies.map(_.state.level()).max + 1
 
     override def initializer: Initializer[State] = this
 
@@ -113,8 +113,8 @@ trait Levelbased extends Twoversion {
       }
       reactive.state.updateIncoming(incoming)
 
-      if (needsReevaluation || incoming.exists(_propagating.contains)) {
-        if (level <= levelQueue.currentLevel()) {
+      if needsReevaluation || incoming.exists(_propagating.contains) then {
+        if level <= levelQueue.currentLevel() then {
           evaluateIn(reactive)(makeDynamicReevaluationTicket(reactive.state.base(token)))
         } else {
           levelQueue.enqueue(level)(reactive)
@@ -127,7 +127,7 @@ trait Levelbased extends Twoversion {
 
     final def prepareInitialChange(ic: InitialChange[State]): Unit = {
       val n = ic.writeValue(ic.source.state.base(token), writeState(ic.source))
-      if (n) enqueueOutgoing(ic.source, LevelQueue.noLevelIncrease)
+      if n then enqueueOutgoing(ic.source, LevelQueue.noLevelIncrease)
     }
 
     def propagationPhase(): Unit = levelQueue.evaluateQueue()
@@ -149,7 +149,7 @@ trait Levelbased extends Twoversion {
       * @return Level of the current queue head
       */
     def currentLevel(): Int =
-      if (elements.peek() == null) Int.MaxValue
+      if elements.peek() == null then Int.MaxValue
       else elements.peek().level
 
     /** Adds a new reactive element to the queue
@@ -170,14 +170,14 @@ trait Levelbased extends Twoversion {
     private def handleElement(queueElement: QueueElement): Unit = {
       val QueueElement(headLevel, head, headMinLevel, reevaluate) = queueElement
       // handle level increases
-      if (headLevel < headMinLevel) {
+      if headLevel < headMinLevel then {
         head.state.updateLevel(headMinLevel)
         enqueue(headMinLevel, reevaluate)(head)
         head.state.outgoing.foreach { r =>
-          if (r.state.level() <= headMinLevel)
+          if r.state.level() <= headMinLevel then
             enqueue(headMinLevel + 1, needsEvaluate = false)(r)
         }
-      } else if (reevaluate) {
+      } else if reevaluate then {
         evaluator.evaluate(head)
       }
     }
@@ -186,9 +186,9 @@ trait Levelbased extends Twoversion {
     def evaluateQueue(): Unit = {
       var current = elements.poll()
       var next    = elements.peek()
-      while (current != null) {
+      while current != null do {
         // if the current and next reactive are equal, merge the queue entries
-        if (next != null && current.reactive == next.reactive) {
+        if next != null && current.reactive == next.reactive then {
           next.minLevel = next.minLevel max current.minLevel
           next.needsEvaluate ||= current.needsEvaluate
         } else {
@@ -206,7 +206,7 @@ trait Levelbased extends Twoversion {
       */
     def remove(reactive: Derived): Unit = {
       val it = elements.iterator()
-      while (it.hasNext) if (it.next().reactive eq reactive) it.remove()
+      while it.hasNext do if it.next().reactive eq reactive then it.remove()
     }
   }
 

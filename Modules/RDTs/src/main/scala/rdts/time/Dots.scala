@@ -69,7 +69,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
         other.internal.get(id) match {
           case Some(otherRanges) =>
             val intersection = ranges intersect otherRanges
-            if (intersection.isEmpty) None
+            if intersection.isEmpty then None
             else Some(id -> intersection)
           case None => None
         }

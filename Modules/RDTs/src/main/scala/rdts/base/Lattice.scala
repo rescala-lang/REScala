@@ -91,7 +91,7 @@ object Lattice {
   }
 
   def assertNoConflicts[A]: Lattice[A] = (left: A, right: A) =>
-    if (left == right) left
+    if left == right then left
     else throw new IllegalStateException(s"assumed there would be no conflict, but have $left and $right")
 
   // /////////////// common instances below ///////////////

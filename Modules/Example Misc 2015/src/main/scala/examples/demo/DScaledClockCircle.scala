@@ -65,8 +65,8 @@ object DScaledClockCircle extends SimpleSwingApplication {
   override def main(args: Array[String]): Unit = {
     super.main(args)
 
-    while (!top.visible) Thread.sleep(5)
-    while (top.visible) {
+    while !top.visible do Thread.sleep(5)
+    while top.visible do {
       Thread.sleep(1)
       tick()
     }

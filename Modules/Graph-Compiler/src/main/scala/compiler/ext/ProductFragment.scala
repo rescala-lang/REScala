@@ -528,7 +528,7 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
 
         val prodParam = CParmVarDecl("prod", recordDecl.getTypeForDecl)
 
-        val body = if (isTuple) {
+        val body = if isTuple then {
           val jsonDecl =
             CVarDecl("json", CPointerType(CJSONH.cJSON), Some(CCallExpr(CJSONH.cJSON_CreateArray.ref, List())))
           val addFields = recordDecl.fields.zip(fieldTypes(tpe)).map[CStmt] { (field, tpe) =>
@@ -567,7 +567,7 @@ object ProductFragment extends SelectIFFragment with ApplyIFFragment with MatchI
 
         val jsonParam = CParmVarDecl("json", CPointerType(CJSONH.cJSON))
 
-        val params = if (isTuple) {
+        val params = if isTuple then {
           fieldTypes(tpe).zipWithIndex map { (tpe, i) =>
             deserialize(CCallExpr(CJSONH.cJSON_GetArrayItem.ref, List(jsonParam.ref, CIntegerLiteral(i))), tpe)
           }

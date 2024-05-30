@@ -12,7 +12,7 @@ object SmashingParticles extends SimpleSwingApplication {
 
   override def main(args: Array[String]): Unit = {
     super.main(args)
-    while (true) {
+    while true do {
       Swing onEDTWait {
         application.base.transform(_ + 1)
         application.frame.repaint()

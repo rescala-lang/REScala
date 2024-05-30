@@ -102,14 +102,14 @@ class NetworkSpaceState(
   new Thread(new Runnable {
     override def run(): Unit = {
       println("start UpdateThread")
-      try while (true) {
+      try while true do {
           println("receiving update")
           val socket = listener.accept
           val shapes = Shape.deserialize(XML.load(socket.getInputStream), drawingStateSpace)
           shapeUpdateRunner {
             updating = true
             drawingStateSpace.clear.fire()
-            for (shape <- shapes)
+            for shape <- shapes do
               drawingStateSpace.execute.fire(new CreateShape(shape))
             updating = false
           }
@@ -122,7 +122,7 @@ class NetworkSpaceState(
   }).start()
 
   drawingStateSpace.shapes.changed observe { shapes => // #IF //#HDL
-    if (!updating) {
+    if !updating then {
       println("sending update")
       val socket = new Socket(serverInetAddress, exchangePort)
       val writer = new OutputStreamWriter(socket.getOutputStream)

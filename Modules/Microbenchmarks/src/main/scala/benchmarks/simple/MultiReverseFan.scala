@@ -32,7 +32,7 @@ class MultiReverseFan {
     val threads = params.getThreads
 
     sources = Array.fill(threads)(Var(step.get()))
-    groupSize = if (threads > size.size) threads / size.size else 1
+    groupSize = if threads > size.size then threads / size.size else 1
 
     val intermediate = sources.map(_.map { v => { work.consume(); v + 1 } }).grouped(groupSize)
     results = intermediate.map { sigs =>
@@ -41,14 +41,14 @@ class MultiReverseFan {
       }
     }.toArray
 
-    if (engineParam.engineName == "unmanaged") locks = Array.fill(threads / groupSize)(new ReentrantLock())
+    if engineParam.engineName == "unmanaged" then locks = Array.fill(threads / groupSize)(new ReentrantLock())
 
   }
 
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if (locks == null) sources(index).set(step.run())
+    if locks == null then sources(index).set(step.run())
     else {
       locks(index / groupSize).lock()
       try {

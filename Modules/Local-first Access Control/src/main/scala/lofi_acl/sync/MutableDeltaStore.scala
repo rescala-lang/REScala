@@ -65,7 +65,7 @@ class MutableDeltaStore[RDT: Bottom] {
         deltas = List(prefixDots -> prefix)
         remaining = remaining.subtract(prefixDots)
 
-    while (!remaining.isEmpty) {
+    while !remaining.isEmpty do {
       val dottedDelta @ (dots, _) = deltaMap(remaining.head)
       remaining = remaining.subtract(dots)
       deltas = dottedDelta :: deltas

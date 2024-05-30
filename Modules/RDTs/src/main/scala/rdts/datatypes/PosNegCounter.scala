@@ -15,8 +15,8 @@ case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Lat
   def dec()(using LocalUid): PosNegCounter = add(-1)
 
   def add(delta: Int)(using LocalUid): PosNegCounter = {
-    if (delta > 0) PosNegCounter(pos.add(delta), GrowOnlyCounter.zero)
-    else if (delta < 0) PosNegCounter(GrowOnlyCounter.zero, neg.add(-delta))
+    if delta > 0 then PosNegCounter(pos.add(delta), GrowOnlyCounter.zero)
+    else if delta < 0 then PosNegCounter(GrowOnlyCounter.zero, neg.add(-delta))
     else PosNegCounter.zero
   }
 }

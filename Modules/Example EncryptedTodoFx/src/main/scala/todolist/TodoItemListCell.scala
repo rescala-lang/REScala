@@ -16,13 +16,13 @@ class TodoItemListCell extends ListCell[UUID] {
   override def updateItem(uuid: UUID, empty: Boolean): Unit = {
     super.updateItem(uuid, empty)
     reset()
-    if (empty || uuid == null) {
+    if empty || uuid == null then {
       setText(null)
       setGraphic(null)
     } else {
       val todoProperty: Option[ObjectProperty[TodoEntry]] = TodoListController.getTodo(uuid)
 
-      if (todoProperty.isEmpty) {
+      if todoProperty.isEmpty then {
         Console.println("Empty")
         return
       }
@@ -43,7 +43,7 @@ class TodoItemListCell extends ListCell[UUID] {
 
       subscriptions :+ textField.text.onChange { (_: ObservableValue[String, String], _, newVal) =>
         val uuid = getItem
-        if (uuid != null) todoProperty match {
+        if uuid != null then todoProperty match {
           case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(description = newVal))
           case None           => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
         }
@@ -52,7 +52,7 @@ class TodoItemListCell extends ListCell[UUID] {
       subscriptions :+ checkBox.selectedProperty.onChange {
         (_: ObservableValue[Boolean, java.lang.Boolean], _, newVal) =>
           val uuid = getItem
-          if (uuid != null) todoProperty match {
+          if uuid != null then todoProperty match {
             case Some(property) => TodoListController.changeTodo(uuid, property.value.copy(completed = newVal))
             case None           => Console.err.println(s"TodoItemListCell: Entry $uuid not present in Controller")
           }
@@ -61,10 +61,10 @@ class TodoItemListCell extends ListCell[UUID] {
       subscriptions :+ todoProperty.get.onChange(
         (_: ObservableValue[TodoEntry, TodoEntry], before: TodoEntry, after: TodoEntry) =>
           Platform.runLater {
-            if (textField.getText == before.description && before.description != after.description) {
+            if textField.getText == before.description && before.description != after.description then {
               textField.setText(after.description)
             }
-            if (checkBox.selected.get() == before.completed && before.completed != after.completed) {
+            if checkBox.selected.get() == before.completed && before.completed != after.completed then {
               checkBox.setSelected(after.completed)
             }
           }

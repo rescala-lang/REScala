@@ -39,8 +39,8 @@ class Elevator(val nFloors: Int) {
 
   val accelaration: Signal[Int] = Signal {
     val break = math.abs(distance.value) <= BreakDist
-    if (break) {
-      if (stopped.value) 0
+    if break then {
+      if stopped.value then 0
       else -MaxAccel
     } else MaxAccel
   }
@@ -54,7 +54,7 @@ class Elevator(val nFloors: Int) {
 
   val waitingTime = Fold(0)(
     reachedFloor act { _ => WaitingTime },
-    tick act { _ => if (isWaiting.now) Fold.current - 1 else Fold.current }
+    tick act { _ => if isWaiting.now then Fold.current - 1 else Fold.current }
   )
 
   val stoppedWaiting = waitingTime.changed.filter(_ == 0)
@@ -89,5 +89,5 @@ object Test extends App {
   e.callToFloor fire 2
   e.callToFloor fire 2
 
-  for (_ <- 0 to 100) e.tick.fire()
+  for _ <- 0 to 100 do e.tick.fire()
 }

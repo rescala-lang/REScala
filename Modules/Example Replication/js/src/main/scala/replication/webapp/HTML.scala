@@ -15,7 +15,7 @@ import scalatags.JsDom.tags2.{aside, section}
 object HTML {
 
   def leftClickHandler(action: => Unit) = { (e: MouseEvent) =>
-    if (e.button == 0) {
+    if e.button == 0 then {
       e.preventDefault()
       action
     }

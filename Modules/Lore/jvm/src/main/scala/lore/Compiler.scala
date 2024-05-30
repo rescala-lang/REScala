@@ -17,13 +17,12 @@ object Compiler extends IOApp {
   private def readFile(path: Path): IO[String] =
     IO.blocking(String(Files.readAllBytes(path), StandardCharsets.UTF_8))
 
-  private def writeFile(path: Path, content: String): IO[Unit] = for {
+  private def writeFile(path: Path, content: String): IO[Unit] = for
     // create parent directories
     _ <- IO.blocking(Files.createDirectories(path.getParent)).attempt
     _ <- IO.blocking(
       Files.write(path, content.getBytes(StandardCharsets.UTF_8))
     )
-  }
   yield ()
 
   def toScala(ast: NonEmptyList[Term], options: Options): IO[Unit] = {
@@ -72,7 +71,7 @@ object Compiler extends IOApp {
     }
     val options = subcommand.options
 
-    val result = for {
+    val result = for
       // read program
       program <-
         if options.file.isDefined
@@ -96,11 +95,10 @@ object Compiler extends IOApp {
               case Some(path) => writeFile(path, ast.toString)
             }
         }
-    }
     yield result
 
     // check if anything went wrong: print error messages and set return code
-    for {
+    for
       resultWithErrors <- result.attempt
       exitCode <- resultWithErrors match {
         case Left(e: NoSuchFileException) =>
@@ -124,7 +122,6 @@ object Compiler extends IOApp {
             .as(ExitCode.Error)
         case Right(io) => IO(io).as(ExitCode.Success)
       }
-    }
     yield exitCode
   }
 }

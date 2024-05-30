@@ -61,11 +61,11 @@ object TodoListController {
   }
 
   def changeTodo(uuid: UUID, changedEntry: TodoEntry): Unit = {
-    if (uuid == null || changedEntry == null) {
+    if uuid == null || changedEntry == null then {
       println("uuid null for " + changedEntry)
     } else {
       val oldTodo = crdt.get(uuid)
-      if (oldTodo.contains(changedEntry)) return
+      if oldTodo.contains(changedEntry) then return
 
       println(s"$uuid -> $changedEntry changed from $oldTodo")
       uuidToTodoEntryProperties(uuid).set(changedEntry)

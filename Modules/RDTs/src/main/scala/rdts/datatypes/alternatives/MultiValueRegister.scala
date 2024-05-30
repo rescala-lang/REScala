@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 /** Keeps all concurrent writes */
 case class MultiValueRegister[T](versions: Map[VectorClock, T]) {
   lazy val currentTime: VectorClock = {
-    if (versions.isEmpty) VectorClock.zero
+    if versions.isEmpty then VectorClock.zero
     else versions.keys.reduce((a, b) => a.merge(b))
   }
 

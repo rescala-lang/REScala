@@ -18,7 +18,7 @@ class Fetcher(val urls: Signal[Set[URL]]) {
   val firstFetchInitiated = collection.mutable.Set.empty[URL]
 
   urls.changed observe { urls => // #IF //#HDL
-    for (url <- urls filterNot (firstFetchInitiated contains _)) {
+    for url <- urls filterNot (firstFetchInitiated contains _) do {
       firstFetchInitiated += url
       fetch(url)
     }

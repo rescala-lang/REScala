@@ -26,7 +26,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
   def successor(v: Vertex): Vertex = {
     edges.get(v) match {
       case None    => throw new IllegalArgumentException(s"CRDTSequence does not contain $v")
-      case Some(u) => if (contains(u)) u else successor(u)
+      case Some(u) => if contains(u) then u else successor(u)
     }
   }
 
@@ -41,11 +41,11 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
     * @return A new RAG containing the inserted element
     */
   def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
-    if (left == Vertex.end) throw new IllegalArgumentException("Cannot insert after end node!")
+    if left == Vertex.end then throw new IllegalArgumentException("Cannot insert after end node!")
 
     val right = successor(left)
     // sort order during merge based on most recent on towards start
-    if (right.timestamp > insertee.timestamp) addRight(right, insertee, value)
+    if right.timestamp > insertee.timestamp then addRight(right, insertee, value)
     else {
       val newVertices = vertexSet.add(vertices, insertee)
       val newEdges    = edges + (left -> insertee) + (insertee -> right)
@@ -55,7 +55,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
   }
 
   def append(value: A): LatticeSequence[A, VertexSet] = {
-    val position = if (vertexIterator.nonEmpty) vertexIterator.toList.last else Vertex.start
+    val position = if vertexIterator.nonEmpty then vertexIterator.toList.last else Vertex.start
     addRight(position, value)
   }
 
@@ -94,7 +94,7 @@ object LatticeSequence {
 
         // build map of old insertion positions of the new vertices
         val oldPositions = right.edges.foldLeft(Map(): Map[Vertex, Vertex]) {
-          case (m, (u, v)) => if (newVertices.contains(v)) m + (v -> u) else m
+          case (m, (u, v)) => if newVertices.contains(v) then m + (v -> u) else m
         }
 
         val partialnew = newVertices.foldLeft(left) {

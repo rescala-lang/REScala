@@ -34,19 +34,19 @@ class P2PTlsTcpConnector(private val identity: PrivateIdentity, _listenPort: Int
     .createServerSocket(_listenPort)
     .asInstanceOf[SSLServerSocket]
 
-  def acceptConnection(using ec: ExecutionContext): Future[(SSLSocket, PublicIdentity)] = for {
+  def acceptConnection(using ec: ExecutionContext): Future[(SSLSocket, PublicIdentity)] = for
     socket         <- Future(sslServerSocket.accept().asInstanceOf[SSLSocket])
     publicIdentity <- doHandshake(socket)
-  } yield (socket, publicIdentity)
+  yield (socket, publicIdentity)
 
-  def connect(host: String, port: Int)(using ec: ExecutionContext): Future[(SSLSocket, PublicIdentity)] = for {
+  def connect(host: String, port: Int)(using ec: ExecutionContext): Future[(SSLSocket, PublicIdentity)] = for
     socket <- Future {
       sslFactory.getSslSocketFactory
         .createSocket(host, port)
         .asInstanceOf[SSLSocket]
     }
     publicIdentity <- doHandshake(socket)
-  } yield (socket, publicIdentity)
+  yield (socket, publicIdentity)
 
   def closeServerSocket(): Try[Unit] = Try {
     sslServerSocket.close()

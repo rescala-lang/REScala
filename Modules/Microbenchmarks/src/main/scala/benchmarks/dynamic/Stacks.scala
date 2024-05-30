@@ -27,11 +27,11 @@ class StackState {
   def setup(params: BenchmarkParams, eParam: EngineParam, work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
     val threads = params.getThreads
-    if (engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged) { isManual = true }
+    if engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int] = source
-      for (_ <- Range(0, size.size)) { cur = cur.map(1.+) }
+      for _ <- Range(0, size.size) do { cur = cur.map(1.+) }
       cur.map { x => { work.consume(); x } }
     }
 
@@ -39,7 +39,7 @@ class StackState {
       case (r, i) =>
         Signal.dynamic {
           val v   = r.value
-          val idx = i + (if (step.test(v)) 2 else 1)
+          val idx = i + (if step.test(v) then 2 else 1)
           results(idx % threads).value
         }
     }
@@ -57,7 +57,7 @@ class Stacks {
   @Benchmark
   def run(state: StackState, step: Step, params: ThreadParams) = {
     import state.stableEngine.*
-    if (state.isManual)
+    if state.isManual then
       state.synchronized {
         val index = params.getThreadIndex % params.getThreadCount
         state.sources(index).set(step.run())

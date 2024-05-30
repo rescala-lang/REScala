@@ -16,13 +16,13 @@ abstract class Shape(
 ) {
 
   def selected = drawingSpaceState.selectedShape.now == this
-  def start    = if (path.isEmpty) null else path.head
-  def end      = if (path.isEmpty) null else path.last
+  def start    = if path.isEmpty then null else path.head
+  def end      = if path.isEmpty then null else path.last
 
   def draw(g: Graphics2D) = {
-    if (start != null && end != null) {
+    if start != null && end != null then {
       val stroke =
-        if (!selected) new BasicStroke(strokeWidth.toFloat)
+        if !selected then new BasicStroke(strokeWidth.toFloat)
         else
           new BasicStroke(strokeWidth.toFloat, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, Array(10.0f), 0.0f)
 
@@ -80,7 +80,7 @@ object Shape {
         new Point((p attribute "x").get.text.toInt, (p attribute "y").get.text.toInt)
       }).toList
 
-    if (data.label == "shapes")
+    if data.label == "shapes" then
       (data.child collect {
         case shape if shape.label == "freedraw" =>
           new Freedraw(
@@ -135,9 +135,9 @@ trait Movable extends Shape {
 
 trait Resizable extends Shape {
   def resizedShape(from: Point, to: Point) = {
-    if (MathUtil.isInCircle(start, 6, from))
+    if MathUtil.isInCircle(start, 6, from) then
       copy(path = to :: path)
-    else if (MathUtil.isInCircle(end, 6, from))
+    else if MathUtil.isInCircle(end, 6, from) then
       copy(path = path :+ to)
     else
       this: Shape
@@ -145,7 +145,7 @@ trait Resizable extends Shape {
 
   override def draw(g: Graphics2D) = {
     super.draw(g)
-    if (start != null && end != null && selected) {
+    if start != null && end != null && selected then {
       val origStroke = g.getStroke
       g.setStroke(new BasicStroke(1))
       g.setColor(new Color(200, 200, 200))

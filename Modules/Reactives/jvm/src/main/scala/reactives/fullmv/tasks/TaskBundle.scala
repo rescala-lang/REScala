@@ -12,25 +12,25 @@ import java.util.concurrent.RecursiveAction
 trait FramingTask extends FullMVAction {
   override def doCompute(): Unit = {
     val branchResult = doFraming()
-    if (FullMVUtil.DEBUG) println(s"[${Thread.currentThread().getName}] $this => $branchResult")
+    if FullMVUtil.DEBUG then println(s"[${Thread.currentThread().getName}] $this => $branchResult")
     branchResult match {
       case FramingBranchEnd =>
         turn.activeBranchDifferential(TurnPhase.Framing, -1)
       case Frame(out: Set[ReSource.of[State]], maybeOtherTurn) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for (dep <- out) new Framing(maybeOtherTurn, dep).fork
+        for dep <- out do new Framing(maybeOtherTurn, dep).fork
       case FrameSupersede(out: Set[ReSource.of[State]], maybeOtherTurn, supersede) =>
         branchCountDiffOnBranchOut(out, maybeOtherTurn)
-        for (dep <- out) new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
+        for dep <- out do new SupersedeFraming(maybeOtherTurn, dep, supersede).fork
     }
   }
 
   private def branchCountDiffOnBranchOut(out: Set[ReSource.of[State]], maybeOtherTurn: FullMVTurn): Unit = {
-    if (turn == maybeOtherTurn) {
+    if turn == maybeOtherTurn then {
       val branchDiff = out.size - 1
-      if (branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
+      if branchDiff != 0 then turn.activeBranchDifferential(TurnPhase.Framing, branchDiff)
     } else {
-      if (out.nonEmpty) maybeOtherTurn.activeBranchDifferential(TurnPhase.Framing, out.size)
+      if out.nonEmpty then maybeOtherTurn.activeBranchDifferential(TurnPhase.Framing, out.size)
       turn.activeBranchDifferential(TurnPhase.Framing, -1)
     }
   }
@@ -73,7 +73,7 @@ trait NotificationAction[N <: ReSource.of[State]] extends ReevaluationHandling[N
   val changed: Boolean
   override def doCompute(): Unit = {
     val (retainBranch, notificationResultAction) = deliverNotification()
-    if (FullMVUtil.DEBUG)
+    if FullMVUtil.DEBUG then
       println(s"[${Thread.currentThread().getName}] $this => $retainBranch, $notificationResultAction")
     processNotificationResult(retainBranch, notificationResultAction)
   }
@@ -84,7 +84,7 @@ trait NotificationAction[N <: ReSource.of[State]] extends ReevaluationHandling[N
   ): Unit = {
     notificationResultAction match {
       case DoNothing =>
-        if (!retainBranch) turn.activeBranchDifferential(TurnPhase.Executing, -1)
+        if !retainBranch then turn.activeBranchDifferential(TurnPhase.Executing, -1)
       case ReevaluationReady =>
         doReevaluation(retainBranch)
       case outAndSucc: ReevOutBranchResult[FullMVTurn @unchecked, Derived.of[State] @unchecked] =>
@@ -168,7 +168,7 @@ trait RegularReevaluationHandling extends ReevaluationHandling[Derived.of[State]
     res.inputs().foreach(commitDependencyDiff(node, node.state.incomings))
     res.forValue(v => value = v)
     res.forEffect(_.execute())
-    val res2 = processReevaluationResult(if (res.activate) Some(value) else None)
+    val res2 = processReevaluationResult(if res.activate then Some(value) else None)
     processReevOutResult(retainBranch, res2, changed = res.activate)
   }
 
@@ -198,7 +198,7 @@ trait SourceReevaluationHandling extends ReevaluationHandling[ReSource.of[State]
     assert(turn.phase == TurnPhase.Executing, s"$turn cannot source-reevaluate (requires executing phase")
     val ic = turn.asInstanceOf[FullMVTurnImpl].initialChanges(node)
     assert(ic.source eq node, s"$turn initial change map broken?")
-    if (
+    if
       !ic.writeValue(
         ic.source.state.latestValue,
         x => {
@@ -206,7 +206,7 @@ trait SourceReevaluationHandling extends ReevaluationHandling[ReSource.of[State]
           processReevOutResult(retainBranch, res, changed = true)
         }
       )
-    ) {
+    then {
       val res = processReevaluationResult(None)
       processReevOutResult(retainBranch, res, changed = false)
     }
@@ -221,16 +221,16 @@ trait ReevaluationHandling[N <: ReSource.of[State]] extends FullMVAction {
 
   def processReevaluationResult(maybeChange: Option[node.Value]): ReevOutBranchResult[FullMVTurn, Derived.of[State]] = {
     val reevOutResult = node.state.reevOut(turn, maybeChange, node.commit)
-    if (FullMVUtil.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional]) {
+    if FullMVUtil.DEBUG && maybeChange.isDefined && maybeChange.get.isInstanceOf[Pulse.Exceptional] then {
       // could be a framework exception that is relevant to debugging, but was eaten by reactive's
       // exception propagation and thus wouldn't be reported otherwise..
       println(s"[${Thread.currentThread().getName}] WARNING: $this glitch-free result is exceptional:")
       maybeChange.get.asInstanceOf[Pulse.Exceptional].throwable.printStackTrace()
     }
-    if (FullMVUtil.DEBUG)
+    if FullMVUtil.DEBUG then
       println(
         s"[${Thread.currentThread().getName}] Reevaluation($turn,$node) => ${
-            if (maybeChange.isDefined) "changed"
+            if maybeChange.isDefined then "changed"
             else "unchanged"
           } $reevOutResult"
       )
@@ -245,20 +245,20 @@ trait ReevaluationHandling[N <: ReSource.of[State]] extends FullMVAction {
     (outAndSucc: @unchecked) match {
       case PureNotifyOnly(out) =>
         doBranchDiff(retainBranch, out)
-        for (dep <- out) new Notification(turn, dep, changed).fork()
+        for dep <- out do new Notification(turn, dep, changed).fork()
       case NotifyAndNonReadySuccessor(out, succTxn) =>
         doBranchDiff(retainBranch, out)
-        for (dep <- out) new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
+        for dep <- out do new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
       case NotifyAndReevaluationReadySuccessor(out, succTxn) =>
         doBranchDiff(retainBranch, out)
-        for (dep <- out) new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
+        for dep <- out do new NotificationWithFollowFrame(turn, dep, changed, succTxn).fork()
         createReevaluation(succTxn).fork()
         ()
     }
   }
 
   private def doBranchDiff(retainBranch: Boolean, out: Set[Derived.of[State]]) = {
-    val branchDiff = out.size - (if (retainBranch) 1 else 2)
-    if (branchDiff != 0) turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
+    val branchDiff = out.size - (if retainBranch then 1 else 2)
+    if branchDiff != 0 then turn.activeBranchDifferential(TurnPhase.Executing, branchDiff)
   }
 }

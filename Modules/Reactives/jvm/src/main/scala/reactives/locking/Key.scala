@@ -19,13 +19,13 @@ final class Key[InterTurn](val turn: InterTurn) {
   private[locking] def await(): Unit    = semaphore.acquire()
 
   def lockKeychain[R](f: Keychain[InterTurn] => R): R = {
-    while (true) {
+    while true do {
       val oldChain = keychain
       // we are worried that the value of keychain changes between the
       // call of the `keychain` accessor, and the call to synchronized
       // so we check that it is the same as before
       keychain.synchronized {
-        if (oldChain eq keychain) return f(oldChain)
+        if oldChain eq keychain then return f(oldChain)
       }
     }
     throw new AssertionError("broke out of infinite loop")

@@ -21,7 +21,7 @@ abstract class DerivedImpl[T](
       case Some(deps) => rein.trackDependencies(deps)
     }
     val newPulse = computePulse(rein2)
-    if (newPulse.isChange) rein2.withValue(newPulse) else rein2
+    if newPulse.isChange then rein2.withValue(newPulse) else rein2
   }
 
   protected def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T]

@@ -90,7 +90,7 @@ object Tags {
   def isInDocumentHack(elem: dom.Element): Any => Boolean = {
     var second = false
     _ => {
-      if (second) {
+      if second then {
         !isInDocument(elem)
       } else {
         second = true

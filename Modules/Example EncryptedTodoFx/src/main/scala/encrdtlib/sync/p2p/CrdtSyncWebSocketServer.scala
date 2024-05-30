@@ -29,7 +29,7 @@ class CrdtSyncWebSocketServer[S](
 
       val remoteReplicaId = req.getHeader(REPLICAID_HEADER)
 
-      if (remoteReplicaId.forall(Character.isWhitespace)) {
+      if remoteReplicaId.forall(Character.isWhitespace) then {
         println(s"ReplicaId header is blank, refusing connection from ${req.getRemoteSocketAddress}")
         null
       } else {
@@ -39,7 +39,7 @@ class CrdtSyncWebSocketServer[S](
 
         // TODO: This probably has a race condition! (maybe add a random number to decide on which connection to choose)
         val replicaIdAlreadyHandled = !connectionManager.addPendingConnection(remoteReplicaId, handler)
-        if (replicaIdAlreadyHandled) {
+        if replicaIdAlreadyHandled then {
           println(s"Closing newly established connection with $remoteReplicaId, already has open connection to replica")
           null
         } else {
@@ -51,7 +51,7 @@ class CrdtSyncWebSocketServer[S](
     }
 
   def uri: URI = {
-    if (server.getURI == null) null
+    if server.getURI == null then null
     else URI.create(server.getURI.toString.replace("http", "ws"))
   }
 

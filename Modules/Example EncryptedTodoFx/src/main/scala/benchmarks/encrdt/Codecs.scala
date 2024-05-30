@@ -29,7 +29,7 @@ object Codecs {
     override def encodeValue(x: Dots, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(
       x.internal.map { case (id, ranges) =>
         id -> {
-          if (ranges.used == ranges.inner.length) ranges.inner
+          if ranges.used == ranges.inner.length then ranges.inner
           else Array.copyOf(ranges.inner, ranges.used)
         }
       },

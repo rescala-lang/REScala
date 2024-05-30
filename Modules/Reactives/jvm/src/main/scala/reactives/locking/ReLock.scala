@@ -21,12 +21,12 @@ final class ReLock[InterTurn]() {
     */
   @tailrec
   def tryLock(key: Key[InterTurn], write: Boolean = true): Key[InterTurn] = {
-    if (owner.compareAndSet(null, key)) {
+    if owner.compareAndSet(null, key) then {
       key.addLock(this)
       writeLock = write
     }
     val current = owner.get()
-    if (current eq null) tryLock(key, write)
+    if current eq null then tryLock(key, write)
     else current
   }
 
@@ -34,7 +34,7 @@ final class ReLock[InterTurn]() {
   private def transform[T](v: AtomicReference[T])(f: T => T): Unit = {
     val old    = v.get()
     val update = f(old)
-    if (!v.compareAndSet(old, update)) transform(v)(f)
+    if !v.compareAndSet(old, update) then transform(v)(f)
   }
 
   def share(key: Key[InterTurn]): Unit = transform(shared)(_.enqueue(key))
@@ -55,13 +55,13 @@ final class ReLock[InterTurn]() {
     // if there is no shared node, set target to null – free the lock
     // if a fallthrough exists always transfer the lock
     val trueTarget =
-      if (!transferWriteSet && shared.get.isEmpty) null
+      if !transferWriteSet && shared.get.isEmpty then null
       else target
 
-    if (!owner.compareAndSet(oldOwner, trueTarget))
+    if !owner.compareAndSet(oldOwner, trueTarget) then
       assert(assertion = false, s"$this is held by $owner but tried to transfer by $oldOwner (to $target)")
 
-    if (trueTarget ne null) trueTarget.addLock(this)
+    if trueTarget ne null then trueTarget.addLock(this)
   }
 
 }

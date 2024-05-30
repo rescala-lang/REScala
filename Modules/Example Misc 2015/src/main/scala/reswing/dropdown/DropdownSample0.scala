@@ -19,12 +19,12 @@ object DropdownSample0 extends SimpleSwingApplication {
 
   val inputField     = new ReTextField(text = "Berlin, Paris, London, Rome", columns = 50)
   val inputText      = Signal { inputField.text.value }
-  val commaSeparated = Signal { if (inputText.value == null) Nil else inputText.value.split(",\\s*").toList }
+  val commaSeparated = Signal { if inputText.value == null then Nil else inputText.value.split(",\\s*").toList }
 
   val dropdown       = new ReDynamicComboBox(options = commaSeparated, selection = -1)
   val selectionIndex = Signal { dropdown.selection.value }
   val validSelection = Signal {
-    if (commaSeparated.value.indices.contains(selectionIndex.value)) Some(selectionIndex.value) else None
+    if commaSeparated.value.indices.contains(selectionIndex.value) then Some(selectionIndex.value) else None
   }
 
   // select the currently selected item manually
