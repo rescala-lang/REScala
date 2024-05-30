@@ -1,6 +1,5 @@
 package lore.dsl
 
-import reactives.Lul.dynamicTicket
 import reactives.core.ReSource
 import reactives.default.*
 import reactives.operator.Interface.State as BundleState
@@ -52,7 +51,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
       val t = Tuple.fromArray(curr.toArray).asInstanceOf[ST]
 
       for (req <- requires) {
-        if (!req.fun(dynamicTicket)(t, a)) {
+        if (!req.fun(at.tx.preconditionTicket)(t, a)) {
           val message = s"Interaction violated requirement: ${req.representation} with argument ($curr, $a) evaluated to false!"
           throw new IllegalStateException(message)
         }
@@ -61,7 +60,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl](private[dsl
       val res = executes(t, a)
 
       for (ens <- ensures) {
-        if (!ens.fun(dynamicTicket)(res, a)) {
+        if (!ens.fun(at.tx.preconditionTicket)(res, a)) {
           val message = s"Interaction violated post-condition: ${ens.representation} with argument (($curr), $a) evaluated to false!"
           throw new IllegalStateException(message)
         }
