@@ -193,9 +193,9 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
   .settings(
     scala3defaults,
     Dependencies.munit,
-    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / exportedProductJars).value.head.data}"
+    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / assembly).value}"
   )
-  .dependsOn(lore.jvm)
+  .dependsOn(lore.jvm, loreCompilerPlugin)
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
