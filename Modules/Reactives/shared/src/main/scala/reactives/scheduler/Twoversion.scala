@@ -147,7 +147,7 @@ trait Twoversion {
     /** Reverts all uncommitted changes to the reactive element. */
     def rollbackPhase(): Unit
 
-    /** Call all registered after-commit obverser functions. */
+    /** Call all registered after-commit observer functions. */
     def observerPhase(): Unit
 
     /** Unlocks (and potentially otherwise reverts the propagation preparations for) each reactive value to allow future
