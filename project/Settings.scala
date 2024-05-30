@@ -12,7 +12,7 @@ object Settings {
   val scala3VersionString = "3.4.2"
 
   val featureOptions = Seq(
-    // see https://docs.scala-lang.org/overviews/compiler-options/
+    // see https://docs.scala-lang.org/overviews/compiler-options/ and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
     scalacOptions ++= List(
       // Emit warning and location for usages of features that should be imported explicitly.
       "-feature",
