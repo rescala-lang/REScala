@@ -29,6 +29,7 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
   replicationExamples.js,
   replicationExamples.jvm,
   loCal,
+  loreCompilerPluginExamples,
 )
 
 lazy val reactivesAggregate =
