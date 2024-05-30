@@ -191,7 +191,7 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
   .settings(
     scala3defaults,
     Dependencies.munit,
-    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / fullClasspathAsJars).value.map(at => at.data).mkString(":")}",
+    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / fullClasspathAsJars).value.map(at => at.data).mkString(java.io.File.pathSeparator)}",
   )
   .dependsOn(lore.jvm)
 
