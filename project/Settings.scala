@@ -20,8 +20,6 @@ object Settings {
       "-language:higherKinds",
       // Allow definition of implicit functions called views
       "-language:implicitConversions",
-      // Existential types (besides wildcard types) can be written and inferred
-      //"-language:existentials",
       // Emit warning and location for usages of deprecated APIs.
       "-deprecation",
       // Require then and do in control expressions.
