@@ -78,15 +78,6 @@ object Settings {
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
 
-  val noPublish = Seq(
-    publishArtifact   := false,
-    packagedArtifacts := Map.empty,
-    publish           := {},
-    publishLocal      := {},
-    publishM2         := {},
-    publishSigned     := {}
-  )
-
   // this is a tool to analyse memory consumption/layout
   val jolSettings = Seq(
     javaOptions += "-Djdk.attach.allowAttachSelf",
@@ -99,7 +90,9 @@ object Settings {
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
   // allows to specify a source map prefix, in case you want to have source maps refer to some online source
-  // 2024-03: not sure if this is still used/tested anywhere
+  // 2024-05-30: Seems to be meant for jitpack publishing
+  // Example:
+  // CUSTOM_SCALAJS_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'publishM2'
   def sourcemapFromEnv() = {
     scala.sys.env.get("CUSTOM_SCALAJS_SOURCE_MAP_PREFIX") match {
       case Some(customSourcePrefix) if !customSourcePrefix.isEmpty =>

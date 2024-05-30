@@ -1,6 +1,6 @@
-import Settings.{noPublish, scala3defaults, javaOutputVersion, resolverJitpack}
+import Settings.{scala3defaults, javaOutputVersion, resolverJitpack}
 
-lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).aggregate(
+lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   aead.js,
   aead.jvm,
   channels.js,
@@ -32,18 +32,19 @@ lazy val bismuth = project.in(file(".")).settings(noPublish, scala3defaults).agg
 
 // aggregate projects allow compiling all variants (js, jvm, native) at the same time
 
-lazy val rdtsAggregate = project.in(file("target/PhonyBuilds/kofreAggregate")).settings(scala3defaults)
-  .aggregate(rdts.js, rdts.jvm, rdts.native)
+lazy val rdtsAggregate =
+  project.in(file("target/PhonyBuilds/kofreAggregate")).settings(scala3defaults, publish / skip := true)
+    .aggregate(rdts.js, rdts.jvm, rdts.native)
 
-lazy val reactivesAggregate = project.in(file("target/PhonyBuilds/reactives")).settings(scala3defaults)
-  .aggregate(reactives.js, reactives.jvm, reactives.native)
+lazy val reactivesAggregate =
+  project.in(file("target/PhonyBuilds/reactives")).settings(scala3defaults, publish / skip := true)
+    .aggregate(reactives.js, reactives.jvm, reactives.native)
 
 // projects in alphabetical order
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .settings(
     scala3defaults,
-    noPublish,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
@@ -83,7 +84,6 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossTy
   .in(file("Modules/Graph-Compiler"))
   .settings(
     scala3defaults,
-    noPublish,
     Dependencies.jsoniterScala,
   )
   .dependsOn(reactives)
@@ -93,7 +93,6 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .dependsOn(rdts.jvm)
   .settings(
     scala3defaults,
-    noPublish,
     LocalSettings.scalafx,
     fork := true,
     Dependencies.jsoniterScala,
@@ -114,7 +113,6 @@ lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
   .dependsOn(reactives.js)
   .settings(
     scala3defaults,
-    noPublish,
     Dependencies.scalatags,
     LocalSettings.deployTask,
   )
@@ -123,7 +121,6 @@ lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
   .dependsOn(reactives.jvm, reswing)
   .settings(
     scala3defaults,
-    noPublish,
     fork := true,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
@@ -136,7 +133,6 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
   .dependsOn(rdts.js, reactives.js, channels.js, lore.js)
   .settings(
     scala3defaults,
-    noPublish,
     resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
@@ -147,7 +143,6 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
   .settings(
     scala3defaults,
     javaOutputVersion(11),
-    noPublish,
     Settings.safeInit(Compile / compile, Test / compile),
     Dependencies.munit,
     Dependencies.munitCheck,
@@ -207,7 +202,6 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
   .settings(
     scala3defaults,
-    noPublish,
     // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     Dependencies.upickle,
     Dependencies.jsoniterScala,
@@ -252,7 +246,6 @@ lazy val replicationExamples =
     .dependsOn(reactives, rdts, aead, rdts % "compile->compile;test->test", channels)
     .settings(
       scala3defaults,
-      noPublish,
       run / fork         := true,
       run / connectInput := true,
       resolverJitpack,
@@ -276,10 +269,10 @@ lazy val replicationExamples =
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, noPublish, LocalSettings.scalafx, fork := true, Settings.javaOutputVersion(17))
+  .settings(scala3defaults, LocalSettings.scalafx, fork := true, Settings.javaOutputVersion(17))
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
+  .settings(scala3defaults, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
   .dependsOn(reactives.jvm)
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
@@ -287,7 +280,6 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
   .dependsOn(rdts.js, reactives.js, channels.js)
   .settings(
     scala3defaults,
-    noPublish,
     resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,

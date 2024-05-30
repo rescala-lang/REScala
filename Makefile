@@ -1,14 +1,14 @@
 publishLocal:
-	sbtn 'rescalaAggregate / publishLocal'
-	sbtn 'kofreAggregate / publishLocal'
+	sbt --client 'rdtsAggregate / publishLocal'
+	sbt --client 'reactivesAggregate / publishLocal'
 
 publishJitpack:
-	RESCALA_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'rescalaAggregate / publishM2'
-	RESCALA_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'kofreAggregate / publishM2'
+	CUSTOM_SCALAJS_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'rdtsAggregate / publishM2'
+	CUSTOM_SCALAJS_SOURCE_MAP_PREFIX="https://raw.githubusercontent.com/rescala-lang/REScala/" sbt -Dsbt.log.noformat=true 'reactivesAggregate / publishM2'
 
 publishSigned:
-	sbtn 'rescalaAggregate / publishSigned'
-	sbtn 'kofreAggregate / publishSigned'
+	sbt --client 'rdtsAggregate / publishSigned'
+	sbt --client 'reactivesAggregate / publishSigned'
 
 runSimpleCaseStudy:
 	sbtn 'examples / run'
