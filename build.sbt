@@ -192,8 +192,6 @@ lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
 lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plugin/examples"))
   .settings(
     scala3defaults,
-    // seems to be needed to make sbt autoconfigure the use of compiler plugins on the classpath
-    autoCompilerPlugins := true,
     Dependencies.munit,
     scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / exportedProductJars).value.head.data}"
   )
