@@ -8,22 +8,25 @@ import sbt.Keys._
 
 object Settings {
 
-  object Versions {
-    val scala3 = "3.4.2"
-  }
-
-  // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
-  val fatalWarnings = Seq(Compile / compile, Test / compile).map(s =>
-    s / scalacOptions ++= List("-Werror")
-  )
+  // also consider updating the -source param below
+  val scala3VersionString = "3.4.2"
 
   val featureOptions = Seq(
+    // see https://docs.scala-lang.org/overviews/compiler-options/
     scalacOptions ++= List(
+      // Emit warning and location for usages of features that should be imported explicitly.
       "-feature",
+      // Allow higher-kinded types
       "-language:higherKinds",
+      // Allow definition of implicit functions called views
       "-language:implicitConversions",
-      "-language:existentials",
+      // Existential types (besides wildcard types) can be written and inferred
+      //"-language:existentials",
+      // Emit warning and location for usages of deprecated APIs.
       "-deprecation",
+      // Require then and do in control expressions.
+      "-new-syntax",
+      // set a specific source level for warnings/rewrites/features
       "-source",
       "3.4",
     )
@@ -32,10 +35,10 @@ object Settings {
   val strictEquality = List(scalacOptions += "-language:strictEquality")
 
   val commonScalacOptions =
-    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
+    fatalWarnings(Compile / compile, Test / compile) ++ featureOptions ++ valueDiscard(Compile / compile)
 
   val scala3defaults = Def.settings(
-    scalaVersion := Versions.scala3,
+    scalaVersion := scala3VersionString,
     commonScalacOptions
   )
 
@@ -53,25 +56,24 @@ object Settings {
     )
   }
 
-  // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
-  def valueDiscard(conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions += "-Wvalue-discard"
+  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c =>
+    c / scalacOptions += setting
   }
+
+  // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
+  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf*)
+
+  // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
+  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf*)
 
   // can be annoying with methods that have optional results, can also help with methods that have non optional results …
-  def nonunitStatement(conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions += "-Wnonunit-statement"
-  }
+  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf*)
 
   // super hard with java interop
-  def explicitNulls(conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions += "-Yexplicit-nulls"
-  }
+  def explicitNulls(conf: TaskKey[?]*) = taskSpecificScalacOption("-Yexplicit-nulls", conf*)
 
   // seems to produce compiler crashes in some cases
-  def safeInit(conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions += "-Ysafe-init"
-  }
+  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Ysafe-init", conf*)
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
