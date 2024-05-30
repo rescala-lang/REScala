@@ -42,15 +42,12 @@ jobs:
 
 
     - name: compile
-      run: sbt --client compile
-
-    - name: compile tests
-      run: sbt --client Test/compile
+      run: sbt "compile; Test/compile"
 
     - name: test
       continue-on-error: true
-      run: sbt --client test
+      run: sbt test
 
     - name: test again (quick)
-      run: sbt --client testQuick
+      run: sbt testQuick
 
