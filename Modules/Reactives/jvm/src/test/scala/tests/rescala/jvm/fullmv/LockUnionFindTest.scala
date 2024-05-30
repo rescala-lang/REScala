@@ -14,7 +14,7 @@ class LockUnionFindTest extends munit.FunSuite {
     turn.beginFraming()
     val lock = turn.subsumableLock.get
 
-    if (SubsumableLockImpl.DEBUG) println(s"single lock gc with $turn using $lock")
+    if SubsumableLockImpl.DEBUG then println(s"single lock gc with $turn using $lock")
 
     assertEquals(lock.refCount.get, 1)
     assertEquals(engine.getInstance(turn.guid), Some(turn))
@@ -58,7 +58,7 @@ class LockUnionFindTest extends munit.FunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (SubsumableLockImpl.DEBUG) println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
+    if SubsumableLockImpl.DEBUG then println(s"single subsumed gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock
 
@@ -119,7 +119,7 @@ class LockUnionFindTest extends munit.FunSuite {
 
     assert(locks(0).refCount.get <= 0)     // gc'd
     assertEquals(locks(1).refCount.get, 1) // turn 0
-    for (i <- 2 until maxIdx) {
+    for i <- 2 until maxIdx do {
       assertEquals(locks(i).refCount.get, 2) // lock(i-1), turn(i-1)
     }
     assertEquals(locks(maxIdx).refCount.get, 3) // lock(count-1), turn(count-1), turn(count)
@@ -134,7 +134,7 @@ class LockUnionFindTest extends munit.FunSuite {
     assertEquals(locks(3).refCount.get, 1) // lock 2
     assertEquals(locks(4).refCount.get, 2) // turn 3, lock 3
     assertEquals(locks(5).refCount.get, 1) // lock 4
-    for (i <- 6 until maxIdx) {
+    for i <- 6 until maxIdx do {
       assertEquals(locks(i).refCount.get, 2) // lock(i-1), turn(i-1)
     }
     assertEquals(locks(maxIdx).refCount.get, 3) // lock(count-1), turn(count-1), turn(count)
@@ -147,7 +147,7 @@ class LockUnionFindTest extends munit.FunSuite {
     assert(locks(3).refCount.get <= 0)     // gc'd
     assertEquals(locks(4).refCount.get, 1) // turn 3
     assert(locks(5).refCount.get <= 0)     // gc'd
-    for (i <- 6 until maxIdx) {
+    for i <- 6 until maxIdx do {
       assertEquals(locks(i).refCount.get, 1) // turn(i-1)
     }
     assertEquals(
@@ -242,7 +242,7 @@ class LockUnionFindTest extends munit.FunSuite {
     turn2.beginExecuting()
     val lock2 = turn2.subsumableLock.get()
 
-    if (SubsumableLockImpl.DEBUG)
+    if SubsumableLockImpl.DEBUG then
       println(s"single subsume blocked gc with $turn1 using $lock1 and $turn2 using $lock2")
 
     val l1 = Await.result(turn1.tryLock(), Duration.Zero).asInstanceOf[Locked].lock

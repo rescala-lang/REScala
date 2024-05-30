@@ -11,14 +11,14 @@ class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
   case class Disagreement[T](from: T, to: T, closure: Boolean, addEdgeSearchPath: Boolean)
 
   private def findDisagreements[T](nodes: Set[T], trees: Map[T, FullMVTurnImpl], transitiveClosure: Map[T, Set[T]]) = {
-    for (from <- nodes; to <- nodes if transitiveClosure(from)(to) != trees(from).isTransitivePredecessor(trees(to)))
+    for from <- nodes; to <- nodes if transitiveClosure(from)(to) != trees(from).isTransitivePredecessor(trees(to))
       yield Disagreement(from, to, transitiveClosure(from)(to), trees(from).isTransitivePredecessor(trees(to)))
   }
 
   private def computeTransitiveClosure[T](nodes: Set[T], edges: Map[T, Set[T]]) = {
     var transitiveClosure = nodes.map(node => node -> (edges.getOrElse(node, Set.empty) + node)).toMap
-    for (via <- edges.keySet) {
-      for (from <- edges.keySet if transitiveClosure(from)(via); to <- transitiveClosure(via)) {
+    for via <- edges.keySet do {
+      for from <- edges.keySet if transitiveClosure(from)(via); to <- transitiveClosure(via) do {
         transitiveClosure += from -> (transitiveClosure(from) + to)
       }
       transitiveClosure += via -> (transitiveClosure(via) + via)
@@ -61,7 +61,7 @@ class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
 
     val trees      = makeTreesUnderSingleLockedLock(nodes)
     var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
-    for ((from, tos) <- edges; to <- tos) {
+    for (from, tos) <- edges; to <- tos do {
       addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
     }
   }
@@ -76,7 +76,7 @@ class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
     val fromTree = trees(from)
     val toTree   = trees(to)
     val res =
-      if (!fromTree.isTransitivePredecessor(toTree)) {
+      if !fromTree.isTransitivePredecessor(toTree) then {
         Await.result(fromTree.addPredecessor(toTree.selfNode), Duration.Zero)
         addedEdges + (from -> (addedEdges(from) + to))
       } else addedEdges
@@ -96,7 +96,7 @@ class FullMVTurnTransitiveReachabilityTest extends munit.FunSuite {
     val nodes      = (0 until SIZE).toSet
     val trees      = makeTreesUnderSingleLockedLock(nodes)
     var addedEdges = Map[Int, Set[Int]]().withDefaultValue(Set())
-    for (_ <- 0 until SIZE * SIZE) {
+    for _ <- 0 until SIZE * SIZE do {
       val from, to = random.nextInt(SIZE)
       addedEdges = addEdgeIfPossibleAndVerify(nodes, trees, addedEdges, from, to)
     }

@@ -24,7 +24,7 @@ class WithoutAPITest extends RETests {
         new InitialChange[State] {
           override val source: CustomSource.this.type = outer
           override def writeValue(base: source.Value, writeCallback: source.Value => Unit): Boolean = {
-            if (base != newValue) {
+            if base != newValue then {
               writeCallback(newValue)
               true
             } else false

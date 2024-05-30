@@ -16,7 +16,7 @@ class ReevaluationCount extends RETests {
 
       val s = Signal {
         i += 1
-        if (v1.value) v2.value else v3.value
+        if v1.value then v2.value else v3.value
       }
 
       s.changed observe (_ => test += 1)

@@ -10,10 +10,10 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object PosNegCounterGenerator {
-  val genPosNegCounter: Gen[AntiEntropyContainer[PosNegCounter]] = for {
+  val genPosNegCounter: Gen[AntiEntropyContainer[PosNegCounter]] = for
     nInc <- Gen.posNum[Int]
     nDec <- Gen.posNum[Int]
-  } yield {
+  yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[PosNegCounter]("a", network, mutable.Buffer())
 
@@ -65,9 +65,9 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[PosNegCounter]("b", network, mutable.Buffer("a"))
       val aec = new AntiEntropy[PosNegCounter]("c", network, mutable.Buffer("c"))
 
-      val ca0 = if (incOrDecA) AntiEntropyContainer[PosNegCounter](aea).map(_.inc())
+      val ca0 = if incOrDecA then AntiEntropyContainer[PosNegCounter](aea).map(_.inc())
       else AntiEntropyContainer[PosNegCounter](aea).map(_.dec())
-      val cb0 = if (incOrDecB) AntiEntropyContainer[PosNegCounter](aeb).map(_.inc())
+      val cb0 = if incOrDecB then AntiEntropyContainer[PosNegCounter](aeb).map(_.inc())
       else AntiEntropyContainer[PosNegCounter](aeb).map(_.dec())
 
       AntiEntropy.sync(aea, aeb)
@@ -76,8 +76,8 @@ class PosNegCounterTest extends munit.ScalaCheckSuite {
       val cb1 = cb0.processReceivedDeltas()
 
       val sequential = AntiEntropyContainer(aec)
-      if (incOrDecA) sequential.map(_.inc()) else sequential.map(_.dec())
-      if (incOrDecB) sequential.map(_.inc()) else sequential.map(_.dec())
+      if incOrDecA then sequential.map(_.inc()) else sequential.map(_.dec())
+      if incOrDecB then sequential.map(_.inc()) else sequential.map(_.dec())
 
       assert(
         ca1.value == sequential.value,

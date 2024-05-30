@@ -11,9 +11,9 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(s"Phil($i)")
+    val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(s"Phil($i)")
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex      = mod(i + 1)
       implicit val name: ReInfo  = ReInfo.create.derive(s"Fork($i, $nextCircularIndex)")
       val left: Var[Philosopher] = phils(i)
@@ -30,7 +30,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
       }
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val ownName               = i.toString
       val fork1                 = forks(i)
       val fork2                 = forks(mod(i - 1))

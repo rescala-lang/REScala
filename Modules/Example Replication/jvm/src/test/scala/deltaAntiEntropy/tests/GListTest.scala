@@ -14,9 +14,9 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] = for {
+  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] = for
     elems <- Gen.listOfN(20, e.arbitrary)
-  } yield {
+  yield {
     elems.foldLeft(GrowOnlyList.empty[E]) {
       case (list, el) => list merge list.insertGL(0, el)
     }
@@ -109,8 +109,8 @@ class GListTest extends munit.ScalaCheckSuite {
       val lb0 = AntiEntropyContainer[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
       val size = base.size
-      val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
-      val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
+      val idx1 = if size == 0 then 0 else math.floorMod(n1, size)
+      val idx2 = if size == 0 then 0 else Math.floorMod(n2, size)
 
       val la1 = la0.insertGL(idx1, e1)
       lb0.insertGL(idx2, e2)

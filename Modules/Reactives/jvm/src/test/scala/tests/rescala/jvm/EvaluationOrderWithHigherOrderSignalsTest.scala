@@ -13,9 +13,9 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
     import engine.*
 
     val initialX = "initialValue"
-    val newX     = if (changeX == SetChanged) "changedValue" else initialX
+    val newX     = if changeX == SetChanged then "changedValue" else initialX
 
-    val results = for (_ <- 0 to 10) yield {
+    val results = for _ <- 0 to 10 yield {
 
       val x  = Var(initialX)
       val x4 = x.map(identity).map(identity).map(identity).map(identity)

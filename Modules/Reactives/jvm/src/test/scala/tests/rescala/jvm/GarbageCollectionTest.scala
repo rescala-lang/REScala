@@ -28,7 +28,7 @@ class GarbageCollectionTest extends RETests {
 
     var `heap of garbage` = List(makeGarbage())
 
-    while (!done) {
+    while !done do {
       `heap of garbage` ::= makeGarbage()
       engine.transaction(`heap of garbage`.map(_._1)*) { at =>
         `heap of garbage`.iterator.map(_._1).foreach(_.admitPulse(Pulse.Value(1))(at))
@@ -36,7 +36,7 @@ class GarbageCollectionTest extends RETests {
       System.gc()
       val timeout = !(System.currentTimeMillis() < start + 100000)
       assert(!timeout, "did not GC a signal before timeout")
-      if (!(q.poll() eq null)) done = true
+      if !(q.poll() eq null) then done = true
     }
   }
 

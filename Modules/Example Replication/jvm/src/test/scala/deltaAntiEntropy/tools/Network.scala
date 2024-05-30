@@ -73,12 +73,12 @@ class Network(val lossChance: Double, val duplicateChance: Double, val delayChan
   }
 
   def sendMessage(recipient: String, message: Array[Byte]): Unit = {
-    if (reliablePhase) {
+    if reliablePhase then {
       insertMessage(recipient, message, reliablyTransferred)
       return
     }
 
-    if (Random.between(0.0, 1.0) <= lossChance) {
+    if Random.between(0.0, 1.0) <= lossChance then {
       return
     }
 

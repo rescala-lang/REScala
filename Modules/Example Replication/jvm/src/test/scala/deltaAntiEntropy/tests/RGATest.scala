@@ -121,8 +121,8 @@ class RGATest extends munit.ScalaCheckSuite {
         val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
         val size = la0.size
-        val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
-        val idx2 = if (size == 0) 0 else Math.floorMod(n2, size)
+        val idx1 = if size == 0 then 0 else math.floorMod(n1, size)
+        val idx2 = if size == 0 then 0 else Math.floorMod(n2, size)
 
         val la1 = la0.insert(using la0.replicaID)(idx1, e1)
         lb0.insert(using lb0.replicaID)(idx2, e2)
@@ -158,7 +158,7 @@ class RGATest extends munit.ScalaCheckSuite {
       AntiEntropy.sync(aea, aeb)
       val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
-      val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
+      val idx = if la0.size == 0 then 0 else math.floorMod(n, la0.size)
 
       val la1 = la0.delete(using la0.replicaID)(idx)
       val lb1 = lb0.delete(using lb0.replicaID)(idx)
@@ -174,8 +174,8 @@ class RGATest extends munit.ScalaCheckSuite {
       )
 
       val size = la2.size
-      val idx1 = if (size == 0) 0 else math.floorMod(n1, size)
-      val idx2 = if (size == 0) 0 else math.floorMod(n2, size)
+      val idx1 = if size == 0 then 0 else math.floorMod(n1, size)
+      val idx2 = if size == 0 then 0 else math.floorMod(n2, size)
 
       val la3 = la2.delete(using la2.replicaID)(idx1)
       lb2.delete(using lb2.replicaID)(idx2)
@@ -185,7 +185,7 @@ class RGATest extends munit.ScalaCheckSuite {
       val la4 = la3.processReceivedDeltas()
 
       val sequential =
-        if (idx1 > idx2) {
+        if idx1 > idx2 then {
           la2.delete(using la2.replicaID)(idx1).delete(using la2.replicaID)(idx2)
         } else {
           la2.delete(using la2.replicaID)(idx2).delete(using la2.replicaID)(idx1)
@@ -212,7 +212,7 @@ class RGATest extends munit.ScalaCheckSuite {
       AntiEntropy.sync(aea, aeb)
       val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
-      val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
+      val idx = if la0.size == 0 then 0 else math.floorMod(n, la0.size)
 
       val la1 = la0.insert(using la0.replicaID)(idx, e1)
       lb0.update(using lb0.replicaID)(idx, e2)
@@ -242,7 +242,7 @@ class RGATest extends munit.ScalaCheckSuite {
       AntiEntropy.sync(aea, aeb)
       val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
-      val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
+      val idx = if la0.size == 0 then 0 else math.floorMod(n, la0.size)
 
       val la1 = la0.insert(using la0.replicaID)(idx + 1, e)
       lb0.delete(using lb0.replicaID)(idx)
@@ -272,7 +272,7 @@ class RGATest extends munit.ScalaCheckSuite {
       AntiEntropy.sync(aea, aeb)
       val lb0 = AntiEntropyContainer[ReplicatedList[Int]](aeb).processReceivedDeltas()
 
-      val idx = if (la0.size == 0) 0 else math.floorMod(n, la0.size)
+      val idx = if la0.size == 0 then 0 else math.floorMod(n, la0.size)
 
       val la1 = la0.delete(using la0.replicaID)(idx)
       lb0.update(using lb0.replicaID)(idx, e)

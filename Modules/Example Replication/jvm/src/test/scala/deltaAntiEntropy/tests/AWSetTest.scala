@@ -16,11 +16,11 @@ import scala.collection.mutable
 
 object AWSetGenerators {
   def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyContainer[ReplicatedSet[A]]] =
-    for {
+    for
       added   <- Gen.containerOf[List, A](a.arbitrary)
       n       <- Gen.choose(0, added.size)
       removed <- Gen.pick(n, added)
-    } yield {
+    yield {
       val network = new Network(0, 0, 0)
       val ae      = new AntiEntropy[ReplicatedSet[A]]("a", network, mutable.Buffer())
 

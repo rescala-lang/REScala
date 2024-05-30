@@ -88,7 +88,7 @@ class SignalTestSuite extends RETests {
       val v3 = v0.map(_ + "level 1").map(_ + "level 2").map(_ + "level 3")
 
       val `dynamic signal changing from level 1 to level 5` = Signal {
-        if (v0.value == "level 0") v0.value
+        if v0.value == "level 0" then v0.value
         else {
           v3.map(_ + "level 4 inner").value
         }

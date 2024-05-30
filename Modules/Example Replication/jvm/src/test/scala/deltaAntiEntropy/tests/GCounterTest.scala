@@ -10,9 +10,9 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object GCounterGenerators {
-  val genGCounter: Gen[AntiEntropyContainer[GrowOnlyCounter]] = for {
+  val genGCounter: Gen[AntiEntropyContainer[GrowOnlyCounter]] = for
     n <- Gen.posNum[Int]
-  } yield {
+  yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[GrowOnlyCounter]("a", network, mutable.Buffer())
 

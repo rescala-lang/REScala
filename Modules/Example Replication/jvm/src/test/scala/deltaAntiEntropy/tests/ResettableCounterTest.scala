@@ -12,10 +12,10 @@ import scala.collection.mutable
 import scala.util.Random
 
 object RCounterGenerators {
-  def genRCounter: Gen[AntiEntropyContainer[ResettableCounter]] = for {
+  def genRCounter: Gen[AntiEntropyContainer[ResettableCounter]] = for
     num <- Gen.choose(0, 100)
     ops <- Gen.listOfN(num, Gen.chooseNum(0, 3))
-  } yield {
+  yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer())
 
@@ -165,7 +165,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
 
       val ca1 =
         given rdts.syntax.LocalUid = ca0.replicaID
-        if (op) ca0.fresh().increment() else ca0.fresh().decrement()
+        if op then ca0.fresh().increment() else ca0.fresh().decrement()
       val cb1 = cb0.reset()
 
       AntiEntropy.sync(aea, aeb)
@@ -174,7 +174,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val cb2 = cb1.processReceivedDeltas()
 
       sequential.reset()
-      if (op) sequential.increment(using sequential.replicaID)() else sequential.decrement(using sequential.replicaID)()
+      if op then sequential.increment(using sequential.replicaID)() else sequential.decrement(using sequential.replicaID)()
 
       assertEquals(
         ca2.value,

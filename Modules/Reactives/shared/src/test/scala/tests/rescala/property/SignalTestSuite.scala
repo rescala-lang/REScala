@@ -33,7 +33,7 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
 
       // make sure that the the list is initial empty
       assert(s.readValueOnce.isEmpty)
-      for (i <- fireValues.indices) {
+      for i <- fireValues.indices do {
         fire(fireValues(i))
         // make sure that the list of the last n events contains at most `lastN` events and exactly `fireCount` if it is less than `lastN`
         assert(s.readValueOnce.length == Math.min(fireCount, lastN))
@@ -47,9 +47,9 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
   }
 
   implicit val signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
-    for {
+    for
       i <- Gen.oneOf(0 to 1000)
-    } yield {
+    yield {
       val root    = Var(0)
       val signals = new ListBuffer[Signal[Int]]()
       signals += root
@@ -63,7 +63,7 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
 
   test("level Is Correctly Computed") {
     forAll { (signals: List[Signal[Int]]) =>
-      for (signal <- signals) {
+      for signal <- signals do {
         assertLevel(signal, signal.readValueOnce)
       }
     }

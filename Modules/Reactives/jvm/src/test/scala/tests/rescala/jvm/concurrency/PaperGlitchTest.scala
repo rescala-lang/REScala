@@ -28,7 +28,7 @@ class PaperGlitchTest extends munit.FunSuite {
     val glitches = new ConcurrentLinkedQueue[Int]()
 
     total.changed observe { v =>
-      if (!isPowerOf2(v)) glitches.add(v); ()
+      if !isPowerOf2(v) then glitches.add(v); ()
     }
 
     // ============================================================================================================
@@ -40,7 +40,7 @@ class PaperGlitchTest extends munit.FunSuite {
     val t1 = Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) {
+      while !cancelled do {
         try {
           price.set(3 * 2 << Random.nextInt(8))
         } catch {
@@ -54,7 +54,7 @@ class PaperGlitchTest extends munit.FunSuite {
     val t2 = Spawn {
       latch.countDown()
       latch.await()
-      while (!cancelled) {
+      while !cancelled do {
         try {
           quantity.set(2 << Random.nextInt(8))
         } catch {

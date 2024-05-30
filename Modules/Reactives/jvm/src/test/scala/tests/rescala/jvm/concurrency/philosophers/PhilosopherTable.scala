@@ -16,7 +16,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
 
   seatings.foreach { seating =>
     seating.vision.observe { state =>
-      if (state == Eating) {
+      if state == Eating then {
         eaten.incrementAndGet()
         ()
       }
@@ -41,16 +41,16 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for (i <- 0 until tableSize) yield Var[Philosopher](Thinking)(s"Phil($i)")
+    val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(s"Phil($i)")
 
-    val forks = for (i <- 0 until tableSize) yield {
+    val forks = for i <- 0 until tableSize yield {
       val nextCircularIndex = mod(i + 1)
       interface.Signal.lift(phils(i), phils(nextCircularIndex))(calcFork(i.toString, nextCircularIndex.toString))(
         using s"Fork($i, $nextCircularIndex)"
       )
     }
 
-    for (i <- 0 until tableSize) yield {
+    for i <- 0 until tableSize yield {
       val previousCircularIndex = mod(i - 1)
       val vision =
         interface.Signal.lift(forks(previousCircularIndex), forks(i))(calcVision(i.toString))(using s"Vision($i)")
@@ -61,7 +61,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
   def tryEat(seating: Seating): Boolean =
     interface.transactionWithWrapup(seating.philosopher) { turn =>
       val forksAreFree = turn.now(seating.vision) == Ready
-      if (forksAreFree) {
+      if forksAreFree then {
         // println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)
         seating.philosopher.admit(Hungry)(turn)
       } // else {
@@ -69,7 +69,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
       // }
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, turn) =>
-      if (forksWereFree)
+      if forksWereFree then
         assert(
           turn.now(seating.vision) == Eating,
           s"philosopher should be done after turn but is ${seating.inspect(turn)}"
@@ -80,7 +80,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
 
   def eatOnce(seating: Seating): Unit = {
     val bo = new Backoff()
-    while (!tryEat(seating)) { bo.backoff() }
+    while !tryEat(seating) do { bo.backoff() }
 
     seating.philosopher.set(Thinking)
     // engine.transactionWithWrapup(seating.philosopher){ turn =>

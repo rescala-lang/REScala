@@ -99,7 +99,7 @@ class AntiEntropy[A](
   }
 
   private def prepareDeltaMsg(to: String): Option[DeltaMsg[A]] = {
-    if (deltaBufferOut.isEmpty || deltaBufferOut.keySet.min > ackMap(to))
+    if deltaBufferOut.isEmpty || deltaBufferOut.keySet.min > ackMap(to) then
       Some(DeltaMsg(Named(replicaID.asId, fullState), nextSeqNum))
     else {
       deltaBufferOut.collect {
@@ -122,7 +122,7 @@ class AntiEntropy[A](
   }
 
   private def gc(): Unit = {
-    if (ackMap.values.nonEmpty) {
+    if ackMap.values.nonEmpty then {
       deltaBufferOut.filterInPlace {
         case (n, _) => n >= ackMap.values.min
       }

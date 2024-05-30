@@ -31,8 +31,8 @@ class LockStressTest extends munit.FunSuite {
             val random     = new Random()
             var ownTurn    = turns(i).get
             var iterations = 0L
-            while (running) {
-              if (random.nextInt(5) == 0) {
+            while running do {
+              if random.nextInt(5) == 0 then {
                 ownTurn.completeExecuting()
                 ownTurn = host.newTurn()
                 ownTurn.beginExecuting()
@@ -40,7 +40,7 @@ class LockStressTest extends munit.FunSuite {
               } else {
                 val pick = random.nextInt(numWorkers)
                 @tailrec def reTryLock(): Unit = {
-                  if (running) SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
+                  if running then SerializationGraphTracking.tryLock(turns(pick).get, ownTurn, UnlockedUnknown) match {
                     case LockedSameSCC(lock) => lock.asyncUnlock()
                     case _                   => reTryLock()
                   }
@@ -59,10 +59,10 @@ class LockStressTest extends munit.FunSuite {
       )
 
       val timeout = System.currentTimeMillis() + duration
-      while (running && System.currentTimeMillis() < timeout) {
+      while running && System.currentTimeMillis() < timeout do {
         Thread.sleep(50)
       }
-      if (!running)
+      if !running then
         println(s"Premature termination after ${(duration - (timeout - System.currentTimeMillis())) / 1000} seconds")
       running = false
 

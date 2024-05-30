@@ -15,19 +15,19 @@ given arbPermission: Arbitrary[Permission] = Arbitrary(Gen.oneOf(ALLOW, PARTIAL)
 def arbPermissionTreeMaxDepth(maxDepth: Int): Gen[PermissionTree] =
   if maxDepth == 0 then Gen.oneOf(PermissionTree.allow, PermissionTree.empty)
   else
-    for {
+    for
       permission           <- Gen.oneOf(ALLOW, PARTIAL)
       numChildren          <- Gen.choose(0, 4)
       maxDepths: List[Int] <- Gen.listOfN(numChildren, Gen.choose(0, maxDepth - 1))
       children <- Gen.mapOfN(
         numChildren,
-        for {
+        for
           maxDepthOfChild <- Gen.choose(0, maxDepth - 1)
           child           <- arbPermissionTreeMaxDepth(maxDepthOfChild)
           label           <- labelGen
-        } yield label -> child
+        yield label -> child
       )
-    } yield PermissionTree(permission, children)
+    yield PermissionTree(permission, children)
 
 given arbPermissionTree: Arbitrary[PermissionTree] = Arbitrary(arbPermissionTreeMaxDepth(50))
 

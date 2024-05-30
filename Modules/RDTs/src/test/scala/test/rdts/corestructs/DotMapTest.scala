@@ -70,7 +70,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         )
 
         // ignore cases where the dots intersect, as this check does not seem to handle such cases correcly
-        if (dotsA.intersect(dotsB).isEmpty) {
+        if dotsA.intersect(dotsB).isEmpty then {
           (dmA.keySet union dmB.keySet).foreach { k =>
             val vMerged =
               Dotted(dmA.getOrElse(k, Dots.empty), (ccA)) merge

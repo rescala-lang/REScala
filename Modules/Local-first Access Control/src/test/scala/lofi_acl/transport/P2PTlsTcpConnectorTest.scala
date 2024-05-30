@@ -71,10 +71,10 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     val serverConnFuture = serverConnector.acceptConnection
     val clientConnFuture = clientConnector.connect("localhost", serverConnector.listenPort)
 
-    for {
+    for
       clientErr <- clientConnFuture.failed
       serverErr <- serverConnFuture.failed
-    } yield
+    yield
       assert(clientErr.isInstanceOf[SSLHandshakeException])
       assert(serverErr.isInstanceOf[SSLHandshakeException] || serverErr.isInstanceOf[IOException])
       clientConnector.closeServerSocket()
@@ -95,9 +95,9 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     serverConnector.closeServerSocket()
     val clientConnFuture = clientConnector.connect("localhost", serverConnector.listenPort)
 
-    for {
+    for
       clientErr <- clientConnFuture.failed
-    } yield
+    yield
       assert(clientErr.isInstanceOf[SocketException])
       clientConnector.closeServerSocket()
   }

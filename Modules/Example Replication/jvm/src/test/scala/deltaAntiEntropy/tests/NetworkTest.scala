@@ -9,11 +9,11 @@ object NetworkGenerators {
   case class NetworkGenerator(lossChance: Double, duplicateChance: Double, delayChance: Double):
     def make() = Network(lossChance, duplicateChance, delayChance)
 
-  val genNetwork: Gen[NetworkGenerator] = for {
+  val genNetwork: Gen[NetworkGenerator] = for
     lossChance      <- Gen.choose(0.0, 1.0)
     duplicateChance <- Gen.choose(0.0, 1.0)
     delayChance     <- Gen.choose(0.0, 1.0)
-  } yield new NetworkGenerator(lossChance, duplicateChance, delayChance)
+  yield new NetworkGenerator(lossChance, duplicateChance, delayChance)
 
   implicit val arbNetwork: Arbitrary[NetworkGenerator] = Arbitrary(genNetwork)
 }

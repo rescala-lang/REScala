@@ -175,7 +175,7 @@ class TrueDynamicSignals extends RETests {
     var reevaluations = 0
     val s = Signal.dynamic(condition) { (dt: DynamicTicket[BundleState]) =>
       reevaluations += 1
-      if (dt.depend(condition)) dt.depend(ifTrue) else dt.depend(ifFalse)
+      if dt.depend(condition) then dt.depend(ifTrue) else dt.depend(ifFalse)
     }
 
     assert(reevaluations == 1)
@@ -230,7 +230,7 @@ class TrueDynamicSignals extends RETests {
 
     val condition = Var(false)
     val `dynamic signal changing from level 1 to level 4` = Signal.dynamic(condition) { t =>
-      if (t.depend(condition)) t.depend(v3) else t.depend(v0)
+      if t.depend(condition) then t.depend(v3) else t.depend(v0)
     }
     assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
@@ -245,7 +245,7 @@ class TrueDynamicSignals extends RETests {
     val v3 = v0.map(_ + "level 1").map(_ + "level 2").map(_ + "level 3")
 
     val `dynamic signal changing from level 1 to level 4` = Signal.dynamic() { implicit ticket =>
-      if (ticket.depend(v0) == "level 0") ticket.depend(v0)
+      if ticket.depend(v0) == "level 0" then ticket.depend(v0)
       else {
         // the static bound is necessary here, otherwise we get infinite loops
         ticket.depend(Signal.dynamic(v3) { t => t.depend(v3) + "level 4 inner" })

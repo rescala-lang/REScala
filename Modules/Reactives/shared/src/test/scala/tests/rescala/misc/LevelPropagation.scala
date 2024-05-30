@@ -21,7 +21,7 @@ class LevelPropagation extends RETests {
       assertEquals(l2.readValueOnce, 2)
       assertEquals(level3.readValueOnce, 3)
       val level_1_to_4 = Signal.dynamic(level0) { t =>
-        if (t.depend(level0) == 10) t.depend(level3) else 42
+        if t.depend(level0) == 10 then t.depend(level3) else 42
       }
       assertEquals(level_1_to_4.readValueOnce, 42)
       var evaluatesOnlyOncePerTurn = 0
@@ -60,7 +60,7 @@ class LevelPropagation extends RETests {
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
       val l1t4 = Signal.dynamic(l0) { t =>
-        if (t.depend(l0) == 10) t.depend(l3) else 3
+        if t.depend(l0) == 10 then t.depend(l3) else 3
       }
       val l2t5 = l1t4.map(_ + 1)
 
@@ -86,7 +86,7 @@ class LevelPropagation extends RETests {
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
       val l1t4 = Signal.dynamic(l0) { t =>
-        if (t.depend(l0) == 10) t.depend(l3) else 13
+        if t.depend(l0) == 10 then t.depend(l3) else 13
       }
       var reevals = 0
       val l2t5 = l1t4.map { v =>
@@ -124,7 +124,7 @@ class LevelPropagation extends RETests {
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
       val l1t4 = Signal.dynamic(l0) { t =>
-        if (t.depend(l0) == 10) t.depend(l3) else 13
+        if t.depend(l0) == 10 then t.depend(l3) else 13
       }
       var reevals = 0
       val l2t5 = Signal.lift(l1t4, l1) { (a, b) =>
@@ -163,7 +163,7 @@ class LevelPropagation extends RETests {
       val l2 = l1.map(_ + 1)
       val l3 = l2.map(_ + 1)
       val l1t4 = Signal.dynamic(l0) { t =>
-        if (t.depend(l0) == 10) t.depend(l3) else 3
+        if t.depend(l0) == 10 then t.depend(l3) else 3
       }
       var reevals = 0
       val l2t5 = l1t4.map { v =>

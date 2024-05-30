@@ -31,7 +31,7 @@ class RecurringPropagation extends RETests {
 
       assert(v1.readValueOnce == 2)
 
-      v1.observe(current => if (current > 100) () else e1.fire(current))
+      v1.observe(current => if current > 100 then () else e1.fire(current))
 
       assert(v1.readValueOnce == 102)
 

@@ -13,7 +13,7 @@ class Infiltrator(val api: Interface) {
       level: Int,
       text: String = "level did not match"
   )(implicit maybe: Scheduler[?]) =
-    if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[?]]) {
+    if api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[?]] then {
       reactive.state match {
         case rb: LevelState[_] => {
           val rblevel = maybe.forceNewTransaction() { _ =>

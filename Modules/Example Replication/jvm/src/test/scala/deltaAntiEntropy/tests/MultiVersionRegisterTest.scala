@@ -17,10 +17,10 @@ object MVRegisterGenerators {
   def genMVRegister[A: Lattice](implicit
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
-  ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] = for {
+  ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] = for
     values <- Gen.containerOf[List, A](a.arbitrary)
     nClear <- Gen.posNum[Short]
-  } yield {
+  yield {
     val network = new Network(0, 0, 0)
     val ae      = new AntiEntropy[MultiVersionRegister[A]]("a", network, mutable.Buffer())
 

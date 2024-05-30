@@ -119,7 +119,7 @@ class SignalMacro extends RETests {
 
       val sig = Signal {
         lazy val v = v1.value
-        if (v2.value) v else 0
+        if v2.value then v else 0
       }
 
       assert(sig.readValueOnce == 0)

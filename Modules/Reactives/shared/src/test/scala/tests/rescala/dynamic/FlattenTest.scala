@@ -116,7 +116,7 @@ class FlattenTest extends RETests {
       val condition     = e1.hold(-1)
       val level1Event   = e1.map(_ => "level 1")
       val level2Event   = level1Event.map(_ => "level 2")
-      val dynamicSignal = Signal { if (condition.value == 1) level1Event else level2Event }
+      val dynamicSignal = Signal { if condition.value == 1 then level1Event else level2Event }
 
       val unwrapped = dynamicSignal.flatten
 
@@ -134,7 +134,7 @@ class FlattenTest extends RETests {
       val level2Condition = e1.hold(-1).map(identity)
       val level1EventA    = e1.map(_ => "A")
       val level1EventB    = e1.map(_ => "B")
-      val dynamicSignal   = Signal { if (level2Condition.value == 1) level1EventA else level1EventB }
+      val dynamicSignal   = Signal { if level2Condition.value == 1 then level1EventA else level1EventB }
 
       val unwrapped = dynamicSignal.flatten
 
@@ -179,7 +179,7 @@ class FlattenTest extends RETests {
       val level2 = level1.map(_ + 1)
       val level3 = level2.map(_ + 1)
 
-      val combined = Signal { if (v1.value == 10) level3.value else derived.value }
+      val combined = Signal { if v1.value == 10 then level3.value else derived.value }
 
       var log = List[Int]()
 
@@ -190,7 +190,7 @@ class FlattenTest extends RETests {
       v1.set(1)
       assert(log == List(1, 13))
 
-      val higherOrder = Signal { if (v1.value == 10) level3 else derived }
+      val higherOrder = Signal { if v1.value == 10 then level3 else derived }
       val flattened   = higherOrder.flatten
 
       var higherOrderLog = List[Int]()

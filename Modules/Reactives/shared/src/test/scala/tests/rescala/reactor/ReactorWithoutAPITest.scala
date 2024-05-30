@@ -122,7 +122,7 @@ class ReactorWithoutAPITest extends RETests {
       val reactor = Reactor.loop("") {
         S.next(e1) { eventValue =>
           S.read(_ =>
-            if (eventValue > 10) {
+            if eventValue > 10 then {
               S.set("Greater 10")
             } else {
               S.set("Smaller 10")

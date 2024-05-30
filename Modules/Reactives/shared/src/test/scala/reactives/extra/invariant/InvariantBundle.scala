@@ -33,7 +33,7 @@ trait InvariantBundle extends TopoBundle {
 
     override val getMessage: String = {
       val chainErrorMessage =
-        if (causalErrorChains.nonEmpty)
+        if causalErrorChains.nonEmpty then
           "The error was caused by these update chains:\n\n" ++ causalErrorChains.map(_.map(r =>
             s"${r.info} with value: ${r.state.value}"
           ).mkString("\n↓\n")).mkString("\n---\n")
@@ -90,7 +90,7 @@ trait InvariantBundle extends TopoBundle {
             }
           )
         )
-        if (!result.passed) {
+        if !result.passed then {
           result.status match {
             case PropException(_, e, _) => throw e
             case _                      => throw new RuntimeException("Test failed!")
@@ -111,9 +111,9 @@ trait InvariantBundle extends TopoBundle {
 
       private def findGenerators(): List[(ReSource.of[State], Gen[?])] = {
         def findGeneratorsRecursive(resource: ReSource): List[(ReSource.of[State], Gen[?])] = {
-          if (resource.state.gen != null) {
+          if resource.state.gen != null then {
             List((resource, resource.state.gen))
-          } else if (resource.state.incoming == Set.empty) {
+          } else if resource.state.incoming == Set.empty then {
             List()
           } else {
             resource.state.incoming
@@ -123,7 +123,7 @@ trait InvariantBundle extends TopoBundle {
         }
 
         val gens = findGeneratorsRecursive(this.signal)
-        if (gens.isEmpty) {
+        if gens.isEmpty then {
           throw NoGeneratorException(s"No generators found in incoming nodes for signal ${this.signal.info}")
         }
         gens
@@ -145,7 +145,7 @@ trait InvariantBundle extends TopoBundle {
 
                     override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
                       val casted = change._2.asInstanceOf[source.Value]
-                      if (casted != b) {
+                      if casted != b then {
                         v(casted)
                         return true
                       }
@@ -166,11 +166,11 @@ trait InvariantBundle extends TopoBundle {
   object InvariantUtil {
 
     def evaluateInvariants(reactives: Seq[ReSource], initialWrites: Set[ReSource]): Unit = {
-      for {
+      for
         reactive <- reactives
         inv      <- reactive.state.invariants
         if !inv.validate(reactive.state.value)
-      } {
+      do {
         throw new InvariantViolationException(
           new IllegalArgumentException(s"${reactive.state.value} violates invariant ${inv.description}"),
           reactive,
@@ -192,9 +192,9 @@ trait InvariantBundle extends TopoBundle {
           path: Seq[ReSource]
       ): Seq[Seq[ReSource]] = {
         val paths = new ListBuffer[Seq[ReSource]]()
-        for (incoming <- node.state.incoming) {
+        for incoming <- node.state.incoming do {
           val incName = incoming.info
-          if (initialNames.contains(incName)) {
+          if initialNames.contains(incName) then {
             paths += path :+ incoming
           } else {
             paths ++= traverse(incoming, path :+ incoming)

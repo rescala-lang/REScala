@@ -49,10 +49,10 @@ class DotSetTest extends munit.ScalaCheckSuite {
       assert(m1 == m2)
 
       // check if all elements were added to the new causal context
-      for (e <- c1) yield {
+      for e <- c1 yield {
         assert(m1.context.contains(e))
       }
-      for (e <- c2) yield {
+      for e <- c2 yield {
         assert(m1.context.contains(e))
       }
 
@@ -60,12 +60,12 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val newElements  = (s1 union s2) -- deadElements
 
       // check that already deleted elements are not added again
-      for (e <- deadElements) yield {
+      for e <- deadElements yield {
         assert(!m1.data.contains(e), s"$m1 ; $deadElements")
       }
 
       // check that the new store contains all new elements
-      for (e <- newElements) yield {
+      for e <- newElements yield {
         assert(m1.data.contains(e))
       }
 

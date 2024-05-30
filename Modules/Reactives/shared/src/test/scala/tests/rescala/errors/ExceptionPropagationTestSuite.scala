@@ -13,7 +13,7 @@ class ExceptionPropagationTestSuite extends RETests {
 
     // we need this because scalajs does not throw exceptions
     def div(in: Int)            = div2(in, 100)
-    def div2(in: Int, acc: Int) = if (in == 0) throw new ArithmeticException() else acc / in
+    def div2(in: Int, acc: Int) = if in == 0 then throw new ArithmeticException() else acc / in
 
     test("basic Signal Exceptions") {
       val v  = Var(42)
@@ -181,7 +181,7 @@ class ExceptionPropagationTestSuite extends RETests {
     test("partial recovery") {
       val v                = Var(2)
       val ds               = Signal { div(v.value) }
-      val ds2: Signal[Int] = Signal { if (ds.value == 10) throw new IndexOutOfBoundsException else ds.value }
+      val ds2: Signal[Int] = Signal { if ds.value == 10 then throw new IndexOutOfBoundsException else ds.value }
       val recovered        = ds2.recover { case _: IndexOutOfBoundsException => 9000 }
 
       assertEquals(recovered.readValueOnce, 50)

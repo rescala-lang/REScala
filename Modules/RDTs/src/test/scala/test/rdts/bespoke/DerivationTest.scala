@@ -10,10 +10,10 @@ case class SomeProductType[A, B](paramA: A, paramB: B) derives Lattice
 
 type NotInt = Int
 
-given Arbitrary[SomeProductType[NotInt, NotInt]] = Arbitrary(for {
+given Arbitrary[SomeProductType[NotInt, NotInt]] = Arbitrary(for
   as: NotInt <- Gen.posNum[Int]
   bs: NotInt <- Gen.posNum[Int]
-} yield SomeProductType(as, bs))
+yield SomeProductType(as, bs))
 
 class DerivedLattice extends LatticePropertyChecks[SomeProductType[NotInt, NotInt]]
 

@@ -42,11 +42,11 @@ object DataGenerator {
   val smallNum = Gen.chooseNum(-10, 10)
 
   given arbCausalTime: Arbitrary[CausalTime] = Arbitrary:
-    for {
+    for
       time     <- smallNum
       causal   <- smallNum
       nanotime <- Gen.long
-    } yield CausalTime(time, causal, nanotime)
+    yield CausalTime(time, causal, nanotime)
 
   given arbLww[E: Arbitrary]: Arbitrary[LastWriterWins[E]] = Arbitrary:
     for
@@ -59,27 +59,27 @@ object DataGenerator {
   )
 
   given arbPosNeg: Arbitrary[PosNegCounter] = Arbitrary(
-    for {
+    for
       pos <- arbGcounter.arbitrary
       neg <- arbGcounter.arbitrary
-    } yield PosNegCounter(pos, neg)
+    yield PosNegCounter(pos, neg)
   )
 
   given Lattice[Int] = _ max _
 
-  given arbORSet[A: Arbitrary]: Arbitrary[ObserveRemoveSet[A]] = Arbitrary(for {
+  given arbORSet[A: Arbitrary]: Arbitrary[ObserveRemoveSet[A]] = Arbitrary(for
     added   <- Gen.nonEmptyListOf(Arbitrary.arbitrary[A])
     removed <- Gen.listOf(Gen.oneOf(added))
-  } yield {
+  yield {
     val a = added.foldLeft(ObserveRemoveSet.empty[A])((s, v) => Lattice.merge(s, s.add(v)))
     removed.foldLeft(a)((s, v) => Lattice.merge(s, s.remove(v)))
   })
 
   given arbMVR[A: Arbitrary]: Arbitrary[MultiValueRegister[A]] =
-    val pairgen = for {
+    val pairgen = for
       version <- arbVectorClock.arbitrary
       value   <- Arbitrary.arbitrary[A]
-    } yield (version, value)
+    yield (version, value)
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
     Arbitrary(map)
 
@@ -91,15 +91,15 @@ object DataGenerator {
             list.map: (dot, value) =>
               QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
 
-  val genDot: Gen[Dot] = for {
+  val genDot: Gen[Dot] = for
     id    <- Gen.oneOf('a' to 'g')
     value <- Gen.oneOf(0 to 100)
-  } yield Dot(Uid.predefined(id.toString), value)
+  yield Dot(Uid.predefined(id.toString), value)
 
-  val uniqueDot: Gen[Dot] = for {
+  val uniqueDot: Gen[Dot] = for
     id    <- Gen.oneOf('a' to 'g')
     value <- Gen.long
-  } yield Dot(Uid.predefined(id.toString), value)
+  yield Dot(Uid.predefined(id.toString), value)
 
   given arbDot: Arbitrary[Dot] = Arbitrary(genDot)
 
@@ -112,11 +112,11 @@ object DataGenerator {
     yield ArrayRanges.from(x.map(_.toLong))
   )
 
-  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] = for {
+  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] = for
     n      <- Gen.choose(0, 10)
     dots   <- Gen.containerOfN[List, Dot](n, genDot)
     values <- Gen.containerOfN[List, A](n, g.arbitrary)
-  } yield (dots zip values).toMap
+  yield (dots zip values).toMap
 
   implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
@@ -127,9 +127,9 @@ object DataGenerator {
 
   case class SmallTimeSet(s: Set[Time])
 
-  given Arbitrary[SmallTimeSet] = Arbitrary(for {
+  given Arbitrary[SmallTimeSet] = Arbitrary(for
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
-  } yield (SmallTimeSet(contents.toSet)))
+  yield (SmallTimeSet(contents.toSet)))
 
   given arbGrowOnlyList[E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
     Gen.listOf(arb.arbitrary).map: list =>
@@ -201,13 +201,13 @@ object DataGenerator {
       }
     }
 
-    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for {
+    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] = for
       nInserted       <- Gen.choose(0, 20)
       insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
       insertedValues  <- Gen.containerOfN[List, E](nInserted, e.arbitrary)
       removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
       id              <- Gen.oneOf('a' to 'g')
-    } yield {
+    yield {
       makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
     }
 
