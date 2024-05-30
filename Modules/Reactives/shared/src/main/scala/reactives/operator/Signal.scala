@@ -96,7 +96,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     Signal {
       try this.value
       catch {
-        case EmptySignalControlThrowable => value
+        case e: EmptySignalControlThrowable => value
       }
     }
 

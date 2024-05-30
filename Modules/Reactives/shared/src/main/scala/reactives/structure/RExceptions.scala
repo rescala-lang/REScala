@@ -2,8 +2,6 @@ package reactives.structure
 
 import reactives.core.{ReInfo, ReSource}
 
-import scala.util.control.ControlThrowable
-
 object RExceptions {
   case class EmptySignalControlThrowable(info: ReInfo)
       extends Exception(s"$info is empty", null, false, false)
