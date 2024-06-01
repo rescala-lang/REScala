@@ -1,6 +1,5 @@
 package lofi_acl.ardt.base
 
-import lofi_acl.ardt.causality.DotFun
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
@@ -24,7 +23,7 @@ object Causal {
   //                       {(d, v) ∈ m  | d ∉ c'} ∪
   //                       {(d, v) ∈ m' | d ∉ c},
   //                      c ∪ c')
-  given CausalWithDotFunLattice[V: Lattice]: Lattice[Causal[DotFun[V]]] = (left, right) => {
+  given CausalWithDotFunLattice[V: Lattice]: Lattice[Causal[Map[Dot, V]]] = (left, right) => {
     Causal(
       ((left.dotStore.keySet `intersect` right.dotStore.keySet) map { (dot: Dot) =>
         (dot, Lattice.merge(left.dotStore(dot), right.dotStore(dot)))

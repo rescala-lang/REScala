@@ -2,7 +2,6 @@ package lofi_acl.ardt.base
 
 import lofi_acl.ardt.base.Causal.given
 import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.given
-import lofi_acl.ardt.causality.DotFun
 import munit.FunSuite
 import rdts.base.{Lattice, Uid}
 import rdts.time.{Dot, Dots}
@@ -109,17 +108,17 @@ class CausalSpec extends FunSuite {
 
   test("Causal with DotFun should merge when empty") {
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(), Dots.empty),
         Causal(Map(), Dots.empty)
       ),
-      Causal[DotFun[Set[Int]]](Map(), Dots.empty)
+      Causal[Map[Dot, Set[Int]]](Map(), Dots.empty)
     )
   }
 
   test("Causal with DotFun should merge idempotent") {
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "A") -> Set(1)), Dots.from(Map("A" -> 1))),
         Causal(Map(dot(1, "A") -> Set(1)), Dots.from(Map("A" -> 1)))
       ),
@@ -127,7 +126,7 @@ class CausalSpec extends FunSuite {
     )
 
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(), Dots.from(Map("A" -> 2))),
         Causal(Map(), Dots.from(Map("A" -> 2)))
       ),
@@ -135,7 +134,7 @@ class CausalSpec extends FunSuite {
     )
 
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "A") -> Set()), Dots.from(Map("A" -> 2))),
         Causal(Map(dot(1, "A") -> Set()), Dots.from(Map("A" -> 2)))
       ),
@@ -145,7 +144,7 @@ class CausalSpec extends FunSuite {
 
   test("Causal with DotFun should merge lattice when dot contained in both dotstores") {
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "A") -> Set(42)), Dots.from(Map("A" -> 1))),
         Causal(Map(dot(1, "A") -> Set(21)), Dots.from(Map("A" -> 1)))
       ),
@@ -160,7 +159,7 @@ class CausalSpec extends FunSuite {
 
   test("Causal with DotFun should union dotstore when disjoint dotstores and not a causal removal") {
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "A") -> Set(42)), Dots.from(Map("A" -> 1))),
         Causal(Map(dot(1, "B") -> Set(21)), Dots.from(Map("B" -> 1)))
       ),
@@ -178,7 +177,7 @@ class CausalSpec extends FunSuite {
     "Causal with DotFun should discard values in dotstore when not contained in causal context and has disjoint dotstores"
   ) {
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "A") -> Set(42)), Dots.from(Map("A" -> 1))),
         Causal(Map(dot(1, "B") -> Set(21)), Dots.from(Map("A" -> 1, "B" -> 1)))
       ),
@@ -191,7 +190,7 @@ class CausalSpec extends FunSuite {
     )
 
     assertEquals(
-      Lattice[Causal[DotFun[Set[Int]]]].merge(
+      Lattice[Causal[Map[Dot, Set[Int]]]].merge(
         Causal(Map(dot(1, "B") -> Set(21)), Dots.from(Map("A" -> 1, "B" -> 1))),
         Causal(Map(dot(1, "A") -> Set(42)), Dots.from(Map("A" -> 1)))
       ),
