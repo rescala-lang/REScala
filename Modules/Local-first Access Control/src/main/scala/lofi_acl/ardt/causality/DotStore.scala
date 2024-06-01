@@ -9,7 +9,4 @@ import rdts.time.{Dot, Dots}
 object DotStore {
   type DotFun[V]    = Map[Dot, V]
   type DotMap[K, V] = Map[K, V]
-
-  inline def apply[D](using dotStore: Bottom[D]): Bottom[D] = dotStore
-
 }

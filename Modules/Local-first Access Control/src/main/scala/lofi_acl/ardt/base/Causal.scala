@@ -46,7 +46,7 @@ object Causal {
           val rightCausal = Causal(right.dotStore.getOrElse(key, Bottom[V].empty), right.causalContext)
           key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).dotStore
         } filterNot { case (key, dotStore) =>
-          DotStore[V].empty == dotStore
+          Bottom[V].empty == dotStore
         }).toMap,
         left.causalContext.union(right.causalContext)
       )
