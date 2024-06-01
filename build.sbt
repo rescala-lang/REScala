@@ -92,10 +92,12 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossTy
 lazy val deltalens = project.in(file("Modules/Deltalens"))
   .settings(
     scala3defaults,
+    Dependencies.munit,
     libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
       "org.scalatest" %%% s"scalatest-$m" % "3.2.18" % Test
     ),
   )
+  .dependsOn(rdts.jvm)
 
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
