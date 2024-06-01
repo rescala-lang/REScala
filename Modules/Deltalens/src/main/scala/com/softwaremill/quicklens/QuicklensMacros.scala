@@ -205,6 +205,16 @@ object QuicklensMacros {
       val objSymbol = obj.tpe.widenAll.matchingTypeSymbol
       if isProduct(objSymbol) then {
         val copy = symbolMethodByNameUnsafe(objSymbol, "copy")
+
+        val bottom = obj.tpe.widen.asType match
+          case '[τ] => '{
+              ${
+                Expr.summon[Bottom[τ]].getOrElse(
+                  report.errorAndAbort(s"Could not find implicit for type ${Type.show[Bottom[τ]]}")
+                )
+              }.empty
+            }.asTerm
+
         val argsMap: Map[Int, Term] = fields.map { (field, trees) =>
           val (fieldMethod, idx) = termAccessorMethodByNameUnsafe(obj, field.name)
           val resTerm: Term = trees.foldLeft[Term](Select(obj, fieldMethod)) { (term, tree) =>
@@ -222,7 +232,7 @@ object QuicklensMacros {
         val firstParamListLength: Int = constructorTree.termParamss.headOption.map(_.params).toList.flatten.length
         val fieldsIdxs                = 1.to(firstParamListLength)
         val args = fieldsIdxs.map { i =>
-          val defaultMethod = obj.select(symbolMethodByNameUnsafe(objSymbol, "copy$default$" + i.toString))
+          val defaultMethod = bottom.select(symbolMethodByNameUnsafe(objSymbol, "copy$default$" + i.toString))
           argsMap.getOrElse(
             i,
             typeParams.fold(defaultMethod)(defaultMethod.appliedToTypes)
@@ -234,18 +244,13 @@ object QuicklensMacros {
             s"Implementation limitation: Only the first parameter list of the modified case classes can be non-implicit."
           )
 
-
-        obj.tpe.widen.asType match
-          case '[τ] =>
-
-            val bottom = '{${Expr.summon[Bottom[τ]].getOrElse(report.errorAndAbort(s"Could not find implicit for type ${Type.show[Bottom[τ]]}"))}.empty}
-            typeParams match {
-              // if the object's type is parametrised, we need to call .copy with the same type parameters
-              case Some(typeParams) =>
-                Apply(TypeApply(Select(bottom.asTerm, copy), typeParams.map(Inferred(_))), args)
-              case _ =>
-                Apply(Select(bottom.asTerm, copy), args)
-            }
+        typeParams match {
+          // if the object's type is parametrised, we need to call .copy with the same type parameters
+          case Some(typeParams) =>
+            Apply(TypeApply(Select(bottom, copy), typeParams.map(Inferred(_))), args)
+          case _ =>
+            Apply(Select(bottom, copy), args)
+        }
       } else if isSum(objSymbol) then {
         obj.tpe.widenAll match {
           case AndType(_, _) =>
