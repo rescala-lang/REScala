@@ -2,7 +2,7 @@ package lofi_acl.ardt.base
 
 import lofi_acl.ardt.base.Causal.given
 import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.given
-import lofi_acl.ardt.causality.DotStore.{DotFun, DotSet}
+import lofi_acl.ardt.causality.DotStore.{DotFun}
 import munit.FunSuite
 import rdts.base.{Lattice, Uid}
 import rdts.time.{Dot, Dots}
@@ -19,88 +19,88 @@ class CausalSpec extends FunSuite {
       }
     ).toSet
 
-  private given setOfDotsToDotSet: Conversion[Set[Dot], DotSet] = Dots.from(_)
+  private given setOfDotsToDotSet: Conversion[Set[Dot], Dots] = Dots.from(_)
 
-  test("Causal with DotSet should merge when empty") {
+  test("Causal with Dots should merge when empty") {
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
-        Causal.bottom[DotSet],
-        Causal.bottom[DotSet]
+      Lattice[Causal[Dots]].merge(
+        Causal.bottom[Dots],
+        Causal.bottom[Dots]
       ),
-      Causal.bottom[DotSet]
+      Causal.bottom[Dots]
     )
   }
 
-  test("Causal with DotSet should union the CausalContext") {
+  test("Causal with Dots should union the CausalContext") {
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set.empty[Dot], Dots.from(Map("A" -> 1))),
         Causal(Set.empty[Dot], Dots.from(Map("B" -> 2)))
       ),
-      Causal[DotSet](Set.empty[Dot], Dots.from(Map("A" -> 1, "B" -> 2)))
+      Causal[Dots](Set.empty[Dot], Dots.from(Map("A" -> 1, "B" -> 2)))
     )
 
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set.empty[Dot], Dots.from(Map("A" -> 1, "B" -> 1))),
         Causal(Set.empty[Dot], Dots.from(Map("B" -> 2)))
       ),
-      Causal[DotSet](Set.empty[Dot], Dots.from(Map("A" -> 1, "B" -> 2)))
+      Causal[Dots](Set.empty[Dot], Dots.from(Map("A" -> 1, "B" -> 2)))
     )
   }
 
-  test("Causal with DotSet should merge with disjoint dotset") {
+  test("Causal with Dots should merge with disjoint dotset") {
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set(dot(1, "A")), Dots.from(Map("A" -> 1))),
         Causal(Set(dot(1, "B")), Dots.from(Map("B" -> 1)))
       ),
-      Causal[DotSet](Set(dot(1, "A"), dot(1, "B")), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Dots](Set(dot(1, "A"), dot(1, "B")), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
   }
 
-  test("Causal with DotSet should remove dots from dotset that are contained in CausalContext") {
+  test("Causal with Dots should remove dots from dotset that are contained in CausalContext") {
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set(dot(1, "A")), Dots.from(Map("A" -> 1))),
         Causal(Set(dot(2, "A")), Dots.from(Map("A" -> 2)))
       ),
-      Causal[DotSet](
+      Causal[Dots](
         Set(dot(2, "A")),
         Dots.from(Map("A" -> 2))
       )
     )
   }
 
-  test("Causal with DotSet should remove dots from dotset if removed") {
+  test("Causal with Dots should remove dots from dotset if removed") {
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set(dot(2, "A")), Dots.from(Map("A" -> 2))),
         Causal(Set.empty[Dot], Dots.from(Map("A" -> 2)))
       ),
-      Causal[DotSet](
+      Causal[Dots](
         Set.empty[Dot],
         Dots.from(Map("A" -> 2))
       )
     )
 
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set.empty[Dot], Dots.from(Map("A" -> 2))),
         Causal(Set(dot(2, "A")), Dots.from(Map("A" -> 2)))
       ),
-      Causal[DotSet](
+      Causal[Dots](
         Set.empty[Dot],
         Dots.from(Map("A" -> 2))
       )
     )
 
     assertEquals(
-      Lattice[Causal[DotSet]].merge(
+      Lattice[Causal[Dots]].merge(
         Causal(Set(dot(1, "B")), Dots.from(Map("A" -> 2, "B" -> 1))),
         Causal(Set(dot(2, "A")), Dots.from(Map("A" -> 2)))
       ),
-      Causal[DotSet](
+      Causal[Dots](
         Set(dot(1, "B")),
         Dots.from(Map("A" -> 2, "B" -> 1))
       )
@@ -207,58 +207,58 @@ class CausalSpec extends FunSuite {
   test("Causal with DotMap should merge when empty") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(), Dots.empty),
-        Causal[Map[Int, DotSet]](Map(), Dots.empty)
+        Causal[Map[Int, Dots]](Map(), Dots.empty),
+        Causal[Map[Int, Dots]](Map(), Dots.empty)
       ),
-      Causal[Map[Int, DotSet]](Map(), Dots.empty)
+      Causal[Map[Int, Dots]](Map(), Dots.empty)
     )
   }
 
   test("Causal with DotMap should merge idempotent") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
       ),
-      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
+      Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
     )
   }
 
   test("Causal with DotMap should remove values when removal is causal") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
-        Causal[Map[Int, DotSet]](Map(), Dots.from(Map("A" -> 2)))
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
+        Causal[Map[Int, Dots]](Map(), Dots.from(Map("A" -> 2)))
       ),
-      Causal[Map[Int, DotSet]](Map(), Dots.from(Map("A" -> 2)))
+      Causal[Map[Int, Dots]](Map(), Dots.from(Map("A" -> 2)))
     )
 
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(), Dots.from(Map("A" -> 2))),
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
+        Causal[Map[Int, Dots]](Map(), Dots.from(Map("A" -> 2))),
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1)))
       ),
-      Causal[Map[Int, DotSet]](Map(), Dots.from(Map("A" -> 2)))
+      Causal[Map[Int, Dots]](Map(), Dots.from(Map("A" -> 2)))
     )
   }
 
   test("Causal with DotMap should replace dotstore when causal") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
       ),
-      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
   }
 
   test("Causal with DotMap should merge dotstore when disjoint") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
-        Causal[Map[Int, DotSet]](Map(2 -> Set(dot(1, "B"))), Dots.from(Map("B" -> 1)))
+        Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1))),
+        Causal[Map[Int, Dots]](Map(2 -> Set(dot(1, "B"))), Dots.from(Map("B" -> 1)))
       ),
-      Causal[Map[Int, DotSet]](
+      Causal[Map[Int, Dots]](
         Map(1 -> Set(dot(1, "A")), 2 -> Set(dot(1, "B"))),
         Dots.from(Map("A" -> 1, "B" -> 1))
       )
@@ -268,16 +268,16 @@ class CausalSpec extends FunSuite {
   test("Causal with DotMap should merge dotstore when not disjoint") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"))),
           Dots.from(Map("A" -> 1))
         ),
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A")), 2 -> Set(dot(1, "B"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         )
       ),
-      Causal[Map[Int, DotSet]](
+      Causal[Map[Int, Dots]](
         Map(1 -> Set(dot(1, "A")), 2 -> Set(dot(1, "B"))),
         Dots.from(Map("A" -> 1, "B" -> 1))
       )
@@ -287,62 +287,62 @@ class CausalSpec extends FunSuite {
   test("Causal with DotMap should merge dotstore recursively") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"))),
           Dots.from(Map("A" -> 1))
         ),
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         )
       ),
-      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"), dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"), dot(1, "B"))), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
   }
 
   test("Causal with DotMap should respect CausalContext when merging dotstore recursively") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         ),
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         )
       ),
-      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
 
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"), dot(1, "B"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         ),
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         )
       ),
-      Causal[Map[Int, DotSet]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, Dots]](Map(1 -> Set(dot(1, "A"))), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
   }
 
   test("Causal with DotMap should remove entry when merging of value yields bottom") {
     assertEquals(
       Lattice.merge(
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "A"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         ),
-        Causal[Map[Int, DotSet]](
+        Causal[Map[Int, Dots]](
           Map(1 -> Set(dot(1, "B"))),
           Dots.from(Map("A" -> 1, "B" -> 1))
         )
       ),
-      Causal[Map[Int, DotSet]](Map[Int, DotSet](), Dots.from(Map("A" -> 1, "B" -> 1)))
+      Causal[Map[Int, Dots]](Map[Int, Dots](), Dots.from(Map("A" -> 1, "B" -> 1)))
     )
   }
 }

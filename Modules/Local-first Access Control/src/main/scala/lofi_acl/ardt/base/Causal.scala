@@ -1,18 +1,18 @@
 package lofi_acl.ardt.base
 
 import lofi_acl.ardt.causality.DotStore
-import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap, DotSet}
-import rdts.base.Lattice
+import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap}
+import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
 case class Causal[D](dotStore: D, causalContext: Dots)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
-  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].empty, Dots.empty)
+  def bottom[D: Bottom]: Causal[D] = Causal(Bottom[D].empty, Dots.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
-  given CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
+  given CausalWithDotSetLattice: Lattice[Causal[Dots]] = (left, right) => {
     val inBoth     = left.dotStore `intersect` right.dotStore
     val newInLeft  = left.dotStore `subtract` right.causalContext
     val newInRight = right.dotStore `subtract` left.causalContext
@@ -38,12 +38,12 @@ object Causal {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  given CausalWithDotMapLattice[K, V: DotStore](using Lattice[Causal[V]]): Lattice[Causal[DotMap[K, V]]] =
+  given CausalWithDotMapLattice[K, V: Bottom](using Lattice[Causal[V]]): Lattice[Causal[DotMap[K, V]]] =
     (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
       Causal(
         ((left.dotStore.keySet union right.dotStore.keySet) map { key =>
-          val leftCausal  = Causal(left.dotStore.getOrElse(key, DotStore[V].empty), left.causalContext)
-          val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].empty), right.causalContext)
+          val leftCausal  = Causal(left.dotStore.getOrElse(key, Bottom[V].empty), left.causalContext)
+          val rightCausal = Causal(right.dotStore.getOrElse(key, Bottom[V].empty), right.causalContext)
           key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).dotStore
         } filterNot { case (key, dotStore) =>
           DotStore[V].empty == dotStore

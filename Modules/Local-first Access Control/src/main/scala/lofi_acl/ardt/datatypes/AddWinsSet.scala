@@ -2,11 +2,13 @@ package lofi_acl.ardt.datatypes
 
 import lofi_acl.ardt.base.Causal
 import lofi_acl.ardt.causality.DotStore
-import lofi_acl.ardt.causality.DotStore.{DotMap, DotSet}
+import lofi_acl.ardt.causality.DotStore.{DotMap}
+import rdts.base.Bottom
+import rdts.dotted.HasDots
 import rdts.syntax.LocalUid
 import rdts.time.Dots
 
-opaque type AddWinsSet[E] = Causal[DotMap[E, DotSet]]
+opaque type AddWinsSet[E] = Causal[DotMap[E, Dots]]
 
 extension [E](awSet: AddWinsSet[E])
   def elements: Set[E]              = awSet.dotStore.keySet
@@ -29,7 +31,7 @@ object AddWinsSet:
       */
     def add[E](set: AddWinsSet[E], replicaId: LocalUid, element: E): AddWinsSet[E] =
       val newDot                           = set.causalContext.nextDot(replicaId.uid)
-      val deltaDotStore: DotMap[E, DotSet] = Map(element -> Dots.single(newDot))
+      val deltaDotStore: DotMap[E, Dots] = Map(element -> Dots.single(newDot))
       val deltaCausalContext = set.dotStore.get(element) match
         case Some(dots) => dots.add(newDot)
         case None       => Dots.single(newDot)
@@ -47,8 +49,8 @@ object AddWinsSet:
       *   The delta of the removal operation.
       */
     def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Causal(
-      DotStore[DotMap[E, DotSet]].empty,
-      set.dotStore.getOrElse(element, DotStore[DotSet].empty)
+      DotStore[DotMap[E, Dots]].empty,
+      set.dotStore.getOrElse(element, DotStore[Dots].empty)
     )
 
     /** Returns the '''delta''' that removes all elements from the `set`.
@@ -63,6 +65,6 @@ object AddWinsSet:
       *   The delta of the clear
       */
     def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
-      DotStore[DotMap[E, DotSet]].empty,
-      DotStore[DotMap[E, DotSet]].dots(set.dotStore)
+      Bottom[DotMap[E, Dots]].empty,
+      HasDots[DotMap[E, Dots]].dots(set.dotStore)
     )
