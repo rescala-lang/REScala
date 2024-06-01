@@ -111,7 +111,7 @@ package object quicklens {
     /** see [[PathModify.usingIf]] */
     def usingIf(condition: Boolean)(mod: U => U): T => T =
       obj =>
-        if (condition) doModify(obj, mod)
+        if condition then doModify(obj, mod)
         else obj
 
     /** see [[PathModify.setTo]] */
@@ -122,7 +122,7 @@ package object quicklens {
 
     /** see [[PathModify.setToIf]] */
     def setToIf(condition: Boolean)(v: => U): T => T =
-      if (condition) setTo(v)
+      if condition then setTo(v)
       else obj => obj
 
     def andThenModify[V](f2: PathLazyModify[U, V]): PathLazyModify[T, V] =
@@ -154,7 +154,7 @@ package object quicklens {
       def map[A](fa: M[A], f: A => A): M[A] = {
         val mapped = fa.view.mapValues(f)
         (fa match {
-          case sfa: SortedMap[K, A] => sfa.sortedMapFactory.from(mapped)(using sfa.ordering)
+          case sfa: SortedMap[_, _] => sfa.sortedMapFactory.from(mapped)(using sfa.ordering)
           case _                    => mapped.to(fa.mapFactory)
         }).asInstanceOf[M[A]]
       }
