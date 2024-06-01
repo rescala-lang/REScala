@@ -15,7 +15,6 @@ object TwoPhaseMap:
   def empty[K, V]: TwoPhaseMap[K, V] = TwoPhaseMap[K, V]()
 
   import TwoPhaseSet.lattice
-  import lofi_acl.ardt.base.StandardLibrary.GrowOnlyMap.lattice
 
   given lattice[K, V: Lattice]: Lattice[TwoPhaseMap[K, V]] =
     case (TwoPhaseMap(leftKeys, leftMappings), TwoPhaseMap(rightKeys, rightMappings)) =>

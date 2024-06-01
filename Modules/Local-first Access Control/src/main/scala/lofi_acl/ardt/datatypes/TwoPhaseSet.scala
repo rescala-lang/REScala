@@ -18,7 +18,6 @@ object TwoPhaseSet {
       val newAdded   = (leftAdded ++ rightAdded) -- newRemoved
       TwoPhaseSet(newAdded, rightAdded)
    */
-  import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.lattice
   given lattice[T]: Lattice[TwoPhaseSet[T]] = Lattice.derived
 
   given bottom[T]: Bottom[TwoPhaseSet[T]] with
