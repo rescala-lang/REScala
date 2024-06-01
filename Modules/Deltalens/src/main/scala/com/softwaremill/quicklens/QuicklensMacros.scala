@@ -67,7 +67,8 @@ object QuicklensMacros {
       case Empty
       case Node(children: Seq[(PathSymbol, Seq[PathTree])])
 
-      def <>(symbols: Seq[PathSymbol]): PathTree = {
+      /** adds some path to the current tree */
+      def add(symbols: Seq[PathSymbol]): PathTree = {
         this match
           case PathTree.Empty => symbols.toPathTree
           case PathTree.Node(children) =>
@@ -86,14 +87,15 @@ object QuicklensMacros {
                 }
               case symbol :: tail =>
                 PathTree.Node {
-                  if !children.exists(_._1 equiv symbol) then children :+ (symbol -> Seq(tail.toPathTree))
+                  if !children.exists(_._1 equiv symbol)
+                  then children :+ (symbol -> Seq(tail.toPathTree))
                   else
                     children.map {
                       case (sym, trees) if sym equiv symbol =>
                         sym -> (trees.init ++ {
                           trees.last match
                             case PathTree.Empty => Seq(PathTree.Empty, tail.toPathTree)
-                            case node           => Seq(node <> tail)
+                            case node           => Seq(node.add(tail))
                         })
                       case c => c
                     }
@@ -109,7 +111,7 @@ object QuicklensMacros {
         case Nil              => PathTree.Empty
         case (symbol :: tail) => PathTree.Node(Seq(symbol -> Seq(tail.toPathTree)))
 
-    enum PathSymbol:
+    enum PathSymbol {
       case Field(name: String)
       case FunctionDelegate(name: String, givn: Term, typeTree: TypeTree, args: List[Term])
 
@@ -118,7 +120,7 @@ object QuicklensMacros {
         case (FunctionDelegate(name1, _, typeTree1, args1), FunctionDelegate(name2, _, typeTree2, args2)) =>
           name1 == name2 && typeTree1.tpe == typeTree2.tpe && args1 == args2
         case _ => false
-    end PathSymbol
+    }
 
     def toPath(tree: Tree, focus: Expr[S => A]): Seq[PathSymbol] = {
       tree match {
@@ -347,7 +349,7 @@ object QuicklensMacros {
       }
 
     val pathTree: PathTree =
-      paths.foldLeft(PathTree.empty) { (tree, path) => tree <> path }
+      paths.foldLeft(PathTree.empty) { (tree, path) => tree.add(path) }
 
     val res: (Expr[A => A] => Expr[S]) = (mod: Expr[A => A]) =>
       Typed(mapToCopy(Symbol.spliceOwner, mod, obj.asTerm, pathTree), TypeTree.of[S]).asExpr.asInstanceOf[Expr[S]]
