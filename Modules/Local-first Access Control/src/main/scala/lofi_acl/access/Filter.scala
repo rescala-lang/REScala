@@ -57,7 +57,7 @@ object Filter:
           pm.fromProduct(filteredProduct)
     }
 
-    private inline def filterProduct(product: Product, permissionTree: PermissionTree): Product = {
+    private def filterProduct(product: Product, permissionTree: PermissionTree): Product = {
       val filteredFactors = permissionTree.children.map { case (factorName, permissionSubTree) =>
         // Assumes that permission tree is valid (i.e., factorName is a valid element)
         val factorIndex   = factorLabels(factorName)

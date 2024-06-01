@@ -42,7 +42,9 @@ case class LocalUid(uid: Uid) {
 }
 object LocalUid:
   given ordering: Ordering[LocalUid]             = Uid.ordering.on(_.uid)
-  inline given fromId: Conversion[Uid, LocalUid] = apply
+  inline given fromId: Conversion[Uid, LocalUid] with {
+    override def apply(x: Uid): LocalUid = LocalUid(x)
+  }
   def predefined(s: String): LocalUid            = LocalUid.fromId(Uid.predefined(s))
   def unwrap(id: LocalUid): Uid                  = id.uid
   def gen(): LocalUid                            = Uid.gen()
