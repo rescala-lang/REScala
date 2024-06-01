@@ -9,8 +9,8 @@ import rdts.time.Dots
 opaque type AddWinsSet[E] = Causal[Map[E, Dots]]
 
 extension [E](awSet: AddWinsSet[E])
-  def elements: Set[E]              = awSet.dotStore.keySet
-  def contains(element: E): Boolean = awSet.dotStore.contains(element)
+  def elements: Set[E]              = awSet.data.keySet
+  def contains(element: E): Boolean = awSet.data.contains(element)
 
 object AddWinsSet:
   object mutators:
@@ -28,9 +28,9 @@ object AddWinsSet:
       *   The delta of the add operation.
       */
     def add[E](set: AddWinsSet[E], replicaId: LocalUid, element: E): AddWinsSet[E] =
-      val newDot                           = set.causalContext.nextDot(replicaId.uid)
+      val newDot                           = set.context.nextDot(replicaId.uid)
       val deltaDotStore: Map[E, Dots] = Map(element -> Dots.single(newDot))
-      val deltaCausalContext = set.dotStore.get(element) match
+      val deltaCausalContext = set.data.get(element) match
         case Some(dots) => dots.add(newDot)
         case None       => Dots.single(newDot)
       Causal(deltaDotStore, deltaCausalContext)
@@ -48,7 +48,7 @@ object AddWinsSet:
       */
     def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Causal(
       Map.empty,
-      set.dotStore.getOrElse(element, Dots.empty)
+      set.data.getOrElse(element, Dots.empty)
     )
 
     /** Returns the '''delta''' that removes all elements from the `set`.
@@ -64,5 +64,5 @@ object AddWinsSet:
       */
     def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
       Bottom[Map[E, Dots]].empty,
-      HasDots[Map[E, Dots]].dots(set.dotStore)
+      HasDots[Map[E, Dots]].dots(set.data)
     )

@@ -12,7 +12,7 @@ opaque type MultiValueRegister[V] = Causal[Map[Dot, V]]
 object MultiValueRegister:
   extension [V](reg: MultiValueRegister[V])
     def read: Set[V] = {
-      reg.dotStore.values.toSet
+      reg.data.values.toSet
     }
 
   private[datatypes] given regToCausal[V]: Conversion[MultiValueRegister[V], Causal[Map[Dot, V]]] = identity
@@ -20,14 +20,14 @@ object MultiValueRegister:
 
   object mutators:
     def write[V](register: MultiValueRegister[V], value: V, replicaId: LocalUid): MultiValueRegister[V] =
-      val dot = register.causalContext.nextDot(replicaId.uid)
+      val dot = register.context.nextDot(replicaId.uid)
       Causal(
         Map(dot -> value),
-        Dots.from(register.dotStore.keySet + dot)
+        Dots.from(register.data.keySet + dot)
       )
 
     def clear[V](register: MultiValueRegister[V]): MultiValueRegister[V] =
       Causal(
         Map.empty,
-        Dots.from(register.dotStore.keySet)
+        Dots.from(register.data.keySet)
       )

@@ -3,7 +3,7 @@ package lofi_acl.ardt.base
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
-case class Causal[D](dotStore: D, causalContext: Dots)
+case class Causal[D](data: D, context: Dots)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
@@ -11,11 +11,11 @@ object Causal {
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   given CausalWithDotSetLattice: Lattice[Causal[Dots]] = (left, right) => {
-    val inBoth     = left.dotStore `intersect` right.dotStore
-    val newInLeft  = left.dotStore `subtract` right.causalContext
-    val newInRight = right.dotStore `subtract` left.causalContext
+    val inBoth     = left.data `intersect` right.data
+    val newInLeft  = left.data `subtract` right.context
+    val newInRight = right.data `subtract` left.context
 
-    val mergedCausalContext = left.causalContext.union(right.causalContext)
+    val mergedCausalContext = left.context.union(right.context)
     Causal(inBoth `union` newInLeft `union` newInRight, mergedCausalContext)
   }
 
@@ -25,12 +25,12 @@ object Causal {
   //                      c ∪ c')
   given CausalWithDotFunLattice[V: Lattice]: Lattice[Causal[Map[Dot, V]]] = (left, right) => {
     Causal(
-      ((left.dotStore.keySet `intersect` right.dotStore.keySet) map { (dot: Dot) =>
-        (dot, Lattice.merge(left.dotStore(dot), right.dotStore(dot)))
+      ((left.data.keySet `intersect` right.data.keySet) map { (dot: Dot) =>
+        (dot, Lattice.merge(left.data(dot), right.data(dot)))
       }).toMap
-      ++ left.dotStore.filterNot { case (dot, _) => right.causalContext.contains(dot) }
-      ++ right.dotStore.filterNot { case (dot, _) => left.causalContext.contains(dot) },
-      left.causalContext.union(right.causalContext)
+      ++ left.data.filterNot { case (dot, _) => right.context.contains(dot) }
+      ++ right.data.filterNot { case (dot, _) => left.context.contains(dot) },
+      left.context.union(right.context)
     )
   }
 
@@ -39,13 +39,13 @@ object Causal {
   given CausalWithDotMapLattice[K, V: Bottom](using Lattice[Causal[V]]): Lattice[Causal[Map[K, V]]] =
     (left: Causal[Map[K, V]], right: Causal[Map[K, V]]) =>
       Causal(
-        ((left.dotStore.keySet union right.dotStore.keySet) map { key =>
-          val leftCausal  = Causal(left.dotStore.getOrElse(key, Bottom[V].empty), left.causalContext)
-          val rightCausal = Causal(right.dotStore.getOrElse(key, Bottom[V].empty), right.causalContext)
-          key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).dotStore
+        ((left.data.keySet union right.data.keySet) map { key =>
+          val leftCausal  = Causal(left.data.getOrElse(key, Bottom[V].empty), left.context)
+          val rightCausal = Causal(right.data.getOrElse(key, Bottom[V].empty), right.context)
+          key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).data
         } filterNot { case (key, dotStore) =>
           Bottom[V].empty == dotStore
         }).toMap,
-        left.causalContext.union(right.causalContext)
+        left.context.union(right.context)
       )
 }

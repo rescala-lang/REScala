@@ -14,7 +14,7 @@ opaque type AddWinsLastWriterWinsMap[K, V] = AddWinsMap[K, Map[Dot, (V, (Instant
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object AddWinsMap:
-  extension [K, V](self: AddWinsMap[K, V]) def get(key: K): Option[V] = self.dotStore.get(key)
+  extension [K, V](self: AddWinsMap[K, V]) def get(key: K): Option[V] = self.data.get(key)
 
   given bottom[K, V: Bottom]: Bottom[AddWinsMap[K, V]] with
     override val empty: AddWinsMap[K, V] = Causal.bottom[Map[K, V]]
@@ -41,7 +41,7 @@ object AddWinsMap:
         deltaMutator: Causal[V] => Causal[V]
     ): AddWinsMap[K, V] = {
 
-      deltaMutator(Causal(map.dotStore.getOrElse(key, Bottom[V].empty), map.causalContext)) match {
+      deltaMutator(Causal(map.data.getOrElse(key, Bottom[V].empty), map.context)) match {
         case Causal(dotStore, causalContext) =>
           Causal(
             Map(key -> dotStore),
@@ -65,7 +65,7 @@ object AddWinsMap:
       */
     def remove[K, V: Bottom: HasDots](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
       Bottom[Map[K, V]].empty,
-      HasDots[V].dots(map.dotStore.getOrElse(key, Bottom[V].empty))
+      HasDots[V].dots(map.data.getOrElse(key, Bottom[V].empty))
     )
 
     /** Returns the '''delta''' that removes all values from the `map`.
@@ -81,7 +81,7 @@ object AddWinsMap:
       */
     def clear[K, V: Bottom](map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
       Bottom[Map[K, V]].empty,
-      HasDots[Map[K, V]].dots(map.dotStore)
+      HasDots[Map[K, V]].dots(map.data)
     )
 
 object AddWinsLastWriterWinsMap {
@@ -100,7 +100,7 @@ object AddWinsLastWriterWinsMap {
 
   extension [K, V](self: AddWinsLastWriterWinsMap[K, V])
     def get(key: K): Option[V] =
-      val dotMap: Map[K, Map[Dot, (V, (Instant, String))]] = self.dotStore
+      val dotMap: Map[K, Map[Dot, (V, (Instant, String))]] = self.data
       dotMap.get(key) match
         case Some(dotFun) =>
           dotFun.maxByOption { case (_, (_, dot: (Instant, String))) => dot }
@@ -108,7 +108,7 @@ object AddWinsLastWriterWinsMap {
         case None => None
 
     def values: Map[K, V] =
-      self.dotStore.map { case (k, mvReg) =>
+      self.data.map { case (k, mvReg) =>
         k -> mvReg.values.maxBy(_._2)._1
       }
 
