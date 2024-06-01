@@ -17,7 +17,7 @@ package object quicklens {
       *
       * You can use `.each` to traverse options, lists, etc.
       */
-    inline def modify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('obj, 'path) }
+    inline def modify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}) }
 
     /** Create an object allowing modifying the given (deeply nested) fields accessible in a `case class` hierarchy via
       * `paths` on the given `obj`.
@@ -27,7 +27,7 @@ package object quicklens {
       * You can use `.each` to traverse options, lists, etc.
       */
     inline def modifyAll[A](inline path: S => A, inline paths: (S => A)*): PathModify[S, A] = ${
-      modifyAllImpl('obj, 'path, 'paths)
+      modifyAllImpl('{obj}, '{path}, '{paths})
     }
 
   case class PathModify[S, A](obj: S, f: (A => A) => S) {
@@ -90,7 +90,7 @@ package object quicklens {
     def setToIf(condition: Boolean)(v: A): S = if condition then setTo(v) else obj
   }
 
-  def modifyLens[T]: LensHelper[T] = LensHelper[T]()
+  def modifyLens[T]: LensHelper[T]         = LensHelper[T]()
   def modifyAllLens[T]: MultiLensHelper[T] = MultiLensHelper[T]()
 
   case class LensHelper[T] private[quicklens] () {
@@ -99,7 +99,7 @@ package object quicklens {
 
   case class MultiLensHelper[T] private[quicklens] () {
     inline def apply[U](inline path1: T => U, inline paths: (T => U)*): PathLazyModify[T, U] = ${
-      modifyAllLensApplyImpl('path1, 'paths)
+      modifyAllLensApplyImpl('{path1}, '{paths})
     }
   }
 
@@ -131,7 +131,7 @@ package object quicklens {
 
   trait QuicklensFunctor[F[_]] {
     def map[A](fa: F[A], f: A => A): F[A]
-    def each[A](fa: F[A], f: A => A): F[A] = map(fa, f)
+    def each[A](fa: F[A], f: A => A): F[A]                          = map(fa, f)
     def eachWhere[A](fa: F[A], f: A => A, cond: A => Boolean): F[A] = map(fa, x => if cond(x) then f(x) else x)
   }
 
@@ -205,7 +205,7 @@ package object quicklens {
 
   object QuicklensEitherFunctor:
     given [L, R]: QuicklensEitherFunctor[Either, L, R] with
-      override def eachLeft[A](e: Either[A, R], f: A => A) = e.left.map(f)
+      override def eachLeft[A](e: Either[A, R], f: A => A)  = e.left.map(f)
       override def eachRight[A](e: Either[L, A], f: A => A) = e.map(f)
 
   // Currently only used for [[Option]], but could be used for [[Right]]-biased [[Either]]s.
@@ -216,9 +216,9 @@ package object quicklens {
 
   object QuicklensSingleAtFunctor:
     given QuicklensSingleAtFunctor[Option] with
-      override def at[A](fa: Option[A], f: A => A): Option[A] = Some(fa.map(f).get)
+      override def at[A](fa: Option[A], f: A => A): Option[A]                      = Some(fa.map(f).get)
       override def atOrElse[A](fa: Option[A], f: A => A, default: => A): Option[A] = fa.orElse(Some(default)).map(f)
-      override def index[A](fa: Option[A], f: A => A): Option[A] = fa.map(f)
+      override def index[A](fa: Option[A], f: A => A): Option[A]                   = fa.map(f)
 
   trait QuicklensWhen[A]:
     inline def when[B <: A](a: A, f: B => B): A

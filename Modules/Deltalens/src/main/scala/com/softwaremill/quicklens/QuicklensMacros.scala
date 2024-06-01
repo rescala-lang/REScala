@@ -11,14 +11,14 @@ object QuicklensMacros {
     ${ pathModify }.f
   }
 
-  def to[T: Type, R: Type](f: Expr[T] => Expr[R])(using Quotes): Expr[T => R] = '{ (x: T) => ${ f('x) } }
+  def to[T: Type, R: Type](f: Expr[T] => Expr[R])(using Quotes): Expr[T => R] = '{ (x: T) => ${ f('{x}) } }
 
   def from[T: Type, R: Type](f: Expr[T => R])(using Quotes): Expr[T] => Expr[R] = (x: Expr[T]) => '{ $f($x) }
 
   def modifyLensApplyImpl[T, U](path: Expr[T => U])(using Quotes, Type[T], Type[U]): Expr[PathLazyModify[T, U]] = '{
     PathLazyModify { (t, mod) =>
       ${
-        toPathModify('t, modifyImpl('t, Seq(path)))
+        toPathModify('{t}, modifyImpl('{t}, Seq(path)))
       }.using(mod)
     }
   }
