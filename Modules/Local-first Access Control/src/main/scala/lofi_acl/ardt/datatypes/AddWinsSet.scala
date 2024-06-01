@@ -1,14 +1,12 @@
 package lofi_acl.ardt.datatypes
 
 import lofi_acl.ardt.base.Causal
-import lofi_acl.ardt.causality.DotStore
-import lofi_acl.ardt.causality.DotStore.{DotMap}
 import rdts.base.Bottom
 import rdts.dotted.HasDots
 import rdts.syntax.LocalUid
 import rdts.time.Dots
 
-opaque type AddWinsSet[E] = Causal[DotMap[E, Dots]]
+opaque type AddWinsSet[E] = Causal[Map[E, Dots]]
 
 extension [E](awSet: AddWinsSet[E])
   def elements: Set[E]              = awSet.dotStore.keySet
@@ -31,7 +29,7 @@ object AddWinsSet:
       */
     def add[E](set: AddWinsSet[E], replicaId: LocalUid, element: E): AddWinsSet[E] =
       val newDot                           = set.causalContext.nextDot(replicaId.uid)
-      val deltaDotStore: DotMap[E, Dots] = Map(element -> Dots.single(newDot))
+      val deltaDotStore: Map[E, Dots] = Map(element -> Dots.single(newDot))
       val deltaCausalContext = set.dotStore.get(element) match
         case Some(dots) => dots.add(newDot)
         case None       => Dots.single(newDot)
@@ -65,6 +63,6 @@ object AddWinsSet:
       *   The delta of the clear
       */
     def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
-      Bottom[DotMap[E, Dots]].empty,
-      HasDots[DotMap[E, Dots]].dots(set.dotStore)
+      Bottom[Map[E, Dots]].empty,
+      HasDots[Map[E, Dots]].dots(set.dotStore)
     )

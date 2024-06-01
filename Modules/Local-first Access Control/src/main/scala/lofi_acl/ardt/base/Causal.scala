@@ -1,7 +1,6 @@
 package lofi_acl.ardt.base
 
-import lofi_acl.ardt.causality.DotStore
-import lofi_acl.ardt.causality.DotStore.{DotFun, DotMap}
+import lofi_acl.ardt.causality.DotFun
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
@@ -38,8 +37,8 @@ object Causal {
 
   // (m, c) ⨆ (m', c') = ( {k -> v(k) | k ∈ dom m ∩ dom m' ∧ v(k) ≠ ⊥}, c ∪ c')
   //                      where v(k) = fst((m(k), c) ⨆ (m'(k), c'))
-  given CausalWithDotMapLattice[K, V: Bottom](using Lattice[Causal[V]]): Lattice[Causal[DotMap[K, V]]] =
-    (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
+  given CausalWithDotMapLattice[K, V: Bottom](using Lattice[Causal[V]]): Lattice[Causal[Map[K, V]]] =
+    (left: Causal[Map[K, V]], right: Causal[Map[K, V]]) =>
       Causal(
         ((left.dotStore.keySet union right.dotStore.keySet) map { key =>
           val leftCausal  = Causal(left.dotStore.getOrElse(key, Bottom[V].empty), left.causalContext)

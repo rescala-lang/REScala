@@ -2,7 +2,7 @@ package lofi_acl.ardt.base
 
 import lofi_acl.ardt.base.Causal.given
 import lofi_acl.ardt.base.StandardLibrary.GrowOnlySet.given
-import lofi_acl.ardt.causality.DotStore.{DotFun}
+import lofi_acl.ardt.causality.DotFun
 import munit.FunSuite
 import rdts.base.{Lattice, Uid}
 import rdts.time.{Dot, Dots}

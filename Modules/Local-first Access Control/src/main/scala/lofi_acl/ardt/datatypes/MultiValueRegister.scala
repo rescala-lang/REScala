@@ -1,9 +1,8 @@
 package lofi_acl.ardt.datatypes
 
 import lofi_acl.ardt.base.Causal
-import lofi_acl.ardt.causality.DotStore
-import lofi_acl.ardt.causality.DotStore.DotFun
 import lofi_acl.ardt.base.Causal
+import lofi_acl.ardt.causality.DotFun
 import rdts.syntax.LocalUid
 import rdts.time.Dots
 
