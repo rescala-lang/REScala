@@ -1,15 +1,14 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.Causal
 import rdts.base.{Bottom, Lattice}
-import rdts.dotted.HasDots
+import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalUid
 import rdts.time.Dot
 
 import java.time.Instant
 import scala.language.implicitConversions
 
-opaque type AddWinsMap[K, V]               = Causal[Map[K, V]]
+opaque type AddWinsMap[K, V]               = Dotted[Map[K, V]]
 opaque type AddWinsLastWriterWinsMap[K, V] = AddWinsMap[K, Map[Dot, (V, (Instant, String))]]
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
@@ -17,7 +16,7 @@ object AddWinsMap:
   extension [K, V](self: AddWinsMap[K, V]) def get(key: K): Option[V] = self.data.get(key)
 
   given bottom[K, V: Bottom]: Bottom[AddWinsMap[K, V]] with
-    override val empty: AddWinsMap[K, V] = Causal.bottom[Map[K, V]]
+    override val empty: AddWinsMap[K, V] = Dotted.empty
 
   object mutators:
     /** Returns the '''delta''' that contains the recursive mutation performed by the `deltaMutator`.
@@ -38,12 +37,12 @@ object AddWinsMap:
     private[datatypes] def mutate[K, V: Bottom](
         map: AddWinsMap[K, V],
         key: K,
-        deltaMutator: Causal[V] => Causal[V]
+        deltaMutator: Dotted[V] => Dotted[V]
     ): AddWinsMap[K, V] = {
 
-      deltaMutator(Causal(map.data.getOrElse(key, Bottom[V].empty), map.context)) match {
-        case Causal(dotStore, causalContext) =>
-          Causal(
+      deltaMutator(Dotted(map.data.getOrElse(key, Bottom[V].empty), map.context)) match {
+        case Dotted(dotStore, causalContext) =>
+          Dotted(
             Map(key -> dotStore),
             causalContext
           )
@@ -63,7 +62,7 @@ object AddWinsMap:
       * @return
       *   The delta that contains the removal (and nothing else)
       */
-    def remove[K, V: Bottom: HasDots](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
+    def remove[K, V: Bottom: HasDots](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Dotted(
       Bottom[Map[K, V]].empty,
       HasDots[V].dots(map.data.getOrElse(key, Bottom[V].empty))
     )
@@ -79,7 +78,7 @@ object AddWinsMap:
       * @return
       *   The delta that contains the removal of all mappings
       */
-    def clear[K, V: Bottom](map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
+    def clear[K, V: Bottom](map: AddWinsMap[K, V]): AddWinsMap[K, V] = Dotted(
       Bottom[Map[K, V]].empty,
       HasDots[Map[K, V]].dots(map.data)
     )

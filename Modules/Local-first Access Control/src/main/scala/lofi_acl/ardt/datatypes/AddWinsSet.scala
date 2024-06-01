@@ -1,12 +1,11 @@
 package lofi_acl.ardt.datatypes
 
-import lofi_acl.ardt.base.Causal
 import rdts.base.Bottom
-import rdts.dotted.HasDots
+import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalUid
 import rdts.time.Dots
 
-opaque type AddWinsSet[E] = Causal[Map[E, Dots]]
+opaque type AddWinsSet[E] = Dotted[Map[E, Dots]]
 
 extension [E](awSet: AddWinsSet[E])
   def elements: Set[E]              = awSet.data.keySet
@@ -33,7 +32,7 @@ object AddWinsSet:
       val deltaCausalContext = set.data.get(element) match
         case Some(dots) => dots.add(newDot)
         case None       => Dots.single(newDot)
-      Causal(deltaDotStore, deltaCausalContext)
+      Dotted(deltaDotStore, deltaCausalContext)
 
     /** Returns the '''delta''' that removes the element from the `set`.
       *
@@ -46,7 +45,7 @@ object AddWinsSet:
       * @return
       *   The delta of the removal operation.
       */
-    def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Causal(
+    def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Dotted(
       Map.empty,
       set.data.getOrElse(element, Dots.empty)
     )
@@ -62,7 +61,7 @@ object AddWinsSet:
       * @return
       *   The delta of the clear
       */
-    def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
+    def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Dotted(
       Bottom[Map[E, Dots]].empty,
       HasDots[Map[E, Dots]].dots(set.data)
     )
