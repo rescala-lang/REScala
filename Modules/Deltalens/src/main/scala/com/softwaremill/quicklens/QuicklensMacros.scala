@@ -11,28 +11,28 @@ object QuicklensMacros {
     ${ pathModify }.f
   }
 
-  def to[T: Type, R: Type](f: Expr[T] => Expr[R])(using Quotes): Expr[T => R] = '{ (x: T) => ${ f('{x}) } }
+  def to[T: Type, R: Type](f: Expr[T] => Expr[R])(using Quotes): Expr[T => R] = '{ (x: T) => ${ f('{ x }) } }
 
   def from[T: Type, R: Type](f: Expr[T => R])(using Quotes): Expr[T] => Expr[R] = (x: Expr[T]) => '{ $f($x) }
 
   def modifyLensApplyImpl[T, U](path: Expr[T => U])(using Quotes, Type[T], Type[U]): Expr[PathLazyModify[T, U]] = '{
     PathLazyModify { (t, mod) =>
       ${
-        toPathModify('{t}, modifyImpl('{t}, Seq(path)))
+        toPathModify('{ t }, modifyImpl('{ t }, Seq(path)))
       }.using(mod)
     }
   }
 
   def modifyAllLensApplyImpl[T: Type, U: Type](
-    path1: Expr[T => U],
-    paths: Expr[Seq[T => U]]
+      path1: Expr[T => U],
+      paths: Expr[Seq[T => U]]
   )(using Quotes): Expr[PathLazyModify[T, U]] =
     '{ PathLazyModify((t, mod) => ${ modifyAllImpl('t, path1, paths) }.using(mod)) }
 
   def modifyAllImpl[S: Type, A: Type](
-    obj: Expr[S],
-    focus: Expr[S => A],
-    focusesExpr: Expr[Seq[S => A]]
+      obj: Expr[S],
+      focus: Expr[S => A],
+      focusesExpr: Expr[Seq[S => A]]
   )(using Quotes): Expr[PathModify[S, A]] = {
     import quotes.reflect.*
 
@@ -49,8 +49,8 @@ object QuicklensMacros {
     toPathModify(obj, modifyImpl(obj, Seq(focus)))
 
   private def modifyImpl[S: Type, A: Type](
-    obj: Expr[S],
-    focuses: Seq[Expr[S => A]]
+      obj: Expr[S],
+      focuses: Seq[Expr[S => A]]
   )(using Quotes): Expr[(A => A) => S] = {
     import quotes.reflect.*
 
@@ -63,40 +63,43 @@ object QuicklensMacros {
     def methodSupported(method: String) =
       Seq("at", "each", "eachWhere", "eachRight", "eachLeft", "atOrElse", "index", "when").contains(method)
 
-    enum PathTree:
+    enum PathTree {
       case Empty
       case Node(children: Seq[(PathSymbol, Seq[PathTree])])
 
-      def <>(symbols: Seq[PathSymbol]): PathTree = ((this, symbols): @unchecked) match
-        case (PathTree.Empty, _) =>
-          symbols.toPathTree
-        case (PathTree.Node(children), (symbol :: Nil)) =>
-          PathTree.Node {
-            if children.find(_._1 equiv symbol).isEmpty then children :+ (symbol -> Seq(PathTree.Empty))
-            else
-              children.map {
-                case (sym, trees) if sym equiv symbol =>
-                  sym -> (trees :+ PathTree.Empty)
-                case c => c
-              }
-          }
-        case (PathTree.Node(children), Nil) =>
-          this
-        case (PathTree.Node(children), (symbol :: tail)) =>
-          PathTree.Node {
-            if children.find(_._1 equiv symbol).isEmpty then children :+ (symbol -> Seq(tail.toPathTree))
-            else
-              children.map {
-                case (sym, trees) if sym equiv symbol =>
-                  sym -> (trees.init ++ {
-                    trees.last match
-                      case PathTree.Empty => Seq(PathTree.Empty, tail.toPathTree)
-                      case node           => Seq(node <> tail)
-                  })
-                case c => c
-              }
-          }
-    end PathTree
+      def <>(symbols: Seq[PathSymbol]): PathTree = {
+        this match
+          case PathTree.Empty => symbols.toPathTree
+          case PathTree.Node(children) =>
+            symbols match
+              case Nil => this
+              case symbol :: Nil =>
+                PathTree.Node {
+                  if !children.exists(_._1 equiv symbol)
+                  then children :+ (symbol -> Seq(PathTree.Empty))
+                  else
+                    children.map {
+                      case (sym, trees) if sym equiv symbol =>
+                        sym -> (trees :+ PathTree.Empty)
+                      case c => c
+                    }
+                }
+              case symbol :: tail =>
+                PathTree.Node {
+                  if !children.exists(_._1 equiv symbol) then children :+ (symbol -> Seq(tail.toPathTree))
+                  else
+                    children.map {
+                      case (sym, trees) if sym equiv symbol =>
+                        sym -> (trees.init ++ {
+                          trees.last match
+                            case PathTree.Empty => Seq(PathTree.Empty, tail.toPathTree)
+                            case node           => Seq(node <> tail)
+                        })
+                      case c => c
+                    }
+                }
+      }
+    }
 
     object PathTree:
       def empty: PathTree = Empty
@@ -110,7 +113,7 @@ object QuicklensMacros {
       case Field(name: String)
       case FunctionDelegate(name: String, givn: Term, typeTree: TypeTree, args: List[Term])
 
-      infix def equiv(other: Any): Boolean = (this, other) match
+      infix def equiv(other: PathSymbol): Boolean = (this, other) match
         case (Field(name1), Field(name2)) => name1 == name2
         case (FunctionDelegate(name1, _, typeTree1, args1), FunctionDelegate(name2, _, typeTree2, args2)) =>
           name1 == name2 && typeTree1.tpe == typeTree2.tpe && args1 == args2
@@ -172,11 +175,11 @@ object QuicklensMacros {
     }
 
     def termAccessorMethodByNameUnsafe(term: Term, name: String): (Symbol, Int) = {
-      val typeSymbol = term.tpe.widenAll.matchingTypeSymbol
+      val typeSymbol     = term.tpe.widenAll.matchingTypeSymbol
       val caseParamNames = typeSymbol.primaryConstructor.paramSymss.flatten.filter(_.isTerm).map(_.name)
-      val idx = caseParamNames.indexOf(name)
+      val idx            = caseParamNames.indexOf(name)
       typeSymbol.caseFields.find(_.name == name).getOrElse(report.errorAndAbort(noSuchMember(term.tpe.show, name)))
-        -> (idx + 1)
+      -> (idx + 1)
     }
 
     def isProduct(sym: Symbol): Boolean = {
@@ -185,14 +188,14 @@ object QuicklensMacros {
 
     def isSum(sym: Symbol): Boolean = {
       sym.flags.is(Flags.Enum) ||
-        (sym.flags.is(Flags.Sealed) && (sym.flags.is(Flags.Trait) || sym.flags.is(Flags.Abstract)))
+      (sym.flags.is(Flags.Sealed) && (sym.flags.is(Flags.Trait) || sym.flags.is(Flags.Abstract)))
     }
 
     def caseClassCopy(
-      owner: Symbol,
-      mod: Expr[A => A],
-      obj: Term,
-      fields: Seq[(PathSymbol.Field, Seq[PathTree])]
+        owner: Symbol,
+        mod: Expr[A => A],
+        obj: Term,
+        fields: Seq[(PathSymbol.Field, Seq[PathTree])]
     ): Term = {
       val objSymbol = obj.tpe.widenAll.matchingTypeSymbol
       if isProduct(objSymbol) then {
@@ -210,9 +213,9 @@ object QuicklensMacros {
           case AppliedType(_, typeParams) => Some(typeParams)
           case _                          => None
         }
-        val constructorTree: DefDef = objSymbol.primaryConstructor.tree.asInstanceOf[DefDef]
+        val constructorTree: DefDef   = objSymbol.primaryConstructor.tree.asInstanceOf[DefDef]
         val firstParamListLength: Int = constructorTree.termParamss.headOption.map(_.params).toList.flatten.length
-        val fieldsIdxs = 1.to(firstParamListLength)
+        val fieldsIdxs                = 1.to(firstParamListLength)
         val args = fieldsIdxs.map { i =>
           val defaultMethod = obj.select(symbolMethodByNameUnsafe(objSymbol, "copy$default$" + i.toString))
           argsMap.getOrElse(
@@ -265,11 +268,11 @@ object QuicklensMacros {
     }
 
     def applyFunctionDelegate(
-      owner: Symbol,
-      mod: Expr[A => A],
-      objTerm: Term,
-      f: PathSymbol.FunctionDelegate,
-      tree: PathTree
+        owner: Symbol,
+        mod: Expr[A => A],
+        objTerm: Term,
+        f: PathSymbol.FunctionDelegate,
+        tree: PathTree
     ): Term =
       val defdefSymbol = Symbol.newMethod(
         owner,
@@ -285,32 +288,32 @@ object QuicklensMacros {
         defdefSymbol,
         ((_: @unchecked) match
           case List(List(x)) => Some(mapToCopy(defdefSymbol, mod, x.asExpr.asTerm, tree))
-          )
+        )
       )
       val closure = Closure(Ref(defdefSymbol), None)
-      val block = Block(List(defdefStatements), closure)
+      val block   = Block(List(defdefStatements), closure)
       Apply(fun, List(objTerm, block) ++ f.args.map(_.changeOwner(owner)))
 
     def accumulateToCopy(
-      owner: Symbol,
-      mod: Expr[A => A],
-      objTerm: Term,
-      pathSymbols: Seq[(PathSymbol, Seq[PathTree])]
+        owner: Symbol,
+        mod: Expr[A => A],
+        objTerm: Term,
+        pathSymbols: Seq[(PathSymbol, Seq[PathTree])]
     ): Term = pathSymbols match {
 
       case Nil =>
         objTerm
 
       case (_: PathSymbol.Field, _) :: _ =>
-        val (fs, funs) = pathSymbols.span(_._1.isInstanceOf[PathSymbol.Field])
-        val fields = fs.collect { case (p: PathSymbol.Field, trees) => p -> trees }
+        val (fs, funs)             = pathSymbols.span(_._1.isInstanceOf[PathSymbol.Field])
+        val fields                 = fs.collect { case (p: PathSymbol.Field, trees) => p -> trees }
         val withCopiedFields: Term = caseClassCopy(owner, mod, objTerm, fields)
         accumulateToCopy(owner, mod, withCopiedFields, funs)
 
       /** For FunctionDelegate(method, givn, T, args)
-       *
-       * Generates: `givn.method[T](obj, x => mapToCopy(...), ...args)`
-       */
+        *
+        * Generates: `givn.method[T](obj, x => mapToCopy(...), ...args)`
+        */
       case (f: PathSymbol.FunctionDelegate, actions: Seq[PathTree]) :: tail =>
         val term = actions.foldLeft(objTerm) { (term, tree) =>
           applyFunctionDelegate(owner, mod, term, f, tree)
