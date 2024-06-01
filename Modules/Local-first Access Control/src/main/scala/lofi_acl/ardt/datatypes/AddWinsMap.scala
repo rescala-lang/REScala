@@ -41,7 +41,7 @@ object AddWinsMap:
         deltaMutator: Causal[V] => Causal[V]
     ): AddWinsMap[K, V] = {
 
-      deltaMutator(Causal(map.dotStore.getOrElse(key, DotStore[V].bottom), map.causalContext)) match {
+      deltaMutator(Causal(map.dotStore.getOrElse(key, DotStore[V].empty), map.causalContext)) match {
         case Causal(dotStore, causalContext) =>
           Causal(
             Map(key -> dotStore),
@@ -64,8 +64,8 @@ object AddWinsMap:
       *   The delta that contains the removal (and nothing else)
       */
     def remove[K, V: DotStore](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
-      DotStore[DotMap[K, V]].bottom,
-      DotStore[V].dots(map.dotStore.getOrElse(key, DotStore[V].bottom))
+      DotStore[DotMap[K, V]].empty,
+      DotStore[V].dots(map.dotStore.getOrElse(key, DotStore[V].empty))
     )
 
     /** Returns the '''delta''' that removes all values from the `map`.
@@ -80,7 +80,7 @@ object AddWinsMap:
       *   The delta that contains the removal of all mappings
       */
     def clear[K, V: DotStore](map: AddWinsMap[K, V]): AddWinsMap[K, V] = Causal(
-      DotStore[DotMap[K, V]].bottom,
+      DotStore[DotMap[K, V]].empty,
       DotStore[DotMap[K, V]].dots(map.dotStore)
     )
 

@@ -47,8 +47,8 @@ object AddWinsSet:
       *   The delta of the removal operation.
       */
     def remove[E](set: AddWinsSet[E], element: E): AddWinsSet[E] = Causal(
-      DotStore[DotMap[E, DotSet]].bottom,
-      set.dotStore.getOrElse(element, DotStore[DotSet].bottom)
+      DotStore[DotMap[E, DotSet]].empty,
+      set.dotStore.getOrElse(element, DotStore[DotSet].empty)
     )
 
     /** Returns the '''delta''' that removes all elements from the `set`.
@@ -63,6 +63,6 @@ object AddWinsSet:
       *   The delta of the clear
       */
     def clear[E](set: AddWinsSet[E]): AddWinsSet[E] = Causal(
-      DotStore[DotMap[E, DotSet]].bottom,
+      DotStore[DotMap[E, DotSet]].empty,
       DotStore[DotMap[E, DotSet]].dots(set.dotStore)
     )

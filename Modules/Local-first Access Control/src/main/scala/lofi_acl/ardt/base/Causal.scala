@@ -9,7 +9,7 @@ case class Causal[D](dotStore: D, causalContext: Dots)
 
 // See: Delta state replicated data types (https://doi.org/10.1016/j.jpdc.2017.08.003)
 object Causal {
-  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].bottom, Dots.empty)
+  def bottom[D: DotStore]: Causal[D] = Causal(DotStore[D].empty, Dots.empty)
 
   // (s, c) ⨆ (s', c') = ((s ∩ s') ∪ (s \ c') ∪ (s' \ c), c ∪ c')
   given CausalWithDotSetLattice: Lattice[Causal[DotSet]] = (left, right) => {
@@ -42,11 +42,11 @@ object Causal {
     (left: Causal[DotMap[K, V]], right: Causal[DotMap[K, V]]) =>
       Causal(
         ((left.dotStore.keySet union right.dotStore.keySet) map { key =>
-          val leftCausal  = Causal(left.dotStore.getOrElse(key, DotStore[V].bottom), left.causalContext)
-          val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].bottom), right.causalContext)
+          val leftCausal  = Causal(left.dotStore.getOrElse(key, DotStore[V].empty), left.causalContext)
+          val rightCausal = Causal(right.dotStore.getOrElse(key, DotStore[V].empty), right.causalContext)
           key -> Lattice[Causal[V]].merge(leftCausal, rightCausal).dotStore
         } filterNot { case (key, dotStore) =>
-          DotStore[V].bottom == dotStore
+          DotStore[V].empty == dotStore
         }).toMap,
         left.causalContext.union(right.causalContext)
       )

@@ -30,6 +30,6 @@ object MultiValueRegister:
 
     def clear[V](register: MultiValueRegister[V]): MultiValueRegister[V] =
       Causal(
-        DotStore[DotFun[V]].bottom,
+        DotStore[DotFun[V]].empty,
         Dots.from(register.dotStore.keySet)
       )
