@@ -85,8 +85,8 @@ trait Twoversion {
       def tracePhase(phase: String) = Tracing.observe(Tracing.Transaction(txhash, phase))
       tracePhase("started")
 
-      val result =
-        try {
+      val result = {
+        try
           tracePhase("preparation")
           tx.preparationPhase(initialWrites)
           val result = dynamicScope.withDynamicInitializer(tx) {
@@ -104,15 +104,16 @@ trait Twoversion {
           tracePhase("commit")
           tx.commitPhase()
           result
-        } catch {
+        catch
           case e: Throwable =>
             tracePhase("rollback")
             tx.rollbackPhase()
             throw e
-        } finally {
+        finally
           tracePhase("release")
           tx.releasePhase()
-        }
+      }
+
       tracePhase("observer")
       tx.observerPhase()
       tracePhase("ended")
