@@ -35,8 +35,6 @@ See https://youtrack.jetbrains.com/issue/SCL-12945/correctly-handle-cross-projec
 Metals also allows using [sbt as a bsp server](https://scalameta.org/metals/docs/build-tools/sbt/#sbt-build-server), but we don’t have much experience if this is necessary over the default import.
 
 
-## Running the tests
-
 # Reactives / REScala
 
 REScala is a set of libraries for principled reactive programming,
