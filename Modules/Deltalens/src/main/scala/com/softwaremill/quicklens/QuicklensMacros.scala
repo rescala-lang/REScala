@@ -20,7 +20,7 @@ object QuicklensMacros {
   def modifyLensApplyImpl[T, U](path: Expr[T => U])(using Quotes, Type[T], Type[U]): Expr[PathLazyModify[T, U]] = '{
     PathLazyModify { (t, mod) =>
       ${
-        toPathModify('{ t }, modifyImpl('{ t }, Seq(path)))
+        toPathModify('{ t }, modifyImpl('{ t }, Seq(path), produceDelta = false))
       }.using(mod)
     }
   }
@@ -29,7 +29,7 @@ object QuicklensMacros {
       path1: Expr[T => U],
       paths: Expr[Seq[T => U]]
   )(using Quotes): Expr[PathLazyModify[T, U]] =
-    '{ PathLazyModify((t, mod) => ${ modifyAllImpl('{t}, path1, paths) }.using(mod)) }
+    '{ PathLazyModify((t, mod) => ${ modifyAllImpl('{ t }, path1, paths) }.using(mod)) }
 
   def modifyAllImpl[S: Type, A: Type](
       obj: Expr[S],
@@ -42,17 +42,20 @@ object QuicklensMacros {
       case Varargs(args) => focus +: args
     }
 
-    val modF = modifyImpl(obj, focuses)
+    val modF = modifyImpl(obj, focuses, produceDelta = false)
 
     toPathModify(obj, modF)
   }
 
-  def toPathModifyFromFocus[S: Type, A: Type](obj: Expr[S], focus: Expr[S => A])(using Quotes): Expr[PathModify[S, A]] =
-    toPathModify(obj, modifyImpl(obj, Seq(focus)))
+  def toPathModifyFromFocus[S: Type, A: Type](obj: Expr[S], focus: Expr[S => A], produceDelta: Boolean)(using
+      Quotes
+  ): Expr[PathModify[S, A]] =
+    toPathModify(obj, modifyImpl(obj, Seq(focus), produceDelta))
 
   private def modifyImpl[S: Type, A: Type](
       obj: Expr[S],
-      focuses: Seq[Expr[S => A]]
+      focuses: Seq[Expr[S => A]],
+      produceDelta: Boolean
   )(using quotes: Quotes): Expr[(A => A) => S] = {
     import quotes.reflect.*
 
@@ -206,14 +209,19 @@ object QuicklensMacros {
       if isProduct(objSymbol) then {
         val copy = symbolMethodByNameUnsafe(objSymbol, "copy")
 
-        val bottom = obj.tpe.widen.asType match
-          case '[τ] => '{
-              ${
-                Expr.summon[Bottom[τ]].getOrElse(
-                  report.errorAndAbort(s"Could not find implicit for type ${Type.show[Bottom[τ]]}")
-                )
-              }.empty
-            }.asTerm
+        val bottom = {
+          if !produceDelta
+          then obj
+          else
+            obj.tpe.widen.asType match
+              case '[τ] => '{
+                  ${
+                    Expr.summon[Bottom[τ]].getOrElse(
+                      report.errorAndAbort(s"Could not find implicit for type ${Type.show[Bottom[τ]]}")
+                    )
+                  }.empty
+                }.asTerm
+        }
 
         val argsMap: Map[Int, Term] = fields.map { (field, trees) =>
           val (fieldMethod, idx) = termAccessorMethodByNameUnsafe(obj, field.name)

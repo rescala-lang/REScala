@@ -2,7 +2,7 @@ import com.softwaremill.quicklens.*
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 
-class BasicTest extends munit.FunSuite {
+class BasicDeltaTest extends munit.FunSuite {
 
   given Bottom[Int]    = Bottom.provide(42)
   given Bottom[String] = Bottom.provide("bottom")
@@ -14,7 +14,7 @@ class BasicTest extends munit.FunSuite {
 
     val a = TestNesting(LastWriterWins.now("example"), TestClass("test", 11))
 
-    val res = a.modify(_.test.str).using(_.toUpperCase)
+    val res = a.deltaModify(_.test.str).using(_.toUpperCase)
 
     assertEquals(res, TestNesting(LastWriterWins.bottom[String].empty, TestClass("TEST", 42)))
 

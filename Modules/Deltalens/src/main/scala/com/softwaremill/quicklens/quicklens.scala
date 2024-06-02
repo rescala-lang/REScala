@@ -17,7 +17,10 @@ package object quicklens {
       *
       * You can use `.each` to traverse options, lists, etc.
       */
-    inline def modify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}) }
+    inline def modify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}, produceDelta = false) }
+
+    inline def deltaModify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}, produceDelta = true) }
+
 
     /** Create an object allowing modifying the given (deeply nested) fields accessible in a `case class` hierarchy via
       * `paths` on the given `obj`.
@@ -94,7 +97,7 @@ package object quicklens {
   def modifyAllLens[T]: MultiLensHelper[T] = MultiLensHelper[T]()
 
   case class LensHelper[T] private[quicklens] () {
-    inline def apply[U](inline path: T => U): PathLazyModify[T, U] = ${ modifyLensApplyImpl('path) }
+    inline def apply[U](inline path: T => U): PathLazyModify[T, U] = ${ modifyLensApplyImpl('{path}) }
   }
 
   case class MultiLensHelper[T] private[quicklens] () {
