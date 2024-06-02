@@ -38,7 +38,7 @@ object AuctionInterface {
     given bottom: Bottom[AuctionData] with { override def empty: AuctionData = AuctionData.empty }
     given hasDots: HasDots[AuctionData] = HasDots.noDots
 
-    implicit val AuctionDataAsUIJDLattice: Lattice[AuctionData] = new Lattice[AuctionData] {
+    given AuctionDataAsUIJDLattice: Lattice[AuctionData] = new Lattice[AuctionData] {
       override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
           Lattice[Set[Bid]].lteq(lb, rb) && Lattice[Status].lteq(ls, rs)

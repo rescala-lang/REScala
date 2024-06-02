@@ -7,7 +7,7 @@ import scala.util.{Failure, Success}
 
 class AeadKeyTest extends munit.FunSuite {
 
-  implicit def executionContext: ExecutionContext = TestExecutionContext.executionContext
+  given executionContext: ExecutionContext = TestExecutionContext.executionContext
 
   test("AeadHelper.ready should work") {
     AeadHelper.ready().map(_ => ())(executionContext)

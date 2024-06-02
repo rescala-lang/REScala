@@ -176,7 +176,7 @@ given [A <: dom.Element]: RangeSplice[A, A => Unit] with {
       case elem: A => value.apply(elem)
 }
 
-implicit def optionAttrValue[T](implicit ev: AttrValue[T]): AttrValue[Option[T]] =
+given optionAttrValue[T](using ev: AttrValue[T]): AttrValue[Option[T]] =
   new AttrValue[Option[T]] {
     override def apply(t: Element, a: Attr, v: Option[T]): Unit = {
       v match {

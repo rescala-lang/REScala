@@ -115,14 +115,14 @@ object DataGenerator {
     yield ArrayRanges.from(x.map(_.toLong))
   )
 
-  def genDotFun[A](implicit g: Arbitrary[A]): Gen[Map[Dot, A]] =
+  def genDotFun[A](using g: Arbitrary[A]): Gen[Map[Dot, A]] =
     for
       n      <- Gen.choose(0, 10)
       dots   <- Gen.containerOfN[List, Dot](n, genDot)
       values <- Gen.containerOfN[List, A](n, g.arbitrary)
     yield (dots zip values).toMap
 
-  implicit def arbDotFun[A](implicit g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
+  given arbDotFun[A](using g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
   def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match

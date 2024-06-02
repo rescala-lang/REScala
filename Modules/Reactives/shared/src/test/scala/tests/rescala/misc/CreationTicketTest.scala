@@ -27,7 +27,7 @@ class CreationTicketTest extends RETests {
   }
 
   test("none Dynamic Some Implicit") {
-    implicit val implicitTurn: Transaction[State] = getTurn
+    given implicitTurn: Transaction[State] = getTurn
     implicitly[CreationTicket[State]].scope match
       case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
       case other                   => assert(false)

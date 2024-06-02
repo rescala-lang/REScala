@@ -11,7 +11,7 @@ import scala.util.{Success, Try}
 
 class AeadTest extends munit.ScalaCheckSuite {
 
-  implicit def executionContext: ExecutionContext = TestExecutionContext.executionContext
+  given executionContext: ExecutionContext = TestExecutionContext.executionContext
 
   test("AeadHelper.ready should  work") {
     AeadHelper.ready().map(_ => ())(executionContext)
