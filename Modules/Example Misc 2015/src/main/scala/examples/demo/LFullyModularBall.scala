@@ -61,9 +61,9 @@ object LFullyModularBall extends Main {
 
     val velocity = Signal {
       Pos(
-        x = horizontalBounceSources.flatten[Event[Any]](Flatten.firstFiringEvent)
+        x = horizontalBounceSources.flatten[Event[Any]](using Flatten.firstFiringEvent)
           .fold(initVx / Clock.NanoSecond) { (old, _) => -old }.value,
-        y = verticalBounceSources.flatten[Event[Any]](Flatten.firstFiringEvent)
+        y = verticalBounceSources.flatten[Event[Any]](using Flatten.firstFiringEvent)
           .fold(initVy / Clock.NanoSecond) { (old, _) => -old }.value
       )
     }

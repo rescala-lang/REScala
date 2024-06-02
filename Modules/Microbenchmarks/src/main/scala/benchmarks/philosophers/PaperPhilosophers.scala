@@ -30,7 +30,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
 
   val phils =
     for idx <- 0 until size yield {
-      Var[Philosopher](Thinking)(CreationTicket.fromName(s"phil(${idx + 1})"))
+      Var[Philosopher](Thinking)(using CreationTicket.fromName(s"phil(${idx + 1})"))
     }
 
   sealed trait Fork
@@ -162,7 +162,7 @@ trait EventPyramidTopper {
 
   val anySuccess = successes.reduce(_ || _)
   val successCount: Signal[Int] =
-    anySuccess.fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"successCount"))
+    anySuccess.fold(0) { (acc, _) => acc + 1 }(using CreationTicket.fromName(s"successCount"))
   override def total: Int = successCount.readValueOnce
 }
 
@@ -172,7 +172,7 @@ trait IndividualCounts {
 
   val individualCounts: Seq[Signal[Int]] =
     for idx <- 0 until size yield {
-      successes(idx).fold(0) { (acc, _) => acc + 1 }(CreationTicket.fromName(s"count(${idx + 1})"))
+      successes(idx).fold(0) { (acc, _) => acc + 1 }(using CreationTicket.fromName(s"count(${idx + 1})"))
     }
 }
 
@@ -197,7 +197,7 @@ trait NoTopper extends IndividualCounts {
     }
   }
 
-  override def total: Int = individualCounts.map(_.readValueOnce(engine.global.scheduler)).sum
+  override def total: Int = individualCounts.map(_.readValueOnce).sum
 }
 
 trait SignalPyramidTopper extends IndividualCounts {

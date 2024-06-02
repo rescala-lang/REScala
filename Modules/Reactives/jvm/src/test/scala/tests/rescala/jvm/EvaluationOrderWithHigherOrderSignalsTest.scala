@@ -32,13 +32,13 @@ class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
         changeX match {
           case DontSet => ho.set(x4)
           case _ => transaction(x, ho) { implicit tx =>
-              x.admit(newX)(tx)
-              ho.admit(x4)(tx)
+              x.admit(newX)(using tx)
+              ho.admit(x4)(using tx)
             }
         }
 
         // final value should be correct
-        assert(flatten.readValueOnce(global.scheduler) == newX)
+        assert(flatten.readValueOnce == newX)
         // value should be determined by reevaluating twice after discovering a higher-level dependency on first run
         reevaluationRestartTracker
       }

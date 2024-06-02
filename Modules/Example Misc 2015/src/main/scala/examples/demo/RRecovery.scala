@@ -22,7 +22,7 @@ object RRecovery extends Main {
       override def closeOperation(): Unit = {
         val s = panel2.Mouse._position
         transaction(s) { t =>
-          s.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(t)
+          s.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(using t)
         }
 
       }

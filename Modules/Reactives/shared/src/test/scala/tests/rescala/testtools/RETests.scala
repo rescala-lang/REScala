@@ -5,7 +5,7 @@ import reactives.operator.Interface
 
 abstract class RETests extends munit.FunSuite {
 
-  override def assertEquals[A, B](obtained: A, expected: B, clue: => Any)(implicit
+  override def assertEquals[A, B](obtained: A, expected: B, clue: => Any)(using
       loc: Location,
       compare: Compare[A, B]
   ): Unit = super.assertEquals(expected, obtained, clue)(

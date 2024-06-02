@@ -102,7 +102,7 @@ class Reactor[T](
     input.withValue(resState)
   }
 
-  def now(implicit scheduler: Scheduler[State]): T = scheduler.singleReadValueOnce(this)
+  def now(using scheduler: Scheduler[State]): T = scheduler.singleReadValueOnce(this)
 }
 
 object Reactor {
@@ -134,7 +134,7 @@ object Reactor {
     createReactor(initialValue, loopingStage)
   }
 
-  private def createReactor[T](initialValue: T, initialStage: Stage[T])(implicit
+  private def createReactor[T](initialValue: T, initialStage: Stage[T])(using
       ct: CreationTicket[State]
   ): Reactor[T] = {
     ct.scope.create(

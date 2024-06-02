@@ -42,7 +42,7 @@ class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: Interface)
   def tryEat(seating: Seating): Boolean =
     engine.transactionWithWrapup(seating.philosopher) { t =>
       val forksAreFree = t.now(seating.vision) == Ready
-      if forksAreFree then seating.philosopher.admit(Eating)(t)
+      if forksAreFree then seating.philosopher.admit(Eating)(using t)
       forksAreFree
     } /* propagation executes here */ { (forksWereFree, t) =>
       if forksWereFree then assert(t.now(seating.vision) == Done, s"philosopher should be done after turn")

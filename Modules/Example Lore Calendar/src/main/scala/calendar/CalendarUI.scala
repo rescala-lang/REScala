@@ -149,7 +149,7 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
      */
 
     val removeEvents = (cal: Signal[Calendar]) =>
-      cal.map { buf => buf.elements.toList.map(_.removeEvent) }.flatten(Flatten.firstFiringEvent)
+      cal.map { buf => buf.elements.toList.map(_.removeEvent) }.flatten(using Flatten.firstFiringEvent)
 
     val removeWorkAppointment = removeAppointment
       .modifies(workCalendarRDT)
@@ -184,7 +184,7 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
     // .ensures { (cal: Calendar, aps) => size(cal.toSet) == old(size(cal.toSet)) }
 
     val editEvents = (cal: Signal[Calendar]) =>
-      cal.map { buf => buf.elements.toList.map(_.editEvent) }.flatten(Flatten.firstFiringEvent)
+      cal.map { buf => buf.elements.toList.map(_.editEvent) }.flatten(using Flatten.firstFiringEvent)
 
     val ewe = editEvents(workCalendarRDT)
 

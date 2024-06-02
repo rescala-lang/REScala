@@ -15,7 +15,7 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
   /** TODO: The BijectiveSigLens requires a reactive read without evaluating dependencies. As this is currently not supported by REScala, it uses .now instead!
     * Creates a new LVar which is connected to this LVar via the given Lens.
     *
-    * @param lens The lens which connects the LVars. Can use implicit conversion from Lens if the Lens does not need to change later
+    * @param lens The lens which connects the LVars. Can use using conversion from Lens if the Lens does not need to change later
     */
 
   def applyLens[V](lens: SignalLens[M, V])(using cs: CreationScope[State]): LVar[V] = cs.embedCreation {
@@ -25,18 +25,18 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
   }
 
   /** Returns the first firing event of all registered events */
-  def getEvent()(implicit ticket: CreationTicket[State]): Event[M] = events.list().flatten(Flatten.firstFiringEvent)
+  def getEvent()(using ticket: CreationTicket[State]): Event[M] = events.list().flatten(using Flatten.firstFiringEvent)
 
   export events.fire
 
   export state.{now}
 
   final infix def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
-      implicit ticket: CreationTicket[State]
+      using ticket: CreationTicket[State]
   ): Disconnectable = state.observe(onValue, onError, fireImmediately)
 
   /** Function to access state of LVar in reactives. Simple wrapper for internal.value. */
-  inline def value(implicit sched: Scheduler[State]): M = state.value
+  inline def value(using sched: Scheduler[State]): M = state.value
 
 }
 
@@ -46,9 +46,9 @@ object LVar {
     *
     * @param initval the inital value of the LVar
     */
-  def apply[T](initval: T)(implicit ticket: CreationTicket[State]): LVar[T] = {
+  def apply[T](initval: T)(using ticket: CreationTicket[State]): LVar[T] = {
     val events: Evt[Event[T]] = Evt()
-    new LVar[T](events.list().flatten(Flatten.firstFiringEvent).hold(initval), events)
+    new LVar[T](events.list().flatten(using Flatten.firstFiringEvent).hold(initval), events)
   }
 
 }
@@ -131,7 +131,7 @@ implicit def toSignalLens[M, V](lens: Lens[M, V]): SignalLens[M, V] = SignalLens
   *
   * @param k The summand
   */
-class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
+class AddLens[A](k: A)(using num: Numeric[A]) extends BijectiveLens[A, A] {
   def toView(m: A): A = num.plus(m, k)
 
   def toModel(v: A): A = num.minus(v, k)
@@ -141,7 +141,7 @@ class AddLens[A](k: A)(implicit num: Numeric[A]) extends BijectiveLens[A, A] {
   *
   * @param k The summand
   */
-class MulLens[A](k: A)(implicit frac: Fractional[A]) extends BijectiveLens[A, A] {
+class MulLens[A](k: A)(using frac: Fractional[A]) extends BijectiveLens[A, A] {
   def toView(m: A): A = frac.times(m, k)
 
   def toModel(v: A): A = frac.div(v, k)

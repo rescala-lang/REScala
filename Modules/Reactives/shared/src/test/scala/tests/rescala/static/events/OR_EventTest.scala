@@ -72,8 +72,8 @@ class OR_EventTest extends RETests {
       assertEquals(log.readValueOnce, List("three a", "two", "one"))
 
       transaction(e1, e2) { turn =>
-        e1.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(turn)
-        e2.admit("five b")(turn)
+        e1.admitPulse(Pulse.Exceptional(new IllegalArgumentException))(using turn)
+        e2.admit("five b")(using turn)
       }
 
       intercept[ObservedException](log.readValueOnce)

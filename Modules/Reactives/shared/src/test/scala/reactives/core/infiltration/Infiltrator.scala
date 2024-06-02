@@ -7,12 +7,12 @@ import reactives.scheduler.LevelbasedVariants.LevelState
 
 /** Accesses private[rescala] values for some low level tests */
 class Infiltrator(val api: Interface) {
-  // final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(implicit maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
+  // final def getLevel[S <: LevelStruct](reactive: graph.Reactive[S])(using maybe: CreationTicket[S]) = maybe {t => reactive.state.level(t.turn)}
   final def assertLevel(
       reactive: ReSource,
       level: Int,
       text: String = "level did not match"
-  )(implicit maybe: Scheduler[?]) =
+  )(using maybe: Scheduler[?]) =
     if api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[?]] then {
       reactive.state match {
         case rb: LevelState[_] => {

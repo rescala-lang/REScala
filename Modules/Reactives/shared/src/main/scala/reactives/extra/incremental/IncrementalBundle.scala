@@ -24,7 +24,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param ticket a creation ticket as a new event will be created which has the ReactiveDeltaSeq as dependency
     * @return
     */
-  def asEvent(implicit ticket: CreationTicket[State]): Event[Delta[T]] = {
+  def asEvent(using ticket: CreationTicket[State]): Event[Delta[T]] = {
     Event.Impl.static(this) { staticTicket =>
       // each time a change occurs it is represented by a Delta
       // the staticTicket gets this Delta and the Event representing the ReactiveDeltaSeq will fire the Delta
@@ -46,7 +46,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @tparam A the value returned by applying fold or unfold on the value T of Deltas
     * @return
     */
-  def foldUndo[A](initial: A)(fold: (A, Delta[T]) => A)(unfold: (A, Delta[T]) => A)(implicit
+  def foldUndo[A](initial: A)(fold: (A, Delta[T]) => A)(unfold: (A, Delta[T]) => A)(using
       ticket: CreationTicket[State]
   ): Signal[A] = {
     // first we create an event that fires each time a Delta occurs
@@ -77,7 +77,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
   //    * @return
   //    */
   //  @cutOutOfUserComputation
-  //  def flatMap[A: ReSerializable] (f: T => ReactiveDeltaSeq[A]) (implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[A] = {
+  //  def flatMap[A: ReSerializable] (f: T => ReactiveDeltaSeq[A]) (using ticket: CreationTicket[State]): ReactiveDeltaSeq[A] = {
   //    // first we create an event that fires each time a Delta occurs
   //    val event = asEvent
   //
@@ -101,7 +101,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param ticket          for creating the new source
     * @return the filtered ReactiveDeltaSeq
     */
-  def filter(filterOperation: T => Boolean)(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
+  def filter(filterOperation: T => Boolean)(using ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
 
     // as a new reactive sequence will be returned after filtering we use the creation ticket to create the new source
     // The new created Source will be a FilterDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
@@ -119,7 +119,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @tparam A new Value type for deltas in the mapped ReactiveDeltaSeq
     * @return the mapped ReactiveDeltaSeq
     */
-  def map[A](mapOperation: T => A)(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[A] = {
+  def map[A](mapOperation: T => A)(using ticket: CreationTicket[State]): ReactiveDeltaSeq[A] = {
 
     // as a new reactive sequence will be returned after mapping we use the creation ticket to create the new source
     // The new created Source will be a MapDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
@@ -136,7 +136,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param ticket used for the creation of the concatenated ReactiveDeltaSeq
     * @return ConcatenateDeltaSeq
     */
-  def ++(that: ReactiveDeltaSeq[T])(implicit ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
+  def ++(that: ReactiveDeltaSeq[T])(using ticket: CreationTicket[State]): ReactiveDeltaSeq[T] = {
 
     // as a new reactive sequence will be returned after concatenating we use the creation ticket to create the new source
     // The new created Source will be a ConcatenateDeltaSeq which is basically a ReactiveDeltaSeq, which reevaluates differently when changes are propagated
@@ -157,7 +157,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param resInt needed by REScala API for Signal/Event holding Ints //TODO check
     * @return
     */
-  def size(implicit ticket: CreationTicket[State]): Signal[Int] =
+  def size(using ticket: CreationTicket[State]): Signal[Int] =
     foldUndo(0)((counted: Int, _) => counted + 1)((counted: Int, _) => counted - 1)
 
   /** Counts number of elements fulfilling the condition provided
@@ -167,7 +167,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param resInt            needed by REScala API for Signal/Event holding Ints
     * @return
     */
-  def count(fulfillsCondition: T => Boolean)(implicit
+  def count(fulfillsCondition: T => Boolean)(using
       ticket: CreationTicket[State]
   ): Signal[Int] =
     foldUndo(0) { (counted, x) => if fulfillsCondition(x.value) then counted + 1 else counted } { (counted, x) =>
@@ -181,7 +181,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param resInt  needed by REScala API for Signal/Event holding Ints
     * @return
     */
-  def contains(element: T)(implicit
+  def contains(element: T)(using
       ticket: CreationTicket[State],
       ord: Ordering[T]
   ): Signal[Boolean] = { exists { (seqElement: T) => ord.equiv(element, seqElement) } }
@@ -193,11 +193,11 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param resInt            needed by REScala API for Signal/Event holding Ints
     * @return
     */
-  def exists(fulfillsCondition: T => Boolean)(implicit ticket: CreationTicket[State]): Signal[Boolean] = {
+  def exists(fulfillsCondition: T => Boolean)(using ticket: CreationTicket[State]): Signal[Boolean] = {
     // count all elements fulfilling the condition of existence
     val instancesNumber = count(fulfillsCondition)
     // if more than one found
-    Signal.static(instancesNumber)(st => st.dependStatic(instancesNumber) > 0)(ticket)
+    Signal.static(instancesNumber)(st => st.dependStatic(instancesNumber) > 0)(using ticket)
   }
 
   /** @param ticket used for creation of new sources
@@ -205,7 +205,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
     */
-  def min(implicit ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
+  def min(using ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
     val minimum = foldUndo(mutable.IndexedSeq.empty[(T, T)])(
       // fold operation
       (trackingSequence: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
@@ -255,7 +255,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
     * @param res    ...
     * @return Signal holding the optional minimum (as it could be None if the seqeunce is empty)
     */
-  def max(implicit ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
+  def max(using ticket: CreationTicket[State], ord: Ordering[T]): Signal[Option[T]] = {
     val seqMaximum = foldUndo(mutable.IndexedSeq.empty[(T, T)])((seq: mutable.IndexedSeq[(T, T)], delta: Delta[T]) => {
       if seq.isEmpty then {
         (delta.value, delta.value) +: seq
@@ -418,17 +418,17 @@ class IncSeq[T] private[reactives] (initialState: IncSeq.SeqState[T], name: ReIn
 
   override protected[reactives] def guardedReevaluate(input: ReIn): Rout = ??? // TODO what comes here...
 
-  def add(value: T)(implicit fac: Scheduler[State]): Unit =
+  def add(value: T)(using fac: Scheduler[State]): Unit =
     fac.forceNewTransaction(this) {
-      addInTx(Addition(value))(_)
+      addInTx(Addition(value))(using _)
     }
 
-  def remove(value: T)(implicit fac: Scheduler[State]): Unit =
+  def remove(value: T)(using fac: Scheduler[State]): Unit =
     fac.forceNewTransaction(this) {
-      addInTx(Removal(value))(_)
+      addInTx(Removal(value))(using _)
     }
 
-  def addInTx(delta: Delta[T])(implicit ticket: AdmissionTicket[State]): Unit = {
+  def addInTx(delta: Delta[T])(using ticket: AdmissionTicket[State]): Unit = {
     (delta: @unchecked) match {
       case Addition(value) => {
         val counter = elements.getOrElse(value, 0)
@@ -466,11 +466,11 @@ object IncSeq {
 
   type SeqState[T] = State[Delta[T]]
 
-  def apply[T](implicit ticket: CreationTicket[State]): IncSeq[T] = empty[T]
+  def apply[T](using ticket: CreationTicket[State]): IncSeq[T] = empty[T]
 
-  def empty[T](implicit ticket: CreationTicket[State]): IncSeq[T] = fromDelta(Delta.noChange[T])
+  def empty[T](using ticket: CreationTicket[State]): IncSeq[T] = fromDelta(Delta.noChange[T])
 
-  private def fromDelta[T](init: Delta[T])(implicit ticket: CreationTicket[State]): IncSeq[T] =
+  private def fromDelta[T](init: Delta[T])(using ticket: CreationTicket[State]): IncSeq[T] =
     ticket.scope.createSource[Delta[T], IncSeq[T]](init)(new IncSeq[T](
       _,
       ticket.info

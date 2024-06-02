@@ -20,7 +20,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
         eaten.incrementAndGet()
         ()
       }
-    }(s"Observer ${seating.vision}")
+    }(using s"Observer ${seating.vision}")
   }
 
   def calcFork(leftName: String, rightName: String)(leftState: Philosopher, rightState: Philosopher): Fork =
@@ -41,7 +41,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
   def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(s"Phil($i)")
+    val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(using s"Phil($i)")
 
     val forks =
       for i <- 0 until tableSize yield {
@@ -64,7 +64,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
       val forksAreFree = turn.now(seating.vision) == Ready
       if forksAreFree then {
         // println(Thread.currentThread().getName + " start " + turn + ": Eating on " + seating.philosopher)
-        seating.philosopher.admit(Hungry)(turn)
+        seating.philosopher.admit(Hungry)(using turn)
       } // else {
       //   println(Thread.currentThread().getName + " start " + turn + ": No Change on " + seating.philosopher)
       // }

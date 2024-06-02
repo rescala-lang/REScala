@@ -118,7 +118,7 @@ class ReactorWithoutAPITest extends RETests {
     def once[T](
         initialValue: T,
         dependencies: Set[ReSource.of[State]]
-    )(stageBuilder: StageBuilder[T])(implicit ct: CreationTicket[State]): Reactor[T] = {
+    )(stageBuilder: StageBuilder[T])(using ct: CreationTicket[State]): Reactor[T] = {
       ct.scope.create(
         dependencies,
         new ReactorStage[T](initialValue, stageBuilder),

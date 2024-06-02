@@ -11,18 +11,18 @@ class CreationTicketTest extends RETests {
   // if (engine != reactives.interfaces.toposort) {
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction
    * you should not do this. */
-  def getTurn(implicit engine: Scheduler[State]): Transaction[State] =
+  def getTurn(using engine: Scheduler[State]): Transaction[State] =
     engine.forceNewTransaction()(_.tx)
 
   test("none Dynamic No Implicit") {
-    assert(implicitly[CreationTicket[State]].scope.isInstanceOf[DynamicCreationScope[State]])
+    assert(summon[CreationTicket[State]].scope.isInstanceOf[DynamicCreationScope[State]])
   }
 
   test("some Dynamic No Implicit") {
     transaction() { (dynamicTurn: AdmissionTicket[State]) =>
-      assert(implicitly[CreationTicket[State]].scope.isInstanceOf[DynamicCreationScope[State]])
+      assert(summon[CreationTicket[State]].scope.isInstanceOf[DynamicCreationScope[State]])
       assertEquals(CreationScope.search, summon[CreationTicket[State]].scope)
-      assertEquals(implicitly[CreationTicket[State]].scope.embedCreation(x ?=> x), dynamicTurn.tx)
+      assertEquals(summon[CreationTicket[State]].scope.embedCreation(x ?=> x), dynamicTurn.tx)
     }
   }
 
@@ -31,7 +31,7 @@ class CreationTicketTest extends RETests {
     implicitly[CreationTicket[State]].scope match
       case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
       case other                   => assert(false)
-    assertEquals(implicitly[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
+    assertEquals(summon[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
   }
 
   test("some Dynamic Some Implicit") {
@@ -40,12 +40,12 @@ class CreationTicketTest extends RETests {
       implicitly[CreationTicket[State]].scope match
         case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
         case other                   => assert(false)
-      assertEquals(implicitly[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
+      assertEquals(summon[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
     }
   }
 
   test("implicit In Closures") {
-    val closureDefinition: Transaction[State] = getTurn(reactives.default.global.scheduler)
+    val closureDefinition: Transaction[State] = getTurn(using reactives.default.global.scheduler)
     val closure = {
       implicit def it: Transaction[State] = closureDefinition
       () => implicitly[CreationTicket[State]]

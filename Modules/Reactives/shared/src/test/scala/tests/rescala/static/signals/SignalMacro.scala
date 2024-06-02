@@ -202,7 +202,7 @@ class SignalMacro extends RETests {
 
     test("correctly replace ticket during macro expansion") {
 
-      def wantsTicket(implicit
+      def wantsTicket(using
           ct: CreationTicket[BundleState],
           ct2: CreationTicket[BundleState]
       ): (Boolean, Boolean, Boolean) = {
@@ -261,7 +261,7 @@ class SignalMacro extends RETests {
       val source  = Evt[String]()
       val mapping = Map("Hallo" -> Var("Welt"), "Test" -> Var("String"))
 
-      val selected = source.map(mapping.get).flatten.hold().flatten(Flatten.flattenImplicitForsignal)
+      val selected = source.map(mapping.get).flatten.hold().flatten(using Flatten.flattenImplicitForsignal)
 
       source.fire("Hallo")
 

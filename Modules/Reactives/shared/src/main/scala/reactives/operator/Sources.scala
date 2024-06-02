@@ -5,8 +5,8 @@ import reactives.operator.Interface.State
 import reactives.structure.Pulse
 
 trait Source[T] extends reactives.core.ReSource {
-  final def admit(value: T)(implicit ticket: AdmissionTicket[State]): Unit = admitPulse(Pulse.Value(value))
-  def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit
+  final def admit(value: T)(using ticket: AdmissionTicket[State]): Unit = admitPulse(Pulse.Value(value))
+  def admitPulse(pulse: Pulse[T])(using ticket: AdmissionTicket[State]): Unit
 }
 
 /** Source events with imperative occurrences
@@ -29,10 +29,10 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
   @deprecated("use .fire instead of apply", "0.21.0")
   def apply(value: T)(using PlanTransactionScope[State]): Unit                = fire(value)
   infix def fire()(using PlanTransactionScope[State])(using Unit =:= T): Unit = fire(())
-  infix def fire(value: T)(implicit planTransactionScope: PlanTransactionScope[State]): Unit =
-    planTransactionScope.planTransaction(this)(admit(value)(_))
+  infix def fire(value: T)(using planTransactionScope: PlanTransactionScope[State]): Unit =
+    planTransactionScope.planTransaction(this)(admit(value)(using _))
   override def disconnect(): Unit = ()
-  def admitPulse(pulse: Pulse[T])(implicit ticket: AdmissionTicket[State]): Unit = {
+  def admitPulse(pulse: Pulse[T])(using ticket: AdmissionTicket[State]): Unit = {
     ticket.recordChange(new InitialChange[State] {
       override val source: Evt.this.type = Evt.this
       override def writeValue(base: Pulse[T], writeCallback: Pulse[T] => Unit): Boolean = {
@@ -44,7 +44,7 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
 
 /** @group create */
 object Evt {
-  def apply[A]()(implicit ticket: CreationTicket[State]): Evt[A] = {
+  def apply[A]()(using ticket: CreationTicket[State]): Evt[A] = {
     ticket.scope.createSource[Pulse[A], Evt[A]](Pulse.NoChange)(init => { new Evt[A](init, ticket.info) }: Evt[A])
   }
 }
@@ -61,18 +61,18 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
   override def disconnect(): Unit = ()
 
   infix def set(value: A)(using planTransactionScope: PlanTransactionScope[State]): Unit =
-    planTransactionScope.planTransaction(this) { admit(value)(_) }
+    planTransactionScope.planTransaction(this) { admit(value)(using _) }
 
   def transform(f: A => A)(using planTransactionScope: PlanTransactionScope[State]): Unit = {
     planTransactionScope.planTransaction(this) { t =>
-      admit(f(t.tx.now(this)))(t)
+      admit(f(t.tx.now(this)))(using t)
     }
   }
 
-  def setEmpty()(implicit fac: Scheduler[State]): Unit =
-    fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty(info))(t))
+  def setEmpty()(using fac: Scheduler[State]): Unit =
+    fac.forceNewTransaction(this)(t => admitPulse(Pulse.empty(info))(using t))
 
-  def admitPulse(pulse: Pulse[A])(implicit ticket: AdmissionTicket[State]): Unit = {
+  def admitPulse(pulse: Pulse[A])(using ticket: AdmissionTicket[State]): Unit = {
     ticket.recordChange(new InitialChange[State] {
       override val source: Var.this.type = Var.this
       override def writeValue(base: Pulse[A], writeCallback: Pulse[A] => Unit): Boolean =
@@ -86,9 +86,9 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
   * @group create
   */
 object Var {
-  def apply[T](initval: T)(implicit ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
-  def empty[T](implicit ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty(ticket.info))
-  private def fromChange[T](change: Pulse[T])(implicit ticket: CreationTicket[State]): Var[T] = {
+  def apply[T](initval: T)(using ticket: CreationTicket[State]): Var[T] = fromChange(Pulse.Value(initval))
+  def empty[T](using ticket: CreationTicket[State]): Var[T]             = fromChange(Pulse.empty(ticket.info))
+  private def fromChange[T](change: Pulse[T])(using ticket: CreationTicket[State]): Var[T] = {
     ticket.scope.createSource[Pulse[T], Var[T]](change)(s => new Var[T](s, ticket.info))
   }
 }

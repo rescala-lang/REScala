@@ -7,7 +7,7 @@ import reactives.operator.Interface
 class ReevaluationBundle[T <: Interface](val api: T) {
   import api.*
 
-  class ReevaluationTracker[A, R[_]](reactive: R[A])(implicit turnSource: CreationTicket[BundleState])
+  class ReevaluationTracker[A, R[_]](reactive: R[A])(using turnSource: CreationTicket[BundleState])
       extends munit.FunSuite {
 
     var results: List[A] = Nil
@@ -25,7 +25,7 @@ class ReevaluationBundle[T <: Interface](val api: T) {
       assertEquals(results, elements.toList)
       ()
     }
-    def assertClear(elements: A*)(implicit pos: munit.Location): Unit = {
+    def assertClear(elements: A*)(using pos: munit.Location): Unit = {
       assert(elements*)
       results = Nil
     }

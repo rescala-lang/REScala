@@ -35,14 +35,14 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     *
     * @group accessor
     */
-  final def now(implicit scheduler: Scheduler[State]): T = readValueOnce
+  final def now: T = readValueOnce
 
   /** Returns the current value of the signal
     *
     * @group accessor
     */
-  final def readValueOnce(implicit scheduler: Scheduler[State]): T = {
-    RExceptions.toExternalReadException(this, scheduler.singleReadValueOnce(this))
+  final def readValueOnce: T = {
+    RExceptions.toExternalReadException(this, reactives.default.global.scheduler.singleReadValueOnce(this))
   }
 
   /** add an observer
@@ -50,12 +50,12 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     * @group accessor
     */
   final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
-      implicit ticket: CreationTicket[State]
+      using ticket: CreationTicket[State]
   ): Disconnectable =
     Observe.strong(this, fireImmediately) { reevalVal => new Observe.ObservePulsing(reevalVal, this, onValue, onError) }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
-  final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit
+  final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(using
       ticket: CreationTicket[State]
   ): Signal[R] =
     Signal {
@@ -66,13 +66,13 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     }
 
   /** Adds another error message in case this signal is empty, also disallows handling exceptions in observers */
-  final def abortOnError(message: String)(implicit ticket: CreationTicket[State]): Signal[T] =
+  final def abortOnError(message: String)(using ticket: CreationTicket[State]): Signal[T] =
     recover { case t => throw ObservedException(this, s"forced abort ($message)", t) }
 
   /** Sets a default value in case this signal is empty.
     * @group operator
     */
-  final def withDefault[R >: T](value: R)(implicit ticket: CreationTicket[State]): Signal[R] =
+  final def withDefault[R >: T](value: R)(using ticket: CreationTicket[State]): Signal[R] =
     Signal {
       try this.value
       catch {
@@ -83,21 +83,21 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   /** Flattens the inner value.
     * @group operator
     */
-  final def flatten[R](implicit flatten: Flatten[Signal[T], R]): R = flatten.apply(this)
+  final def flatten[R](using flatten: Flatten[Signal[T], R]): R = flatten.apply(this)
 
   /** Create an event that fires every time the signal changes. It fires the tuple (oldVal, newVal) for the signal.
     * Be aware that no change will be triggered when the signal changes to or from empty
     *
     * @group conversion
     */
-  final def change(implicit ticket: CreationTicket[State]): Event[Diff[T]] = Event.Impl.change(this)(ticket)
+  final def change(using ticket: CreationTicket[State]): Event[Diff[T]] = Event.Impl.change(this)(using ticket)
 
   /** Create an event that fires every time the signal changes. The value associated
     * to the event is the new value of the signal
     *
     * @group conversion
     */
-  final def changed(implicit ticket: CreationTicket[State]): Event[T] =
+  final def changed(using ticket: CreationTicket[State]): Event[T] =
     Event.Impl.staticNamed(s"(changed $this)", this) { st =>
       st.collectStatic(this) match {
         case Pulse.empty(info) => Pulse.NoChange
@@ -142,7 +142,7 @@ object Signal {
   }
 
   /** creates a new static signal depending on the dependencies, reevaluating the function */
-  def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(implicit
+  def static[T](dependencies: ReSource.of[State]*)(expr: StaticTicket[State] => T)(using
       ct: CreationTicket[State]
   ): Signal[T] = {
     ct.scope.create[Pulse[T], SignalImpl[T] & Signal[T]](
@@ -155,7 +155,7 @@ object Signal {
   }
 
   /** creates a signal that has dynamic dependencies (which are detected at runtime with Signal.apply(turn)) */
-  def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(implicit
+  def dynamic[T](dependencies: ReSource.of[State]*)(expr: DynamicTicket[State] => T)(using
       ct: CreationTicket[State]
   ): Signal[T] = {
     val staticDeps = dependencies.toSet
@@ -169,7 +169,7 @@ object Signal {
   }
 
   /** converts a future to a signal */
-  def fromFuture[A](fut: Future[A])(implicit
+  def fromFuture[A](fut: Future[A])(using
       creationScope: CreationScope[State],
       planScope: PlanTransactionScope[State],
       ec: ExecutionContext,
@@ -179,17 +179,17 @@ object Signal {
       new CreationTicket[State](creationScope, name.derive("fromFuture"))
     fut.value match {
       case Some(Success(value)) =>
-        Var(value)(creationTicket)
+        Var(value)(using creationTicket)
       case _ =>
-        val v: Var[A] = Var.empty[A](creationTicket)
+        val v: Var[A] = Var.empty[A](using creationTicket)
         fut.onComplete { res =>
-          planScope.planTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(t))
+          planScope.planTransaction(v)(t => v.admitPulse(Pulse.tryCatch(Pulse.Value(res.get)))(using t))
         }
         v
     }
   }
 
-  def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(implicit maybe: CreationTicket[State]): Signal[R] = {
+  def lift[A, R](los: Seq[Signal[A]])(fun: Seq[A] => R)(using maybe: CreationTicket[State]): Signal[R] = {
     Signal.static(los*) { t => fun(los.map(s => t.dependStatic(s))) }
   }
 

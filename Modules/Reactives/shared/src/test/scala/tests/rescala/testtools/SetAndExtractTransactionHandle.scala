@@ -9,7 +9,7 @@ class SetAndExtractTransactionHandle[Api <: Interface](val api: Api) {
   def SetAndExtractTransactionHandle[A, N](
       source: Source[A] { type State[V] = api.global.State[V] },
       value: A
-  )(implicit
+  )(using
       engine: Scheduler[BundleState]
   ): Initializer[BundleState] = {
     engine.forceNewTransaction(source) { implicit t =>

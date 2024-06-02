@@ -39,13 +39,13 @@ class SynchronizedReevaluation extends ManagedBlocker {
 class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
   import api.*
 
-  def SynchronizedReevaluation[A](sig: Signal[A])(implicit
+  def SynchronizedReevaluation[A](sig: Signal[A])(using
       turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Signal[A]) = {
     val sync = new SynchronizedReevaluation
     (sync, sig.map(sync.reev))
   }
-  def SynchronizedReevaluation[A](evt: Event[A])(implicit
+  def SynchronizedReevaluation[A](evt: Event[A])(using
       turnSource: CreationTicket[State]
   ): (SynchronizedReevaluation, Event[A]) = {
     val sync = new SynchronizedReevaluation

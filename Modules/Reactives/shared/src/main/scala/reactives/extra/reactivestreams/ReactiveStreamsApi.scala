@@ -100,7 +100,7 @@ class SubscriptionReactive[T](
 
 object REPublisher {
 
-  def apply[T](dependency: ReadAs.of[State, Pulse[T]])(implicit fac: Scheduler[State]): REPublisher[T] =
+  def apply[T](dependency: ReadAs.of[State, Pulse[T]])(using fac: Scheduler[State]): REPublisher[T] =
     new REPublisher[T](dependency, fac)
 
   def subscription[T](
