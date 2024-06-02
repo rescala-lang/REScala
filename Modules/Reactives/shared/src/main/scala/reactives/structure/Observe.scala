@@ -2,6 +2,7 @@ package reactives.structure
 
 import reactives.core.*
 import reactives.operator.Interface.State
+import reactives.structure.RExceptions.ObservedException
 
 /** observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
 object Observe {
@@ -34,6 +35,27 @@ object Observe {
         }
         new Obs
     }
+  }
+
+  class ObservePulsing[T](reevalVal: Pulse[T], location: Any, onValue: T => Unit, onError: Exception => Unit)
+      extends Observe.ObserveInteract {
+    override def checkExceptionAndRemoval(): Boolean = {
+      reevalVal match {
+        case Pulse.empty(info) => ()
+        case Pulse.Exceptional(f) if onError == null =>
+          throw ObservedException(location, "observed", f)
+        case _ => ()
+      }
+      false
+    }
+
+    override def execute(): Unit =
+      (reevalVal: Pulse[T]) match {
+        case Pulse.empty(info)    => ()
+        case Pulse.Value(v)       => onValue(v)
+        case Pulse.Exceptional(f) => onError(f)
+        case Pulse.NoChange       => ()
+      }
   }
 
 }

@@ -52,27 +52,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
   final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
       implicit ticket: CreationTicket[State]
   ): Disconnectable =
-    Observe.strong(this, fireImmediately) { reevalVal =>
-      new Observe.ObserveInteract {
-        override def checkExceptionAndRemoval(): Boolean = {
-          reevalVal match {
-            case Pulse.empty(info) => ()
-            case Pulse.Exceptional(f) if onError == null =>
-              throw ObservedException(Signal.this, "observed", f)
-            case _ => ()
-          }
-          false
-        }
-
-        override def execute(): Unit =
-          (reevalVal: Pulse[T]) match {
-            case Pulse.empty(info)    => ()
-            case Pulse.Value(v)       => onValue(v)
-            case Pulse.Exceptional(f) => onError(f)
-            case Pulse.NoChange       => ()
-          }
-      }
-    }
+    Observe.strong(this, fireImmediately) { reevalVal => new Observe.ObservePulsing(reevalVal, this, onValue, onError) }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value. */
   final def recover[R >: T](onFailure: PartialFunction[Throwable, R])(implicit
