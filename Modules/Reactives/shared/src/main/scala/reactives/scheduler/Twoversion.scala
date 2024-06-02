@@ -4,6 +4,7 @@ import reactives.core
 import reactives.core.{AccessHandler, AdmissionTicket, DynamicTicket, InitialChange, Observation, ReSource, ReadAs, ReevTicket, SchedulerWithDynamicScope, Tracing, Transaction}
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 class Token
@@ -174,22 +175,19 @@ trait Twoversion {
 
     override def schedule(commitable: ReSource): Unit = { toCommit += commitable; () }
 
-    def observe(f: Observation): Unit = {
+    def checkNotCommitted() =
       if commitStarted then
-        throw new IllegalStateException(
-          s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
-          s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
-        )
+        throw new IllegalStateException:
+          s"Added observation to transaction ($this), but it is too late in its lifecycle. This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
+
+    def observe(f: Observation): Unit = {
+      checkNotCommitted()
       observers += f
       ()
     }
 
     override def followup(obs: Observation): Unit = {
-      if commitStarted then
-        throw new IllegalStateException(
-          s"Added observation to transaction (${this}), but it is too late in its lifecycle. " +
-          s"This may happen due to capturing a transaction reference such that it survives outside of its dynamic scope."
-        )
+      checkNotCommitted()
       followups += obs
       ()
     }
@@ -201,22 +199,26 @@ trait Twoversion {
 
     override def rollbackPhase(): Unit = toCommit.foreach(r => r.state.release())
 
-    override def observerPhase(): Unit = {
-      var failure: Throwable = null
-      observers.foreach { n =>
-        try n.execute()
-        catch { case NonFatal(e) => failure = e }
-      }
-      // find some failure and rethrow the contained exception
-      // we should probably aggregate all of the exceptions,
-      // but this is not the place to invent exception aggregation
-      if failure != null then throw failure
+    def handleObservations(observations: Iterable[Observation]) = {
+      var failure: List[Exception] = Nil
 
-      followups.foreach { n =>
+      observations.foreach { n =>
         try n.execute()
-        catch { case NonFatal(e) => failure = e }
+        catch { case ex: Exception => failure = ex :: failure }
       }
-      if failure != null then throw failure
+
+      failure match
+        case Nil              =>
+        case latest :: others =>
+          // not sure if this is a reasonable way to aggregate exceptions, but better than nothing?
+          others.foreach(latest.addSuppressed)
+          throw latest
+
+    }
+
+    override def observerPhase(): Unit = {
+      handleObservations(observers)
+      handleObservations(followups)
     }
 
     final def commitDependencyDiff(node: Derived, current: Set[ReSource])(updated: Set[ReSource]): Unit = {

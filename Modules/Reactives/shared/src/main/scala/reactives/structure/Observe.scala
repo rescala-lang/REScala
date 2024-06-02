@@ -4,7 +4,10 @@ import reactives.core.*
 import reactives.operator.Interface.State
 import reactives.structure.RExceptions.ObservedException
 
-/** observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]] */
+/** Observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]].
+  * Observers are executed after a (non exceptional) transaction commits.
+  * Throwing exceptions within an observer leaves the system in a potentially inconsistent state.
+  */
 object Observe {
 
   trait ObserveInteract extends Observation {
@@ -12,6 +15,7 @@ object Observe {
     def checkExceptionAndRemoval(): Boolean
   }
 
+  /* Why “strong”? There were weak observers once that are GC’ed if you don’t store them somewhere. */
   def strong[T](
       dependency: ReSource.of[State],
       fireImmediately: Boolean
