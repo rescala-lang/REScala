@@ -7,6 +7,7 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   channels.jvm,
   compileMacros.js,
   compileMacros.jvm,
+  deltalens,
   encryptedTodo,
   exampleLenses,
   examplesReactives,
@@ -88,6 +89,14 @@ lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossTy
   )
   .dependsOn(reactives)
 
+lazy val deltalens = project.in(file("Modules/Deltalens"))
+  .settings(
+    scala3defaults,
+    libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
+      "org.scalatest" %%% s"scalatest-$m" % "3.2.18" % Test
+    ),
+  )
+
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
   .dependsOn(rdts.jvm)
@@ -166,9 +175,9 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "com.monovore"  %%% "decline"     % "2.4.1",
-    libraryDependencies += "org.typelevel" %%% "cats-parse"  % "1.0.0",
-    libraryDependencies += ("com.lihaoyi"  %%% "fansi"       % "0.5.0"),
+    libraryDependencies += "com.monovore"  %%% "decline"    % "2.4.1",
+    libraryDependencies += "org.typelevel" %%% "cats-parse" % "1.0.0",
+    libraryDependencies += ("com.lihaoyi"  %%% "fansi"      % "0.5.0"),
     // optics dependencies
     libraryDependencies ++= Seq(
       "dev.optics" %%% "monocle-core" % "3.2.0"
