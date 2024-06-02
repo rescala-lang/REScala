@@ -21,7 +21,7 @@ class PipeliningTest extends munit.FunSuite {
       val derived: Array[Signal[Int]] = new Array(pipelineLength)
       for i <- 0 until pipelineLength do {
         val from = if i == 0 then input else derived(i - 1)
-        derived(i) = ReInfo.named("pipeline-" + i) { implicit ! =>
+        derived(i) = ReInfo.named("pipeline-" + i) {
           from.map { v =>
             Thread.sleep(millisecondsPerNode)
             v + 1
