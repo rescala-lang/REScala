@@ -29,7 +29,7 @@ object QuicklensMacros {
       path1: Expr[T => U],
       paths: Expr[Seq[T => U]]
   )(using Quotes): Expr[PathLazyModify[T, U]] =
-    '{ PathLazyModify((t, mod) => ${ modifyAllImpl('t, path1, paths) }.using(mod)) }
+    '{ PathLazyModify((t, mod) => ${ modifyAllImpl('{t}, path1, paths) }.using(mod)) }
 
   def modifyAllImpl[S: Type, A: Type](
       obj: Expr[S],
