@@ -30,7 +30,7 @@ class Fold3Test extends RETests {
       assert(res.readValueOnce == "hellohello")
       word.fire("world")
       assert(res.readValueOnce == "world")
-      transaction(count, word, reset) { implicit at =>
+      transaction(count, word, reset) {
         count.admit(2)
         word.admit("do them all!")
         reset.admit(())

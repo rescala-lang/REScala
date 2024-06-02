@@ -182,7 +182,7 @@ class FoldTests extends RETests {
     test("create folds during tx") {
 
       val e = Evt[String]()
-      val listed = transaction(e) { implicit t =>
+      val listed = transaction(e) { t ?=>
         e.admit("hello")
         e.list()
       }
@@ -215,7 +215,7 @@ class FoldTests extends RETests {
       assert(res.readValueOnce == "hellohello")
       word.fire("world")
       assert(res.readValueOnce == "world")
-      transaction(count, word, reset) { implicit at =>
+      transaction(count, word, reset) { at ?=>
         count.admit(2)
         word.admit("do them all!")
         reset.admit(())

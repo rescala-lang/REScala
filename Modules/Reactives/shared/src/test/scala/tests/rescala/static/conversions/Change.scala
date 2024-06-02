@@ -151,14 +151,14 @@ class Change extends RETests {
     v2.set("three")
     assertEquals(log.readValueOnce, List("two" -> "three", "constant" -> "one"))
 
-    transaction(v1, v2) { at =>
+    transaction(v1, v2) { at ?=>
       v1.admit("four a")(using at)
       v2.admit("four b")(using at)
     }
 
     assertEquals(log.readValueOnce, List("constant" -> "four a", "two" -> "three", "constant" -> "one"))
 
-    transaction(v1, v2) { turn =>
+    transaction(v1, v2) { turn ?=>
       v1.admitPulse(Pulse.Exceptional(EmptySignalControlThrowable(summon)))(using turn)
       v2.admit("five b")(using turn)
     }

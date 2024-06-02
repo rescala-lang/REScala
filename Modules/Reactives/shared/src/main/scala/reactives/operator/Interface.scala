@@ -37,8 +37,8 @@ trait Interface {
     * @group update
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
-  def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] => R): R = {
-    global.scheduler.forceNewTransaction(initialWrites*)(admissionPhase)
+  def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] ?=> R): R = {
+    global.scheduler.forceNewTransaction(initialWrites*)(admissionPhase(using _))
   }
 
   /** Executes a transaction with WrapUpPhase.
@@ -50,7 +50,7 @@ trait Interface {
       Transaction[State]
   ) => R): R = {
     var res: Option[R] = None
-    transaction(iw*)(at => {
+    transaction(iw*)(at ?=> {
       val apr: I = ap(at)
       at.wrapUp = wut => { res = Some(wrapUp(apr, wut)) }
     })

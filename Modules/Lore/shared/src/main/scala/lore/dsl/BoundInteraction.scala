@@ -58,7 +58,7 @@ case class BoundInteraction[ST <: Tuple, S <: Tuple, A] private[dsl] (
   def apply(a: A): Unit = {
     val modList = modifies.toList.asInstanceOf[List[Var[?]]]
     transaction((modList ++ requires.flatMap(_.inputs) ++ ensures.flatMap(_.inputs)).asInstanceOf[Seq[Var[?]]]*) {
-      implicit at =>
+      at ?=>
         val curr = modList.map(it => at.now(it))
 
         val t = Tuple.fromArray(curr.toArray).asInstanceOf[ST]

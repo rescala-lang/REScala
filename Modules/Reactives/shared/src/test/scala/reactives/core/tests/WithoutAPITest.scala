@@ -54,15 +54,15 @@ class WithoutAPITest extends RETests {
     test("simple usage of core rescala without signals or events") {
 
       val customSource: CustomSource[String] =
-        implicitly[CreationTicket[State]]
+        summon[CreationTicket[State]]
           .scope.createSource("Hi!") { createdState =>
             new CustomSource[String](createdState)
           }
 
-      assertEquals(transaction(customSource) { _.now(customSource) }, "Hi!")
+      assertEquals(transaction(customSource) { at ?=> at.now(customSource) }, "Hi!")
 
       val customDerived: ReadAs.of[State, String] =
-        implicitly[CreationTicket[State]]
+        summon[CreationTicket[State]]
           .scope.create(
             Set(customSource),
             "Well, this is an initial value",
@@ -71,13 +71,13 @@ class WithoutAPITest extends RETests {
             new CustomDerivedString(createdState, customSource)
           }
 
-      assertEquals(transaction(customSource) { _.now(customSource) }, "Hi!")
-      assertEquals(transaction(customDerived) { _.now(customDerived) }, "Well, this is an initial value")
+      assertEquals(transaction(customSource) { at ?=> at.now(customSource) }, "Hi!")
+      assertEquals(transaction(customDerived) { at ?=> at.now(customDerived) }, "Well, this is an initial value")
 
-      transaction(customSource) { _.recordChange(customSource.makeChange("Hello!")) }
+      transaction(customSource) { at ?=> at.recordChange(customSource.makeChange("Hello!")) }
 
-      assertEquals(transaction(customSource) { _.now(customSource) }, "Hello!")
-      assertEquals(transaction(customDerived) { _.now(customDerived) }, "Hello! :D")
+      assertEquals(transaction(customSource) { at ?=> at.now(customSource) }, "Hello!")
+      assertEquals(transaction(customDerived) { at ?=> at.now(customDerived) }, "Hello! :D")
     }
   }
 }

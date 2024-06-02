@@ -68,7 +68,7 @@ class MacroEventTestSuite extends RETests {
       assertEquals(res.readValueOnce, 10)
       e2.fire(11)
       assertEquals(res.readValueOnce, 11)
-      transaction(e1, e2) { implicit at =>
+      transaction(e1, e2) { at ?=>
         e1.admit(10)
         e2.admit(10)
       }
@@ -87,7 +87,7 @@ class MacroEventTestSuite extends RETests {
       assertEquals(res.readValueOnce, List(9))
       e2.fire(10)
       assertEquals(res.readValueOnce, List(10))
-      transaction(e1, e2) { implicit at =>
+      transaction(e1, e2) { at ?=>
         e1.admit(11)
         e2.admit(12)
       }

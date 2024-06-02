@@ -122,7 +122,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicit
   def manuallyLocked[T](idx: Int)(f: => T): T = synchronized { f }
 
   def maybeEat(idx: Int): Unit = {
-    transaction(phils(idx)) { implicit t =>
+    transaction(phils(idx)) { t ?=>
       if t.now(sights(idx)) == Ready then phils(idx).admit(Eating)
     }
   }

@@ -35,12 +35,12 @@ class CreationTicketTest extends RETests {
   }
 
   test("some Dynamic Some Implicit") {
-    transaction() { (_: AdmissionTicket[State]) =>
-      implicit val implicitTurn: Transaction[State] = getTurn
-      implicitly[CreationTicket[State]].scope match
+    transaction() {
+      given implicitTurn: Transaction[State] = getTurn
+      summon[CreationTicket[State]](using implicitTurn).scope match
         case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
         case other                   => assert(false)
-      assertEquals(summon[CreationTicket[State]].scope.embedCreation(x ?=> x), implicitTurn)
+      assertEquals(summon[CreationTicket[State]](using implicitTurn).scope.embedCreation(x ?=> x), implicitTurn)
     }
   }
 
@@ -50,7 +50,7 @@ class CreationTicketTest extends RETests {
       implicit def it: Transaction[State] = closureDefinition
       () => implicitly[CreationTicket[State]]
     }
-    transaction() { _ =>
+    transaction() {
       closure().scope match
         case StaticCreationScope(tx) => assertEquals(tx, closureDefinition)
         case other                   => assert(false)
@@ -59,10 +59,13 @@ class CreationTicketTest extends RETests {
   }
 
   test("dynamic In Closures") {
+
+    def otherScope = () => implicitly[CreationTicket[State]]
+
     val closure: () => CreationTicket[State] = {
-      transaction() { _ => () => implicitly[CreationTicket[State]] }
+      transaction() { otherScope }
     }
-    transaction() { dynamic =>
+    transaction() { dynamic ?=>
       assert(closure().scope.isInstanceOf[DynamicCreationScope[State]])
       assertEquals(closure().scope.embedCreation(x ?=> x), dynamic.tx)
     }

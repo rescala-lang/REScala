@@ -45,7 +45,7 @@ class FoldVersion {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D): Unit =
-        transaction(xx, yy) { t =>
+        transaction(xx, yy) { t ?=>
           g.fillOval(t.now(xx), t.now(yy), Size, Size)
         }
     }

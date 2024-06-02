@@ -11,7 +11,7 @@ class ReactorWithoutAPITest extends RETests {
     test("Reactor has initial value") {
       val reactor = Reactor.once("Initial Value") { Stage() }
 
-      assertEquals(transaction(reactor) { _.now(reactor) }, "Initial Value")
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, "Initial Value")
     }
 
     test("Reactor executes body instantly") {
@@ -19,7 +19,7 @@ class ReactorWithoutAPITest extends RETests {
         S.set("Value Set!")
       }
 
-      assertEquals(transaction(reactor) { _.now(reactor) }, "Value Set!")
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, "Value Set!")
     }
 
     test("Reactor waits for event when using next") {
@@ -30,9 +30,9 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assertEquals(transaction(reactor) { _.now(reactor) }, 42)
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, 42)
       e1.fire()
-      assertEquals(transaction(reactor) { _.now(reactor) }, 1)
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, 1)
     }
 
     test("ReactorStage callback passes event value") {
@@ -44,9 +44,9 @@ class ReactorWithoutAPITest extends RETests {
         }
       }
 
-      assertEquals(transaction(reactor) { _.now(reactor) }, 0)
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, 0)
       e1.fire(1)
-      assertEquals(transaction(reactor) { _.now(reactor) }, 1)
+      assertEquals(transaction(reactor) { at ?=> at.now(reactor) }, 1)
     }
 
     test("ReactorStages can be nested") {

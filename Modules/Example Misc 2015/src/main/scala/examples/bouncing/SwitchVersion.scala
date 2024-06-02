@@ -44,7 +44,7 @@ class SwitchVersion {
     contents = new Panel() {
       preferredSize = new Dimension(600, 600)
       override def paintComponent(g: Graphics2D): Unit =
-        transaction(x, y) { t =>
+        transaction(x, y) { t ?=>
           g.fillOval(t.now(x), t.now(y), Size, Size)
         }
     }

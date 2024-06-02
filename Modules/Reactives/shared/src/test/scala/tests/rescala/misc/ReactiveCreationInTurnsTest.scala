@@ -53,7 +53,7 @@ class ReactiveCreationInTurnsTest extends RETests {
 
     test("change Of Created Signal") {
 
-      engine.transaction() { implicit t =>
+      engine.transaction() {
         val v1 = engine.Var(0)
         val v2 = v1.map(_ + 1)
         v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
