@@ -1,5 +1,7 @@
 package com.softwaremill.quicklens
 
+import rdts.base.Bottom
+
 import scala.quoted.*
 
 object QuicklensMacros {
@@ -51,7 +53,7 @@ object QuicklensMacros {
   private def modifyImpl[S: Type, A: Type](
       obj: Expr[S],
       focuses: Seq[Expr[S => A]]
-  )(using Quotes): Expr[(A => A) => S] = {
+  )(using quotes: Quotes): Expr[(A => A) => S] = {
     import quotes.reflect.*
 
     def unsupportedShapeInfo(tree: Tree) =
@@ -147,7 +149,7 @@ object QuicklensMacros {
       }
     }
 
-    extension (tpe: TypeRepr)
+    extension (tpe: TypeRepr) {
       def poorMansLUB: TypeRepr = tpe match {
         case AndType(l, r) if l <:< r => l
         case AndType(l, r) if r <:< l => r
@@ -164,6 +166,7 @@ object QuicklensMacros {
         case tpe =>
           Symbol.noSymbol
       }
+    }
 
     def symbolMethodByNameUnsafe(sym: Symbol, name: String): Symbol = {
       sym
@@ -231,11 +234,18 @@ object QuicklensMacros {
             s"Implementation limitation: Only the first parameter list of the modified case classes can be non-implicit."
           )
 
-        typeParams match {
-          // if the object's type is parametrised, we need to call .copy with the same type parameters
-          case Some(typeParams) => Apply(TypeApply(Select(obj, copy), typeParams.map(Inferred(_))), args)
-          case _                => Apply(Select(obj, copy), args)
-        }
+
+        obj.tpe.widen.asType match
+          case '[τ] =>
+
+            val bottom = '{${Expr.summon[Bottom[τ]].getOrElse(report.errorAndAbort(s"Could not find implicit for type ${Type.show[Bottom[τ]]}"))}.empty}
+            typeParams match {
+              // if the object's type is parametrised, we need to call .copy with the same type parameters
+              case Some(typeParams) =>
+                Apply(TypeApply(Select(bottom.asTerm, copy), typeParams.map(Inferred(_))), args)
+              case _ =>
+                Apply(Select(bottom.asTerm, copy), args)
+            }
       } else if isSum(objSymbol) then {
         obj.tpe.widenAll match {
           case AndType(_, _) =>
