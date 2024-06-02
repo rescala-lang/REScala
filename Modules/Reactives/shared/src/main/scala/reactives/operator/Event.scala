@@ -50,7 +50,6 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
       implicit ticket: CreationTicket[State]
   ): Disconnectable =
     Observe.strong(this, fireImmediately) { reevalVal =>
-      val internalVal: Pulse[T] = (reevalVal)
       new Observe.ObserveInteract {
         override def checkExceptionAndRemoval(): Boolean = {
           reevalVal match {
@@ -61,7 +60,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
           false
         }
         override def execute(): Unit =
-          internalVal match {
+          (reevalVal: Pulse[T]) match {
             case Pulse.NoChange       => ()
             case Pulse.Value(v)       => onValue(v)
             case Pulse.Exceptional(f) => onError(f)

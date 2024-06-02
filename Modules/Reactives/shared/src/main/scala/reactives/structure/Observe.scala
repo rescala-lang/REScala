@@ -14,15 +14,14 @@ object Observe {
   def strong[T](
       dependency: ReSource.of[State],
       fireImmediately: Boolean
-  )(fun: dependency.Value => ObserveInteract)(implicit ct: CreationTicket[dependency.State]): Disconnectable = {
+  )(fun: dependency.Value => ObserveInteract)(using ct: CreationTicket[dependency.State]): Disconnectable = {
     ct.scope.create[Pulse[Nothing], Disconnectable & Derived.of[State]](
       Set(dependency),
       Pulse.NoChange,
       fireImmediately
     ) {
       state =>
-        class Obs extends Base[Pulse[Nothing]](state, ct.info) with Derived
-            with DisconnectableImpl {
+        class Obs extends Base[Pulse[Nothing]](state, ct.info) with Derived with DisconnectableImpl {
 
           override protected[reactives] def commit(base: Obs.this.Value): Obs.this.Value = Pulse.NoChange
 
