@@ -8,5 +8,6 @@ import rescala.interface.RescalaInterface
   * signals additionally can be created using [[rescala.default.Signal]] expressions.
   */
 object default extends RescalaInterface with rescala.Schedulers.Unmanaged {
+  override type State[V] = LevelState[V]
   override type ReSource = rescala.core.ReSource.of[State]
 }

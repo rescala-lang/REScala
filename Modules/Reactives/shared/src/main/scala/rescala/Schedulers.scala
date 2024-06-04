@@ -41,10 +41,12 @@ object Schedulers extends PlatformSchedulers {
   }
 
   object unmanaged extends Unmanaged with RescalaInterface {
+    override type State[V] = LevelState[V]
     override type ReSource = rescala.core.ReSource.of[State]
   }
 
   object synchron extends Synchron with RescalaInterface {
+    override type State[V] = LevelState[V]
     override type ReSource = rescala.core.ReSource.of[State]
   }
 
