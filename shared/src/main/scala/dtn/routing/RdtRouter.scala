@@ -340,7 +340,7 @@ class NeighbourDotsState {
         case null => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(endpoint, Dots.empty)
 
-      !(dots <= d)
+      !(dots <= d) || dots.isEmpty
     })
   }
 
@@ -350,8 +350,8 @@ class NeighbourDotsState {
         case null => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(peer.eid, Dots.empty)
 
-      println(s"predicate: ${!(dots <= d)}, d: $d, dots: $dots")
-      !(dots <= d)
+      println(s"predicate: ${!(dots <= d) || dots.isEmpty}, d: $d, dots: $dots")
+      !(dots <= d) || dots.isEmpty
     })
   }
 }
