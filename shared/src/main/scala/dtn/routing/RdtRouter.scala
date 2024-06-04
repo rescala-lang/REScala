@@ -350,6 +350,7 @@ class NeighbourDotsState {
         case null => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(peer.eid, Dots.empty)
 
+      println(s"predicate: ${!(dots <= d)}, d: $d, dots: $dots")
       !(dots <= d)
     })
   }
