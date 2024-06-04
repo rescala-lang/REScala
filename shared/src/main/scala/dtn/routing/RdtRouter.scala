@@ -136,7 +136,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
 
     // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-    println("doing fallback strategy")
+    println(s"doing fallback strategy, peers: ${peers}")
 
     var filtered_peers: Iterable[DtnPeer] = peers.values().asScala
 
@@ -145,8 +145,13 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
       case null => filtered_peers.filter(p => !p.eid.equals(source_node))
       case previous_node: Endpoint => filtered_peers.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
     
+    println(s"peers without previous and source node: ${List.from(filtered_peers)}")
+    
     // remove peers which already know the state
     filtered_peers = neighbourDotsState.filterPeersToNotForwardTo(filtered_peers, rdt_id, dots)
+
+    println(s"peers without neighbours that already know the state: ${List.from(filtered_peers)}")
+
 
     // choose one peer at random
     return Random
@@ -164,7 +169,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
           Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
         }
         case Some(selected_clas) => {
-          println("clas selected via fallback strategy")
+          println(s"clas selected via fallback strategy: ${selected_clas}")
           Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
         }
   }
