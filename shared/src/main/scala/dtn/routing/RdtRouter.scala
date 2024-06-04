@@ -136,21 +136,21 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
 
     // FALLBACK-STRATEGY: on empty cla-list go through all peers in random order until one results in a non-empty cla list
-    println(s"doing fallback strategy, peers: ${peers}")
-
     var filtered_peers: Iterable[DtnPeer] = peers.values().asScala
+
+    println(s"peers: ${List.from(filtered_peers).map(peer => peer.eid)}")
 
     // remove previous node and source node from peers if available
     filtered_peers = tempPreviousNodeStore.get(packet.bp.id) match
       case null => filtered_peers.filter(p => !p.eid.equals(source_node))
       case previous_node: Endpoint => filtered_peers.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
     
-    println(s"peers without previous and source node: ${List.from(filtered_peers)}")
+    println(s"peers without previous and source node: ${List.from(filtered_peers).map(peer => peer.eid)}")
     
     // remove peers which already know the state
     filtered_peers = neighbourDotsState.filterPeersToNotForwardTo(filtered_peers, rdt_id, dots)
 
-    println(s"peers without neighbours that already know the state: ${List.from(filtered_peers)}")
+    println(s"peers without neighbours that already know the state: ${List.from(filtered_peers).map(peer => peer.eid)}")
 
 
     // choose one peer at random
@@ -349,8 +349,7 @@ class NeighbourDotsState {
       val d = map.get(rdt_id) match
         case null => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(peer.eid, Dots.empty)
-
-      println(s"predicate: ${!(dots <= d) || dots.isEmpty}, d: $d, dots: $dots")
+      
       !(dots <= d) || dots.isEmpty
     })
   }
