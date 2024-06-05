@@ -25,7 +25,7 @@ object Settings {
       "-new-syntax",
       // set a specific source level for warnings/rewrites/features
       "-source",
-      "3.4",
+      "3.5",
     )
   )
 
