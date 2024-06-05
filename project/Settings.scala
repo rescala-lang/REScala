@@ -1,7 +1,6 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
 import sbt._
 import sbt.Keys._
@@ -52,9 +51,7 @@ object Settings {
     )
   }
 
-  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions += setting
-  }
+  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c => c / scalacOptions += setting  }
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
   def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf*)
