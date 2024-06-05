@@ -154,7 +154,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def toggle[A](a: Signal[A], b: Signal[A])(using ticket: CreationTicket[State]): Signal[A] =
     ticket.scope.embedCreation { ict ?=>
       val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
-      Signal.dynamic(using ict) { if switched.value then b.value else a.value }
+      Signal.dynamic { if switched.value then b.value else a.value }(using ict)
     }
 
   /** Filters the event, only propagating the value when the filter is true.
