@@ -44,6 +44,7 @@ lazy val reactivesAggregate =
 // projects in alphabetical order
 
 lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
+  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .settings(
     scala3defaults,
     Dependencies.munit,
@@ -52,7 +53,6 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .jvmSettings(
     LocalSettings.tink
   )
-  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .jsSettings(
     Compile / npmDependencies ++= Seq(
       "libsodium-wrappers" -> "0.7.13",
@@ -60,16 +60,19 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   )
 
 lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
-  .in(file("Modules/Channels")).settings(
+  .in(file("Modules/Channels"))
+  .settings(
     Settings.scala3defaults,
     Dependencies.slips.delay,
     Dependencies.munit,
     Dependencies.jsoniterScala,
-  ).jsSettings(
+  )
+  .jsSettings(
     Settings.jsEnvDom,
     Dependencies.scalajsDom,
     Dependencies.scalatags,
-  ).jvmSettings(
+  )
+  .jvmSettings(
     libraryDependencies ++= {
       val jettyVersion = "12.0.10"
       Seq(
@@ -83,13 +86,14 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
   .in(file("Modules/Graph-Compiler"))
+  .dependsOn(reactives)
   .settings(
     scala3defaults,
     Dependencies.jsoniterScala,
   )
-  .dependsOn(reactives)
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
+  .dependsOn(rdts.jvm)
   .settings(
     scala3defaults,
     Dependencies.munit,
@@ -97,7 +101,6 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
       "org.scalatest" %%% s"scalatest-$m" % "3.2.18" % Test
     ),
   )
-  .dependsOn(rdts.jvm)
 
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
@@ -150,7 +153,8 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
     LocalSettings.deployTask
   )
 
-lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
+lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
+  .dependsOn(rdts.jvm % "compile->compile;test->test")
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(11),
@@ -169,53 +173,52 @@ lazy val lofiAcl = (project in file("Modules/Local-first Access Control"))
         "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.5",
         "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.5",
       )
-  ).dependsOn(rdts.jvm % "compile->compile;test->test")
+  )
 
-lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
-  .in(file("Modules/Lore"))
+lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).in(file("Modules/Lore"))
+  .dependsOn(reactives)
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "com.monovore"  %%% "decline"    % "2.4.1",
-    libraryDependencies += "org.typelevel" %%% "cats-parse" % "1.0.0",
-    libraryDependencies += ("com.lihaoyi"  %%% "fansi"      % "0.5.0"),
-    // optics dependencies
-    libraryDependencies ++= Seq(
-      "dev.optics" %%% "monocle-core" % "3.2.0"
-    ),
-    // test dependencies
-    Dependencies.munit
+    libraryDependencies += "com.monovore"  %%% "decline"      % "2.4.1",
+    libraryDependencies += "org.typelevel" %%% "cats-parse"   % "1.0.0",
+    libraryDependencies += "com.lihaoyi"   %%% "fansi"        % "0.5.0",
+    libraryDependencies += "dev.optics"    %%% "monocle-core" % "3.2.0",
+    Dependencies.munit,
+    Compile / mainClass := Some("lore.Compiler")
   )
-  .dependsOn(reactives)
-  .settings(Compile / mainClass := Some("lore.Compiler"))
 
 lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
+  .dependsOn(lore.jvm)
   .settings(
     scala3defaults,
     libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
     Dependencies.munit
   )
-  .dependsOn(lore.jvm)
 
 lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plugin/examples"))
+  .dependsOn(lore.jvm)
   .settings(
     scala3defaults,
     Dependencies.munit,
-    scalacOptions += s"-Xplugin:${(loreCompilerPlugin / Compile / fullClasspathAsJars).value.map(at => at.data).mkString(java.io.File.pathSeparator)}",
+    scalacOptions += {
+      val pluginClasspath = (loreCompilerPlugin / Compile / fullClasspathAsJars).value
+        .map(at => at.data).mkString(java.io.File.pathSeparator)
+      s"-Xplugin:${pluginClasspath}"
+    }
   )
-  .dependsOn(lore.jvm)
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
+  .dependsOn(reactives.jvm, rdts.jvm)
   .settings(
     scala3defaults,
-    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
     Dependencies.upickle,
     Dependencies.jsoniterScala,
     Settings.jolSettings,
+    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
   )
-  .dependsOn(reactives.jvm, rdts.jvm)
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
   .in(file("Modules/RDTs"))
@@ -249,39 +252,39 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Settings.sourcemapFromEnv(),
   )
 
-lazy val replicationExamples =
-  crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(reactives, rdts, aead, rdts % "compile->compile;test->test", channels)
-    .settings(
-      scala3defaults,
-      run / fork         := true,
-      run / connectInput := true,
-      Settings.resolverJitpack,
-      Dependencies.munitCheck,
-      Dependencies.munit,
-      Dependencies.scalacheck,
-      Dependencies.slips.options,
-      Dependencies.slips.delay,
-      Dependencies.jsoniterScala,
-      Settings.strictEquality(Compile / compile, Test / test),
-    )
-    .jvmSettings(
-      Dependencies.slips.script,
-      Dependencies.sqliteJdbc,
-      libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13",
-    )
-    .jsSettings(
-      Dependencies.scalatags,
-      LocalSettings.deployTask,
-    )
+lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full)
+  .in(file("Modules/Example Replication"))
+  .dependsOn(reactives, rdts, aead, rdts % "compile->compile;test->test", channels)
+  .settings(
+    scala3defaults,
+    run / fork         := true,
+    run / connectInput := true,
+    Settings.resolverJitpack,
+    Dependencies.munitCheck,
+    Dependencies.munit,
+    Dependencies.scalacheck,
+    Dependencies.slips.options,
+    Dependencies.slips.delay,
+    Dependencies.jsoniterScala,
+    Settings.strictEquality(Compile / compile, Test / test),
+  )
+  .jvmSettings(
+    Dependencies.slips.script,
+    Dependencies.sqliteJdbc,
+    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13",
+  )
+  .jsSettings(
+    Dependencies.scalatags,
+    LocalSettings.deployTask,
+  )
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
   .settings(scala3defaults, LocalSettings.scalafx, fork := true, Settings.javaOutputVersion(17))
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
   .dependsOn(reactives.jvm)
+  .settings(scala3defaults, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
