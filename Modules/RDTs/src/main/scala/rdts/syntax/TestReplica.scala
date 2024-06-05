@@ -2,8 +2,6 @@ package rdts.syntax
 
 import rdts.base.{Lattice, Uid}
 
-import scala.annotation.targetName
-
 class TestReplica[A](val replicaId: Uid, var anon: A) {
   def apply(delta: A)(using Lattice[A]): TestReplica[A] =
     anon = anon merge delta

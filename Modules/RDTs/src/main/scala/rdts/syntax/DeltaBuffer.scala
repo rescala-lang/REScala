@@ -15,11 +15,11 @@ case class DeltaBuffer[State](
   def applyDelta(delta: State)(using Lattice[State]): DeltaBuffer[State] =
     val merged = state merge delta
     DeltaBuffer(merged, if merged == state then deltaBuffer else delta :: deltaBuffer)
-  def clearDeltas() = DeltaBuffer(state)
+  def clearDeltas(): DeltaBuffer[State] = DeltaBuffer(state)
 
   def mutable: DeltaBufferContainer[State] = new DeltaBufferContainer(this)
 
-  def transform(f: State => State)(using Lattice[State]) = applyDelta(f(state))
+  def transform(f: State => State)(using Lattice[State]): DeltaBuffer[State] = applyDelta(f(state))
 }
 
 object DeltaBuffer {
