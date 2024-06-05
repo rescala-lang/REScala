@@ -1,8 +1,11 @@
 package lore.dsl
 
 import reactives.core.ReSource
+import reactives.operator.{Event, Fold, FoldState}
+import reactives.operator.Fold.current
 import reactives.operator.Interface.State as BundleState
 
+import scala.annotation.targetName
 import scala.quoted.{Expr, Quotes, Type}
 
 def constructIWEWithRequires[S <: Tuple, A](
@@ -39,13 +42,28 @@ case class InteractionWithExecutes[S <: Tuple, A] private[dsl] (
     private[dsl] val requires: Seq[Requires[S, A]] = Seq.empty,
     private[dsl] val ensures: Seq[Ensures[S, A]] = Seq.empty,
     private[dsl] val executes: (S, A) => S
-) extends Interaction[S, A] {
-  type T[_, _] = InteractionWithExecutes[S, A]
+) extends Interaction[S, A] with CanAct[S, A] {
+  type T[_, _]  = InteractionWithExecutes[S, A]
+  type AO[_, _] = InteractionWithExecutesAndActs[S, A]
 
   override inline def requires(inline pred: (S, A) => Boolean): InteractionWithExecutes[S, A] =
     ${ constructIWEWithRequires('{ this }, '{ pred }) }
 
   override inline def ensures(inline pred: (S, A) => Boolean): InteractionWithExecutes[S, A] =
     ${ constructIWEWithEnsures('{ this }, '{ pred }) }
+
+  override def actsOn(event: Event[A]): InteractionWithExecutesAndActs[S, A] =
+    InteractionWithExecutesAndActs(requires, ensures, executes, event)
+
+  @targetName("actWithN")
+  inline def actWith(inline event: FoldState[S] ?=> Event[A]): Fold.Branch[S] = Fold.branch[S] {
+    event.value.fold(current)(executes(current, _))
+  }
+
+  @targetName("actWithT1")
+  inline def actWith[T](inline event: FoldState[T] ?=> Event[A])(using ev: S =:= Tuple1[T]): Fold.Branch[T] =
+    Fold.branch[T] {
+      event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T])), _)._1)
+    }
 
 }

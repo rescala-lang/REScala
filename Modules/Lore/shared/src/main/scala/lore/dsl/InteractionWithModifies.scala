@@ -4,6 +4,7 @@ import reactives.core.ReSource
 import reactives.default.*
 import reactives.operator.Interface.State as BundleState
 
+import scala.annotation.targetName
 import scala.quoted.{Expr, Quotes, Type}
 
 def constructInteractionWithModifiesWithRequires[ST <: Tuple, S <: Tuple, A](

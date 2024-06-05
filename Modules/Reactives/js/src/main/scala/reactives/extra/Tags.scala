@@ -41,9 +41,6 @@ object Tags {
       range.collapse(toStart = false)
       Observe.strong(signal, true) {
         tagObserver(anchor, signal) { v =>
-          println("branch ", range.commonAncestorContainer != anchor)
-          println("else ", range.commonAncestorContainer == anchor)
-
           if range.commonAncestorContainer != anchor then
             println(
               "weird state",

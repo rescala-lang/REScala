@@ -1,10 +1,12 @@
 package lore.dsl
 
+import reactives.default.act
 import reactives.core.ReSource
-import reactives.operator.Event
+import reactives.operator.Fold.current
+import reactives.operator.{Event, Fold, FoldState}
 import reactives.operator.Interface.State as BundleState
 
-import scala.annotation.static
+import scala.annotation.{static, targetName}
 import scala.quoted.{Expr, Quotes, Type}
 
 def constructIWEAAWithRequires[S <: Tuple, A](
@@ -50,5 +52,25 @@ case class InteractionWithExecutesAndActs[S <: Tuple, A] private[dsl] (
 
   override inline def ensures(inline pred: (S, A) => Boolean): InteractionWithExecutesAndActs[S, A] =
     ${ constructIWEAAWithEnsures('{ this }, '{ pred }) }
+
+  @targetName("foldIntoN")
+  inline def foldInto(): Fold.Branch[S] =
+    event.act { arg =>
+      executes(current, arg)
+    }
+
+  @targetName("foldIntoT1")
+  inline def foldInto[T](using ev: S =:= Tuple1[T]): Fold.Branch[T] =
+    event.act { arg =>
+      executes(ev.flip.apply(Tuple1(current[T])), arg)._1
+    }
+
+  @targetName("foldIntoBranchN")
+  inline def foldIntoBranch(using FoldState[S]): S =
+    event.value.fold(current)(executes(current, _))
+
+  @targetName("foldIntoBranchT1")
+  inline def foldIntoBranch[T](using FoldState[T])(using ev: S =:= Tuple1[T]): T =
+    event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T])), _)._1)
 
 }
