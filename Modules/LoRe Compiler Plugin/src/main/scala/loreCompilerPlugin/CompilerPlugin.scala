@@ -18,8 +18,7 @@ class CompilerPlugin extends StandardPlugin:
   val name: String        = "LoRe Compiler Plugin"
   val description: String = "Constructs a LoRe AST from the given Scala AST"
 
-  override def init(options: List[String]): List[PluginPhase] =
-    (new LoRePhase) :: Nil
+  override def initialize(options: List[String])(using Context): List[PluginPhase] = List(new LoRePhase)
 end CompilerPlugin
 
 class LoRePhase extends PluginPhase:

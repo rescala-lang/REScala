@@ -1,6 +1,6 @@
 package compiler
 
-import scala.annotation.{tailrec, targetName}
+import scala.annotation.{nowarn, tailrec, targetName}
 
 class FragmentedCompiler(val fragments: List[CompilerFragment]) {
   @targetName("append")
@@ -13,13 +13,13 @@ class FragmentedCompiler(val fragments: List[CompilerFragment]) {
     [A, R] =>
       (f: S => PartialFunction[A, R]) =>
         (a: A) =>
-          dispatchRec(fragments.collect { case s: S => f(s) }, a).getOrElse(throw new MatchError(a))
+          dispatchRec(fragments.collect { case s: S => f(s) }: @nowarn, a).getOrElse(throw new MatchError(a))
 
   inline def dispatchLifted[S <: CompilerFragment]: [A, R] => (S => PartialFunction[A, R]) => A => Option[R] =
     [A, R] =>
       (f: S => PartialFunction[A, R]) =>
         (a: A) =>
-          dispatchRec(fragments.collect { case s: S => f(s) }, a)
+          dispatchRec(fragments.collect { case s: S => f(s) }: @nowarn, a)
 
   @tailrec
   protected final def dispatchRec[A, R](l: List[PartialFunction[A, R]], a: A): Option[R] = {

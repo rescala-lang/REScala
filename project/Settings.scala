@@ -9,7 +9,7 @@ import sbt.Keys._
 object Settings {
 
   // also consider updating the -source param below
-  val scala3VersionString = "3.4.2"
+  val scala3VersionString = "3.5.0-RC1"
 
   val featureOptions = Seq(
     // see https://docs.scala-lang.org/overviews/compiler-options/ and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
@@ -72,7 +72,7 @@ object Settings {
   def explicitNulls(conf: TaskKey[?]*) = taskSpecificScalacOption("-Yexplicit-nulls", conf*)
 
   // seems to produce compiler crashes in some cases
-  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Ysafe-init", conf*)
+  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf*)
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"

@@ -1,8 +1,9 @@
 package api2
 
 import compiler.StandardReactiveMacroCompiler
-
 import com.github.plokhotnyuk.jsoniter_scala.core.*
+
+import scala.annotation.nowarn
 
 object CompileGraph {
   val macroCompiler: StandardReactiveMacroCompiler.type = StandardReactiveMacroCompiler
@@ -21,7 +22,7 @@ object CompileGraph {
 
     new RemoteGraphWithInput[IN] {
       override val events: IN = dependencies
-    }
+    }: @nowarn
   }
 
   inline def withOutput[OUT <: Tuple](inline appName: String)(inline graph: OUT)(using
@@ -33,7 +34,7 @@ object CompileGraph {
     given JsonValueCodec[OptionsFromTuple[TupleFromCEvents[OUT]]] =
       TupleCodecFactory.combineTupleCodecs(TupleCodecFactory.generateCEventCodecsTuple[OUT])
 
-    new RemoteGraphWithOutput[TupleFromCEvents[OUT]] {}
+    new RemoteGraphWithOutput[TupleFromCEvents[OUT]] {}: @nowarn
   }
 
   inline def withIO[OUT <: Tuple, IN <: Tuple: EventTupleUtils](inline appName: String)(
@@ -55,6 +56,6 @@ object CompileGraph {
 
     new RemoteGraphWithIO[IN, TupleFromCEvents[OUT]] {
       override val events: IN = dependencies
-    }
+    }: @nowarn
   }
 }
