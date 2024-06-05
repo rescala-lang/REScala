@@ -71,7 +71,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
     Dependencies.scalatags,
   ).jvmSettings(
     libraryDependencies ++= {
-      val jettyVersion = "12.0.9"
+      val jettyVersion = "12.0.10"
       Seq(
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
         "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
