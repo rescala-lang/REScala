@@ -2,13 +2,13 @@ package todo
 
 import channel.broadcastchannel.BroadcastChannelConnector
 import channel.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
-import channel.{ArrayMessageBuffer, Abort, MessageBuffer}
+import channel.{Abort, ArrayMessageBuffer, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Callback}
 import org.scalajs.dom
+import org.scalajs.dom.*
 import org.scalajs.dom.html.{Div, Input, Table}
-import org.scalajs.dom.{MouseEvent, RTCIceConnectionState, RTCIceGatheringState, RTCIceServer, UIEvent, document, window}
 import rdts.dotted.Dotted
 import reactives.operator.{Evt, Fold}
 import scalatags.JsDom.all.*
@@ -75,41 +75,46 @@ object Example {
   }
 
   private def useLocalBroadcastChannel(renderedConnectionTable: Table) = {
-    val broadcast = BroadcastChannelConnector("channels local broadcast for webrtc offers")
+    val latentConnection = BroadcastChannelConnector.named("channels local broadcast for webrtc offers")
 
     var autoconnections: Map[Long, WebRTCHandling] = Map.empty
     val selfId                                     = Random.nextLong()
 
-    Async[Abort] {
-      val msg                                   = broadcast.receive.bind
-      val communication: BroadcastCommunication = msg.convert
-      Async[Abort].bind:
-        Async[Abort].fromCallback:
-          communication match
-            case BroadcastCommunication.Hello(id) =>
-              val handling = WebRTCHandling(Some {
-                case Success(sd) =>
-                  broadcast.send(BroadcastCommunication.Request(selfId, id, sd)).run(Async.handler)
-              })
-              autoconnections = autoconnections.updated(id, handling)
-              renderedConnectionTable.appendChild(handling.controlRow().render)
-              addDataChannel(handling)
+    latentConnection.prepare { conn =>
+      {
+        case Failure(ex) => errorReporter.fail(ex)
+        case Success(msg) =>
+          val communication: BroadcastCommunication = msg.convert
+          Async[Abort].fromCallback {
+            communication match
+              case BroadcastCommunication.Hello(id) =>
+                val handling = WebRTCHandling(Some {
+                  case Success(sd) =>
+                    conn.send(BroadcastCommunication.Request(selfId, id, sd)).run(Async.handler)
+                })
+                autoconnections = autoconnections.updated(id, handling)
+                renderedConnectionTable.appendChild(handling.controlRow().render)
+                addDataChannel(handling)
 
-            case BroadcastCommunication.Request(from, `selfId`, sessionDescription) =>
-              val handling = WebRTCHandling(Some {
-                case Success(sd) =>
-                  broadcast.send(BroadcastCommunication.Response(selfId, from, sd)).run(Async.handler)
-              })
-              autoconnections = autoconnections.updated(from, handling)
-              renderedConnectionTable.appendChild(handling.controlRow().render)
-              addDataChannel(handling)
-              handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
-            case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
-              autoconnections.get(from).foreach: handling =>
+              case BroadcastCommunication.Request(from, `selfId`, sessionDescription) =>
+                val handling = WebRTCHandling(Some {
+                  case Success(sd) =>
+                    conn.send(BroadcastCommunication.Response(selfId, from, sd)).run(Async.handler)
+                })
+                autoconnections = autoconnections.updated(from, handling)
+                renderedConnectionTable.appendChild(handling.controlRow().render)
+                addDataChannel(handling)
                 handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
-    }.run(using Abort())(errorReporter)
-
-    broadcast.send(BroadcastCommunication.Hello(selfId).convert).run(using ())(errorReporter)
+              case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
+                autoconnections.get(from).foreach: handling =>
+                  handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
+          }.run(using Abort())(errorReporter)
+      }
+    }.run(using Abort()) {
+      case Success(conn) =>
+        conn.send(BroadcastCommunication.Hello(selfId).convert).run(using ())(errorReporter)
+      case Failure(ex) => errorReporter.fail(ex)
+    }
 
   }
   def addDataChannel(handling: WebRTCHandling) = {
