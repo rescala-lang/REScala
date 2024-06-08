@@ -1,6 +1,6 @@
 package channel.jettywebsockets
 
-import channel.{Abort, ArrayMessageBuffer, ConnectionContext, InChan, Incoming, LatentConnection, MessageBuffer, OutChan, Prod}
+import channel.{Abort, ArrayMessageBuffer, ConnectionContext,  Incoming, LatentConnection, MessageBuffer,  Prod}
 import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
@@ -22,7 +22,7 @@ def println(str: Any): Unit = System.out.println(s"$str [${Thread.currentThread(
 
 object JettyWsListener {
 
-  def prepareServer(port: Int) = {
+  def prepareServer(port: Int): JettyWsListener = {
     val server = new Server()
 
     val connector = new ServerConnector(server)

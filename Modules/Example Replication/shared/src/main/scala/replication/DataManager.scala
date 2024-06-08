@@ -1,6 +1,6 @@
 package replication
 
-import channel.{Abort, ArrayMessageBuffer, LatentConnection, MessageBuffer, OutChan}
+import channel.{Abort, ArrayMessageBuffer, ConnectionContext, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
@@ -42,7 +42,7 @@ class DataManager[State](
 
   type TransferState = ProtocolDots[State]
 
-  var connections: List[OutChan] = Nil
+  var connections: List[ConnectionContext] = Nil
 
   val timer = new Timer()
 
@@ -62,7 +62,7 @@ class DataManager[State](
     4000
   )
 
-  private def messageBufferCallback(outChan: OutChan): Callback[MessageBuffer] =
+  private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
     case Success(msg) =>
       val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
       println(s"$res")
@@ -119,7 +119,7 @@ class DataManager[State](
     contexts.transform(_.updatedWith(rr)(curr => curr merge Some(dots)))
   }
 
-  def handleMessage(msg: ProtocolMessage[TransferState], biChan: OutChan) = {
+  def handleMessage(msg: ProtocolMessage[TransferState], biChan: ConnectionContext) = {
     msg match
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot(dt => dt.context <= knows)

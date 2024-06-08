@@ -25,15 +25,9 @@ inline def context(using ctx: Abort): Abort = ctx
 
 type Prod[A] = Async[Abort, A]
 
-trait InChan {
-  def receive: Prod[MessageBuffer]
-}
 
-trait OutChan {
-  def send(message: MessageBuffer): Async[Any, Unit]
-}
 
-trait ConnectionContext extends OutChan {
+trait ConnectionContext {
   def send(message: MessageBuffer): Async[Any, Unit]
   def close(): Unit
 }

@@ -1,7 +1,7 @@
 package channel.webrtc
 
 import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import channel.{ JsArrayBufferMessageBuffer, MessageBuffer, Prod}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}
 import org.scalajs.dom

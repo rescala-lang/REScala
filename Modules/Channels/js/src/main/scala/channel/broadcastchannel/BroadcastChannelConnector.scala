@@ -1,7 +1,7 @@
 package channel.broadcastchannel
 
 import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import channel.{JsArrayBufferMessageBuffer, MessageBuffer, Prod}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
@@ -13,11 +13,11 @@ import scala.util.{Failure, Success}
 
 class BroadcastException(message: String, event: MessageEvent) extends Exception(message)
 
-class BroadcastChannelConnector(name: String) extends InChan with OutChan {
+class BroadcastChannelConnector(name: String) {
 
   val bc = new BroadcastChannel(name)
 
-  override def receive: Prod[MessageBuffer] = Async.fromCallback {
+  def receive: Prod[MessageBuffer] = Async.fromCallback {
     bc.onmessage = (event: dom.MessageEvent) =>
       println(js.typeOf(event.data))
       event.data match
@@ -33,7 +33,7 @@ class BroadcastChannelConnector(name: String) extends InChan with OutChan {
       Async.handler.fail(BroadcastException(s"broadcast error ($name):\n${event.data}", event))
   }
 
-  override def send(message: MessageBuffer): delay.Async[Any, Unit] =
+  def send(message: MessageBuffer): delay.Async[Any, Unit] =
     Sync(bc.postMessage(message.asArrayBuffer))
 
 }

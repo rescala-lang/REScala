@@ -1,7 +1,7 @@
 package todo
 
 import channel.webrtc.WebRTCConnection
-import channel.{ArrayMessageBuffer, MessageBuffer, OutChan}
+import channel.{ArrayMessageBuffer, ConnectionContext, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromSubArray, writeToArray}
 import rdts.base.Lattice
 import rdts.dotted.Dotted
@@ -22,7 +22,7 @@ object GlobalRegistry {
 
   private var buffer: Map[String, List[(Int, Array[Byte])]] = Map.empty
 
-  private var channels: List[OutChan] = Nil
+  private var channels: List[ConnectionContext] = Nil
 
   def addConnection(connection: WebRTCConnection): Unit = {
     println(s"adding channel")

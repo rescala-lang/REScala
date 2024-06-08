@@ -1,6 +1,6 @@
 package channel.tcp
 
-import channel.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer, OutChan}
+import channel.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
@@ -71,7 +71,7 @@ object TCP {
 
 }
 
-class TCPConnection(socket: Socket) extends OutChan with ConnectionContext {
+class TCPConnection(socket: Socket) extends ConnectionContext {
 
   // socket streams
 

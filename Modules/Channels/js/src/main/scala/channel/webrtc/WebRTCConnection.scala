@@ -1,7 +1,7 @@
 package channel.webrtc
 
 import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import channel.{ConnectionContext, JsArrayBufferMessageBuffer, MessageBuffer, Prod}
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
 import org.scalajs.dom.RTCDataChannelState
@@ -13,8 +13,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 class WebRTCReceiveFailed(message: String)    extends Exception(message)
 class WebRTCConnectionFailed(message: String) extends Exception(message)
 
-class WebRTCConnection(channel: dom.RTCDataChannel) extends InChan with OutChan {
-  override def receive: Prod[MessageBuffer] = Async.fromCallback {
+class WebRTCConnection(channel: dom.RTCDataChannel) extends ConnectionContext {
+  def receive: Prod[MessageBuffer] = Async.fromCallback {
     channel.onmessage = { (event: dom.MessageEvent) =>
       event.data match {
         case data: ArrayBuffer =>
@@ -52,8 +52,10 @@ class WebRTCConnection(channel: dom.RTCDataChannel) extends InChan with OutChan 
       case _                          =>
 
   }
-  override def send(message: MessageBuffer): Async[Any, Unit] =
+  def send(message: MessageBuffer): Async[Any, Unit] =
     Sync(channel.send(message.asArrayBuffer))
+
+  override def close(): Unit = channel.close()
 }
 
 object WebRTCConnection {
