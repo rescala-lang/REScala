@@ -1,6 +1,5 @@
 package replication.webapp
 
-import channel.BiChan
 import channel.webnativewebsockets.WebsocketConnect
 import org.scalajs.dom
 import reactives.default.*
@@ -27,8 +26,8 @@ class ContentConnectionManager(dataManager: DataManager[?]) {
 
   def tryConnect(): Unit = {
     println(s"trying to connect to $wsUri")
-    WebsocketConnect.connect(wsUri).run(using ()):
-      case Success(conn) => dataManager.addConnection(BiChan(conn, conn))
-      case Failure(t)    => t.printStackTrace()
+    dataManager.addLatentConnection(
+      WebsocketConnect.connect(wsUri)
+    )
   }
 }

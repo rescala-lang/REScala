@@ -1,20 +1,18 @@
 package channel.webnativewebsockets
 
 import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{InChan, JsArrayBufferMessageBuffer, MessageBuffer, OutChan, Prod}
+import channel.*
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
-import org.scalajs.dom.Blob
 
 import java.io.IOException
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
-import scala.scalajs.js.typedarray.TypedArrayBufferOps.*
 import scala.util.{Failure, Success}
 
 class WebsocketException(msg: String) extends IOException(msg)
 
-class WebsocketConnect(socket: dom.WebSocket) extends InChan with OutChan {
+class WebsocketConnect(socket: dom.WebSocket) extends ConnectionContext {
 
   def open(): Boolean = socket.readyState == dom.WebSocket.OPEN
 
@@ -24,44 +22,54 @@ class WebsocketConnect(socket: dom.WebSocket) extends InChan with OutChan {
 
   def close() = socket.close()
 
-  override def receive: Prod[MessageBuffer] = Async.fromCallback {
-
-    socket.onmessage = { (event: dom.MessageEvent) =>
-      event.data match {
-        case data: ArrayBuffer =>
-          Async.handler.succeed(JsArrayBufferMessageBuffer(data))
-
-        case data: dom.Blob =>
-          val reader = new dom.FileReader
-          reader.onload = { (event: dom.Event) =>
-            val buffer = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
-            Async.handler.succeed(JsArrayBufferMessageBuffer(buffer))
-          }
-          reader.readAsArrayBuffer(data)
-
-        case _ =>
-      }
-    }
-
-    socket.onerror = (event: dom.Event) =>
-      socket.close()
-      Async.handler.fail(new WebsocketException("Error during websocket communication"))
-  }
-
 }
 
 object WebsocketConnect {
 
-  def connect(url: String): Async[Any, WebsocketConnect] = Async.fromCallback {
+  def connect(url: String): LatentConnection = new LatentConnection {
 
-    val socket = new dom.WebSocket(url)
+    override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Async.fromCallback {
 
-    socket.onopen = (_: dom.Event) =>
-      Async.handler.succeed:
-        new WebsocketConnect(socket)
+      println(s"preparing connection")
 
-    socket.onerror = (event: dom.Event) =>
-      socket.close()
-      Async.handler.fail(new WebsocketException("Websocket failed to connect"))
+      val socket = new dom.WebSocket(url)
+
+      socket.onopen = (_: dom.Event) => {
+
+        println(s"connection opened")
+
+        val connect  = new WebsocketConnect(socket)
+        val callback = incoming(connect)
+
+        socket.onmessage = { (event: dom.MessageEvent) =>
+
+          event.data match {
+            case data: ArrayBuffer =>
+              callback.succeed(JsArrayBufferMessageBuffer(data))
+
+            case data: dom.Blob =>
+              val reader = new dom.FileReader
+              reader.onload = { (event: dom.Event) =>
+                val buffer = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
+                callback.succeed(JsArrayBufferMessageBuffer(buffer))
+              }
+              reader.readAsArrayBuffer(data)
+
+            case data: String =>
+              callback.succeed(ArrayMessageBuffer(data.getBytes))
+          }
+        }
+
+        socket.onerror = (event: dom.Event) =>
+          socket.close()
+          callback.fail(new WebsocketException("Error during websocket communication"))
+
+        Async.handler.succeed(connect)
+      }
+
+      socket.onerror = (event: dom.Event) =>
+        socket.close()
+        Async.handler.fail(new WebsocketException("Websocket failed to connect"))
+    }
   }
 }

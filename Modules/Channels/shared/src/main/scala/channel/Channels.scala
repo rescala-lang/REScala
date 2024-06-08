@@ -38,10 +38,11 @@ trait ConnectionContext extends OutChan {
   def close(): Unit
 }
 
+/** Provides a specification how to handle messages, given a connection context */
 type Incoming = ConnectionContext => Callback[MessageBuffer]
 
 /** Contains all the information required to try and establish a bidirectional connection.
-  * Only misses specification on how to handle messages.
+  * Only misses specification on how to handle messages, the abstract handler is acquired from `incoming`
   * Note, may produce multiple connections (e.g., if this produces a server connection) thus triggering the async multiple times.
   *
   * Implementations should make it safe to establish multiple times, though the semantics of that is unclear.
@@ -50,4 +51,3 @@ trait LatentConnection {
   def prepare(incoming: Incoming): Async[Abort, ConnectionContext]
 }
 
-case class BiChan(in: InChan, out: OutChan)

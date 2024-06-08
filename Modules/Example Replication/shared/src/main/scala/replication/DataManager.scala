@@ -1,6 +1,6 @@
 package replication
 
-import channel.{Abort, ArrayMessageBuffer, BiChan, LatentConnection, MessageBuffer, OutChan}
+import channel.{Abort, ArrayMessageBuffer, LatentConnection, MessageBuffer, OutChan}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
@@ -77,15 +77,6 @@ class DataManager[State](
           connections = conn :: connections
         }
       case Failure(ex) => ex.printStackTrace()
-  }
-
-  def addConnection(biChan: BiChan): Unit = {
-    println(s"adding connection to data manager")
-    lock.synchronized {
-      connections = biChan.out :: connections
-    }
-    biChan.in.receive.run(using Abort())(messageBufferCallback(biChan.out))
-
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers

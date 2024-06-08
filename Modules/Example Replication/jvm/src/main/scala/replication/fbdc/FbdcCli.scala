@@ -1,6 +1,5 @@
 package replication.fbdc
 
-import channel.BiChan
 import channel.tcp.{TCP, TCPConnection}
 
 import java.nio.file.Path

@@ -1,6 +1,5 @@
 package replication.fbdc
 
-import channel.BiChan
 import channel.jettywebsockets.JettyWsListener
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ResourceHandler

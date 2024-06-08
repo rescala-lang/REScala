@@ -1,17 +1,27 @@
 package channel
 
 import channel.webnativewebsockets.WebsocketConnect
-import de.rmgk.delay.Async
+import de.rmgk.delay.{Async, Callback}
+
+import scala.util.{Failure, Success}
+
+def printErrors[T](cb: T => Unit): Callback[T] =
+  case Success(mb) => cb(mb)
+  case Failure(ex) => ex.printStackTrace()
 
 class EchoWSTest extends munit.FunSuite {
 
   test("echo") {
+
+    val outgoing = WebsocketConnect.connect("wss://echo.websocket.org/.ws").prepare: conn =>
+      printErrors { msg =>
+        println(s"received: ${new String(msg.asArray)}")
+      }
+
     val fut = Async[Abort]:
-      val wsc = WebsocketConnect.connect("wss://echo.websocket.org/.ws").bind
+      val wsc = outgoing.bind
       println(s"connected")
       wsc.send(ArrayMessageBuffer("hello world".getBytes())).bind
-      val buf = wsc.receive.bind
-      println(s"received: ${new String(buf.asArray)}")
     .runToFuture(using Abort())
     fut
   }
