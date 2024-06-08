@@ -1,19 +1,17 @@
 package channel.jettywebsockets
 
-import channel.{Abort, ArrayMessageBuffer, ConnectionContext,  Incoming, LatentConnection, MessageBuffer,  Prod}
+import channel.*
 import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
-import org.eclipse.jetty.server.{Handler, Server, ServerConnector}
+import org.eclipse.jetty.server.{Server, ServerConnector}
 import org.eclipse.jetty.util.Callback as JettyUtilCallback
 import org.eclipse.jetty.websocket.api.Session.Listener
-import org.eclipse.jetty.websocket.api.{Frame, Session, Callback as JettyCallback}
+import org.eclipse.jetty.websocket.api.{Session, Callback as JettyCallback}
 import org.eclipse.jetty.websocket.client.WebSocketClient
 import org.eclipse.jetty.websocket.server
-import org.eclipse.jetty.websocket.server.{ServerUpgradeRequest, ServerUpgradeResponse, ServerWebSocketContainer, WebSocketCreator, WebSocketUpgradeHandler}
+import org.eclipse.jetty.websocket.server.*
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.jdk.FutureConverters.given
 import java.net.URI
 import java.nio.ByteBuffer
 import scala.util.{Failure, Success}
