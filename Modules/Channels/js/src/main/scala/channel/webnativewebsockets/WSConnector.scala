@@ -1,7 +1,7 @@
 package channel.webnativewebsockets
 
-import channel.MesageBufferExtensions.asArrayBuffer
 import channel.*
+import channel.MesageBufferExtensions.asArrayBuffer
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
 

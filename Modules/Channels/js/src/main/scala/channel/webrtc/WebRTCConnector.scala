@@ -1,19 +1,13 @@
 package channel.webrtc
 
-import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{ JsArrayBufferMessageBuffer, MessageBuffer, Prod}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}
 import org.scalajs.dom
-import org.scalajs.dom.{RTCConfiguration, RTCIceCandidate, RTCIceConnectionState, RTCIceGatheringState, RTCSessionDescription, RTCSignalingState}
+import org.scalajs.dom.*
 
-import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.duration.*
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
-import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 

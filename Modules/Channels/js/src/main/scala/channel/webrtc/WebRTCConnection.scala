@@ -6,7 +6,6 @@ import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
 import org.scalajs.dom.RTCDataChannelState
 
-import scala.concurrent.duration.DurationInt
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
