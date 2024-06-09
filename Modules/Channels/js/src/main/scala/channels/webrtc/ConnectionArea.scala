@@ -1,7 +1,7 @@
-package channel.webrtc
+package channels.webrtc
 
-import channel.broadcastchannel.BroadcastChannelConnector
-import channel.{Abort, ArrayMessageBuffer, MessageBuffer}
+import channels.broadcastchannel.BroadcastChannelConnector
+import channels.{Abort, ArrayMessageBuffer, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Callback}

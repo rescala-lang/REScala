@@ -1,8 +1,8 @@
 package todo
 
-import channel.broadcastchannel.BroadcastChannelConnector
-import channel.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
-import channel.{Abort, ArrayMessageBuffer, MessageBuffer}
+import channels.broadcastchannel.BroadcastChannelConnector
+import channels.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
+import channels.{Abort, ArrayMessageBuffer, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Callback}

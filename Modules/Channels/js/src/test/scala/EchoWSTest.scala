@@ -1,6 +1,6 @@
-package channel
+package channels
 
-import channel.webnativewebsockets.WebsocketConnect
+import channels.webnativewebsockets.WebsocketConnect
 import de.rmgk.delay.{Async, Callback}
 
 import scala.util.{Failure, Success}

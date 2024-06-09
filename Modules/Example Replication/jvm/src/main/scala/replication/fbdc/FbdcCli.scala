@@ -1,6 +1,6 @@
 package replication.fbdc
 
-import channel.tcp.{TCP, TCPConnection}
+import channels.tcp.{TCP, TCPConnection}
 
 import java.nio.file.Path
 import java.util.concurrent.Executors

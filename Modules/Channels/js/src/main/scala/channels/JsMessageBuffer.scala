@@ -1,4 +1,4 @@
-package channel
+package channels
 
 import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, given}
 

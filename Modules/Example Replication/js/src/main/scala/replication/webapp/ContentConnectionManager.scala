@@ -1,6 +1,6 @@
 package replication.webapp
 
-import channel.webnativewebsockets.WebsocketConnect
+import channels.webnativewebsockets.WebsocketConnect
 import org.scalajs.dom
 import reactives.default.*
 import replication.DataManager

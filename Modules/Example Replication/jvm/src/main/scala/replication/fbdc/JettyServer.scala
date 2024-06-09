@@ -1,6 +1,6 @@
 package replication.fbdc
 
-import channel.jettywebsockets.JettyWsListener
+import channels.jettywebsockets.JettyWsListener
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.ResourceHandler
 import org.eclipse.jetty.server.{Handler, Request, Response, Server, ServerConnector}

@@ -1,6 +1,6 @@
 package replication
 
-import channel.{Abort, ArrayMessageBuffer, ConnectionContext, LatentConnection, MessageBuffer}
+import channels.{Abort, ArrayMessageBuffer, ConnectionContext, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}

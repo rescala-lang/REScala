@@ -1,9 +1,8 @@
-package channel
+package channels
 
 import de.rmgk.delay.{Async, Callback}
 
 import java.nio.charset.StandardCharsets
-import scala.util.{Failure, Success, Try}
 
 trait MessageBuffer {
   def asArray: Array[Byte]
@@ -25,8 +24,6 @@ inline def context(using ctx: Abort): Abort = ctx
 
 type Prod[A] = Async[Abort, A]
 
-
-
 trait ConnectionContext {
   def send(message: MessageBuffer): Async[Any, Unit]
   def close(): Unit
@@ -44,4 +41,3 @@ type Incoming = ConnectionContext => Callback[MessageBuffer]
 trait LatentConnection {
   def prepare(incoming: Incoming): Async[Abort, ConnectionContext]
 }
-

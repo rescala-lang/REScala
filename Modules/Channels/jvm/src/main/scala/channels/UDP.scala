@@ -1,6 +1,6 @@
-package channel.udp
+package channels.udp
 
-import channel.*
+import channels.*
 import de.rmgk.delay.{Async, Callback, Sync}
 
 import java.net.{DatagramPacket, DatagramSocket, SocketAddress, SocketTimeoutException}

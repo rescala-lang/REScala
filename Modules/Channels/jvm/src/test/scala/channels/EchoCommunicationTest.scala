@@ -1,14 +1,14 @@
-package channel
+package channels
 
-import channel.jettywebsockets.{JettyWsConnection, JettyWsListener}
+import channels.jettywebsockets.{JettyWsConnection, JettyWsListener}
 import de.rmgk.delay.{Async, Callback}
 
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.{CountDownLatch, Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-import channel.tcp.TCP
-import channel.udp.UDP
+import channels.tcp.TCP
+import channels.udp.UDP
 import org.eclipse.jetty.http.pathmap.PathSpec
 
 import java.net.{InetSocketAddress, URI}

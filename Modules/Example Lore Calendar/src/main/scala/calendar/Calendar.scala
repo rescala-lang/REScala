@@ -4,7 +4,7 @@ import org.scalajs.dom.{document, window}
 import rdts.base.Uid
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-import channel.webrtc.Example
+import channels.webrtc.Example
 import scalatags.JsDom.all.*
 
 object Calendar {

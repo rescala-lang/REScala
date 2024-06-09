@@ -1,4 +1,4 @@
-package channel.webrtc
+package channels.webrtc
 
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Sync, syntax}

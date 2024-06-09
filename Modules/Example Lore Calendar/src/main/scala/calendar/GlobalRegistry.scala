@@ -1,7 +1,7 @@
 package calendar
 
-import channel.webrtc.WebRTCConnection
-import channel.{ArrayMessageBuffer, ConnectionContext, MessageBuffer}
+import channels.webrtc.WebRTCConnection
+import channels.{ArrayMessageBuffer, ConnectionContext, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromSubArray, writeToArray}
 import rdts.base.Lattice
 import rdts.dotted.Dotted

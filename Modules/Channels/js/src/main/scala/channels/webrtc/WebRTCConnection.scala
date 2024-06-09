@@ -1,7 +1,7 @@
-package channel.webrtc
+package channels.webrtc
 
-import channel.MesageBufferExtensions.asArrayBuffer
-import channel.{ConnectionContext, JsArrayBufferMessageBuffer, MessageBuffer, Prod}
+import channels.MesageBufferExtensions.asArrayBuffer
+import channels.{ConnectionContext, JsArrayBufferMessageBuffer, MessageBuffer, Prod}
 import de.rmgk.delay.{Async, Sync}
 import org.scalajs.dom
 import org.scalajs.dom.RTCDataChannelState
