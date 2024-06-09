@@ -115,8 +115,8 @@ object Example {
         conn.send(BroadcastCommunication.Hello(selfId).convert).run(using ())(errorReporter)
       case Failure(ex) => errorReporter.fail(ex)
     }
-
   }
+
   def addDataChannel(handling: WebRTCHandling) = {
 
     def handleConnection: Callback[WebRTCConnection] =

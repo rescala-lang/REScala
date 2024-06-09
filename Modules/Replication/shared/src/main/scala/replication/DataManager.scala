@@ -6,7 +6,6 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
-import rdts.dotted.{DottedLattice, HasDots}
 import rdts.syntax.LocalUid
 import rdts.time.Dots
 import reactives.default.{Event, Evt, Signal, Var}
@@ -15,13 +14,12 @@ import replication.ProtocolMessage.{Payload, Request}
 
 import java.nio.charset.StandardCharsets
 import java.util.Timer
-import scala.annotation.unused
 import scala.collection.mutable
 import scala.util.{Failure, Success}
 
-class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])
+class Binding[T](key: String)(using lat: Lattice[T], codec: JsonValueCodec[T])
 
-case class HMap(keys: Map[String, Key[?]], values: Map[String, Any])
+case class HMap(keys: Map[String, Binding[?]], values: Map[String, Any])
 
 sealed trait ProtocolMessage[+T]
 object ProtocolMessage {
@@ -104,6 +102,11 @@ class DataManager[State](
     localBuffer = dotted :: localBuffer
     changeEvt.fire(dotted)
     disseminateLocalBuffer()
+  }
+
+  def applyUnrelatedDelta(delta: State): Unit = lock.synchronized {
+    val nextDot = currentContext.now.nextDot(replicaId.uid)
+    applyLocalDelta(ProtocolDots(delta, Dots.single(nextDot)))
   }
 
   def transform(fun: State => State) = lock.synchronized {

@@ -116,13 +116,13 @@ object Example {
                   handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
           }.run(using ())(errorReporter)
       }
-    }.run(using Abort()){
+    }.run(using Abort()) {
       case Success(conn) =>
         conn.send(BroadcastCommunication.Hello(selfId).convert).run(using ())(errorReporter)
       case Failure(ex) => errorReporter.fail(ex)
     }
-
   }
+
   def addDataChannel(messages: dom.html.Div, input: dom.html.Input, handling: WebRTCHandling) = {
 
     def handleConnection: Callback[WebRTCConnection] =

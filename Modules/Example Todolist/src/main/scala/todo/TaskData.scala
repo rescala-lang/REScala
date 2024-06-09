@@ -9,9 +9,10 @@ import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{DeltaBuffer, LocalUid}
 import reactives.default.*
 import reactives.extra.Tags.*
-import scalatags.JsDom.TypedTag
+import replication.Storing
 import scalatags.JsDom.all.*
 import todo.Codecs.given
+import todo.GlobalDataManager.TodoRepState
 import todo.Todolist.replicaId
 
 import scala.Function.const
@@ -102,7 +103,16 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val remoteUpdates = GlobalRegistry.subscribeBranch[LastWriterWins[Option[TaskData]]](taskID)
+    val remoteUpdates = {
+
+      val changes = GlobalDataManager.dataManager.changes.collect(
+        Function.unlift { transfer => transfer.data.entries.get(taskID) }
+      )
+
+      changes.act[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] { delta =>
+        current.clearDeltas().applyDelta(Dotted(delta))
+      }
+    }
 
     extension (db: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]])
       def modTask(f: TaskData => TaskData): DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
@@ -117,8 +127,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
         )
       }(using Codecs.codecLww)
 
-    GlobalRegistry.publish(taskID, crdt)
-    GlobalRegistry.unbuffer(taskID)
+    GlobalDataManager.publish(crdt, entry => Bottom.empty[TodoRepState].copy(entries = Map(taskID -> entry.data)))
 
     val taskData = Signal {
       crdt.value.state.data.read.getOrElse(TaskData(desc = "LWW Empty"))

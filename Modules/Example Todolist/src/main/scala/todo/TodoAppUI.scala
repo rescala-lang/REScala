@@ -2,21 +2,20 @@ package todo
 
 import org.scalajs.dom
 import org.scalajs.dom.html.{Div, Input, LI}
-import org.scalajs.dom.{HTMLDivElement, KeyboardEvent, UIEvent, document, window}
+import org.scalajs.dom.{HTMLDivElement, window}
+import rdts.base.Bottom
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import reactives.default.*
 import reactives.extra.Tags.*
-import reactives.structure.Pulse
+import replication.Storing
 import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
-import scalatags.JsDom.{Attr, TypedTag}
 import todo.Codecs.given
+import todo.GlobalDataManager.TodoRepState
 import todo.Todolist.replicaId
-
-import scala.annotation.targetName
 
 class TodoAppUI(val storagePrefix: String) {
 
@@ -47,8 +46,6 @@ class TodoAppUI(val storagePrefix: String) {
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
     val taskOps  = new TaskOps(taskrefs, replicaId)
 
-    val deltaEvt = GlobalRegistry.subscribe[ReplicatedList[TaskRef]]("tasklist")
-
     val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
       Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
         Fold(init)(
@@ -57,11 +54,12 @@ class TodoAppUI(val storagePrefix: String) {
           Fold.branch {
             current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
           },
-          taskOps.handleDelta(deltaEvt)
+          // todo: does not restore full state
+          taskOps.handleDelta(GlobalDataManager.dataManager.changes)
         )
       }
 
-    GlobalRegistry.publish("tasklist", tasksRDT)
+    GlobalDataManager.publish(tasksRDT, list => Bottom.empty[TodoRepState].copy(list = list))
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
