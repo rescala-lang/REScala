@@ -1,4 +1,4 @@
-package replication.protocols
+package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
@@ -8,7 +8,7 @@ import rdts.syntax.LocalUid
 import rdts.syntax.LocalUid.replicaId
 import rdts.time.Dots
 
-case class Vote(owner: Uid, voter: Uid)
+case class Vote(leader: Uid, voter: Uid)
 
 case class Voting(rounds: Epoch[ReplicatedSet[Vote]], numParticipants: LastWriterWins[Int]) {
   def threshold: Int = numParticipants.value / 2 + 1
@@ -49,7 +49,7 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]], numParticipants: LastWrite
 
   def leadingCount(using id: LocalUid): (Uid, Int) =
     val votes: Set[Vote]       = rounds.value.elements
-    val grouped: Map[Uid, Int] = votes.groupBy(_.owner).map((o, elems) => (o, elems.size))
+    val grouped: Map[Uid, Int] = votes.groupBy(_.leader).map((o, elems) => (o, elems.size))
     if grouped.isEmpty
     then (replicaId, 0)
     else grouped.maxBy((o, size) => size)

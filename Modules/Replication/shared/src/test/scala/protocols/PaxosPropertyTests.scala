@@ -1,4 +1,4 @@
-package replication.protocols
+package protocols
 
 val a = 0
 //import rdts.syntax.LocalReplicaId

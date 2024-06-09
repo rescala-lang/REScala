@@ -1,6 +1,9 @@
-package replication.protocols
+package protocols
+
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.experiments.protocols
+import rdts.datatypes.experiments.protocols.{Vote, Voting}
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.LocalUid
@@ -12,7 +15,7 @@ class VotingTests2Participants extends munit.FunSuite {
   // create replicas for set of 2 participants
   val id1: LocalUid = LocalUid.gen()
   val id2: LocalUid = LocalUid.gen()
-  var voting = Dotted(Voting(
+  var voting = Dotted(protocols.Voting(
     rounds = Epoch.empty[ReplicatedSet[Vote]],
     numParticipants = LastWriterWins.now(2)
   ))
@@ -32,12 +35,12 @@ class VotingTests2Participants extends munit.FunSuite {
     assert(!voting.data.isOwner(using id2))
   }
   test("Is not owner for 4 participants") {
-    voting = voting.merge(Dotted(Voting(voting.data.rounds, LastWriterWins.now(4))))
+    voting = voting.merge(Dotted(protocols.Voting(voting.data.rounds, LastWriterWins.now(4))))
     assert(!voting.data.isOwner(using id1))
     assert(!voting.data.isOwner(using id2))
   }
   test("Is owner for 3 participants") {
-    voting = voting.merge(Dotted(Voting(voting.data.rounds, LastWriterWins.now(3))))
+    voting = voting.merge(Dotted(protocols.Voting(voting.data.rounds, LastWriterWins.now(3))))
     assert(voting.data.isOwner(using id1))
     assert(!voting.data.isOwner(using id2))
   }

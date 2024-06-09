@@ -1,7 +1,8 @@
-package replication.protocols.simplified
+package protocols
 
 import rdts.base.Lattice
 import rdts.base.Lattice.syntax.merge
+import rdts.datatypes.experiments.protocols.{MultiRoundVoting, SimpleVoting, Voting}
 import rdts.syntax.LocalUid
 
 class SimpleVotingTests extends munit.FunSuite {
@@ -12,7 +13,7 @@ class SimpleVotingTests extends munit.FunSuite {
   val id4 = LocalUid.gen()
 
   test("Voting for 4 participants") {
-    var voting: Voting = Voting.unchanged
+    var voting: SimpleVoting = SimpleVoting.unchanged
     voting = voting merge voting.voteFor(id1.uid)(using id1)
     assert(!voting.isLeader(using id1))
     voting = voting merge voting.voteFor(id1.uid)(using id2) merge voting.voteFor(id1.uid)(using id3)
@@ -20,7 +21,7 @@ class SimpleVotingTests extends munit.FunSuite {
     assert(!voting.isLeader(using id2))
 
     // voting again does not change anything:
-    assertEquals(voting.voteFor(id1.uid)(using id1), Voting.unchanged)
+    assertEquals(voting.voteFor(id1.uid)(using id1), SimpleVoting.unchanged)
   }
 
   test("Multiroundvoting for 4 participants") {
@@ -48,6 +49,6 @@ class SimpleVotingTests extends munit.FunSuite {
     // check that upkeep cleans
     voting = voting merge voting.upkeep(using id1)
     assertEquals(voting.rounds.counter, Integer.toUnsignedLong(3))
-    assertEquals(voting.rounds.value, Voting(Set.empty))
+    assertEquals(voting.rounds.value, SimpleVoting(Set.empty))
   }
 }

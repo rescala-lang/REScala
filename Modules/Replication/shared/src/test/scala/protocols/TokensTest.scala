@@ -1,7 +1,8 @@
-package replication.protocols
+package protocols
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.experiments.protocols.{Ownership, Token}
 import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
 import rdts.time.Dots

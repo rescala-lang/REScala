@@ -1,4 +1,4 @@
-package replication.protocols
+package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet

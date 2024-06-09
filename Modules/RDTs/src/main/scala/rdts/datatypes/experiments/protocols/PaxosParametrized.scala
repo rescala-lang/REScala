@@ -1,4 +1,4 @@
-package replication.protocols
+package rdts.datatypes.experiments.protocols
 
 import rdts.base.Lattice.setLattice
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
@@ -12,61 +12,56 @@ import rdts.time.Dots
 
 import scala.compiletime.{constValue, summonFrom}
 
-// message types
-case class Prepare(proposalNumber: Int)
-case class Promise[A](proposalNumber: Int, value: Option[A], acceptor: Uid)
-case class Accept[A](proposalNumber: Int, value: A)
-case class Accepted[A](proposalNumber: Int, value: A, acceptor: Uid)
-
-case class Paxos[A, N <: Int](
+case class PaxosParm[A](
     prepares: GrowOnlySet[Prepare],
     promises: GrowOnlySet[Promise[A]],
     accepts: GrowOnlySet[Accept[A]],
     accepteds: GrowOnlySet[Accepted[A]],
-)(using quorum: N) {
-  private def getQuorum: N = quorum
+    members: Set[Uid] // fixed!
+) {
+  private def quorum: Int = members.size / 2 + 1
 
-  def prepare()(using LocalUid, Bottom[A]): Paxos[A, N] =
+  def prepare()(using LocalUid, Bottom[A]): PaxosParm[A] =
     val proposalNumber = prepares.map(_.proposalNumber).maxOption.getOrElse(-1) + 1
     val prepare        = Prepare(proposalNumber)
 
-    Paxos.unchanged.copy(
+    PaxosParm.unchanged.copy(
       prepares = prepares.insert(prepare)
     )
 
-  def promise(prepareId: Int)(using LocalUid): Paxos[A, N] =
+  def promise(prepareId: Int)(using LocalUid): PaxosParm[A] =
     val highestProposal        = prepares.maxByOption(_.proposalNumber)
     val myHighestPromiseNumber = promises.filter(_.acceptor == replicaId).map(_.proposalNumber).maxOption.getOrElse(-1)
     // check if I already promised for an equally high id
     if myHighestPromiseNumber >= highestProposal.map(_.proposalNumber).getOrElse(-1)
     then
       // already promised for equally high id
-      Paxos.unchanged
+      PaxosParm.unchanged
     else
       // there is a new higher proposal
       // check if I already accepted a specific value
       val value =
         accepteds.filter(_.acceptor == replicaId).map(_.value).headOption
-      Paxos.unchanged.copy(
+      PaxosParm.unchanged.copy(
         promises = promises.insert(Promise(highestProposal.get.proposalNumber, value, replicaId))
       )
 
-  def accept(v: A)(using LocalUid): Paxos[A, N] =
+  def accept(v: A)(using LocalUid): PaxosParm[A] =
     val highestProposalNumber = promises.map(_.proposalNumber).maxOption
     val promisesForProposal   = promises.filter(_.proposalNumber == highestProposalNumber.getOrElse(-1))
     // check if accepted
     if promisesForProposal.size < quorum then
       // is not accepted
-      Paxos.unchanged
+      PaxosParm.unchanged
     else
       // is accepted, check if promise contains value
       val promisesWithVal = promisesForProposal.filter(_.value.isDefined)
       val value: A        = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
-      Paxos.unchanged.copy(
+      PaxosParm.unchanged.copy(
         accepts = accepts.insert(Accept(highestProposalNumber.get, value))
       )
 
-  def accepted()(using LocalUid): Paxos[A, N] =
+  def accepted()(using LocalUid): PaxosParm[A] =
     // get highest accept message
     val highestAccept = accepts.maxByOption(_.proposalNumber)
     if highestAccept.isEmpty || // there are no accepts
@@ -74,9 +69,9 @@ case class Paxos[A, N <: Int](
       promises.filter(_.acceptor == replicaId).map(_.proposalNumber).maxOption.getOrElse(-1) >
       highestAccept.get.proposalNumber
     then
-      Paxos.unchanged
+      PaxosParm.unchanged
     else
-      Paxos.unchanged.copy(accepteds =
+      PaxosParm.unchanged.copy(accepteds =
         accepteds.insert(Accepted(
           proposalNumber = highestAccept.get.proposalNumber,
           value = highestAccept.get.value,
@@ -84,7 +79,7 @@ case class Paxos[A, N <: Int](
         ))
       )
 
-  def upkeep()(using LocalUid): Paxos[A, N] =
+  def upkeep()(using LocalUid): PaxosParm[A] =
     // check which phase we are in
     val newestPrepare = prepares.map(_.proposalNumber).maxOption
     val newestAccept  = accepts.map(_.proposalNumber).maxOption
@@ -95,9 +90,9 @@ case class Paxos[A, N <: Int](
       // we are in accepted phase
       accepted()
     else
-      Paxos.unchanged
+      PaxosParm.unchanged
 
-  def write(value: A): Paxos[A, N] =
+  def write(value: A): PaxosParm[A] =
     // TODO: What would write look like? Maybe return false if we can't write at the moment?
     ???
 
@@ -109,25 +104,27 @@ case class Paxos[A, N <: Int](
     yield value
 }
 
-object Paxos {
+object PaxosParm {
 
-  given lattice[A, N <: Int]: Lattice[Paxos[A, N]] with
-    override def merge(left: Paxos[A, N], right: Paxos[A, N]): Paxos[A, N] =
-      Paxos[A, N](
+  given lattice[A]: Lattice[PaxosParm[A]] with
+    override def merge(left: PaxosParm[A], right: PaxosParm[A]): PaxosParm[A] =
+      PaxosParm[A](
         prepares = left.prepares merge right.prepares,
         promises = left.promises merge right.promises,
         accepts = left.accepts merge right.accepts,
-        accepteds = left.accepteds merge right.accepteds
-      )(using left.getQuorum)
+        accepteds = left.accepteds merge right.accepteds,
+        members = left.members
+      )
 
   // modify
   // delta?
 
-  def unchanged[A, N <: Int](using quorum: N): Paxos[A, N] =
-    Paxos[A, N](
+  def unchanged[A]: PaxosParm[A] =
+    PaxosParm[A](
       GrowOnlySet.empty[Prepare],
       GrowOnlySet.empty[Promise[A]],
       GrowOnlySet.empty[Accept[A]],
       GrowOnlySet.empty[Accepted[A]],
+      Set.empty[Uid]
     )
 }
