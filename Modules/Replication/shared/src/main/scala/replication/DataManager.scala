@@ -56,8 +56,8 @@ class DataManager[State](
       connections.foreach: con =>
         con.send(missingRequestMessage).run(using ())(debugCallback)
     },
-    4000,
-    4000
+    1000,
+    1000
   )
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
