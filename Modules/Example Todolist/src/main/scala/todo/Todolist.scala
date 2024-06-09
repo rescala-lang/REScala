@@ -2,14 +2,12 @@ package todo
 
 import org.scalajs.dom.{document, window}
 import rdts.base.Uid
-import replication.Storing
-import replication.JsoniterCodecs.given
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
 
-  val replicaId: Uid = Storing.initializedOnce("replicaId", Uid.gen())
+  val replicaId: Uid = Uid.gen()
 
   @JSExportTopLevel("Todolist")
   def run(): Unit = main(Array.empty[String])
