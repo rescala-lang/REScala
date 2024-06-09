@@ -119,30 +119,6 @@ object Example {
 
   def addDataChannel(handling: WebRTCHandling) = {
 
-    def handleConnection: Callback[WebRTCConnection] =
-      case Success(connection) =>
-        println("adding connection!!!!")
-        connection.receive.run(using Abort()):
-          case Success(msg) =>
-            GlobalRegistry.handle(msg)
-            ()
-          case Failure(err) =>
-            println(s"oh noes")
-            err.printStackTrace()
-            handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
-            ()
-
-        GlobalRegistry.addConnection(connection)
-
-      case Failure(err) =>
-        println(s"oh noes")
-        err.printStackTrace()
-        handling.peer.peerConnection.asInstanceOf[js.Dynamic].restartIce()
-        ()
-
-    // there is also a listener for non negotiated channels
-    // handling.peer.peerConnection.ondatachannel
-
     val channel = handling.peer.peerConnection.createDataChannel(
       Example.channelLabel,
       new dom.RTCDataChannelInit {
@@ -150,7 +126,8 @@ object Example {
         id = Example.channelId
       }
     )
-    WebRTCConnection.open(channel).run(using ())(handleConnection)
+
+    GlobalDataManager.dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
 
   }
 
