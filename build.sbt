@@ -258,7 +258,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Replication"))
-  .dependsOn(reactives, rdts, channels, aead)
+  .dependsOn(reactives, rdts, channels, aead, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
     Dependencies.munitCheck,
@@ -268,7 +268,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Re
 
 lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full)
   .in(file("Modules/Example Replication"))
-  .dependsOn(replication, rdts % "compile->compile;test->test")
+  .dependsOn(replication)
   .settings(
     scala3defaults,
     run / fork         := true,

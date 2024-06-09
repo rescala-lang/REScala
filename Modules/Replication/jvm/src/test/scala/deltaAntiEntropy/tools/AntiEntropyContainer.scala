@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tools
 
-import rdts.base.{Lattice, Uid}
 import rdts.base.Uid.asId
+import rdts.base.{Lattice, Uid}
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{LocalUid, PermCausalMutate, PermMutate}
 import rdts.time.Dots
