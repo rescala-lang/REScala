@@ -199,14 +199,10 @@ lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
   )
 
 lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plugin/examples"))
-  .dependsOn(lore.jvm, loreCompilerPlugin)
+  .dependsOn(lore.jvm)
   .settings(
     scala3defaults,
     Dependencies.munit,
-    autoCompilerPlugins := true,
-    libraryDependencies += compilerPlugin(
-      (loreCompilerPlugin / projectID).value
-    ),
     scalacOptions += {
       val pluginClasspath = (loreCompilerPlugin / Compile / fullClasspathAsJars).value
         .map(at => at.data).mkString(java.io.File.pathSeparator)
