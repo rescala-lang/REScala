@@ -3,10 +3,10 @@ package replication
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Uid
+import rdts.datatypes.*
 import rdts.datatypes.alternatives.ResettableCounter
-import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister, ObserveRemoveMap, ReplicatedList, ReplicatedSet}
+import rdts.datatypes.contextual.*
 import rdts.datatypes.experiments.AuctionInterface.AuctionData
-import rdts.datatypes.{Epoch, GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter, TwoPhaseSet}
 import rdts.dotted.Dotted
 import rdts.time.{ArrayRanges, Dot, Dots, Time}
 

@@ -1,13 +1,13 @@
 package replication
 
-import channels.{Abort, ArrayMessageBuffer, ConnectionContext, LatentConnection, MessageBuffer}
+import channels.*
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
-import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{LocalUid, PermCausalMutate}
+import rdts.dotted.{DottedLattice, HasDots}
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 import reactives.default.{Event, Evt, Signal, Var}
 import replication.JsoniterCodecs.given
@@ -16,7 +16,7 @@ import replication.ProtocolMessage.{Payload, Request}
 import java.nio.charset.StandardCharsets
 import java.util.Timer
 import scala.annotation.unused
-import scala.collection.{View, mutable}
+import scala.collection.mutable
 import scala.util.{Failure, Success}
 
 class Key[T](@unused name: String)(using @unused lat: DottedLattice[T], @unused hado: HasDots[T])

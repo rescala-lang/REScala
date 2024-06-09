@@ -61,6 +61,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
 
 lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .in(file("Modules/Channels"))
+  .dependsOn(rdts)
   .settings(
     Settings.scala3defaults,
     Dependencies.slips.delay,
@@ -256,9 +257,18 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Settings.sourcemapFromEnv(),
   )
 
+lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Replication"))
+  .dependsOn(reactives, rdts, channels, aead)
+  .settings(
+    scala3defaults,
+    Dependencies.munitCheck,
+    Dependencies.munit,
+    Dependencies.jsoniterScala,
+  )
+
 lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full)
   .in(file("Modules/Example Replication"))
-  .dependsOn(reactives, rdts, aead, rdts % "compile->compile;test->test", channels)
+  .dependsOn(replication, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
     run / fork         := true,
@@ -292,7 +302,7 @@ lazy val reswing = project.in(file("Modules/Swing"))
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rdts.js, reactives.js, channels.js)
+  .dependsOn(replication.js)
   .settings(
     scala3defaults,
     Settings.resolverJitpack,
