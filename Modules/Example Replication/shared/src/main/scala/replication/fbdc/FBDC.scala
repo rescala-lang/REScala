@@ -8,7 +8,7 @@ import rdts.datatypes.*
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.{DeltaBuffer, LocalUid, PermCausalMutate}
+import rdts.syntax.LocalUid
 import rdts.time.VectorClock
 import reactives.operator.Signal
 import replication.DataManager

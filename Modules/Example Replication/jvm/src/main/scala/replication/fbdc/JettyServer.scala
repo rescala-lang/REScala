@@ -2,15 +2,14 @@ package replication.fbdc
 
 import channels.jettywebsockets.JettyWsListener
 import org.eclipse.jetty.http.pathmap.PathSpec
+import org.eclipse.jetty.server.*
 import org.eclipse.jetty.server.handler.ResourceHandler
-import org.eclipse.jetty.server.{Handler, Request, Response, Server, ServerConnector}
 import org.eclipse.jetty.util.Callback
 import org.eclipse.jetty.util.resource.ResourceFactory
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 import replication.DataManager
 
 import java.nio.file.Path
-import scala.util.{Failure, Success}
 
 class JettyServer(
     staticPath: Option[Path],

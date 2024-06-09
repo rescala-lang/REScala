@@ -3,13 +3,12 @@ package replication.calendar
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.{Dotted, DottedLattice}
-import replication.calendar.Bindings.*
-import replication.calendar.SyncMessage.{AppointmentMessage, CalendarState, FreeMessage, RaftMessage, WantMessage}
+import replication.calendar.SyncMessage.*
 
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
-class Peer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
+class SynchronizationPointCalendarPeer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
   implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 

@@ -2,10 +2,7 @@ package replication.webapp
 
 import channels.webnativewebsockets.WebsocketConnect
 import org.scalajs.dom
-import reactives.default.*
 import replication.DataManager
-
-import scala.util.{Failure, Success}
 
 class ContentConnectionManager(dataManager: DataManager[?]) {
 

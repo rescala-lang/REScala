@@ -15,7 +15,6 @@ import scalatags.JsDom.attrs.id
 import scalatags.JsDom.implicits.{stringAttr, stringFrag}
 import scalatags.JsDom.tags.{SeqFrag, body}
 import scalatags.JsDom.tags2
-import scalatags.JsDom.tags2.main
 
 import scala.annotation.nowarn
 import scala.concurrent.Future

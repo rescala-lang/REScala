@@ -7,8 +7,6 @@ import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
 import replication.JsoniterCodecs
 
-import scala.concurrent.Future
-
 sealed trait SyncMessage
 object SyncMessage {
   type CalendarState = Dotted[ReplicatedSet[Appointment]]

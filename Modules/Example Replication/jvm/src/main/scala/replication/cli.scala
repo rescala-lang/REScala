@@ -42,7 +42,11 @@ object cli {
       inline def ipsAndPorts = named[List[(String, Int)]]("--connectTo", "<ip:port>", Nil)
 
       subcommand("calendar", ""):
-        new replication.calendar.Peer(Uid.predefined(id.value), listenPort.value, ipsAndPorts.value).run()
+        new replication.calendar.SynchronizationPointCalendarPeer(
+          Uid.predefined(id.value),
+          listenPort.value,
+          ipsAndPorts.value
+        ).run()
       .value
 
       subcommand("dtn", ""):

@@ -10,7 +10,6 @@ import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.syntax.LocalUid
 import replication.JsoniterCodecs.given
-import replication.dtn.Replica
 
 import scala.collection.mutable
 

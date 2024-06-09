@@ -6,7 +6,6 @@ import org.scalajs.dom.html.TableRow
 import rdts.base.Uid
 import reactives.default.*
 import reactives.extra.Tags.*
-import replication.DataManager
 import replication.fbdc.{FbdcExampleData, Req}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*

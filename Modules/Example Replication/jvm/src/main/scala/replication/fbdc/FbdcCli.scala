@@ -1,11 +1,10 @@
 package replication.fbdc
 
-import channels.tcp.{TCP, TCPConnection}
+import channels.tcp.TCP
 
 import java.nio.file.Path
 import java.util.concurrent.Executors
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext
 
 case class CliConnections(
     `tcp-listen-port`: Option[Int],
