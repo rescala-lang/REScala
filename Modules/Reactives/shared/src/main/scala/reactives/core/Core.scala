@@ -194,8 +194,7 @@ trait Scheduler[S[_]] {
   override def toString: String = s"Scheduler($schedulerName)"
 }
 
-/**
-  */
+/** Some apis expect an implicit scheduler for historic reasons. This guarantees they work */
 object Scheduler {
   given implicitScheduler: Scheduler[reactives.SelectedScheduler.State] =
     reactives.SelectedScheduler.candidate.scheduler
