@@ -22,7 +22,5 @@ abstract class RETests extends munit.FunSuite {
       ): Nothing = compare.failEqualsComparison(expected, obtained, title, loc, assertions)
     }
   )
-
-  def multiEngined(block: reactives.default.type => Any): Unit = block(reactives.default)
-
+  
 }
