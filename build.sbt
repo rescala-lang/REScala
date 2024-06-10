@@ -24,6 +24,8 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   reactives.js,
   reactives.jvm,
   reactives.native,
+  replication.js,
+  replication.jvm,
   replicationExamples.js,
   replicationExamples.jvm,
   rescalafx,
