@@ -1,7 +1,7 @@
 package reactives.operator
 
 import reactives.core.{CreationTicket, DynamicTicket, ReSource}
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.{Pulse, SignalImpl}
 
 /** Folds when any one of a list of events occurs, if multiple events occur, every fold is executed in order.

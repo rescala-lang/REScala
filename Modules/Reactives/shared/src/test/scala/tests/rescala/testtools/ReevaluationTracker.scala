@@ -1,10 +1,9 @@
 package tests.rescala.testtools
 
 import reactives.core.CreationTicket
-import reactives.default.global.State as BundleState
-import reactives.operator.Interface
+import reactives.SelectedScheduler.candidate.State as BundleState
 
-class ReevaluationBundle[T <: Interface](val api: T) {
+class ReevaluationBundle(val api: reactives.default.type) {
   import api.*
 
   class ReevaluationTracker[A, R[_]](reactive: R[A])(using turnSource: CreationTicket[BundleState])

@@ -3,7 +3,7 @@ package lore.dsl
 import reactives.core.ReSource
 import reactives.operator.Fold.current
 import reactives.operator.{Event, Fold, FoldState}
-import reactives.operator.Interface.State as BundleState
+import reactives.SelectedScheduler.State as BundleState
 
 import scala.annotation.{static, targetName}
 import scala.quoted.{Expr, Quotes, Type}

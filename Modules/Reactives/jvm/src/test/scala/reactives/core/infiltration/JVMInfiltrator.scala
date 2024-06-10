@@ -1,6 +1,5 @@
 package reactives.core.infiltration
 
-import reactives.operator.Interface
 import reactives.parrp.ParRP
 
 /** Accesses private[rescala] values for some low level tests */

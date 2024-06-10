@@ -6,7 +6,7 @@ import reactives.core.ReSource
 import scala.annotation.{static, targetName}
 import scala.quoted.*
 import reactives.default.*
-import reactives.operator.Interface.State as BundleState
+import reactives.SelectedScheduler.State as BundleState
 
 trait Interaction[S <: Tuple, A] {
   type T[_ <: S, _ <: A] <: Interaction[S, A]

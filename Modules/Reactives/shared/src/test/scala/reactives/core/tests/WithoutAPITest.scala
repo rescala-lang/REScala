@@ -1,8 +1,7 @@
 package reactives.core.tests
 
 import reactives.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
-import reactives.operator.Interface
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
@@ -12,7 +11,7 @@ class WithoutAPITest extends RETests {
     class CustomSource[T](initState: State[T]) extends reactives.core.ReSource with ReadAs[T] {
       outer =>
 
-      override type State[V] = Interface.State[V]
+      override type State[V] = reactives.SelectedScheduler.State[V]
 
       override type Value = T
       override protected[reactives] def state: State[T]            = initState
@@ -38,7 +37,7 @@ class WithoutAPITest extends RETests {
     ) extends Derived
         with ReadAs[String] {
       override type Value    = String
-      override type State[V] = Interface.State[V]
+      override type State[V] = reactives.SelectedScheduler.State[V]
       override protected[reactives] def state: State[Value]        = initState
       override val info: ReInfo                                    = ReInfo.create
       override protected[reactives] def commit(base: Value): Value = base

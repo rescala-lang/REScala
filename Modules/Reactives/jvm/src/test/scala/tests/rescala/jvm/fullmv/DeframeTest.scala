@@ -9,12 +9,12 @@ import reactives.structure.Pulse
 import scala.concurrent.duration.Duration
 
 class DeframeTest extends munit.FunSuite {
-  if reactives.default.global.scheduler.isInstanceOf[FullMVEngine] then {
+  if reactives.SelectedScheduler.candidate.scheduler.isInstanceOf[FullMVEngine] then {
     import reactives.default.*
 
     implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf
 
-    val engine: FullMVEngine = reactives.default.global.scheduler.asInstanceOf[FullMVEngine]
+    val engine: FullMVEngine = reactives.SelectedScheduler.candidate.scheduler.asInstanceOf[FullMVEngine]
 
     test("deframe") {
 

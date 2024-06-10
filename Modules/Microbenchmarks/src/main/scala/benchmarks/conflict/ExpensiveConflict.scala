@@ -2,7 +2,7 @@ package benchmarks.conflict
 
 import benchmarks.{EngineParam, Workload}
 import org.openjdk.jmh.annotations.*
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -32,7 +32,7 @@ class ExpensiveConflict {
 
   var input: AtomicInteger = new AtomicInteger(0)
 
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type     = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine.*
 

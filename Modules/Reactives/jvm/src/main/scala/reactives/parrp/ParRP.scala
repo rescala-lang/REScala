@@ -2,7 +2,6 @@ package reactives.parrp
 
 import reactives.core.Scheduler
 import reactives.locking.*
-import reactives.operator.Interface
 import reactives.scheduler.Levelbased
 
 object ParRPDefault extends ParRP {

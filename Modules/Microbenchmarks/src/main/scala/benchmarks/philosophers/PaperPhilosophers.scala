@@ -1,8 +1,8 @@
 package benchmarks.philosophers
 
 import reactives.core.{CreationTicket, ReInfo, ReSource}
-import reactives.default.global.State as BundleState
-import reactives.operator.Interface
+import reactives.SelectedScheduler.State as BundleState
+
 import reactives.parrp.Backoff
 
 import java.util.concurrent.locks.ReentrantLock
@@ -11,6 +11,8 @@ import scala.annotation.tailrec
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
+import reactives.default.*
+
 
 sealed trait Dynamicity
 object Dynamicity {
@@ -18,9 +20,8 @@ object Dynamicity {
   case object SemiStatic extends Dynamicity
   case object Dynamic    extends Dynamicity
 }
-abstract class PaperPhilosophers(val size: Int, val engine: Interface, dynamicity: Dynamicity) {
+abstract class PaperPhilosophers(val size: Int, val engine: Any, dynamicity: Dynamicity) {
 
-  import engine.*
 
   sealed trait Philosopher
 

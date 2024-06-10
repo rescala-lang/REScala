@@ -2,7 +2,7 @@ package benchmarks.dynamic
 
 import benchmarks.{EngineParam, Step}
 import org.openjdk.jmh.annotations.*
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class SingleSwitch {
 
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type     = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine.*
 
@@ -33,7 +33,7 @@ class SingleSwitch {
       if step.test(source.value) then d1.value else d2.value
     }
 
-    if engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then isManual = true
+    if reactives.SelectedScheduler.candidate.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then isManual = true
 
   }
 

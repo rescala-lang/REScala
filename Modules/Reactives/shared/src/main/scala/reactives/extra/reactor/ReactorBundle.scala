@@ -3,14 +3,14 @@ package reactives.extra.reactor
 import reactives.core.{CreationTicket, Derived, ReInfo, Scheduler}
 import reactives.macros.MacroAccess
 import reactives.operator.*
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 
 class Reactor[T](
     initState: State[ReactorState[T]]
 ) extends Derived with MacroAccess[T] {
 
   override type Value    = ReactorState[T]
-  override type State[V] = Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
 
   override protected[reactives] def state: State[ReactorState[T]] = initState
 

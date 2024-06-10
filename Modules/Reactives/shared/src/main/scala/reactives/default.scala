@@ -1,10 +1,8 @@
-package reactives.operator
+package reactives
 
-import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScope, ReSource, Scheduler, Transaction}
-import reactives.operator.Interface.State
+import reactives.core.{AdmissionTicket, ReSource, Transaction}
+import reactives.SelectedScheduler.State
 import reactives.scheduler.{GlobalCandidate, LevelbasedVariants}
-
-import scala.util.DynamicVariable
 
 /** [[Event]] and [[Signal]] represent different time-changing values, commonly referred to as reactives.
   * Use [[Var]] to create signal sources and [[Evt]] to create event sources.
@@ -12,14 +10,12 @@ import scala.util.DynamicVariable
   * Events and signals can be created from other reactives by using combinators,
   * signals additionally can be created using [[Signal]] expressions.
   */
-trait Interface {
+object default {
 
   export reactives.operator.{Signal, Event, Var, Evt, Fold, Flatten}
   export Fold.current
 
-  val global: GlobalCandidate[GlobalCandidate.selected.State] = GlobalCandidate.selected
-
-  override def toString: String = s"Api»${global.scheduler.schedulerName}«"
+  override def toString: String = s"Api»${SelectedScheduler.candidate.scheduler.schedulerName}«"
 
   /** Executes a transaction.
     *
@@ -33,7 +29,7 @@ trait Interface {
     * @example transaction(a, b){ implicit at => a.set(5); b.set(1); at.now(a) }
     */
   def transaction[R](initialWrites: ReSource.of[State]*)(admissionPhase: AdmissionTicket[State] ?=> R): R = {
-    global.scheduler.forceNewTransaction(initialWrites*)(admissionPhase(using _))
+    SelectedScheduler.candidate.scheduler.forceNewTransaction(initialWrites*)(admissionPhase(using _))
   }
 
   /** Executes a transaction with WrapUpPhase.
@@ -53,6 +49,8 @@ trait Interface {
   }
 }
 
-object Interface {
+object SelectedScheduler {
+  val candidate: GlobalCandidate[GlobalCandidate.selected.State] = GlobalCandidate.selected
+
   type State[V] = reactives.scheduler.GlobalCandidate.selected.State[V]
 }

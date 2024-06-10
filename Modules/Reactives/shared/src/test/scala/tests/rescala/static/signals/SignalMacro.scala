@@ -1,7 +1,7 @@
 package tests.rescala.static.signals
 
 import reactives.core.{CreationScope, CreationTicket}
-import reactives.default.global.State as BundleState
+import reactives.SelectedScheduler.candidate.State as BundleState
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests {

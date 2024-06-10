@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
 import munit.{Assertions, Compare, Location}
-import reactives.operator.Interface
+import reactives.SelectedScheduler
 
 abstract class RETests extends munit.FunSuite {
 
@@ -23,6 +23,6 @@ abstract class RETests extends munit.FunSuite {
     }
   )
 
-  def multiEngined(block: Interface => Any): Unit = block(reactives.default)
+  def multiEngined(block: reactives.default.type => Any): Unit = block(reactives.default)
 
 }

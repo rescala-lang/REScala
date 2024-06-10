@@ -1,8 +1,7 @@
 package reactives.structure
 
 import reactives.core.*
-import reactives.operator.Interface
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.Pulse.NoChange
 
 abstract class DerivedImpl[T](
@@ -13,7 +12,7 @@ abstract class DerivedImpl[T](
     with Derived
     with DisconnectableImpl {
 
-  override type State[V] = Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
 
   override protected[reactives] def guardedReevaluate(rein: ReIn): Rout = {
     val rein2 = isDynamicWithStaticDeps match {

@@ -1,7 +1,7 @@
 package tests.rescala.misc
 
 import reactives.core.{CreationTicket, DynamicTicket}
-import reactives.default.global.State as BundleState
+import reactives.SelectedScheduler.candidate.State as BundleState
 import tests.rescala.testtools.RETests
 
 class LightImplicitSyntaxTest extends RETests {

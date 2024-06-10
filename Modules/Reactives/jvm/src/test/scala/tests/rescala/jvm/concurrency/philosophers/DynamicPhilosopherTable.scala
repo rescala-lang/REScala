@@ -1,10 +1,9 @@
 package tests.rescala.concurrency.philosophers
 
 import reactives.core.ReInfo
-import reactives.operator.Interface
 import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 
-class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: Interface)
+class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.type )
     extends PhilosopherTable(philosopherCount)(ri) {
   import interface.{Signal, Var}
 

@@ -2,7 +2,7 @@ package reactives.operator
 
 import reactives.core.*
 import reactives.macros.MacroAccess
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.EmptySignalControlThrowable
 import reactives.structure.*
@@ -29,7 +29,7 @@ import scala.collection.immutable.{LinearSeq, Queue}
   */
 trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
 
-  type State[V] = Interface.State[V]
+  type State[V] = reactives.SelectedScheduler.State[V]
 
   implicit def internalAccess(v: Value): Pulse[T]
 

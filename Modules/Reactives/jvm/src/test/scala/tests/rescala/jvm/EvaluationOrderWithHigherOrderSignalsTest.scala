@@ -1,6 +1,5 @@
 package tests.rescala.jvm
 
-import reactives.operator.Interface
 import tests.rescala.testtools.RETests
 
 sealed trait ChangeX
@@ -9,7 +8,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged   extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
-  def run(engine: Interface, changeX: ChangeX): Unit = {
+  def run(engine: reactives.default.type , changeX: ChangeX): Unit = {
     import engine.*
 
     val initialX = "initialValue"

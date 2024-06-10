@@ -1,7 +1,7 @@
 package reactives.extra.lenses
 
 import reactives.core.{CreationScope, CreationTicket, CreationTicketCont, Disconnectable, PlanTransactionScope, Scheduler}
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.operator.{Event, Evt, Flatten, Signal}
 
 /** LVars serve as the basis for reactive lenses. To create the root of a new LVar cluster, use the apply() function

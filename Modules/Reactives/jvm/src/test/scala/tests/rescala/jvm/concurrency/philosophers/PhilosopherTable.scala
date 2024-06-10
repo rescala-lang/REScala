@@ -1,12 +1,11 @@
 package tests.rescala.concurrency.philosophers
 
 import reactives.core.Transaction
-import reactives.operator.Interface
 import reactives.parrp.Backoff
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
+class PhilosopherTable(philosopherCount: Int)(val interface: reactives.default.type ) {
   import interface.*
   import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 
@@ -101,7 +100,7 @@ class PhilosopherTable(philosopherCount: Int)(val interface: Interface) {
       rightFork: Signal[Fork],
       vision: Signal[Vision]
   ) {
-    def inspect(t: Transaction[global.State]): String =
+    def inspect(t: Transaction[reactives.SelectedScheduler.State]): String =
       s"Seating(${t.now(philosopher)}, ${t.now(leftFork)}, ${t.now(rightFork)}, ${t.now(vision)})"
   }
 

@@ -1,7 +1,7 @@
 package reactives.extra.precondition
 
 import reactives.core.{AdmissionTicket, DynamicTicket, ReSource}
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 
 class Precondition[T](val accessed: List[ReSource.of[State]], fun: DynamicTicket[State] => T) {
   def check(using at: AdmissionTicket[State]): T =

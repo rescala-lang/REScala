@@ -3,7 +3,7 @@ package api2
 import reactives.default.*
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import reactives.core.ReSource
-import reactives.default.global.State as BundleState
+import reactives.SelectedScheduler.State as BundleState
 
 trait RemoteGraph {
   protected var connector: Option[RemoteGraphConnector] = None

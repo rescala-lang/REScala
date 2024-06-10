@@ -2,7 +2,7 @@ package benchmarks.errorprop
 
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 import scala.util.Try
@@ -16,7 +16,7 @@ import scala.util.Try
 @State(Scope.Thread)
 class MonadicErrors {
 
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type     = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine.*
 

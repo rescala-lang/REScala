@@ -3,7 +3,7 @@ package tests.rescala.misc
 import reactives.core.CreationScope.{DynamicCreationScope, StaticCreationScope}
 import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScopeImpl, Scheduler, Transaction}
 import reactives.default.transaction
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class CreationTicketTest extends RETests {
@@ -45,7 +45,7 @@ class CreationTicketTest extends RETests {
   }
 
   test("implicit In Closures") {
-    val closureDefinition: Transaction[State] = getTurn(using reactives.default.global.scheduler)
+    val closureDefinition: Transaction[State] = getTurn(using reactives.SelectedScheduler.candidate.scheduler)
     val closure = {
       implicit def it: Transaction[State] = closureDefinition
       () => implicitly[CreationTicket[State]]

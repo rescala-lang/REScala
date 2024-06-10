@@ -3,7 +3,7 @@ package benchmarks.dynamic
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 import scala.collection.immutable.Range
@@ -14,7 +14,7 @@ import scala.collection.immutable.Range
 @State(Scope.Benchmark)
 class StackState {
 
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type     = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine.*
 
@@ -27,7 +27,7 @@ class StackState {
   def setup(params: BenchmarkParams, eParam: EngineParam, work: Workload, size: Size, step: Step) = {
     engine = eParam.engine
     val threads = params.getThreads
-    if engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then { isManual = true }
+    if reactives.SelectedScheduler.candidate.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then { isManual = true }
     sources = Range(0, threads).map(_ => Var(0)).toArray
     results = sources.map { source =>
       var cur: Signal[Int] = source

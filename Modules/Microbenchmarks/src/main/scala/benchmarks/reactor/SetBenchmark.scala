@@ -3,7 +3,7 @@ package benchmarks.reactor
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 import reactives.extra.reactor.{Reactor, S}
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class SetBenchmark {
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type     = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
   import stableEngine.*
 

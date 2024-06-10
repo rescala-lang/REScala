@@ -2,7 +2,7 @@ package reactives.operator
 
 import reactives.core.*
 import reactives.macros.MacroAccess
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 
@@ -22,7 +22,7 @@ import scala.util.control.NonFatal
   * @groupprio accessor 5
   */
 trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
-  override type State[V] = Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
   override type Value <: Pulse[T]
   override def read(v: Value): T = v.get
 
@@ -42,7 +42,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     * @group accessor
     */
   final def readValueOnce: T = {
-    RExceptions.toExternalReadException(this, reactives.default.global.scheduler.singleReadValueOnce(this))
+    RExceptions.toExternalReadException(this, reactives.SelectedScheduler.candidate.scheduler.singleReadValueOnce(this))
   }
 
   /** add an observer

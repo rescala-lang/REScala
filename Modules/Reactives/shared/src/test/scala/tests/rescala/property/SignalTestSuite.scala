@@ -3,7 +3,7 @@ package tests.rescala.property
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
 import reactives.core.infiltration.Infiltrator
-import reactives.operator.Interface
+import reactives.SelectedScheduler
 import reactives.scheduler.Levelbased
 import tests.rescala.testtools.RETests
 
@@ -13,7 +13,7 @@ import scala.util.Random
 
 class SignalTestSuite extends munit.ScalaCheckSuite {
   import reactives.default as engine
-  val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
+  val ie = new Infiltrator()
   import ie.api.*
   import ie.assertLevel
 

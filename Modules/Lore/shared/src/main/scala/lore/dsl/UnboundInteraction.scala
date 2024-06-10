@@ -2,7 +2,7 @@ package lore.dsl
 
 import reactives.core.ReSource
 import reactives.operator.Event
-import reactives.operator.Interface.State as BundleState
+import reactives.SelectedScheduler.State as BundleState
 
 import scala.quoted.{Expr, Quotes, Type}
 

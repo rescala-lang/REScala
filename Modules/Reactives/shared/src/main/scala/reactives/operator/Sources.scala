@@ -1,7 +1,7 @@
 package reactives.operator
 
 import reactives.core.{AdmissionTicket, Base, CreationTicket, InitialChange, Observation, PlanTransactionScope, ReInfo, ReSource, Scheduler}
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.Pulse
 
 trait Source[T] extends reactives.core.ReSource {

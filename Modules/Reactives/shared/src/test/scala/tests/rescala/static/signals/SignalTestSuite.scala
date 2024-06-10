@@ -1,7 +1,7 @@
 package tests.rescala.static.signals
 
 import reactives.core.infiltration.Infiltrator
-import reactives.operator.Interface
+import reactives.SelectedScheduler
 import reactives.scheduler.Levelbased
 import tests.rescala.testtools.RETests
 
@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class SignalTestSuite extends RETests {
   multiEngined { engine =>
-    val ie = new Infiltrator(engine.asInstanceOf[Interface & Levelbased])
+    val ie = new Infiltrator()
     import ie.api.*
     import ie.assertLevel
 

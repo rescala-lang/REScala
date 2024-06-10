@@ -3,7 +3,7 @@ package examples.demo.ui
 import examples.demo.Pos
 import reactives.core.AdmissionTicket
 import reactives.default.*
-import reactives.default.global.State as BundleState
+import reactives.SelectedScheduler.State as BundleState
 
 import java.awt.{Color, Graphics2D}
 

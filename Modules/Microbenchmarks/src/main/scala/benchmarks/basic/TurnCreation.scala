@@ -2,7 +2,7 @@ package benchmarks.basic
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
-import reactives.operator.Interface
+
 
 import java.util.concurrent.TimeUnit
 
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class TurnCreation {
 
-  var engine: Interface       = scala.compiletime.uninitialized
+  var engine: reactives.default.type        = scala.compiletime.uninitialized
   final lazy val stableEngine = engine
 
   @Setup

@@ -2,7 +2,7 @@ package reactives.extra.incremental
 
 import reactives.core.*
 import reactives.operator.*
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}
@@ -17,7 +17,7 @@ trait ReactiveDeltaSeq[T] extends Derived with DisconnectableImpl {
   /** the value of deltas send through the set */
   override type Value = Delta[T]
 
-  override type State[V] = Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
 
   /** Returns current ReactiveDeltaSeq as an Event
     *

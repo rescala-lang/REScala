@@ -1,9 +1,9 @@
 package benchmarks.philosophers
 
 import benchmarks.philosophers.PhilosopherTable.*
-import reactives.operator.Interface
 
-class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: Interface)
+
+class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val engine: reactives.default.type )
     extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.*
@@ -48,7 +48,7 @@ class DynamicPhilosopherTable(philosopherCount: Int, work: Long)(override val en
 }
 
 class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
-    override val engine: Interface
+    override val engine: reactives.default.type
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.*
@@ -83,7 +83,7 @@ class HalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
 }
 
 class OtherHalfDynamicPhilosopherTable(philosopherCount: Int, work: Long)(
-    override implicit val engine: Interface
+    override implicit val engine: reactives.default.type
 ) extends PhilosopherTable(philosopherCount, work)(engine) {
 
   import engine.{Signal, Var}

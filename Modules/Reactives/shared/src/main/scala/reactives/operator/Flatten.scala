@@ -1,7 +1,7 @@
 package reactives.operator
 
 import reactives.core.CreationTicket
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 
 import scala.annotation.{implicitNotFound, nowarn}
 import scala.collection.IterableOps

@@ -3,8 +3,7 @@ package benchmarks.basic
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 import reactives.core.Scheduler
-import reactives.default.global.State as BundleState
-import reactives.operator.Interface
+import reactives.SelectedScheduler.State as BundleState
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
@@ -18,7 +17,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 @State(Scope.Benchmark)
 class SingleVar {
 
-  var engine: Interface  = scala.compiletime.uninitialized
+  var engine: reactives.default.type   = scala.compiletime.uninitialized
   final lazy val engineT = engine
 
   var source: engineT.Var[Boolean] = scala.compiletime.uninitialized
@@ -30,7 +29,7 @@ class SingleVar {
     engine = engineParam.engine
     current = false
     source = engineT.Var(current)
-    if engineParam.engine.global.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then
+    if reactives.SelectedScheduler.candidate.scheduler == reactives.scheduler.LevelbasedVariants.unmanaged then
       lock = new ReentrantReadWriteLock()
   }
 

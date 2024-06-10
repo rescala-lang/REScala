@@ -1,7 +1,5 @@
 package reactives.core
 
-import reactives.operator.Interface
-
 case class TransactionSearch[State[_]](static: Option[Transaction[State]])
 object TransactionSearch extends LowPrioTransactionScope {
   inline given search[State[_]](using tx: Transaction[State]): TransactionSearch[State]     = static(tx)
@@ -45,8 +43,10 @@ object CreationScope {
     override def embedCreation[T](f: Transaction[State] ?=> T): T = ds.dynamicTransaction(f)
   }
 
-  inline given search(using ts: TransactionSearch[Interface.State]): CreationScope[Interface.State] = ts.static match
-    case None     => DynamicCreationScope(reactives.default.global.dynamicScope)
+  inline given search(using
+      ts: TransactionSearch[reactives.SelectedScheduler.State]
+  ): CreationScope[reactives.SelectedScheduler.State] = ts.static match
+    case None     => DynamicCreationScope(reactives.SelectedScheduler.candidate.dynamicScope)
     case Some(tx) => StaticCreationScope(tx)
 }
 
@@ -75,8 +75,13 @@ object PlanTransactionScope {
           scheduler.forceNewTransaction(inintialWrites*)(admission)
   }
 
-  inline given search(using ts: TransactionSearch[Interface.State]): PlanTransactionScope[Interface.State] =
+  inline given search(using
+      ts: TransactionSearch[reactives.SelectedScheduler.State]
+  ): PlanTransactionScope[reactives.SelectedScheduler.State] =
     ts.static match
-      case None => DynamicTransactionLookup(reactives.default.global.scheduler, reactives.default.global.dynamicScope)
-      case Some(tx) => StaticInTransaction(tx, reactives.default.global.scheduler)
+      case None => DynamicTransactionLookup(
+          reactives.SelectedScheduler.candidate.scheduler,
+          reactives.SelectedScheduler.candidate.dynamicScope
+        )
+      case Some(tx) => StaticInTransaction(tx, reactives.SelectedScheduler.candidate.scheduler)
 }

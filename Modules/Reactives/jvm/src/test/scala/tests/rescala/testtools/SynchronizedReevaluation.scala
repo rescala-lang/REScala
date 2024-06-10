@@ -1,8 +1,7 @@
 package tests.rescala.testtools
 
 import reactives.core.CreationTicket
-import reactives.operator.Interface
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}
@@ -36,7 +35,7 @@ class SynchronizedReevaluation extends ManagedBlocker {
   }
 }
 
-class SynchronizedReevaluationApi[Api <: Interface](val api: Api) {
+class SynchronizedReevaluationApi(val api: reactives.default.type) {
   import api.*
 
   def SynchronizedReevaluation[A](sig: Signal[A])(using

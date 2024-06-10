@@ -2,8 +2,7 @@ package reactives.core.reactor
 
 import reactives.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import reactives.macros.MacroAccess
-import reactives.operator.Interface
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class ReactorWithoutAPITest extends RETests {
@@ -18,7 +17,7 @@ class ReactorWithoutAPITest extends RETests {
       with MacroAccess[T] {
 
     override type Value    = ReactorStage[T]
-    override type State[V] = Interface.State[V]
+    override type State[V] = reactives.SelectedScheduler.State[V]
 
     override protected[reactives] def state: State[ReactorStage[T]] = initState
     override def info: ReInfo                                       = ReInfo.create.derive("Custom Reactor")
@@ -60,7 +59,7 @@ class ReactorWithoutAPITest extends RETests {
 
     def resource: ReadAs.of[State, T] = this
 
-    def now: T = global.scheduler.forceNewTransaction(this)(at => at.now(this))
+    def now: T = reactives.SelectedScheduler.candidate.scheduler.forceNewTransaction(this)(at => at.now(this))
   }
 
   /** A class that manages a single stage of the reactor body.

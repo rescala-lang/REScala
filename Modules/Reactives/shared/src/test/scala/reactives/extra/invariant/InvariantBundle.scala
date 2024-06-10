@@ -4,7 +4,6 @@ import org.scalacheck.Prop.forAll
 import org.scalacheck.Test.PropException
 import org.scalacheck.{Gen, Prop, Test}
 import reactives.core.{InitialChange, Observation, ReSource}
-import reactives.operator.Interface
 import reactives.scheduler.TopoBundle
 import reactives.structure.Pulse
 

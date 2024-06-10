@@ -7,8 +7,8 @@ import reactives.core.{CreationTicket, Disconnectable, DynamicScope, PlanTransac
 import reactives.operator.*
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
-
 import console.log as println
+import reactives.SelectedScheduler
 
 import scala.annotation.targetName
 import scala.scalajs.js
@@ -34,7 +34,7 @@ object Tags {
   extension [A <: dom.Element](anchor: A)
     def reattach[T](signal: Signal[T], removeOnContainerMismatch: Boolean = false)(using
         splicer: RangeSplice[A, T],
-        creationTicket: CreationTicket[Interface.State]
+        creationTicket: CreationTicket[SelectedScheduler.State]
     ): anchor.type = {
       val range = document.createRange()
       range.selectNodeContents(anchor)
@@ -61,8 +61,8 @@ object Tags {
 
   extension (input: Input)
     def inputEntered(using
-        creationTicket: CreationTicket[Interface.State],
-        scheduler: PlanTransactionScope[Interface.State]
+        creationTicket: CreationTicket[SelectedScheduler.State],
+        scheduler: PlanTransactionScope[SelectedScheduler.State]
     ): Event[String] = {
       val handler: Event.CBR[KeyboardEvent, Unit] = Event.fromCallback(input.onkeyup = Event.handle(_))
 

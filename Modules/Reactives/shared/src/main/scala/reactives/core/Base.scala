@@ -7,11 +7,11 @@ package reactives.core
   * @param info  the name of the reactive, useful for debugging as it often contains positional information
   */
 abstract class Base[V](
-    override protected[reactives] val state: reactives.operator.Interface.State[V],
+    override protected[reactives] val state: reactives.SelectedScheduler.State[V],
     override val info: ReInfo
 ) extends ReSource {
 
-  override type State[V] = reactives.operator.Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
   override type Value    = V
   override def toString: String = s"${info.description}($state)"
 }

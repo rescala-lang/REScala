@@ -1,7 +1,7 @@
 package reactives.structure
 
 import reactives.core.*
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.RExceptions.ObservedException
 
 /** Observers are normal reactives that are configured by a function that converts the value of the input into an [[ObserveInteract]].

@@ -2,7 +2,7 @@ package reactives.extra.reactivestreams
 
 import reactives.core.{Base, Derived, DynamicScope, PlanTransactionScope, ReInfo, ReadAs, Scheduler}
 import reactives.operator.*
-import reactives.operator.Interface.State
+import reactives.SelectedScheduler.State
 import reactives.structure.Pulse
 
 import java.util.Objects
@@ -53,7 +53,7 @@ class SubscriptionReactive[T](
     with Derived
     with Subscription {
 
-  override type State[V] = Interface.State[V]
+  override type State[V] = reactives.SelectedScheduler.State[V]
 
   var requested: Long = 0
   var cancelled       = false
