@@ -54,13 +54,13 @@ case class InteractionWithExecutesAndActs[S <: Tuple, A] private[dsl] (
 
   @targetName("foldIntoN")
   inline def foldInto(): Fold.Branch[S] =
-    event.act { arg =>
+    event.branch { arg =>
       executes(current, arg)
     }
 
   @targetName("foldIntoT1")
   inline def foldInto[T](using ev: S =:= Tuple1[T]): Fold.Branch[T] =
-    event.act { arg =>
+    event.branch { arg =>
       executes(ev.flip.apply(Tuple1(current[T])), arg)._1
     }
 

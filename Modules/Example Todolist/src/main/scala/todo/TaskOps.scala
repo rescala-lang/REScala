@@ -19,7 +19,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
 
   given LocalUid = replicaID
 
-  def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.act { desc =>
+  def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.branch { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
     TaskReferences.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
     val taskref = TaskRef(taskid)
@@ -27,7 +27,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
   }
 
   def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] =
-    removeAll.act: _ =>
+    removeAll.branch: _ =>
       current.clearDeltas().deleteBy { (taskref: TaskRef) =>
         val isDone = taskref.task.value.state.data.read.exists(_.done)
         // todo, move to observer, disconnect during transaction does not respect rollbacks
@@ -45,7 +45,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
   }
 
   def handleDelta(deltaEvent: Event[ProtocolDots[TodoDataManager.TodoRepState]]): Fold.Branch[State] =
-    deltaEvent.act { allDeltas =>
+    deltaEvent.branch { allDeltas =>
       val deltaBuffered = current
 
       val delta = (allDeltas.data: TodoRepState).list

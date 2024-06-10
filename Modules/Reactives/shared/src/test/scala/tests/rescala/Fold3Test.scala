@@ -12,10 +12,10 @@ class Fold3Test extends RETests {
       val count = Evt[Int]()
       val reset = Evt[Unit]()
 
-      val resetB = reset act (_ => "")
+      val resetB = reset branch (_ => "")
 
-      val wordB  = word act identity
-      val countB = count act (Fold.current * _)
+      val wordB  = word branch identity
+      val countB = count branch (Fold.current * _)
 
       val res = Fold("")(resetB, wordB, countB)
 

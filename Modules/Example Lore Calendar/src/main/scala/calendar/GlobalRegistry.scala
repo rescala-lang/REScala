@@ -83,7 +83,7 @@ object GlobalRegistry {
       codec: JsonValueCodec[Dotted[A]],
       lattice: Lattice[Dotted[A]]
   ): Fold.Branch[DeltaBuffer[Dotted[A]]] =
-    subscribe(name).act[DeltaBuffer[Dotted[A]]](delta => Fold.current.clearDeltas().applyDelta(delta))
+    subscribe(name).branch[DeltaBuffer[Dotted[A]]](delta => Fold.current.clearDeltas().applyDelta(delta))
 
   def encode[A: JsonValueCodec](name: String, value: A) =
     ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))

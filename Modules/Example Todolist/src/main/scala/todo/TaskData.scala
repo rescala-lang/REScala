@@ -109,7 +109,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
         Function.unlift { transfer => transfer.data.entries.get(taskID) }
       )
 
-      changes.act[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] { delta =>
+      changes.branch[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] { delta =>
         current.clearDeltas().applyDelta(Dotted(delta))
       }
     }
@@ -121,8 +121,8 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
     val crdt: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] =
       Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
         Fold(init)(
-          doneEv act { _ => current.clearDeltas().modTask(_.toggle()) },
-          edittextStr act { v => current.clearDeltas().modTask(_.edit(v)) },
+          doneEv branch { _ => current.clearDeltas().modTask(_.toggle()) },
+          edittextStr branch { v => current.clearDeltas().modTask(_.edit(v)) },
           remoteUpdates
         )
       }(using Codecs.codecLww)

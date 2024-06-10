@@ -4,10 +4,9 @@ import reactives.core.*
 import reactives.macros.MacroAccess
 import reactives.operator.Interface.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
-import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
-import reactives.structure.{ChangeEventImpl, Diff, EventImpl, Observe, Pulse}
+import reactives.structure.RExceptions.EmptySignalControlThrowable
+import reactives.structure.*
 
-import scala.annotation.nowarn
 import scala.collection.immutable.{LinearSeq, Queue}
 
 /** Events only propagate a value when they are changing,
@@ -120,7 +119,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group conversion
     */
   final def hold[A >: T]()(using ticket: CreationTicket[State]): Signal[A] =
-    Fold(throw EmptySignalControlThrowable(info))(this act { v => v })
+    Fold(throw EmptySignalControlThrowable(info))(this branch { v => v })
 
   /** Holds the latest value of an event as an Option, None before the first event occured
     * @group conversion
@@ -207,12 +206,12 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     */
   final inline def fold[A](init: A)(inline op: (A, T) => A)(using ticket: CreationTicket[State]): Signal[A] =
     Fold(init)(
-      this.act: v =>
+      this.branch: v =>
         op(Fold.current, v)
     )
 
   /** This creates a branch that can be combined into a `Fold` */
-  final inline infix def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
+  final inline infix def branch[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
     Fold.branch {
       this.value.fold(Fold.current)(f)
     }
