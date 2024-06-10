@@ -1,8 +1,8 @@
 package tests.rescala
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class Fold3Test extends RETests {
+class Fold3Test extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

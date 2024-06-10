@@ -4,9 +4,9 @@ import reactives.SelectedScheduler.State
 import reactives.core.CreationScope.{DynamicCreationScope, StaticCreationScope}
 import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScopeImpl, Scheduler, Transaction}
 import reactives.default.transaction
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class CreationTicketTest extends RETests {
+class CreationTicketTest extends FunSuiteInvertedAssert {
 
   // if (engine != reactives.interfaces.toposort) {
   /* this test uses some shady planned()(identity) to get the turn object out of the transaction

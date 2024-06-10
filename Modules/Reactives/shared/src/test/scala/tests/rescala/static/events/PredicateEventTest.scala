@@ -1,8 +1,8 @@
 package tests.rescala.static.events
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class PredicateEventTest extends RETests {
+class PredicateEventTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

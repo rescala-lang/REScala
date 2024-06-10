@@ -2,9 +2,9 @@ package tests.rescala.static.signals
 
 import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.{CreationScope, CreationTicket}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class SignalMacro extends RETests {
+class SignalMacro extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

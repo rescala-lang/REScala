@@ -2,11 +2,11 @@ package tests.rescala.static.events
 
 import reactives.structure.Pulse
 import reactives.structure.RExceptions.ObservedException
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class OR_EventTest extends RETests {
+class OR_EventTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

@@ -1,8 +1,8 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class RecurringPropagation extends RETests {
+class RecurringPropagation extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

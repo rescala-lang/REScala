@@ -1,9 +1,9 @@
 package tests.rescala.static.lenses
 
 import reactives.extra.lenses.{AddLens, LVar, Lens, MulLens, SignalLens, toSignalLens}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class LensTest extends RETests {
+class LensTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

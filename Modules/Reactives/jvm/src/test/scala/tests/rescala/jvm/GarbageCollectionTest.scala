@@ -3,11 +3,11 @@ package tests.rescala.jvm
 import reactives.default as engine
 import reactives.default.*
 import reactives.structure.Pulse
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.lang.ref.{PhantomReference, ReferenceQueue}
 
-class GarbageCollectionTest extends RETests {
+class GarbageCollectionTest extends FunSuiteInvertedAssert {
 
   test("garbage collection for simple signal mappings") {
 

@@ -2,17 +2,13 @@ package tests.rescala.property
 
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import reactives.SelectedScheduler
 import reactives.core.infiltration.Infiltrator
-import reactives.scheduler.Levelbased
-import tests.rescala.testtools.RETests
 
 import scala.collection.Seq
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 class SignalTestSuite extends munit.ScalaCheckSuite {
-  import reactives.default as engine
   val ie = new Infiltrator()
   import ie.api.*
   import ie.assertLevel

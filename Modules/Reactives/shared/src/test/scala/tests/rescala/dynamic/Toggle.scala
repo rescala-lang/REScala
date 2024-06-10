@@ -1,8 +1,8 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class Toggle extends RETests {
+class Toggle extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

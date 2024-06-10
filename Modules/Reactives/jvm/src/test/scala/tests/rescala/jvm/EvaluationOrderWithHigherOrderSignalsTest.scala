@@ -1,13 +1,13 @@
 package tests.rescala.jvm
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 sealed trait ChangeX
 case object DontSet      extends ChangeX
 case object SetUnchanged extends ChangeX
 case object SetChanged   extends ChangeX
 
-class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
+class EvaluationOrderWithHigherOrderSignalsTest extends FunSuiteInvertedAssert {
   def run(engine: reactives.default.type, changeX: ChangeX): Unit = {
     import engine.*
 

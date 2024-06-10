@@ -1,9 +1,9 @@
 package tests.rescala.static.events
 
 import reactives.default.*
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class EventTest extends RETests {
+class EventTest extends FunSuiteInvertedAssert {
 
   test("handlers Are Executed") {
     var test = 0

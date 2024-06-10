@@ -1,8 +1,8 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class GlitchFreedomTestSuite extends RETests {
+class GlitchFreedomTestSuite extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

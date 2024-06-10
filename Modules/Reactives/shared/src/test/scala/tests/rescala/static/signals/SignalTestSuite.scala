@@ -2,11 +2,11 @@ package tests.rescala.static.signals
 
 import reactives.core.infiltration.Infiltrator
 import reactives.default.*
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class SignalTestSuite extends RETests {
+class SignalTestSuite extends FunSuiteInvertedAssert {
   val ie = new Infiltrator()
   import ie.assertLevel
 

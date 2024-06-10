@@ -1,7 +1,7 @@
 package tests.rescala.misc
 
 import reactives.operator.{Signal, Var}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.concurrent.Future
 

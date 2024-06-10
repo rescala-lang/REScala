@@ -1,8 +1,8 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class DisconnectTests extends RETests {
+class DisconnectTests extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

@@ -1,10 +1,10 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.concurrent.Future
 
-class FromFutureTests extends RETests {
+class FromFutureTests extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

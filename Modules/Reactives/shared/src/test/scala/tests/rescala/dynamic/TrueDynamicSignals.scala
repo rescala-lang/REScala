@@ -5,9 +5,9 @@ import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.infiltration.Infiltrator
 import reactives.core.{CreationTicket, DynamicTicket}
 import reactives.scheduler.Levelbased
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class TrueDynamicSignals extends RETests {
+class TrueDynamicSignals extends FunSuiteInvertedAssert {
   val ie = new Infiltrator()
   import ie.api.*
   import ie.assertLevel

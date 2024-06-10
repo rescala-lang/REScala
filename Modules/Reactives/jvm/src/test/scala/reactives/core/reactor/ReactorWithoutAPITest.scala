@@ -3,9 +3,9 @@ package reactives.core.reactor
 import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import reactives.macros.MacroAccess
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class ReactorWithoutAPITest extends RETests {
+class ReactorWithoutAPITest extends FunSuiteInvertedAssert {
 
   import ReactorAction.*
   import reactives.default.*

@@ -1,8 +1,8 @@
 package tests.rescala.errors
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class EmptySignalTestSuite extends RETests {
+class EmptySignalTestSuite extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

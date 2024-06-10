@@ -1,10 +1,10 @@
 package tests.rescala.static.signals
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 //These 3 are for JUnitRunner
 
-class VarTestSuite extends RETests {
+class VarTestSuite extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

@@ -1,10 +1,10 @@
 package tests.rescala.static.conversions
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.collection.LinearSeq
 
-class FoldTests extends RETests {
+class FoldTests extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

@@ -2,9 +2,9 @@ package reactives.core.tests
 
 import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class WithoutAPITest extends RETests {
+class WithoutAPITest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

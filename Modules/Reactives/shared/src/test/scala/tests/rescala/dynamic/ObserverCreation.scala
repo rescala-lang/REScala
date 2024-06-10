@@ -1,8 +1,8 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class ObserverCreation extends RETests {
+class ObserverCreation extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

@@ -1,10 +1,10 @@
 package tests.rescala.misc
 
 import reactives.core.infiltration.Infiltrator
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 import reactives.default.*
 
-class LevelPropagation extends RETests {
+class LevelPropagation extends FunSuiteInvertedAssert {
   val ie = new Infiltrator()
   import ie.assertLevel
 

@@ -9,11 +9,11 @@ import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.generic.StylePair
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.util.chaining.scalaUtilChainingOps
 
-class RescalatagsTest extends RETests {
+class RescalatagsTest extends FunSuiteInvertedAssert {
 
   test("put var into dom") {
 

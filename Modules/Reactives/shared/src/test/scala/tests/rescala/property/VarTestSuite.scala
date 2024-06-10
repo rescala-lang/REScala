@@ -3,7 +3,7 @@ package tests.rescala.property
 import org.scalacheck.Gen
 import org.scalacheck.Prop.*
 import reactives.default.*
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 class VarTestSuite extends munit.ScalaCheckSuite {
 

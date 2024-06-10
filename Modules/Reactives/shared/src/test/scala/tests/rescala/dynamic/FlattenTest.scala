@@ -1,10 +1,10 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.concurrent.Future
 
-class FlattenTest extends RETests {
+class FlattenTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

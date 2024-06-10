@@ -2,9 +2,9 @@ package tests.rescala.misc
 
 import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.{CreationTicket, DynamicTicket}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class LightImplicitSyntaxTest extends RETests {
+class LightImplicitSyntaxTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

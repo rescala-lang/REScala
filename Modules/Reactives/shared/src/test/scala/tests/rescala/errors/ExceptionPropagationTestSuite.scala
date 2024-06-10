@@ -3,11 +3,11 @@ package tests.rescala.errors
 import reactives.scheduler
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Diff, Pulse}
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.util.{Failure, Success, Try}
 
-class ExceptionPropagationTestSuite extends RETests {
+class ExceptionPropagationTestSuite extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 

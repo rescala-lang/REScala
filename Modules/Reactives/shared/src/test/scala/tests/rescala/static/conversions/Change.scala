@@ -3,9 +3,9 @@ package tests.rescala.static.conversions
 import reactives.default.*
 import reactives.structure.Pulse
 import reactives.structure.RExceptions.EmptySignalControlThrowable
-import tests.rescala.testtools.RETests
+import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class Change extends RETests {
+class Change extends FunSuiteInvertedAssert {
 
   /* changed */
   test("changed is Not Triggered On Creation") {

@@ -1,9 +1,8 @@
 package tests.rescala.testtools
 
 import munit.{Assertions, Compare, Location}
-import reactives.SelectedScheduler
 
-abstract class RETests extends munit.FunSuite {
+abstract class FunSuiteInvertedAssert extends munit.FunSuite {
 
   override def assertEquals[A, B](obtained: A, expected: B, clue: => Any)(using
       loc: Location,
@@ -22,5 +21,5 @@ abstract class RETests extends munit.FunSuite {
       ): Nothing = compare.failEqualsComparison(expected, obtained, title, loc, assertions)
     }
   )
-  
+
 }
