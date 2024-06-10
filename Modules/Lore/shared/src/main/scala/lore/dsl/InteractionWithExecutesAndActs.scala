@@ -1,6 +1,5 @@
 package lore.dsl
 
-import reactives.default.act
 import reactives.core.ReSource
 import reactives.operator.Fold.current
 import reactives.operator.{Event, Fold, FoldState}

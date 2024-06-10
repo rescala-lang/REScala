@@ -1,7 +1,6 @@
 package reactives.operator
 
 import reactives.core.*
-import reactives.default.act
 import reactives.macros.MacroAccess
 import reactives.operator.Interface.State
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
@@ -212,6 +211,11 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
         op(Fold.current, v)
     )
 
+  /** This creates a branch that can be combined into a `Fold` */
+  final inline infix def act[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
+    Fold.branch {
+      this.value.fold(Fold.current)(f)
+    }
 }
 
 /** Similar to [[reactives.operator.Signal]] expressions, but resulting in an event.
