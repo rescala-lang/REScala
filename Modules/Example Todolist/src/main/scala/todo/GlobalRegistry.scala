@@ -11,7 +11,7 @@ import rdts.time.Dots
 import reactives.default.*
 import replication.DataManager
 
-object GlobalDataManager {
+object TodoDataManager {
 
   case class TodoRepState(list: Dotted[ReplicatedList[TaskRef]], entries: Map[String, LastWriterWins[Option[TaskData]]])
 

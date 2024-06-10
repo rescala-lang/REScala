@@ -127,7 +127,7 @@ object Example {
       }
     )
 
-    GlobalDataManager.dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
+    TodoDataManager.dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
 
   }
 

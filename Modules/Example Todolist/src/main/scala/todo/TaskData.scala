@@ -12,7 +12,7 @@ import reactives.extra.Tags.*
 import replication.Storing
 import scalatags.JsDom.all.*
 import todo.Codecs.given
-import todo.GlobalDataManager.TodoRepState
+import todo.TodoDataManager.TodoRepState
 import todo.Todolist.replicaId
 
 import scala.Function.const
@@ -105,7 +105,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val remoteUpdates = {
 
-      val changes = GlobalDataManager.dataManager.changes.collect(
+      val changes = TodoDataManager.dataManager.changes.collect(
         Function.unlift { transfer => transfer.data.entries.get(taskID) }
       )
 
@@ -127,7 +127,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
         )
       }(using Codecs.codecLww)
 
-    GlobalDataManager.publish(crdt, entry => Bottom.empty[TodoRepState].copy(entries = Map(taskID -> entry.data)))
+    TodoDataManager.publish(crdt, entry => Bottom.empty[TodoRepState].copy(entries = Map(taskID -> entry.data)))
 
     val taskData = Signal {
       crdt.value.state.data.read.getOrElse(TaskData(desc = "LWW Empty"))

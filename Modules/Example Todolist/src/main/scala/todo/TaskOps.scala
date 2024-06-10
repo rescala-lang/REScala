@@ -6,7 +6,7 @@ import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalUid}
 import reactives.default.*
 import replication.ProtocolDots
-import todo.GlobalDataManager.TodoRepState
+import todo.TodoDataManager.TodoRepState
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.unused
@@ -44,7 +44,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
     }
   }
 
-  def handleDelta(deltaEvent: Event[ProtocolDots[GlobalDataManager.TodoRepState]]): Fold.Branch[State] =
+  def handleDelta(deltaEvent: Event[ProtocolDots[TodoDataManager.TodoRepState]]): Fold.Branch[State] =
     deltaEvent.act { allDeltas =>
       val deltaBuffered = current
 

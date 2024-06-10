@@ -14,7 +14,7 @@ import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import todo.Codecs.given
-import todo.GlobalDataManager.TodoRepState
+import todo.TodoDataManager.TodoRepState
 import todo.Todolist.replicaId
 
 class TodoAppUI(val storagePrefix: String) {
@@ -55,11 +55,11 @@ class TodoAppUI(val storagePrefix: String) {
             current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
           },
           // todo: does not restore full state
-          taskOps.handleDelta(GlobalDataManager.dataManager.changes)
+          taskOps.handleDelta(TodoDataManager.dataManager.changes)
         )
       }
 
-    GlobalDataManager.publish(tasksRDT, list => Bottom.empty[TodoRepState].copy(list = list))
+    TodoDataManager.publish(tasksRDT, list => Bottom.empty[TodoRepState].copy(list = list))
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
