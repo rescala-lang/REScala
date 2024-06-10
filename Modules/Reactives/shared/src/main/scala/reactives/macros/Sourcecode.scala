@@ -84,7 +84,6 @@ object Sourcecode {
         s
 
     def fileImpl(using Quotes): Expr[File] = {
-      import quotes.reflect._
       val file = quotes.reflect.Position.ofMacroExpansion.sourceFile.getJPath.map(_.toAbsolutePath.toString).getOrElse(
         "unknown path"
       )
@@ -109,8 +108,8 @@ object Sourcecode {
 
     }
 
-    def enclosing(using Quotes)(machine: Boolean)(filter: quotes.reflect.Symbol => Boolean): String = {
-      import quotes.reflect._
+    def enclosing(using quotes: Quotes)(machine: Boolean)(filter: quotes.reflect.Symbol => Boolean): String = {
+      import quotes.reflect.*
 
       var current = Symbol.spliceOwner
       if !machine then
