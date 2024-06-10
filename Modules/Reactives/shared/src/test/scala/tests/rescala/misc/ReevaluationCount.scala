@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class ReevaluationCount extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("keep fixed Dependencies") {
 

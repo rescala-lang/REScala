@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.collection.LinearSeq
 
 class FoldTests extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     /* fold */
     test("fold the Initial Value Is Set Correctly") {

@@ -5,8 +5,8 @@ import reactives.SelectedScheduler.candidate.State as BundleState
 import tests.rescala.testtools.RETests
 
 class SignalMacro extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("value access works") {
 
@@ -223,7 +223,7 @@ class SignalMacro extends RETests {
 
       val source = Var("Hallo")
       object myMap {
-        var ms: engine.Var[String] = source
+        var ms: Var[String] = source
       }
 
       val greeting = Signal {
@@ -242,7 +242,7 @@ class SignalMacro extends RETests {
       val source         = Var("Hallo")
       var indirectSource = source
       object myMap {
-        def ms: engine.Var[String] = indirectSource
+        def ms: Var[String] = indirectSource
       }
 
       val greeting = Signal {

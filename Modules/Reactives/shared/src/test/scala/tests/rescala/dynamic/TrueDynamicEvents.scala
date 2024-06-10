@@ -3,8 +3,8 @@ package tests.rescala.dynamic
 import tests.rescala.testtools.RETests
 
 class TrueDynamicEvents extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("higher order events") {
       val e1 = Evt[Signal[Int]]()

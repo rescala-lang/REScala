@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class MacrosInteractingWithLanguageFeatures extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("pattern Matching Anonymous Function Nested Signals") {
       val v1 = Var(1)
@@ -28,16 +28,12 @@ class MacrosInteractingWithLanguageFeatures extends RETests {
     test("abstract Type Member") {
       // the renamed engines are a workaround for this bug: https://issues.scala-lang.org/browse/SI-10036
       // using the same engine in both trait and object causes the compiler to generate two field with the same name
-      val engine1: engine.type = engine
-      val engine2: engine.type = engine
       trait T {
-        import engine1.*
         type A
         lazy val v: Var[A]
         val s = Signal { v.value }
       }
       object o extends T {
-        import engine2.*
         type A = Int
         lazy val v: Var[Int] = Var(4)
       }

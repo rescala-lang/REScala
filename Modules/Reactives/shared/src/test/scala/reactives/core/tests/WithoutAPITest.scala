@@ -5,8 +5,8 @@ import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class WithoutAPITest extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     class CustomSource[T](initState: State[T]) extends reactives.core.ReSource with ReadAs[T] {
       outer =>

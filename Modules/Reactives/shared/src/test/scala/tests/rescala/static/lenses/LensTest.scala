@@ -4,8 +4,8 @@ import reactives.extra.lenses.{AddLens, LVar, Lens, MulLens, SignalLens, toSigna
 import tests.rescala.testtools.RETests
 
 class LensTest extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("Bijective Lens Addition") {
       val a    = LVar[Int](3)

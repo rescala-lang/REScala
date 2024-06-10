@@ -8,8 +8,8 @@ import tests.rescala.testtools.RETests
 import scala.util.{Failure, Success, Try}
 
 class ExceptionPropagationTestSuite extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     // we need this because scalajs does not throw exceptions
     def div(in: Int)            = div2(in, 100)
@@ -156,7 +156,7 @@ class ExceptionPropagationTestSuite extends RETests {
       v.set(42)
       assertEquals(res, 100 / 42, "making signal non empty triggers observer")
 
-      engine.transaction(v)(t ?=> v.admitPulse(Pulse.empty(summon))(using t))
+      transaction(v)(t ?=> v.admitPulse(Pulse.empty(summon))(using t))
       assertEquals(res, 100 / 42, "observers are not triggered when empty")
       intercept[NoSuchElementException] { v.readValueOnce }
     }

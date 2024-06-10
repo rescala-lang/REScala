@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.concurrent.Future
 
 class FlattenTest extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("flatten var") {
       val sv = Signal { Var(10) }.flatten
@@ -360,7 +360,7 @@ class FlattenTest extends RETests {
     test("flatten from future type inference") {
       val joined = Evt[String]()
       import scala.concurrent.ExecutionContext.Implicits.global
-      val res = (joined.map(str => engine.Signal.fromFuture(Future.successful(str)))
+      val res = (joined.map(str => Signal.fromFuture(Future.successful(str)))
         .hold(Signal { "unknown" })).flatten
 
       joined.fire("test")

@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class ReactiveCreationInTurnsTest extends RETests {
-  multiEngined { engine =>
-    import engine.*
+  import reactives.default.*
+  {
 
     test("evaluations Of Inner Signals") {
 
@@ -53,8 +53,8 @@ class ReactiveCreationInTurnsTest extends RETests {
 
     test("change Of Created Signal") {
 
-      engine.transaction() {
-        val v1 = engine.Var(0)
+      transaction() {
+        val v1 = Var(0)
         val v2 = v1.map(_ + 1)
         v1.change.observe(v => fail(s"created signals should not change, but change was $v"))
         v2.change.observe(v => fail(s"created mapped signals should not change, but change was $v"))

@@ -3,8 +3,8 @@ package tests.rescala.dynamic
 import tests.rescala.testtools.RETests
 
 class ObserverCreation extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("add Event After") {
       var res   = 0

@@ -3,8 +3,8 @@ package tests.rescala
 import tests.rescala.testtools.RETests
 
 class Fold3Test extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("scala 3 fold expressions") {
 

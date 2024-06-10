@@ -7,8 +7,8 @@ import tests.rescala.testtools.RETests
 import java.util.concurrent.atomic.AtomicInteger
 
 class OR_EventTest extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("handler Of OR Is Executed If Any Of The Events Fires") {
       var test     = 0

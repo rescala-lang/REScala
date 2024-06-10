@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 //These 3 are for JUnitRunner
 
 class VarTestSuite extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     test("get Val After Creation Returns Initialization Value") {
       val v = Var(1)

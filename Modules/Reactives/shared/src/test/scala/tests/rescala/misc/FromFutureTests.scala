@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.concurrent.Future
 
 class FromFutureTests extends RETests {
-  multiEngined { engine =>
-    import engine.*
+import reactives.default.*
+{
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
