@@ -2,7 +2,7 @@ package tests.rescala.fullmv
 
 import reactives.core.{ReInfo, ReSource}
 import reactives.fullmv.{FullMVEngine, State}
-import tests.rescala.testtools.{IgnoreOnGithubCiBecause, Spawn}
+import tests.rescala.testtools.Spawn
 
 class PipeliningTest extends munit.FunSuite {
   if reactives.SelectedScheduler.candidate.scheduler.isInstanceOf[FullMVEngine] then {
@@ -11,7 +11,6 @@ class PipeliningTest extends munit.FunSuite {
     implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf
 
     val engine: FullMVEngine = reactives.SelectedScheduler.candidate.scheduler.asInstanceOf[FullMVEngine]
-    // IgnoreOnGithubCiBecause("pipelining does not work")
     test("pipelining works") {
       val millisecondsPerNode = 10L
       val pipelineLength      = 20
