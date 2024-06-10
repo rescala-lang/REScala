@@ -3,8 +3,8 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 class AND_EventTest extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("handler Of AND Is NOT Executed If Events Fire Singularly") {
       var test      = 0

@@ -8,8 +8,8 @@ import tests.rescala.testtools.RETests
 import scala.util.{Failure, Success, Try}
 
 class ExceptionPropagationTestSuite extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     // we need this because scalajs does not throw exceptions
     def div(in: Int)            = div2(in, 100)

@@ -1,6 +1,5 @@
 package reactives.core
 
-
 import reactives.structure.RExceptions
 
 import scala.annotation.implicitNotFound
@@ -195,7 +194,9 @@ trait Scheduler[S[_]] {
   override def toString: String = s"Scheduler($schedulerName)"
 }
 
-/**  */
+/**
+  */
 object Scheduler {
-  given implicitScheduler: Scheduler[reactives.SelectedScheduler.State] = reactives.SelectedScheduler.candidate.scheduler
+  given implicitScheduler: Scheduler[reactives.SelectedScheduler.State] =
+    reactives.SelectedScheduler.candidate.scheduler
 }

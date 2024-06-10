@@ -1,7 +1,7 @@
 package reactives.structure
 
-import reactives.core.*
 import reactives.SelectedScheduler.State
+import reactives.core.*
 import reactives.structure.Pulse.NoChange
 
 abstract class DerivedImpl[T](

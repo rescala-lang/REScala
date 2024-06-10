@@ -1,8 +1,8 @@
 package reactives.core.reactor
 
+import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import reactives.macros.MacroAccess
-import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class ReactorWithoutAPITest extends RETests {

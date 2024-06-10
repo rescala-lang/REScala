@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.collection.LinearSeq
 
 class FoldTests extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     /* fold */
     test("fold the Initial Value Is Set Correctly") {
@@ -239,14 +239,14 @@ import reactives.default.*
       assert(res.readValueOnce == Some(2))
     }
 
-  // test("changing only a signal when folding") {
-  //  val e = Evt[Int]()
-  //  val v = Var(0)
-  //  val f = e.fold(0) { (_, _) => v.value }
-  //  f observe identity
-  //
-  //  v.set(1)
-  // }
+    // test("changing only a signal when folding") {
+    //  val e = Evt[Int]()
+    //  val v = Var(0)
+    //  val f = e.fold(0) { (_, _) => v.value }
+    //  f observe identity
+    //
+    //  v.set(1)
+    // }
 
   }
 }

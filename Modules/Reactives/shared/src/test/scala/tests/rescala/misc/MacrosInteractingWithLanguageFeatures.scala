@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class MacrosInteractingWithLanguageFeatures extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("pattern Matching Anonymous Function Nested Signals") {
       val v1 = Var(1)

@@ -1,8 +1,8 @@
 package reactives.operator
 
+import reactives.SelectedScheduler.State
 import reactives.core.*
 import reactives.macros.MacroAccess
-import reactives.SelectedScheduler.State
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 import reactives.structure.{Diff, Observe, Pulse, RExceptions, SignalImpl}
 

@@ -3,8 +3,8 @@ package tests.rescala.errors
 import tests.rescala.testtools.RETests
 
 class EmptySignalTestSuite extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("basic Empty Signal Test") {
 

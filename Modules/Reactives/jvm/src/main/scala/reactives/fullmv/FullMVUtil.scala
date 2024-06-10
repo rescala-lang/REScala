@@ -1,6 +1,5 @@
 package reactives.fullmv
 
-
 import java.util.concurrent.ForkJoinPool
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}

@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class RecurringPropagation extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("can start propagation in observers") {
 

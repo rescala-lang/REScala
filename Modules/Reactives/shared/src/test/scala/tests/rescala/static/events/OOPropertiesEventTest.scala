@@ -8,8 +8,8 @@ import tests.rescala.testtools.RETests
   */
 
 class OOPropertiesEventTest extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("events Are Inherited") {
 

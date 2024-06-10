@@ -1,14 +1,14 @@
 package reactives.extra
 
 import org.scalajs.dom
+import org.scalajs.dom.console.log as println
 import org.scalajs.dom.html.Input
 import org.scalajs.dom.{Element, KeyboardEvent, MutationObserver, Node, Range, console, document}
+import reactives.SelectedScheduler
 import reactives.core.{CreationTicket, Disconnectable, DynamicScope, PlanTransactionScope, Scheduler, Tracing}
 import reactives.operator.*
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Observe, Pulse}
-import console.log as println
-import reactives.SelectedScheduler
 
 import scala.annotation.targetName
 import scala.scalajs.js

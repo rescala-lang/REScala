@@ -8,7 +8,7 @@ case object SetUnchanged extends ChangeX
 case object SetChanged   extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends RETests {
-  def run(engine: reactives.default.type , changeX: ChangeX): Unit = {
+  def run(engine: reactives.default.type, changeX: ChangeX): Unit = {
     import engine.*
 
     val initialX = "initialValue"

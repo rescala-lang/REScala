@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
-import reactives.core.CreationTicket
 import reactives.SelectedScheduler.State
+import reactives.core.CreationTicket
 
 import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.{CountDownLatch, ForkJoinPool}

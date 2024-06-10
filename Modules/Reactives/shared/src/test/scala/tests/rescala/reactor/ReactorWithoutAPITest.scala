@@ -5,8 +5,8 @@ import reactives.extra.reactor.*
 
 class ReactorWithoutAPITest extends RETests {
 
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("Reactor has initial value") {
       val reactor = Reactor.once("Initial Value") { Stage() }

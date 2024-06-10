@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.concurrent.Future
 
 class FlattenTest extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("flatten var") {
       val sv = Signal { Var(10) }.flatten

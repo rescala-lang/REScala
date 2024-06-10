@@ -5,8 +5,8 @@ import tests.rescala.testtools.RETests
 import scala.concurrent.Future
 
 class FromFutureTests extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     import scala.concurrent.ExecutionContext.Implicits.global
 

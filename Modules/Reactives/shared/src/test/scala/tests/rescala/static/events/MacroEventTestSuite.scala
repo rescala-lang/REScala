@@ -3,8 +3,8 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 class MacroEventTestSuite extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("simple") {
       val ev1 = Evt[Int]()

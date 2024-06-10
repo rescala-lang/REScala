@@ -3,8 +3,8 @@ package tests.rescala.dynamic
 import tests.rescala.testtools.RETests
 
 class Toggle extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     /* toggle */
     test("toggle the Initial Value Is Set Correctly") {

@@ -5,7 +5,7 @@ import reactives.parrp.Backoff
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class PhilosopherTable(philosopherCount: Int)(val interface: reactives.default.type ) {
+class PhilosopherTable(philosopherCount: Int)(val interface: reactives.default.type) {
   import interface.*
   import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 

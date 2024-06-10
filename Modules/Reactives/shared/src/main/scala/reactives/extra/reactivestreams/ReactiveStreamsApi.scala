@@ -1,8 +1,8 @@
 package reactives.extra.reactivestreams
 
+import reactives.SelectedScheduler.State
 import reactives.core.{Base, Derived, DynamicScope, PlanTransactionScope, ReInfo, ReadAs, Scheduler}
 import reactives.operator.*
-import reactives.SelectedScheduler.State
 import reactives.structure.Pulse
 
 import java.util.Objects

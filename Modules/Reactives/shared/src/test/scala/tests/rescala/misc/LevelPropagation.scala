@@ -1,7 +1,7 @@
 package tests.rescala.misc
 
-import reactives.core.infiltration.Infiltrator
 import reactives.SelectedScheduler
+import reactives.core.infiltration.Infiltrator
 import reactives.scheduler.Levelbased
 import tests.rescala.testtools.RETests
 

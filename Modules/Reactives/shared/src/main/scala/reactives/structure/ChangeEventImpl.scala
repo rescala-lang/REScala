@@ -1,7 +1,7 @@
 package reactives.structure
 
-import reactives.core.*
 import reactives.SelectedScheduler.State
+import reactives.core.*
 
 class ChangeEventImpl[T](
     initial: State[(Pulse[T], Pulse[Diff[T]])],

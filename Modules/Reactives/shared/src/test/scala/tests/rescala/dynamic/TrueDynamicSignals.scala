@@ -1,9 +1,9 @@
 package tests.rescala.dynamic
 
+import reactives.SelectedScheduler
+import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.infiltration.Infiltrator
 import reactives.core.{CreationTicket, DynamicTicket}
-import reactives.SelectedScheduler.candidate.State as BundleState
-import reactives.SelectedScheduler
 import reactives.scheduler.Levelbased
 import tests.rescala.testtools.RETests
 
@@ -130,7 +130,7 @@ class TrueDynamicSignals extends RETests {
   // }
 
   test("extracting Signal Side Effects") {
-    val e1                                                                 = Evt[Int]()
+    val e1                                                              = Evt[Int]()
     def newSignal()(using ct: CreationTicket[BundleState]): Signal[Int] = e1.count()
 
     val macroRes = Signal {

@@ -1,8 +1,8 @@
 package reactives.extra.incremental
 
+import reactives.SelectedScheduler.State
 import reactives.core.*
 import reactives.operator.*
-import reactives.SelectedScheduler.State
 
 import scala.collection.mutable
 import scala.util.control.Breaks.{break, breakable}

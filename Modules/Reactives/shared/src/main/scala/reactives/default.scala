@@ -1,7 +1,7 @@
 package reactives
 
-import reactives.core.{AdmissionTicket, ReSource, Transaction}
 import reactives.SelectedScheduler.State
+import reactives.core.{AdmissionTicket, ReSource, Transaction}
 import reactives.scheduler.{GlobalCandidate, LevelbasedVariants}
 
 /** [[Event]] and [[Signal]] represent different time-changing values, commonly referred to as reactives.

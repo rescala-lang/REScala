@@ -2,8 +2,8 @@ package tests.rescala.property
 
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import reactives.core.infiltration.Infiltrator
 import reactives.SelectedScheduler
+import reactives.core.infiltration.Infiltrator
 import reactives.scheduler.Levelbased
 import tests.rescala.testtools.RETests
 

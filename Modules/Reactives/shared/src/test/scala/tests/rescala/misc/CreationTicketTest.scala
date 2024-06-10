@@ -1,9 +1,9 @@
 package tests.rescala.misc
 
+import reactives.SelectedScheduler.State
 import reactives.core.CreationScope.{DynamicCreationScope, StaticCreationScope}
 import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScopeImpl, Scheduler, Transaction}
 import reactives.default.transaction
-import reactives.SelectedScheduler.State
 import tests.rescala.testtools.RETests
 
 class CreationTicketTest extends RETests {

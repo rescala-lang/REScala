@@ -3,7 +3,7 @@ package tests.rescala.concurrency.philosophers
 import reactives.core.ReInfo
 import tests.rescala.concurrency.philosophers.PhilosopherTable.*
 
-class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.type )
+class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.type)
     extends PhilosopherTable(philosopherCount)(ri) {
   import interface.{Signal, Var}
 

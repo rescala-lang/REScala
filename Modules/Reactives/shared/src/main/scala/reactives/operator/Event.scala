@@ -1,11 +1,11 @@
 package reactives.operator
 
+import reactives.SelectedScheduler.State
 import reactives.core.*
 import reactives.macros.MacroAccess
-import reactives.SelectedScheduler.State
+import reactives.structure.*
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.EmptySignalControlThrowable
-import reactives.structure.*
 
 import scala.collection.immutable.{LinearSeq, Queue}
 

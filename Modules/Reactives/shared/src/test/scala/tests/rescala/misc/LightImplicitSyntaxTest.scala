@@ -1,12 +1,12 @@
 package tests.rescala.misc
 
-import reactives.core.{CreationTicket, DynamicTicket}
 import reactives.SelectedScheduler.candidate.State as BundleState
+import reactives.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.RETests
 
 class LightImplicitSyntaxTest extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("experiment With Implicit Syntax") {
 

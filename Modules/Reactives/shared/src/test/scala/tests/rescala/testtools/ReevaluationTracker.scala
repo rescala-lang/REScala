@@ -1,7 +1,7 @@
 package tests.rescala.testtools
 
-import reactives.core.CreationTicket
 import reactives.SelectedScheduler.candidate.State as BundleState
+import reactives.core.CreationTicket
 
 class ReevaluationBundle(val api: reactives.default.type) {
   import api.*

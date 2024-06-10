@@ -3,8 +3,8 @@ package tests.rescala.misc
 import tests.rescala.testtools.RETests
 
 class ScheduledSetting extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("setting during inner event") {
 

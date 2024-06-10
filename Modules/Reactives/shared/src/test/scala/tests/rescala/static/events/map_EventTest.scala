@@ -3,8 +3,8 @@ package tests.rescala.static.events
 import tests.rescala.testtools.RETests
 
 class map_EventTest extends RETests {
-import reactives.default.*
-{
+  import reactives.default.*
+  {
 
     test("handler Of map  Is Executed") {
       var test   = 0

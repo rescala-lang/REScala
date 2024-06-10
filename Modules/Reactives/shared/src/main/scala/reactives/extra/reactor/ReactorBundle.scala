@@ -1,9 +1,9 @@
 package reactives.extra.reactor
 
+import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, Derived, ReInfo, Scheduler}
 import reactives.macros.MacroAccess
 import reactives.operator.*
-import reactives.SelectedScheduler.State
 
 class Reactor[T](
     initState: State[ReactorState[T]]
