@@ -11,21 +11,28 @@ object Settings {
   val scala3VersionString = "3.5.0-RC1"
 
   val featureOptions = Seq(
-    // see https://docs.scala-lang.org/overviews/compiler-options/ and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
+    // see https://docs.scala-lang.org/overviews/compiler-options/
+    // and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
+    // and https://www.scala-lang.org/api/current/scala/language$.html
     scalacOptions ++= List(
-      // Emit warning and location for usages of features that should be imported explicitly.
+      // Spell out feature and deprecation warnings instead of summarizing them into a single warning
       "-feature",
-      // Allow higher-kinded types
-      "-language:higherKinds",
-      // Allow definition of implicit functions called views
-      "-language:implicitConversions",
-      // Emit warning and location for usages of deprecated APIs.
       "-deprecation",
-      // Require then and do in control expressions.
-      "-new-syntax",
+
       // set a specific source level for warnings/rewrites/features
       "-source",
       "3.5",
+
+      // Allow definition and application of implicit conversions
+      "-language:implicitConversions",
+
+      // more stuff that may be interesting in special contexts
+
+      // Require then and do in control expressions. (handled by scalafmt)
+      // "-new-syntax",
+
+      // combine with the above to automatically rewrite such expressions
+      // "-rewrite",
     )
   )
 
@@ -47,29 +54,33 @@ object Settings {
       "-Wunused:explicits",
       "-Wunused:implicits",
       "-Wunused:params",
-      "-Wunused:all"
+      // @nowarn annotations
+      "-Wunused:nowarn",
+      // why do all of the above if you can just do this? Who knows!
+      "-Wunused:all",
     )
   }
 
-  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c => c / scalacOptions += setting  }
+  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c => c / scalacOptions += setting }
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
-  def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf*)
+  def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
-  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf*)
+  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
 
   // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
-  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf*)
+  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf: _*)
 
   // can be annoying with methods that have optional results, can also help with methods that have non optional results …
-  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf*)
+  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
 
   // super hard with java interop
-  def explicitNulls(conf: TaskKey[?]*) = taskSpecificScalacOption("-Yexplicit-nulls", conf*)
+  def explicitNulls(conf: TaskKey[?]*) = taskSpecificScalacOption("-Yexplicit-nulls", conf: _*)
 
   // seems to produce compiler crashes in some cases
-  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf*)
+  // this is -Ysafe-init for scala 3.4 and below
+  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
