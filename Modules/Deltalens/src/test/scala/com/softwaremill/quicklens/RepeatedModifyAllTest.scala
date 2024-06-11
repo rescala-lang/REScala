@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class RepeatedModifyAllTest extends AnyFlatSpec with Matchers {
-  import RepeatedModifyAllTest._
+  import RepeatedModifyAllTest.*
 
   it should "expand a very long repeated function" in {
     val c6 = C6(1)

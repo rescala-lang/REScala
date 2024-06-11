@@ -3,7 +3,6 @@ package benchmarks.simple
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class Creation {
 
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   @Setup

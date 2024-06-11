@@ -13,8 +13,8 @@ class CustomModifyProxyTest extends AnyFlatSpec with Matchers {
       modify(state)(path).setTo(value)
     }
 
-    val state = State(100)
-    val res = set(state, _.foo, 200)
+    val state    = State(100)
+    val res      = set(state, _.foo, 200)
     val expected = State(200)
     res.shouldBe(expected)
   }

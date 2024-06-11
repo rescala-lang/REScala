@@ -4,7 +4,6 @@ import benchmarks.*
 import org.openjdk.jmh.annotations.*
 import reactives.core.{CreationTicket, ReInfo}
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Benchmark)
 class SignalMapGrid extends BusyThreads {
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var source: Var[Int]        = scala.compiletime.uninitialized

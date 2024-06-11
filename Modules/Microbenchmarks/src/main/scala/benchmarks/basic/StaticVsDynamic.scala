@@ -15,8 +15,8 @@ import java.util.concurrent.locks.ReadWriteLock
 @State(Scope.Thread)
 class StaticVsDynamic {
 
-  var engine: reactives.default.type        = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   @Param(Array("true", "false"))

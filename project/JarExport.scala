@@ -20,7 +20,7 @@ object JarExport extends sbt.AutoPlugin {
 
   // This defines settings the plugin makes.
   // It is essentially the same as if this was in a `.settings()` block in the build.sbt
-  override lazy val projectSettings: Seq[Setting[_]] = Seq(
+  override lazy val projectSettings: Seq[Setting[?]] = Seq(
     // copy all jars required in the class path to a `jars` folder in the target directory
     stageJars := {
       val cp         = (Compile / fullClasspathAsJars).value

@@ -1,6 +1,6 @@
 package com.softwaremill.quicklens
 
-import com.softwaremill.quicklens.TestData._
+import com.softwaremill.quicklens.TestData.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -39,7 +39,7 @@ class ModifyEachWhereTest extends AnyFlatSpec with Matchers {
 
     Seq(Foo("asdf"))
       .modify(_.eachWhere(_.field != lang2).field)
-      .setTo(lang2) should be (Seq(Foo("hey")))
+      .setTo(lang2) should be(Seq(Foo("hey")))
   }
 
   it should "not modify an optional case class field if it is none regardless of the condition" in {

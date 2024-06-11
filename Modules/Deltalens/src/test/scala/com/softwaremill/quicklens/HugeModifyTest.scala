@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class HugeModifyTest extends AnyFlatSpec with Matchers {
-  import HugeModifyTestData._
+  import HugeModifyTestData.*
 
   it should "expand a huge function" in {
     val c5 = C5(1)

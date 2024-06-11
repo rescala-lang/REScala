@@ -17,7 +17,7 @@ class Infiltrator {
   )(using maybe: Scheduler[?]) =
     if (api.isInstanceOf[Levelbased] && reactive.state.isInstanceOf[LevelState[?]]): @nowarn then {
       reactive.state match {
-        case rb: LevelState[_] => {
+        case rb: LevelState[?] => {
           val rblevel = maybe.forceNewTransaction() { _ =>
             rb.level()
           }

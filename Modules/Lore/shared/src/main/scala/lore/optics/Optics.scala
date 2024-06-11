@@ -1,8 +1,8 @@
 package lore.optics
 
 import monocle.{Traversal}
-import cats.implicits._
-import lore.ast._
+import cats.implicits.*
+import lore.ast.*
 import cats.Applicative
 import monocle.Lens
 import monocle.Fold

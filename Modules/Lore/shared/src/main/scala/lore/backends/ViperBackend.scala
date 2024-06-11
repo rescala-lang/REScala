@@ -1,7 +1,7 @@
 package lore.backends
 
-import lore.ast._
-import cats.implicits._
+import lore.ast.*
+import cats.implicits.*
 
 object ViperBackend {
   case class ViperCompilationException(message: String)
@@ -272,7 +272,7 @@ object ViperBackend {
     def bodyAssignment(lastExpression: Term): String =
       lastExpression match {
         case t: TTuple =>
-          if (t.factors.length != interaction.modifies.length) then
+          if t.factors.length != interaction.modifies.length then
             throw ViperCompilationException(
               s"Interaction $name has invalid executes part. Expected tuple with ${interaction.modifies.length} entries as result but only ${t.factors.length} were given: $t"
             )

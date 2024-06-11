@@ -2,7 +2,7 @@ package com.softwaremill
 
 import scala.collection.{Factory, SortedMap}
 import scala.annotation.compileTimeOnly
-import com.softwaremill.quicklens.QuicklensMacros._
+import com.softwaremill.quicklens.QuicklensMacros.*
 import scala.reflect.ClassTag
 
 package object quicklens {
@@ -17,10 +17,11 @@ package object quicklens {
       *
       * You can use `.each` to traverse options, lists, etc.
       */
-    inline def modify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}, produceDelta = false) }
+    inline def modify[A](inline path: S => A): PathModify[S, A] =
+      ${ toPathModifyFromFocus('{ obj }, '{ path }, produceDelta = false) }
 
-    inline def deltaModify[A](inline path: S => A): PathModify[S, A] = ${ toPathModifyFromFocus('{obj}, '{path}, produceDelta = true) }
-
+    inline def deltaModify[A](inline path: S => A): PathModify[S, A] =
+      ${ toPathModifyFromFocus('{ obj }, '{ path }, produceDelta = true) }
 
     /** Create an object allowing modifying the given (deeply nested) fields accessible in a `case class` hierarchy via
       * `paths` on the given `obj`.
@@ -30,7 +31,7 @@ package object quicklens {
       * You can use `.each` to traverse options, lists, etc.
       */
     inline def modifyAll[A](inline path: S => A, inline paths: (S => A)*): PathModify[S, A] = ${
-      modifyAllImpl('{obj}, '{path}, '{paths})
+      modifyAllImpl('{ obj }, '{ path }, '{ paths })
     }
 
   case class PathModify[S, A](obj: S, f: (A => A) => S) {
@@ -97,12 +98,12 @@ package object quicklens {
   def modifyAllLens[T]: MultiLensHelper[T] = MultiLensHelper[T]()
 
   case class LensHelper[T] private[quicklens] () {
-    inline def apply[U](inline path: T => U): PathLazyModify[T, U] = ${ modifyLensApplyImpl('{path}) }
+    inline def apply[U](inline path: T => U): PathLazyModify[T, U] = ${ modifyLensApplyImpl('{ path }) }
   }
 
   case class MultiLensHelper[T] private[quicklens] () {
     inline def apply[U](inline path1: T => U, inline paths: (T => U)*): PathLazyModify[T, U] = ${
-      modifyAllLensApplyImpl('{path1}, '{paths})
+      modifyAllLensApplyImpl('{ path1 }, '{ paths })
     }
   }
 
@@ -157,7 +158,7 @@ package object quicklens {
       def map[A](fa: M[A], f: A => A): M[A] = {
         val mapped = fa.view.mapValues(f)
         (fa match {
-          case sfa: SortedMap[_, _] => sfa.sortedMapFactory.from(mapped)(using sfa.ordering)
+          case sfa: SortedMap[?, ?] => sfa.sortedMapFactory.from(mapped)(using sfa.ordering)
           case _                    => mapped.to(fa.mapFactory)
         }).asInstanceOf[M[A]]
       }

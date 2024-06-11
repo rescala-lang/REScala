@@ -1,12 +1,12 @@
 package lore
 
-import ast._
-import cats.parse.{Parser => P, Parser0 => P0, Rfc5234}
+import ast.*
+import cats.parse.{Parser as P, Parser0 as P0, Rfc5234}
 import cats.parse.Rfc5234.{alpha, crlf, digit, lf, wsp}
 import cats.data.NonEmptyList
 import scala.annotation.tailrec
 import java.nio.file.Path
-import cats.syntax.all._
+import cats.syntax.all.*
 
 object Parser {
   final case class ParsingException(message: String) extends Exception(message)

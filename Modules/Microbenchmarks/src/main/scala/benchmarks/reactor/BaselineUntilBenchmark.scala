@@ -4,7 +4,6 @@ import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 import reactives.extra.reactor.{Reactor, S, Stage}
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class BaselineUntilBenchmark {
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
 
   import stableEngine.*
 

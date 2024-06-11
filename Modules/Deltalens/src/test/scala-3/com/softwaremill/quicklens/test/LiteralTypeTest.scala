@@ -4,7 +4,7 @@ import com.softwaremill.quicklens.TestData.duplicate
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import com.softwaremill.quicklens._
+import com.softwaremill.quicklens.*
 
 object LiteralTypeTestData {
   case class Test(f: "foo")
@@ -12,7 +12,7 @@ object LiteralTypeTestData {
 }
 
 class LiteralTypeTest extends AnyFlatSpec with Matchers {
-  import LiteralTypeTestData._
+  import LiteralTypeTestData.*
 
   it should "modify a literal type field with an explicit parameter" in {
     Test("foo").modify["foo"](_.f).setTo("foo") should be(Test("foo"))

@@ -42,7 +42,6 @@ object WebsocketConnect {
         val callback = incoming(connect)
 
         socket.onmessage = { (event: dom.MessageEvent) =>
-
           event.data match {
             case data: ArrayBuffer =>
               callback.succeed(JsArrayBufferMessageBuffer(data))

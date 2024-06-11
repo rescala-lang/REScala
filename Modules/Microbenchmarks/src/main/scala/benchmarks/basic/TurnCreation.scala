@@ -3,7 +3,6 @@ package benchmarks.basic
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 class TurnCreation {
 
-  var engine: reactives.default.type        = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
 
   @Setup
   def setup(engineParam: EngineParam) = {

@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class ModifyAllOrderTest extends AnyFlatSpec with Matchers {
-  import ModifyAllOrderTest._
+  import ModifyAllOrderTest.*
 
   it should "apply modifications in the correct order if child is first" in {
     val lst: Cons = Cons.fromList(List(1, 2, 3)).get

@@ -5,30 +5,30 @@ import org.scalatest.matchers.should.Matchers
 
 object ModifyWhenTestData {
   trait Animal
-  case class Dog(age: Int) extends Animal
+  case class Dog(age: Int)        extends Animal
   case class Cat(ages: List[Int]) extends Animal
   case class Zoo(animals: List[Animal])
 
-  val dog: Animal = Dog(4)
+  val dog: Animal      = Dog(4)
   val olderDog: Animal = Dog(5)
 
-  val cat: Animal = Cat(List(3, 12, 13))
+  val cat: Animal      = Cat(List(3, 12, 13))
   val olderCat: Animal = Cat(List(4, 12, 13))
 
-  val zoo = Zoo(List(dog, cat))
+  val zoo      = Zoo(List(dog, cat))
   val olderZoo = Zoo(List(olderDog, olderCat))
 
   trait MyOption[+A]
   case class MySome[+A](value: A) extends MyOption[A]
-  case object MyNone extends MyOption[Nothing]
+  case object MyNone              extends MyOption[Nothing]
 
-  val someDog: MyOption[Dog] = MySome(Dog(4))
+  val someDog: MyOption[Dog]      = MySome(Dog(4))
   val someOlderDog: MyOption[Dog] = MySome(Dog(5))
-  val noDog: MyOption[Dog] = MyNone
+  val noDog: MyOption[Dog]        = MyNone
 }
 
 class ModifyWhenTest extends AnyFlatSpec with Matchers {
-  import ModifyWhenTestData._
+  import ModifyWhenTestData.*
 
   it should "modify a field in a subtype" in {
     dog.modify(_.when[Dog].age).using(_ + 1) shouldEqual olderDog

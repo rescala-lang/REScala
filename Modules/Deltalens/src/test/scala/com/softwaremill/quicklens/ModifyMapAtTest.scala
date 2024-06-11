@@ -1,6 +1,6 @@
 package com.softwaremill.quicklens
 
-import com.softwaremill.quicklens.TestData._
+import com.softwaremill.quicklens.TestData.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -61,7 +61,7 @@ class ModifyMapAtTest extends AnyFlatSpec with Matchers {
   it should "modify a map using at with a derived class" in {
     class C
     object D extends C
-    val m = Map[C, String](D -> "")
+    val m        = Map[C, String](D -> "")
     val expected = Map(D -> "x")
     modify(m)(_.at(D)).setTo("x") should be(expected)
   }

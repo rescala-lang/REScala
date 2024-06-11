@@ -4,7 +4,6 @@ import benchmarks.{EngineParam, Size, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 
-
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 
@@ -41,8 +40,8 @@ class ChatBench {
 @State(Scope.Benchmark)
 class BenchState {
 
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var cs: ChatServer[stableEngine.type] = scala.compiletime.uninitialized

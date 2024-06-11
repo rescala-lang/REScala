@@ -13,7 +13,6 @@ import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
 import reactives.default.*
 
-
 sealed trait Dynamicity
 object Dynamicity {
   case object Static     extends Dynamicity
@@ -21,7 +20,6 @@ object Dynamicity {
   case object Dynamic    extends Dynamicity
 }
 abstract class PaperPhilosophers(val size: Int, val engine: Any, dynamicity: Dynamicity) {
-
 
   sealed trait Philosopher
 

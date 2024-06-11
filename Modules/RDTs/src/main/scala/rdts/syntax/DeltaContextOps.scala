@@ -41,14 +41,14 @@ case class LocalUid(uid: Uid) {
   def show: String              = uid.show
 }
 object LocalUid:
-  given ordering: Ordering[LocalUid]             = Uid.ordering.on(_.uid)
+  given ordering: Ordering[LocalUid] = Uid.ordering.on(_.uid)
   inline given fromId: Conversion[Uid, LocalUid] with {
     override def apply(x: Uid): LocalUid = LocalUid(x)
   }
-  def predefined(s: String): LocalUid            = LocalUid.fromId(Uid.predefined(s))
-  def unwrap(id: LocalUid): Uid                  = id.uid
-  def gen(): LocalUid                            = Uid.gen()
-  def replicaId(using rid: LocalUid): Uid        = rid.uid
+  def predefined(s: String): LocalUid     = LocalUid.fromId(Uid.predefined(s))
+  def unwrap(id: LocalUid): Uid           = id.uid
+  def gen(): LocalUid                     = Uid.gen()
+  def replicaId(using rid: LocalUid): Uid = rid.uid
 
 @implicitNotFound(
   "Requires context mutation permission.\nUnsure how to extract context from »${C}«\nto modify »${L}«"

@@ -1,10 +1,9 @@
 package benchmarks.chatserver
 
-
 import scala.collection.LinearSeq
 import scala.collection.immutable.Queue
 
-class ChatServer[Api <: reactives.default.type ]()(val engine: Api) {
+class ChatServer[Api <: reactives.default.type]()(val engine: Api) {
 
   import engine.*
 

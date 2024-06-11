@@ -26,7 +26,7 @@ object DebugAdapter {
     case v: (Boolean | Char | Short | Int | Long) => v.toString
     case o: Option[Any]                           => o.map(debugPrinter).toString
     case s: (Seq[Any])                            => s.iterator.map(debugPrinter).mkString(s"List(", ", ", ")")
-    case m: scalatags.generic.Modifier[_]         => "<some html>"
+    case m: scalatags.generic.Modifier[?]         => "<some html>"
     case p: Pulse[Any]                            => p.map(debugPrinter).getOrElse("")
     case p: Product => Range(0, p.productArity).map(n =>
         s"${p.productElementName(n)} = ${debugPrinter(p.productElement(n))}"

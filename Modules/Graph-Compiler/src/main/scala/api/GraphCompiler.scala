@@ -19,7 +19,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     hfc: HelperFunCollection
 ) {
   private val allNodes: Set[ReSource] = flattenGraph(outputs, Set())
-  private val sources: Set[Source[?]] = allNodes.collect { case s: Source[_] => s }
+  private val sources: Set[Source[?]] = allNodes.collect { case s: Source[?] => s }
 
   private val dataflow: Map[ReSource, Set[ReSource]] =
     allNodes.foldLeft(Map.empty[ReSource, Set[ReSource]]) { (acc, r) =>
@@ -27,7 +27,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     }
 
   private val topological: List[ReSource]         = toposort(sources.toList).reverse
-  private val sourcesTopological: List[Source[?]] = topological.collect { case s: Source[_] => s }
+  private val sourcesTopological: List[Source[?]] = topological.collect { case s: Source[?] => s }
 
   @tailrec
   private def flattenGraph(check: List[ReSource], acc: Set[ReSource]): Set[ReSource] = {
@@ -215,7 +215,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     }
 
     m.map {
-      case (f: Filter[_], _) => f -> m(f.input)
+      case (f: Filter[?], _) => f -> m(f.input)
       case other             => other
     }
   }
@@ -223,7 +223,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
   private def valueRef(r: ReSource): CDeclRefExpr =
     r match {
       case s @ Source(_, cType) if !usesRefCount(cType) => sourceParameters(s).ref
-      case f: Fold[_]                                   => globalVariables(f).ref
+      case f: Fold[?]                                   => globalVariables(f).ref
       case _                                            => localVariables(r).ref
     }
 
@@ -377,7 +377,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val includes = mainInclude :: libInclude :: Set.from(StdBoolH.include :: contexts.flatMap(_.includes)).toList
 
     val globalVarDecls = topological.collect {
-      case f: Fold[_] => globalVariables(f)
+      case f: Fold[?] => globalVariables(f)
     }
 
     CTranslationUnitDecl(
@@ -390,7 +390,7 @@ class GraphCompiler(outputs: List[ReSource], mainFun: CMainFunction = CMainFunct
     val includes = libInclude :: Set.from(contexts.flatMap(_.includes)).toList
 
     val globalVarDecls = topological.collect {
-      case f: Fold[_] => globalVariables(f).declOnly
+      case f: Fold[?] => globalVariables(f).declOnly
     }.map(forUseInHeader)
 
     CTranslationUnitDecl(

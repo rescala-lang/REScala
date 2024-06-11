@@ -1,10 +1,10 @@
 package lore.test.util
 import munit.FunSuite
-import cats.parse.{Parser => P}
-import cats.implicits._
+import cats.parse.{Parser as P}
+import cats.implicits.*
 import lore.ast.Term
 import lore.backends.traverseFromNode
-import lore.optics._
+import lore.optics.*
 
 class ParserSuite extends FunSuite {
   def assertParses[A](p: P[A], expr: String): Unit =

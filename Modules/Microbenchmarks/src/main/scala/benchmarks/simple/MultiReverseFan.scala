@@ -4,7 +4,6 @@ import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.{BenchmarkParams, ThreadParams}
 
-
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{Lock, ReentrantLock}
 
@@ -17,8 +16,8 @@ import java.util.concurrent.locks.{Lock, ReentrantLock}
 @State(Scope.Benchmark)
 class MultiReverseFan {
 
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var sources: Array[Var[Int]]    = scala.compiletime.uninitialized

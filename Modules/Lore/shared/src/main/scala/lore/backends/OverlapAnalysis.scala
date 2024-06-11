@@ -1,6 +1,6 @@
 package lore.backends
 
-import lore.ast._
+import lore.ast.*
 
 object OverlapAnalysis {
 

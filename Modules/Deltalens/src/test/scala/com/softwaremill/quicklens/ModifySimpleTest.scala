@@ -2,7 +2,7 @@ package com.softwaremill.quicklens
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import TestData._
+import TestData.*
 
 class ModifySimpleTest extends AnyFlatSpec with Matchers {
   it should "modify a single-nested case class field" in {

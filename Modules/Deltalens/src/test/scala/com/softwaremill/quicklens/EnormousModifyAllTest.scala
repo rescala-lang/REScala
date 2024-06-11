@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class EnormousModifyAllTest extends AnyFlatSpec with Matchers {
-  import EnormousModifyAllTest._
+  import EnormousModifyAllTest.*
 
   it should "expand an enormous function" in {
     val c6 = C6(1)

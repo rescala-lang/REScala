@@ -3,7 +3,6 @@ package benchmarks.errorprop
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 
-
 import java.util.concurrent.TimeUnit
 import scala.util.Try
 
@@ -16,8 +15,8 @@ import scala.util.Try
 @State(Scope.Thread)
 class MonadicErrors {
 
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var fire: Int => Unit       = scala.compiletime.uninitialized

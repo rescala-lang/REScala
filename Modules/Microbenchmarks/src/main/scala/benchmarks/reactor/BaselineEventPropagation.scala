@@ -3,7 +3,6 @@ package benchmarks.reactor
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -14,8 +13,8 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class BaselineEventPropagation {
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var event: Evt[Int]     = scala.compiletime.uninitialized

@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 import scala.reflect.ClassTag
 
 class ModifyAllOptimizedTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
-  import ModifyAllOptimizedTest._
+  import ModifyAllOptimizedTest.*
 
   override def beforeEach() = {
     Cons.copyCount = 0

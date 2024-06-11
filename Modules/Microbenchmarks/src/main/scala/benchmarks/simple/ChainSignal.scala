@@ -3,7 +3,6 @@ package benchmarks.simple
 import benchmarks.{EngineParam, Size, Step, Workload}
 import org.openjdk.jmh.annotations.*
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))
@@ -15,8 +14,8 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Thread)
 class ChainSignal {
 
-  var engine: reactives.default.type     = scala.compiletime.uninitialized
-  final lazy val stableEngine = engine
+  var engine: reactives.default.type = scala.compiletime.uninitialized
+  final lazy val stableEngine        = engine
   import stableEngine.*
 
   var source: Var[Int]    = scala.compiletime.uninitialized

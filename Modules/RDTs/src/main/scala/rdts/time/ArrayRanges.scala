@@ -283,7 +283,7 @@ class ArrayRanges(
       else // overlap after start of left until end of left
         // Add parts of left range
         includeRangeInclusive(lMin, rMin - 1) // Exclude rMin
-        if (lMax < rMax)                      // l is completely removed
+        if lMax < rMax                        // l is completely removed
         then
           // Look at next left range
           nextLeft()

@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class RepeatedModifyTest extends AnyFlatSpec with Matchers {
-  import RepeatedModifyTest._
+  import RepeatedModifyTest.*
 
   it should "properly handle repeated modify invocations for different fields" in {
     val c = C(B(1, 1, 1, 1, 1))

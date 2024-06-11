@@ -13,8 +13,8 @@ class ReevaluationBundle(val api: reactives.default.type) {
     /* should be private but is unused */
     // to prevent fake observers from being prematurely gc'd
     var strongRef: AnyRef = (reactive: @unchecked) match {
-      case signal: Signal[_] => signal.map(reev)
-      case event: Event[_]   => event.map(reev)
+      case signal: Signal[?] => signal.map(reev)
+      case event: Event[?]   => event.map(reev)
     }
     def reev(v1: Any): Any = {
       results ::= v1.asInstanceOf[A]

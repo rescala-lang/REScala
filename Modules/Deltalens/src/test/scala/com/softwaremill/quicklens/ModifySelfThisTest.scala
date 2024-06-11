@@ -3,7 +3,7 @@ package com.softwaremill.quicklens
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import ModifySelfThisTest._
+import ModifySelfThisTest.*
 
 object ModifySelfThisTest {
 
@@ -26,14 +26,14 @@ object ModifySelfThisTest {
 
 class ModifySelfThisTest extends AnyFlatSpec with Matchers {
   it should "modify an object even in presence of self alias" in {
-    val s = State(0)
+    val s        = State(0)
     val modified = s.mod
 
     modified.x shouldBe 1
   }
 
   it should "modify an object even in presence of self type" in {
-    val s = State(0)
+    val s        = State(0)
     val modified = s.mod
 
     modified.x shouldBe 1

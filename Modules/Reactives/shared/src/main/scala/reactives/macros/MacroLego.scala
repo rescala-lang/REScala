@@ -55,13 +55,13 @@ object MacroLegos {
           val before = acc._1
           val res    = foldTree((Nil, true), x)(owner)
           // we do not find things with nested things inside
-          if (res._1.nonEmpty) then (before, false)
+          if res._1.nonEmpty then (before, false)
           else (x :: before, acc._2)
 
         if !tree.isExpr then foldOverTree(acc, tree)(owner)
         else
           tree.asExpr match
-            case '{ (${ x }: MacroAccess[_]).value } => handleFind(x.asTerm)
+            case '{ (${ x }: MacroAccess[?]).value } => handleFind(x.asTerm)
             case _                                   => foldOverTree(acc, tree)(owner)
 
       }

@@ -3,10 +3,9 @@ package benchmarks.philosophers
 import benchmarks.philosophers.PhilosopherTable.*
 import org.openjdk.jmh.infra.Blackhole
 
-
 import java.util.concurrent.atomic.AtomicInteger
 
-class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: reactives.default.type ) {
+class PhilosopherTable(philosopherCount: Int, work: Long)(val engine: reactives.default.type) {
 
   import engine.*
 
