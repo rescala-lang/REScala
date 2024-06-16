@@ -28,7 +28,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   replication.jvm,
   replicationExamples.js,
   replicationExamples.jvm,
-  reswing,
   todolist,
 )
 
@@ -134,7 +133,7 @@ lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
   )
 
 lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
-  .dependsOn(reactives.jvm, reswing)
+  .dependsOn(reactives.jvm)
   .settings(
     scala3defaults,
     fork := true,
@@ -292,10 +291,6 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
     Dependencies.scalatags,
     LocalSettings.deployTask,
   )
-
-lazy val reswing = project.in(file("Modules/Swing"))
-  .dependsOn(reactives.jvm)
-  .settings(scala3defaults, libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0")
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
