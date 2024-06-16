@@ -36,7 +36,6 @@ object QuicklensMacros {
       focus: Expr[S => A],
       focusesExpr: Expr[Seq[S => A]]
   )(using Quotes): Expr[PathModify[S, A]] = {
-    import quotes.reflect.*
 
     val focuses = focusesExpr match {
       case Varargs(args) => focus +: args
