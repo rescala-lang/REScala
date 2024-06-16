@@ -1,27 +1,18 @@
 package calendar
 
-import rdts.datatypes.contextual.{ReplicatedList, ReplicatedSet}
-import org.scalajs.dom.html.{Div, Form, Input, LI}
-import org.scalajs.dom
-import org.scalajs.dom.{HTMLDivElement, HTMLFormElement, KeyboardEvent, UIEvent, console, document, window}
-import reactives.default.*
-import reactives.extra.Tags.*
-import scalatags.JsDom
-import scalatags.JsDom.all.*
-import scalatags.JsDom.tags2.section
-import scalatags.JsDom.{Attr, TypedTag, all}
+import calendar.Codecs.given
+import lore.dsl.{Interaction, InteractionWithExecutes, Invariant}
+import org.scalajs.dom.html.{Div, Input}
+import rdts.base.Uid
+import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalUid}
-import reactives.structure.Pulse
-import calendar.Codecs.given
-import rdts.base.Uid
-import lore.dsl.{BoundInteraction, Ex, Interaction, InteractionWithExecutes, InteractionWithExecutesAndActs, Invariant}
 import reactives.core.CreationTicket
+import reactives.default.*
+import reactives.extra.Tags.*
 import reactives.operator.Event.CBR
-
-import javax.swing.text.html.FormSubmitEvent
-import scala.annotation.targetName
-import scala.scalajs.js.Date
+import replication.Storing
+import scalatags.JsDom.all.*
 
 class NewAppointment(private val typeName: String) {
 
@@ -48,7 +39,7 @@ class NewAppointment(private val typeName: String) {
     value   := "Submit"
   ).render)
 
-  val form: Div = all.div(
+  val form: Div = div(
     `class` := "new-appointment-form",
     h2(
       `class` := "new-appointment-title",

@@ -4,8 +4,6 @@ import org.scalajs.dom.{document, window}
 import rdts.base.Uid
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-import channels.webrtc.Example
-import scalatags.JsDom.all.*
 
 object Calendar {
 
@@ -22,10 +20,8 @@ object Calendar {
     val calendar = new CalendarUI(storagePrefix, replicaId)
     val div      = calendar.getContents()
 
-    val webrtc = Example.example()
 
     document.body.replaceChild(div, document.body.firstElementChild)
-    document.body.appendChild(webrtc.render)
     ()
   }
 

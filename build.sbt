@@ -147,7 +147,7 @@ lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
 
 lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(rdts.js, reactives.js, channels.js, lore.js)
+  .dependsOn(rdts.js, reactives.js, channels.js, lore.js, replication.js)
   .settings(
     scala3defaults,
     Settings.resolverJitpack,

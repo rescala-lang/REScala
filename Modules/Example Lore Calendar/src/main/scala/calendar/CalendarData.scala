@@ -1,13 +1,11 @@
 package calendar
 
-import org.scalajs.dom.HTMLElement
 import org.scalajs.dom.html.{Button, Div, Input, LI}
+import reactives.default.*
 import reactives.extra.Tags.reattach
 import reactives.operator.Event
 import reactives.operator.Event.CBR
-import scalatags.JsDom
 import scalatags.JsDom.all.*
-import reactives.default.*
 
 case class Appointment(name: String, start: Int, end: Int) {
   def days: Int = end - start
