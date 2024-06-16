@@ -5,7 +5,8 @@ import sbt.Keys.*
 object LocalSettings {
 
   def tink    = libraryDependencies += "com.google.crypto.tink" % "tink"    % "1.13.0"
-  def scalafx = libraryDependencies += "org.scalafx"           %% "scalafx" % "22.0.0-R33"
+
+  def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
 
   val deployTask = TaskKey[File]("deploy", "generates a correct index.template.html") := {
     val fastlink   = (Compile / fastLinkJS).value

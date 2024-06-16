@@ -110,7 +110,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .dependsOn(rdts.jvm)
   .settings(
     scala3defaults,
-    LocalSettings.scalafx,
+    libraryDependencies += LocalSettings.scalafx,
     fork := true,
     Dependencies.jsoniterScala,
     LocalSettings.tink,
@@ -292,7 +292,12 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(reactives.jvm)
-  .settings(scala3defaults, LocalSettings.scalafx, fork := true, Settings.javaOutputVersion(17))
+  .settings(
+    scala3defaults,
+    libraryDependencies += LocalSettings.scalafx % Provided,
+    fork                                        := true,
+    Settings.javaOutputVersion(17)
+  )
 
 lazy val reswing = project.in(file("Modules/Swing"))
   .dependsOn(reactives.jvm)

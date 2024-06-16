@@ -1,6 +1,5 @@
 package rescalafx
 
-import reactives.default.*
 import rescalafx.JFXAdapter.*
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.application.{JFXApp3, Platform}
@@ -17,7 +16,7 @@ object Main extends JFXApp3 {
     sliderValue.text <== {
       val sliderSignal = slider.value.toSignal
       val str          = sliderSignal.map(v => f"$v%.2f")
-      new SignalToStringProperty(str).toProperty
+      str.toProperty
     }
 
     def render(): Node =

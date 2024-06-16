@@ -6,16 +6,14 @@ import scalafx.beans.property.{BooleanProperty, DoubleProperty, Property, String
 
 object JFXAdapter {
 
-  implicit class PropertyToSignal[T, J](p: Property[T, J]) {
-
+  extension [T, J](p: Property[T, J])
     def toSignal: Signal[T] = {
       val v = Var(p.value)
       p.onChange { (_, _, _) => v.set(p.value) }
       v
     }
-  }
 
-  implicit class SignalToStringProperty(s: Signal[String]) {
+  extension (s: Signal[String]) {
     def toProperty: StringProperty = {
       val p = StringProperty(s.now)
       s.observe(
@@ -28,7 +26,7 @@ object JFXAdapter {
     }
   }
 
-  implicit class SignalToDoubleProperty(s: Signal[Double]) {
+  extension (s: Signal[Double]) {
     def toProperty: DoubleProperty = {
       val p = DoubleProperty(s.now)
       s.observe(
@@ -41,7 +39,7 @@ object JFXAdapter {
     }
   }
 
-  implicit class SignalToBooleanProperty(s: Signal[Boolean]) {
+  extension (s: Signal[Boolean]) {
     def toProperty: BooleanProperty = {
       val p = BooleanProperty(s.now)
       s.observe(
