@@ -14,7 +14,7 @@ class ExtraDataManager[State](val dataManager: DataManager[State])(using
     bottom: Bottom[State]
 ) {
 
-  export dataManager.{ currentContext as _,  *}
+  export dataManager.{ selfContext as _,  *}
 
   import dataManager.given
 

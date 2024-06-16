@@ -20,8 +20,6 @@ class Binding[T](key: String)(using lat: Lattice[T], codec: JsonValueCodec[T])
 
 case class HMap(keys: Map[String, Binding[?]], values: Map[String, Any])
 
-
-
 sealed trait ProtocolMessage[+T]
 object ProtocolMessage {
   case class Request(sender: Uid, knows: Dots) extends ProtocolMessage[Nothing]
@@ -54,8 +52,8 @@ class DataManager[State](
       connections.foreach: con =>
         con.send(missingRequestMessage).run(using ())(debugCallback)
     },
-    1000,
-    1000
+    10000,
+    10000
   )
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
@@ -81,12 +79,12 @@ class DataManager[State](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  val receivedCallback: Evt[State] = Evt()
+  val receivedCallback: Evt[State]   = Evt()
   val allChanges: Evt[TransferState] = Evt()
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
-  def currentContext = contexts.getOrElse(replicaId.uid, Dots.empty)
+  def selfContext = contexts.getOrElse(replicaId.uid, Dots.empty)
 
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
@@ -96,7 +94,7 @@ class DataManager[State](
   }
 
   def applyUnrelatedDelta(delta: State): Unit = lock.synchronized {
-    val nextDot = currentContext.nextDot(replicaId.uid)
+    val nextDot = selfContext.nextDot(replicaId.uid)
     applyLocalDelta(ProtocolDots(delta, Dots.single(nextDot)))
   }
 
@@ -111,13 +109,14 @@ class DataManager[State](
   def handleMessage(msg: ProtocolMessage[TransferState], biChan: ConnectionContext) = {
     msg match
       case Request(uid, knows) =>
-        val relevant = allDeltas.filterNot(dt => dt.context <= knows)
+        val relevant = allDeltas.filterNot { dt => dt.context <= knows }
         relevant.map(encodeDelta).foreach: msg =>
           biChan.send(msg).run(using ())(debugCallback)
-        updateContext(uid, currentContext merge knows)
+        updateContext(uid, selfContext merge knows)
       case Payload(uid, named) =>
         lock.synchronized {
           updateContext(uid, named.context)
+          updateContext(replicaId.uid, named.context)
           remoteDeltas = named :: remoteDeltas
         }
         receivedCallback.fire(named.data)
@@ -134,7 +133,7 @@ class DataManager[State](
     }
     connections.foreach: con =>
       deltas.foreach: delta =>
-        con.send(encodeDelta(delta))
+        con.send(encodeDelta(delta)).run(using ())(debugCallback)
   }
 
   def encodeDelta(delta: TransferState): MessageBuffer =
@@ -144,6 +143,6 @@ class DataManager[State](
     ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))
 
   def missingRequestMessage: MessageBuffer =
-    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, currentContext)))
+    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext)))
 
 }
