@@ -11,7 +11,7 @@ import todo.TodoDataManager.TodoRepState
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.unused
 
-// `taskrefs` is unused as a reference, but is used indierectly so this parameter serves as a requirement
+// `taskrefs` is unused as a reference, but is used indirectly so this parameter serves as a requirement
 // that a `taskrefs` needs to be created before taskops may be used
 class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
 
