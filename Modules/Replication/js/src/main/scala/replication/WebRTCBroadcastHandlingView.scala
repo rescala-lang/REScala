@@ -1,4 +1,4 @@
-package todo
+package replication
 
 import channels.broadcastchannel.BroadcastChannelConnector
 import channels.webrtc.{ConnectorOverview, SessionDescription, WebRTCConnection, WebRTCConnector}
@@ -11,8 +11,10 @@ import org.scalajs.dom.*
 import org.scalajs.dom.html.{Div, Input, Table}
 import rdts.dotted.Dotted
 import reactives.operator.{Evt, Fold}
-import scalatags.JsDom.all.*
+import replication.DataManager
+import scalatags.JsDom.all.{s, *}
 import scalatags.JsDom.tags2.section
+import scalatags.generic.TypedTag
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.scalajs.js
@@ -32,14 +34,14 @@ given [T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] = v => ArrayMes
 
 given JsonValueCodec[BroadcastCommunication] = JsonCodecMaker.make
 
-object Example {
+class WebRTCConnectionView(dataManager: DataManager[?]) {
 
   // label seems mostly for auto negotiation
-  val channelLabel = "loci-webrtc-channel"
+  val channelLabel = "webrtc-channel"
   // id is used for pre negotiated channels
   val channelId: Double = 4
 
-  def example() = {
+  def example(): Tag = {
     val renderedConnectionTable = table(
       tr(
         th("local session description"),
@@ -120,14 +122,14 @@ object Example {
   def addDataChannel(handling: WebRTCHandling) = {
 
     val channel = handling.peer.peerConnection.createDataChannel(
-      Example.channelLabel,
+      channelLabel,
       new dom.RTCDataChannelInit {
         negotiated = true
-        id = Example.channelId
+        id = channelId
       }
     )
 
-    TodoDataManager.dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
+    dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
 
   }
 
