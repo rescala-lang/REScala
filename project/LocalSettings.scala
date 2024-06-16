@@ -8,6 +8,15 @@ object LocalSettings {
 
   def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
 
+  def jetty = {
+    val jettyVersion = "12.0.10"
+    Seq(
+      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
+      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
+      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
+    )
+  }
+
   val deployTask = TaskKey[File]("deploy", "generates a correct index.template.html") := {
     val fastlink   = (Compile / fastLinkJS).value
     val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value

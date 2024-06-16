@@ -74,14 +74,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
     Dependencies.scalatags,
   )
   .jvmSettings(
-    libraryDependencies ++= {
-      val jettyVersion = "12.0.10"
-      Seq(
-        "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
-        "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
-        "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
-      )
-    },
+    libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
   )
 
@@ -286,6 +279,7 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
     Dependencies.slips.script,
     Dependencies.sqliteJdbc,
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13",
+    libraryDependencies ++= LocalSettings.jetty,
   )
   .jsSettings(
     Dependencies.scalatags,
