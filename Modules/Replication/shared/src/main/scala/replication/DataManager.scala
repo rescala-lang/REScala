@@ -90,6 +90,7 @@ class DataManager[State](
 
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
+    updateContext(replicaId.uid, dotted.context)
     allChanges.fire(dotted)
     disseminateLocalBuffer()
   }
@@ -103,7 +104,7 @@ class DataManager[State](
     List(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def updateRemoteContext(rr: Uid, dots: Dots) = lock.synchronized {
+  def updateContext(rr: Uid, dots: Dots) = lock.synchronized {
     contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
   }
 
@@ -113,10 +114,10 @@ class DataManager[State](
         val relevant = allDeltas.filterNot(dt => dt.context <= knows)
         relevant.map(encodeDelta).foreach: msg =>
           biChan.send(msg).run(using ())(debugCallback)
-        updateRemoteContext(uid, currentContext merge knows)
+        updateContext(uid, currentContext merge knows)
       case Payload(uid, named) =>
         lock.synchronized {
-          updateRemoteContext(uid, named.context)
+          updateContext(uid, named.context)
           remoteDeltas = named :: remoteDeltas
         }
         receivedCallback.fire(named.data)
