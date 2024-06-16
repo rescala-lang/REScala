@@ -1,4 +1,4 @@
-package rescalafx
+package reactives.jfx
 
 import reactives.default.*
 import scalafx.application.Platform

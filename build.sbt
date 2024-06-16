@@ -28,7 +28,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   replication.jvm,
   replicationExamples.js,
   replicationExamples.jvm,
-  rescalafx,
   reswing,
   todolist,
 )
@@ -139,6 +138,7 @@ lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
   .settings(
     scala3defaults,
     fork := true,
+    libraryDependencies += LocalSettings.scalafx,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
@@ -248,6 +248,9 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Dependencies.munitCheck,
     Dependencies.munit,
   )
+  .jvmSettings(
+    libraryDependencies += LocalSettings.scalafx % Provided,
+  )
   .jsSettings(
     Dependencies.scalajsDom,
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1" % Test,
@@ -288,15 +291,6 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
   .jsSettings(
     Dependencies.scalatags,
     LocalSettings.deployTask,
-  )
-
-lazy val rescalafx = project.in(file("Modules/Javafx"))
-  .dependsOn(reactives.jvm)
-  .settings(
-    scala3defaults,
-    libraryDependencies += LocalSettings.scalafx % Provided,
-    fork                                        := true,
-    Settings.javaOutputVersion(17)
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))

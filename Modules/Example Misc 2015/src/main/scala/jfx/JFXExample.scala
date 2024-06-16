@@ -1,13 +1,13 @@
-package rescalafx
+package jfx
 
-import rescalafx.JFXAdapter.*
+import reactives.jfx.JFXAdapter.*
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.control.{Label, Slider}
 import scalafx.scene.layout.VBox
 import scalafx.scene.{Node, Scene}
 
-object Main extends JFXApp3 {
+object JFXExample extends JFXApp3 {
   override def start(): Unit = {
 
     val slider      = new Slider(0, 30, 0)
