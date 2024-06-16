@@ -90,6 +90,7 @@ class DataManager[State](
 
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
+    allChanges.fire(dotted)
     disseminateLocalBuffer()
   }
 
@@ -119,6 +120,7 @@ class DataManager[State](
           remoteDeltas = named :: remoteDeltas
         }
         receivedCallback.fire(named.data)
+        allChanges.fire(named)
 
   }
 
