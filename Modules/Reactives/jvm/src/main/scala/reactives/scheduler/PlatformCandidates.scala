@@ -1,7 +1,6 @@
 package reactives.scheduler
 
 import reactives.core.{DynamicScope, Scheduler}
-import reactives.scheduler.GlobalCandidate
 
 object PlatformCandidates {
 
