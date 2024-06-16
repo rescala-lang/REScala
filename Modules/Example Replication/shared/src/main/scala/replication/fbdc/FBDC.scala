@@ -26,7 +26,7 @@ enum Res:
   case Fortune(req: Req.Fortune, result: String)
   case Northwind(req: Req.Northwind, result: List[Map[String, String]])
 
-class Focus[Inner: Lattice, Outer](dm: DataManager[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
+class Focus[Inner: Lattice, Outer](dm: ExtraDataManager[Outer])(extract: Outer => Inner, wrap: Inner => Outer) {
 
   def apply(fun: Inner => Inner): Unit = {
     dm.transform { outer =>
@@ -49,7 +49,7 @@ case class State(
 
 object State:
 
-  extension (dm: DataManager[State])
+  extension (dm: ExtraDataManager[State])
     def modReq          = Focus(dm)(_.requests, d => Bottom.empty.copy(requests = d))
     def modRes          = Focus(dm)(_.responses, d => Bottom.empty.copy(responses = d))
     def modParticipants = Focus(dm)(_.providers, d => Bottom.empty.copy(providers = d))
@@ -59,7 +59,7 @@ class FbdcExampleData {
 
   val dataManager =
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    new DataManager[State](replicaId)
+    ExtraDataManager(new DataManager[State](replicaId))
 
   def addCapability(capability: String) =
     dataManager.modParticipants { part =>

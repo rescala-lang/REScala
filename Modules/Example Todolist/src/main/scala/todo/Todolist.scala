@@ -1,7 +1,7 @@
 package todo
 
 import org.scalajs.dom.{document, window}
-import rdts.base.Uid
+import rdts.base.{Lattice, Uid}
 import reactives.extra.Tags.reattach
 import replication.WebRTCConnectionView
 import scalatags.JsDom.all
@@ -30,9 +30,10 @@ object Todolist {
     document.body.appendChild(webrtc.render)
 
     document.body.appendChild:
-      all.div.render.reattach(TodoDataManager.dataManager.mergedState.map(state =>
+      all.div.render.reattach(TodoDataManager.dataManager.receivedCallback.map(_ =>
+        val state = TodoDataManager.dataManager.allDeltas.reduceOption(Lattice.merge)
         all.pre(all.stringFrag(pprint.apply(state).plainText)).render
-      ))
+      ).hold(all.span.render))
 
     ()
   }

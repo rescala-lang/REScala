@@ -21,22 +21,31 @@ object TodoDataManager {
 
   val dataManager = DataManager[TodoRepState](Todolist.replicaId)
 
-  val lock                             = new Object
-  var globalBuffer: List[TodoRepState] = Nil
+  def hookup[A: Lattice](
+      init: A,
+      wrap: A => TodoRepState,
+      unwrap: TodoRepState => Option[A]
+  )(create: (A, Fold.Branch[DeltaBuffer[A]]) => Signal[DeltaBuffer[A]]) = {
+    dataManager.lock.synchronized {
+      dataManager.applyUnrelatedDelta(wrap(init))
+      val fullInit = dataManager.allDeltas.flatMap(v => unwrap(v.data)).foldLeft(init)(Lattice.merge)
 
-  def publish[A](reactive: Signal[DeltaBuffer[A]], wrap: A => TodoRepState) = {
-    reactive.map { v =>
-      lock.synchronized {
-        globalBuffer = globalBuffer.reverse_:::(v.deltaBuffer.map(wrap))
+      val branch = Fold.branch[DeltaBuffer[A]] {
+        dataManager.receivedCallback.value.flatMap(unwrap) match
+          case None    => Fold.current
+          case Some(v) => Fold.current.applyDelta(v)
       }
 
-    }.observe { _ =>
-      lock.synchronized {
-        if globalBuffer.nonEmpty then
-          dataManager.applyUnrelatedDelta(globalBuffer.reduce(Lattice.merge))
+      val sig = create(fullInit, branch)
+
+      sig.observe { buffer =>
+        buffer.deltaBuffer.foreach { delta =>
+          dataManager.applyUnrelatedDelta(wrap(delta))
+        }
       }
+
+      sig
     }
-
   }
 
 }

@@ -48,22 +48,27 @@ class TodoAppUI(val storagePrefix: String) {
 
     val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
       Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
-        Fold(init)(
-          taskOps.handleCreateTodo(createTodo),
-          taskOps.handleRemoveAll(removeAll.event),
-          Fold.branch {
-            current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
-          },
-          // todo: does not restore full state
-          taskOps.handleDelta(TodoDataManager.dataManager.changes)
-        )
+        TodoDataManager.hookup(
+          init.state,
+          list => Bottom.empty[TodoRepState].copy(list = list),
+          fs => Option.when(!Bottom.isEmpty(fs.list))(fs.list)
+        ) { (init, branch) =>
+          Fold(DeltaBuffer(init))(
+            TaskOps.resetBuffer,
+            taskOps.handleCreateTodo(createTodo),
+            taskOps.handleRemoveAll(removeAll.event),
+            Fold.branch {
+              current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
+            },
+            // todo: does not restore full state
+            branch
+          )
+        }
       }
-
-    TodoDataManager.publish(tasksRDT, list => Bottom.empty[TodoRepState].copy(list = list))
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
     val tasksData: Signal[List[TaskData]] =
-      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.state.data.read) }
+      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.state.read) }
     val taskTags: Signal[List[LI]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.drop(1)

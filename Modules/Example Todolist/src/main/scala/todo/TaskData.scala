@@ -31,13 +31,13 @@ given [A]: DottedLattice[LastWriterWins[A]] = Dotted.liftLattice
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
+  def task: Signal[DeltaBuffer[LastWriterWins[Option[TaskData]]]] = cached.task
   def tag: LI                                                             = cached.tag
   def removed: Event[String]                                              = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]],
+    val task: Signal[DeltaBuffer[LastWriterWins[Option[TaskData]]]],
     val tag: dom.html.LI,
     val removed: Event[String],
     val id: String,
@@ -72,10 +72,10 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lww: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
+    val lww: DeltaBuffer[LastWriterWins[Option[TaskData]]] =
       if task.isEmpty
-      then DeltaBuffer(Dotted(LastWriterWins.fallback(task)))
-      else DeltaBuffer(Dotted(LastWriterWins.now(task)))
+      then DeltaBuffer(LastWriterWins.fallback(task))
+      else DeltaBuffer(LastWriterWins.now(task))
 
     val edittext: Event.CBR[dom.Event, dom.html.Input] = Event.fromCallback {
       input(
@@ -102,34 +102,28 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val remoteUpdates = {
+    extension (db: DeltaBuffer[LastWriterWins[Option[TaskData]]])
+      def modTask(f: TaskData => TaskData): DeltaBuffer[LastWriterWins[Option[TaskData]]] =
+        db.transform(_.map(f))
 
-      val changes = TodoDataManager.dataManager.changes.collect(
-        Function.unlift { transfer => transfer.data.entries.get(taskID) }
-      )
-
-      changes.branch[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] { delta =>
-        current.clearDeltas().applyDelta(Dotted(delta))
-      }
-    }
-
-    extension (db: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]])
-      def modTask(f: TaskData => TaskData): DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
-        db.transform(_.map(_.map(f)))
-
-    val crdt: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] =
+    val crdt: Signal[DeltaBuffer[LastWriterWins[Option[TaskData]]]] =
       Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
-        Fold(init)(
-          doneEv branch { _ => current.clearDeltas().modTask(_.toggle()) },
-          edittextStr branch { v => current.clearDeltas().modTask(_.edit(v)) },
-          remoteUpdates
-        )
+        TodoDataManager.hookup[LastWriterWins[Option[TaskData]]](
+          init.state,
+          entry => Bottom.empty[TodoRepState].copy(entries = Map(taskID -> entry)),
+          fs => fs.entries.get(taskID)
+        ) { (init, branch) =>
+          Fold(DeltaBuffer(init))(
+            TaskOps.resetBuffer,
+            doneEv branch { _ => current.modTask(_.toggle()) },
+            edittextStr branch { v => current.modTask(_.edit(v)) },
+            branch
+          )
+        }
       }(using Codecs.codecLww)
 
-    TodoDataManager.publish(crdt, entry => Bottom.empty[TodoRepState].copy(entries = Map(taskID -> entry.data)))
-
     val taskData = Signal {
-      crdt.value.state.data.read.getOrElse(TaskData(desc = "LWW Empty"))
+      crdt.value.state.read.getOrElse(TaskData(desc = "LWW Empty"))
     }
 
     val removeButton =

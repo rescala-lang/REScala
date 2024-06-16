@@ -30,8 +30,9 @@ object Bottom {
   def provide[A](v: A) = new Bottom[A]:
     override val empty: A = v
 
-  def empty[A](using bottom: Bottom[A]): A         = bottom.empty
-  def apply[A](using bottom: Bottom[A]): Bottom[A] = bottom
+  def empty[A](using bottom: Bottom[A]): A               = bottom.empty
+  def isEmpty[A](v: A)(using bottom: Bottom[A]): Boolean = bottom.isEmpty(v)
+  def apply[A](using bottom: Bottom[A]): Bottom[A]       = bottom
 
   private object mapBottomInstance extends Bottom[Map[Nothing, Nothing]] {
     override def empty: Map[Nothing, Nothing]                              = Map.empty

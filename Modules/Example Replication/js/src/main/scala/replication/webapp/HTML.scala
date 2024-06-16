@@ -29,14 +29,14 @@ object HTML {
       section(table(
         tr(td("self id"), td(dataManager.replicaId.show)),
         tr(td("total state size")).render.reattach(dataManager.encodedStateSize.map(s => td(s).render)),
-        tr(td("tick")).render.reattach(dataManager.tick.map(td(_).render)),
+        // tr(td("tick")).render.reattach(dataManager.tick.map(td(_).render)),
         tr(
           td("request queue"),
         ).render.reattach(dataManager.mergedState.map(v => td(v.data.requests.elements.size).render)),
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
-        button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
+        //button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
       ),
       section(table(
         thead(th("remote ref"), th("dots")),
@@ -88,7 +88,7 @@ object HTML {
     button(
       "get fortune",
       onclick := leftClickHandler {
-        exdat.dataManager.modReq { reqs =>
+        exdat.dataManager.dataManager.modReq { reqs =>
           reqs.enqueue(using exdat.dataManager.replicaId)(Req.Fortune(id))
         }
       }
@@ -103,7 +103,7 @@ object HTML {
       button(
         "query northwind",
         onclick := leftClickHandler {
-          exdat.dataManager.modReq { reqs =>
+          exdat.dataManager.dataManager.modReq { reqs =>
             reqs.enqueue(using exdat.dataManager.replicaId)(Req.Northwind(id, ip.value))
           }
         }

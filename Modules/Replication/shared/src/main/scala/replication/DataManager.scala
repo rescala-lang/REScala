@@ -8,18 +8,19 @@ import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.syntax.LocalUid
 import rdts.time.Dots
-import reactives.default.{Event, Evt, Signal, Var}
+import reactives.operator.Evt
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}
 
 import java.nio.charset.StandardCharsets
 import java.util.Timer
-import scala.collection.mutable
 import scala.util.{Failure, Success}
 
 class Binding[T](key: String)(using lat: Lattice[T], codec: JsonValueCodec[T])
 
 case class HMap(keys: Map[String, Binding[?]], values: Map[String, Any])
+
+
 
 sealed trait ProtocolMessage[+T]
 object ProtocolMessage {
@@ -44,15 +45,12 @@ class DataManager[State](
 
   val timer = new Timer()
 
-  val tick: Var[Int] = Var(0)
-
   val debugCallback: Callback[Any] =
     case Success(value)     => ()
     case Failure(exception) => exception.printStackTrace()
 
   timer.scheduleAtFixedRate(
     { () =>
-      tick.transform(_ + 1)
       connections.foreach: con =>
         con.send(missingRequestMessage).run(using ())(debugCallback)
     },
@@ -78,48 +76,34 @@ class DataManager[State](
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  private val lock: AnyRef                      = new {}
+  val lock: AnyRef                              = new {}
   private var localDeltas: List[TransferState]  = Nil
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  private val contexts: Var[Map[Uid, Dots]]                            = Var(Map.empty)
-  private val filteredContexts: mutable.Map[Uid, Signal[Option[Dots]]] = mutable.Map.empty
+  val receivedCallback: Evt[State] = Evt()
+  val allChanges: Evt[TransferState] = Evt()
 
-  def peerids: Signal[Set[Uid]] = contexts.map(_.keySet)
-  def contextOf(rr: Uid): Signal[Dots] = Signal {
-    contexts.value.getOrElse(rr, Dots.empty)
-  }
+  private var contexts: Map[Uid, Dots] = Map.empty
 
-  private val changeEvt             = Evt[TransferState]()
-  val changes: Event[TransferState] = changeEvt
-  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr merge ts }
-  val currentContext: Signal[Dots]  = mergedState.map(_.context)
-
-  val encodedStateSize = mergedState.map(s => writeToArray(s).size)
+  def currentContext = contexts.getOrElse(replicaId.uid, Dots.empty)
 
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
-    changeEvt.fire(dotted)
     disseminateLocalBuffer()
   }
 
   def applyUnrelatedDelta(delta: State): Unit = lock.synchronized {
-    val nextDot = currentContext.now.nextDot(replicaId.uid)
+    val nextDot = currentContext.nextDot(replicaId.uid)
     applyLocalDelta(ProtocolDots(delta, Dots.single(nextDot)))
-  }
-
-  def transform(fun: State => State) = lock.synchronized {
-    val current = mergedState.now
-    applyLocalDelta(ProtocolDots(fun(current.data), Dots.single(current.context.nextDot(replicaId.uid))))
   }
 
   def allDeltas: List[ProtocolDots[State]] = lock.synchronized {
     List(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def updateRemoteContext(rr: Uid, dots: Dots) = {
-    contexts.transform(_.updatedWith(rr)(curr => curr merge Some(dots)))
+  def updateRemoteContext(rr: Uid, dots: Dots) = lock.synchronized {
+    contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
   }
 
   def handleMessage(msg: ProtocolMessage[TransferState], biChan: ConnectionContext) = {
@@ -128,13 +112,13 @@ class DataManager[State](
         val relevant = allDeltas.filterNot(dt => dt.context <= knows)
         relevant.map(encodeDelta).foreach: msg =>
           biChan.send(msg).run(using ())(debugCallback)
-        updateRemoteContext(uid, currentContext.now merge knows)
+        updateRemoteContext(uid, currentContext merge knows)
       case Payload(uid, named) =>
         lock.synchronized {
           updateRemoteContext(uid, named.context)
           remoteDeltas = named :: remoteDeltas
         }
-        changeEvt.fire(named)
+        receivedCallback.fire(named.data)
 
   }
 
@@ -153,14 +137,10 @@ class DataManager[State](
   def encodeDelta(delta: TransferState): MessageBuffer =
     ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta)))
 
-  def disseminateFull() =
-    connections.foreach: con =>
-      con.send(encodeDelta(mergedState.now))
-
   def encodeNamed[A: JsonValueCodec](name: String, value: A) =
     ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))
 
   def missingRequestMessage: MessageBuffer =
-    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, currentContext.now)))
+    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, currentContext)))
 
 }

@@ -31,7 +31,7 @@ class FbdcCli(settings: CliConnections) {
     settings.`webserver-listen-port` match
       case None =>
       case Some(port) =>
-        val server = new JettyServer(settings.`webserver-static-path`, "/", exData.dataManager, "0")
+        val server = new JettyServer(settings.`webserver-static-path`, "/", exData.dataManager.dataManager, "0")
         server.start(port)
     settings.`tcp-connect`.collect {
       case (ip, port) =>

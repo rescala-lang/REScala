@@ -59,7 +59,7 @@ object WebRepMain {
 
     val exData = new FbdcExampleData()
 
-    val ccm = new ContentConnectionManager(exData.dataManager)
+    val ccm = new ContentConnectionManager(exData.dataManager.dataManager)
 
     val bodyParent = dom.document.body.parentElement
     bodyParent.removeChild(dom.document.body)

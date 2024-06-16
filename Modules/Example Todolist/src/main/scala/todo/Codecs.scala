@@ -14,6 +14,6 @@ object Codecs {
 
   given codecRGA: JsonValueCodec[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-  given codecLww: JsonValueCodec[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = JsonCodecMaker.make
+  given codecLww: JsonValueCodec[DeltaBuffer[LastWriterWins[Option[TaskData]]]] = JsonCodecMaker.make
 
 }
