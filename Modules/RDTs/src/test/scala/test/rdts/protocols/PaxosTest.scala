@@ -1,4 +1,4 @@
-package protocols
+package test.rdts.protocols
 
 import rdts.base.Bottom
 import rdts.base.Lattice.merge

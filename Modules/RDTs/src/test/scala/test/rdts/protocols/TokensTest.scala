@@ -1,4 +1,4 @@
-package protocols
+package test.rdts.protocols
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
