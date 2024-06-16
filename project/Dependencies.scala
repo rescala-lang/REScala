@@ -34,25 +34,4 @@ object Dependencies {
     def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.9.0"
     def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.9.0"
   }
-
-  object loci {
-    def generic(n: String) =
-      // use maven (true) jitpack (false)?
-      if (false)
-        libraryDependencies += "io.github.scala-loci" %%% s"scala-loci-$n" % "0.5.0-62-gd313a2f"
-      else
-        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "b9809c9c2d"
-
-    def communication = generic("communication")
-    def circe         = generic("serializer-circe")
-    def tcp           = generic("communicator-tcp")
-    def upickle       = generic("serializer-upickle")
-    def jsoniterScala = generic("serializer-jsoniter-scala")
-    def webrtc        = generic("communicator-webrtc")
-    def wsAkka        = generic("communicator-ws-akka")
-    def wsWeb         = generic("communicator-ws-webnative")
-    def wsJavalin     = generic("communicator-ws-javalin")
-    def wsJetty       = generic("communicator-ws-jetty")
-    def wsJetty12     = generic("communicator-ws-jetty12")
-  }
 }

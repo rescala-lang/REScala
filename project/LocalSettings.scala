@@ -4,7 +4,7 @@ import sbt.Keys.*
 
 object LocalSettings {
 
-  def tink    = libraryDependencies += "com.google.crypto.tink" % "tink"    % "1.13.0"
+  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.13.0"
 
   def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
 
