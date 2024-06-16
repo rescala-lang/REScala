@@ -21,10 +21,19 @@ object TodoDataManager {
 
   val dataManager = DataManager[TodoRepState](Todolist.replicaId)
 
+  val lock                             = new Object
+  var globalBuffer: List[TodoRepState] = Nil
+
   def publish[A](reactive: Signal[DeltaBuffer[A]], wrap: A => TodoRepState) = {
-    reactive.observe { buffer =>
-      buffer.deltaBuffer.foreach { delta =>
-        dataManager.applyUnrelatedDelta(wrap(delta))
+    reactive.map { v =>
+      lock.synchronized {
+        globalBuffer = globalBuffer.reverse_:::(v.deltaBuffer.map(wrap))
+      }
+
+    }.observe { _ =>
+      lock.synchronized {
+        if globalBuffer.nonEmpty then
+          dataManager.applyUnrelatedDelta(globalBuffer.reduce(Lattice.merge))
       }
     }
 

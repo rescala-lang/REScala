@@ -2,7 +2,9 @@ package todo
 
 import org.scalajs.dom.{document, window}
 import rdts.base.Uid
+import reactives.extra.Tags.reattach
 import replication.WebRTCConnectionView
+import scalatags.JsDom.all
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 
@@ -18,13 +20,20 @@ object Todolist {
     val storagePrefix = window.location.href
     println(storagePrefix)
 
-    val todoApp = new TodoAppUI(storagePrefix)
-    val div     = todoApp.getContents()
+    val todoApp  = new TodoAppUI(storagePrefix)
+    val contents = todoApp.getContents()
 
     val webrtc = WebRTCConnectionView(TodoDataManager.dataManager).example()
 
-    document.body.replaceChild(div, document.body.firstElementChild)
+    document.body.replaceChild(contents, document.body.firstElementChild)
+
     document.body.appendChild(webrtc.render)
+
+    document.body.appendChild:
+      all.div.render.reattach(TodoDataManager.dataManager.mergedState.map(state =>
+        all.pre(all.stringFrag(pprint.apply(state).plainText)).render
+      ))
+
     ()
   }
 

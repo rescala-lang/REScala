@@ -295,4 +295,5 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
     LocalSettings.deployTask,
+    Dependencies.pprint,
   )
