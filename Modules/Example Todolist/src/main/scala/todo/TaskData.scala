@@ -11,7 +11,6 @@ import reactives.default.*
 import reactives.extra.Tags.*
 import replication.Storing
 import scalatags.JsDom.all.*
-import todo.Codecs.given
 import todo.TodoDataManager.TodoRepState
 import todo.Todolist.replicaId
 
