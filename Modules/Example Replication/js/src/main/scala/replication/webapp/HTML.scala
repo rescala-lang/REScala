@@ -88,7 +88,7 @@ object HTML {
     button(
       "get fortune",
       onclick := leftClickHandler {
-        exdat.dataManager.dataManager.modReq { reqs =>
+        exdat.dataManager.modReq { reqs =>
           reqs.enqueue(using exdat.dataManager.replicaId)(Req.Fortune(id))
         }
       }
@@ -103,7 +103,7 @@ object HTML {
       button(
         "query northwind",
         onclick := leftClickHandler {
-          exdat.dataManager.dataManager.modReq { reqs =>
+          exdat.dataManager.modReq { reqs =>
             reqs.enqueue(using exdat.dataManager.replicaId)(Req.Northwind(id, ip.value))
           }
         }
