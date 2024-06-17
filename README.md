@@ -41,3 +41,15 @@ create a config for native executable creation (one time only for each main meth
 create a native executable (important: re-export the jars first again):
 
     graalvm-jdk-22.0.1+8.1/bin/native-image --class-path jvm/target/jars/"*" dtn.start_epidemic_routing -o start_epidemic_routing --no-fallback --gc=G1 -Ob
+
+
+# setup commands for the showroom docker
+
+enable network emulation
+
+  sudo modprobe sch_netem
+  sudo modprobe ebtables
+
+start emulation docker
+
+  docker run --rm -it --name showroom -p 5901:5901 --privileged -v /home/kali/shared:/shared dtn7-showroom
