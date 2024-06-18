@@ -160,9 +160,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final inline infix def filter(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
-    Event.static {
-      this.value.filter(expression)
-    }
+    Event.static { this.value.filter(expression) }
 
   /** Filters the event, only propagating the value when the filter is true.
     *
@@ -175,21 +173,15 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     *
     * @group operator
     */
-  final inline def collect[U](inline expression: PartialFunction[T, U])(using
-      ticket: CreationTicket[State]
-  ): Event[U] =
-    Event.static {
-      this.value.collect(expression)
-    }
+  final inline def collect[U](inline expression: PartialFunction[T, U])(using CreationTicket[State]): Event[U] =
+    Event.static { this.value.collect(expression) }
 
   /** Transform the event.
     *
     * @group operator
     */
   final inline infix def map[B](inline expression: T => B)(using ticket: CreationTicket[State]): Event[B] =
-    Event.static {
-      this.value.map(expression)
-    }
+    Event.static { this.value.map(expression) }
 
   /** Like map, but allows to ignore the parameter if its type is Unit.
     * Useful for snapshotting some signals when an event triggers
