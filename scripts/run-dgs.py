@@ -13,11 +13,11 @@ this_filepath = pathlib.Path(__file__).parent.resolve()
 dgs_filepath = this_filepath / "data" / "dgs" / "exp1.dgs"
 
 
-node_model = "DTN"
-
-control_node_model = "CHECKER"
-
 wait_time_per_step_seconds = 1.0
+
+# WARNING
+# this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
+# but, they are probably better of writing their own script
 
 
 # this script can play rudimentary dgs files (info taken from https://graphstream-project.org/doc/Advanced-Concepts/The-DGS-File-Format/)
@@ -40,11 +40,10 @@ wait_time_per_step_seconds = 1.0
 #  this script automatically adds the control network: 172.16.0.0/24
 #
 # special case: control node
-#  this script automatically adds a first node outside the grid
-#  the node model can be specified
+#  this script automatically adds a control node of type "CHECKER" outside the grid
 #
 # special case: step 0
-#  if step 0 exists, we accept only 'an' add-node instructions in that step
+#  step 0 must exist and we accept only 'an' add-node instructions in that step
 #  supplied y and y coordinates are ignored
 #  nodes are placed in a 10 by x grid evenly spaced apart solely for better visibility
 #  the node model can be specified
@@ -54,6 +53,10 @@ wait_time_per_step_seconds = 1.0
 #  step x will be executed after approximately x seconds
 #  (step execution does not count into our wait-time)
 #  another wait-time may be specified
+#
+# special case: DTN node
+#  the node model we add here is "DTN"
+#  there is also a custom mechanism to set the dtnd service configuration file dtnd.toml
 
 
 class ID_Counter:
@@ -106,8 +109,8 @@ class Dtnd_Configfile_Helper:
   def _substitute_config_file(self, node_id):
     file_contents = self.configs[node_id]
 
-    file_contents = re.sub('strategy = "epidemic"', 'strategy = "external"', file_contents, 1)
-    file_contents = re.sub('interval = "2s"', 'interval = "1s"', file_contents, 1)
+    file_contents = re.sub(r'strategy = "epidemic"', 'strategy = "external"', file_contents, 1)
+    file_contents = re.sub(r'interval = "2s"', 'interval = "1s"', file_contents, 1)
 
     discovery_string = "[discovery_destinations]\n"
     for idx, address in enumerate(self.discovery_addresses[node_id]):
@@ -122,7 +125,6 @@ class Dtnd_Configfile_Helper:
     return self.configs
 
 
-
 grid_node_counter = ID_Counter(0)
 global_node_counter = ID_Counter(1)
 interface_creator = Interface_Creator()
@@ -132,9 +134,11 @@ dtnd_configfile_helper = Dtnd_Configfile_Helper()
 with open(dgs_filepath, "rt", encoding="utf8") as f:
   dgs_lines = f.read().split("\n")
 
+
 file_version = dgs_lines.pop(0)
 if file_version != "DGS004":
   raise Exception(f"file version is '{file_version}' but only 'DGS004' is supported")
+
 
 file_header = dgs_lines.pop(0)  # ignore, because we dont set a session name and do not care about step-numbers or event-numbers
 print("dgs file opened")
@@ -159,11 +163,12 @@ core.set_service_defaults(session_id, service_defaults)
 print("set service defaults for nodes")
 
 
-core.add_node(session_id, Node(id=global_node_counter.next(), name="control", type=NodeType.DEFAULT, model=control_node_model, position=Position(x=50, y=50)))
+core.set_session_options(session_id, {'controlnet': '172.16.0.0/24'})
+print("added control network 172.16.0.0/24")
+
+
+core.add_node(session_id, Node(id=global_node_counter.next(), name="control", type=NodeType.DEFAULT, model="CHECKER", position=Position(x=50, y=50)))
 print ("added control node")
-
-
-node_map = {}
 
 
 print("running setup")
@@ -173,6 +178,8 @@ if line != "st 0":
   raise Exception(f"'step 0' is missing, where each 'an ...' should be, aborting")
 
 # adding all nodes
+node_map = {}
+
 line = dgs_lines.pop(0)
 while not line.startswith("st"):
   action, node_name, *others = line.split(" ")
@@ -188,7 +195,7 @@ while not line.startswith("st"):
     id=node_map[node_name], 
     name=node_name,
     type=NodeType.DEFAULT,
-    model=node_model,
+    model="DTN",
     position=position
   ))
 
@@ -230,12 +237,12 @@ for lline in dgs_lines:
 # editing dtnd.toml
 for node_id, file_contents in dtnd_configfile_helper.get_substituted_config_files().items():
   core.set_node_service_file(session_id, node_id, "dtnd", "dtnd.toml", file_contents)
-  print(f"edited dtnd.toml for node-id {node_id}")
+print(f"updated dtnd.toml for each node")
 
 print("setup complete")
 
 
-input("press any key to start the simulation")
+input("press any enter to start the simulation")
 core.set_session_state(session_id, SessionState.INSTANTIATION)
 
 last_step = 0
@@ -251,7 +258,7 @@ while True:
   #print(f"waiting {step-last_step} steps, resulting wait-time seconds: {(step - last_step)*wait_time_per_step_seconds}")
   #time.sleep((step - last_step)*wait_time_per_step_seconds)
   last_step = step
-  input(f"press any key to run step {step}")
+  input(f"press any enter to run step {step}")
 
   line = dgs_lines.pop(0)
 
