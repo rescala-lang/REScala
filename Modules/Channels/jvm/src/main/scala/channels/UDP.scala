@@ -1,4 +1,4 @@
-package channels.udp
+package channels
 
 import channels.*
 import de.rmgk.delay.{Async, Callback, Sync}

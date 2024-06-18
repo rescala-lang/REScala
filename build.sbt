@@ -59,14 +59,13 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
-lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
+lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Full)
   .in(file("Modules/Channels"))
   .dependsOn(rdts)
   .settings(
     Settings.scala3defaults,
     Dependencies.slips.delay,
     Dependencies.munit,
-    Dependencies.jsoniterScala,
   )
   .jsSettings(
     Settings.jsEnvDom,
@@ -76,6 +75,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Fu
   .jvmSettings(
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
+    Test / fork := true,
   )
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)

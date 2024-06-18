@@ -1,12 +1,7 @@
 package channels
 
-import channels.jettywebsockets.{JettyWsConnection, JettyWsListener}
-import channels.tcp.TCP
-import channels.udp.UDP
 import de.rmgk.delay.{Async, Callback}
-import org.eclipse.jetty.http.pathmap.PathSpec
 
-import java.net.{InetSocketAddress, URI}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
@@ -15,23 +10,6 @@ import scala.util.{Failure, Success}
 class EchoServerTestTCP extends EchoCommunicationTest(
       TCP.listen("0", 54467, _),
       TCP.connect("localhost", 54467, _)
-    )
-
-class EchoServerTestUDP extends EchoCommunicationTest(
-      UDP.sendreceive(InetSocketAddress("localhost", 54469), 54468, _),
-      UDP.sendreceive(InetSocketAddress("localhost", 54468), 54469, _)
-    )
-
-class EchoServerTestJetty extends EchoCommunicationTest(
-      _ =>
-        (incoming: Incoming) =>
-          Async[Abort] {
-            val listener   = JettyWsListener.prepareServer(54470)
-            val echoServer = listener.listen(PathSpec.from("/registry/*"))
-            listener.server.start()
-            echoServer.prepare(incoming).bind
-          },
-      _ => JettyWsConnection.connect(URI.create(s"ws://localhost:54470/registry/"))
     )
 
 def printErrors[T](cb: T => Unit): Callback[T] =

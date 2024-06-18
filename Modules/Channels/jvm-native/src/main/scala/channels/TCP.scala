@@ -1,4 +1,4 @@
-package channels.tcp
+package channels
 
 import channels.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer}
 import de.rmgk.delay
