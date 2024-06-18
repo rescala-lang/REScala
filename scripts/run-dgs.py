@@ -242,7 +242,7 @@ print(f"updated dtnd.toml for each node")
 print("setup complete")
 
 
-input("press any enter to start the simulation")
+input("press enter to start the simulation")
 core.set_session_state(session_id, SessionState.INSTANTIATION)
 
 last_step = 0
@@ -258,7 +258,7 @@ while True:
   #print(f"waiting {step-last_step} steps, resulting wait-time seconds: {(step - last_step)*wait_time_per_step_seconds}")
   #time.sleep((step - last_step)*wait_time_per_step_seconds)
   last_step = step
-  input(f"press any enter to run step {step}")
+  input(f"press enter to run step {step}")
 
   line = dgs_lines.pop(0)
 
