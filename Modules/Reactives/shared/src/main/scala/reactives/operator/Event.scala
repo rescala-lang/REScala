@@ -152,7 +152,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def toggle[A](a: Signal[A], b: Signal[A])(using ticket: CreationTicket[State]): Signal[A] =
     ticket.scope.embedCreation { ict ?=>
       val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
-      Signal.dynamic { if switched.value then b.value else a.value }(using ict)
+      Signal.static { if switched.value then b.value else a.value }(using ict)
     }
 
   /** Filters the event, only propagating the value when the filter is true.
@@ -160,7 +160,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final inline infix def filter(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
-    Event.dynamic {
+    Event.static {
       this.value.filter(expression)
     }
 
@@ -178,7 +178,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final inline def collect[U](inline expression: PartialFunction[T, U])(using
       ticket: CreationTicket[State]
   ): Event[U] =
-    Event.dynamic {
+    Event.static {
       this.value.collect(expression)
     }
 
@@ -187,7 +187,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final inline infix def map[B](inline expression: T => B)(using ticket: CreationTicket[State]): Event[B] =
-    Event.dynamic {
+    Event.static {
       this.value.map(expression)
     }
 
@@ -197,7 +197,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @group operator
     */
   final inline def snap[B, T1 >: T](inline expression: B)(using CreationTicket[State])(using T1 =:= Unit): Event[B] =
-    Event.dynamic { Some(expression) }
+    Event.static { Some(expression) }
 
   /** Folds events with a given operation to create a Signal.
     *

@@ -17,11 +17,16 @@ class FeedStore(
     fold(Set.empty[RSSItem])(_ + _))                                        // #IF
   }
 
-  val itemAdded: Event[RSSItem] = addItem && { item => // #EVT //#EF
-    (for
-      channel <- item.srcChannel
-      items   <- channels.value get channel
-      if !(items.value contains item)
-    yield ()).isDefined
+  val itemAdded: Event[RSSItem] = Event.dynamic {
+    addItem.value.filter { item => // #EVT //#EF
+      val contains =
+        for
+          channel <- item.srcChannel
+          items   <- channels.value get channel
+          if !(items.value contains item)
+        yield ()
+
+      contains.isDefined
+    }
   }
 }
