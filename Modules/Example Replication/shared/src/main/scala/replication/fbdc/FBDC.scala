@@ -10,7 +10,7 @@ import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
 import rdts.syntax.LocalUid
 import rdts.time.VectorClock
-import reactives.operator.Signal
+import reactives.operator.{Event, Signal}
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
@@ -57,9 +57,14 @@ object State:
 class FbdcExampleData {
   val replicaId = LocalUid(Uid.gen())
 
-  val dataManager =
+  val dataManager = {
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    ExtraDataManager(new DataManager[State](replicaId))
+    val dm =
+      Event.fromCallback {
+        new DataManager[State](replicaId, _ => (), Event.handle)
+      }
+    ExtraDataManager(dm.data, dm.event)
+  }
 
   def addCapability(capability: String) =
     dataManager.modParticipants { part =>

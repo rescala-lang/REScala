@@ -8,7 +8,6 @@ import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.syntax.LocalUid
 import rdts.time.Dots
-import reactives.operator.Evt
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}
 
@@ -30,6 +29,8 @@ case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bott
 
 class DataManager[State](
     val replicaId: LocalUid,
+    receiveCallback: State => Unit,
+    allChanges: ProtocolDots[State] => Unit,
 )(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
 
   given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
@@ -79,9 +80,6 @@ class DataManager[State](
   private var localBuffer: List[TransferState]  = Nil
   private var remoteDeltas: List[TransferState] = Nil
 
-  val receivedCallback: Evt[State]   = Evt()
-  val allChanges: Evt[TransferState] = Evt()
-
   private var contexts: Map[Uid, Dots] = Map.empty
 
   def selfContext = contexts.getOrElse(replicaId.uid, Dots.empty)
@@ -89,7 +87,7 @@ class DataManager[State](
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
     updateContext(replicaId.uid, dotted.context)
-    allChanges.fire(dotted)
+    allChanges(dotted)
     disseminateLocalBuffer()
   }
 
@@ -119,8 +117,8 @@ class DataManager[State](
           updateContext(replicaId.uid, named.context)
           remoteDeltas = named :: remoteDeltas
         }
-        receivedCallback.fire(named.data)
-        allChanges.fire(named)
+        receiveCallback(named.data)
+        allChanges(named)
 
   }
 

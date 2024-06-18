@@ -9,6 +9,7 @@ import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import rdts.time.Dots
 import reactives.default.*
+import reactives.operator.Event.CBR
 import replication.DataManager
 
 object TodoDataManager {
@@ -19,7 +20,9 @@ object TodoDataManager {
   given Lattice[TodoRepState]        = Lattice.derived
   given Bottom[TodoRepState]         = Bottom.derived
 
-  val dataManager = DataManager[TodoRepState](Todolist.replicaId)
+  val CBR(receivedCallback, dataManager) = Event.fromCallback {
+    DataManager[TodoRepState](Todolist.replicaId, Event.handle, _ => ())
+  }
 
   def hookup[A: Lattice](
       init: A,
@@ -31,7 +34,7 @@ object TodoDataManager {
       val fullInit = dataManager.allDeltas.flatMap(v => unwrap(v.data)).foldLeft(init)(Lattice.merge)
 
       val branch = Fold.branch[DeltaBuffer[A]] {
-        dataManager.receivedCallback.value.flatMap(unwrap) match
+        receivedCallback.value.flatMap(unwrap) match
           case None    => Fold.current
           case Some(v) => Fold.current.applyDelta(v)
       }

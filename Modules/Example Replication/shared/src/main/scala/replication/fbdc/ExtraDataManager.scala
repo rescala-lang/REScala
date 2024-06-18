@@ -8,7 +8,7 @@ import replication.{DataManager, ProtocolDots}
 
 import scala.collection.mutable
 
-class ExtraDataManager[State](val dataManager: DataManager[State])(using
+class ExtraDataManager[State](val dataManager: DataManager[State], changeEvt: Event[ProtocolDots[State]])(using
     jsonCodec: JsonValueCodec[State],
     lattice: Lattice[State],
     bottom: Bottom[State]
@@ -18,7 +18,6 @@ class ExtraDataManager[State](val dataManager: DataManager[State])(using
 
   import dataManager.given
 
-  private val changeEvt             = dataManager.allChanges
   val changes: Event[TransferState] = changeEvt
   val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr merge ts }
   val currentContext: Signal[Dots]  = mergedState.map(_.context)
