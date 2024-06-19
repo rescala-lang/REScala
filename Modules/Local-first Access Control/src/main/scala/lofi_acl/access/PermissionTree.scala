@@ -3,9 +3,26 @@ package lofi_acl.access
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import rdts.base.{Bottom, Lattice}
 
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, targetName}
 
-case class PermissionTree(permission: Permission, children: Map[String, PermissionTree])
+case class PermissionTree(permission: Permission, children: Map[String, PermissionTree]) {
+
+  /** Returns true if this is less than or equal to the PermissionTree in the argument.
+    *
+    * Assumes two minimized and normalized PermissionTree
+    */
+  @targetName("lteq")
+  def <=(right: PermissionTree): Boolean =
+    (this, right) match
+      case (_, PermissionTree(ALLOW, _))                          => true
+      case (PermissionTree(ALLOW, _), PermissionTree(PARTIAL, _)) => false
+      case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
+        leftChildren.forall((key, leftChild) =>
+          rightChildren.get(key) match
+            case Some(rightChild) => leftChild <= rightChild
+            case None             => false
+        )
+}
 
 object PermissionTree {
   val allow: PermissionTree = PermissionTree(ALLOW, Map.empty)
