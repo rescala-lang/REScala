@@ -20,6 +20,15 @@ Create a `build.sbt` file in an empty folder with the following contents:
 ```scala
 // should also work on any recent version of the Scala 2.11 - 3 branches
 // including ScalaJS 1.0 and ScalaNative 0.4
+scalaVersion := "3.3.3"
+libraryDependencies += "de.tu-darmstadt.stg" %% "reactives" % "0.35.1"
+```
+
+Or for Scala version 2.x:
+
+```scala
+// should also work on any recent version of the Scala 2.11 - 3 branches
+// including ScalaJS 1.0 and ScalaNative 0.4
 scalaVersion := "2.13.10"
 libraryDependencies += "de.tu-darmstadt.stg" %% "rescala" % "0.33.0"
 ```
@@ -203,7 +212,7 @@ The application prints all the values associated to the displacement over time.
 ```scala mdoc:silent
 val SPEED = 10
 val time = Var(0)
-val space = Signal{ SPEED * time() }
+val space = Signal{ SPEED * time.value }
 val o1 = space observe ((x: Int) => println(x))
 ```
 ```scala mdoc
@@ -261,7 +270,7 @@ Example:
 
 ```scala mdoc:silent:nest
 val e = Evt[Int]()
-val s: Signal[Int] = e.latest(10)
+val s: Signal[Int] = e.hold(10)
 assert(s.now == 10)
 
 e.fire(1)
@@ -284,7 +293,7 @@ Example:
 ```scala mdoc:silent:nest
 var test = 0
 val v =  Var(1)
-val s = Signal{ v() + 1 }
+val s = Signal{ v.value + 1 }
 val e: Event[Int] = s.changed
 val o1 = e observe ((x:Int) => { test+=1 })
 
@@ -407,10 +416,7 @@ e.fire(3); assert(s.now == 2)
 
 ## Last(n) Signal
 
-The `last` function generalizes the `latest` function and
-returns a signal which holds the last `n` events.
-
-`last[T](e: Event[T], n: Int): Signal[List[T]]`
+The `list` function returns a signal which holds the last `n` events.
 
 Initially, an empty list is returned. Then the values are
 progressively filled up to the size specified by the
@@ -418,7 +424,7 @@ programmer. Example:
 
 ```scala mdoc:silent:nest
 val e = Evt[Int]()
-val s: Signal[scala.collection.LinearSeq[Int]] = e.last(5)
+val s: Signal[scala.collection.LinearSeq[Int]] = e.list(5)
 val o1 = s observe println
 ```
 
@@ -439,20 +445,16 @@ function can potentially introduce a memory overflow.
 
 ## LatestOption Signal
 
-### LatestOption Signal
-
 The `latestOption` function is a variant of the `latest`
 function which uses the `Option` type to distinguish the case in
 which the event did not fire yet. Holds the latest value of an event
 as `Some(val)` or `None`.
 
-`latestOption[T](e: Event[T]): Signal[Option[T]]`
-
 Example:
 
 ```scala mdoc:silent:nest
 val e = Evt[Int]()
-val s: Signal[Option[Int]] = e.latestOption()
+val s: Signal[Option[Int]] = e.holdOption()
 assert(s.now == None)
 e.fire(1)
 assert(s.now == Option(1))
@@ -470,17 +472,17 @@ For every firing event, the corresponding handler function is executed,
 to compute the new state.
 If multiple events fire at the same time,
 the handlers are executed in order.
-The acc parameter reflects the current state.
+The current parameter reflects the current state.
 
 ```scala mdoc:silent:nest
 val word = Evt[String]()
 val count = Evt[Int]()
 val reset = Evt[Unit]()
-val result = Events.foldAll(""){ acc => Seq(
-  reset act2 (_ => ""),
-  word act2 identity,
-  count act2 (acc * _),
-)}
+val result = Fold("")(
+  reset act (_ => ""),
+  word act identity,
+  count act (current * _),
+)
 val o1 = result.observe(r => println(r))
 ```
 
@@ -556,7 +558,7 @@ value.
 ```scala mdoc:silent
 var test = 0
 val v =  Var(1)
-val s = Signal{ v() + 1 }
+val s = Signal{ v.value + 1 }
 val e: Event[Unit] = s.changedTo(3)
 val o1 = e observe ((x:Unit) => { test+=1 })
 
@@ -644,7 +646,7 @@ and then use property based testing to find inputs that violate specified invari
 ```scala
 val a = Var(42)
 val b = Var(42)
-val c = Signal { a() + b() }
+val c = Signal { a.value + b.value }
 
 a.setValueGenerator(Gen.posNum[Int])
 b.setValueGenerator(Gen.posNum[Int])
@@ -675,7 +677,7 @@ class InvariantsTest extends AnyFreeSpec {
   "expect sum of two positives to always be positive" in {
     val a = Var(42)
     val b = Var(42)
-    val c = Signal { a() + b() }
+    val c = Signal { a.value + b.value }
 
     a.setValueGenerator(Gen.posNum[Int])
     b.setValueGenerator(Gen.posNum[Int])
@@ -697,7 +699,7 @@ programming and _REScala_.
 
 ## Accessing values in signal expressions
 
-The `()`
+The `.value`
 operator used on a signal or a var, inside a signal expression,
 returns the signal/var value _and_ creates a dependency. The
 `now` operator returns the current value but does _not_
@@ -708,7 +710,7 @@ between `b` and `s`.
 ```scala
 val a = Var(42)
 val b = Var(42)
-val c = Signal { a() + b() }
+val c = Signal { a.value + b.value }
 
 a.setValueGenerator(Gen.posNum[Int])
 b.setValueGenerator(Gen.posNum[Int])
@@ -724,14 +726,14 @@ The following code instead establishes only a dependency between
 `b` and `s`.
 
 ```scala mdoc:silent:nest
-val s = Signal{ a.now + b() }
+val s = Signal{ a.now + b.value }
 ```
 
 In other words, in the last example, if `a` is updated, `s`
 is not automatically updated. With the exception of the rare cases in
 which this behavior is desirable, using `now` inside a signal
 expression is almost certainly a mistake. As a rule of dumb, signals
-and vars appear in signal expressions with the `()` operator.
+and vars appear in signal expressions with the `.value` operator.
 
 ## Attempting to assign a signal
 
@@ -749,9 +751,12 @@ For example the following code is conceptually wrong because the variable
 
 
 ```scala mdoc:silent:nest
+val a = Var(42)
+val b = Var(42)
+
 var c = 0
 val s = Signal{
-  val sum = a() + b();
+  val sum: Int = a.value + b.value
   c = sum * 2           /* WRONG - DON'T DO IT */
 }
 assert(c == 4)
@@ -762,8 +767,11 @@ style. For example, by removing the variable `c` and replacing it
 directly with the signal.
 
 ```scala mdoc:silent:nest
+val a = Var(42)
+val b = Var(42)
+
 val c = Signal{
-  val sum = a() + b();
+  val sum: Int = a.value + b.value
   sum * 2
 }
 assert(c.now == 4)
@@ -780,8 +788,8 @@ For example the following code:
 ```scala
 /* WRONG - DON'T DO IT */
 val a = Var(0)
-val s = Signal{ a() + t() }
-val t = Signal{ a() + s() + 1 }
+val s = Signal{ a.value + t.value }
+val t = Signal{ a.value + s.value + 1 }
 ```
 
 creates a mutual dependency between `s` and
@@ -797,7 +805,7 @@ unexpectedly with mutable objects. Consider the following example.
 class Foo(init: Int) { var x = init }
 val foo = new Foo(1)
 val varFoo = Var(foo)
-val s = Signal{ varFoo().x + 10 }
+val s = Signal{ varFoo.value.x + 10 }
 println(s.now)
 foo.x = 2
 println(s.now)
@@ -822,7 +830,7 @@ the var is reevaluated.
 class Foo(val x: Int){}
 val foo = new Foo(1)
 val varFoo = Var(foo)
-val s = Signal{ varFoo().x + 10 }
+val s = Signal{ varFoo.value.x + 10 }
 println(s.now)
 varFoo set (new Foo(2))
 println(s.now)
@@ -837,7 +845,7 @@ confusing for the reader and should be avoided when possible.
 class Foo(init: Int) { var x = init }
 val foo = new Foo(1)
 val varFoo = Var(foo)
-val s = Signal{ varFoo().x + 10 }
+val s = Signal{ varFoo.value.x + 10 }
 println(s.now)
 foo.x = 2
 varFoo set foo
@@ -858,13 +866,13 @@ def increment(x: Int): Int = x + 1
 The following code does not compile because the compiler expects an
 integer, not a var as a parameter of the `increment` function. In
 addition, since the `increment` function returns an integer,
-`b` has type `Int`, and the call `b()` in the signal
+`b` has type `Int`, and the call `b.value` in the signal
 expression is also rejected by the compiler.
 
 ```scala
 val a = Var(1)
 val b = increment(a)     /* WRONG - DON'T DO THIS */
-val s = Signal{ b() + 1 }
+val s = Signal{ b.value + 1 }
 ```
 
 The following code snippet is syntactically correct, but the signal
@@ -881,7 +889,7 @@ The following solution is syntactically correct and the signal
 
 ```scala mdoc:silent:nest
 val a = Var(1)
-val s = Signal{ increment(a()) + 1 }
+val s = Signal{ increment(a.value) + 1 }
 ```
 
 # Essential Related Work

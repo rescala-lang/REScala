@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-cs launch org.scalameta:mdoc_2.13:2.3.7 -- --classpath $(cs fetch --classpath de.tu-darmstadt.stg:rescala_2.13:0.33.0) --in manual-src.md --out manual.md
+cs launch org.scalameta:mdoc_3:2.5.3 -- --classpath $(cs fetch --classpath de.tu-darmstadt.stg:rescala_3:0.35.1) --in manual-src.md --out manual.md
