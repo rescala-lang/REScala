@@ -17,20 +17,6 @@ import scala.concurrent.duration.{Duration, MILLISECONDS, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-enum MonotonicAclSyncMessage[RDT]:
-  case AnnouncePeers(peers: Map[PublicIdentity, (String, Int)])
-  // TODO: Check validity of created PermissionTree using Filter before applying the entry
-  case AddAclEntry(
-      subject: PublicIdentity,
-      path: String,
-      operation: Operation,
-      dot: Dot, // Also indicates authorship
-      cc: Dots,
-      signature: Array[Byte]
-  )
-  case Delta(delta: RDT, dot: Dot /* dot.place is the author */, aclCC: Dots)
-  case RequestMissing(rdtDots: Dots, aclDots: Dots)
-
 class SyncWithMonotonicAcl[RDT](
     private val localIdentity: PrivateIdentity,
     initialRdt: (Dots, RDT),

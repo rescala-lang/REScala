@@ -1,8 +1,9 @@
-package lofi_acl.sync
+package lofi_acl.sync.no_acl
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
-import lofi_acl.sync.SingleGroupSyncMessage.*
+import lofi_acl.sync.*
+import lofi_acl.sync.no_acl.MutuallyTrustingSyncMessage.*
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
@@ -12,22 +13,15 @@ import scala.concurrent.duration.{Duration, MILLISECONDS, SECONDS}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
-enum SingleGroupSyncMessage[RDT]:
-  case AnnouncePeers(peers: Map[PublicIdentity, (String, Int)])
-  case AddUsers(users: Set[PublicIdentity], dots: Dots, cc: Dots)
-  case Delta(delta: RDT, dots: Dots, rdtCC: Dots, permCC: Dots)
-  case Time(rdtTime: Dots, permTime: Dots)
-  case RequestMissing(rdtMerged: Dots, rdtRx: Dots, permMerged: Dots, permRx: Dots)
-
-class SingleGroupSync[RDT](
+class MutuallyTrustingSync[RDT](
     private val localIdentity: PrivateIdentity,
     initialRdt: (Dots, RDT),
     initialPermissions: (Dots, Set[PublicIdentity]) // Should contain local identity
 )(using
     lattice: Lattice[RDT],
     bottom: Bottom[RDT],
-    msgJsonCode: JsonValueCodec[SingleGroupSyncMessage[RDT]]
-) extends CausalityCheckingMessageHandler[SingleGroupSyncMessage[RDT]] {
+    msgJsonCode: JsonValueCodec[MutuallyTrustingSyncMessage[RDT]]
+) extends CausalityCheckingMessageHandler[MutuallyTrustingSyncMessage[RDT]] {
 
   private val localPublicId = localIdentity.getPublic
 
@@ -53,7 +47,7 @@ class SingleGroupSync[RDT](
   @volatile private var receivedPermissionDots: Dots      = initialPermissions._1
   @volatile private var maxReferencedPermissionDots: Dots = initialPermissions._1
 
-  private val connectionManager: ConnectionManager[SingleGroupSyncMessage[RDT]] =
+  private val connectionManager: ConnectionManager[MutuallyTrustingSyncMessage[RDT]] =
     ConnectionManager(localIdentity, this)(using MessageSerialization.derived)
 
   private val executor               = Executors.newCachedThreadPool()
@@ -81,7 +75,7 @@ class SingleGroupSync[RDT](
   }
 
   /** Thread safe. */
-  override def receivedMessage(msg: SingleGroupSyncMessage[RDT], sender: PublicIdentity): Unit = {
+  override def receivedMessage(msg: MutuallyTrustingSyncMessage[RDT], sender: PublicIdentity): Unit = {
     if permissionsReference.get()._2.contains(sender)
     then msgQueue.put((msg, sender))
 
@@ -89,7 +83,10 @@ class SingleGroupSync[RDT](
     // TODO: Might be better to disconnect, or check for missing permission deltas with peers
   }
 
-  override def newMessageWithMissingPredecessors(msg: SingleGroupSyncMessage[RDT], sender: PublicIdentity): Unit = {
+  override def newMessageWithMissingPredecessors(
+      msg: MutuallyTrustingSyncMessage[RDT],
+      sender: PublicIdentity
+  ): Unit = {
     var rdtMissing  = Dots.empty
     var permMissing = Dots.empty
 
@@ -109,7 +106,7 @@ class SingleGroupSync[RDT](
     requestDeltasIfStillMissingAfterDelay(sender, rdtMissing, permMissing, Duration(1, SECONDS))
   }
 
-  override def canHandleMessage(msg: SingleGroupSyncMessage[RDT]): Boolean = {
+  override def canHandleMessage(msg: MutuallyTrustingSyncMessage[RDT]): Boolean = {
     msg match
       case Time(_, _)                => true
       case AddUsers(users, dots, cc) =>
@@ -123,7 +120,7 @@ class SingleGroupSync[RDT](
       case RequestMissing(_, _, _, _) => true
   }
 
-  override def handleMessage(msg: SingleGroupSyncMessage[RDT], sender: PublicIdentity): Boolean = {
+  override def handleMessage(msg: MutuallyTrustingSyncMessage[RDT], sender: PublicIdentity): Boolean = {
     msg match
       case AnnouncePeers(peers) =>
         peers.foreach { case (user, (host, port)) =>
