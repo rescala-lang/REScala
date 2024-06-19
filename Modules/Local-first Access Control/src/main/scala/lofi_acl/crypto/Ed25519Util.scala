@@ -126,4 +126,25 @@ object Ed25519Util {
     pemWriter.close()
     writer.toString
   }
+
+  def checkEd25519Signature(data: Array[Byte], signature: Array[Byte], signingKey: PublicKey): Boolean = {
+    val verifier = Signature.getInstance("ED25519")
+    verifier.initVerify(signingKey)
+    verifier.update(data)
+    verifier.verify(signature)
+  }
+
+  def checkEd25519Signature(data: Array[Byte], signature: Array[Byte], signer: PublicIdentity): Boolean = {
+    val verifier = Signature.getInstance("ED25519")
+    verifier.initVerify(signer.publicKey)
+    verifier.update(data)
+    verifier.verify(signature)
+  }
+
+  def sign(data: Array[Byte], signKey: PrivateKey): Array[Byte] = {
+    val verifier = Signature.getInstance("ED25519")
+    verifier.initSign(signKey)
+    verifier.update(data)
+    verifier.sign()
+  }
 }
