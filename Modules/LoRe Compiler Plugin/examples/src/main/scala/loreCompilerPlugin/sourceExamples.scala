@@ -6,28 +6,28 @@ import reactives.default.Var as Source
 object sourceExamples:
   @main def main(): Unit =
     // ========= Non-Source Values to use in below tests =========
-    val testIntLiteral: Int     = 1
-    val testIntExpression1: Int = 1 + 2
-    val testIntExpression2: Int = 2 * 6 - 3
-    val testIntExpression3: Int = (2 * 6) - 3
-    val testIntExpression4: Int = 2 * (6 - 3)
-    val testIntReference: Int   = testIntLiteral
+    val integerLiteral: Int     = 1
+    val integerExpression1: Int = 1 + 2
+    val integerExpression2: Int = 2 * 6 - 3
+    val integerExpression3: Int = (2 * 6) - 3
+    val integerExpression4: Int = 2 * (6 - 3)
+    val integerReference: Int   = integerLiteral
 
-    val testStringLiteral: String   = "foo"
-    val testStringReference: String = testStringLiteral
+    val stringLiteral: String   = "foo"
+    val stringReference: String = stringLiteral
 
-    val testBooleanLiteral: Boolean     = true
-    val testBooleanExpression1: Boolean = true && false
-    val testBooleanExpression2: Boolean = 2 > 1 || 1 + 1 == 2 && false
-    val testBooleanExpression3: Boolean = (2 > 1 || 1 + 1 == 2) && false
-    val testBooleanExpression4: Boolean = 2 > 1 || (1 + 1 == 2 && false)
-    val testBooleanReference: Boolean   = testBooleanLiteral
+    val booleanLiteral: Boolean     = true
+    val booleanExpression1: Boolean = true && false
+    val booleanExpression2: Boolean = 2 > 1 || 1 + 1 == 2 && false
+    val booleanExpression3: Boolean = (2 > 1 || 1 + 1 == 2) && false
+    val booleanExpression4: Boolean = 2 > 1 || (1 + 1 == 2 && false)
+    val booleanReference: Boolean   = booleanLiteral
 
     // ========= Source tests =========
 
     // Simple integer values
     val integerLiteralSource: Source[Int]   = Source(1)
-    val integerReferenceSource: Source[Int] = Source(testIntLiteral)
+    val integerReferenceSource: Source[Int] = Source(integerLiteral)
 
     // Binary integer operators
     val integerLiteralAdditionSource: Source[Int]       = Source(4 + 2)
@@ -36,22 +36,22 @@ object sourceExamples:
     val integerLiteralDivisionSource: Source[Int]       = Source(4 / 2)
 
     // Binary integer operators with references
-    val integerReferenceBinaryOpSource1: Source[Int] = Source(testIntLiteral + testIntLiteral)
-    val integerReferenceBinaryOpSource2: Source[Int] = Source(4 - testIntLiteral)
-    val integerReferenceBinaryOpSource3: Source[Int] = Source(testIntLiteral * 2)
+    val integerReferenceBinaryOpSource1: Source[Int] = Source(integerLiteral + integerLiteral)
+    val integerReferenceBinaryOpSource2: Source[Int] = Source(4 - integerLiteral)
+    val integerReferenceBinaryOpSource3: Source[Int] = Source(integerLiteral * 2)
 
     // Simple string values
     val stringLiteralSource: Source[String]   = Source("bar")
-    val stringReferenceSource: Source[String] = Source(testStringLiteral)
+    val stringReferenceSource: Source[String] = Source(stringLiteral)
 
     // Simple boolean values
     val boolTrueSource: Source[Boolean]      = Source(true)
     val boolFalseSource: Source[Boolean]     = Source(false)
-    val boolReferenceSource: Source[Boolean] = Source(testBooleanLiteral)
+    val boolReferenceSource: Source[Boolean] = Source(booleanLiteral)
 
     // Unary boolean operators
     val boolNotSource: Source[Boolean]          = Source(!true)
-    val boolNotReferenceSource: Source[Boolean] = Source(!testBooleanLiteral)
+    val boolNotReferenceSource: Source[Boolean] = Source(!booleanLiteral)
 
     // Binary boolean operators
     val boolAndSource1: Source[Boolean] = Source(true && true)
@@ -60,9 +60,9 @@ object sourceExamples:
     val boolOrSource2: Source[Boolean]  = Source(false || false)
 
     // Binary boolean operators with references
-    val boolReferenceBinaryOpSource1: Source[Boolean] = Source(testBooleanLiteral && testBooleanLiteral)
-    val boolReferenceBinaryOpSource2: Source[Boolean] = Source(false || testBooleanLiteral)
-    val boolReferenceBinaryOpSource3: Source[Boolean] = Source(testBooleanLiteral && true)
+    val boolReferenceBinaryOpSource1: Source[Boolean] = Source(booleanLiteral && booleanLiteral)
+    val boolReferenceBinaryOpSource2: Source[Boolean] = Source(false || booleanLiteral)
+    val boolReferenceBinaryOpSource3: Source[Boolean] = Source(booleanLiteral && true)
 
     // Binary boolean operators with numerical values and boolean output
     val boolLTSource: Source[Boolean] = Source(1 < 2)
@@ -73,27 +73,8 @@ object sourceExamples:
     val boolNESource: Source[Boolean] = Source(1 != 2)
 
     // Binary boolean operators with numerical values and boolean output on references
-    val boolReferenceNumeralBinaryOpSource1: Source[Boolean] = Source(testIntLiteral >= testIntLiteral + 1)
-    val boolReferenceNumeralBinaryOpSource2: Source[Boolean] = Source(1 != testIntLiteral)
-    val boolReferenceNumeralBinaryOpSource3: Source[Boolean] = Source(testIntLiteral <= 2)
-
-    // ========= TODO: Derived and Interactions (in separate example files) =========
-
-//    val integerDerived: Derived[Int] = Derived { integerSource() + integerSource() }
-//    val integerInteraction = Interaction[Int, Int]
-//      .requires((curr, _) => curr < 20)
-//      .modifies(integerSource)
-//      .executes((curr, _) => curr + 10)
-
-//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-
-//    integerInteraction(0)
-//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-
-//    integerInteraction(0)
-//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-
-//    integerInteraction(0)
-//    println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
+    val boolReferenceNumeralBinaryOpSource1: Source[Boolean] = Source(integerLiteral >= integerLiteral + 1)
+    val boolReferenceNumeralBinaryOpSource2: Source[Boolean] = Source(1 != integerLiteral)
+    val boolReferenceNumeralBinaryOpSource3: Source[Boolean] = Source(integerLiteral <= 2)
   end main
 end sourceExamples
