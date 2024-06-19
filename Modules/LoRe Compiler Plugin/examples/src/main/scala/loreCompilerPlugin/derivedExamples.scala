@@ -4,7 +4,7 @@ import lore.dsl.*
 import reactives.default.{Var as Source, Signal as Derived}
 
 object derivedExamples:
-  @main def main(): Unit =
+  def derivedExamples(): Unit =
     // ========= Plain values and sources to use in below tests =========
     val integerLiteral: Int     = 1
     val stringLiteral: String   = "foo"
@@ -18,14 +18,14 @@ object derivedExamples:
     // ========= Derived tests =========
 
     // These will have constant values, as they depend on values that are not mutable
-    val integerLiteralDerived: Derived[Int] = Derived { 1 + 2 }
-    val integerReferenceDerived1: Derived[Int] = Derived { integerLiteral + 2 }
-    val integerReferenceDerived2: Derived[Int] = Derived { 1 + integerLiteral }
+//    val integerLiteralDerived: Derived[Int] = Derived { 1 + 2 }
+//    val integerReferenceDerived1: Derived[Int] = Derived { integerLiteral + 2 }
+//    val integerReferenceDerived2: Derived[Int] = Derived { 1 + integerLiteral }
 
     // Single and double dependencies on integer sources
-    val integerSourceDerived1: Derived[Int] = Derived { integerLiteralSource1() + 2 }
-    val integerSourceDerived2: Derived[Int] = Derived { 1 + integerLiteralSource2() }
-    val integerSourceDerived3: Derived[Int] = Derived { integerLiteralSource1() + integerLiteralSource2() }
+//    val integerSourceDerived1: Derived[Int] = Derived { integerLiteralSource1() + 2 }
+//    val integerSourceDerived2: Derived[Int] = Derived { 1 + integerLiteralSource2() }
+//    val integerSourceDerived3: Derived[Int] = Derived { integerLiteralSource1() + integerLiteralSource2() }
 
 //   ========= TODO: Interactions (in separate example file) =========
 //      val integerInteraction = Interaction[Int, Int]
@@ -43,5 +43,5 @@ object derivedExamples:
 //
 //      integerInteraction(0)
 //      println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-  end main
-end sourceExamples
+  end derivedExamples
+end derivedExamples
