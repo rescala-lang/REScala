@@ -1,6 +1,5 @@
 package lofi_acl.sync
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValueCodec, readFromArray, writeToArray}
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.transport.P2PTlsTcpConnector
 
@@ -14,7 +13,7 @@ import scala.util.{Failure, Success}
 class ConnectionManager[MSG](
     privateIdentity: PrivateIdentity,
     messageHandler: MessageReceiver[MSG]
-)(using msgCodec: JsonValueCodec[MSG]) {
+)(using msgCodec: MessageSerialization[MSG]) {
   private val executor               = Executors.newCachedThreadPool()
   private given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
@@ -48,13 +47,9 @@ class ConnectionManager[MSG](
     outputStreams.get(user) match
       case Some(outputStream) =>
         Future {
-          val encodedMsgs = msgs.map { msg =>
-            writeToArray(msg)
-          }
           outputStream.synchronized {
-            encodedMsgs.foreach { encodedMsg =>
-              outputStream.writeInt(encodedMsg.length)
-              outputStream.write(encodedMsg)
+            msgs.foreach { msg =>
+              msgCodec.writeToStream(msg, outputStream)
             }
           }
         }
@@ -195,9 +190,7 @@ class ConnectionManager[MSG](
           val input = new DataInputStream(socket.getInputStream)
           while !stopped do
             try {
-              val lengthOfMessage = input.readInt() // Length of message is sent before message itself.
-              val message         = input.readNBytes(lengthOfMessage)
-              val msg             = readFromArray[MSG](message)
+              val msg = msgCodec.readFromStream(input)
               messageHandler.receivedMessage(msg, identity)
             } catch {
               case e: IOException =>
@@ -211,10 +204,10 @@ class ConnectionManager[MSG](
                       then connections = connections.removed(identity)
                     case None =>
                 }
-              case jsonEx: JsonReaderException => jsonEx.printStackTrace()
               case e: InterruptedException =>
                 try { socket.close() }
                 catch { case e: IOException => }
+              case runtimeException: RuntimeException => runtimeException.printStackTrace()
             }
         }
     )

@@ -54,15 +54,15 @@ class SingleGroupSync[RDT](
   @volatile private var maxReferencedPermissionDots: Dots = initialPermissions._1
 
   private val connectionManager: ConnectionManager[SingleGroupSyncMessage[RDT]] =
-    ConnectionManager(localIdentity, this)
+    ConnectionManager(localIdentity, this)(using MessageSerialization.derived)
 
   private val executor               = Executors.newCachedThreadPool()
   private given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
   def addUser(user: PublicIdentity): Unit = {
-    val dot                 = lastLocalPermissionsDot.updateAndGet(dot => dot.advance)
-    val (dots, permissions) = rdtReference.get()
-    val addUsersMsg         = AddUsers[RDT](Set(user), dot.dots, dots)
+    val dot         = lastLocalPermissionsDot.updateAndGet(dot => dot.advance)
+    val dots        = permissionsReference.get()._1
+    val addUsersMsg = AddUsers[RDT](Set(user), dot.dots, dots)
     receivedMessage(addUsersMsg, localPublicId)
     val _ = connectionManager.broadcast(addUsersMsg)
   }
