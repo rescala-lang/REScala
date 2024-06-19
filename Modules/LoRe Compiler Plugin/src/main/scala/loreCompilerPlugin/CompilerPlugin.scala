@@ -91,8 +91,9 @@ class LoRePhase extends PluginPhase:
           case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg)) // !operand
           case _ => // Unsupported unary operators
             report.error(
+              // No access to sourcePos here due to LazyTree
               s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
-            )        // No access to sourcePos here due to LazyTree
+            )
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
         if operandSide.nonEmpty then
@@ -154,13 +155,15 @@ class LoRePhase extends PluginPhase:
             )
           case _ => // Unsupported binary operators
             report.error(
+              // No access to sourcePos here due to LazyTree
               s"${"\t".repeat(indentLevel)}Unsupported binary operator ${op.show} used:\n$tree"
-            )        // No access to sourcePos here due to LazyTree
+            )
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
         report.error(
+          // No access to sourcePos here due to LazyTree
           s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n$tree"
-        )        // No access to sourcePos here due to LazyTree
+        )
         TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
   end buildLoreRhsTerm
 
