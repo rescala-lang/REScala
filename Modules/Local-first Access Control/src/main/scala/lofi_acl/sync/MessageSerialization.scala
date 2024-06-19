@@ -9,7 +9,7 @@ trait MessageSerialization[MSG]:
   def readFromStream(inputStream: DataInputStream): MSG
 
 object MessageSerialization:
-  inline def derived[MSG](using JsonValueCodec[MSG]): MessageSerialization[MSG] = new MessageSerialization[MSG]:
+  def derived[MSG](using JsonValueCodec[MSG]): MessageSerialization[MSG] = new MessageSerialization[MSG]:
     override def writeToStream(msg: MSG, outputStream: DataOutputStream): Unit =
       val encodedMsg = writeToArray(msg)
       outputStream.writeInt(encodedMsg.length) // Length of encoded message is prepended
