@@ -27,7 +27,7 @@ object PermissionTree {
         case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
           PermissionTree(PARTIAL, childrenLattice.merge(leftChildren, rightChildren))
 
-    private[PermissionTree] def normalizeWildcards(tree: PermissionTree): PermissionTree = tree match
+    def normalizeWildcards(tree: PermissionTree): PermissionTree = tree match
       case PermissionTree(ALLOW, _)                                                    => allow
       case PermissionTree(_, children) if children.forall((_, child) => child.isEmpty) => empty
       case PermissionTree(_, children) => children.get("*") match

@@ -26,6 +26,9 @@ object StandardLibrary:
         if permissionTree.children.isEmpty then Success(permissionTree)
         else Filter[T].validatePermissionTree(permissionTree)
 
+      override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+        Filter[T].minimizePermissionTree(permissionTree)
+
   // Set[T] can be treated as a grow only set
   object GrowOnlySet:
     object mutators:
@@ -42,6 +45,8 @@ object StandardLibrary:
         case PermissionTree(ALLOW, _)                                              => Success(permission)
         case PermissionTree(PARTIAL, entryPermissions) if entryPermissions.isEmpty => Success(permission)
         case PermissionTree(PARTIAL, entryPermissions) => Failure(InvalidPathException(List.empty))
+
+      override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = permissionTree
 
     given filter[T: Filter]: Filter[Set[T]] with
       override def filter(delta: Set[T], permission: PermissionTree): Set[T] = permission match
@@ -63,6 +68,12 @@ object StandardLibrary:
           permissionTree.children.get("*") match
             case Some(entryPermission) => Filter[T].validatePermissionTree(entryPermission)
             case None                  => Failure(PermissionTreeValidationException.InvalidPathException(List.empty))
+
+      override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+        PermissionTree(
+          permission = permissionTree.permission,
+          children = permissionTree.children.map((label, child) => label -> Filter[T].minimizePermissionTree(child))
+        )
 
   // Map[K, V] can be treated as a grow only map, if V is mergeable (e.g., last-writer-wins register, …)
   object GrowOnlyMap:
@@ -97,3 +108,13 @@ object StandardLibrary:
             case keyPath -> Failure(InvalidPathException(subPath)) => Failure(InvalidPathException(keyPath :: subPath))
             case (_, f @ scala.util.Failure(_))                    => f
             case _ -> Success(_)                                   => Success(permissionTree)
+
+      override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+        val minimized = PermissionTree(
+          permission = permissionTree.permission,
+          children = permissionTree.children.map((label, child) => label -> Filter[V].minimizePermissionTree(child))
+        )
+
+        if minimized.children.contains("*")
+        then PermissionTree.lattice.normalizeWildcards(minimized)
+        else minimized

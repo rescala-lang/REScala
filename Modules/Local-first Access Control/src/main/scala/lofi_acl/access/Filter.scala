@@ -2,6 +2,7 @@ package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree
+import lofi_acl.access.PermissionTree.allow
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import rdts.base.Bottom
 
@@ -24,6 +25,8 @@ trait Filter[T]:
     * @return Success(the validated permission tree) or a Failure(with the cause).
     */
   def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree]
+
+  def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree
 
 object Filter:
   inline def apply[T](using filter: Filter[T]): Filter[T] = filter
@@ -76,7 +79,7 @@ object Filter:
       * @param permissionTree The tree to check
       *  @return Success(the validated permission tree) or a Failure(with the cause).
       */
-    def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
+    override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
       permissionTree match
         case PermissionTree(_, children) =>
           val validationResultsOfChildren = children.map { case (factorLabel, factorPermissionTree) =>
@@ -90,4 +93,20 @@ object Filter:
                   case f @ Failure(_) => f
           }
           validationResultsOfChildren.find { _.isInstanceOf[Failure[?]] }.getOrElse(Success(permissionTree))
+    }
+
+    // Assumes a valid permission tree
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = {
+      if (permissionTree.permission == ALLOW) return allow
+
+      val minimizedChildren = permissionTree.children.map { (label, subtree) =>
+        val idx = factorLabels(label)
+        val filter = factorFilters(idx)
+        val minimizedChild: PermissionTree = filter.minimizePermissionTree(subtree)
+        label -> minimizedChild
+      }
+
+      if minimizedChildren.size == factorFilters.size && minimizedChildren.forall(_._2.permission == ALLOW)
+      then allow
+      else PermissionTree(PARTIAL, minimizedChildren)
     }

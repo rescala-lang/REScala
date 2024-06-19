@@ -20,6 +20,9 @@ object LWW {
       case PermissionTree(ALLOW, _)   => Success(permissionTree)
       case PermissionTree(PARTIAL, _) => Filter[V].validatePermissionTree(permissionTree)
 
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+      Filter[V].minimizePermissionTree(permissionTree)
+
   given filter[V: Bottom]: Filter[LWW[V]] with
     override def filter(delta: LWW[V], permission: PermissionTree): LWW[V] = permission match
       case PermissionTree(ALLOW, _)                 => delta
@@ -32,4 +35,6 @@ object LWW {
       case PermissionTree(ALLOW, _)                                              => Success(permissionTree)
       case PermissionTree(PARTIAL, valuePermissions) if valuePermissions.isEmpty => Success(permissionTree)
       case PermissionTree(PARTIAL, _) => Failure(InvalidPathException(List.empty))
+
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = permissionTree
 }
