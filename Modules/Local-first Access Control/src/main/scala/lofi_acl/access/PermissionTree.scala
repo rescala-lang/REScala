@@ -76,6 +76,17 @@ object PermissionTree {
   given bottom: Bottom[PermissionTree] with
     override val empty: PermissionTree = PermissionTree.empty
 
+  // Assumes normalized trees (with wildcards merged into siblings)
+  def intersect(left: PermissionTree, right: PermissionTree): PermissionTree = (left, right) match
+    case (PermissionTree(ALLOW, _), PermissionTree(ALLOW, _))   => allow
+    case (PermissionTree(ALLOW, _), PermissionTree(PARTIAL, _)) => right
+    case (PermissionTree(PARTIAL, _), PermissionTree(ALLOW, _)) => left
+    case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
+      val intersectionOfChildren = leftChildren.keySet.intersect(rightChildren.keySet).map(label =>
+        label -> intersect(leftChildren(label), rightChildren(label))
+      )
+      lattice.normalizeWildcards(PermissionTree(PARTIAL, intersectionOfChildren.toMap))
+
   def fromPath(path: String): PermissionTree = {
     require(!path.contains("..") && path != ".")
 
