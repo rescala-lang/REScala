@@ -5,6 +5,15 @@ import lofi_acl.crypto.PublicIdentity
 import lofi_acl.sync.MessageReceiver
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.Delta
 
+/** Filters the received messages using the supplied ACL.
+  *
+  * Used by FilteringConnectionManager to filter received deltas.
+  *
+  * @param delegate The actual message handler
+  * @param acl The acl used for filtering
+  * @param filter The filter instance
+  * @tparam RDT The type of the filtered deltas
+  */
 class FilteringMessageReceiver[RDT](
     private val delegate: MessageReceiver[MonotonicAclSyncMessage[RDT]],
     private val acl: MonotonicAcl[RDT]

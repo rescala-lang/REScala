@@ -6,13 +6,17 @@ import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.sync.{ConnectionManager, MessageReceiver, MessageSerialization}
 import rdts.time.Dots
 
+/** ConnectionManager that enforces the ACL using a Filter on sent and received deltas. */
 class FilteringConnectionManager[RDT](
     privateIdentity: PrivateIdentity,
     messageHandler: MessageReceiver[MonotonicAclSyncMessage[RDT]],
     acl: MonotonicAcl[RDT],
     val aclVersion: Dots
 )(using msgCodec: MessageSerialization[MonotonicAclSyncMessage[RDT]], filter: Filter[RDT])
-    extends ConnectionManager[MonotonicAclSyncMessage[RDT]](privateIdentity, messageHandler)(using msgCodec) {
+    extends ConnectionManager[MonotonicAclSyncMessage[RDT]](
+      privateIdentity,
+      FilteringMessageReceiver(messageHandler, acl)
+    )(using msgCodec) {
 
   override def sendMultiple(receivingUser: PublicIdentity, msgs: MonotonicAclSyncMessage[RDT]*): Boolean =
     val filteredMsgs = msgs.map {
