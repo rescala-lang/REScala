@@ -1,6 +1,7 @@
 package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
+import lofi_acl.access.PermissionTree.{allow, lattice}
 import rdts.base.{Bottom, Lattice}
 
 import scala.annotation.{tailrec, targetName}
@@ -22,6 +23,17 @@ case class PermissionTree(permission: Permission, children: Map[String, Permissi
             case Some(rightChild) => leftChild <= rightChild
             case None             => false
         )
+
+  // Assumes normalized trees (with wildcards merged into siblings)
+  def intersect(that: PermissionTree): PermissionTree = (this, that) match
+    case (PermissionTree(ALLOW, _), PermissionTree(ALLOW, _))   => allow
+    case (PermissionTree(ALLOW, _), PermissionTree(PARTIAL, _)) => that
+    case (PermissionTree(PARTIAL, _), PermissionTree(ALLOW, _)) => this
+    case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
+      val intersectionOfChildren = leftChildren.keySet.intersect(rightChildren.keySet).map(label =>
+        label -> leftChildren(label).intersect(rightChildren(label))
+      )
+      lattice.normalizeWildcards(PermissionTree(PARTIAL, intersectionOfChildren.toMap))
 }
 
 object PermissionTree {
@@ -75,17 +87,6 @@ object PermissionTree {
 
   given bottom: Bottom[PermissionTree] with
     override val empty: PermissionTree = PermissionTree.empty
-
-  // Assumes normalized trees (with wildcards merged into siblings)
-  def intersect(left: PermissionTree, right: PermissionTree): PermissionTree = (left, right) match
-    case (PermissionTree(ALLOW, _), PermissionTree(ALLOW, _))   => allow
-    case (PermissionTree(ALLOW, _), PermissionTree(PARTIAL, _)) => right
-    case (PermissionTree(PARTIAL, _), PermissionTree(ALLOW, _)) => left
-    case (PermissionTree(PARTIAL, leftChildren), PermissionTree(PARTIAL, rightChildren)) =>
-      val intersectionOfChildren = leftChildren.keySet.intersect(rightChildren.keySet).map(label =>
-        label -> intersect(leftChildren(label), rightChildren(label))
-      )
-      lattice.normalizeWildcards(PermissionTree(PARTIAL, intersectionOfChildren.toMap))
 
   def fromPath(path: String): PermissionTree = {
     require(!path.contains("..") && path != ".")

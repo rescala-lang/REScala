@@ -268,11 +268,10 @@ class PermissionTreeTest extends FunSuite {
 
   test("intersect") {
     assertEquals(
-      PermissionTree.intersect(
-        partial("*" -> partial("b" -> allow), "d" -> partial("b" -> allow, "e" -> allow)),
+      partial("*" -> partial("b" -> allow), "d" -> partial("b" -> allow, "e" -> allow)).intersect(
         partial("*" -> partial("b" -> partial("c" -> allow)))
       ),
-      partial("*" -> partial("b" -> partial("c" -> allow)))
+      partial ("*" -> partial("b" -> partial("c" -> allow)))
     )
   }
 }
