@@ -1,6 +1,7 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.syntax.LocalUid
 import rdts.time.Time
 
 trait Consensus[C[_]] {
@@ -8,19 +9,13 @@ trait Consensus[C[_]] {
   extension [A](c: C[A]) def read: Option[A]
   extension [A](c: C[A]) def members: Set[Uid]
   extension [A](c: C[A]) def reset(newMembers: Set[Uid]): C[A]
-  extension [A](c: C[A]) def upkeep: C[A]
+  extension [A](c: C[A]) def upkeep()(using LocalUid): C[A]
 }
-
-//trait Consensus[C[A]] {
-//  def write[A](value: A): C[A]
-//  def read[A]: A
-//  def members: Set[Uid]
-//}
 
 case class Membership[A, C[_]: Consensus, D[_]: Consensus](
     counter: Time,
     membersConsensus: C[Set[Uid]],
-    innerConsensus: C[A],
+    innerConsensus: D[A],
     log: List[A]
 ) {
   def currentMembers: Set[Uid] = membersConsensus.members
@@ -28,12 +23,12 @@ case class Membership[A, C[_]: Consensus, D[_]: Consensus](
     Membership.unchanged.copy(membersConsensus = membersConsensus.write(currentMembers + id))
   def removeMember(id: Uid): Membership[A, C, D] =
     Membership.unchanged.copy(membersConsensus = membersConsensus.write(currentMembers - id))
-  def read            = log
-  def write(value: A) = innerConsensus.write(value)
+  def read: List[A]         = log
+  def write(value: A): D[A] = innerConsensus.write(value)
 
-  def upkeep =
-    val newMembers = membersConsensus.upkeep
-    val newInner   = innerConsensus.upkeep
+  def upkeep()(using LocalUid): Membership[A, C, D] =
+    val newMembers = membersConsensus.upkeep()
+    val newInner   = innerConsensus.upkeep()
     (newMembers.read, newInner.read) match
       // members have changed
       case (Some(members), _) =>
@@ -61,11 +56,31 @@ case class Membership[A, C[_]: Consensus, D[_]: Consensus](
 object Membership {
   def unchanged[A, C[_], D[_]]: Membership[A, C, D] = ???
 
-  given lattice[A, C[_], D[_]]: Lattice[Membership[A, C, D]] with
+  given lattice[A, C[_], D[_]](using
+      Consensus[C],
+      Consensus[D],
+      Lattice[C[Set[Uid]]],
+      Lattice[D[A]]
+  ): Lattice[Membership[A, C, D]] with
     override def merge(left: Membership[A, C, D], right: Membership[A, C, D]): Membership[A, C, D] =
-      val counter =
-        if left.counter < right.counter then right.counter
-        else left.counter
+      if left.counter > right.counter then left
+      else if right.counter > left.counter then right
+      else
+        assert(left.log == right.log) // safety check: logs should never go out of sync without counter increasing
+        Membership(
+          left.counter,
+          Lattice[C[Set[Uid]]].merge(left.membersConsensus, right.membersConsensus),
+          Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
+          left.log
+        )
+}
 
-      ???
+object Test {
+  given Consensus[PaxosParm] with
+    extension [A](c: PaxosParm[A]) override def members: Set[Uid]                      = c.members
+    extension [A](c: PaxosParm[A]) override def read: Option[A]                        = c.read
+    extension [A](c: PaxosParm[A]) override def write(value: A): PaxosParm[A]          = c.write(value)
+    extension [A](c: PaxosParm[A]) override def upkeep()(using LocalUid): PaxosParm[A] = c.upkeep()
+    extension [A](c: PaxosParm[A])
+      override def reset(newMembers: Set[Uid]): PaxosParm[A] = PaxosParm.unchanged.copy(members = newMembers)
 }
