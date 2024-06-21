@@ -57,17 +57,17 @@ class AWLWWMapBenchmark {
 
   @Benchmark
   def putOnceNoSerialization(benchState: SerializeOnlyBenchmarkState): Unit = {
-    benchState.crdt.put("This is a String", "And so this is too")(using Bottom.provide(""))
+    benchState.crdt.put("This is a String", "And so this is too")
   }
 
   @Benchmark
   @Fork(2)
   @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
   def putAndSerializeManyTimes(blackhole: Blackhole, putBenchmarkState: PutManyBenchmarkState): Unit = {
-    val crdt = new AWLWWMContainer[String, String](replicaId)
+    val crdt = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
+      crdt.put(entry._1, entry._2)
       // Serialize to JSON (as byte array)
       val serializedState = writeToArray(crdt.state)
 
@@ -84,12 +84,12 @@ class AWLWWMapBenchmark {
       aeadState: AeadState
   ): Unit = {
     var versionVector: VectorClock = VectorClock.zero
-    val crdt                       = new AWLWWMContainer[String, String](replicaId)
+    val crdt                       = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
     val aead                       = aeadState.aead
 
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
+      crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
       // Serialize/Encrypt/Authenticate state with attached time
@@ -133,11 +133,11 @@ class SerializeOnlyBenchmarkState {
 
     var versionVector: VectorClock = VectorClock.zero
     val replicaId                  = "TestReplica"
-    val crdt                       = new AWLWWMContainer[String, String](replicaId)
+    val crdt                       = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
 
     for entry <- dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
+      crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
     }

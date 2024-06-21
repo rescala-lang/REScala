@@ -13,7 +13,7 @@ type AddWinsMapLattice[K, V] = Dotted[ObserveRemoveMap[K, V]]
 class AWLWWMContainer[K, V](
     val replicaId: Uid,
     initialState: AddWinsMapLattice[K, LastWriterWins[V]] =  Dotted(ObserveRemoveMap.empty[K, LastWriterWins[V]])
-) {
+)(using Bottom[V]) {
 
   given LocalUid = replicaId
 
@@ -24,16 +24,16 @@ class AWLWWMContainer[K, V](
 
   def get(key: K): Option[V] = _state.data.get(key).map(reg => reg.payload)
 
-  def put(key: K, value: V)(using Bottom[V]): Unit = {
+  def put(key: K, value: V): Unit = {
     val timeStamp = _state.data.get(key) match {
       case Some(register) => register.timestamp.advance
       case None           => CausalTime.now()
     }
 
-    _state = _state.update(key, LastWriterWins(timeStamp, value))
+    _state = _state merge _state.update(key, LastWriterWins(timeStamp, value))
   }
 
-  def remove(key: K): Unit = _state = _state.remove(key)
+  def remove(key: K): Unit = merge(_state.remove(key))
 
   def values: Map[K, V] =
     _state.entries.map { case (k, LastWriterWins(_, v)) => k -> v }.toMap
