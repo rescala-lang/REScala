@@ -41,6 +41,7 @@ object NamedDeltaBuffer {
     inline def mod(f: Dots ?=> A => Dotted[A]): DeltaBufferDotted[A] = {
       curr.applyDelta(curr.replicaID.uid, curr.state.mod(f(_)))
     }
+  extension [A](curr: DeltaBufferDotted[A]) def data: A = curr.state.data
 
   def dotted[State](replicaID: Uid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())

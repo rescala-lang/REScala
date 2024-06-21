@@ -1,10 +1,7 @@
 package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
-import rdts.datatypes.contextual.ObserveRemoveMap
-import rdts.datatypes.contextual.ObserveRemoveMap.make
 import rdts.dotted.Dotted
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 import rdts.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -25,28 +22,14 @@ object GrowOnlyMap {
 
   given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.mapLattice
 
-  extension [C, K, V](container: C)
-    def growOnlyMap: syntax[C, K, V] = syntax(container)
-
-  implicit class syntax[C, K, V](container: C)
-      extends OpsSyntaxHelper[C, GrowOnlyMap[K, V]](container) {
-
-    def contains(using IsQuery)(k: K): Boolean = current.contains(k)
-
-    def queryKey(using IsQuery)(k: K): Option[V] = current.get(k)
-
-    def queryAllEntries(using IsQuery)(): Iterable[V] = current.values
-
+  extension [K, V](current: GrowOnlyMap[K, V]) {
     def mutateKeyNamedCtx(k: K, default: => V)(m: Dotted[V] => Dotted[V])(using
-        IsCausalMutator,
-    ): C = {
+        context: Dots
+    ): Dotted[GrowOnlyMap[K, V]] = {
       m(
-        container.queryKey(k).getOrElse(default).inheritContext
-      ).map(v => Map(k -> v)).mutator
+        context.wrap(current.getOrElse(k, default))
+      ).map(v => Map(k -> v))
     }
-    def +(element: (K, V))(using IsCausalMutator, Bottom[V]): C =
-      // mutateKeyNamedCtx(element._1, Bottom.empty[V])(_ => Dotted(element._2, Dots.single(context.nextDot(replicaId))))
-      mutateKeyNamedCtx(element._1, Bottom.empty[V])(_ => element._2.inheritContext)
   }
 
 }

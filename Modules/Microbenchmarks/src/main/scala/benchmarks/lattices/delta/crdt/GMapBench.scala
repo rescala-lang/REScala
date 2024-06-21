@@ -4,6 +4,8 @@ import org.openjdk.jmh.annotations.*
 import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.GrowOnlyMap.given
 import rdts.datatypes.contextual.EnableWinsFlag
+import rdts.datatypes.GrowOnlyMap.mutateKeyNamedCtx
+
 
 import java.util.concurrent.TimeUnit
 
@@ -28,29 +30,29 @@ class GMapBench {
 
     map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted("a", GrowOnlyMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
-        rdc.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable(using rdc.replicaID)())
+        rdc.mod(_.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable(using rdc.replicaID)()))
     }
   }
 
   @Benchmark
-  def queryExisting() = map.queryKey(0).map(_.read)
+  def queryExisting() = map.data.get(0).map(_.read)
 
   @Benchmark
-  def queryMissing() = map.queryKey(-1).map(_.read)
+  def queryMissing() = map.data.get(-1).map(_.read)
 
   @Benchmark
-  def containsExisting() = map.contains(0)
+  def containsExisting() = map.data.contains(0)
 
   @Benchmark
-  def containsMissing() = map.contains(-1)
+  def containsMissing() = map.data.contains(-1)
 
   @Benchmark
-  def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries().map(_.read)
+  def queryAllEntries(): Iterable[Boolean] = map.data.values.map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.disable())
+  def mutateExisting(): SUT = map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.disable()))
 
   @Benchmark
   def mutateMissing(): SUT =
-    map.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable(using map.replicaID)())
+    map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable(using map.replicaID)()))
 }
