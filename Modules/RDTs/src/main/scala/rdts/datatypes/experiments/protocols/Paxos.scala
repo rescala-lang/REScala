@@ -141,7 +141,7 @@ object Paxos {
 
   given lattice[A]: Lattice[Paxos[A]] with
     override def merge(left: Paxos[A], right: Paxos[A]): Paxos[A] =
-      val newmembers = Lattice[Set[Uid]].merge(left.members,right.members)
+      val newmembers = Lattice[Set[Uid]].merge(left.members, right.members)
       assert(
         newmembers == left.members,
         "cannot merge two Paxos instances with differing members"
@@ -162,4 +162,12 @@ object Paxos {
       GrowOnlySet.empty[Accepted[A]],
       Set.empty
     )
+
+  given Consensus[Paxos] with
+    extension [A](c: Paxos[A]) override def members: Set[Uid]                         = c.members
+    extension [A](c: Paxos[A]) override def read: Option[A]                           = c.read
+    extension [A](c: Paxos[A]) override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
+    extension [A](c: Paxos[A]) override def upkeep()(using LocalUid): Paxos[A]        = c.upkeep()
+    extension [A](c: Paxos[A])
+      override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
 }

@@ -4,14 +4,6 @@ import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.syntax.LocalUid
 import rdts.time.Time
 
-trait Consensus[C[_]] {
-  extension [A](c: C[A]) def write(value: A)(using LocalUid): C[A]
-  extension [A](c: C[A]) def read: Option[A]
-  extension [A](c: C[A]) def members: Set[Uid]
-  extension [A](c: C[A]) def reset(newMembers: Set[Uid]): C[A]
-  extension [A](c: C[A]) def upkeep()(using LocalUid): C[A]
-}
-
 case class Membership[A, C[_]: Consensus, D[_]: Consensus](
     counter: Time,
     membersConsensus: C[Set[Uid]],
@@ -73,14 +65,4 @@ object Membership {
           Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
           left.log
         )
-}
-
-object Test {
-  given Consensus[Paxos] with
-    extension [A](c: Paxos[A]) override def members: Set[Uid]                         = c.members
-    extension [A](c: Paxos[A]) override def read: Option[A]                           = c.read
-    extension [A](c: Paxos[A]) override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
-    extension [A](c: Paxos[A]) override def upkeep()(using LocalUid): Paxos[A]        = c.upkeep()
-    extension [A](c: Paxos[A])
-      override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
 }
