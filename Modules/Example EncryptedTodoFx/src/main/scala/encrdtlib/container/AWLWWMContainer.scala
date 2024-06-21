@@ -1,12 +1,12 @@
 package encrdtlib.container
 
-import encrdtlib.container.AddWinsLastWriterWinsMap.LatticeType
+import encrdtlib.container.AWLWWMContainer.LatticeType
 import encrdtlib.lattices.AddWinsMapLattice
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.time.CausalTime
 
-class AddWinsLastWriterWinsMap[K, V](
+class AWLWWMContainer[K, V](
     val replicaId: Uid,
     initialState: AddWinsMapLattice[K, LastWriterWins[V]] =
       AddWinsMapLattice[K, LastWriterWins[V]]()
@@ -37,6 +37,6 @@ class AddWinsLastWriterWinsMap[K, V](
   }
 }
 
-object AddWinsLastWriterWinsMap {
+object AWLWWMContainer {
   type LatticeType[K, V] = AddWinsMapLattice[K, LastWriterWins[V]]
 }

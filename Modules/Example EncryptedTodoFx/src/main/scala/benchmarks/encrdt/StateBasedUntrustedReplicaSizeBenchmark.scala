@@ -2,8 +2,8 @@ package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.StateType
+import encrdtlib.container.DeltaAWLWWMContainer
+import encrdtlib.container.DeltaAWLWWMContainer.StateType
 import encrdtlib.encrypted.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 import rdts.time.VectorClock
 
@@ -28,7 +28,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
   val aead               = Helper.setupAead("AES128_GCM")
 
   for totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10, i.toDouble).toInt) do {
-    val crdt                       = new DeltaAddWinsLastWriterWinsMap[String, String]("0")
+    val crdt                       = new DeltaAWLWWMContainer[String, String]("0")
     var versionVector: VectorClock = VectorClock.zero
 
     for i <- 0 until totalElements - MAX_PARALLEL_UPDATES do {
@@ -53,7 +53,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
 
       for replicaId <- 1 to parallelUpdates do {
         val entry               = dummyKeyValuePairs(totalElements - parallelUpdates + replicaId - 1)
-        val replicaSpecificCrdt = new DeltaAddWinsLastWriterWinsMap[String, String](replicaId.toString, commonState)
+        val replicaSpecificCrdt = new DeltaAWLWWMContainer[String, String](replicaId.toString, commonState)
         replicaSpecificCrdt.put(entry._1, entry._2)
         val replicaSpecificVersionVector = versionVector.inc(replicaId.toString)
         val replicaSpecificDecState: DecryptedState[StateType[String, String]] =
@@ -61,7 +61,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)
         untrustedReplica.receive(replicaSpecificEncState)
         decryptedStatesMerged =
-          DecryptedState.lattice[StateType[String, String]](DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice).merge(
+          DecryptedState.lattice[StateType[String, String]](DeltaAWLWWMContainer.deltaAddWinsMapLattice).merge(
             decryptedStatesMerged,
             replicaSpecificDecState
           )

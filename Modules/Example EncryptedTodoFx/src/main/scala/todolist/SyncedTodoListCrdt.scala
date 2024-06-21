@@ -3,7 +3,7 @@ package todolist
 import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.sync.ConnectionManager
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
@@ -17,8 +17,8 @@ import scala.util.Try
 
 class SyncedTodoListCrdt(val replicaId: String) {
 
-  private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry] =
-    new DeltaAddWinsLastWriterWinsMap[UUID, TodoEntry](replicaId)
+  private val crdt: DeltaAWLWWMContainer[UUID, TodoEntry] =
+    new DeltaAWLWWMContainer[UUID, TodoEntry](replicaId)
 
   private val crdtExecutorService: ExecutorService = Executors.newSingleThreadExecutor()
   private val crdtExecContext: ExecutionContext    = ExecutionContext.fromExecutor(crdtExecutorService)
@@ -97,7 +97,7 @@ class SyncedTodoListCrdt(val replicaId: String) {
 }
 
 object SyncedTodoListCrdt {
-  type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
+  type StateType = DeltaAWLWWMContainer.StateType[UUID, TodoEntry]
 
   given stateCodec: JsonValueCodec[StateType] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true).withMapAsArray(true))

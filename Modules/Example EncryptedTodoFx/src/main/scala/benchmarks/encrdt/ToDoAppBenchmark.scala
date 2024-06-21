@@ -5,7 +5,7 @@ import benchmarks.encrdt.mock.insecure.{AlternativeInsecureToDoListClient, Alter
 import benchmarks.encrdt.mock.{DisseminationStats, IntermediarySizeInfo, SecureToDoListClient, ToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.{AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator}
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAWLWWMContainer
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
@@ -22,7 +22,7 @@ object ToDoAppBenchmark extends App {
   private val interactions: Iterable[ToDoListInteraction] =
     new ToDoListInteractionGenerator(pruningThreshold, keptToDos).generateInteractions(numInteractions)
 
-  private val clientCrdt = new DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry]("client")
+  private val clientCrdt = new DeltaAWLWWMContainer[UUID, ToDoEntry]("client")
 
   private var intermediarySizeInfo: IntermediarySizeInfo = scala.compiletime.uninitialized
   private var aead: Aead                                 = scala.compiletime.uninitialized

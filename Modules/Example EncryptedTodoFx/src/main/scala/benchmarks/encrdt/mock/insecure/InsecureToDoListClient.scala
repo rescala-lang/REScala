@@ -4,15 +4,15 @@ import benchmarks.encrdt.mock.SecureToDoListClient.ToDoMapLattice
 import benchmarks.encrdt.mock.{SecureToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup}
 
 import java.util.UUID
 
 class InsecureToDoListClient(
-    replicaId: String,
-    crdt: DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry],
-    untrustedReplica: ToDoListIntermediary
+                              replicaId: String,
+                              crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
+                              untrustedReplica: ToDoListIntermediary
 ) extends SecureToDoListClient(replicaId, crdt, null, untrustedReplica) {
   override protected def encryptAndDisseminate(newDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice]): Unit = {
     // Serialize but don't encrypt!

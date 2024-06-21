@@ -4,7 +4,7 @@ import benchmarks.encrdt.Codecs.given
 import benchmarks.encrdt.{Codecs, idFromString}
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
+import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 import rdts.time.Dots
 
@@ -52,8 +52,8 @@ class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
     printWriter.close()
   }
 
-  def decrypt(aead: Aead): DeltaAddWinsLastWriterWinsMap[String, String] = {
-    val crdt = new DeltaAddWinsLastWriterWinsMap[String, String]("")
+  def decrypt(aead: Aead): DeltaAWLWWMContainer[String, String] = {
+    val crdt = new DeltaAWLWWMContainer[String, String]("")
     encryptedDeltaGroupStore.map { encDeltaGroup =>
       encDeltaGroup.decrypt(aead)(Codecs.deltaAwlwwmapJsonCodec)
     }.foreach { decDeltaGroup =>

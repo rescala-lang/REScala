@@ -4,15 +4,15 @@ import benchmarks.encrdt.mock.insecure.AlternativeInsecureToDoListClient.ToDoLis
 import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import encrdtlib.container.DeltaAWLWWMContainer
+import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
 
 import java.util.UUID
 
 class AlternativeInsecureToDoListClient(
-    val replicaId: String,
-    private val crdt: DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry],
-    private val intermediary: AlternativeInsecureToDoListIntermediary
+                                         val replicaId: String,
+                                         private val crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
+                                         private val intermediary: AlternativeInsecureToDoListIntermediary
 )(
     private implicit val stateCodec: JsonValueCodec[ToDoListState]
 ) extends ToDoListClient {

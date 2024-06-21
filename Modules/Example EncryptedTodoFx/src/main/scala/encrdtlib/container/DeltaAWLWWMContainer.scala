@@ -1,6 +1,6 @@
 package encrdtlib.container
 
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
+import encrdtlib.container.DeltaAWLWWMContainer.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
 import rdts.base.{Lattice, Uid}
@@ -11,9 +11,9 @@ import rdts.time.Dot
 import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering.Implicits.infixOrderingOps
 
-class DeltaAddWinsLastWriterWinsMap[K, V](
+class DeltaAWLWWMContainer[K, V](
     val replicaId: Uid,
-    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAddWinsLastWriterWinsMap.empty[K, V],
+    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAWLWWMContainer.empty[K, V],
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
 ) {
   protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
@@ -76,7 +76,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   def removeAllDelta(keys: Seq[K]): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
     val subDeltas = keys.map(DeltaAddWinsMap.deltaRemove(_, _state))
     val delta = subDeltas.reduce((left, right) =>
-      DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice[K, V].merge(left, right)
+      DeltaAWLWWMContainer.deltaAddWinsMapLattice[K, V].merge(left, right)
     )
     mutate(delta)
     delta
@@ -97,7 +97,7 @@ class DeltaAddWinsLastWriterWinsMap[K, V](
   }
 }
 
-object DeltaAddWinsLastWriterWinsMap {
+object DeltaAWLWWMContainer {
   type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     DeltaAddWinsMapLattice[K, Map[Dot, (V, LastWriterWins[Uid])]]
 

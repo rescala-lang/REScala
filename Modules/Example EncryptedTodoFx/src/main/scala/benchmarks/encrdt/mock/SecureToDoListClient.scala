@@ -4,8 +4,8 @@ import benchmarks.encrdt.Codecs.given
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
-import encrdtlib.container.DeltaAddWinsLastWriterWinsMap.DeltaAddWinsLastWriterWinsMapLattice
+import encrdtlib.container.DeltaAWLWWMContainer
+import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
 import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import rdts.dotted.Dotted
 import rdts.time.Dots
@@ -14,10 +14,10 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SecureToDoListClient(
-    replicaId: String,
-    crdt: DeltaAddWinsLastWriterWinsMap[UUID, ToDoEntry],
-    aead: Aead,
-    private val intermediary: UntrustedReplica
+                            replicaId: String,
+                            crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
+                            aead: Aead,
+                            private val intermediary: UntrustedReplica
 ) extends TrustedReplica[ToDoMapLattice](replicaId, crdt.merge, aead) with ToDoListClient {
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
@@ -92,7 +92,7 @@ class SecureToDoListClient(
     // Merge old delta referring to uuid
     val newDelta = uuidToDeltaGroupMap.get(uuid) match {
       case Some(oldUuidDeltaGroup) => DecryptedDeltaGroup(
-          DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice.merge(oldUuidDeltaGroup.deltaGroup, delta),
+          DeltaAWLWWMContainer.deltaAddWinsMapLattice.merge(oldUuidDeltaGroup.deltaGroup, delta),
           oldUuidDeltaGroup.dottedVersionVector.add(eventDot)
         )
 
@@ -119,7 +119,7 @@ object SecureToDoListClient {
       right: DecryptedDeltaGroup[ToDoMapLattice]
   ): DecryptedDeltaGroup[ToDoMapLattice] = {
     DecryptedDeltaGroup.decryptedDeltaGroupSemiLattice[ToDoMapLattice](
-      DeltaAddWinsLastWriterWinsMap.deltaAddWinsMapLattice
+      DeltaAWLWWMContainer.deltaAddWinsMapLattice
     ).merge(left, right)
   }
 }

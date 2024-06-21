@@ -3,7 +3,6 @@ package rdts.datatypes
 import rdts.base.{Bottom, Lattice, Orderings}
 import rdts.datatypes.contextual.MultiVersionRegister
 import rdts.dotted.HasDots
-import rdts.syntax.OpsSyntaxHelper
 import rdts.time.CausalTime
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -43,6 +42,10 @@ object LastWriterWins {
     given Ordering[A] = MultiVersionRegister.assertEqualsOrdering
     Lattice.fromOrdering(using Orderings.lexicographic)
 
+  given bottom[A: Bottom]: Bottom[LastWriterWins[A]] with
+    override def empty: LastWriterWins[A] = LastWriterWins.this.empty
+
+  /* This is an alternative lattice implementation that supports merging in case of concurrent changes */
   inline def generalizedLattice[A]: Lattice[LastWriterWins[A]] = scala.compiletime.summonFrom {
     case conflictCase: Lattice[A] => GenericLastWriterWinsLattice(conflictCase)
     case _                        => GenericLastWriterWinsLattice(MultiVersionRegister.assertEqualsLattice)
@@ -61,8 +64,5 @@ object LastWriterWins {
         case x if x < 0 => right
         case x if x > 0 => left
   }
-
-  given bottom[A: Bottom]: Bottom[LastWriterWins[A]] with
-    override def empty: LastWriterWins[A] = LastWriterWins.this.empty
 
 }
