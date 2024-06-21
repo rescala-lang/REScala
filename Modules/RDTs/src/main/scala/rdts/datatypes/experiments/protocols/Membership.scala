@@ -5,7 +5,7 @@ import rdts.syntax.LocalUid
 import rdts.time.Time
 
 trait Consensus[C[_]] {
-  extension [A](c: C[A]) def write(value: A): C[A]
+  extension [A](c: C[A]) def write(value: A)(using LocalUid): C[A]
   extension [A](c: C[A]) def read: Option[A]
   extension [A](c: C[A]) def members: Set[Uid]
   extension [A](c: C[A]) def reset(newMembers: Set[Uid]): C[A]
@@ -19,12 +19,12 @@ case class Membership[A, C[_]: Consensus, D[_]: Consensus](
     log: List[A]
 ) {
   def currentMembers: Set[Uid] = membersConsensus.members
-  def addMember(id: Uid): Membership[A, C, D] =
+  def addMember(id: Uid)(using LocalUid): Membership[A, C, D] =
     Membership.unchanged.copy(membersConsensus = membersConsensus.write(currentMembers + id))
-  def removeMember(id: Uid): Membership[A, C, D] =
+  def removeMember(id: Uid)(using LocalUid): Membership[A, C, D] =
     Membership.unchanged.copy(membersConsensus = membersConsensus.write(currentMembers - id))
-  def read: List[A]         = log
-  def write(value: A): D[A] = innerConsensus.write(value)
+  def read: List[A]                         = log
+  def write(value: A)(using LocalUid): D[A] = innerConsensus.write(value)
 
   def upkeep()(using LocalUid): Membership[A, C, D] =
     val newMembers = membersConsensus.upkeep()
@@ -76,11 +76,11 @@ object Membership {
 }
 
 object Test {
-  given Consensus[PaxosParm] with
-    extension [A](c: PaxosParm[A]) override def members: Set[Uid]                      = c.members
-    extension [A](c: PaxosParm[A]) override def read: Option[A]                        = c.read
-    extension [A](c: PaxosParm[A]) override def write(value: A): PaxosParm[A]          = c.write(value)
-    extension [A](c: PaxosParm[A]) override def upkeep()(using LocalUid): PaxosParm[A] = c.upkeep()
-    extension [A](c: PaxosParm[A])
-      override def reset(newMembers: Set[Uid]): PaxosParm[A] = PaxosParm.unchanged.copy(members = newMembers)
+  given Consensus[Paxos] with
+    extension [A](c: Paxos[A]) override def members: Set[Uid]                         = c.members
+    extension [A](c: Paxos[A]) override def read: Option[A]                           = c.read
+    extension [A](c: Paxos[A]) override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
+    extension [A](c: Paxos[A]) override def upkeep()(using LocalUid): Paxos[A]        = c.upkeep()
+    extension [A](c: Paxos[A])
+      override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
 }

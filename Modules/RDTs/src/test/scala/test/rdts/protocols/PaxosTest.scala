@@ -1,6 +1,6 @@
 package test.rdts.protocols
 
-import rdts.base.Bottom
+import rdts.base.{Bottom, Uid}
 import rdts.base.Lattice.merge
 import rdts.datatypes.GrowOnlyMap.*
 import rdts.datatypes.experiments.protocols.Paxos
@@ -19,10 +19,20 @@ class PaxosTest extends munit.FunSuite {
   val id2          = LocalUid.gen()
   val id3          = LocalUid.gen()
 
-  var emptyPaxosObject: Paxos[Int, 2] = Paxos.unchanged(using 2)
+  given members: Set[Uid] = Set(id1,id2,id3).map(_.uid)
+
+  var emptyPaxosObject: Paxos[Int] = Paxos.unchanged
+
+  test("Merge fails with different members") {
+    val p1: Paxos[Int] = Paxos.unchanged(using Set(id1).map(_.uid))
+    val p2: Paxos[Int] = Paxos.unchanged(using Set(id2).map(_.uid))
+    interceptMessage[AssertionError]("assertion failed: cannot merge two Paxos instances with differing members"){
+      p1 merge p2
+    }
+  }
 
   test("Paxos for 3 participants without errors") {
-    var a: Paxos[Int, 2] = Paxos.unchanged(using 2)
+    var a: Paxos[Int] = Paxos.unchanged
 
     a = a merge a.prepare()(using id1)
     a = a merge a.upkeep()(using id1) merge a.upkeep()(using id2) merge a.upkeep()(using id3)
@@ -93,13 +103,12 @@ class PaxosTest extends munit.FunSuite {
       .merge(testPaxosObject.prepare()(using id3))
     val highestProposalNumber = testPaxosObject.prepares.maxBy(_.proposalNumber).proposalNumber
     testPaxosObject = testPaxosObject.upkeep()(using id1)
-    val promiseProposalNumber = testPaxosObject.promises.head.proposalNumber
+    val promiseProposalNumber = testPaxosObject.promises.head.proposal.proposalNumber
 
     assertEquals(promiseProposalNumber, highestProposalNumber)
   }
 
   test("accept contains value of promise with highest proposal number") {
-    assert(true)
     var testPaxosObject = emptyPaxosObject
     // replica 1 sends prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id1))
@@ -120,5 +129,35 @@ class PaxosTest extends munit.FunSuite {
     val acceptValue = testPaxosObject.accept(2)(using id2).accepts.head.value
     // assert that the value in 2's accept message is the value of 1's promise
     assertEquals(acceptValue, 1)
+  }
+
+  test("write works as expected") {
+    var testPaxosObject = emptyPaxosObject
+    val writeValue = 1
+    // replica 1 tries to write
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+      id2)).merge(testPaxosObject.upkeep()(using id3))
+    assertEquals(testPaxosObject.read, None)
+    // replica 1 tries to write again
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+      id2)).merge(testPaxosObject.upkeep()(using id3))
+    assertEquals(testPaxosObject.read, Some(writeValue))
+  }
+
+  test("concurrent writes") {
+    var testPaxosObject = emptyPaxosObject
+    // replica 1 and 2 try to write
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+      id2)).merge(testPaxosObject.upkeep()(using id3))
+    assertEquals(testPaxosObject.read, None)
+    println(testPaxosObject.promises)
+    // replica 1 and 2 try to write again
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
+      id2)).merge(testPaxosObject.upkeep()(using id3))
+    assert(clue(testPaxosObject.read) == Some(2) || clue(testPaxosObject.read) == Some(1))
   }
 }
