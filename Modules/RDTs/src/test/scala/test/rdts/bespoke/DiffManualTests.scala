@@ -8,7 +8,6 @@ import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.UtilHacks.*
-import rdts.datatypes.GrowOnlyMap.mutateKeyNamedCtx
 
 
 class DiffManualTests extends munit.ScalaCheckSuite {

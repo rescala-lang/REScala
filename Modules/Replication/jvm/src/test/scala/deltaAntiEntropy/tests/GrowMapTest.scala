@@ -8,8 +8,6 @@ import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.GrowOnlyMap.{bottom}
 import rdts.datatypes.contextual.ReplicatedSet
 import replication.JsoniterCodecs.given
-import rdts.datatypes.GrowOnlyMap.mutateKeyNamedCtx
-
 
 import scala.collection.mutable
 
@@ -28,7 +26,8 @@ class GrowMapTest extends munit.ScalaCheckSuite {
 
       val map: AntiEntropyContainer[GrowOnlyMap[Int, ReplicatedSet[Int]]] =
         add.foldLeft(AntiEntropyContainer[GrowOnlyMap[Int, ReplicatedSet[Int]]](aea)) {
-          case (m, e) => m.mod(_.mutateKeyNamedCtx(k, ReplicatedSet.empty[Int])((st) => st.mod(_.add(using m.replicaID)(e))))
+          case (m, e) =>
+            m.mod(_.mutateKeyNamedCtx(k, ReplicatedSet.empty[Int])((st) => st.mod(_.add(using m.replicaID)(e))))
         }
 
       val mapElements: Set[Int] = map.data.get(k).map(o => o.elements).getOrElse(Set.empty[Int])

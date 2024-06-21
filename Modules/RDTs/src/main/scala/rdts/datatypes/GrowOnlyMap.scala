@@ -1,7 +1,7 @@
 package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, HasDots}
 import rdts.time.Dots
 
 /** A GMap (Grow-only Map) is a Delta CRDT that models a map from an arbitrary key type to nested Delta CRDTs.
@@ -12,24 +12,26 @@ import rdts.time.Dots
   * by a CRDT Interface method of the nested CRDT. For example, to enable a nested EWFlag, one would pass `EWFlagInterface.enable()`
   * as the DeltaMutator to mutateKey.
   */
-type GrowOnlyMap[K, V] = Map[K, V]
+case class GrowOnlyMap[K, V](inner: Map[K, V]) {
+
+  export inner.{get, getOrElse, contains, values, valuesIterator, keySet, keys, keysIterator, exists, iterator}
+
+  def mutateKeyNamedCtx(k: K, default: => V)(m: Dotted[V] => Dotted[V])(using
+      context: Dots
+  ): Dotted[GrowOnlyMap[K, V]] = {
+    m(
+      context.wrap(inner.getOrElse(k, default))
+    ).map(v => GrowOnlyMap(Map(k -> v)))
+  }
+}
 
 object GrowOnlyMap {
 
-  def empty[K, V]: GrowOnlyMap[K, V] = Map.empty
+  def empty[K, V]: GrowOnlyMap[K, V] = GrowOnlyMap(Map.empty)
 
-  given bottom[K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.mapBottom
+  given bottom[K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.provide(empty)
 
-  given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.mapLattice
-
-  extension [K, V](current: GrowOnlyMap[K, V]) {
-    def mutateKeyNamedCtx(k: K, default: => V)(m: Dotted[V] => Dotted[V])(using
-        context: Dots
-    ): Dotted[GrowOnlyMap[K, V]] = {
-      m(
-        context.wrap(current.getOrElse(k, default))
-      ).map(v => Map(k -> v))
-    }
-  }
+  given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.derived
+  given hasDots[K, V]: HasDots[GrowOnlyMap[K, V]]          = HasDots.derived
 
 }

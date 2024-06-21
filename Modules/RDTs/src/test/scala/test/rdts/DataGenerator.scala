@@ -149,6 +149,10 @@ object DataGenerator {
         elems.headOption.map(GrowOnlyList.Node.Head -> _) concat pairs
       GrowOnlyList(all.toMap)
 
+  given arbGrowOnlyMap[K, V](using arb: Arbitrary[Map[K, V]]): Arbitrary[GrowOnlyMap[K, V]] = Arbitrary {
+    arb.arbitrary.map(GrowOnlyMap.apply)
+  }
+
   given arbTwoPhaseSet[E](using arb: Arbitrary[E]): Arbitrary[TwoPhaseSet[E]] = Arbitrary:
     Gen.listOf(arb.arbitrary).flatMap: additions =>
       Gen.listOf(arb.arbitrary).map: removals =>
