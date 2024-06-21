@@ -1,6 +1,7 @@
 package encrdtlib.encrypted.statebased
 
-import benchmarks.encrdt.Codecs.idKeyCodec
+import benchmarks.encrdt.Codecs.given
+import replication.JsoniterCodecs.given
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.Aead

@@ -1,6 +1,6 @@
 package benchmarks.encrdt
 
-import benchmarks.encrdt.Codecs.{deltaAwlwwmapJsonCodec, dotSetCodec}
+import benchmarks.encrdt.Codecs.given
 import benchmarks.encrdt.mock.UntrustedDeltaBasedReplicaMock
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead

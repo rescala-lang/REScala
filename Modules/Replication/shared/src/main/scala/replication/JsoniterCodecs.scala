@@ -26,7 +26,7 @@ object JsoniterCodecs {
     x => x.inner.slice(0, x.used)
   )
 
-  given idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
+  given uidKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
     override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
     override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
   given CausalContextCodec: JsonValueCodec[Dots] = JsonCodecMaker.make

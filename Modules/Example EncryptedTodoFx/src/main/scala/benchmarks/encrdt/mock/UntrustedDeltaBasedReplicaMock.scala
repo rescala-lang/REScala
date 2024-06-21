@@ -1,6 +1,6 @@
 package benchmarks.encrdt.mock
 
-import benchmarks.encrdt.Codecs.dotSetCodec
+import benchmarks.encrdt.Codecs.given
 import benchmarks.encrdt.{Codecs, idFromString}
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
@@ -40,7 +40,7 @@ class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   def decryptAndWriteDeltasToFile(aead: Aead, outFilePath: Path): Unit = {
     val os          = Files.newOutputStream(outFilePath)
     val printWriter = new PrintWriter(os)
-    encryptedDeltaGroupStore.foreach(encDeltaGroup => printWriter.println(encDeltaGroup.decrypt(aead)))
+    encryptedDeltaGroupStore.foreach(encDeltaGroup => printWriter.println(encDeltaGroup.decrypt[Dots](aead)))
     printWriter.close()
   }
 

@@ -7,37 +7,16 @@ import encrdtlib.container.{AddWinsLastWriterWinsMap, DeltaAddWinsLastWriterWins
 import rdts.base.Uid
 import rdts.base.Uid.asId
 import rdts.time.{ArrayRanges, Dot, Dots, Time}
+import replication.JsoniterCodecs.given
 
 import java.util.UUID
 
 object Codecs {
-  implicit val idCodec: JsonValueCodec[Uid] = JsonCodecMaker.make[String].asInstanceOf
-  implicit val idKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
-    override def decodeKey(in: JsonReader): Uid           = Uid.predefined(in.readKeyAsString())
-    override def encodeKey(x: Uid, out: JsonWriter): Unit = out.writeKey(Uid.unwrap(x))
+
+  given dotsCodec: JsonValueCodec[Dots] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
   implicit val awlwwmapJsonCodec: JsonValueCodec[AddWinsLastWriterWinsMap.LatticeType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))
-
-  implicit val dotSetCodec: JsonValueCodec[Dots] = new JsonValueCodec[Dots] {
-    private val optimizedArrayCausalContextCodec: JsonValueCodec[Map[Uid, Array[Time]]] = JsonCodecMaker.make
-
-    override def decodeValue(in: JsonReader, default: Dots): Dots =
-      Dots(optimizedArrayCausalContextCodec.decodeValue(in, Map.empty).map {
-        case (id, times) => id -> new ArrayRanges(times, times.length)
-      })
-
-    override def encodeValue(x: Dots, out: JsonWriter): Unit = optimizedArrayCausalContextCodec.encodeValue(
-      x.internal.map { case (id, ranges) =>
-        id -> {
-          if ranges.used == ranges.inner.length then ranges.inner
-          else Array.copyOf(ranges.inner, ranges.used)
-        }
-      },
-      out
-    )
-
-    override def nullValue: Dots = Dots.empty
-  }
 
   implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAddWinsLastWriterWinsMap.StateType[String, String]] =
     JsonCodecMaker.make(CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue))

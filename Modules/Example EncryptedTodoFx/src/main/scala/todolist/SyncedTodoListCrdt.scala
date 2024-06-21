@@ -8,6 +8,7 @@ import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.sync.ConnectionManager
 import rdts.datatypes.LastWriterWins
 import rdts.time.Dot
+import replication.JsoniterCodecs.given
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
 

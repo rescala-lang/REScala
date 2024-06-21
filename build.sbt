@@ -98,7 +98,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
 
 lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(rdts.jvm)
+  .dependsOn(rdts.jvm, replication.jvm)
   .settings(
     scala3defaults,
     libraryDependencies += LocalSettings.scalafx,

@@ -1,6 +1,6 @@
 package benchmarks.encrdt.mock
 
-import benchmarks.encrdt.Codecs.*
+import benchmarks.encrdt.Codecs.given
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
