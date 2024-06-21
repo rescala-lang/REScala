@@ -69,7 +69,7 @@ class DeltaAWLWWMContainer[K, V](
 }
 
 object DeltaAWLWWMContainer {
-  type DeltaAddWinsLastWriterWinsMapLattice[K, V] = Dotted[ObserveRemoveMap[K, Entry[LastWriterWins[V]]]]
+  type DeltaAddWinsLastWriterWinsMapLattice[K, V] = Dotted[InnerType[K, V]]
 
   def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
     Dotted(ObserveRemoveMap.empty[K, Entry[LastWriterWins[V]]])

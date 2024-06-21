@@ -4,9 +4,10 @@ import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import encrdtlib.sync.ConnectionManager
 import rdts.base.{Bottom, Lattice}
+import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
-import replication.DataManager
-import todolist.SyncedTodoListCrdt.{StateType, given}
+import replication.{DataManager, ProtocolDots}
+import todolist.SyncedTodoListCrdt.{InnerStateType, StateType, given}
 
 import java.net.URI
 import java.util.concurrent.{ExecutorService, Executors}
@@ -18,7 +19,7 @@ object ConnectionManagerFactory {
   var impl: (String, () => StateType, StateType => Unit) => ConnectionManager[StateType] =
     (replicaId, queryCrdtState, handleStateReceived) =>
       // new P2PConnectionManager[StateType](replicaId, queryCrdtState, handleStateReceived)
-      DataManagerConnectionManager[StateType](LocalUid.predefined(replicaId), handleStateReceived)
+      DataManagerConnectionManager[InnerStateType](LocalUid.predefined(replicaId), handleStateReceived)
 
   def connectionManager(
       replicaId: String,
@@ -30,9 +31,10 @@ object ConnectionManagerFactory {
 
 class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
     replicaId: LocalUid,
-    receiveCallback: State => Unit
-) extends ConnectionManager[State] {
-  val dataManager: DataManager[State] = DataManager[State](replicaId: LocalUid, receiveCallback, _ => ())
+    receiveCallback: Dotted[State] => Unit
+) extends ConnectionManager[Dotted[State]] {
+  val dataManager: DataManager[State] =
+    DataManager[State](replicaId: LocalUid, _ => (), pd => receiveCallback(Dotted(pd.data, pd.context)))
 
   val port = Random.nextInt(10000) + 50000
 
@@ -45,8 +47,8 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
 
   override val localReplicaId: String = replicaId.toString
 
-  override def stateChanged(newState: State): Unit = {
-    dataManager.applyUnrelatedDelta(newState)
+  override def stateChanged(newState: Dotted[State]): Unit = {
+    dataManager.applyLocalDelta(ProtocolDots(newState.data, newState.context))
   }
 
   override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
