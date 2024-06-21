@@ -40,6 +40,8 @@ class DataManager[State](
 
   type TransferState = ProtocolDots[State]
 
+  val globalAbort = Abort()
+
   var connections: List[ConnectionContext] = Nil
 
   val timer = new Timer()
@@ -66,7 +68,7 @@ class DataManager[State](
 
   def addLatentConnection(latentConnection: LatentConnection): Unit = {
     println(s"activating latent connection in data manager")
-    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using Abort()):
+    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort):
       case Success(conn) =>
         lock.synchronized {
           connections = conn :: connections

@@ -18,8 +18,10 @@ object TCP {
   }
 
   def handleConnection(socket: Socket, incoming: Incoming, executionContext: ExecutionContext): TCPConnection = {
+    println(s"handling new connection")
     val conn = new TCPConnection(socket)
     executionContext.execute: () =>
+      println(s"exeecuting task")
       conn.handleReceivedMessages(incoming(conn))
     conn
   }
@@ -28,6 +30,7 @@ object TCP {
     new LatentConnection {
       override def prepare(incoming: Incoming): Async[Any, ConnectionContext] =
         TCP.syncAttempt {
+          println(s"tcp sync attempt")
           TCP.handleConnection(new Socket(host, port), incoming, executionContext)
         }
     }
@@ -85,12 +88,14 @@ class TCPConnection(socket: Socket) extends ConnectionContext {
   // connection interface
 
   def send(data: MessageBuffer): Async[Any, Unit] = Async.fromCallback {
+    println(s"sending data on tcp socket")
     try {
       val outArray = data.asArray
       outputStream.write(sizedContent)
       outputStream.writeInt(outArray.size)
       outputStream.write(outArray)
       outputStream.flush()
+      println(s"sending done")
       Async.handler.succeed(())
     } catch {
       case ioe: IOException => Async.handler.fail(ioe)
@@ -111,12 +116,15 @@ class TCPConnection(socket: Socket) extends ConnectionContext {
     }
 
     try while true do {
+        println(s"receiving messages")
         readNextByte() match {
           case `sizedContent` =>
             val size = inputStream.readInt()
 
             val bytes = new Array[Byte](size)
             inputStream.readFully(bytes, 0, size)
+
+            println(s"received message buffer of size $size")
 
             handler.succeed(ArrayMessageBuffer(bytes))
 
