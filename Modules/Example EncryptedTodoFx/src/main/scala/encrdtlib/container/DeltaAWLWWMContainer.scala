@@ -1,17 +1,13 @@
 package encrdtlib.container
 
-import encrdtlib.container.DeltaAWLWWMContainer.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
-import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
-import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
-import rdts.base.{Bottom, Lattice, Uid}
+import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import rdts.base.{Lattice, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
-import rdts.time.{Dot, Dots}
-
-import scala.math.Ordering.Implicits.infixOrderingOps
+import rdts.time.Dots
 
 class DeltaAWLWWMContainer[K, V](
     val replicaId: Uid,
