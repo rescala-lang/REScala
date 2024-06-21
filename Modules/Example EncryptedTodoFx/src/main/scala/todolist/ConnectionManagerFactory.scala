@@ -5,7 +5,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle}
 import com.google.crypto.tink.aead.AeadConfig
 import encrdtlib.sync.ConnectionManager
-import intermediaries_demo.TrustedReplicaDemoApp.keyset
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
