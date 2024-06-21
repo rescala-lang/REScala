@@ -1,7 +1,7 @@
 package encrdtlib.container
 
 import encrdtlib.container.AWLWWMContainer.LatticeType
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.dotted.Dotted
@@ -12,17 +12,14 @@ type AddWinsMapLattice[K, V] = Dotted[ObserveRemoveMap[K, V]]
 
 class AWLWWMContainer[K, V](
     val replicaId: Uid,
-    initialState: AddWinsMapLattice[K, LastWriterWins[V]] =  Dotted(ObserveRemoveMap.empty[K, LastWriterWins[V]])
+    initialState: AddWinsMapLattice[K, LastWriterWins[V]] = Dotted(ObserveRemoveMap.empty[K, LastWriterWins[V]])
 )(using Bottom[V]) {
 
   given LocalUid = replicaId
 
-
   private var _state: AddWinsMapLattice[K, LastWriterWins[V]] = initialState
 
   def state: LatticeType[K, V] = _state
-
-  def get(key: K): Option[V] = _state.data.get(key).map(reg => reg.payload)
 
   def put(key: K, value: V): Unit = {
     val timeStamp = _state.data.get(key) match {
@@ -33,14 +30,6 @@ class AWLWWMContainer[K, V](
     _state = _state merge _state.update(key, LastWriterWins(timeStamp, value))
   }
 
-  def remove(key: K): Unit = merge(_state.remove(key))
-
-  def values: Map[K, V] =
-    _state.entries.map { case (k, LastWriterWins(_, v)) => k -> v }.toMap
-
-  def merge(otherState: LatticeType[K, V])(using Bottom[V]): Unit = {
-    _state = Lattice.merge(_state, otherState)
-  }
 }
 
 object AWLWWMContainer {
