@@ -7,17 +7,17 @@ import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
 import todolist.{ConnectionManagerFactory, TodoListApp}
 
 import java.nio.file.{Files, Path, Paths}
-import scala.annotation.nowarn
 
 object TrustedReplicaDemoApp extends TodoListApp {
   AeadConfig.register()
   private val keysetFilePath: Path = Paths.get(".", "demokey.json")
   if !Files.exists(keysetFilePath) then {
     val keyset: KeysetHandle = KeysetHandle.generateNew(KeyTemplates.get("XCHACHA20_POLY1305"))
-    CleartextKeysetHandle.write(keyset, JsonKeysetWriter.withFile(keysetFilePath.toFile): @nowarn)
+    CleartextKeysetHandle.write(keyset, JsonKeysetWriter.withOutputStream(Files.newOutputStream(keysetFilePath)))
   }
 
-  private val keyset     = CleartextKeysetHandle.read(JsonKeysetReader.withFile(keysetFilePath.toFile): @nowarn)
+  private val keyset =
+    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(Files.newInputStream(keysetFilePath)))
   private val aead: Aead = keyset.getPrimitive(classOf[Aead])
 
   Console.println(keyset.getKeysetInfo)

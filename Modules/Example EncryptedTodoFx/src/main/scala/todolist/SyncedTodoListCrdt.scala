@@ -1,21 +1,16 @@
 package todolist
 
-import benchmarks.encrdt.Codecs.*
 import benchmarks.encrdt.idFromString
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.DeltaAddWinsLastWriterWinsMap
 import encrdtlib.sync.ConnectionManager
-import rdts.datatypes.LastWriterWins
-import rdts.time.Dot
-import replication.JsoniterCodecs.given
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
 
 import java.net.URI
 import java.util.UUID
 import java.util.concurrent.{ExecutorService, Executors}
-import scala.annotation.nowarn
 import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
@@ -104,24 +99,6 @@ class SyncedTodoListCrdt(val replicaId: String) {
 object SyncedTodoListCrdt {
   type StateType = DeltaAddWinsLastWriterWinsMap.StateType[UUID, TodoEntry]
 
-  private implicit val dotMapAsSetCodec: JsonValueCodec[Set[(Dot, (TodoEntry, LastWriterWins[String]))]] =
-    JsonCodecMaker.make
-  @nowarn
-  private implicit val dotMapCodec: JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[String])]] =
-    new JsonValueCodec[Map[Dot, (TodoEntry, LastWriterWins[String])]] {
-      override def decodeValue(
-          in: JsonReader,
-          default: Map[Dot, (TodoEntry, LastWriterWins[String])]
-      ): Map[Dot, (TodoEntry, LastWriterWins[String])] =
-        dotMapAsSetCodec.decodeValue(in, Set.empty).toMap
-
-      override def encodeValue(x: Map[Dot, (TodoEntry, LastWriterWins[String])], out: JsonWriter): Unit =
-        dotMapAsSetCodec.encodeValue(x.toSet, out)
-
-      override def nullValue: Map[Dot, (TodoEntry, LastWriterWins[String])] =
-        Map.empty
-    }
-
-  implicit val stateCodec: JsonValueCodec[StateType] =
-    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true))
+  given stateCodec: JsonValueCodec[StateType] =
+    JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true).withMapAsArray(true))
 }

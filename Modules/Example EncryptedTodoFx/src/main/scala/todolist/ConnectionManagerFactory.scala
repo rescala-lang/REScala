@@ -2,7 +2,7 @@ package todolist
 
 import encrdtlib.sync.ConnectionManager
 import encrdtlib.sync.p2p.P2PConnectionManager
-import todolist.SyncedTodoListCrdt.{StateType, stateCodec}
+import todolist.SyncedTodoListCrdt.{StateType, given}
 
 object ConnectionManagerFactory {
   var impl: (String, () => StateType, StateType => Unit) => ConnectionManager[StateType] =
