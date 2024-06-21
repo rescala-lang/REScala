@@ -3,7 +3,7 @@ package rdts.datatypes.contextual
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.*
 import rdts.dotted.HasDots.mapInstance
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 
 /** A set that allows deletes.
