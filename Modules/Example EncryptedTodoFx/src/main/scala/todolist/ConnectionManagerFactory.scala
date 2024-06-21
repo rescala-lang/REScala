@@ -2,14 +2,19 @@ package todolist
 
 import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle}
+import com.google.crypto.tink.aead.AeadConfig
 import encrdtlib.sync.ConnectionManager
+import intermediaries_demo.TrustedReplicaDemoApp.keyset
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
-import replication.{DataManager, ProtocolDots}
+import replication.{Crypto, DataManager, ProtocolDots}
 import todolist.SyncedTodoListCrdt.{InnerStateType, StateType, given}
 
 import java.net.URI
+import java.nio.file.{Files, Path, Paths}
+import java.security.GeneralSecurityException
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
 import scala.util.Random
@@ -33,8 +38,31 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
     replicaId: LocalUid,
     receiveCallback: Dotted[State] => Unit
 ) extends ConnectionManager[Dotted[State]] {
+
+  AeadConfig.register()
+  private val keysetFilePath: Path = Path.of("demokey.json")
+  if !Files.exists(keysetFilePath) then {
+    val keyset: KeysetHandle = KeysetHandle.generateNew(KeyTemplates.get("XCHACHA20_POLY1305"))
+    CleartextKeysetHandle.write(keyset, JsonKeysetWriter.withOutputStream(Files.newOutputStream(keysetFilePath)))
+  }
+
+  private val keyset =
+    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(Files.newInputStream(keysetFilePath)))
+  private val aead: Aead = keyset.getPrimitive(classOf[Aead])
+
+  println(keyset.getKeysetInfo)
+
   val dataManager: DataManager[State] =
-    DataManager[State](replicaId: LocalUid, _ => (), pd => receiveCallback(Dotted(pd.data, pd.context)))
+    DataManager[State](
+      replicaId: LocalUid,
+      _ => (),
+      pd => receiveCallback(Dotted(pd.data, pd.context)),
+      crypto = Some(new Crypto {
+        override def encrypt(data: Array[Byte]): Array[Byte] = aead.encrypt(data, Array.empty)
+
+        override def decrypt(data: Array[Byte]): Array[Byte] = aead.decrypt(data, Array.empty)
+      })
+    )
 
   val port = Random.nextInt(10000) + 50000
 

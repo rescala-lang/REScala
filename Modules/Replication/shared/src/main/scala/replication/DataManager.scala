@@ -11,7 +11,6 @@ import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}
 
-import java.nio.charset.StandardCharsets
 import java.util.Timer
 import scala.util.{Failure, Success}
 
@@ -27,14 +26,20 @@ object ProtocolMessage {
 
 case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bottom
 
+trait Crypto {
+  def encrypt(data: Array[Byte]): Array[Byte]
+  def decrypt(data: Array[Byte]): Array[Byte]
+}
+
 class DataManager[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
+    crypto: Option[Crypto] = None
 )(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
 
-  given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
   given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]]              = JsonCodecMaker.make
+  given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
 
   given LocalUid = replicaId
 
@@ -61,7 +66,8 @@ class DataManager[State](
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
     case Success(msg) =>
-      val res = readFromArray[ProtocolMessage[TransferState]](msg.asArray)
+      val bytes = crypto.map(c => c.decrypt(msg.asArray)).getOrElse(msg.asArray)
+      val res   = readFromArray[ProtocolMessage[TransferState]](bytes)
       println(s"$res")
       handleMessage(res, outChan)
     case Failure(error) => error.printStackTrace()
@@ -136,13 +142,18 @@ class DataManager[State](
         con.send(encodeDelta(delta)).run(using ())(debugCallback)
   }
 
-  def encodeDelta(delta: TransferState): MessageBuffer =
-    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta)))
+  def encodeDelta(delta: TransferState): MessageBuffer = {
+    toEncBuffer:
+      writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta))
+  }
 
-  def encodeNamed[A: JsonValueCodec](name: String, value: A) =
-    ArrayMessageBuffer(s"$name\r\n\r\n".getBytes(StandardCharsets.UTF_8) ++ writeToArray(value))
+  def missingRequestMessage: MessageBuffer = {
+    toEncBuffer:
+      writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext))
+  }
 
-  def missingRequestMessage: MessageBuffer =
-    ArrayMessageBuffer(writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext)))
+  def toEncBuffer(bytes: Array[Byte]): MessageBuffer =
+    val enc = crypto.map(c => c.encrypt(bytes)).getOrElse(bytes)
+    ArrayMessageBuffer(enc)
 
 }
