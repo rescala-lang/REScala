@@ -13,12 +13,10 @@ import scala.math.Ordering.Implicits.infixOrderingOps
 class DeltaAWLWWMContainer[K, V](
     val replicaId: Uid,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAWLWWMContainer.empty[K, V],
-    initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
 ) {
-  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
+  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
-
 
   def get(key: K): Option[V] =
     _state.data.get(key)
