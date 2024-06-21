@@ -19,9 +19,9 @@ class ORMapTest extends munit.ScalaCheckSuite {
     given Bottom[Int] with
       def empty = Int.MinValue
     forAll { (entries: List[Int]) =>
-      val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) { (curr, elem) => curr.update(elem, elem) }
-      orMap.entries.foreach { (k, v) =>
-        assert(orMap.contains(k))
+      val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) { (curr, elem) => curr.mod(_.update(elem, elem)) }
+      orMap.data.entries.foreach { (k, v) =>
+        assert(orMap.data.contains(k))
       }
     }
   }
@@ -46,15 +46,15 @@ class ORMapTest extends munit.ScalaCheckSuite {
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
           case (m, e) =>
-            m.transform(k)(_.mod(_.add(using m.replicaID)(e)))
+            m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.transform(k)(_.mod(_.remove(e)))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))))
         }
       }
 
-      val mapElements = map.queryKey(k).elements
+      val mapElements = map.data.queryKey(k).elements
 
       assert(
         mapElements == set.data.elements,
@@ -74,17 +74,17 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
-          case (m, e) => m.transform(k)(_.mod(_.add(using m.replicaID)(e)))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.transform(k)(_.mod(_.remove(e)))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))))
         }
       }
 
-      val removed = map.observeRemoveMap.remove(k)
+      val removed = map.mod(_.remove(k))
 
-      val queryResult = removed.queryKey(k).elements
+      val queryResult = removed.data.queryKey(k).elements
 
       assertEquals(
         queryResult,

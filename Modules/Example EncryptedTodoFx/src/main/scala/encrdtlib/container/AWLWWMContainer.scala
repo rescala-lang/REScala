@@ -27,7 +27,7 @@ class AWLWWMContainer[K, V](
       case None           => CausalTime.now()
     }
 
-    _state = _state merge _state.update(key, LastWriterWins(timeStamp, value))
+    _state = _state merge _state.mod(_.update(key, LastWriterWins(timeStamp, value)))
   }
 
 }

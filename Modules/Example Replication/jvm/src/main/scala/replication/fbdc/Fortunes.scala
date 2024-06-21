@@ -26,10 +26,10 @@ object Fortunes {
         val reqq = DeltaBuffer(reqqI).mutable
         fortunes.foreach { q =>
           val resp = processFortune(q.value)
-          reqq.update(using dataManager.replicaId)(
+          reqq.mod(_.update(using dataManager.replicaId)(
             "fortune",
             Some(LastWriterWins.now(resp))
-          )
+          ))
         }
         reqq.result.state
       }

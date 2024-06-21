@@ -68,7 +68,7 @@ class FbdcExampleData {
 
   def addCapability(capability: String) =
     dataManager.modParticipants { part =>
-      part.observeRemoveMap.transform(replicaId.uid)(_.mod(_.add(using replicaId)(capability)))
+      part.mod(_.transform(replicaId.uid)(_.mod(_.add(using replicaId)(capability))))
     }
 
   val requests = dataManager.mergedState.map(_.data.requests.data.values)
@@ -82,7 +82,7 @@ class FbdcExampleData {
         }
     }
     r
-  val responses = dataManager.mergedState.map(_.data.responses.entries.toMap)
+  val responses = dataManager.mergedState.map(_.data.responses.data.entries.toMap)
 
   val latestFortune = responses.map(_.get("fortune").flatten.map(_.payload).collect {
     case res: Res.Fortune => res

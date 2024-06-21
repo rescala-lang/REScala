@@ -70,7 +70,7 @@ object HTML {
       h1("make a request"),
     ).render.reattach(
       exdat.providers.map { prov =>
-        prov.observeRemoveMap.entries.map { (id, provided) =>
+        prov.data.entries.map { (id, provided) =>
           section(
             header(h2("Executor:", Uid.unwrap(id))),
             provided.elements.iterator.map {

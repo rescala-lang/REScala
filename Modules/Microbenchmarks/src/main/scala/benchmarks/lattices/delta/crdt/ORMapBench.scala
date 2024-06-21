@@ -27,43 +27,43 @@ class ORMapBench {
       "a",
       ObserveRemoveMap.empty
     )) {
-      case (m, i) => m.transform(i)(_.enable(using m.replicaID)())
+      case (m, i) => m.mod(_.transform(i)(_.enable(using m.replicaID)()))
     }
   }
 
   @Benchmark
-  def queryExisting(): Boolean = map.queryKey(0).read
+  def queryExisting(): Boolean = map.data.queryKey(0).read
 
   @Benchmark
-  def queryMissing(): Boolean = map.queryKey(-1).read
+  def queryMissing(): Boolean = map.data.queryKey(-1).read
 
   @Benchmark
-  def containsExisting(): Boolean = map.contains(0)
+  def containsExisting(): Boolean = map.data.contains(0)
 
   @Benchmark
-  def containsMissing(): Boolean = map.contains(-1)
+  def containsMissing(): Boolean = map.data.contains(-1)
 
   @Benchmark
-  def queryAllEntries(): Iterable[Boolean] = map.queryAllEntries.map(_.read)
+  def queryAllEntries(): Iterable[Boolean] = map.data.queryAllEntries.map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.transform(0)(_.disable())
+  def mutateExisting(): SUT = map.mod(_.transform(0)(_.disable()))
 
   @Benchmark
-  def mutateMissing(): SUT = map.transform(-1)(_.enable(using map.replicaID)())
+  def mutateMissing(): SUT = map.mod(_.transform(-1)(_.enable(using map.replicaID)()))
 
   @Benchmark
-  def removeExisting(): SUT = map.remove(0)
+  def removeExisting(): SUT = map.mod(_.remove(0))
 
   @Benchmark
-  def removeMissing(): SUT = map.remove(-1)
+  def removeMissing(): SUT = map.mod(_.remove(-1))
 
   @Benchmark
-  def removeAll(): SUT = map.removeAll(0 until numEntries)
+  def removeAll(): SUT = map.mod(_.removeAll(0 until numEntries))
 
   @Benchmark
-  def removeByValue(): SUT = map.removeByValue(ewf => ewf.read)
+  def removeByValue(): SUT = map.mod(_.removeByValue(ewf => ewf.read))
 
   @Benchmark
-  def clear(): SUT = map.clear()
+  def clear(): SUT = map.mod(_.clear())
 }

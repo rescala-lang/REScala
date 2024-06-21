@@ -46,7 +46,7 @@ object Northwind {
           val ress = DeltaBuffer(res).mutable
           queries.foreach { q =>
             val resp = Res.Northwind(q.value, query(q.value.query))
-            ress.observeRemoveMap.update("northwind", Some(LastWriterWins.now(resp)))
+            ress.mod(_.update("northwind", Some(LastWriterWins.now(resp))))
           }
           ress.result.state
         }
