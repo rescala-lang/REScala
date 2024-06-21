@@ -7,6 +7,7 @@ import encrdtlib.container.AWLWWMContainer
 import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
+import rdts.base.Bottom
 import rdts.time.VectorClock
 
 import java.util.concurrent.TimeUnit
@@ -56,7 +57,7 @@ class AWLWWMapBenchmark {
 
   @Benchmark
   def putOnceNoSerialization(benchState: SerializeOnlyBenchmarkState): Unit = {
-    benchState.crdt.put("This is a String", "And so this is too")
+    benchState.crdt.put("This is a String", "And so this is too")(using Bottom.provide(""))
   }
 
   @Benchmark
@@ -66,7 +67,7 @@ class AWLWWMapBenchmark {
     val crdt = new AWLWWMContainer[String, String](replicaId)
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)
+      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
       // Serialize to JSON (as byte array)
       val serializedState = writeToArray(crdt.state)
 
@@ -88,7 +89,7 @@ class AWLWWMapBenchmark {
 
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)
+      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
       // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
       // Serialize/Encrypt/Authenticate state with attached time
@@ -136,7 +137,7 @@ class SerializeOnlyBenchmarkState {
 
     for entry <- dummyKeyValuePairs do {
       // Update crdt
-      crdt.put(entry._1, entry._2)
+      crdt.put(entry._1, entry._2)(using Bottom.provide(""))
       // Track time information used for encrypted crdt
       versionVector = versionVector.inc(replicaId)
     }

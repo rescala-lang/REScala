@@ -6,7 +6,9 @@ import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 import rdts.time.Dots
 
-case class ObserveRemoveMap[K, V](inner: Map[K, V])
+case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
+  export inner.{get}
+}
 
 /** An ObserveRemoveMap (Observed-Remove Map) is a Delta CRDT that models a map from an arbitrary key type to nested causal Delta CRDTs.
   * In contrast to [[GrowOnlyMap]], ObserveRemoveMap allows the removal of key/value pairs from the map.
