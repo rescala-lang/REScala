@@ -8,7 +8,6 @@ import rdts.datatypes.LastWriterWins
 import rdts.dotted.Dotted
 import rdts.time.Dot
 
-import scala.collection.mutable.ArrayBuffer
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 class DeltaAWLWWMContainer[K, V](
@@ -17,12 +16,9 @@ class DeltaAWLWWMContainer[K, V](
     initialDeltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Vector()
 ) {
   protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V]               = initialState
-  protected val _deltas: ArrayBuffer[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = ArrayBuffer.from(initialDeltas)
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
 
-  def deltas: Vector[DeltaAddWinsLastWriterWinsMapLattice[K, V]] =
-    _deltas.toVector // TODO: Maybe change this to another type
 
   def get(key: K): Option[V] =
     _state.data.get(key)
@@ -92,7 +88,6 @@ class DeltaAWLWWMContainer[K, V](
   }
 
   private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
-    _deltas.append(delta)
     _state = Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(_state, delta)
   }
 }

@@ -38,7 +38,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
 
     for parallelStates <- 1 to maxParallelStates do {
       val crdt =
-        new DeltaAWLWWMContainer[String, String]("0", benchmarkSharedCrdt.state, benchmarkSharedCrdt.deltas)
+        new DeltaAWLWWMContainer[String, String]("0", benchmarkSharedCrdt.state)
       val untrustedReplica = benchmarkSharedUntrustedReplica.copy()
       var localDot         = Dot("0", 0);
       // Populate CRDT with missing elements (before adding concurrent updates)
@@ -55,7 +55,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
         for replicaId <- 1 to parallelStates do {
           val entry = dummyKeyValuePairs(totalElements - replicaId)
           val replicaSpecificCrdt =
-            new DeltaAWLWWMContainer[String, String](replicaId.toString, crdt.state, crdt.deltas)
+            new DeltaAWLWWMContainer[String, String](replicaId.toString, crdt.state)
           val delta = replicaSpecificCrdt.putDelta(entry._1, entry._2)
           unmergedDeltas = unmergedDeltas :+ delta
           val dot      = Dot(replicaId.toString, 1)
@@ -63,7 +63,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
           untrustedReplica.receive(encState)
         }
 
-        val mergedCrdt = new DeltaAWLWWMContainer[String, String]("0", crdt.state, crdt.deltas)
+        val mergedCrdt = new DeltaAWLWWMContainer[String, String]("0", crdt.state)
         unmergedDeltas.foreach(delta => mergedCrdt.merge(delta))
         val serializedDecryptedMergedState = writeToArray(mergedCrdt.state)
 
