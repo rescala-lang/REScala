@@ -6,6 +6,7 @@ import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import rdts.base.Bottom
 
 import java.util.UUID
 

@@ -3,10 +3,13 @@ package encrdtlib.container
 import encrdtlib.container.DeltaAWLWWMContainer.{DeltaAddWinsLastWriterWinsMapLattice, deltaAddWinsMapLattice}
 import encrdtlib.lattices.DeltaAddWinsMap.DeltaAddWinsMapLattice
 import encrdtlib.lattices.{DeltaAddWinsMap, DeltaMultiValueRegister}
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.LastWriterWins
+import rdts.datatypes.contextual.ObserveRemoveMap
+import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 import rdts.dotted.Dotted
-import rdts.time.Dot
+import rdts.syntax.LocalUid
+import rdts.time.{Dot, Dots}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -18,96 +21,67 @@ class DeltaAWLWWMContainer[K, V](
 
   def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
 
-  def get(key: K): Option[V] =
-    _state.data.get(key)
-      .map(_.values)
-      .getOrElse(Nil)
-      .maxByOption(_._2.timestamp)
-      .map(_._1)
+  given LocalUid = replicaId
 
-  def put(key: K, value: V): Unit =
-    mutate(
-      DeltaAddWinsMap.deltaMutate[K, Map[
-        Dot,
-        (
-            V,
-            LastWriterWins[Uid]
-        )
-      ]](
-        key,
-        Map.empty,
-        delta =>
-          DeltaMultiValueRegister.deltaWrite(
-            (value, LastWriterWins.now(replicaId)),
-            replicaId,
-            delta
-          ),
-        _state
-      )
-    )
+  def get(key: K): Option[V] =
+    _state.data.get(key).map(_.value.value)
+
+  def put(key: K, value: V): Unit = { putDelta(key, value); () }
 
   def putDelta(key: K, value: V): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
-    val delta: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-      DeltaAddWinsMap.deltaMutate(
-        key,
-        Map.empty,
-        m => DeltaMultiValueRegister.deltaWrite((value, LastWriterWins.now(replicaId)), replicaId, m),
-        _state
-      )
+    val delta = {
+      _state.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[K, Entry[LastWriterWins[V]]]) =>
+        val nextDot = Dots.single(context.nextDot(replicaId))
+        ormap.transformPlain(key) {
+          case Some(prior) => Some(Entry(nextDot, prior.value.write(value)))
+          case None        => Some(Entry(nextDot, LastWriterWins.now(value)))
+        }
+      }
+    }
     mutate(delta)
     delta
   }
 
-  def remove(key: K): Unit =
-    mutate(DeltaAddWinsMap.deltaRemove(key, _state))
+  def remove(key: K): Unit = { removeDelta(key); () }
 
   def removeDelta(key: K): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
-    val delta = DeltaAddWinsMap.deltaRemove(key, _state)
+    val delta = {
+      _state.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[K, Entry[LastWriterWins[V]]]) =>
+        ormap.remove(key)
+      }
+    }
     mutate(delta)
     delta
   }
 
   def removeAllDelta(keys: Seq[K]): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
-    val subDeltas = keys.map(DeltaAddWinsMap.deltaRemove(_, _state))
-    val delta = subDeltas.reduce((left, right) =>
-      DeltaAWLWWMContainer.deltaAddWinsMapLattice[K, V].merge(left, right)
-    )
+    val delta = _state.mod(orm => orm.clear())
     mutate(delta)
     delta
   }
 
   def values: Map[K, V] =
-    _state.data.map { case (k, mvReg) =>
-      k -> mvReg.values.maxBy(_._2.timestamp)._1
-    }
+    _state.data.entries.map((k, v) => (k, v.value.value)).toMap
 
   def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
     mutate(other)
   }
 
   private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
-    _state = Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]].merge(_state, delta)
+    _state = Dotted.lattice.merge(_state, delta)
   }
 }
 
 object DeltaAWLWWMContainer {
-  type DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMapLattice[K, Map[Dot, (V, LastWriterWins[Uid])]]
+  type DeltaAddWinsLastWriterWinsMapLattice[K, V] = Dotted[ObserveRemoveMap[K, Entry[LastWriterWins[V]]]]
 
   def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
-    DeltaAddWinsMap.empty
+    Dotted(ObserveRemoveMap.empty[K, Entry[LastWriterWins[V]]])
 
   type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
 
-  given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = {
-    val timestampedValueLattice: Lattice[(V, LastWriterWins[Uid])] =
-      (left, right) =>
-        // note, this is incorrect when both are equal
-        if left._2.timestamp <= right._2.timestamp then right
-        else left
-    given Lattice[Map[Dot, (V, LastWriterWins[Uid])]] =
-      Lattice.mapLattice[Dot, (V, LastWriterWins[Uid])](using timestampedValueLattice)
-    Dotted.lattice[Map[K, Map[Dot, (V, LastWriterWins[Uid])]]]
-  }
+  type InnerType[K, V] = ObserveRemoveMap[K, Entry[LastWriterWins[V]]]
+
+  given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Dotted.lattice
 
 }

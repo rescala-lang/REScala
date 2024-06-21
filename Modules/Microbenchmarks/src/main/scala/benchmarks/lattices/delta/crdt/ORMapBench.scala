@@ -1,7 +1,9 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.Bottom
 import rdts.datatypes.contextual.{EnableWinsFlag, ObserveRemoveMap}
+import rdts.dotted.Dotted
 
 import java.util.concurrent.TimeUnit
 

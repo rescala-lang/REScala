@@ -6,6 +6,7 @@ import benchmarks.encrdt.mock.{DisseminationStats, IntermediarySizeInfo, SecureT
 import benchmarks.encrdt.todolist.{AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator}
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAWLWWMContainer
+import rdts.base.Bottom
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}

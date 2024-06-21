@@ -1,10 +1,11 @@
 package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
+import rdts.datatypes.contextual.ObserveRemoveMap.empty
 import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.{LocalUid, OpsSyntaxHelper}
-import rdts.time.Dots
+import rdts.time.{Dot, Dots}
 
 case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   export inner.{get}
@@ -23,8 +24,15 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
 
   def entries: Iterable[(K, V)] = inner.view
 
-  def update(using LocalUid, Bottom[V])(k: K, v: V)(using context: Dots): Delta = {
-    transform(k)(_ => Dotted(v, Dots.single(context.nextDot(LocalUid.replicaId))))
+  def update(using LocalUid)(k: K, v: V)(using context: Dots): Delta = {
+    Dotted(ObserveRemoveMap(Map(k -> v)), Dots.single(context.nextDot(LocalUid.replicaId)))
+  }
+
+  def transformPlain(using LocalUid)(k: K)(m: Option[V] => Option[V])(using context: Dots): Delta = {
+    m(inner.get(k)) match {
+      case Some(value) => update(k, value)
+      case None        => Dotted.empty
+    }
   }
 
   def transform(using
@@ -84,13 +92,30 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   */
 object ObserveRemoveMap {
 
+  case class Entry[V](dots: Dots, value: V)
+  object Entry {
+    given bottom[V: Bottom]: Bottom[Entry[V]]    = Bottom.derived
+    given lattice[V: Lattice]: Lattice[Entry[V]] = Lattice.derived
+
+    given hasDots[V]: HasDots[Entry[V]] = new HasDots[Entry[V]] {
+      extension (dotted: Entry[V]) {
+        override def dots: Dots = dotted.dots
+
+        override def removeDots(dots: Dots): Option[Entry[V]] =
+          val res = dotted.dots subtract dots
+          Option.when(!res.isEmpty):
+            Entry(res, dotted.value)
+      }
+    }
+  }
+
   def empty[K, V]: ObserveRemoveMap[K, V] = ObserveRemoveMap(Map.empty)
 
   given bottom[K, V]: Bottom[ObserveRemoveMap[K, V]] = Bottom.derived
 
   given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = HasDots.derived
 
-  given contextDecompose[K, V: Lattice: HasDots: Bottom]: Lattice[ObserveRemoveMap[K, V]] =
+  given lattice[K, V: Lattice: HasDots]: Lattice[ObserveRemoveMap[K, V]] =
     Lattice.derived
 
   private def make[K, V](

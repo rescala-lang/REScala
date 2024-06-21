@@ -6,6 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.encrypted.deltabased.DecryptedDeltaGroup
+import rdts.base.Bottom
 import rdts.time.{Dot, Dots}
 
 import java.io.PrintWriter
@@ -90,7 +91,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmarkLinearScaling extends App
   println(csvHeader)
   csvFile.println(csvHeader)
   val crdt: DeltaAWLWWMContainer[String, String] = new DeltaAWLWWMContainer[String, String]("0")
-  var currentDot                                          = Dot("0", 0)
+  var currentDot                                 = Dot("0", 0)
 
   val untrustedReplica = new UntrustedDeltaBasedReplicaMock()
 
