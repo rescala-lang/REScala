@@ -17,6 +17,9 @@ case class Dotted[A](data: A, context: Dots) {
   def deletions(using HasDots[A]): Dots = context diff contained
   def contained(using HasDots[A]): Dots = data.dots
   def advanced(r: LocalUid): Dotted[A]  = Dotted(data, context.advanced(r.uid))
+
+  inline def mod[B](f: Dots ?=> A => Dotted[B]): Dotted[B] = f(using context)(data)
+
 }
 
 type DottedLattice[T] = Lattice[Dotted[T]]

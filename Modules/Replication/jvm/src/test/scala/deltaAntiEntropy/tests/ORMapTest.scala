@@ -35,30 +35,30 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val set = {
         val added: AntiEntropyContainer[ReplicatedSet[Int]] = add.foldLeft(AntiEntropyContainer(aeb)) {
-          case (s, e) => s.add(using s.replicaID)(e)
+          case (s, e) => s.mod(_.add(using s.replicaID)(e))
         }
 
         remove.foldLeft(added) {
-          case (s, e) => s.remove(e)
+          case (s, e) => s.mod(_.remove(e))
         }
       }
 
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
           case (m, e) =>
-            m.transform(k)(_.add(using m.replicaID)(e))
+            m.transform(k)(_.mod(_.add(using m.replicaID)(e)))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.transform(k)(_.remove(e))
+          case (m, e) => m.transform(k)(_.mod(_.remove(e)))
         }
       }
 
       val mapElements = map.queryKey(k).elements
 
       assert(
-        mapElements == set.elements,
-        s"Mutating/Querying a key in an ObserveRemoveMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.elements}"
+        mapElements == set.data.elements,
+        s"Mutating/Querying a key in an ObserveRemoveMap should have the same behavior as modifying a standalone CRDT of that type, but $mapElements does not equal ${set.data.elements}"
       )
     }
   }
@@ -74,11 +74,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
-          case (m, e) => m.transform(k)(_.add(using m.replicaID)(e))
+          case (m, e) => m.transform(k)(_.mod(_.add(using m.replicaID)(e)))
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.transform(k)(_.remove(e))
+          case (m, e) => m.transform(k)(_.mod(_.remove(e)))
         }
       }
 
@@ -88,8 +88,8 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       assertEquals(
         queryResult,
-        empty.elements,
-        s"Querying a removed key should produce the same result as querying an empty CRDT, but $queryResult does not equal ${empty.elements}"
+        empty.data.elements,
+        s"Querying a removed key should produce the same result as querying an empty CRDT, but $queryResult does not equal ${empty.data.elements}"
       )
     }
   }

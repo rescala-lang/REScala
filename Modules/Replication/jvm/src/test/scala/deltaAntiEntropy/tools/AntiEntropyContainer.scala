@@ -46,6 +46,16 @@ class AntiEntropyContainer[State](
 
 object AntiEntropyContainer {
 
+  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]]) {
+    inline def mod(f: Dots ?=> A => Dotted[A]): AntiEntropyContainer[A] = {
+      curr.applyDelta(Named(curr.replicaID.uid, curr.state.mod(f(_))))
+    }
+  }
+
+  extension [A](curr: AntiEntropyContainer[A]) {
+    def data: A = curr.state.data
+  }
+
   given allPermissions[L: DottedLattice]
       : (PermMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
     new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {

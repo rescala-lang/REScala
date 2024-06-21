@@ -2,7 +2,6 @@ package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
-import rdts.datatypes.contextual.ReplicatedSet.syntax
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalUid
@@ -24,10 +23,10 @@ case class Token(os: Ownership, wants: ReplicatedSet[Uid]) {
   def isOwner(using LocalUid): Boolean = replicaId == os.owner
 
   def request(using LocalUid, Dots): Dotted[Token] =
-    wants.addElem(replicaId).map(w => Token(Ownership.unchanged, w))
+    wants.add(replicaId).map(w => Token(Ownership.unchanged, w))
 
   def release(using LocalUid, Dots): Dotted[Token] =
-    wants.removeElem(replicaId).map(w => Token(Ownership.unchanged, w))
+    wants.remove(replicaId).map(w => Token(Ownership.unchanged, w))
 
   def upkeep(using LocalUid): Token =
     if !isOwner then Token.unchanged

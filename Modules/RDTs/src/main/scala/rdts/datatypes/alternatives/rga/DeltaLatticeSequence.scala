@@ -22,9 +22,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = Dotted(ReplicatedSet.empty[Vertex]).add(using Vertex.start.id)(
-      Vertex.start
-    )
+    val addStart = ReplicatedSet.empty[Vertex].add(using Vertex.start.id)(Vertex.start)(using Dots.empty)
     DeltaSequence(
       addStart.data,
       DeltaSequenceOrder(Map()),
@@ -60,7 +58,7 @@ object DeltaSequence {
 
     def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using IsCausalMutator): C = {
       val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-      val newVertices = context.wrap(current.vertices).add(using replica)(insertee)
+      val newVertices = current.vertices.add(using replica)(insertee)(using context)
       val newValues   = Map(insertee -> value)
       newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues)).mutator
     }
@@ -69,7 +67,7 @@ object DeltaSequence {
       addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
 
     def removeDelta(v: Vertex)(using IsCausalMutator): C =
-      context.wrap(current.vertices).remove(v).map(vert => current.copy(vertices = vert)).mutator
+      current.vertices.remove(v).map(vert => current.copy(vertices = vert)).mutator
 
     def filterDelta(keep: A => Boolean)(using IsCausalMutator): C = {
       val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }

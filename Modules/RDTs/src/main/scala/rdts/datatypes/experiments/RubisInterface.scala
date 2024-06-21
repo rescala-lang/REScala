@@ -68,7 +68,7 @@ object RubisInterface {
       val (req, users, _) = current
       if users.contains(userId) then Dotted(deltaState.make(), context).mutator
       else
-        val merged = req.inheritContext.add(userId -> replicaId)
+        val merged = req.add(userId -> replicaId)(using context)
         Dotted(deltaState.make(userRequests = merged.data), merged.context).mutator
     }
 
@@ -83,7 +83,7 @@ object RubisInterface {
           }
       }
 
-      Dotted(req, context).clear().map { ur =>
+      req.clear().map { ur =>
         deltaState.make(
           userRequests = ur,
           users = newUsers

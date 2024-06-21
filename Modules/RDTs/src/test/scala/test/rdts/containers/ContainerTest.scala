@@ -73,15 +73,15 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted can contain contextual ReplicatedSet[String]") {
     val awSet: Dotted[ReplicatedSet[String]] = Dotted.empty
 
-    assert(awSet.elements.isEmpty)
+    assert(awSet.data.elements.isEmpty)
 
-    val added = awSet.add("First")
-    assertEquals(added.elements.size, 1)
-    assert(added.elements.contains("First"))
-    assert(added.contains("First"))
+    val added = awSet.mod(_.add("First"))
+    assertEquals(added.data.elements.size, 1)
+    assert(added.data.elements.contains("First"))
+    assert(added.data.contains("First"))
 
-    val removed = added.remove("First")
-    assert(removed.elements.isEmpty)
+    val removed = added.mod(_.remove("First"))
+    assert(removed.data.elements.isEmpty)
   }
 
   // NOTE: DeltaBuffer cannot contain contextual ReplicatedSet without Dotted, as ReplicatedSet needs a context
@@ -89,29 +89,29 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBuffer can contain contextual ReplicatedSet[String]") {
     val awSet: DeltaBuffer[Dotted[ReplicatedSet[String]]] = DeltaBuffer(Dotted.empty)
 
-    assert(awSet.elements.isEmpty)
+    assert(awSet.data.elements.isEmpty)
 
-    val added = awSet.add("First")
-    assertEquals(added.elements.size, 1)
-    assert(added.elements.contains("First"))
-    assert(added.contains("First"))
+    val added = awSet.mod(_.add("First"))
+    assertEquals(added.data.elements.size, 1)
+    assert(added.data.elements.contains("First"))
+    assert(added.data.contains("First"))
 
-    val removed = added.remove("First")
-    assert(removed.elements.isEmpty)
+    val removed = added.mod(_.remove("First"))
+    assert(removed.data.elements.isEmpty)
   }
 
   test("Dotted DeltaBufferContainer can contain contextual ReplicatedSet[String]") {
     val awSet: DeltaBufferContainer[Dotted[ReplicatedSet[String]]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
-    assert(awSet.elements.isEmpty)
+    assert(awSet.data.elements.isEmpty)
 
-    awSet.add("First")
-    assertEquals(awSet.elements.size, 1)
-    assert(awSet.elements.contains("First"))
-    assert(awSet.contains("First"))
+    awSet.mod(_.add("First"))
+    assertEquals(awSet.data.elements.size, 1)
+    assert(awSet.data.elements.contains("First"))
+    assert(awSet.data.contains("First"))
 
-    awSet.remove("First")
-    assert(awSet.elements.isEmpty)
+    awSet.mod(_.remove("First"))
+    assert(awSet.data.elements.isEmpty)
   }
 
   // END ReplicatedSet

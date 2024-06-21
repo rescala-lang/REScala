@@ -68,12 +68,12 @@ class SynchronizationPointCalendarPeer(id: Uid, listenPort: Int, connectTo: List
   }
 
   def printStatus() = {
-    println(s"> Cal :\n  work: ${calendar.work.now.elements}\n  vaca: ${calendar.vacation.now.elements}")
+    println(s"> Cal :\n  work: ${calendar.work.now.data.elements}\n  vaca: ${calendar.vacation.now.data.elements}")
     println(
       s"> Raft: ${tokens.tokenAgreement.leader} (${tokens.tokenAgreement.currentTerm})\n  ${tokens.tokenAgreement.values}"
     )
-    println(s"> Want: ${tokens.want.elements}")
-    println(s"> Free: ${tokens.tokenFreed.elements}")
+    println(s"> Want: ${tokens.want.data.elements}")
+    println(s"> Free: ${tokens.tokenFreed.data.elements}")
     println("")
   }
 
@@ -122,8 +122,8 @@ class SynchronizationPointCalendarPeer(id: Uid, listenPort: Int, connectTo: List
             calendar.change_time(cal, appointment, nstart.toInt, nend.toInt)
 
           case "elements" =>
-            println(calendar.work.now.elements)
-            println(calendar.vacation.now.elements)
+            println(calendar.work.now.data.elements)
+            println(calendar.vacation.now.data.elements)
 
           case "lead" =>
             tokens = tokens.lead()

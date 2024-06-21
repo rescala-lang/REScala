@@ -24,6 +24,16 @@ case class DeltaBuffer[State](
 
 object DeltaBuffer {
 
+  extension [A](curr: DeltaBuffer[Dotted[A]])(using Lattice[Dotted[A]]) {
+    inline def mod(f: Dots ?=> A => Dotted[A]): DeltaBuffer[Dotted[A]] = {
+      curr.applyDelta(curr.state.mod(f(_)))
+    }
+  }
+
+  extension [A](curr: DeltaBuffer[Dotted[A]]) {
+    def data: A = curr.state.data
+  }
+
   given dottedPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
     override def query(c: DeltaBuffer[Dotted[L]]): L = c.state.data
     override def mutateContext(
@@ -54,6 +64,16 @@ class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {
 }
 
 object DeltaBufferContainer extends DeltaBufferContainer.LowPrio {
+
+  extension [A](curr: DeltaBufferContainer[Dotted[A]])(using Lattice[Dotted[A]]) {
+    inline def mod(f: Dots ?=> A => Dotted[A]): Unit = {
+      curr.applyDelta(curr.result.state.mod(f(_)))
+    }
+  }
+
+  extension [A](curr: DeltaBufferContainer[Dotted[A]]) {
+    def data: A = curr.result.state.data
+  }
 
   given dottedPermissions[L](using
       pcm: PermCausalMutate[DeltaBuffer[Dotted[L]], L]

@@ -26,10 +26,10 @@ object AWSetGenerators {
       given LocalUid = Uid.predefined(ae.replicaID)
 
       val setAdded = added.foldLeft(AntiEntropyContainer[ReplicatedSet[A]](ae)) {
-        case (set, e) => set.add(e)
+        case (set, e) => set.mod(_.add(e))
       }
       removed.foldLeft(setAdded) {
-        case (set, e) => set.remove(e)
+        case (set, e) => set.mod(_.remove(e))
       }
     }
 
@@ -46,9 +46,9 @@ class AWSetTest extends munit.ScalaCheckSuite {
   property("add") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
       given LocalUid                                      = set.replicaID
-      val added: AntiEntropyContainer[ReplicatedSet[Int]] = set.add(e)
+      val added: AntiEntropyContainer[ReplicatedSet[Int]] = set.mod(_.add(e))
 
-      val elems = added.elements
+      val elems = added.data.elements
       assert(
         elems.contains(e),
         s"After adding an element to the set it should be contained in its elements, but ${elems} does not contain $e"
@@ -58,28 +58,28 @@ class AWSetTest extends munit.ScalaCheckSuite {
   property("remove") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
       given LocalUid          = set.replicaID
-      val removedNotContained = set.remove(e)
-      val added               = set.add(e)
-      val removed             = added.remove(e)
+      val removedNotContained = set.mod(_.remove(e))
+      val added               = set.mod(_.add(e))
+      val removed             = added.mod(_.remove(e))
 
       assert(
-        set.elements.contains(e) || removedNotContained.elements == set.elements,
-        s"Removing an element that was not contained in the set should not change the set, but ${removedNotContained.elements} does not equal ${set.elements}"
+        set.data.elements.contains(e) || removedNotContained.data.elements == set.data.elements,
+        s"Removing an element that was not contained in the set should not change the set, but ${removedNotContained.data.elements} does not equal ${set.data.elements}"
       )
 
       assert(
-        !removed.elements.contains(e),
-        s"When removing an element from a set the resulting set should not contain this element, but ${removed.elements} contains $e"
+        !removed.data.elements.contains(e),
+        s"When removing an element from a set the resulting set should not contain this element, but ${removed.data.elements} contains $e"
       )
     }
   }
   property("clear") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]]) =>
-      val cleared = set.clear()
+      val cleared = set.mod(_.clear())
 
       assert(
-        cleared.elements.isEmpty,
-        s"After clearing the set it should be empty, but ${cleared.elements} is not empty"
+        cleared.data.elements.isEmpty,
+        s"After clearing the set it should be empty, but ${cleared.data.elements} is not empty"
       )
     }
   }
@@ -93,8 +93,8 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val seta0 = AntiEntropyContainer[ReplicatedSet[Int]](aea)
       val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb)
 
-      val seta1 = seta0.add(using seta0.replicaID)(e)
-      val setb1 = setb0.add(using setb0.replicaID)(e)
+      val seta1 = seta0.mod(_.add(using seta0.replicaID)(e))
+      val setb1 = setb0.mod(_.add(using setb0.replicaID)(e))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -102,16 +102,16 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb2 = setb1.processReceivedDeltas()
 
       assert(
-        seta2.elements.contains(e),
-        s"Concurrently adding the same element should have the same effect as adding it once, but ${seta2.elements} does not contain $e"
+        seta2.data.elements.contains(e),
+        s"Concurrently adding the same element should have the same effect as adding it once, but ${seta2.data.elements} does not contain $e"
       )
       assert(
-        setb2.elements.contains(e),
-        s"Concurrently adding the same element should have the same effect as adding it once, but ${setb2.elements} does not contain $e"
+        setb2.data.elements.contains(e),
+        s"Concurrently adding the same element should have the same effect as adding it once, but ${setb2.data.elements} does not contain $e"
       )
 
-      val seta3 = seta2.add(using seta2.replicaID)(e1)
-      val setb3 = setb2.add(using setb2.replicaID)(e2)
+      val seta3 = seta2.mod(_.add(using seta2.replicaID)(e1))
+      val setb3 = setb2.mod(_.add(using setb2.replicaID)(e2))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -119,12 +119,12 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb4 = setb3.processReceivedDeltas()
 
       assert(
-        Set(e1, e2).subsetOf(seta4.elements),
-        s"Concurrently adding two different elements should result in a set containing both elements, but ${seta4.elements} does not contain both $e1 and $e2"
+        Set(e1, e2).subsetOf(seta4.data.elements),
+        s"Concurrently adding two different elements should result in a set containing both elements, but ${seta4.data.elements} does not contain both $e1 and $e2"
       )
       assert(
-        Set(e1, e2).subsetOf(setb4.elements),
-        s"Concurrently adding two different elements should result in a set containing both elements, but ${setb4.elements} does not contain both $e1 and $e2"
+        Set(e1, e2).subsetOf(setb4.data.elements),
+        s"Concurrently adding two different elements should result in a set containing both elements, but ${setb4.data.elements} does not contain both $e1 and $e2"
       )
     }
   }
@@ -137,13 +137,13 @@ class AWSetTest extends munit.ScalaCheckSuite {
 
       val seta0 =
         given LocalUid = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e).add(e1).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e)).mod(_.add(e1)).mod(_.add(e2))
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
       val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
-      val seta1 = seta0.remove(e)
-      val setb1 = setb0.remove(e)
+      val seta1 = seta0.mod(_.remove(e))
+      val setb1 = setb0.mod(_.remove(e))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -151,16 +151,16 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb2 = setb1.processReceivedDeltas()
 
       assert(
-        !seta2.elements.contains(e),
-        s"Concurrently removing the same element should have the same effect as removing it once, but ${seta2.elements} contains $e"
+        !seta2.data.elements.contains(e),
+        s"Concurrently removing the same element should have the same effect as removing it once, but ${seta2.data.elements} contains $e"
       )
       assert(
-        !setb2.elements.contains(e),
-        s"Concurrently removing the same element should have the same effect as removing it once, but ${setb2.elements} contains $e"
+        !setb2.data.elements.contains(e),
+        s"Concurrently removing the same element should have the same effect as removing it once, but ${setb2.data.elements} contains $e"
       )
 
-      val seta3 = seta2.remove(e1)
-      val setb3 = setb2.remove(e2)
+      val seta3 = seta2.mod(_.remove(e1))
+      val setb3 = setb2.mod(_.remove(e2))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -168,12 +168,12 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb4 = setb3.processReceivedDeltas()
 
       assert(
-        Set(e1, e2).intersect(seta4.elements).isEmpty,
-        s"Concurrently removing two different elements should result in a set not containing either element, but ${seta4.elements} contains one of $e1, $e2"
+        Set(e1, e2).intersect(seta4.data.elements).isEmpty,
+        s"Concurrently removing two different elements should result in a set not containing either element, but ${seta4.data.elements} contains one of $e1, $e2"
       )
       assert(
-        Set(e1, e2).intersect(setb4.elements).isEmpty,
-        s"Concurrently removing two different elements should result in a set not containing either element, but ${setb4.elements} contains one of $e1, $e2"
+        Set(e1, e2).intersect(setb4.data.elements).isEmpty,
+        s"Concurrently removing two different elements should result in a set not containing either element, but ${setb4.data.elements} contains one of $e1, $e2"
       )
     }
   }
@@ -186,13 +186,13 @@ class AWSetTest extends munit.ScalaCheckSuite {
 
       val seta0 =
         given LocalUid = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e2))
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
       val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
-      val seta1 = seta0.add(using seta0.replicaID)(e)
-      val setb1 = setb0.remove(e)
+      val seta1 = seta0.mod(_.add(using seta0.replicaID)(e))
+      val setb1 = setb0.mod(_.remove(e))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -200,16 +200,16 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb2 = setb1.processReceivedDeltas()
 
       assert(
-        seta2.elements.contains(e),
-        s"When concurrently adding and removing the same element the add operation should win, but ${seta2.elements} does not contain $e"
+        seta2.data.elements.contains(e),
+        s"When concurrently adding and removing the same element the add operation should win, but ${seta2.data.elements} does not contain $e"
       )
       assert(
-        setb2.elements.contains(e),
-        s"When concurrently adding and removing the same element the add operation should win, but ${setb2.elements} does not contain $e"
+        setb2.data.elements.contains(e),
+        s"When concurrently adding and removing the same element the add operation should win, but ${setb2.data.elements} does not contain $e"
       )
 
-      val seta3 = seta2.add(using seta2.replicaID)(e1)
-      val setb3 = setb2.remove(e2)
+      val seta3 = seta2.mod(_.add(using seta2.replicaID)(e1))
+      val setb3 = setb2.mod(_.remove(e2))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -217,12 +217,12 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb4 = setb3.processReceivedDeltas()
 
       assert(
-        e1 == e2 || (seta4.elements.contains(e1) && !seta4.elements.contains(e2)),
-        s"Concurrently adding an element and removing another should have the same effects as sequential execution, but ${seta4.elements} either contains $e2 or does not contain $e1"
+        e1 == e2 || (seta4.data.elements.contains(e1) && !seta4.data.elements.contains(e2)),
+        s"Concurrently adding an element and removing another should have the same effects as sequential execution, but ${seta4.data.elements} either contains $e2 or does not contain $e1"
       )
       assert(
-        e1 == e2 || (setb4.elements.contains(e1) && !setb4.elements.contains(e2)),
-        s"Concurrently adding an element and removing another should have the same effects as sequential execution, but ${setb4.elements} either contains $e2 or does not contain $e1"
+        e1 == e2 || (setb4.data.elements.contains(e1) && !setb4.data.elements.contains(e2)),
+        s"Concurrently adding an element and removing another should have the same effects as sequential execution, but ${setb4.data.elements} either contains $e2 or does not contain $e1"
       )
     }
   }
@@ -235,12 +235,12 @@ class AWSetTest extends munit.ScalaCheckSuite {
 
       val seta0 =
         given LocalUid = Uid.predefined(aea.replicaID)
-        AntiEntropyContainer[ReplicatedSet[Int]](aea).add(e1).add(e2)
+        AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e1)).mod(_.add(e2))
       AntiEntropy.sync(aea, aeb)
       val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()
 
-      val seta1 = seta0.add(using seta0.replicaID)(e)
-      val setb1 = setb0.clear()
+      val seta1 = seta0.mod(_.add(using seta0.replicaID)(e))
+      val setb1 = setb0.mod(_.clear())
 
       AntiEntropy.sync(aea, aeb)
 
@@ -248,12 +248,12 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val setb2 = setb1.processReceivedDeltas()
 
       assert(
-        seta2.elements == Set(e),
-        s"Concurrently adding an element and clearing the set should result in a singleton set containing the added element, but ${seta2.elements} does not equal ${Set(e)}"
+        seta2.data.elements == Set(e),
+        s"Concurrently adding an element and clearing the set should result in a singleton set containing the added element, but ${seta2.data.elements} does not equal ${Set(e)}"
       )
       assert(
-        setb2.elements == Set(e),
-        s"Concurrently adding an element and clearing the set should result in a singleton set containing the added element, but ${setb2.elements} does not equal ${Set(e)}"
+        setb2.data.elements == Set(e),
+        s"Concurrently adding an element and clearing the set should result in a singleton set containing the added element, but ${setb2.data.elements} does not equal ${Set(e)}"
       )
     }
   }
@@ -265,17 +265,17 @@ class AWSetTest extends munit.ScalaCheckSuite {
         val aeb     = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
         val setaAdded = addedA.foldLeft(AntiEntropyContainer[ReplicatedSet[Int]](aea)) {
-          case (set, e) => set.add(using set.replicaID)(e)
+          case (set, e) => set.mod(_.add(using set.replicaID)(e))
         }
         val seta0 = removedA.foldLeft(setaAdded) {
-          case (set, e) => set.remove(e)
+          case (set, e) => set.mod(_.remove(e))
         }
 
         val setbAdded = addedB.foldLeft(AntiEntropyContainer[ReplicatedSet[Int]](aeb)) {
-          case (set, e) => set.add(using set.replicaID)(e)
+          case (set, e) => set.mod(_.add(using set.replicaID)(e))
         }
         val setb0 = removedB.foldLeft(setbAdded) {
-          case (set, e) => set.remove(e)
+          case (set, e) => set.mod(_.remove(e))
         }
 
         AntiEntropy.sync(aea, aeb)
@@ -286,8 +286,8 @@ class AWSetTest extends munit.ScalaCheckSuite {
         val setb1 = setb0.processReceivedDeltas()
 
         assert(
-          seta1.elements == setb1.elements,
-          s"After synchronization messages were reliably exchanged all replicas should converge, but ${seta1.elements} does not equal ${setb1.elements}"
+          seta1.data.elements == setb1.data.elements,
+          s"After synchronization messages were reliably exchanged all replicas should converge, but ${seta1.data.elements} does not equal ${setb1.data.elements}"
         )
     }
   }

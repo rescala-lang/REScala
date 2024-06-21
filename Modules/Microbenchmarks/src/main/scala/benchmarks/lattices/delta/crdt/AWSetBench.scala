@@ -22,7 +22,7 @@ class AWSetBench {
 
   def createBySize(size: Int): DeltaBufferDotted[ReplicatedSet[Int]] =
     (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])) {
-      case (s, e) => s.add(using s.replicaID)(e)
+      case (s, e) => s.mod(_.add(using s.replicaID)(e))
     }
 
   @Setup
@@ -31,27 +31,27 @@ class AWSetBench {
   }
 
   @Benchmark
-  def elements(): Set[Int] = set.elements
+  def elements(): Set[Int] = set.state.data.elements
 
   @Benchmark
-  def add(): DeltaBufferDotted[ReplicatedSet[Int]] = set.add(using set.replicaID)(-1)
+  def add(): DeltaBufferDotted[ReplicatedSet[Int]] = set.mod(_.add(using set.replicaID)(-1))
 
   @Benchmark
   def addAll(): DeltaBufferDotted[ReplicatedSet[Int]] =
     val ndb = NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])
-    ndb.addAll(using ndb.replicaID)(0 until size)
+    ndb.mod(_.addAll(using ndb.replicaID)(0 until size))
 
   @Benchmark
-  def remove(): DeltaBufferDotted[ReplicatedSet[Int]] = set.remove(0)
+  def remove(): DeltaBufferDotted[ReplicatedSet[Int]] = set.mod(_.remove(0))
 
   @Benchmark
-  def removeBy(): DeltaBufferDotted[ReplicatedSet[Int]] = set.removeBy((e: Int) => e == 0)
+  def removeBy(): DeltaBufferDotted[ReplicatedSet[Int]] = set.mod(_.removeBy((e: Int) => e == 0))
 
   @Benchmark
-  def removeAll(): DeltaBufferDotted[ReplicatedSet[Int]] = set.removeAll(set.elements)
+  def removeAll(): DeltaBufferDotted[ReplicatedSet[Int]] = set.mod(_.removeAll(set.state.data.elements))
 
   @Benchmark
-  def clear(): DeltaBufferDotted[ReplicatedSet[Int]] = set.clear()
+  def clear(): DeltaBufferDotted[ReplicatedSet[Int]] = set.mod(_.clear())
 
   @Benchmark
   def construct(): DeltaBufferDotted[ReplicatedSet[Int]] = createBySize(size)

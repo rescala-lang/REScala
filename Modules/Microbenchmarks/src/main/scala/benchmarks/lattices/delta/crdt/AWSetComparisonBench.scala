@@ -29,7 +29,7 @@ class AWSetComparisonBench {
 
   private def createSet(replicaID: String): State = {
     (0 until setSize).foldLeft(Dotted(ReplicatedSet.empty[String])) { (s, i) =>
-      val delta = s.add(using replicaID.asId)(s"${i.toString}$replicaID")
+      val delta = s.mod(_.add(using replicaID.asId)(s"${i.toString}$replicaID"))
       Lattice[State].merge(s, delta)
     }
   }
@@ -39,7 +39,7 @@ class AWSetComparisonBench {
     setAState = createSet("a")
     setBState = createSet("b")
 
-    plusOneDelta = setBState.add(using "b".asId)("hallo welt")
+    plusOneDelta = setBState.mod(_.add(using "b".asId)("hallo welt"))
     setAStatePlusOne = Lattice[State].merge(setAState, setBState)
   }
 
@@ -47,7 +47,7 @@ class AWSetComparisonBench {
   def create(): State = createSet("c")
 
   @Benchmark
-  def addOne(): State = setAState.add(using "a".asId)("Hallo Welt")
+  def addOne(): State = setAState.mod(_.add(using "a".asId)("Hallo Welt"))
 
   @Benchmark
   def merge(): State = Lattice[State].merge(setAState, setBState)

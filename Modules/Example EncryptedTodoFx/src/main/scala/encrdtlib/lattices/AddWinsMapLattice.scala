@@ -11,13 +11,13 @@ case class AddWinsMapLattice[K, V](
   def values: Map[K, V] = mappings
 
   def added(key: K, value: V, replicaId: Uid): AddWinsMapLattice[K, V] = {
-    val newKeys = keys merge keys.add(using replicaId)(key)
+    val newKeys = keys merge keys.mod(_.add(using replicaId)(key))
     val newMap  = mappings + (key -> value)
     AddWinsMapLattice(newKeys, newMap)
   }
 
   def removed(key: K): AddWinsMapLattice[K, V] = {
-    val newKeys = keys merge keys.remove(key)
+    val newKeys = keys merge keys.mod(_.remove(key))
     val newMap  = mappings - key
     AddWinsMapLattice(newKeys, newMap)
   }

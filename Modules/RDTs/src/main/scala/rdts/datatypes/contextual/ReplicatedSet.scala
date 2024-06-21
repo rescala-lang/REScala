@@ -6,114 +6,88 @@ import rdts.dotted.HasDots.mapInstance
 import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 import rdts.time.{Dot, Dots}
 
-/** An AddWinsSet (Add-Wins Set) is a Delta CRDT modeling a set.
-  *
-  * When an element is concurrently added and removed/cleared from the set then the add operation wins, i.e. the resulting set contains the element.
+/** A set that allows deletes.
+  * Each unique element tracks the dots of when it was inserted.
+  * Removals do not override concurrent inserts.
   */
-case class ReplicatedSet[E](inner: Map[E, Dots])
+case class ReplicatedSet[E](inner: Map[E, Dots]) {
+
+  type Delta = Dotted[ReplicatedSet[E]]
+
+  def elements: Set[E] = inner.keySet
+
+  def contains(elem: E): Boolean = inner.contains(elem)
+
+  def add(using LocalUid)(e: E)(using context: Dots): Delta = {
+    val nextDot = context.nextDot(LocalUid.replicaId)
+    val v: Dots = inner.getOrElse(e, Dots.empty)
+
+    deltaState(
+      dm = Map(e -> Dots.single(nextDot)),
+      cc = v add nextDot
+    )
+  }
+
+  def addAll(using LocalUid)(elems: Iterable[E])(using context: Dots): Delta = {
+    val nextCounter = context.nextTime(LocalUid.replicaId)
+    val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(LocalUid.replicaId, _)))
+
+    val ccontextSet = elems.foldLeft(nextDots) {
+      case (dots, e) => inner.get(e) match {
+          case Some(ds) => dots union ds
+          case None     => dots
+        }
+    }
+
+    deltaState(
+      dm = (elems zip nextDots.iterator.map(dot => Dots.single(dot))).toMap,
+      cc = ccontextSet
+    )
+  }
+
+  def remove(e: E): Delta = {
+    val v = inner.getOrElse(e, Dots.empty)
+
+    deltaState(v)
+  }
+
+  def removeAll(elems: Iterable[E]): Delta = {
+    val dotsToRemove = elems.foldLeft(Dots.empty) {
+      case (dots, e) => inner.get(e) match {
+          case Some(ds) => dots union ds
+          case None     => dots
+        }
+    }
+
+    deltaState(dotsToRemove)
+  }
+
+  def removeBy(cond: E => Boolean): Delta = {
+    val removedDots = inner.collect {
+      case (k, v) if cond(k) => v
+    }.foldLeft(Dots.empty)(_ union _)
+
+    deltaState(
+      cc = removedDots
+    )
+  }
+
+  def clear(): Delta = { deltaState(inner.dots) }
+
+  private def deltaState(
+      dm: Map[E, Dots],
+      cc: Dots
+  ): Delta = Dotted(ReplicatedSet(dm), cc)
+
+  private def deltaState(cc: Dots): Delta = deltaState(Map.empty, cc)
+}
 
 object ReplicatedSet {
 
   def empty[E]: ReplicatedSet[E] = ReplicatedSet(Map.empty)
 
-  given bottom[E]: Bottom[ReplicatedSet[E]] with { override def empty: ReplicatedSet[E] = ReplicatedSet.empty }
-
-  given lattice[E]: Lattice[ReplicatedSet[E]]         = Lattice.derived
-  given asCausalContext[E]: HasDots[ReplicatedSet[E]] = HasDots.derived
-
-  extension [C, E](container: C)
-    def addWinsSet: syntax[C, E] = syntax(container)
-
-  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, ReplicatedSet[E]](container) {
-
-    def elements(using isQuery: IsQuery): Set[E] = current.inner.keySet
-
-    def contains(using IsQuery)(elem: E): Boolean = current.inner.contains(elem)
-
-    def addElem(using rid: LocalUid, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
-      Dotted(current, dots).add(using rid)(e)(using Dotted.syntaxPermissions)
-
-    def removeElem(using rid: LocalUid, dots: Dots, isQuery: IsQuery)(e: E): Dotted[ReplicatedSet[E]] =
-      Dotted(current, dots).remove(using Dotted.syntaxPermissions)(e)
-
-    def add(using LocalUid)(e: E): CausalMutator = {
-      val dm      = current.inner
-      val nextDot = context.nextDot(replicaId)
-      val v: Dots = dm.getOrElse(e, Dots.empty)
-
-      deltaState(
-        dm = Map(e -> Dots.single(nextDot)),
-        cc = v add nextDot
-      ).mutator
-    }
-
-    def addAll(using LocalUid, IsCausalMutator)(elems: Iterable[E]): C = {
-      val dm          = current.inner
-      val cc          = context
-      val nextCounter = cc.nextTime(replicaId)
-      val nextDots    = Dots.from((nextCounter until nextCounter + elems.size).map(Dot(replicaId, _)))
-
-      val ccontextSet = elems.foldLeft(nextDots) {
-        case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds
-            case None     => dots
-          }
-      }
-
-      deltaState(
-        dm = (elems zip nextDots.iterator.map(dot => Dots.single(dot))).toMap,
-        cc = ccontextSet
-      ).mutator
-    }
-
-    def remove(using IsCausalMutator)(e: E): C = {
-      val dm = current.inner
-      val v  = dm.getOrElse(e, Dots.empty)
-
-      deltaState(
-        v
-      ).mutator
-    }
-
-    def removeAll(elems: Iterable[E])(using IsCausalMutator): C = {
-      val dm = current.inner
-      val dotsToRemove = elems.foldLeft(Dots.empty) {
-        case (dots, e) => dm.get(e) match {
-            case Some(ds) => dots union ds
-            case None     => dots
-          }
-      }
-
-      deltaState(
-        dotsToRemove
-      ).mutator
-    }
-
-    def removeBy(cond: E => Boolean)(using IsCausalMutator): C = {
-      val dm = current.inner
-      val removedDots = dm.collect {
-        case (k, v) if cond(k) => v
-      }.foldLeft(Dots.empty)(_ union _)
-
-      deltaState(
-        removedDots
-      ).mutator
-    }
-
-    def clear()(using IsCausalMutator): C = {
-      val dm = current.inner
-      deltaState(
-        dm.dots
-      ).mutator
-    }
-
-  }
-
-  private def deltaState[E](
-      dm: Map[E, Dots],
-      cc: Dots
-  ): Dotted[ReplicatedSet[E]] = Dotted(ReplicatedSet(dm), cc)
-
-  private def deltaState[E](cc: Dots): Dotted[ReplicatedSet[E]] = deltaState(Map.empty, cc)
+  given bottom[E]: Bottom[ReplicatedSet[E]]   = Bottom.provide(empty)
+  given lattice[E]: Lattice[ReplicatedSet[E]] = Lattice.derived
+  given hasDots[E]: HasDots[ReplicatedSet[E]] = HasDots.derived
 
 }

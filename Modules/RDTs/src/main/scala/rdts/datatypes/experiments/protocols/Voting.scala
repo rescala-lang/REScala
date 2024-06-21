@@ -39,7 +39,7 @@ case class Voting(rounds: Epoch[ReplicatedSet[Vote]], numParticipants: LastWrite
     if rounds.value.elements.exists { case Vote(_, voter) => voter == replicaId }
     then Voting.unchanged // already voted!
     else
-      val newVote = rounds.value.addElem(Vote(uid, replicaId))
+      val newVote = rounds.value.add(Vote(uid, replicaId))
       newVote.map(rs => Voting(rounds.write(rs), numParticipants))
 
   def checkIfMajorityPossible(count: Int): Boolean =

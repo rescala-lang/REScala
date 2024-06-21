@@ -37,6 +37,11 @@ case class NamedDeltaBuffer[State](
 
 object NamedDeltaBuffer {
 
+  extension [A](curr: DeltaBufferDotted[A])(using Lattice[Dotted[A]])
+    inline def mod(f: Dots ?=> A => Dotted[A]): DeltaBufferDotted[A] = {
+      curr.applyDelta(curr.replicaID.uid, curr.state.mod(f(_)))
+    }
+
   def dotted[State](replicaID: Uid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())
 
