@@ -1,11 +1,10 @@
 package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
-import rdts.datatypes.contextual.ObserveRemoveMap.empty
 import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
-import rdts.time.{Dot, Dots}
+import rdts.syntax.LocalUid
+import rdts.time.Dots
 
 case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   export inner.{get}

@@ -1,9 +1,9 @@
 package benchmarks.encrdt
 
-import benchmarks.encrdt.Codecs.awlwwmapJsonCodec
+import benchmarks.encrdt.Codecs.given
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import encrdtlib.container.AWLWWMContainer
+import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
@@ -64,7 +64,7 @@ class AWLWWMapBenchmark {
   @Fork(2)
   @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
   def putAndSerializeManyTimes(blackhole: Blackhole, putBenchmarkState: PutManyBenchmarkState): Unit = {
-    val crdt = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
+    val crdt = new DeltaAWLWWMContainer[String, String](replicaId)
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
       // Update crdt
       crdt.put(entry._1, entry._2)
@@ -84,7 +84,7 @@ class AWLWWMapBenchmark {
       aeadState: AeadState
   ): Unit = {
     var versionVector: VectorClock = VectorClock.zero
-    val crdt                       = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
+    val crdt                       = new DeltaAWLWWMContainer[String, String](replicaId)
     val aead                       = aeadState.aead
 
     for entry <- putBenchmarkState.dummyKeyValuePairs do {
@@ -117,8 +117,8 @@ class AeadState {
 
 @State(Scope.Thread)
 class SerializeOnlyBenchmarkState {
-  var crdt: AWLWWMContainer[String, String]                  = scala.compiletime.uninitialized
-  var crdtState: AWLWWMContainer.LatticeType[String, String] = scala.compiletime.uninitialized
+  var crdt: DeltaAWLWWMContainer[String, String]                  = scala.compiletime.uninitialized
+  var crdtState: DeltaAWLWWMContainer.StateType[String, String] = scala.compiletime.uninitialized
   var crdtStateVersionVector: VectorClock                    = scala.compiletime.uninitialized
 
   var serialPlaintextState: Array[Byte]       = scala.compiletime.uninitialized
@@ -133,9 +133,14 @@ class SerializeOnlyBenchmarkState {
 
     var versionVector: VectorClock = VectorClock.zero
     val replicaId                  = "TestReplica"
-    val crdt                       = new AWLWWMContainer[String, String](replicaId)(using Bottom.provide(""))
+    val crdt                       = new DeltaAWLWWMContainer[String, String](replicaId)
 
+    var count = 0
     for entry <- dummyKeyValuePairs do {
+      count = count + 1
+      if count % 1000 == 0 then {
+        println(s"put $count entries")
+      }
       // Update crdt
       crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt
