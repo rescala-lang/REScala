@@ -1,28 +1,27 @@
-package replication.calendar
+package rdts.datatypes.experiments.protocols.raft
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
-import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalUid}
 import rdts.time.Dots
 
 import scala.util.Random
 
-case class Token(id: Long, owner: Uid, value: String) derives CanEqual {
-  def same(other: Token) = owner == other.owner && value == other.value
+case class RaftToken(id: Long, owner: Uid, value: String) derives CanEqual {
+  def same(other: RaftToken) = owner == other.owner && value == other.value
 }
 
 case class RaftTokens(
     replicaID: Uid,
-    tokenAgreement: RaftState[Token],
-    want: DeltaBuffer[Dotted[ReplicatedSet[Token]]],
-    tokenFreed: DeltaBuffer[Dotted[ReplicatedSet[Token]]]
+    tokenAgreement: RaftState[RaftToken],
+    want: DeltaBuffer[Dotted[ReplicatedSet[RaftToken]]],
+    tokenFreed: DeltaBuffer[Dotted[ReplicatedSet[RaftToken]]]
 ) {
 
   given LocalUid = replicaID
 
-  def owned(value: String): List[Token] = {
+  def owned(value: String): List[RaftToken] = {
     val freed  = tokenFreed.state.data.elements
     val owners = tokenAgreement.values.filter(t => t.value == value && !freed.contains(t))
     val mine   = owners.filter(_.owner == replicaID)
@@ -33,7 +32,7 @@ case class RaftTokens(
   def isOwned(value: String): Boolean = owned(value).nonEmpty
 
   def acquire(value: String): RaftTokens = {
-    val token = Token(Random.nextLong(), replicaID, value)
+    val token = RaftToken(Random.nextLong(), replicaID, value)
 
     // conditional is only an optimization
     if !(tokenAgreement.values.iterator ++ want.state.data.elements.iterator).exists(_.same(token)) then {
@@ -58,15 +57,15 @@ case class RaftTokens(
     } else copy(tokenAgreement = generalDuties)
   }
 
-  def applyWant(state: Dotted[ReplicatedSet[Token]]): RaftTokens = {
+  def applyWant(state: Dotted[ReplicatedSet[RaftToken]]): RaftTokens = {
     copy(want = want.applyDelta(state))
   }
 
-  def applyFree(state: Dotted[ReplicatedSet[Token]]): RaftTokens = {
+  def applyFree(state: Dotted[ReplicatedSet[RaftToken]]): RaftTokens = {
     copy(tokenFreed = tokenFreed.applyDelta(state))
   }
 
-  def applyRaft(state: RaftState[Token]): RaftTokens = {
+  def applyRaft(state: RaftState[RaftToken]): RaftTokens = {
     copy(tokenAgreement = Lattice.merge(tokenAgreement, state))
   }
 
@@ -80,7 +79,7 @@ object RaftTokens {
     RaftTokens(
       replicaID,
       RaftState(Set(replicaID)),
-      DeltaBuffer(Dotted(ReplicatedSet.empty[Token])),
-      DeltaBuffer(Dotted(ReplicatedSet.empty[Token]))
+      DeltaBuffer(Dotted(ReplicatedSet.empty[RaftToken])),
+      DeltaBuffer(Dotted(ReplicatedSet.empty[RaftToken]))
     )
 }

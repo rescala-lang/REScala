@@ -2,6 +2,7 @@ package replication.calendar
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
+import rdts.datatypes.experiments.protocols.raft.{RaftTokens, RaftToken}
 import rdts.dotted.{Dotted, DottedLattice}
 import replication.calendar.SyncMessage.*
 
@@ -41,11 +42,11 @@ class SynchronizationPointCalendarPeer(id: Uid, listenPort: Int, connectTo: List
       set.now.deltaBuffer.reduceOption(Lattice[CalendarState].merge).foreach(delta => delta)
     }
 
-    tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[ReplicatedSet[Token]]].merge).foreach { state =>
+    tokens.want.deltaBuffer.reduceOption(Lattice[Dotted[ReplicatedSet[RaftToken]]].merge).foreach { state =>
       WantMessage(state)
     }
 
-    tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[ReplicatedSet[Token]].merge).foreach { state =>
+    tokens.tokenFreed.deltaBuffer.reduceOption(DottedLattice[ReplicatedSet[RaftToken]].merge).foreach { state =>
       FreeMessage(state)
     }
 

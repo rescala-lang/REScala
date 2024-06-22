@@ -1,7 +1,7 @@
-package rdts.datatypes.experiments
+package rdts.datatypes.experiments.protocols.raft
 
 import rdts.base.{Lattice, Uid}
-import rdts.datatypes.experiments.RaftState.*
+import rdts.datatypes.experiments.protocols.raft.RaftState.{DecisionImpossible, Propose, Undecided, Vote}
 
 import scala.util.Try
 
