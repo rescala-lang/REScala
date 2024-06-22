@@ -32,6 +32,8 @@ object GrowOnlyMap {
   given bottom[K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.provide(empty)
 
   given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.derived
-  given hasDots[K, V]: HasDots[GrowOnlyMap[K, V]]          = HasDots.derived
+
+  // inline to enable optional summoning of has dots instances for K and V
+  inline given hasDots[K, V]: HasDots[GrowOnlyMap[K, V]] = HasDots.derived
 
 }
