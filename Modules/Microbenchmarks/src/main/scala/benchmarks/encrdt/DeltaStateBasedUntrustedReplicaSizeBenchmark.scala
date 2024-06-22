@@ -1,11 +1,11 @@
 package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.given
+import benchmarks.encrdt.deltabased.DecryptedDeltaGroup
 import benchmarks.encrdt.mock.UntrustedDeltaBasedReplicaMock
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAWLWWMContainer
-import encrdtlib.encrypted.deltabased.DecryptedDeltaGroup
 import rdts.base.Bottom
 import rdts.time.{Dot, Dots}
 

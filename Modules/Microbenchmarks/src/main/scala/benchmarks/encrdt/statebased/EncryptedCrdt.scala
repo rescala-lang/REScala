@@ -1,9 +1,9 @@
-package encrdtlib.encrypted.statebased
+package benchmarks.encrdt.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import replication.Aead
-import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
+import DecryptedState.vectorClockJsonCodec
 import rdts.base.Lattice
 import rdts.base.Lattice.*
 import rdts.datatypes.alternatives.MultiValueRegister

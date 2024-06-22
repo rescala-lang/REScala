@@ -1,13 +1,13 @@
 package benchmarks.encrdt.mock
 
 import benchmarks.encrdt.Codecs.given
+import benchmarks.encrdt.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
-import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, TrustedReplica, UntrustedReplica}
 import rdts.dotted.Dotted
 import rdts.time.Dots
 

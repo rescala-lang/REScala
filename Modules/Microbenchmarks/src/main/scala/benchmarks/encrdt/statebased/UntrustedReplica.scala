@@ -1,4 +1,4 @@
-package encrdtlib.encrypted.statebased
+package benchmarks.encrdt.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import replication.Aead

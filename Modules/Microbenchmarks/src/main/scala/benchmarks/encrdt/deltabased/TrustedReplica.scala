@@ -1,4 +1,4 @@
-package encrdtlib.encrypted.deltabased
+package benchmarks.encrdt.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import replication.Aead

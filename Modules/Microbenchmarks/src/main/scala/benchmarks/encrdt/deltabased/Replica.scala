@@ -1,4 +1,4 @@
-package encrdtlib.encrypted.deltabased
+package benchmarks.encrdt.deltabased
 
 trait Replica {
   def receive(encryptedState: EncryptedDeltaGroup): Unit

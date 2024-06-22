@@ -1,4 +1,4 @@
-package encrdtlib.encrypted.statebased
+package benchmarks.encrdt.statebased
 
 trait Replica {
   def receive(encryptedState: EncryptedState): Unit
