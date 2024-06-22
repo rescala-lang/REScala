@@ -1,7 +1,7 @@
 package encrdtlib.container
 
 import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
-import rdts.base.{Lattice, Uid}
+import rdts.base.Lattice
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
