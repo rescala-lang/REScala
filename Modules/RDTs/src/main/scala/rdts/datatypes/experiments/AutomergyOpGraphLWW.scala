@@ -1,7 +1,6 @@
 package rdts.datatypes.experiments
 
 import rdts.base.{Bottom, Lattice}
-import rdts.syntax.OpsSyntaxHelper
 import rdts.time.CausalTime
 
 /* Experimental implementation of an LWW register using a graph of operations, inspired by a paper from Leo Stewen and Martin Kleppmann from the Technical University of Munich submitted to the PLF workshop.
@@ -22,6 +21,30 @@ object AutomergyOpGraphLWW {
     lazy val heads: Map[Id, Entry[T]] =
       elements.filter((k, _) => !predecessors.contains(k))
     lazy val latest: Option[Id] = elements.keysIterator.reduceOption(Lattice.merge[CausalTime])
+
+    def values: List[T] =
+      def getTerminals(cur: Map[Id, Entry[T]]): List[T] =
+        cur.toList.sortBy(_._1)(CausalTime.ordering.reverse).map(_._2.op).flatMap:
+          case Op.set(v) => List(v)
+          case Op.del    => Nil
+          case Op.undo(anchor) => elements.get(anchor).toList.flatMap: pred =>
+              getTerminals(elements.filter((k, _) => pred.predecessors.contains(k)))
+
+      getTerminals(heads)
+
+    private def applyOp(op: Op[T]) =
+      OpGraph(
+        Map(
+          latest.fold(CausalTime.now())(_.advance)
+          -> Entry(op, heads.map(_._1).toSet)
+        )
+      )
+
+    def set(value: T) = applyOp(Op.set(value))
+
+    def del() = applyOp(Op.del)
+
+    def undo(anchor: Id) = applyOp(Op.undo(anchor))
   }
 
   object OpGraph {
@@ -30,35 +53,4 @@ object AutomergyOpGraphLWW {
       Lattice.derived
     given bottom[T]: Bottom[OpGraph[T]] = Bottom.derived
   }
-
-  extension [C, T](container: C)
-    def automergyLww: syntax[C, T] = syntax(container)
-
-  implicit class syntax[C, T](container: C)
-      extends OpsSyntaxHelper[C, OpGraph[T]](container) {
-
-    def values(using IsQuery): List[T] =
-      def getTerminals(cur: Map[Id, Entry[T]]): List[T] =
-        cur.toList.sortBy(_._1)(CausalTime.ordering.reverse).map(_._2.op).flatMap:
-          case Op.set(v) => List(v)
-          case Op.del    => Nil
-          case Op.undo(anchor) => current.elements.get(anchor).toList.flatMap: pred =>
-              getTerminals(current.elements.filter((k, _) => pred.predecessors.contains(k)))
-      getTerminals(current.heads)
-
-    private def applyOp(using IsMutator)(op: Op[T]) =
-      OpGraph(
-        Map(
-          current.latest.fold(CausalTime.now())(_.advance)
-          -> Entry(op, current.heads.map(_._1).toSet)
-        )
-      ).mutator
-
-    def set(using IsMutator)(value: T) = applyOp(Op.set(value))
-
-    def del(using IsMutator)() = applyOp(Op.del)
-
-    def undo(using IsMutator)(anchor: Id) = applyOp(Op.undo(anchor))
-  }
-
 }
