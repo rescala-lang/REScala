@@ -2,7 +2,7 @@ package encrdtlib.encrypted.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import com.google.crypto.tink.Aead
+import replication.Aead
 import encrdtlib.encrypted.statebased.DecryptedState.vectorClockJsonCodec
 import rdts.base.Lattice
 import rdts.base.Lattice.*

@@ -25,7 +25,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
   println(csvHeader)
   csvFile.println(csvHeader)
   val dummyKeyValuePairs = Helper.dummyKeyValuePairs(MAX_TESTED_ELEMENTS)
-  val aead               = Helper.setupAead("AES128_GCM")
+  val aead               = AeadTranslation(Helper.setupAead("AES128_GCM"))
 
   for totalElements <- (minElementExponent to maxElementExponent).map(i => math.pow(10, i.toDouble).toInt) do {
     val crdt                       = new DeltaAWLWWMContainer[String, String]("0")
@@ -46,7 +46,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
 
       val commonState      = crdt.state
       val commonStateDec   = DecryptedState(commonState, versionVector)
-      val commonStateEnc   = commonStateDec.encrypt(Helper.setupAead("AES128_GCM"))
+      val commonStateEnc   = commonStateDec.encrypt(AeadTranslation(Helper.setupAead("AES128_GCM")))
       val untrustedReplica = new UntrustedStateBasedReplicaMock(Set(commonStateEnc))
 
       var decryptedStatesMerged: DecryptedState[StateType[String, String]] = commonStateDec

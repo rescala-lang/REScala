@@ -1,7 +1,7 @@
 package encrdtlib.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray}
-import com.google.crypto.tink.Aead
+import replication.Aead
 import rdts.time.Dots
 
 case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersionVector: Array[Byte])(

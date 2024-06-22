@@ -17,7 +17,7 @@ import scala.collection.mutable
 class SecureToDoListClient(
     replicaId: String,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
-    aead: Aead,
+    aead: replication.Aead,
     private val intermediary: UntrustedReplica
 ) extends TrustedReplica[ToDoMapLattice](replicaId, crdt.merge, aead) with ToDoListClient {
 

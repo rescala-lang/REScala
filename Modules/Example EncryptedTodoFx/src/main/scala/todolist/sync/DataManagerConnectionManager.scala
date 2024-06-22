@@ -16,6 +16,12 @@ import scala.concurrent.ExecutionContext
 import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
 
+class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
+  override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
+
+  override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
+}
+
 class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
     replicaId: LocalUid,
     receiveCallback: Dotted[State] => Unit
@@ -39,11 +45,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
       replicaId: LocalUid,
       _ => (),
       pd => receiveCallback(Dotted(pd.data, pd.context)),
-      crypto = Some(new replication.Aead {
-        override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
-
-        override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
-      })
+      crypto = Some(AeadTranslation(aead))
     )
 
   val port = Random.nextInt(10000) + 50000

@@ -1,7 +1,7 @@
 package encrdtlib.encrypted.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.google.crypto.tink.Aead
+import replication.Aead
 import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead)(
