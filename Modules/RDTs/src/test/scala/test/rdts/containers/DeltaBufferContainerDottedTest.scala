@@ -16,7 +16,7 @@ class DeltaBufferContainerDottedTest extends munit.FunSuite {
     assert(initial.result.state.data.bids.isEmpty)
     assertEquals(initial.result.deltaBuffer, List.empty)
 
-    initial.bid(userId = "Testuser", price = 7)
+    initial.modn(_.bid(userId = "Testuser", price = 7))
 
     assertEquals(initial.result.state.data.bids.size, 1)
     assertEquals(initial.result.deltaBuffer.size, 1)

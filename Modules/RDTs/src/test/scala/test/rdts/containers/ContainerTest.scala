@@ -203,12 +203,12 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.data.status, AuctionInterface.Open)
     assertEquals(auction.data.winner, None)
 
-    val added = auction.bid("First", 1)
+    val added = auction.modn(_.bid("First", 1))
     assertEquals(added.data.bids, Set(Bid("First", 1)))
     assertEquals(added.data.status, AuctionInterface.Open)
     assertEquals(added.data.winner, None)
 
-    val knockedDown = added merge added.knockDown()
+    val knockedDown = added merge added.modn(_.knockDown())
     assertEquals(knockedDown.data.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.data.status, AuctionInterface.Closed)
     assertEquals(knockedDown.data.winner, Some("First"))
@@ -221,12 +221,12 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.state.status, AuctionInterface.Open)
     assertEquals(auction.state.winner, None)
 
-    val added = auction.bid("First", 1)
+    val added = auction.modp(_.bid("First", 1))
     assertEquals(added.state.bids, Set(Bid("First", 1)))
     assertEquals(added.state.status, AuctionInterface.Open)
     assertEquals(added.state.winner, None)
 
-    val knockedDown = added.knockDown()
+    val knockedDown = added.modp(_.knockDown())
     assertEquals(knockedDown.state.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.state.status, AuctionInterface.Closed)
     assertEquals(knockedDown.state.winner, Some("First"))
@@ -239,12 +239,12 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.state.data.status, AuctionInterface.Open)
     assertEquals(auction.state.data.winner, None)
 
-    val added = auction.bid("First", 1)
+    val added = auction.modn(_.bid("First", 1))
     assertEquals(added.state.data.bids, Set(Bid("First", 1)))
     assertEquals(added.state.data.status, AuctionInterface.Open)
     assertEquals(added.state.data.winner, None)
 
-    val knockedDown = added.knockDown()
+    val knockedDown = added.modn(_.knockDown())
     assertEquals(knockedDown.state.data.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.state.data.status, AuctionInterface.Closed)
     assertEquals(knockedDown.state.data.winner, Some("First"))
@@ -257,12 +257,12 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.result.state.data.status, AuctionInterface.Open)
     assertEquals(auction.result.state.data.winner, None)
 
-    auction.bid("First", 1)
+    auction.modn(_.bid("First", 1))
     assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
     assertEquals(auction.result.state.data.status, AuctionInterface.Open)
     assertEquals(auction.result.state.data.winner, None)
 
-    auction.knockDown()
+    auction.modn(_.knockDown())
     assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
     assertEquals(auction.result.state.data.status, AuctionInterface.Closed)
     assertEquals(auction.result.state.data.winner, Some("First"))

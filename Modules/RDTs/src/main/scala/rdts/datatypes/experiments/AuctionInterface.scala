@@ -3,7 +3,6 @@ package rdts.datatypes.experiments
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.experiments.AuctionInterface.Bid.User
 import rdts.dotted.HasDots
-import rdts.syntax.OpsSyntaxHelper
 
 object AuctionInterface {
   sealed trait Status
@@ -29,7 +28,13 @@ object AuctionInterface {
       bids: Set[Bid] = Set.empty,
       status: Status = Open,
       winner: Option[User] = None
-  )
+  ) {
+    def bid(userId: User, price: Int): AuctionData =
+      AuctionData(bids = Set(Bid(userId, price)))
+
+    def knockDown(): AuctionData = AuctionData(status = Closed)
+
+  }
 
   object AuctionData {
 
@@ -66,14 +71,6 @@ object AuctionInterface {
 
           AuctionData(bidsMerged, statusMerged, winnerMerged)
       }
-    }
-
-    implicit class AuctionSyntax[C](container: C) extends OpsSyntaxHelper[C, AuctionData](container) {
-      def bid(userId: User, price: Int): Mutator =
-        AuctionData(bids = Set(Bid(userId, price))).mutator
-
-      def knockDown()(using IsMutator): C = AuctionData(status = Closed).mutator
-
     }
 
   }

@@ -19,6 +19,8 @@ case class Dotted[A](data: A, context: Dots) {
   def advanced(r: LocalUid): Dotted[A]  = Dotted(data, context.advanced(r.uid))
 
   inline def mod[B](f: Dots ?=> A => Dotted[B]): Dotted[B] = f(using context)(data)
+  inline def modn[B](f: A => B): Dotted[B] =
+    Dotted(f(data))
 
 }
 

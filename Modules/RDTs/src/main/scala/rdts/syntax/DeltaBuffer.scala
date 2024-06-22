@@ -20,6 +20,7 @@ case class DeltaBuffer[State](
   def mutable: DeltaBufferContainer[State] = new DeltaBufferContainer(this)
 
   def transform(f: State => State)(using Lattice[State]): DeltaBuffer[State] = applyDelta(f(state))
+
 }
 
 object DeltaBuffer {
@@ -28,10 +29,20 @@ object DeltaBuffer {
     inline def mod(f: Dots ?=> A => Dotted[A]): DeltaBuffer[Dotted[A]] = {
       curr.applyDelta(curr.state.mod(f(_)))
     }
+    inline def modn(f: A => A): DeltaBuffer[Dotted[A]] = {
+      curr.applyDelta(Dotted(f(curr.state.data)))
+    }
   }
 
   extension [A](curr: DeltaBuffer[Dotted[A]]) {
     def data: A = curr.state.data
+  }
+
+  extension [A](curr: DeltaBuffer[A])(using Lattice[A]) {
+
+    inline def modp(f: A => A): DeltaBuffer[A] = {
+      curr.applyDelta(f(curr.state))
+    }
   }
 
   given dottedPermissions[L](using Lattice[Dotted[L]]): PermCausalMutate[DeltaBuffer[Dotted[L]], L] = new {
@@ -68,6 +79,18 @@ object DeltaBufferContainer extends DeltaBufferContainer.LowPrio {
   extension [A](curr: DeltaBufferContainer[Dotted[A]])(using Lattice[Dotted[A]]) {
     inline def mod(f: Dots ?=> A => Dotted[A]): Unit = {
       curr.applyDelta(curr.result.state.mod(f(_)))
+    }
+    inline def modn(f: A => A): DeltaBufferContainer[Dotted[A]] = {
+      curr.applyDelta(Dotted(f(curr.result.state.data)))
+      curr
+    }
+  }
+
+  extension [A](curr: DeltaBufferContainer[A])(using Lattice[A]) {
+
+    inline def modp(f: A => A): DeltaBufferContainer[A] = {
+      curr.applyDelta(f(curr.result.state))
+      curr
     }
   }
 

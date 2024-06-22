@@ -4,7 +4,6 @@ import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.OpsSyntaxHelper
 import rdts.time.Dots
 
 import scala.collection.{AbstractIterator, immutable}
