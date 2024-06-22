@@ -43,7 +43,6 @@ class DottedTest extends munit.FunSuite {
     assert(knockedDown.state.winner == Some("First"))
   }
 
-
   test("AuctionData can be in DeltaBufferContainer") {
     val auction: DeltaBufferContainer[AuctionData] = DeltaBufferContainer(DeltaBuffer(AuctionData.empty))
 
@@ -61,7 +60,5 @@ class DottedTest extends munit.FunSuite {
     assert(knockedDown.result.state.status == AuctionInterface.Closed)
     assert(knockedDown.result.state.winner == Some("First"))
   }
-
-
 
 }

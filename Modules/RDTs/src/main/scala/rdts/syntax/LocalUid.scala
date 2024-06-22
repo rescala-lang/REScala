@@ -24,4 +24,3 @@ object LocalUid:
   def unwrap(id: LocalUid): Uid           = id.uid
   def gen(): LocalUid                     = Uid.gen()
   def replicaId(using rid: LocalUid): Uid = rid.uid
-

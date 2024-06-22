@@ -1,14 +1,14 @@
 package test.rdts.protocols
 
-import rdts.base.{Bottom, Uid}
 import rdts.base.Lattice.merge
+import rdts.base.{Bottom, Uid}
 import rdts.datatypes.GrowOnlyMap.*
 import rdts.datatypes.experiments.protocols.Paxos
+import rdts.datatypes.experiments.protocols.Paxos.*
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap}
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.LocalUid
 import rdts.time.Dots
-import rdts.datatypes.experiments.protocols.Paxos.*
 
 class PaxosTest extends munit.FunSuite {
   given Bottom[Int] with

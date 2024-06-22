@@ -5,7 +5,7 @@ import rdts.datatypes.experiments.BoundedCounter.neutral
 import rdts.datatypes.{GrowOnlyCounter, PosNegCounter}
 import rdts.syntax.LocalUid
 
-case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Uid]){
+case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCounter, participants: Set[Uid]) {
 
   type Delta = BoundedCounter
 
@@ -13,11 +13,11 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
 
   def addParticipants(part: Set[Uid]): Delta = neutral.copy(participants = part)
 
-  def allocated(id: Uid): Int = allocations.inner.getOrElse(id, 0)
+  def allocated(id: Uid): Int       = allocations.inner.getOrElse(id, 0)
   def reserved(using LocalUid): Int = reserved(LocalUid.replicaId)
   def reserved(id: Uid): Int =
     current.reservations.pos.inner.getOrElse(id, 0) - current.reservations.neg.inner.getOrElse(id, 0)
-  def available(id: Uid): Int  = reserved(id) - allocated(id)
+  def available(id: Uid): Int        = reserved(id) - allocated(id)
   def available(using LocalUid): Int = available(LocalUid.replicaId)
 
   def allocate(value: Int)(using LocalUid): Delta = {
@@ -30,7 +30,7 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
     else
       neutral.copy(reservations =
         current.reservations.add(amount)(using target) merge
-          current.reservations.add(-amount)
+        current.reservations.add(-amount)
       )
   }
 
@@ -61,7 +61,5 @@ object BoundedCounter {
   private val neutral: BoundedCounter = BoundedCounter(PosNegCounter.zero, GrowOnlyCounter.zero, Set.empty)
 
   given lattice: Lattice[BoundedCounter] = Lattice.derived
-
-
 
 }

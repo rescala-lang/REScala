@@ -88,7 +88,6 @@ object RubisInterface {
 
   private def deltaState: DeltaStateFactory = new DeltaStateFactory
 
-
   private class DeltaStateFactory {
     val bottom: State = State(ReplicatedSet.empty, Map.empty, Map.empty)
 

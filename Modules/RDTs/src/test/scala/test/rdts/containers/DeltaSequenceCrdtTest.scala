@@ -23,7 +23,10 @@ class DeltaSequenceCrdtTest extends munit.FunSuite {
 
     val combined2 = added2.modd(_.addRightDelta(a, vertex2, Vertex.fresh(), "Hello world after 2 the second!"))
 
-    assertEquals(combined2.data.iterator.toList, List("Hello world 2!", "Hello world after 2 the second!", "Hello world!"))
+    assertEquals(
+      combined2.data.iterator.toList,
+      List("Hello world 2!", "Hello world after 2 the second!", "Hello world!")
+    )
 
   }
 

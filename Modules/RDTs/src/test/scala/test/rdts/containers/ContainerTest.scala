@@ -232,8 +232,6 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(knockedDown.state.winner, Some("First"))
   }
 
-
-
   // END AuctionData
 
 }

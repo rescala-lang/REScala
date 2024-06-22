@@ -1,7 +1,7 @@
 package rdts.dotted
 
 import rdts.base.{Bottom, Lattice}
-import rdts.syntax.{LocalUid}
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.
@@ -78,7 +78,5 @@ object Dotted {
     def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
       Dotted(left.data merge right.data, left.context union right.context)
   }
-
-
 
 }

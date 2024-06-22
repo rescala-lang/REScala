@@ -4,7 +4,6 @@ import rdts.datatypes.GrowOnlyList
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.time.Dot
-import test.rdts.idFromString
 
 class ReplicatedListTest extends munit.FunSuite {
 

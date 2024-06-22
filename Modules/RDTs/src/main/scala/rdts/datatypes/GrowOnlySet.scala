@@ -9,7 +9,7 @@ object GrowOnlySet {
 
   extension [E](set: GrowOnlySet[E]) {
     def insert(e: E): GrowOnlySet[E] = Set(e)
-    def elements: GrowOnlySet[E] = set
+    def elements: GrowOnlySet[E]     = set
   }
 
   def empty[E]: GrowOnlySet[E] = Set.empty

@@ -2,11 +2,7 @@ package test.rdts.bespoke
 
 import rdts.base.Uid
 import rdts.datatypes.contextual.MultiVersionRegister
-import rdts.datatypes.experiments.BoundedCounter
 import rdts.dotted.Dotted
-import rdts.syntax.TestReplica
-import rdts.time.Dot
-import test.rdts.DataGenerator.ExampleData
 import test.rdts.given
 
 class MultiVersionRegisterTest extends munit.FunSuite {

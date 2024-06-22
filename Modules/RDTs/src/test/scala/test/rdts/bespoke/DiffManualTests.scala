@@ -10,7 +10,6 @@ import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.UtilHacks.*
 
-
 class DiffManualTests extends munit.ScalaCheckSuite {
 
   val r1: LocalUid = "r1".asId
