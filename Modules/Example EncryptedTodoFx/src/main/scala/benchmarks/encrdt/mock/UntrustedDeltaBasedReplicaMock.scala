@@ -6,7 +6,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
 import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.encrypted.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
-import rdts.base.Bottom
 import rdts.time.Dots
 
 import java.io.PrintWriter
