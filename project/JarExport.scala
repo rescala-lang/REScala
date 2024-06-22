@@ -1,9 +1,8 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import sbt.Keys.{fullClasspathAsJars, target}
-import sbt.{Compile, IO, Setting, TaskKey}
-import sbt._
+import sbt.Keys.{crossTarget, fullClasspathAsJars, target}
+import sbt.{Compile, File, IO, Setting, TaskKey}
 
 // Extending sbt.AutoPlugin causes this plugin to be automatically added to all sbt projects that match the triggers.
 // And because we don’t really specify any triggers, it is just added everywhere.
@@ -13,7 +12,7 @@ object JarExport extends sbt.AutoPlugin {
   // a “task key” is something you can execute on the sbt commandline,
   // thus, this makes `stageJars` available like `compile` or `run`
   // though, it does not yet define behaviour
-  val stageJars = TaskKey[File]("stageJars", "copies classpath jars to a file in the target dir")
+  val packageJars = TaskKey[File]("packageJars", "copies classpath jars to a file in the target dir")
 
   // second additional command, same as the above
   val writeClasspath = TaskKey[File]("writeClasspath", "writes the classpath to a file in the target dir")
@@ -22,9 +21,9 @@ object JarExport extends sbt.AutoPlugin {
   // It is essentially the same as if this was in a `.settings()` block in the build.sbt
   override lazy val projectSettings: Seq[Setting[?]] = Seq(
     // copy all jars required in the class path to a `jars` folder in the target directory
-    stageJars := {
+    packageJars := {
       val cp         = (Compile / fullClasspathAsJars).value
-      val targetpath = target.value.toPath.resolve("jars")
+      val targetpath = crossTarget.value.toPath.resolve("jars")
       IO.delete(targetpath.toFile)
       IO.createDirectory(targetpath.toFile)
       cp.foreach { at =>
@@ -41,7 +40,7 @@ object JarExport extends sbt.AutoPlugin {
         val pathstring = at.data.toString.replace("\\", "/")
         s"""-cp "${pathstring}"\n"""
       }.mkString("")
-      val targetpath = target.value.toPath.resolve("classpath.txt")
+      val targetpath = crossTarget.value.toPath.resolve("classpath.txt")
       IO.write(targetpath.toFile, cpstring)
       targetpath.toFile
     }
