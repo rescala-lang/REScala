@@ -6,6 +6,10 @@ class TestReplica[A](val replicaId: Uid, var anon: A) {
   def apply(delta: A)(using Lattice[A]): TestReplica[A] =
     anon = anon merge delta
     this
+
+  def mod(f: A => A)(using Lattice[A]) = {
+    apply(f(anon))
+  }
 }
 
 object TestReplica {
