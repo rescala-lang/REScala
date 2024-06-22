@@ -4,9 +4,9 @@ import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.DeltaAWLWWMContainer
-import encrdtlib.sync.ConnectionManager
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
+import todolist.sync.ConnectionManager
 
 import java.net.URI
 import java.util.UUID

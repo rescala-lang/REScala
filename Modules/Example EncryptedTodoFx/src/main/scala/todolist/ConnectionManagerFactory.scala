@@ -1,8 +1,8 @@
 package todolist
 
-import encrdtlib.sync.{ConnectionManager, DataManagerConnectionManager}
 import rdts.syntax.LocalUid
 import todolist.SyncedTodoListCrdt.{InnerStateType, StateType, given}
+import todolist.sync.{ConnectionManager, DataManagerConnectionManager}
 
 object ConnectionManagerFactory {
   var impl: (String, () => StateType, StateType => Unit) => ConnectionManager[StateType] =

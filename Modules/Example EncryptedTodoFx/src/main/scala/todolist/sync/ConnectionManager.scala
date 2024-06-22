@@ -1,4 +1,4 @@
-package encrdtlib.sync
+package todolist.sync
 
 import java.net.URI
 
