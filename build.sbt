@@ -9,7 +9,7 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   compileMacros.jvm,
   deltalens,
   exampleLenses,
-  examplesReactives,
+  examplesMiscJVM,
   loCal,
   lofiAcl,
   lore.js,
@@ -104,7 +104,7 @@ lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
     LocalSettings.deployTask,
   )
 
-lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
+lazy val examplesMiscJVM = project.in(file("Modules/Example Misc"))
   .dependsOn(reactives.jvm, replication.jvm)
   .settings(
     scala3defaults,
