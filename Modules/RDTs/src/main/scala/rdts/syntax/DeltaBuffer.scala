@@ -40,28 +40,21 @@ object DeltaBuffer {
   }
 }
 
-class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {
-  def applyDelta(delta: State)(using Lattice[State]): Unit =
+class DeltaBufferContainer[A](var result: DeltaBuffer[A]) {
+  def applyDelta(delta: A)(using Lattice[A]): Unit =
     result = result.applyDelta(delta)
+
+  def mod(f: A => A)(using Lattice[A]): DeltaBufferContainer[A] = {
+    applyDelta(f(result.state))
+    this
+  }
 }
 
 object DeltaBufferContainer {
 
   extension [A](curr: DeltaBufferContainer[Dotted[A]])(using Lattice[Dotted[A]]) {
-    inline def mod(f: A => Dots ?=> Dotted[A]): Unit = {
+    inline def modd(f: A => Dots ?=> Dotted[A]): Unit = {
       curr.applyDelta(curr.result.state.mod(f(_)))
-    }
-    inline def modn(f: A => A): DeltaBufferContainer[Dotted[A]] = {
-      curr.applyDelta(Dotted(f(curr.result.state.data)))
-      curr
-    }
-  }
-
-  extension [A](curr: DeltaBufferContainer[A])(using Lattice[A]) {
-
-    inline def modp(f: A => A): DeltaBufferContainer[A] = {
-      curr.applyDelta(f(curr.result.state))
-      curr
     }
   }
 

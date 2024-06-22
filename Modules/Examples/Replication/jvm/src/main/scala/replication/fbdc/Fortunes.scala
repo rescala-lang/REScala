@@ -26,7 +26,7 @@ object Fortunes {
         val reqq = DeltaBuffer(reqqI).mutable
         fortunes.foreach { q =>
           val resp = processFortune(q.value)
-          reqq.mod(_.update(using dataManager.replicaId)(
+          reqq.modd(_.update(using dataManager.replicaId)(
             "fortune",
             Some(LastWriterWins.now(resp))
           ))

@@ -59,10 +59,10 @@ class ContainerTest extends munit.FunSuite {
 
     assertEquals(flag.data.read, false)
 
-    flag.mod(_.enable())
+    flag.modd(_.enable())
     assertEquals(flag.data.read, true)
 
-    flag.mod(_.disable())
+    flag.modd(_.disable())
     assertEquals(flag.data.read, false)
   }
 
@@ -105,12 +105,12 @@ class ContainerTest extends munit.FunSuite {
 
     assert(awSet.data.elements.isEmpty)
 
-    awSet.mod(_.add("First"))
+    awSet.modd(_.add("First"))
     assertEquals(awSet.data.elements.size, 1)
     assert(awSet.data.elements.contains("First"))
     assert(awSet.data.contains("First"))
 
-    awSet.mod(_.remove("First"))
+    awSet.modd(_.remove("First"))
     assert(awSet.data.elements.isEmpty)
   }
 
@@ -233,23 +233,6 @@ class ContainerTest extends munit.FunSuite {
   }
 
 
-  test("Dotted DeltaBufferContainer can contain plain AuctionData") {
-    val auction: DeltaBufferContainer[Dotted[AuctionData]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
-
-    assertEquals(auction.result.state.data.bids, Set.empty)
-    assertEquals(auction.result.state.data.status, AuctionInterface.Open)
-    assertEquals(auction.result.state.data.winner, None)
-
-    auction.modn(_.bid("First", 1))
-    assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
-    assertEquals(auction.result.state.data.status, AuctionInterface.Open)
-    assertEquals(auction.result.state.data.winner, None)
-
-    auction.modn(_.knockDown())
-    assertEquals(auction.result.state.data.bids, Set(Bid("First", 1)))
-    assertEquals(auction.result.state.data.status, AuctionInterface.Closed)
-    assertEquals(auction.result.state.data.winner, Some("First"))
-  }
 
   // END AuctionData
 

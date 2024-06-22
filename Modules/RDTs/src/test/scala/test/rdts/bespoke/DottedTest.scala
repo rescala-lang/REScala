@@ -51,33 +51,17 @@ class DottedTest extends munit.FunSuite {
     assert(auction.result.state.status == AuctionInterface.Open)
     assert(auction.result.state.winner == None)
 
-    val added = auction.modp(_.bid("First", 1))
+    val added = auction.mod(_.bid("First", 1))
     assert(added.result.state.bids == Set(Bid("First", 1)))
     assert(added.result.state.status == AuctionInterface.Open)
     assert(added.result.state.winner == None)
 
-    val knockedDown = added.modp(_.knockDown())
+    val knockedDown = added.mod(_.knockDown())
     assert(knockedDown.result.state.bids == Set(Bid("First", 1)))
     assert(knockedDown.result.state.status == AuctionInterface.Closed)
     assert(knockedDown.result.state.winner == Some("First"))
   }
 
-  test("Dotted[AuctionData] can be in DeltaBufferContainer") {
-    val auction: DeltaBufferContainer[Dotted[AuctionData]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
-    assert(auction.result.state.data.bids == Set.empty)
-    assert(auction.result.state.data.status == AuctionInterface.Open)
-    assert(auction.result.state.data.winner == None)
-
-    val added = auction.modn(_.bid("First", 1))
-    assert(added.result.state.data.bids == Set(Bid("First", 1)))
-    assert(added.result.state.data.status == AuctionInterface.Open)
-    assert(added.result.state.data.winner == None)
-
-    val knockedDown = added.modn(_.knockDown())
-    assert(knockedDown.result.state.data.bids == Set(Bid("First", 1)))
-    assert(knockedDown.result.state.data.status == AuctionInterface.Closed)
-    assert(knockedDown.result.state.data.winner == Some("First"))
-  }
 
 }
