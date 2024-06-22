@@ -1,9 +1,9 @@
 package examples.demo.ui
 
 import examples.demo.Pos
+import reactives.SelectedScheduler.State as BundleState
 import reactives.core.AdmissionTicket
 import reactives.default.*
-import reactives.SelectedScheduler.State as BundleState
 
 import java.awt.{Color, Graphics2D}
 

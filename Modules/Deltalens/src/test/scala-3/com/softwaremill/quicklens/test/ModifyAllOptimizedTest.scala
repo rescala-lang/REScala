@@ -1,8 +1,9 @@
 package com.softwaremill.quicklens
 
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 import scala.reflect.ClassTag
 
 class ModifyAllOptimizedTest extends AnyFlatSpec with Matchers with BeforeAndAfterEach {

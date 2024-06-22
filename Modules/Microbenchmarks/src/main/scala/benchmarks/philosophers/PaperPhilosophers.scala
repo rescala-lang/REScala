@@ -1,8 +1,8 @@
 package benchmarks.philosophers
 
-import reactives.core.{CreationTicket, ReInfo, ReSource}
 import reactives.SelectedScheduler.State as BundleState
-
+import reactives.core.{CreationTicket, ReInfo, ReSource}
+import reactives.default.*
 import reactives.parrp.Backoff
 
 import java.util.concurrent.locks.ReentrantLock
@@ -11,7 +11,6 @@ import scala.annotation.tailrec
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Success, Try}
-import reactives.default.*
 
 sealed trait Dynamicity
 object Dynamicity {

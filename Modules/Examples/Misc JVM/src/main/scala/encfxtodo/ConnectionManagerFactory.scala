@@ -1,8 +1,8 @@
 package encfxtodo
 
-import rdts.syntax.LocalUid
 import encfxtodo.SyncedTodoListCrdt.{InnerStateType, StateType, given}
 import encfxtodo.sync.{ConnectionManager, DataManagerConnectionManager}
+import rdts.syntax.LocalUid
 
 object ConnectionManagerFactory {
   var impl: (LocalUid, () => StateType, StateType => Unit) => ConnectionManager[StateType] =
@@ -17,5 +17,3 @@ object ConnectionManagerFactory {
   ): ConnectionManager[StateType] =
     impl(replicaId, query, stateReceived)
 }
-
-

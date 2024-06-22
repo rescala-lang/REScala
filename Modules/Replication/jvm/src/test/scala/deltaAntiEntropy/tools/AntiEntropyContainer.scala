@@ -2,8 +2,8 @@ package deltaAntiEntropy.tools
 
 import rdts.base.Uid.asId
 import rdts.base.{Lattice, Uid}
-import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{LocalUid}
+import rdts.dotted.Dotted
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 import scala.annotation.targetName
@@ -57,7 +57,6 @@ object AntiEntropyContainer {
   extension [A](curr: AntiEntropyContainer[A]) {
     def data: A = curr.state.data
   }
-
 
   extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]]) {
     @targetName("modNoDelta") inline def modn(f: A => A): AntiEntropyContainer[A] = {

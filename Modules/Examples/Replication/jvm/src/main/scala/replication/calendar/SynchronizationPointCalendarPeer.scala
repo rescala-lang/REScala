@@ -2,7 +2,7 @@ package replication.calendar
 
 import rdts.base.{Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
-import rdts.datatypes.experiments.protocols.raft.{RaftTokens, RaftToken}
+import rdts.datatypes.experiments.protocols.raft.{RaftToken, RaftTokens}
 import rdts.dotted.{Dotted, DottedLattice}
 import replication.calendar.SyncMessage.*
 

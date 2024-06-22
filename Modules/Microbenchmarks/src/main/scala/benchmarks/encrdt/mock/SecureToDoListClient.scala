@@ -6,9 +6,9 @@ import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaAWLWWMContainer
+import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.Dots
 
 import java.util.UUID

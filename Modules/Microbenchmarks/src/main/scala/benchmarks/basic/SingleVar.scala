@@ -2,8 +2,8 @@ package benchmarks.basic
 
 import benchmarks.EngineParam
 import org.openjdk.jmh.annotations.*
-import reactives.core.Scheduler
 import reactives.SelectedScheduler.State as BundleState
+import reactives.core.Scheduler
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}

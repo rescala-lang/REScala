@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import org.scalacheck.Prop.forAll
 import rdts.datatypes.GrowOnlyMap
-import rdts.datatypes.GrowOnlyMap.{bottom}
+import rdts.datatypes.GrowOnlyMap.bottom
 import rdts.datatypes.contextual.ReplicatedSet
 import replication.JsoniterCodecs.given
 

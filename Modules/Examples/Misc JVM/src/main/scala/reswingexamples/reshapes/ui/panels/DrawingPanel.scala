@@ -7,8 +7,8 @@ import reswingexamples.reshapes.util.MathUtil
 
 import java.awt.BasicStroke
 import scala.collection.mutable.ListBuffer
-import scala.swing.{Color, Graphics2D, Panel, Point}
 import scala.swing.event.{MouseDragged, MousePressed, MouseReleased}
+import scala.swing.{Color, Graphics2D, Panel, Point}
 
 /** Represents the panel where all shapes are drawn onto */
 class DrawingPanel(val state: DrawingSpaceState) extends Panel {

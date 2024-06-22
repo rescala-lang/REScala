@@ -2,13 +2,13 @@ package reswingexamples.reshapes
 
 import reactives.default.*
 import reswing.ReMenuItem.toMenuItem
+import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 import reswingexamples.reshapes.actions.{LoadAction, SaveAction}
 import reswingexamples.reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
 import reswingexamples.reshapes.figures.Shape
 import reswingexamples.reshapes.ui.dialogs.{NewTabDialog, ServerDialog}
 import reswingexamples.reshapes.ui.panels.{CommandPanel, DrawingPanel, InfoPanel, ShapePanel, ShapeSelectionPanel, ShowCoordinateSystem, ShowIntersection, ShowNameLabels, StrokeInputPanel}
 import reswingexamples.reshapes.util.ReactiveUtil.{UnionEvent, bilateralValues}
-import reswing.{ReMenu, ReMenuItem, ReSwingValue}
 
 import java.net.{BindException, ConnectException}
 import javax.swing.JOptionPane

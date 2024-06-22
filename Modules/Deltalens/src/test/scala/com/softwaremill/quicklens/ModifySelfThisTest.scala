@@ -1,9 +1,8 @@
 package com.softwaremill.quicklens
 
+import com.softwaremill.quicklens.ModifySelfThisTest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import ModifySelfThisTest.*
 
 object ModifySelfThisTest {
 

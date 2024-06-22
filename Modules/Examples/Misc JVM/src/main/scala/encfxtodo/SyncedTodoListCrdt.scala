@@ -2,10 +2,10 @@ package encfxtodo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import rdts.syntax.{DeltaAWLWWMContainer, LocalUid}
-import scalafx.application.Platform
 import encfxtodo.SyncedTodoListCrdt.StateType
 import encfxtodo.sync.ConnectionManager
+import rdts.syntax.{DeltaAWLWWMContainer, LocalUid}
+import scalafx.application.Platform
 
 import java.net.URI
 import java.util.UUID

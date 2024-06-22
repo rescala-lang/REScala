@@ -1,13 +1,13 @@
 package benchmarks.encrdt.statebased
 
+import benchmarks.encrdt.statebased.DecryptedState.vectorClockJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import replication.Aead
-import DecryptedState.vectorClockJsonCodec
 import rdts.base.Lattice
 import rdts.base.Lattice.*
 import rdts.datatypes.alternatives.MultiValueRegister
 import rdts.time.VectorClock
+import replication.Aead
 import replication.JsoniterCodecs.given
 
 import scala.util.{Failure, Success, Try}

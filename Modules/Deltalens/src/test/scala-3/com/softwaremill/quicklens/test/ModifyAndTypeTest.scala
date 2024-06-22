@@ -1,9 +1,8 @@
 package com.softwaremill.quicklens
 
+import com.softwaremill.quicklens.ModifyAndTypeTest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import ModifyAndTypeTest.*
 
 object ModifyAndTypeTest {
   case class A(a: Int) extends B

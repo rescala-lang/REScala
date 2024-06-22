@@ -1,9 +1,9 @@
 package com.softwaremill.quicklens
 
-import java.util.NoSuchElementException
-
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.util.NoSuchElementException
 
 class ModifyOptionAtTest extends AnyFlatSpec with Matchers {
 

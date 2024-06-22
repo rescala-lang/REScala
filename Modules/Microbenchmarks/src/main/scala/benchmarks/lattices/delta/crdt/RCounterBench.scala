@@ -25,7 +25,8 @@ class RCounterBench {
   @Setup
   def setup(): Unit = {
     counter =
-      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).mod(_.increment(using "0".asId)())) {
+      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).mod(_.increment(using
+      "0".asId)())) {
         case (c, n) =>
           given rid: LocalUid = n.toString.asId
           val delta           = Dotted(ResettableCounter.zero).mod(_.increment())

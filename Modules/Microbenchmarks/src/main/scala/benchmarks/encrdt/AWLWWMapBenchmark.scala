@@ -1,12 +1,11 @@
 package benchmarks.encrdt
 
 import benchmarks.encrdt.Codecs.given
+import benchmarks.encrdt.statebased.DecryptedState.vectorClockJsonCodec
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import benchmarks.encrdt.statebased.DecryptedState.vectorClockJsonCodec
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
-import rdts.base.Bottom
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.VectorClock
 
@@ -117,9 +116,9 @@ class AeadState {
 
 @State(Scope.Thread)
 class SerializeOnlyBenchmarkState {
-  var crdt: DeltaAWLWWMContainer[String, String]                  = scala.compiletime.uninitialized
+  var crdt: DeltaAWLWWMContainer[String, String]            = scala.compiletime.uninitialized
   var crdtState: DeltaAWLWWMContainer.State[String, String] = scala.compiletime.uninitialized
-  var crdtStateVersionVector: VectorClock                    = scala.compiletime.uninitialized
+  var crdtStateVersionVector: VectorClock                   = scala.compiletime.uninitialized
 
   var serialPlaintextState: Array[Byte]       = scala.compiletime.uninitialized
   var serialPlaintextVectorClock: Array[Byte] = scala.compiletime.uninitialized

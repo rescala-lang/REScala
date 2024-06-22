@@ -1,8 +1,8 @@
 package reswingexamples.texteditor.signalsAndEventsFromImperative
 
 import reactives.default.*
-import reswingexamples.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 import reswing.{ReComponent, ReSwingValue}
+import reswingexamples.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
 
 import java.awt.datatransfer.{DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}

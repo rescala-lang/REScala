@@ -1,6 +1,5 @@
 package replication.fbdc
 
-import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
 import rdts.syntax.DeltaBuffer
 

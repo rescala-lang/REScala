@@ -1,8 +1,8 @@
 package com.softwaremill.quicklens.test
 
+import com.softwaremill.quicklens.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import com.softwaremill.quicklens.*
 
 class CustomModifyProxyTest extends AnyFlatSpec with Matchers {
 

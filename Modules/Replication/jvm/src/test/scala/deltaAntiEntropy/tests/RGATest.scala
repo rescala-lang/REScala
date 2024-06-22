@@ -4,8 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen}
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted

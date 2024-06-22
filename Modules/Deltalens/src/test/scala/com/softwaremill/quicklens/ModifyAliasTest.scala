@@ -1,9 +1,8 @@
 package com.softwaremill.quicklens
 
+import com.softwaremill.quicklens.ModifyAliasTest.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
-import ModifyAliasTest.*
 
 object ModifyAliasTest {
 

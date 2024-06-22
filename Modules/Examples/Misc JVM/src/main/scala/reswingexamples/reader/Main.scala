@@ -9,8 +9,8 @@ import reswingexamples.reader.network.{Fetcher, UrlChecker}
 import java.net.URL
 import scala.io.Source
 import scala.swing.Dialog.Message
-import scala.swing.{Dialog, Swing}
 import scala.swing.Swing.EmptyIcon
+import scala.swing.{Dialog, Swing}
 
 object Main extends App {
   val tick    = Evt[Unit]() // #EVT

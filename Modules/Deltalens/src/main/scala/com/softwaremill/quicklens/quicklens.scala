@@ -1,8 +1,9 @@
 package com.softwaremill
 
-import scala.collection.{Factory, SortedMap}
-import scala.annotation.compileTimeOnly
 import com.softwaremill.quicklens.QuicklensMacros.*
+
+import scala.annotation.compileTimeOnly
+import scala.collection.{Factory, SortedMap}
 import scala.reflect.ClassTag
 
 package object quicklens {

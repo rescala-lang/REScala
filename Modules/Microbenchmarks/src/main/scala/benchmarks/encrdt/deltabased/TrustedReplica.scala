@@ -1,9 +1,9 @@
 package benchmarks.encrdt.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import replication.Aead
 import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
+import replication.Aead
 abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead)(
     implicit
     val stateJsonCodec: JsonValueCodec[T],

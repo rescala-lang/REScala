@@ -25,7 +25,7 @@ object ToDoAppBenchmark extends App {
   private val clientCrdt = new DeltaAWLWWMContainer[UUID, ToDoEntry]("client")
 
   private var intermediarySizeInfo: IntermediarySizeInfo = scala.compiletime.uninitialized
-  private var aead: replication.Aead                                 = scala.compiletime.uninitialized
+  private var aead: replication.Aead                     = scala.compiletime.uninitialized
   private var clientReplica: ToDoListClient              = scala.compiletime.uninitialized
 
   if USE_ENCRYPTION then {
