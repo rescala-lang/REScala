@@ -44,7 +44,7 @@ class DeltaBufferContainer[A](var result: DeltaBuffer[A]) {
   def applyDelta(delta: A)(using Lattice[A]): Unit =
     result = result.applyDelta(delta)
 
-  def mod(f: A => A)(using Lattice[A]): DeltaBufferContainer[A] = {
+  inline def mod(f: A => A)(using Lattice[A]): DeltaBufferContainer[A] = {
     applyDelta(f(result.state))
     this
   }
