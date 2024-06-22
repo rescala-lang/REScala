@@ -4,7 +4,8 @@ import rdts.base.Uid
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.AuctionInterface.Bid.User
 import rdts.dotted.Dotted
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
+import rdts.syntax.LocalUid
+import rdts.time.Dots
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.
   *
@@ -19,60 +20,52 @@ import rdts.syntax.{LocalUid, OpsSyntaxHelper}
 object RubisInterface {
   type AID = String
 
-  type State = (ReplicatedSet[(User, Uid)], Map[User, Uid], Map[AID, AuctionInterface.AuctionData])
+  case class State(current: (ReplicatedSet[(User, Uid)], Map[User, Uid], Map[AID, AuctionInterface.AuctionData])) {
 
-  private class DeltaStateFactory {
-    val bottom: State = (ReplicatedSet.empty, Map.empty, Map.empty)
+    type Delta = State
 
-    def make(
-        userRequests: ReplicatedSet[(User, Uid)] = bottom._1,
-        users: Map[User, Uid] = bottom._2,
-        auctions: Map[AID, AuctionInterface.AuctionData] = bottom._3
-    ): State = (userRequests, users, auctions)
-  }
-
-  private def deltaState: DeltaStateFactory = new DeltaStateFactory
-
-  implicit class RubisSyntax[C](container: C) extends OpsSyntaxHelper[C, State](container) {
-
-    def placeBid(auctionId: AID, userId: User, price: Int): IdMutator = {
+    def placeBid(auctionId: AID, userId: User, price: Int)(using LocalUid): Delta = {
       val (_, users, m) = current
       val newMap =
-        if users.get(userId).contains(replicaId) && m.contains(auctionId) then {
-          m.updatedWith(auctionId) { _.map(a => a.bid(userId, price)) }
+        if users.get(userId).contains(LocalUid.replicaId) && m.contains(auctionId) then {
+          m.updatedWith(auctionId) {
+            _.map(a => a.bid(userId, price))
+          }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
-      deltaState.make(auctions = newMap).mutator
+      deltaState.make(auctions = newMap)
     }
 
-    def closeAuction(auctionId: AID)(using IsMutator): C = {
+    def closeAuction(auctionId: AID): Delta = {
       val (_, _, m) = current
       val newMap =
         if m.contains(auctionId) then {
-          m.updatedWith(auctionId) { _.map(a => a.knockDown()) }
+          m.updatedWith(auctionId) {
+            _.map(a => a.knockDown())
+          }
         } else Map.empty[AID, AuctionInterface.AuctionData]
 
-      deltaState.make(auctions = newMap).mutator
+      deltaState.make(auctions = newMap)
     }
 
-    def openAuction(auctionId: AID)(using IsMutator): C = {
+    def openAuction(auctionId: AID): Delta = {
       val (_, _, m) = current
       val newMap =
         if m.contains(auctionId) then Map.empty[AID, AuctionInterface.AuctionData]
         else Map(auctionId -> AuctionInterface.AuctionData())
 
-      deltaState.make(auctions = newMap).mutator
+      deltaState.make(auctions = newMap)
     }
 
-    def requestRegisterUser(using LocalUid)(userId: User): CausalMutator = {
+    def requestRegisterUser(using LocalUid)(userId: User)(using context: Dots): Dotted[Delta] = {
       val (req, users, _) = current
-      if users.contains(userId) then Dotted(deltaState.make(), context).mutator
+      if users.contains(userId) then Dotted(deltaState.make(), context)
       else
-        val merged = req.add(userId -> replicaId)(using context)
-        Dotted(deltaState.make(userRequests = merged.data), merged.context).mutator
+        val merged = req.add(userId -> LocalUid.replicaId)(using context)
+        Dotted(deltaState.make(userRequests = merged.data), merged.context)
     }
 
-    def resolveRegisterUser()(using IsCausalMutator): C = {
+    def resolveRegisterUser(): Dotted[Delta] = {
       val (req, users, _) = current
       val newUsers = req.elements.foldLeft(Map.empty[User, Uid]) {
         case (newlyRegistered, (uid, rid)) =>
@@ -90,6 +83,19 @@ object RubisInterface {
         )
       }
 
-    }.mutator
+    }
+  }
+
+  private def deltaState: DeltaStateFactory = new DeltaStateFactory
+
+
+  private class DeltaStateFactory {
+    val bottom: State = State(ReplicatedSet.empty, Map.empty, Map.empty)
+
+    def make(
+        userRequests: ReplicatedSet[(User, Uid)] = bottom.current._1,
+        users: Map[User, Uid] = bottom.current._2,
+        auctions: Map[AID, AuctionInterface.AuctionData] = bottom.current._3
+    ): State = State(userRequests, users, auctions)
   }
 }
