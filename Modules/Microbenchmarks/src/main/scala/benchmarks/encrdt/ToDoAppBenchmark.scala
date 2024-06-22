@@ -5,7 +5,7 @@ import benchmarks.encrdt.mock.insecure.{AlternativeInsecureToDoListClient, Alter
 import benchmarks.encrdt.mock.{DisseminationStats, IntermediarySizeInfo, SecureToDoListClient, ToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.{AddToDoItem, CompleteToDoItem, RemoveToDoItems, ToDoEntry, ToDoListInteraction, ToDoListInteractionGenerator}
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAWLWWMContainer
+import rdts.syntax.DeltaAWLWWMContainer
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}

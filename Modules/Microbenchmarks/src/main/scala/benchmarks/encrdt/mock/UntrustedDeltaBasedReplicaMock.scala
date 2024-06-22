@@ -5,7 +5,7 @@ import benchmarks.encrdt.deltabased.{EncryptedDeltaGroup, UntrustedReplica}
 import benchmarks.encrdt.{Codecs, idFromString, localidFromString}
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAWLWWMContainer
+import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.Dots
 
 import java.io.PrintWriter

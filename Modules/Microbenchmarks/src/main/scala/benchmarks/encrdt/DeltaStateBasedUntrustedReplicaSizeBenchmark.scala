@@ -5,8 +5,8 @@ import benchmarks.encrdt.deltabased.DecryptedDeltaGroup
 import benchmarks.encrdt.mock.UntrustedDeltaBasedReplicaMock
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAWLWWMContainer
 import rdts.base.Bottom
+import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.{Dot, Dots}
 
 import java.io.PrintWriter

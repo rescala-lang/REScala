@@ -3,8 +3,8 @@ package benchmarks.encrdt
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import encrdtlib.container.DeltaAWLWWMContainer
 import rdts.base.Uid
+import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.{ArrayRanges, Dots}
 import replication.JsoniterCodecs.given
 

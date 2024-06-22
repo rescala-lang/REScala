@@ -4,8 +4,8 @@ import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.IntermediarySizeInfo
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import encrdtlib.container.DeltaAWLWWMContainer
-import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import rdts.syntax.DeltaAWLWWMContainer
+import DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
 
 import java.util.UUID
 

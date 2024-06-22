@@ -3,11 +3,11 @@ package benchmarks.encrdt
 import benchmarks.encrdt.Codecs.given
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import com.google.crypto.tink.Aead
-import encrdtlib.container.DeltaAWLWWMContainer
 import benchmarks.encrdt.statebased.DecryptedState.vectorClockJsonCodec
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import rdts.base.Bottom
+import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.VectorClock
 
 import java.util.concurrent.TimeUnit

@@ -1,14 +1,14 @@
-package encrdtlib.container
+package rdts.syntax
 
-import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
 import rdts.base.Lattice
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
+import rdts.syntax.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
 import rdts.time.Dots
 
+/** This is used for the encrypted todolist and associated benchmark */
 class DeltaAWLWWMContainer[K, V](
     val replicaId: LocalUid,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAWLWWMContainer.empty[K, V],

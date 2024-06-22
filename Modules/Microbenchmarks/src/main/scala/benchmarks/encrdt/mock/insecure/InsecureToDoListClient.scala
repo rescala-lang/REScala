@@ -5,7 +5,7 @@ import benchmarks.encrdt.mock.SecureToDoListClient.ToDoMapLattice
 import benchmarks.encrdt.mock.{SecureToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
-import encrdtlib.container.DeltaAWLWWMContainer
+import rdts.syntax.DeltaAWLWWMContainer
 
 import java.util.UUID
 
