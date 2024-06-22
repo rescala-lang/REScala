@@ -23,16 +23,16 @@ class TwoPSetBench {
   @Setup
   def setup(): Unit = {
     set = (0 until size).foldLeft(NamedDeltaBuffer("a".asId, TwoPhaseSet.empty[Int])) {
-      case (s, e) => s.insert(e)
+      case (s, e) => s.mod(_.insert(e))
     }
   }
 
   @Benchmark
-  def elements(): Set[Int] = set.elements
+  def elements(): Set[Int] = set.state.elements
 
   @Benchmark
-  def insert(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.insert(-1)
+  def insert(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.mod(_.insert(-1))
 
   @Benchmark
-  def remove(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.remove(0)
+  def remove(): NamedDeltaBuffer[TwoPhaseSet[Int]] = set.mod(_.remove(0))
 }

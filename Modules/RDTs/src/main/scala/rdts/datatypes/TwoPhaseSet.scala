@@ -10,7 +10,23 @@ import rdts.syntax.OpsSyntaxHelper
   * elements that were removed from the set once can never be re-added.
   */
 
-case class TwoPhaseSet[E](added: Set[E], removed: Set[E])
+case class TwoPhaseSet[E](added: Set[E], removed: Set[E]) {
+
+  type Delta = TwoPhaseSet[E]
+
+  def elements: Set[E] = {
+    added diff removed
+  }
+
+  def contains(element: E): Boolean =
+    added.contains(element) && !removed.contains(element)
+
+  def insert(element: E): Delta = TwoPhaseSet(Set(element), Set.empty)
+
+  def remove(element: E): Delta = TwoPhaseSet(Set.empty, Set(element))
+
+  def removeAll(elements: Set[E]): Delta = TwoPhaseSet(Set.empty, elements)
+}
 
 object TwoPhaseSet {
   def empty[E]: TwoPhaseSet[E] = TwoPhaseSet(Set.empty, Set.empty)
@@ -20,21 +36,4 @@ object TwoPhaseSet {
   given lattice[E]: Lattice[TwoPhaseSet[E]] = Lattice.derived
   given hasDots[E]: HasDots[TwoPhaseSet[E]] = HasDots.noDots
 
-  extension [C, E](container: C)
-    def twoPhaseSet: syntax[C, E] = syntax(container)
-
-  implicit class syntax[C, E](container: C) extends OpsSyntaxHelper[C, TwoPhaseSet[E]](container) {
-
-    def elements(using IsQuery): Set[E] = {
-      current.added diff current.removed
-    }
-
-    def contains(using IsQuery)(element: E): Boolean =
-      current.added.contains(element) && !current.removed.contains(element)
-
-    def insert(using IsMutator)(element: E): C = TwoPhaseSet(Set(element), Set.empty).mutator
-
-    def remove(using IsMutator)(element: E): C          = TwoPhaseSet(Set.empty, Set(element)).mutator
-    def removeAll(using IsMutator)(elements: Set[E]): C = TwoPhaseSet(Set.empty, elements).mutator
-  }
 }

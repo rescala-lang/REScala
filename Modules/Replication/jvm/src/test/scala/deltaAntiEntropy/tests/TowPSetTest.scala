@@ -22,10 +22,10 @@ object TwoPSetGenerators {
       val ae =
         new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
       val setAdded = added.foldLeft(AntiEntropyContainer[TwoPhaseSet[E]](ae)) {
-        case (set, e) => set.insert(e)
+        case (set, e) => set.modn(_.insert(e))
       }
       removed.foldLeft(setAdded) {
-        case (set, e) => set.remove(e)
+        case (set, e) => set.modn(_.remove(e))
       }
     }
 
@@ -45,28 +45,28 @@ class TowPSetTest extends munit.ScalaCheckSuite {
       val ae      = new AntiEntropy[TwoPhaseSet[Int]]("a", network, mutable.Buffer())
 
       val setInserted = insert.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](ae)) {
-        case (s, e) => s.insert(e)
+        case (s, e) => s.modn(_.insert(e))
       }
 
       val set = remove.foldLeft(setInserted) {
-        case (s, e) => s.remove(e)
+        case (s, e) => s.modn(_.remove(e))
       }
 
-      val setNewInsert = set.insert(e)
+      val setNewInsert = set.modn(_.insert(e))
 
       assert(
-        remove.contains(e) || setNewInsert.elements.contains(e),
-        s"After adding an element that was never before removed the set should contain this element, but ${setNewInsert.elements} does not contain $e"
+        remove.contains(e) || setNewInsert.data.elements.contains(e),
+        s"After adding an element that was never before removed the set should contain this element, but ${setNewInsert.data.elements} does not contain $e"
       )
     }
   }
   property("remove") {
     forAll { (set: AntiEntropyContainer[TwoPhaseSet[Int]], e: Int) =>
-      val removed = set.remove(e)
+      val removed = set.modn(_.remove(e))
 
       assert(
-        !removed.elements.contains(e),
-        s"After removing an element it should no longer be contained in the set, but ${removed.elements} contains $e"
+        !removed.data.elements.contains(e),
+        s"After removing an element it should no longer be contained in the set, but ${removed.data.elements} contains $e"
       )
     }
   }
@@ -78,12 +78,12 @@ class TowPSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
       val sa0 = addOrRemoveA match {
-        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aea).insert(e)
-        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aea).remove(e)
+        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aea).modn(_.insert(e))
+        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aea).modn(_.remove(e))
       }
       val sb0 = addOrRemoveB match {
-        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).insert(e)
-        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).remove(e)
+        case Left(e)  => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).modn(_.insert(e))
+        case Right(e) => AntiEntropyContainer[TwoPhaseSet[Int]](aeb).modn(_.remove(e))
       }
 
       AntiEntropy.sync(aea, aeb)
@@ -92,17 +92,17 @@ class TowPSetTest extends munit.ScalaCheckSuite {
       val sb1 = sb0.processReceivedDeltas()
 
       val sequential = addOrRemoveB match {
-        case Left(e)  => sa0.insert(e)
-        case Right(e) => sa0.remove(e)
+        case Left(e)  => sa0.modn(_.insert(e))
+        case Right(e) => sa0.modn(_.remove(e))
       }
 
       assert(
-        sa1.elements == sequential.elements,
-        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sa1.elements} does not equal ${sequential.elements}"
+        sa1.data.elements == sequential.data.elements,
+        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sa1.data.elements} does not equal ${sequential.data.elements}"
       )
       assert(
-        sb1.elements == sequential.elements,
-        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sb1.elements} does not equal ${sequential.elements}"
+        sb1.data.elements == sequential.data.elements,
+        s"Concurrent execution of insertGL/remove should be equivalent to their sequential execution, but ${sb1.data.elements} does not equal ${sequential.data.elements}"
       )
     }
   }
@@ -114,16 +114,16 @@ class TowPSetTest extends munit.ScalaCheckSuite {
         val aeb     = new AntiEntropy[TwoPhaseSet[Int]]("b", network, mutable.Buffer("a"))
 
         val insertedA = insertA.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](aea)) {
-          case (s, e) => s.insert(e)
+          case (s, e) => s.modn(_.insert(e))
         }
         val sa0 = removeA.foldLeft(insertedA) {
-          case (s, e) => s.remove(e)
+          case (s, e) => s.modn(_.remove(e))
         }
         val insertedB = insertB.foldLeft(AntiEntropyContainer[TwoPhaseSet[Int]](aeb)) {
-          case (s, e) => s.insert(e)
+          case (s, e) => s.modn(_.insert(e))
         }
         val sb0 = removeB.foldLeft(insertedB) {
-          case (s, e) => s.remove(e)
+          case (s, e) => s.modn(_.remove(e))
         }
 
         AntiEntropy.sync(aea, aeb)
@@ -134,8 +134,8 @@ class TowPSetTest extends munit.ScalaCheckSuite {
         val sb1 = sb0.processReceivedDeltas()
 
         assert(
-          sa1.elements == sb1.elements,
-          s"After synchronization messages were reliably exchanged all replicas should converge, but ${sa1.elements} does not equal ${sb1.elements}"
+          sa1.data.elements == sb1.data.elements,
+          s"After synchronization messages were reliably exchanged all replicas should converge, but ${sa1.data.elements} does not equal ${sb1.data.elements}"
         )
     }
   }
