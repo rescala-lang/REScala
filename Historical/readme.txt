@@ -8,6 +8,8 @@ dividi and paroli are two case studies for an early version of CRDTs and delta C
 
 The distributed multiversion implementation is described in [1]. Unfortunately, the code mixes a very complex domain, with an implementation that relies on a very fine grained and tangled communication model. This makes the result incredibly hard to maintain. Specifically, it is currently completely unknown if any semantic changes in REScala have broken the assumption this codebase makes. Moreover, something makes parts of the project extremely slow to compile, which makes executing it as part of the CI or similar undesirable.
 
+[1] https://tuprints.ulb.tu-darmstadt.de/5228/
+
 Documentation is what was written as parts of various endeavours over the years. These things usually have been integrated into the repo somewhere, but the standalone documentation was never maintained. Either refer to the scaladoc, or ask your local expert for help.
 
-[1] https://tuprints.ulb.tu-darmstadt.de/5228/
+The Graph-Compiler package allows compilation of parts of rescala to C code, however the pipeline is currently untested and unmaintained
