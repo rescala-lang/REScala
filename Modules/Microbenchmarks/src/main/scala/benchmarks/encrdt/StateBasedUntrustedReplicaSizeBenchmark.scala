@@ -4,7 +4,7 @@ import benchmarks.encrdt.Codecs.deltaAwlwwmapJsonCodec
 import benchmarks.encrdt.statebased.{DecryptedState, EncryptedState, UntrustedReplica}
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import rdts.syntax.DeltaAWLWWMContainer
-import DeltaAWLWWMContainer.StateType
+import DeltaAWLWWMContainer.State
 import rdts.time.VectorClock
 
 import java.io.PrintWriter
@@ -49,19 +49,19 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
       val commonStateEnc   = commonStateDec.encrypt(AeadTranslation(Helper.setupAead("AES128_GCM")))
       val untrustedReplica = new UntrustedStateBasedReplicaMock(Set(commonStateEnc))
 
-      var decryptedStatesMerged: DecryptedState[StateType[String, String]] = commonStateDec
+      var decryptedStatesMerged: DecryptedState[State[String, String]] = commonStateDec
 
       for replicaId <- 1 to parallelUpdates do {
         val entry               = dummyKeyValuePairs(totalElements - parallelUpdates + replicaId - 1)
         val replicaSpecificCrdt = new DeltaAWLWWMContainer[String, String](replicaId.toString, commonState)
         replicaSpecificCrdt.put(entry._1, entry._2)
         val replicaSpecificVersionVector = versionVector.inc(replicaId.toString)
-        val replicaSpecificDecState: DecryptedState[StateType[String, String]] =
+        val replicaSpecificDecState: DecryptedState[State[String, String]] =
           DecryptedState(replicaSpecificCrdt.state, replicaSpecificVersionVector)
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)
         untrustedReplica.receive(replicaSpecificEncState)
         decryptedStatesMerged =
-          DecryptedState.lattice[StateType[String, String]](DeltaAWLWWMContainer.deltaAddWinsMapLattice).merge(
+          DecryptedState.lattice[State[String, String]](DeltaAWLWWMContainer.lattice).merge(
             decryptedStatesMerged,
             replicaSpecificDecState
           )

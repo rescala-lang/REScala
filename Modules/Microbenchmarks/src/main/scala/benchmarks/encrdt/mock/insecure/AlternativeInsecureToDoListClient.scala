@@ -5,7 +5,7 @@ import benchmarks.encrdt.mock.{DisseminationStats, ToDoListClient}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import rdts.syntax.DeltaAWLWWMContainer
-import DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import DeltaAWLWWMContainer.State
 
 import java.util.UUID
 
@@ -67,5 +67,5 @@ class AlternativeInsecureToDoListClient(
 }
 
 private object AlternativeInsecureToDoListClient {
-  type ToDoListState = DeltaAddWinsLastWriterWinsMapLattice[UUID, ToDoEntry]
+  type ToDoListState = State[UUID, ToDoEntry]
 }

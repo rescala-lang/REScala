@@ -52,7 +52,7 @@ object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateU
           untrustedReplica.receive(encDelta)
         }
 
-        var unmergedDeltas = List.empty[DeltaAWLWWMContainer.StateType[String, String]]
+        var unmergedDeltas = List.empty[DeltaAWLWWMContainer.State[String, String]]
         for replicaId <- 1 to parallelStates do {
           val entry = dummyKeyValuePairs(totalElements - replicaId)
           val replicaSpecificCrdt =

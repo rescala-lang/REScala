@@ -15,12 +15,12 @@ object Codecs {
   given dotsCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
 
-  implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAWLWWMContainer.StateType[String, String]] =
+  implicit val deltaAwlwwmapJsonCodec: JsonValueCodec[DeltaAWLWWMContainer.State[String, String]] =
     JsonCodecMaker.make(
       CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue).withMapAsArray(true)
     )
 
-  implicit val toDoMapCodec: JsonValueCodec[DeltaAWLWWMContainer.StateType[UUID, ToDoEntry]] =
+  implicit val toDoMapCodec: JsonValueCodec[DeltaAWLWWMContainer.State[UUID, ToDoEntry]] =
     JsonCodecMaker.make(
       CodecMakerConfig.withSetMaxInsertNumber(Int.MaxValue).withMapMaxInsertNumber(Int.MaxValue).withMapAsArray(true)
     )

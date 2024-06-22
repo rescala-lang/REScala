@@ -118,7 +118,7 @@ class AeadState {
 @State(Scope.Thread)
 class SerializeOnlyBenchmarkState {
   var crdt: DeltaAWLWWMContainer[String, String]                  = scala.compiletime.uninitialized
-  var crdtState: DeltaAWLWWMContainer.StateType[String, String] = scala.compiletime.uninitialized
+  var crdtState: DeltaAWLWWMContainer.State[String, String] = scala.compiletime.uninitialized
   var crdtStateVersionVector: VectorClock                    = scala.compiletime.uninitialized
 
   var serialPlaintextState: Array[Byte]       = scala.compiletime.uninitialized

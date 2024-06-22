@@ -6,7 +6,7 @@ import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.google.crypto.tink.Aead
-import rdts.syntax.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.Dots
@@ -98,7 +98,7 @@ class SecureToDoListClient(
     // Merge old delta referring to uuid
     val newDelta = uuidToDeltaGroupMap.get(uuid) match {
       case Some(oldUuidDeltaGroup) => DecryptedDeltaGroup(
-          DeltaAWLWWMContainer.deltaAddWinsMapLattice.merge(oldUuidDeltaGroup.deltaGroup, delta),
+          DeltaAWLWWMContainer.lattice.merge(oldUuidDeltaGroup.deltaGroup, delta),
           oldUuidDeltaGroup.dottedVersionVector.add(eventDot)
         )
 
@@ -118,14 +118,14 @@ class SecureToDoListClient(
 }
 
 object SecureToDoListClient {
-  type ToDoMapLattice = DeltaAddWinsLastWriterWinsMapLattice[UUID, ToDoEntry]
+  type ToDoMapLattice = State[UUID, ToDoEntry]
 
   private def mergeDecryptedDeltas(
       left: DecryptedDeltaGroup[ToDoMapLattice],
       right: DecryptedDeltaGroup[ToDoMapLattice]
   ): DecryptedDeltaGroup[ToDoMapLattice] = {
     DecryptedDeltaGroup.decryptedDeltaGroupSemiLattice[ToDoMapLattice](
-      DeltaAWLWWMContainer.deltaAddWinsMapLattice
+      DeltaAWLWWMContainer.lattice
     ).merge(left, right)
   }
 }

@@ -96,9 +96,9 @@ class SyncedTodoListCrdt(val replicaId: LocalUid) {
 }
 
 object SyncedTodoListCrdt {
-  type StateType = DeltaAWLWWMContainer.StateType[UUID, TodoEntry]
+  type StateType = DeltaAWLWWMContainer.State[UUID, TodoEntry]
 
-  type InnerStateType = DeltaAWLWWMContainer.InnerType[UUID, TodoEntry]
+  type InnerStateType = DeltaAWLWWMContainer.Inner[UUID, TodoEntry]
 
   given stateCodec1: JsonValueCodec[InnerStateType] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true).withMapAsArray(true))

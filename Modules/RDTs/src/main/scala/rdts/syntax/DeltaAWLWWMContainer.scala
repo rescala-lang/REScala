@@ -5,17 +5,17 @@ import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 import rdts.dotted.Dotted
-import rdts.syntax.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
+import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.Dots
 
 /** This is used for the encrypted todolist and associated benchmark */
 class DeltaAWLWWMContainer[K, V](
     val replicaId: LocalUid,
-    initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAWLWWMContainer.empty[K, V],
+    initialState: State[K, V] = DeltaAWLWWMContainer.empty[K, V],
 ) {
-  protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
+  protected var _state: State[K, V] = initialState
 
-  def state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = _state
+  def state: State[K, V] = _state
 
   given LocalUid = replicaId
 
@@ -24,7 +24,7 @@ class DeltaAWLWWMContainer[K, V](
 
   def put(key: K, value: V): Unit = { putDelta(key, value); () }
 
-  def putDelta(key: K, value: V): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
+  def putDelta(key: K, value: V): State[K, V] = {
     val delta = {
       _state.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[K, Entry[LastWriterWins[V]]]) =>
         val nextDot = Dots.single(context.nextDot(replicaId.uid))
@@ -40,7 +40,7 @@ class DeltaAWLWWMContainer[K, V](
 
   def remove(key: K): Unit = { removeDelta(key); () }
 
-  def removeDelta(key: K): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
+  def removeDelta(key: K): State[K, V] = {
     val delta = {
       _state.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[K, Entry[LastWriterWins[V]]]) =>
         ormap.remove(key)
@@ -50,7 +50,7 @@ class DeltaAWLWWMContainer[K, V](
     delta
   }
 
-  def removeAllDelta(keys: Seq[K]): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
+  def removeAllDelta(keys: Seq[K]): State[K, V] = {
     val delta = _state.mod(orm => orm.clear())
     mutate(delta)
     delta
@@ -59,25 +59,22 @@ class DeltaAWLWWMContainer[K, V](
   def values: Map[K, V] =
     _state.data.entries.map((k, v) => (k, v.value.value)).toMap
 
-  def merge(other: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
+  def merge(other: State[K, V]): Unit = {
     mutate(other)
   }
 
-  private def mutate(delta: DeltaAddWinsLastWriterWinsMapLattice[K, V]): Unit = {
+  private def mutate(delta: State[K, V]): Unit = {
     _state = Dotted.lattice.merge(_state, delta)
   }
 }
 
 object DeltaAWLWWMContainer {
-  type DeltaAddWinsLastWriterWinsMapLattice[K, V] = Dotted[InnerType[K, V]]
+  type Inner[K, V] = ObserveRemoveMap[K, Entry[LastWriterWins[V]]]
+  type State[K, V] = Dotted[Inner[K, V]]
 
-  def empty[K, V]: DeltaAddWinsLastWriterWinsMapLattice[K, V] =
+  def empty[K, V]: State[K, V] =
     Dotted(ObserveRemoveMap.empty[K, Entry[LastWriterWins[V]]])
 
-  type StateType[K, V] = DeltaAddWinsLastWriterWinsMapLattice[K, V]
-
-  type InnerType[K, V] = ObserveRemoveMap[K, Entry[LastWriterWins[V]]]
-
-  given deltaAddWinsMapLattice[K, V]: Lattice[DeltaAddWinsLastWriterWinsMapLattice[K, V]] = Dotted.lattice
+  given lattice[K, V]: Lattice[State[K, V]] = Dotted.lattice
 
 }
