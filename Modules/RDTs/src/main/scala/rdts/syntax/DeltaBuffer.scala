@@ -21,7 +21,7 @@ case class DeltaBuffer[A](
 
   def transform(f: A => A)(using Lattice[A]): DeltaBuffer[A] = applyDelta(f(state))
 
-  inline def modn(f: A => A)(using Lattice[A]): DeltaBuffer[A] = {
+  inline def mod(f: A => A)(using Lattice[A]): DeltaBuffer[A] = {
     applyDelta(f(state))
   }
 

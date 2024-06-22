@@ -221,12 +221,12 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.state.status, AuctionInterface.Open)
     assertEquals(auction.state.winner, None)
 
-    val added = auction.modn(_.bid("First", 1))
+    val added = auction.mod(_.bid("First", 1))
     assertEquals(added.state.bids, Set(Bid("First", 1)))
     assertEquals(added.state.status, AuctionInterface.Open)
     assertEquals(added.state.winner, None)
 
-    val knockedDown = added.modn(_.knockDown())
+    val knockedDown = added.mod(_.knockDown())
     assertEquals(knockedDown.state.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.state.status, AuctionInterface.Closed)
     assertEquals(knockedDown.state.winner, Some("First"))

@@ -6,22 +6,11 @@ import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalUid}
 import rdts.time.Dots
-import replication.calendar.TokenLens.mod
 
 import scala.util.Random
 
 case class Token(id: Long, owner: Uid, value: String) derives CanEqual {
   def same(other: Token) = owner == other.owner && value == other.value
-}
-
-object TokenLens {
-  extension (curr: DeltaBuffer[Dotted[ReplicatedSet[Token]]])
-    def mod(f: Dots ?=> ReplicatedSet[Token] => Dotted[ReplicatedSet[Token]])
-        : DeltaBuffer[Dotted[ReplicatedSet[Token]]] = {
-      curr.applyDelta(
-        f(using curr.state.context)(curr.state.data)
-      )
-    }
 }
 
 case class RaftTokens(
@@ -48,19 +37,19 @@ case class RaftTokens(
 
     // conditional is only an optimization
     if !(tokenAgreement.values.iterator ++ want.state.data.elements.iterator).exists(_.same(token)) then {
-      copy(want = want.mod(_.add(token)))
+      copy(want = want.modd(_.add(token)))
     } else this
   }
 
   def free(value: String): RaftTokens = {
-    copy(tokenFreed = tokenFreed.mod(_.addAll(owned(value))))
+    copy(tokenFreed = tokenFreed.modd(_.addAll(owned(value))))
   }
 
   def update(): RaftTokens = {
     val generalDuties = tokenAgreement.supportLeader(replicaID).supportProposal(replicaID)
 
     if tokenAgreement.leader == replicaID then {
-      val unwanted = want.mod(_.removeAll(want.state.data.elements.filter(generalDuties.values.contains)))
+      val unwanted = want.modd(_.removeAll(want.state.data.elements.filter(generalDuties.values.contains)))
       unwanted.state.data.elements.headOption match {
         case None => copy(tokenAgreement = generalDuties, want = unwanted)
         case Some(tok) =>

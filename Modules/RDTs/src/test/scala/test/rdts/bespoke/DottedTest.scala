@@ -32,12 +32,12 @@ class DottedTest extends munit.FunSuite {
     assert(auction.state.status == AuctionInterface.Open)
     assert(auction.state.winner == None)
 
-    val added = auction.modn(_.bid("First", 1))
+    val added = auction.mod(_.bid("First", 1))
     assert(added.state.bids == Set(Bid("First", 1)))
     assert(added.state.status == AuctionInterface.Open)
     assert(added.state.winner == None)
 
-    val knockedDown = added.modn(_.knockDown())
+    val knockedDown = added.mod(_.knockDown())
     assert(knockedDown.state.bids == Set(Bid("First", 1)))
     assert(knockedDown.state.status == AuctionInterface.Closed)
     assert(knockedDown.state.winner == Some("First"))
