@@ -95,7 +95,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     ),
   )
 
-lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
+lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(reactives.js)
   .settings(
@@ -104,7 +104,7 @@ lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
     LocalSettings.deployTask,
   )
 
-lazy val examplesMiscJVM = project.in(file("Modules/Example Misc"))
+lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
   .dependsOn(reactives.jvm, replication.jvm)
   .settings(
     scala3defaults,
@@ -243,7 +243,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Re
   )
 
 lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full)
-  .in(file("Modules/Example Replication"))
+  .in(file("Modules/Examples/Replication"))
   .dependsOn(replication)
   .settings(
     scala3defaults,
@@ -269,7 +269,7 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
     LocalSettings.deployTask,
   )
 
-lazy val todolist = project.in(file("Modules/Example Todolist"))
+lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(replication.js)
   .settings(
