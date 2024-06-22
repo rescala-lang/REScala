@@ -5,8 +5,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   aead.jvm,
   channels.js,
   channels.jvm,
-  compileMacros.js,
-  compileMacros.jvm,
   deltalens,
   exampleLenses,
   examplesMiscJVM,
@@ -75,14 +73,6 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
     Test / fork                       := true,
-  )
-
-lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)
-  .in(file("Modules/Graph-Compiler"))
-  .dependsOn(reactives)
-  .settings(
-    scala3defaults,
-    Dependencies.jsoniterScala,
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
