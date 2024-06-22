@@ -10,9 +10,9 @@ import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLat
 import java.util.UUID
 
 class AlternativeInsecureToDoListClient(
-                                         val replicaId: String,
-                                         private val crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
-                                         private val intermediary: AlternativeInsecureToDoListIntermediary
+    val replicaId: String,
+    private val crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
+    private val intermediary: AlternativeInsecureToDoListIntermediary
 )(
     private implicit val stateCodec: JsonValueCodec[ToDoListState]
 ) extends ToDoListClient {

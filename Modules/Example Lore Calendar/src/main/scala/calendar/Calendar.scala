@@ -20,7 +20,6 @@ object Calendar {
     val calendar = new CalendarUI(storagePrefix, replicaId)
     val div      = calendar.getContents()
 
-
     document.body.replaceChild(div, document.body.firstElementChild)
     ()
   }

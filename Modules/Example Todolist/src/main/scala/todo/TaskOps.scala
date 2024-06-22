@@ -15,7 +15,6 @@ object TaskOps {
   def resetBuffer[T] = Fold.Branch[DeltaBuffer[T]](Nil, isStatic = false, _ => Fold.current.clearDeltas())
 }
 
-
 // `taskrefs` is unused as a reference, but is used indirectly so this parameter serves as a requirement
 // that a `taskrefs` needs to be created before taskops may be used
 class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
@@ -23,7 +22,6 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 
   given LocalUid = replicaID
-
 
   def handleCreateTodo(createTodo: Event[String]): Fold.Branch[State] = createTodo.branch { desc =>
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"

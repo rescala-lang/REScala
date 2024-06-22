@@ -75,7 +75,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   .jvmSettings(
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
-    Test / fork := true,
+    Test / fork                       := true,
   )
 
 lazy val compileMacros = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Pure)

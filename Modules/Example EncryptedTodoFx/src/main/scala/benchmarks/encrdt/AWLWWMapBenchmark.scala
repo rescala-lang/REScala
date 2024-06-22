@@ -119,7 +119,7 @@ class AeadState {
 class SerializeOnlyBenchmarkState {
   var crdt: AWLWWMContainer[String, String]                  = scala.compiletime.uninitialized
   var crdtState: AWLWWMContainer.LatticeType[String, String] = scala.compiletime.uninitialized
-  var crdtStateVersionVector: VectorClock                             = scala.compiletime.uninitialized
+  var crdtStateVersionVector: VectorClock                    = scala.compiletime.uninitialized
 
   var serialPlaintextState: Array[Byte]       = scala.compiletime.uninitialized
   var serialPlaintextVectorClock: Array[Byte] = scala.compiletime.uninitialized

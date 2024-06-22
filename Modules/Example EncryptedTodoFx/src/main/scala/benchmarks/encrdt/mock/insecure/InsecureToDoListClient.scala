@@ -10,9 +10,9 @@ import encrdtlib.encrypted.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup}
 import java.util.UUID
 
 class InsecureToDoListClient(
-                              replicaId: String,
-                              crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
-                              untrustedReplica: ToDoListIntermediary
+    replicaId: String,
+    crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
+    untrustedReplica: ToDoListIntermediary
 ) extends SecureToDoListClient(replicaId, crdt, null, untrustedReplica) {
   override protected def encryptAndDisseminate(newDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice]): Unit = {
     // Serialize but don't encrypt!

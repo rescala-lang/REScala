@@ -5,7 +5,6 @@ import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.GrowOnlyMap.given
 import rdts.datatypes.contextual.EnableWinsFlag
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

@@ -36,7 +36,7 @@ object HTML {
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
-        //button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
+        // button("disseminate all", onclick   := leftClickHandler(dataManager.disseminateFull()))
       ),
       section(table(
         thead(th("remote ref"), th("dots")),

@@ -9,7 +9,6 @@ import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.UtilHacks.*
 
-
 class DiffManualTests extends munit.ScalaCheckSuite {
 
   val r1: LocalUid = "r1".asId
@@ -215,20 +214,22 @@ class DiffManualTests extends munit.ScalaCheckSuite {
       Dotted(Bottom[GrowOnlyMap[Int, LastWriterWins[String]]].empty)
     assertEquals(emptyMap.context.internal, Map.empty)
 
-    val k1: Int                                                   = 1
-    val v1: String                                                = "one"
-    val e1                                                        = LastWriterWins.now("")
-    val delta_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.write(v1)))
+    val k1: Int    = 1
+    val v1: String = "one"
+    val e1         = LastWriterWins.now("")
+    val delta_1: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] =
+      emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.write(v1)))
     assertEquals(delta_1.context.internal, Map.empty)
     assertEquals(delta_1.data.keySet, Set(1))
     assertEquals(delta_1.data.get(1).map(_.payload), Some("one"))
 
     // delta_1 and delta_2 are in parallel
 
-    val k2: Int                                                   = 2
-    val v2: String                                                = "two"
-    val e2                                                        = LastWriterWins.now("")
-    val delta_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] = emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.write(v2)))
+    val k2: Int    = 2
+    val v2: String = "two"
+    val e2         = LastWriterWins.now("")
+    val delta_2: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] =
+      emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.write(v2)))
     assertEquals(delta_2.context.internal, Map.empty)
     assertEquals(delta_2.data.keySet, Set(2))
     assertEquals(delta_2.data.get(2).map(_.payload), Some("two"))
@@ -262,9 +263,10 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val emptyMap: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = Dotted(Bottom[GrowOnlyMap[Int, EnableWinsFlag]].empty)
 
-    val k1: Int                                           = 1
-    val e1                                                = EnableWinsFlag.empty
-    val delta_1: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.enable(using r1)()))
+    val k1: Int = 1
+    val e1      = EnableWinsFlag.empty
+    val delta_1: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] =
+      emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.enable(using r1)()))
     assertEquals(delta_1.context.internal.size, 1)
     assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(delta_1.data.keySet, Set(1))
@@ -272,9 +274,10 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     // delta_1 and delta_2 are in parallel
 
-    val k2: Int                                           = 2
-    val e2                                                = EnableWinsFlag.empty
-    val delta_2: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] = emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.enable(using r2)()))
+    val k2: Int = 2
+    val e2      = EnableWinsFlag.empty
+    val delta_2: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] =
+      emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.enable(using r2)()))
     assertEquals(delta_2.context.internal.size, 1)
     assertEquals(delta_2.context.max(r2.uid), Some(Dot(r2.uid, 0)))
     assertEquals(delta_2.data.keySet, Set(2))

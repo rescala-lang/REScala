@@ -107,5 +107,4 @@ object SyncedTodoListCrdt {
   given stateCodec: JsonValueCodec[StateType] =
     JsonCodecMaker.make(CodecMakerConfig.withAllowRecursiveTypes(true).withMapAsArray(true))
 
-
 }
