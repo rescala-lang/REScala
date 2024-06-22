@@ -1,10 +1,10 @@
 package encrdtlib.encrypted.deltabased
 
-import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
-abstract class TrustedReplica[T](val replicaId: String, mutate: T => Unit, private val aead: Aead)(
+abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead)(
     implicit
     val stateJsonCodec: JsonValueCodec[T],
     val dotSetJsonCodec: JsonValueCodec[Dots]
@@ -12,7 +12,7 @@ abstract class TrustedReplica[T](val replicaId: String, mutate: T => Unit, priva
 
   protected var dottedVersionVector: Dots = Dots.empty
 
-  private var lastDot = Dot(replicaId, 0)
+  private var lastDot = Dot(replicaId.uid, 0)
 
   protected def nextDot(): Dot = {
     lastDot = lastDot.advance

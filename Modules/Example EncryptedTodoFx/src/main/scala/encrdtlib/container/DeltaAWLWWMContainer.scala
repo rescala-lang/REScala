@@ -10,7 +10,7 @@ import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 class DeltaAWLWWMContainer[K, V](
-    val replicaId: Uid,
+    val replicaId: LocalUid,
     initialState: DeltaAddWinsLastWriterWinsMapLattice[K, V] = DeltaAWLWWMContainer.empty[K, V],
 ) {
   protected var _state: DeltaAddWinsLastWriterWinsMapLattice[K, V] = initialState
@@ -27,7 +27,7 @@ class DeltaAWLWWMContainer[K, V](
   def putDelta(key: K, value: V): DeltaAddWinsLastWriterWinsMapLattice[K, V] = {
     val delta = {
       _state.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[K, Entry[LastWriterWins[V]]]) =>
-        val nextDot = Dots.single(context.nextDot(replicaId))
+        val nextDot = Dots.single(context.nextDot(replicaId.uid))
         ormap.transformPlain(key) {
           case Some(prior) => Some(Entry(nextDot, prior.value.write(value)))
           case None        => Some(Entry(nextDot, LastWriterWins.now(value)))

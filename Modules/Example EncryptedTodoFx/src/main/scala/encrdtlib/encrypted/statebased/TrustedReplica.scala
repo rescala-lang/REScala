@@ -1,11 +1,11 @@
 package encrdtlib.encrypted.statebased
 
-import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
+import rdts.syntax.LocalUid
 import rdts.time.VectorClock
 
-abstract class TrustedReplica[T](val localReplicaId: String, private val aead: Aead)(implicit
+abstract class TrustedReplica[T](val localReplicaId: LocalUid, private val aead: Aead)(implicit
     val stateJsonCodec: JsonValueCodec[T]
 ) extends Replica {
 
@@ -19,7 +19,7 @@ abstract class TrustedReplica[T](val localReplicaId: String, private val aead: A
   }
 
   def stateChanged(state: T): Unit = {
-    versionVector = versionVector.inc(localReplicaId)
+    versionVector = versionVector.inc(localReplicaId.uid)
     val encryptedState = DecryptedState(state, versionVector).encrypt(aead)
     disseminate(encryptedState)
   }

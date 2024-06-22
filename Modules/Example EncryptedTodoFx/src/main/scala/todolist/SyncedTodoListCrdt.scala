@@ -1,9 +1,9 @@
 package todolist
 
-import benchmarks.encrdt.idFromString
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.DeltaAWLWWMContainer
+import rdts.syntax.LocalUid
 import scalafx.application.Platform
 import todolist.SyncedTodoListCrdt.StateType
 import todolist.sync.ConnectionManager
@@ -15,10 +15,10 @@ import scala.concurrent.duration.{DurationInt, MILLISECONDS}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
 
-class SyncedTodoListCrdt(val replicaId: String) {
+class SyncedTodoListCrdt(val replicaId: LocalUid) {
 
   private val crdt: DeltaAWLWWMContainer[UUID, TodoEntry] =
-    new DeltaAWLWWMContainer[UUID, TodoEntry](replicaId)
+    new DeltaAWLWWMContainer[UUID, TodoEntry](replicaId.uid)
 
   private val crdtExecutorService: ExecutorService = Executors.newSingleThreadExecutor()
   private val crdtExecContext: ExecutionContext    = ExecutionContext.fromExecutor(crdtExecutorService)

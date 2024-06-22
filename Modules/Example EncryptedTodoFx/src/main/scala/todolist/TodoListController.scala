@@ -1,6 +1,7 @@
 package todolist
 
 import javafx.collections.{FXCollections, ObservableList}
+import rdts.syntax.LocalUid
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 
@@ -10,7 +11,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
 object TodoListController {
-  val replicaId: String = UUID.randomUUID().toString.substring(0, 4)
+  val replicaId: LocalUid = LocalUid.gen()
 
   private val crdt: SyncedTodoListCrdt = new SyncedTodoListCrdt(replicaId)
 
