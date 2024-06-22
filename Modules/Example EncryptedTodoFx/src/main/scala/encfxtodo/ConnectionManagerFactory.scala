@@ -1,8 +1,8 @@
-package todolist
+package encfxtodo
 
 import rdts.syntax.LocalUid
-import todolist.SyncedTodoListCrdt.{InnerStateType, StateType, given}
-import todolist.sync.{ConnectionManager, DataManagerConnectionManager}
+import encfxtodo.SyncedTodoListCrdt.{InnerStateType, StateType, given}
+import encfxtodo.sync.{ConnectionManager, DataManagerConnectionManager}
 
 object ConnectionManagerFactory {
   var impl: (LocalUid, () => StateType, StateType => Unit) => ConnectionManager[StateType] =

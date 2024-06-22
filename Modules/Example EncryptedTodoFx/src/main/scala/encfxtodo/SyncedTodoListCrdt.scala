@@ -1,12 +1,12 @@
-package todolist
+package encfxtodo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import encrdtlib.container.DeltaAWLWWMContainer
 import rdts.syntax.LocalUid
 import scalafx.application.Platform
-import todolist.SyncedTodoListCrdt.StateType
-import todolist.sync.ConnectionManager
+import encfxtodo.SyncedTodoListCrdt.StateType
+import encfxtodo.sync.ConnectionManager
 
 import java.net.URI
 import java.util.UUID

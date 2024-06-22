@@ -1,4 +1,4 @@
-package todolist.sync
+package encfxtodo.sync
 
 import java.net.URI
 

@@ -1,4 +1,4 @@
-package todolist.sync
+package encfxtodo.sync
 
 import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec

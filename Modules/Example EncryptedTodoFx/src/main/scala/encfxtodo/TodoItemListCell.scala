@@ -1,4 +1,4 @@
-package todolist
+package encfxtodo
 
 import javafx.scene.control.ListCell
 import scalafx.Includes.*

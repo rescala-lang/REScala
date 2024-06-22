@@ -1,4 +1,4 @@
-package todolist
+package encfxtodo
 
 import javafx.collections.{FXCollections, ObservableList}
 import rdts.syntax.LocalUid

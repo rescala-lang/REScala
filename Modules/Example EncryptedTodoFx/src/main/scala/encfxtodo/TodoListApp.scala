@@ -1,4 +1,4 @@
-package todolist
+package encfxtodo
 
 import scalafx.Includes.*
 import scalafx.application.{JFXApp3, Platform}
