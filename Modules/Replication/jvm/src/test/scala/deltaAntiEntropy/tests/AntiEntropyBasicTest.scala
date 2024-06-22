@@ -26,27 +26,27 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     val aec = AntiEntropyContainer[ReplicatedList[String]](ae)
 
-    aec.insert(using aec.replicaID)(0, "00")
+    aec.mod(_.insert(using aec.replicaID)(0, "00"))
 
-    aec.update(using Uid.predefined("b"))(0, "UPD")
+    aec.mod(_.update(using Uid.predefined("b"))(0, "UPD"))
 
-    assertEquals(aec.toList, List("UPD"))
+    assertEquals(aec.data.toList, List("UPD"))
 
-    aec.insert(using aec.replicaID)(1, "100")
+    aec.mod(_.insert(using aec.replicaID)(1, "100"))
 
-    assertEquals(aec.toList, List("UPD", "100"))
+    assertEquals(aec.data.toList, List("UPD", "100"))
 
     val lots = List.tabulate(100)(_.toString)
 
     lots.foreach: elem =>
-      aec.insert(using aec.replicaID)(0, elem)
-    // aec.insertAll(using aec.replicaID)(0, lots)
+      aec.mod(_.insert(using aec.replicaID)(0, elem))
+    // aec.mod(_.insertAll(using aec.replicaID)(0, lots))
 
-    assertEquals(aec.toList, lots.reverse ::: List("UPD", "100"))
+    assertEquals(aec.data.toList, lots.reverse ::: List("UPD", "100"))
 
-    aec.insert(using Uid.predefined("b"))(1, "b00")
+    aec.mod(_.insert(using Uid.predefined("b"))(1, "b00"))
 
-    assertEquals(aec.read(1), Some("b00"))
+    assertEquals(aec.data.read(1), Some("b00"))
 
   }
 
@@ -70,7 +70,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     lots.foreach: elem =>
       aec.modn(_.insertGL(0, elem))
-    // aec.insertAll(using aec.replicaID)(0, lots)
+    // aec.mod(_.insertAll(using aec.replicaID)(0, lots))
 
     assertEquals(aec.data.toList, lots.reverse ::: List("00", "100"))
 
@@ -106,29 +106,29 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     val la1 = {
       val inserted = insertedAB._1.foldLeft(la0) {
-        case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
+        case (rga, (i, e)) => rga.mod(_.insert(using rga.replicaID)(i, e))
       }
 
       val deleted = removedAB._1.foldLeft(inserted) {
-        case (rga, i) => rga.delete(using rga.replicaID)(i)
+        case (rga, i) => rga.mod(_.delete(using rga.replicaID)(i))
       }
 
       updatedAB._1.foldLeft(deleted) {
-        case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
+        case (rga, (i, e)) => rga.mod(_.update(using rga.replicaID)(i, e))
       }
     }
 
     val lb1 = {
       val inserted = insertedAB._2.foldLeft(lb0) {
-        case (rga, (i, e)) => rga.insert(using rga.replicaID)(i, e)
+        case (rga, (i, e)) => rga.mod(_.insert(using rga.replicaID)(i, e))
       }
 
       val deleted = removedAB._2.foldLeft(inserted) {
-        case (rga, i) => rga.delete(using rga.replicaID)(i)
+        case (rga, i) => rga.mod(_.delete(using rga.replicaID)(i))
       }
 
       updatedAB._2.foldLeft(deleted) {
-        case (rga, (i, e)) => rga.update(using rga.replicaID)(i, e)
+        case (rga, (i, e)) => rga.mod(_.update(using rga.replicaID)(i, e))
       }
     }
 
@@ -156,9 +156,9 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
     assertEquals(lb2.state, directMergedState)
 
     assertEquals(
-      la2.toList,
-      lb2.toList,
-      s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}\n  before A: $beforeA1\n  before B: $beforeB1\n  ${la2.state}\n  ${lb2.state}"
+      la2.data.toList,
+      lb2.data.toList,
+      s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.data.toList} does not equal ${lb2.data.toList}\n  before A: $beforeA1\n  before B: $beforeB1\n  ${la2.state}\n  ${lb2.state}"
     )
   }
 

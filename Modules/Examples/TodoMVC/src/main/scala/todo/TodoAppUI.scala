@@ -58,7 +58,7 @@ class TodoAppUI(val storagePrefix: String) {
             taskOps.handleCreateTodo(createTodo),
             taskOps.handleRemoveAll(removeAll.event),
             Fold.branch {
-              current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
+              current.data.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
             },
             // todo: does not restore full state
             branch
@@ -66,7 +66,7 @@ class TodoAppUI(val storagePrefix: String) {
         }
       }
 
-    val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
+    val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.data.toList }
     val tasksData: Signal[List[TaskData]] =
       Signal.dynamic { tasksList.value.flatMap(l => l.task.value.state.read) }
     val taskTags: Signal[List[LI]] = Signal { tasksList.value.map(_.tag) }

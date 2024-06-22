@@ -38,11 +38,11 @@ class ReplicatedListTest extends munit.FunSuite {
     val aid = Uid.predefined("a")
     val bid = Uid.predefined("a")
 
-    val v2 = v1.insert(using aid)(0, "10")
+    val v2 = v1.mod(_.insert(using aid)(0, "10"))
 
-    assertEquals(v2.toList, List("10"))
+    assertEquals(v2.data.toList, List("10"))
 
-    val v3d = v2.insert(using aid)(1, "20")
+    val v3d = v2.mod(_.insert(using aid)(1, "20"))
 
     val mergedOrder = v2.data.order.value merge v3d.data.order.value
 
@@ -60,11 +60,11 @@ class ReplicatedListTest extends munit.FunSuite {
     assertEquals(mergedOrder.toList, List(Dot(aid, 0), Dot(aid, 1)))
     assertEquals(v3.data.order.value.toList, List(Dot(aid, 0), Dot(aid, 1)))
 
-    assertEquals(v3.toList, List("10", "20"))
+    assertEquals(v3.data.toList, List("10", "20"))
 
-    val v4 = v3 merge v3.insert(using aid)(1, "30")
+    val v4 = v3 merge v3.mod(_.insert(using aid)(1, "30"))
 
-    assertEquals(v4.toList, List("10", "30", "20"))
+    assertEquals(v4.data.toList, List("10", "30", "20"))
 
   }
 

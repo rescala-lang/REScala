@@ -27,25 +27,25 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
     TaskReferences.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
     val taskref = TaskRef(taskid)
-    current.prepend(taskref)
+    current.mod(_.prepend(taskref))
   }
 
   def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] =
     removeAll.branch: _ =>
-      current.deleteBy { (taskref: TaskRef) =>
+      current.mod(_.deleteBy { (taskref: TaskRef) =>
         val isDone = taskref.task.value.state.read.exists(_.done)
         // todo, move to observer, disconnect during transaction does not respect rollbacks
         if isDone then taskref.task.disconnect()
         isDone
-      }
+      })
 
   def handleRemove(state: State)(id: String): State = {
-    state.deleteBy { (taskref: TaskRef) =>
+    state.mod(_.deleteBy { (taskref: TaskRef) =>
       val delete = taskref.id == id
       // todo, move to observer, disconnect during transaction does not respect rollbacks
       if delete then taskref.task.disconnect()
       delete
-    }
+    })
   }
 
   def handleDelta(deltaEvent: Event[ProtocolDots[TodoDataManager.TodoRepState]]): Fold.Branch[State] =
@@ -56,8 +56,8 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
 
       val newList = deltaBuffered.applyDelta(delta)
 
-      val oldIDs = deltaBuffered.toList.toSet
-      val newIDs = newList.toList.toSet
+      val oldIDs = deltaBuffered.data.toList.toSet
+      val newIDs = newList.data.toList.toSet
 
       val removed = oldIDs -- newIDs
       removed.foreach { _.task.disconnect() }

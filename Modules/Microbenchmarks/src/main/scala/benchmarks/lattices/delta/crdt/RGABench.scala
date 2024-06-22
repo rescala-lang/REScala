@@ -25,49 +25,49 @@ class RGABench {
 
   @Setup
   def setup(): Unit = {
-    rga = NamedDeltaBuffer.dotted("a", ReplicatedList.empty[Int]).appendAll(using "".asId)(0 until rgaSize)
-    rgaCleared = rga.clear()
+    rga = NamedDeltaBuffer.dotted("a", ReplicatedList.empty[Int]).mod(_.appendAll(using "".asId)(0 until rgaSize))
+    rgaCleared = rga.mod(_.clear())
   }
 
   @Benchmark
-  def readFirst(): Option[Int] = rga.read(0)
+  def readFirst(): Option[Int] = rga.data.read(0)
 
   @Benchmark
-  def readLast(): Option[Int] = rga.read(rgaSize - 1)
+  def readLast(): Option[Int] = rga.data.read(rgaSize - 1)
 
   @Benchmark
-  def size(): Int = rga.size
+  def size(): Int = rga.data.size
 
   @Benchmark
-  def toList: List[Int] = rga.toList
+  def toList: List[Int] = rga.data.toList
 
   @Benchmark
-  def prepend(): SUT = rga.prepend(using rga.replicaID)(-1)
+  def prepend(): SUT = rga.mod(_.prepend(using rga.replicaID)(-1))
 
   @Benchmark
-  def append(): SUT = rga.append(using rga.replicaID)(rgaSize)
+  def append(): SUT = rga.mod(_.append(using rga.replicaID)(rgaSize))
 
   @Benchmark
-  def prependTen(): SUT = rga.prependAll(using rga.replicaID)(-10 to -1)
+  def prependTen(): SUT = rga.mod(_.prependAll(using rga.replicaID)(-10 to -1))
 
   @Benchmark
-  def appendTen(): SUT = rga.appendAll(using rga.replicaID)(rgaSize until rgaSize + 10)
+  def appendTen(): SUT = rga.mod(_.appendAll(using rga.replicaID)(rgaSize until rgaSize + 10))
 
   @Benchmark
-  def updateFirst(): SUT = rga.update(using rga.replicaID)(0, -1)
+  def updateFirst(): SUT = rga.mod(_.update(using rga.replicaID)(0, -1))
 
   @Benchmark
-  def updateLast(): SUT = rga.update(using rga.replicaID)(rgaSize - 1, -1)
+  def updateLast(): SUT = rga.mod(_.update(using rga.replicaID)(rgaSize - 1, -1))
 
   @Benchmark
-  def deleteFirst(): SUT = rga.delete(using rga.replicaID)(0)
+  def deleteFirst(): SUT = rga.mod(_.delete(using rga.replicaID)(0))
 
   @Benchmark
-  def deleteLast(): SUT = rga.delete(using rga.replicaID)(rgaSize - 1)
+  def deleteLast(): SUT = rga.mod(_.delete(using rga.replicaID)(rgaSize - 1))
 
   @Benchmark
-  def clear(): SUT = rga.clear()
+  def clear(): SUT = rga.mod(_.clear())
 
   @Benchmark
-  def purgeTombstones(): SUT = rgaCleared.purgeTombstones(using rgaCleared.replicaID)()
+  def purgeTombstones(): SUT = rgaCleared.mod(_.purgeTombstones(using rgaCleared.replicaID)())
 }

@@ -201,11 +201,11 @@ object DataGenerator {
         rid: LocalUid
     ): Dotted[ReplicatedList[E]] = {
       val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
-        case (rga, (i, e)) => rga merge rga.insert(using rid)(i, e)
+        case (rga, (i, e)) => rga merge rga.mod(_.insert(using rid)(i, e))
       }
 
       removed.foldLeft(afterInsert) {
-        case (rga, i) => rga.delete(using rid)(i)
+        case (rga, i) => rga.mod(_.delete(using rid)(i))
       }
     }
 

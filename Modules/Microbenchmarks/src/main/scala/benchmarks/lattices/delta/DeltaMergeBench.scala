@@ -35,10 +35,10 @@ class DeltaMergeBench {
     val baseState: Dotted[ReplicatedList[Long]] = Dotted(ReplicatedList.empty)
 
     val deltaState: Dotted[ReplicatedList[Long]] =
-      baseState.insertAll(using "".asId)(0, 0L to size)
+      baseState.mod(_.insertAll(using "".asId)(0, 0L to size))
     fullState = DottedLattice[ReplicatedList[Long]].merge(baseState, deltaState)
 
-    plusOneDeltaState = fullState.insert(using "".asId)(0, size)
+    plusOneDeltaState = fullState.mod(_.insert(using "".asId)(0, size))
     plusOneState = DottedLattice[ReplicatedList[Long]].merge(fullState, plusOneDeltaState)
   }
 
