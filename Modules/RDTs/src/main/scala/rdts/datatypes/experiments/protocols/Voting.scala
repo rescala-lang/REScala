@@ -1,6 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.Dotted

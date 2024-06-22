@@ -1,14 +1,11 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.Lattice.setLattice
-import rdts.base.{Bottom, Lattice, Orderings, Uid}
-import rdts.datatypes.GrowOnlyMap.*
+import rdts.base.{Lattice, Uid}
+import rdts.datatypes.GrowOnlySet
 import rdts.datatypes.GrowOnlySet.*
-import rdts.datatypes.{GrowOnlyMap, GrowOnlySet, LastWriterWins}
-import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
 import rdts.syntax.LocalUid.replicaId
-import rdts.time.Dots
 
 import scala.compiletime.{constValue, summonFrom}
 

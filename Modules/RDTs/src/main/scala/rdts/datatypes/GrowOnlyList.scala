@@ -2,10 +2,8 @@ package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.GrowOnlyList.Node
-import rdts.datatypes.GrowOnlyList.Node.Elem
+import rdts.datatypes.GrowOnlyList.Node.*
 import rdts.dotted.HasDots
-import rdts.syntax.OpsSyntaxHelper
-import GrowOnlyList.Node.*
 
 import scala.annotation.tailrec
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -106,7 +104,7 @@ object GrowOnlyList {
   enum Node[+E]:
     case Head
     case Elem(value: E)
-  import Node.{Elem, Head}
+  import Node.Elem
 
   def empty[E]: GrowOnlyList[E] = GrowOnlyList(Map.empty)
 

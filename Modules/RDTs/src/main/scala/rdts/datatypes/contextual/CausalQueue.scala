@@ -3,7 +3,7 @@ package rdts.datatypes.contextual
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
+import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue

@@ -1,6 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.base.{Lattice, Uid}
 import rdts.syntax.LocalUid
 import rdts.time.Time
 

@@ -2,7 +2,6 @@ package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.HasDots
-import rdts.syntax.OpsSyntaxHelper
 
 /** A TwoPhaseSet (Two-Phase Set) is a Delta CRDT modeling a set.
   *

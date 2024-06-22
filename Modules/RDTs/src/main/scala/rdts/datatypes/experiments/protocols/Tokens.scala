@@ -2,7 +2,6 @@ package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
-import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.syntax.LocalUid
 import rdts.syntax.LocalUid.replicaId

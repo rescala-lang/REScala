@@ -6,7 +6,7 @@ import rdts.datatypes.experiments.RaftState
 import rdts.dotted.Dotted
 import rdts.syntax.{DeltaBuffer, LocalUid}
 import rdts.time.Dots
-import TokenLens.mod
+import replication.calendar.TokenLens.mod
 
 import scala.util.Random
 

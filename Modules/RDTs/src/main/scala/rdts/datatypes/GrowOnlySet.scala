@@ -1,7 +1,6 @@
 package rdts.datatypes
 
 import rdts.base.{Bottom, Lattice}
-import rdts.syntax.OpsSyntaxHelper
 
 type GrowOnlySet[E] = Set[E]
 
