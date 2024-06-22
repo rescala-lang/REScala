@@ -31,13 +31,13 @@ class ContainerTest extends munit.FunSuite {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
     given LocalUid                   = "me".asId
 
-    assertEquals(flag.read, false)
+    assertEquals(flag.data.read, false)
 
-    val enabled = flag.enable()
-    assertEquals(enabled.read, true)
+    val enabled = flag.mod(_.enable())
+    assertEquals(enabled.data.read, true)
 
-    val disabled = enabled.disable()
-    assertEquals(disabled.read, false)
+    val disabled = enabled.mod(_.disable())
+    assertEquals(disabled.data.read, false)
   }
 
   // NOTE: DeltaBuffer cannot contain contextual EnableWinsFlag without Dotted, as EnableWinsFlag needs a context
@@ -45,25 +45,25 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBuffer can contain contextual EnableWinsFlag") {
     val flag: DeltaBuffer[Dotted[EnableWinsFlag]] = DeltaBuffer(Dotted.empty)
 
-    assertEquals(flag.read, false)
+    assertEquals(flag.data.read, false)
 
-    val enabled = flag.enable()
-    assertEquals(enabled.read, true)
+    val enabled = flag.mod(_.enable())
+    assertEquals(enabled.data.read, true)
 
-    val disabled = enabled.disable()
-    assertEquals(disabled.read, false)
+    val disabled = enabled.mod(_.disable())
+    assertEquals(disabled.data.read, false)
   }
 
   test("Dotted DeltaBufferContainer can contain contextual EnableWinsFlag") {
     val flag: DeltaBufferContainer[Dotted[EnableWinsFlag]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
-    assertEquals(flag.read, false)
+    assertEquals(flag.data.read, false)
 
-    flag.enable()
-    assertEquals(flag.read, true)
+    flag.mod(_.enable())
+    assertEquals(flag.data.read, true)
 
-    flag.disable()
-    assertEquals(flag.read, false)
+    flag.mod(_.disable())
+    assertEquals(flag.data.read, false)
   }
 
   // END EnableWinsFlag
@@ -121,13 +121,13 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted can contain non-contextual LastWriterWins[String]") {
     val lww: Dotted[LastWriterWins[String]] = Dotted.empty
 
-    assertEquals(lww.read, "")
+    assertEquals(lww.data.read, "")
 
     val added = lww.write("First")
-    assertEquals(added.read, "First")
+    assertEquals(added.data.read, "First")
 
     val removed = added.write("")
-    assertEquals(removed.read, "")
+    assertEquals(removed.data.read, "")
   }
 
   test("DeltaBuffer can contain non-contextual LastWriterWins[String]") {
@@ -145,25 +145,25 @@ class ContainerTest extends munit.FunSuite {
   test("Dotted DeltaBuffer can contain non-contextual LastWriterWins[String]") {
     val lww: DeltaBuffer[Dotted[LastWriterWins[String]]] = DeltaBuffer(Dotted.empty)
 
-    assertEquals(lww.read, "")
+    assertEquals(lww.data.read, "")
 
     val added = lww.write("First")
-    assertEquals(added.read, "First")
+    assertEquals(added.data.read, "First")
 
     val removed = added.write("")
-    assertEquals(removed.read, "")
+    assertEquals(removed.data.read, "")
   }
 
   test("Dotted DeltaBufferContainer can contain non-contextual LastWriterWins[String]") {
     val lww: DeltaBufferContainer[Dotted[LastWriterWins[String]]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
 
-    assertEquals(lww.read, "")
+    assertEquals(lww.data.read, "")
 
     lww.write("First")
-    assertEquals(lww.read, "First")
+    assertEquals(lww.data.read, "First")
 
     lww.write("")
-    assertEquals(lww.read, "")
+    assertEquals(lww.data.read, "")
   }
 
   // END LastWriterWins

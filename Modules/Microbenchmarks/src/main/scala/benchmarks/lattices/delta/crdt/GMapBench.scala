@@ -28,7 +28,7 @@ class GMapBench {
 
     map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted("a", GrowOnlyMap.empty[Int, EnableWinsFlag]): SUT) {
       case (rdc: SUT, i) =>
-        rdc.mod(_.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.enable(using rdc.replicaID)()))
+        rdc.mod(_.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.mod(_.enable(using rdc.replicaID)())))
     }
   }
 
@@ -48,9 +48,9 @@ class GMapBench {
   def queryAllEntries(): Iterable[Boolean] = map.data.values.map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.disable()))
+  def mutateExisting(): SUT = map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.mod(_.disable())))
 
   @Benchmark
   def mutateMissing(): SUT =
-    map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.enable(using map.replicaID)()))
+    map.mod(_.mutateKeyNamedCtx(0, EnableWinsFlag.empty)(_.mod(_.enable(using map.replicaID)())))
 }

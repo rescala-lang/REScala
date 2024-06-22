@@ -14,14 +14,14 @@ class DeltaBufferDottedTest extends munit.FunSuite {
     val dbe = DeltaBuffer[Dotted[EnableWinsFlag]](Dotted(EnableWinsFlag.empty))
 
     assertEquals(dbe.state.data, Bottom.empty[EnableWinsFlag])
-    assert(!dbe.read)
+    assert(!dbe.data.read)
     assertEquals(dbe.deltaBuffer, List.empty)
 
-    val dis = dbe.enable().enable()
-    assert(dis.read)
-    val en = dis.disable()
+    val dis = dbe.mod(_.enable()).mod(_.enable())
+    assert(dis.data.read)
+    val en = dis.mod(_.disable())
 
-    assert(!en.read)
+    assert(!en.data.read)
     assertEquals(en.deltaBuffer.size, 3)
 
   }

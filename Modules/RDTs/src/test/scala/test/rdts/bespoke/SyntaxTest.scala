@@ -17,11 +17,11 @@ class SyntaxTest extends munit.FunSuite {
     val flag: Dotted[EnableWinsFlag] = Dotted.empty
     given LocalUid                   = "me".asId
 
-    assert(!flag.read)
-    val enabled = flag.enable()
-    assert(enabled.read)
-    val disabled = enabled.disable()
-    assert(!disabled.read)
+    assert(!flag.data.read)
+    val enabled = flag.mod(_.enable())
+    assert(enabled.data.read)
+    val disabled = enabled.mod(_.disable())
+    assert(!disabled.data.read)
 
   }
 

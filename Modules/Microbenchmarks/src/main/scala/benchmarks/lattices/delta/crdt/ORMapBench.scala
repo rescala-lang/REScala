@@ -29,7 +29,7 @@ class ORMapBench {
       "a",
       ObserveRemoveMap.empty
     )) {
-      case (m, i) => m.mod(_.transform(i)(_.enable(using m.replicaID)()))
+      case (m, i) => m.mod(_.transform(i)(_.mod(_.enable(using m.replicaID)())))
     }
   }
 
@@ -49,10 +49,10 @@ class ORMapBench {
   def queryAllEntries(): Iterable[Boolean] = map.data.queryAllEntries.map(_.read)
 
   @Benchmark
-  def mutateExisting(): SUT = map.mod(_.transform(0)(_.disable()))
+  def mutateExisting(): SUT = map.mod(_.transform(0)(_.mod(_.disable())))
 
   @Benchmark
-  def mutateMissing(): SUT = map.mod(_.transform(-1)(_.enable(using map.replicaID)()))
+  def mutateMissing(): SUT = map.mod(_.transform(-1)(_.mod(_.enable(using map.replicaID)())))
 
   @Benchmark
   def removeExisting(): SUT = map.mod(_.remove(0))
@@ -64,7 +64,7 @@ class ORMapBench {
   def removeAll(): SUT = map.mod(_.removeAll(0 until numEntries))
 
   @Benchmark
-  def removeByValue(): SUT = map.mod(_.removeByValue(ewf => ewf.read))
+  def removeByValue(): SUT = map.mod(_.removeByValue(ewf => ewf.data.read))
 
   @Benchmark
   def clear(): SUT = map.mod(_.clear())

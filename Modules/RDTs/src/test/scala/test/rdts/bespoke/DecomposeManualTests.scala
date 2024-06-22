@@ -61,14 +61,14 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val emptyEWFlag: Dotted[EnableWinsFlag] = Dotted(Bottom[EnableWinsFlag].empty)
     assertEquals(emptyEWFlag.context, Dots.empty)
 
-    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.enable(using r1)()
+    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.mod(_.enable(using r1)())
     assertEquals(delta_1.context.internal.size, 1)
     assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(delta_1.data.read, true)
 
     // delta_1 and delta_2 are in parallel
 
-    val delta_2: Dotted[EnableWinsFlag] = emptyEWFlag.disable()
+    val delta_2: Dotted[EnableWinsFlag] = emptyEWFlag.mod(_.disable())
     assertEquals(delta_2.context.internal, Map.empty)
     assertEquals(delta_2.data.read, false)
 
@@ -95,7 +95,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     // The first enable creates a dot, first disable keep it. Second enable creates a new dot.
     // At the end, both dots are in the context, but only the last one is contained within.
 
-    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.enable(using r1)()
+    val delta_1: Dotted[EnableWinsFlag] = emptyEWFlag.mod(_.enable(using r1)())
     assertEquals(delta_1.context.internal.size, 1)
     assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(delta_1.data.read, true)
@@ -104,7 +104,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_1: Dotted[EnableWinsFlag] = delta_1
     assertEquals(val_1.data.read, true)
 
-    val delta_2: Dotted[EnableWinsFlag] = val_1.disable()
+    val delta_2: Dotted[EnableWinsFlag] = val_1.mod(_.disable())
     assertEquals(delta_2.context.internal.size, 1)
     assertEquals(delta_2.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(delta_2.data.read, false)
@@ -113,7 +113,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val val_2: Dotted[EnableWinsFlag] = val_1 merge delta_2
     assertEquals(val_2.data.read, false)
 
-    val delta_3: Dotted[EnableWinsFlag] = val_2.enable(using r2)()
+    val delta_3: Dotted[EnableWinsFlag] = val_2.mod(_.enable(using r2)())
     assertEquals(delta_3.context.internal.size, 1)
     assertEquals(delta_3.context.toSet, Set(Dot(r2.uid, 0))) // it's a delta - r1 dot not here, only r2
     assertEquals(delta_3.data.read, true)
@@ -274,7 +274,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val k1: Int = 1
     val e1      = EnableWinsFlag.empty
     val delta_1: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] =
-      emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.enable(using r1)()))
+      emptyMap.mod(_.mutateKeyNamedCtx(k1, e1)(_.mod(_.enable(using r1)())))
     assertEquals(delta_1.context.internal.size, 1)
     assertEquals(delta_1.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(delta_1.data.keySet, Set(1))
@@ -285,7 +285,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val k2: Int = 2
     val e2      = EnableWinsFlag.empty
     val delta_2: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] =
-      emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.enable(using r2)()))
+      emptyMap.mod(_.mutateKeyNamedCtx(k2, e2)(_.mod(_.enable(using r2)())))
     assertEquals(delta_2.context.internal.size, 1)
     assertEquals(delta_2.context.max(r2.uid), Some(Dot(r2.uid, 0)))
     assertEquals(delta_2.data.keySet, Set(2))

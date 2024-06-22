@@ -9,7 +9,27 @@ import rdts.time.Dots
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: Dots) derives Bottom
+case class EnableWinsFlag(inner: Dots) derives Bottom {
+
+  type Delta = Dotted[EnableWinsFlag]
+
+  def read: Boolean = !inner.dots.isEmpty
+
+  def enable(using LocalUid)()(using context: Dots): Delta = {
+    val nextDot = context.nextDot(LocalUid.replicaId)
+    Dotted(
+      EnableWinsFlag(Dots.single(nextDot)),
+      inner add nextDot
+    )
+  }
+
+  def disable(): Delta = {
+    Dotted(
+      EnableWinsFlag(Dots.empty),
+      inner
+    )
+  }
+}
 
 object EnableWinsFlag {
 
@@ -17,29 +37,5 @@ object EnableWinsFlag {
   given hasDotsEWF: HasDots[EnableWinsFlag] = HasDots.derived
 
   val empty: EnableWinsFlag = EnableWinsFlag(Dots.empty)
-
-  extension [C](container: C)
-    def enableWinsFlag: syntax[C] = syntax(container)
-
-  /** It is enabled if there is a value in the store.
-    * It relies on the external context to track removals.
-    */
-  implicit class syntax[C](container: C) extends OpsSyntaxHelper[C, EnableWinsFlag](container) {
-    def read(using IsQuery): Boolean = !current.dots.isEmpty
-
-    def enable(using LocalUid)(): CausalMutator = {
-      val nextDot = context.nextDot(replicaId)
-      Dotted(
-        EnableWinsFlag(Dots.single(nextDot)),
-        current.dots add nextDot
-      ).mutator
-    }
-    def disable(using IsCausalMutator)(): C = {
-      Dotted(
-        EnableWinsFlag(Dots.empty),
-        current.dots
-      ).mutator
-    }
-  }
 
 }
