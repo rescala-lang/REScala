@@ -5,16 +5,8 @@ import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle}
 import org.conscrypt.Conscrypt
 
 import java.security.Security
-import java.util.UUID
 
 object Helper {
-  def uuidKeyValuePairs(size: Int): Array[(String, String)] = {
-    val arr = new Array[(String, String)](size)
-    for i <- arr.indices do {
-      arr(i) = UUID.randomUUID().toString -> UUID.randomUUID().toString
-    }
-    arr
-  }
 
   def dummyKeyValuePairs(size: Int): Array[(String, String)] = {
     val arr = new Array[(String, String)](size)
