@@ -1,12 +1,9 @@
 package benchmarks
 
 import org.openjdk.jmh.annotations.{Param, Scope, State}
-import reactives.core.Scheduler
 
 @State(Scope.Benchmark)
 class EngineParam {
-  @Param(Array("synchron", "parrp", "fullmv", "toposort", "sidup"))
-  var engineName: String = scala.compiletime.uninitialized
-
+  var engineName: String             = reactives.SelectedScheduler.candidate.scheduler.schedulerName
   def engine: reactives.default.type = reactives.default
 }
