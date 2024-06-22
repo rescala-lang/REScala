@@ -107,16 +107,16 @@ class DiffManualTests extends munit.ScalaCheckSuite {
 
     val empty: Dotted[MultiVersionRegister[Int]] = Dotted(Bottom[MultiVersionRegister[Int]].empty)
 
-    val delta_1: Dotted[MultiVersionRegister[Int]] = empty.write(using r1)(1)
-    assertEquals(delta_1.read, Set(1))
+    val delta_1: Dotted[MultiVersionRegister[Int]] = empty.mod(_.write(using r1)(1))
+    assertEquals(delta_1.data.read, Set(1))
 
     // delta_1 and delta_2 are in parallel
 
-    val delta_2: Dotted[MultiVersionRegister[Int]] = empty.write(using r2)(2)
-    assertEquals(delta_2.read, Set(2))
+    val delta_2: Dotted[MultiVersionRegister[Int]] = empty.mod(_.write(using r2)(2))
+    assertEquals(delta_2.data.read, Set(2))
 
     val merged: Dotted[MultiVersionRegister[Int]] = Lattice[Dotted[MultiVersionRegister[Int]]].merge(delta_1, delta_2)
-    assertEquals(merged.read, Set(1, 2))
+    assertEquals(merged.data.read, Set(1, 2))
 
     val delta_1_diff_delta_2: Option[Dotted[MultiVersionRegister[Int]]] =
       Lattice[Dotted[MultiVersionRegister[Int]]].diff(delta_1, delta_2)
@@ -143,15 +143,15 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     val empty: Dotted[LastWriterWins[Int]] = Bottom[Dotted[LastWriterWins[Int]]].empty
 
     val delta_1: Dotted[LastWriterWins[Int]] = empty.write(1)
-    assertEquals(delta_1.read, 1)
+    assertEquals(delta_1.data.read, 1)
 
     // delta_1 and delta_2 are in parallel
 
     val delta_2: Dotted[LastWriterWins[Int]] = empty.write(2)
-    assertEquals(delta_2.read, 2)
+    assertEquals(delta_2.data.read, 2)
 
     val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(delta_1, delta_2)
-    assertEquals(merged.read, 2)
+    assertEquals(merged.data.read, 2)
 
     val delta_1_diff_delta_2: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(delta_1, delta_2)

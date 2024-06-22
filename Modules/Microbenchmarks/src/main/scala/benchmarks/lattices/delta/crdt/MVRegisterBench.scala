@@ -28,17 +28,17 @@ class MVRegisterBench {
     reg = (0 until numWrites).foldLeft(NamedDeltaBuffer.dotted("-1", MultiVersionRegister.empty[Int])) {
       case (r, i) =>
         given rid: rdts.syntax.LocalUid = i.toString.asId
-        val delta                       = Dotted(MultiVersionRegister.empty[Int]).write(i)
+        val delta                       = Dotted(MultiVersionRegister.empty[Int]).mod(_.write(i))
         r.applyDelta(rid.uid, delta)
     }
   }
 
   @Benchmark
-  def read(): Set[Int] = reg.read
+  def read(): Set[Int] = reg.data.read
 
   @Benchmark
-  def write(): DeltaBufferDotted[MultiVersionRegister[Int]] = reg.write(using reg.replicaID)(-1)
+  def write(): DeltaBufferDotted[MultiVersionRegister[Int]] = reg.mod(_.write(using reg.replicaID)(-1))
 
   @Benchmark
-  def clear(): DeltaBufferDotted[MultiVersionRegister[Int]] = reg.clear()
+  def clear(): DeltaBufferDotted[MultiVersionRegister[Int]] = reg.mod(_.clear())
 }

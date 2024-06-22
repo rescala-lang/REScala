@@ -28,8 +28,8 @@ object MVRegisterGenerators {
       val ops = Random.shuffle(values.indices ++ List.fill(nClear.toInt)(-1))
 
       ops.foldLeft(AntiEntropyContainer[MultiVersionRegister[A]](ae)) {
-        case (r, -1) => r.clear()
-        case (r, n)  => r.write(using r.replicaID)(values(n))
+        case (r, -1) => r.mod(_.clear())
+        case (r, n)  => r.mod(_.write(using r.replicaID)(values(n)))
       }
     }
 
@@ -48,21 +48,21 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
 
   property("write") {
     forAll { (reg: AntiEntropyContainer[MultiVersionRegister[Int]], v: Int) =>
-      val written = reg.write(using reg.replicaID)(v)
+      val written = reg.mod(_.write(using reg.replicaID)(v))
 
       assert(
-        written.read == Set(v),
-        s"Sequentially writing a value should result in a singleton set containing that value, but ${written.read} does not equal ${Set(v)}"
+        written.data.read == Set(v),
+        s"Sequentially writing a value should result in a singleton set containing that value, but ${written.data.read} does not equal ${Set(v)}"
       )
     }
   }
   property("clear") {
     forAll { (reg: AntiEntropyContainer[MultiVersionRegister[Int]]) =>
-      val cleared = reg.clear()
+      val cleared = reg.mod(_.clear())
 
       assert(
-        cleared.read.isEmpty,
-        s"Clearing the register should result in an empty set, but ${cleared.read} is not empty"
+        cleared.data.read.isEmpty,
+        s"Clearing the register should result in an empty set, but ${cleared.data.read} is not empty"
       )
     }
   }
@@ -73,8 +73,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(using aea.uid)(vA)
-      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).write(using aeb.uid)(vB)
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.uid)(vA))
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).mod(_.write(using aeb.uid)(vB))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -82,12 +82,12 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val rb1 = rb0.processReceivedDeltas()
 
       assert(
-        ra1.read == Set(vA, vB),
-        s"Concurrently writing two values should result in a set containing both values, but ${ra1.read} does not equal ${Set(vA, vB)}"
+        ra1.data.read == Set(vA, vB),
+        s"Concurrently writing two values should result in a set containing both values, but ${ra1.data.read} does not equal ${Set(vA, vB)}"
       )
       assert(
-        rb1.read == Set(vA, vB),
-        s"Concurrently writing two values should result in a set containing both values, but ${rb1.read} does not equal ${Set(vA, vB)}"
+        rb1.data.read == Set(vA, vB),
+        s"Concurrently writing two values should result in a set containing both values, but ${rb1.data.read} does not equal ${Set(vA, vB)}"
       )
     }
   }
@@ -98,8 +98,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).write(using aea.uid)(v)
-      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).clear()
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.uid)(v))
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).mod(_.clear())
 
       AntiEntropy.sync(aea, aeb)
 
@@ -107,12 +107,12 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val rb1 = rb0.processReceivedDeltas()
 
       assert(
-        ra1.read == Set(v),
-        s"Writing a value should win over a concurrent clear, but ${ra1.read} does not equal ${Set(v)}"
+        ra1.data.read == Set(v),
+        s"Writing a value should win over a concurrent clear, but ${ra1.data.read} does not equal ${Set(v)}"
       )
       assert(
-        rb1.read == Set(v),
-        s"Writing a value should win over a concurrent clear, but ${rb1.read} does not equal ${Set(v)}"
+        rb1.data.read == Set(v),
+        s"Writing a value should win over a concurrent clear, but ${rb1.data.read} does not equal ${Set(v)}"
       )
     }
   }
@@ -127,12 +127,12 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
         val opsB = Random.shuffle(valuesB.indices ++ List.fill(nClearB.toInt)(-1))
 
         val ra0 = opsA.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aea)) {
-          case (r, -1) => r.clear()
-          case (r, n)  => r.write(using r.replicaID)(valuesA(n))
+          case (r, -1) => r.mod(_.clear())
+          case (r, n)  => r.mod(_.write(using r.replicaID)(valuesA(n)))
         }
         val rb0 = opsB.foldLeft(AntiEntropyContainer[MultiVersionRegister[Int]](aeb)) {
-          case (r, -1) => r.clear()
-          case (r, n)  => r.write(using r.replicaID)(valuesB(n))
+          case (r, -1) => r.mod(_.clear())
+          case (r, n)  => r.mod(_.write(using r.replicaID)(valuesB(n)))
         }
 
         AntiEntropy.sync(aea, aeb)
@@ -143,8 +143,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
         val rb1 = rb0.processReceivedDeltas()
 
         assert(
-          ra1.read == rb1.read,
-          s"After synchronization messages were reliably exchanged all replicas should converge, but ${ra1.read} does not equal ${rb1.read}"
+          ra1.data.read == rb1.data.read,
+          s"After synchronization messages were reliably exchanged all replicas should converge, but ${ra1.data.read} does not equal ${rb1.data.read}"
         )
     }
   }
