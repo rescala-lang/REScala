@@ -138,9 +138,6 @@ class SerializeOnlyBenchmarkState {
     var count = 0
     for entry <- dummyKeyValuePairs do {
       count = count + 1
-      if count % 1000 == 0 then {
-        println(s"put $count entries")
-      }
       // Update crdt
       crdt.put(entry._1, entry._2)
       // Track time information used for encrypted crdt
