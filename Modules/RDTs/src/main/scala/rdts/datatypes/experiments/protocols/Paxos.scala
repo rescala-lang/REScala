@@ -43,7 +43,7 @@ case class Paxos[A](
   def prepare()(using LocalUid): Paxos[A] =
     val proposalNumber = highestProposal.map(_.proposalNumber).getOrElse(-1) + 1
     Paxos.unchanged.copy(
-      prepares = prepares.insert(Prepare(proposalNumber, replicaId))
+      prepares = Set(Prepare(proposalNumber, replicaId))
     )
 
   def promise()(using LocalUid): Paxos[A] =
@@ -60,7 +60,7 @@ case class Paxos[A](
       val value =
         accepteds.filter(_.acceptor == replicaId).map(_.value).headOption
       Paxos.unchanged.copy(
-        promises = promises.insert(Promise(highestProposal.get, value, replicaId))
+        promises = Set(Promise(highestProposal.get, value, replicaId))
       )
 
   def accept(v: A)(using LocalUid): Paxos[A] =
@@ -74,7 +74,7 @@ case class Paxos[A](
       val promisesWithVal = promisesForProposal.filter(_.value.isDefined)
       val value: A        = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
       Paxos.unchanged.copy(
-        accepts = accepts.insert(Accept(myHighestProposal.get, value))
+        accepts = Set(Accept(myHighestProposal.get, value))
       )
 
   def accepted()(using LocalUid): Paxos[A] =
@@ -86,7 +86,7 @@ case class Paxos[A](
       Paxos.unchanged
     else
       Paxos.unchanged.copy(accepteds =
-        accepteds.insert(Accepted(
+        Set(Accepted(
           proposal = newestAccept.get.proposal,
           value = newestAccept.get.value,
           acceptor = replicaId

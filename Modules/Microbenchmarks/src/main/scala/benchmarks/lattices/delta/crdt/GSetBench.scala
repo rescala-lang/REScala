@@ -22,13 +22,13 @@ class GSetBench {
   @Setup
   def setup(): Unit = {
     set = (0 until size).foldLeft(NamedDeltaBuffer("a".asId, Set.empty[Int])) {
-      case (s, e) => s.insert(e)
+      case (s, e) => s.mod(_.insert(e))
     }
   }
 
   @Benchmark
-  def elements(): Set[Int] = set.elements
+  def elements(): Set[Int] = set.state
 
   @Benchmark
-  def insert(): NamedDeltaBuffer[Set[Int]] = set.insert(-1)
+  def insert(): NamedDeltaBuffer[Set[Int]] = set.mod(_.insert(-1))
 }

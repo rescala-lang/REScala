@@ -1,7 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.{Bottom, Lattice, Uid}
-import rdts.datatypes.GrowOnlySet.syntax
 import rdts.datatypes.{Epoch, GrowOnlySet}
 import rdts.syntax.LocalUid
 import rdts.syntax.LocalUid.replicaId
@@ -16,7 +15,7 @@ case class SimpleVoting(votes: Set[Vote]) {
     id == replicaId && count >= threshold
 
   def voteFor(uid: Uid)(using LocalUid): SimpleVoting =
-    if votes.elements.exists { case Vote(_, voter) => voter == replicaId }
+    if votes.exists { case Vote(_, voter) => voter == replicaId }
     then SimpleVoting(Set.empty) // already voted!
     else
       SimpleVoting(Set(Vote(uid, replicaId)))
