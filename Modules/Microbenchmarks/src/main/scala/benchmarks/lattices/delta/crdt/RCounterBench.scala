@@ -25,26 +25,26 @@ class RCounterBench {
   @Setup
   def setup(): Unit = {
     counter =
-      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).increment(using "0".asId)()) {
+      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).mod(_.increment(using "0".asId)())) {
         case (c, n) =>
           given rid: LocalUid = n.toString.asId
-          val delta           = Dotted(ResettableCounter.zero).increment()
+          val delta           = Dotted(ResettableCounter.zero).mod(_.increment())
           c.applyDelta(rid.uid, delta)
       }
   }
 
   @Benchmark
-  def value(): Int = counter.value
+  def value(): Int = counter.data.value
 
   @Benchmark
-  def fresh(): DeltaBufferDotted[ResettableCounter] = counter.fresh(using counter.replicaID)()
+  def fresh(): DeltaBufferDotted[ResettableCounter] = counter.mod(_.fresh(using counter.replicaID)())
 
   @Benchmark
-  def increment(): DeltaBufferDotted[ResettableCounter] = counter.increment(using counter.replicaID)()
+  def increment(): DeltaBufferDotted[ResettableCounter] = counter.mod(_.increment(using counter.replicaID)())
 
   @Benchmark
-  def decrement(): DeltaBufferDotted[ResettableCounter] = counter.decrement(using counter.replicaID)()
+  def decrement(): DeltaBufferDotted[ResettableCounter] = counter.mod(_.decrement(using counter.replicaID)())
 
   @Benchmark
-  def reset(): DeltaBufferDotted[ResettableCounter] = counter.reset()
+  def reset(): DeltaBufferDotted[ResettableCounter] = counter.mod(_.reset())
 }

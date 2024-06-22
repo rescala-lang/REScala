@@ -2,7 +2,7 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.{LocalUid, OpsSyntaxHelper}
+import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 /** An EWFlag (Enable-Wins Flag) is a Delta CRDT modeling a boolean flag.
