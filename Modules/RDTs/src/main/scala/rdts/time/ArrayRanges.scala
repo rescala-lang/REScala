@@ -132,12 +132,6 @@ class ArrayRanges(
     var rightPos  = 0
     var mergedPos = 0
 
-    val merged = new Array[Time](used + other.used)
-
-    inline def write(t: Time): Unit =
-      merged(mergedPos) = t
-      mergedPos += 1
-
     inline def lstart = inner(leftPos)
     inline def lend   = inner(leftPos + 1)
     inline def rstart = other.inner(rightPos)
@@ -145,6 +139,30 @@ class ArrayRanges(
 
     inline def lok = leftPos < used
     inline def rok = rightPos < other.used
+
+    // return early if one is empty
+    if !lok then return other
+    if !rok then return this
+
+    val merged = new Array[Time](used + other.used)
+
+    // fast path if left end touches right start
+    if inner(used - 1) == rstart then {
+      System.arraycopy(inner, 0, merged, 0, used - 1)
+      System.arraycopy(other.inner, 1, merged, used - 1, other.used - 1)
+      return new ArrayRanges(merged, used + other.used - 2)
+    }
+
+    // fast path if this is strictly before right
+    if inner(used - 1) <= rstart then {
+      System.arraycopy(inner, 0, merged, 0, used)
+      System.arraycopy(other.inner, 0, merged, used, other.used)
+      return new ArrayRanges(merged, used + other.used)
+    }
+
+    inline def write(t: Time): Unit =
+      merged(mergedPos) = t
+      mergedPos += 1
 
     def findNextRange(): Unit =
       val selection =
