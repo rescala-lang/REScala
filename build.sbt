@@ -104,8 +104,8 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
     libraryDependencies += LocalSettings.scalafx,
     fork := true,
     Dependencies.jsoniterScala,
-    LocalSettings.tink,
     Settings.javaOutputVersion(17),
+    LocalSettings.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
@@ -199,13 +199,14 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(reactives.jvm, rdts.jvm)
+  .dependsOn(reactives.jvm, rdts.jvm, replication.jvm)
   .settings(
     scala3defaults,
     Dependencies.upickle,
     Dependencies.jsoniterScala,
     Settings.jolSettings,
-    // (Compile / mainClass) := Some("org.openjdk.jmh.Main"),
+    LocalSettings.tink,
+    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
