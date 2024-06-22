@@ -7,7 +7,7 @@ import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, Js
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.Dotted
 import rdts.syntax.LocalUid
-import replication.{Crypto, DataManager, ProtocolDots}
+import replication.{DataManager, ProtocolDots}
 
 import java.net.URI
 import java.nio.file.{Files, Path}
@@ -39,10 +39,10 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
       replicaId: LocalUid,
       _ => (),
       pd => receiveCallback(Dotted(pd.data, pd.context)),
-      crypto = Some(new Crypto {
-        override def encrypt(data: Array[Byte]): Array[Byte] = aead.encrypt(data, Array.empty)
+      crypto = Some(new replication.Aead {
+        override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
 
-        override def decrypt(data: Array[Byte]): Array[Byte] = aead.decrypt(data, Array.empty)
+        override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
       })
     )
 

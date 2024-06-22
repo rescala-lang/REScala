@@ -26,16 +26,16 @@ object ProtocolMessage {
 
 case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bottom
 
-trait Crypto {
-  def encrypt(data: Array[Byte]): Array[Byte]
-  def decrypt(data: Array[Byte]): Array[Byte]
+trait Aead {
+  def encrypt(plain: Array[Byte], associated: Array[Byte]): Array[Byte]
+  def decrypt(cypher: Array[Byte], associated: Array[Byte]): Array[Byte]
 }
 
 class DataManager[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
-    crypto: Option[Crypto] = None
+    crypto: Option[Aead] = None
 )(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
 
   given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]]              = JsonCodecMaker.make
@@ -66,7 +66,7 @@ class DataManager[State](
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
     case Success(msg) =>
-      val bytes = crypto.map(c => c.decrypt(msg.asArray)).getOrElse(msg.asArray)
+      val bytes = crypto.map(c => c.decrypt(msg.asArray, Array.empty)).getOrElse(msg.asArray)
       val res   = readFromArray[ProtocolMessage[TransferState]](bytes)
       println(s"$res")
       handleMessage(res, outChan)
@@ -153,7 +153,7 @@ class DataManager[State](
   }
 
   def toEncBuffer(bytes: Array[Byte]): MessageBuffer =
-    val enc = crypto.map(c => c.encrypt(bytes)).getOrElse(bytes)
+    val enc = crypto.map(c => c.encrypt(bytes, Array.empty)).getOrElse(bytes)
     ArrayMessageBuffer(enc)
 
 }
