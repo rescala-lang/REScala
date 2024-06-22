@@ -23,7 +23,7 @@ class BoundedCounterTest extends munit.FunSuite {
     assertEquals(r2.anon.reserved(r2.replicaId), 0)
     assertEquals(r3.anon.reserved(r3.replicaId), 0)
 
-    r1.mod(_.rebalance(using r1.replicaId).allocate(10)(using r1.replicaId))
+    r1.mod(_.rebalance(using r1.replicaId)).mod(_.allocate(10)(using r1.replicaId))
     assertInvariant()
     assertEquals(r1.anon.available(r1.replicaId), 40, "100 -> rebalanced to 50 -> -10 allocated")
 
