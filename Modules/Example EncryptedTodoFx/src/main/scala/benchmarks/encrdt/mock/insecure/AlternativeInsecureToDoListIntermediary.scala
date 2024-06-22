@@ -1,12 +1,11 @@
 package benchmarks.encrdt.mock.insecure
 
-import benchmarks.encrdt.idFromString
+import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.IntermediarySizeInfo
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import encrdtlib.container.DeltaAWLWWMContainer
 import encrdtlib.container.DeltaAWLWWMContainer.DeltaAddWinsLastWriterWinsMapLattice
-import rdts.base.Bottom
 
 import java.util.UUID
 
