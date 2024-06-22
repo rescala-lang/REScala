@@ -43,7 +43,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
     given myId: rdts.syntax.LocalUid = Uid.gen()
 
     // okay, this is cheating, this just adds complex components to a replicated list, and would not be sufficient for fine grained editing of replicated UIs … however, it should be sufficient for a very simple usecase
-    rlist.mod(_.append(exampleComposition))
+    rlist.modd(_.append(exampleComposition))
   }
 
 }

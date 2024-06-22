@@ -110,14 +110,14 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
     val addAppointment = Interaction[Calendar, Appointment]
       .requires { (_, a: Appointment) => a.start <= a.end }
       .requires { (cal: Calendar, a) => !cal.data.contains(a) }
-      .executes { (cal: Calendar, a) => cal.clearDeltas().mod(_.add(a)) }
+      .executes { (cal: Calendar, a) => cal.clearDeltas().modd(_.add(a)) }
       .ensures { (cal: Calendar, a) => cal.data.contains(a) }
 
     // ====================== remove ====================== //
 
     val removeAppointment: InteractionWithExecutes[Tuple1[Calendar], Appointment] = Interaction[Calendar, Appointment]
       .requires { (cal: Calendar, a) => cal.data.contains(a) }
-      .executes { (cal: Calendar, a) => cal.clearDeltas().mod(_.remove(a)) }
+      .executes { (cal: Calendar, a) => cal.clearDeltas().modd(_.remove(a)) }
       .ensures { (cal: Calendar, a) => !cal.data.contains(a) }
     /*
       .ensures { (cal: Calendar, a) =>
@@ -137,7 +137,7 @@ class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
       .requires { (cal: Calendar, aps) => aps._2.start <= aps._2.end }
       .requires { (cal: Calendar, aps) => cal.data.elements.contains(aps._1) }
       .requires { (cal: Calendar, aps) => !cal.data.elements.contains(aps._2) }
-      .executes { (cal: Calendar, aps) => cal.clearDeltas().mod(_.remove(aps._1)).mod(_.add(aps._2)) }
+      .executes { (cal: Calendar, aps) => cal.clearDeltas().modd(_.remove(aps._1)).modd(_.add(aps._2)) }
       .ensures { (cal: Calendar, aps) => cal.data.elements.contains(aps._2) }
       // .ensures { (cal: Calendar, aps) => cal.toSet == old(cal.toSet.setminus(Set(oldApp)).union(Set(newApp))) }
       .ensures { (cal: Calendar, aps) => !cal.data.elements.contains(aps._1) }

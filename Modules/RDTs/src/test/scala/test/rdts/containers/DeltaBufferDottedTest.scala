@@ -17,9 +17,9 @@ class DeltaBufferDottedTest extends munit.FunSuite {
     assert(!dbe.data.read)
     assertEquals(dbe.deltaBuffer, List.empty)
 
-    val dis = dbe.mod(_.enable()).mod(_.enable())
+    val dis = dbe.modd(_.enable()).modd(_.enable())
     assert(dis.data.read)
-    val en = dis.mod(_.disable())
+    val en = dis.modd(_.disable())
 
     assert(!en.data.read)
     assertEquals(en.deltaBuffer.size, 3)

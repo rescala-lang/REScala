@@ -8,43 +8,36 @@ import rdts.time.Dots
   * take these deltas and ship them to other replicas, using applyDelta to apply them on the remote state. After deltas
   * have been read and propagated by the middleware, it should call resetDeltaBuffer to empty the deltaBuffer.
   */
-case class DeltaBuffer[State](
-    state: State,
-    deltaBuffer: List[State] = Nil
+case class DeltaBuffer[A](
+    state: A,
+    deltaBuffer: List[A] = Nil
 ) {
-  def applyDelta(delta: State)(using Lattice[State]): DeltaBuffer[State] =
+  def applyDelta(delta: A)(using Lattice[A]): DeltaBuffer[A] =
     val merged = state merge delta
     DeltaBuffer(merged, if merged == state then deltaBuffer else delta :: deltaBuffer)
-  def clearDeltas(): DeltaBuffer[State] = DeltaBuffer(state)
+  def clearDeltas(): DeltaBuffer[A] = DeltaBuffer(state)
 
-  def mutable: DeltaBufferContainer[State] = new DeltaBufferContainer(this)
+  def mutable: DeltaBufferContainer[A] = new DeltaBufferContainer(this)
 
-  def transform(f: State => State)(using Lattice[State]): DeltaBuffer[State] = applyDelta(f(state))
+  def transform(f: A => A)(using Lattice[A]): DeltaBuffer[A] = applyDelta(f(state))
+
+  inline def modn(f: A => A)(using Lattice[A]): DeltaBuffer[A] = {
+    applyDelta(f(state))
+  }
 
 }
 
 object DeltaBuffer {
 
   extension [A](curr: DeltaBuffer[Dotted[A]])(using Lattice[Dotted[A]]) {
-    inline def mod(f: A => Dots ?=> Dotted[A]): DeltaBuffer[Dotted[A]] = {
+    inline def modd(f: A => Dots ?=> Dotted[A]): DeltaBuffer[Dotted[A]] = {
       curr.applyDelta(curr.state.mod(f(_)))
-    }
-    inline def modn(f: A => A): DeltaBuffer[Dotted[A]] = {
-      curr.applyDelta(Dotted(f(curr.state.data)))
     }
   }
 
   extension [A](curr: DeltaBuffer[Dotted[A]]) {
     def data: A = curr.state.data
   }
-
-  extension [A](curr: DeltaBuffer[A])(using Lattice[A]) {
-
-    inline def modp(f: A => A): DeltaBuffer[A] = {
-      curr.applyDelta(f(curr.state))
-    }
-  }
-
 }
 
 class DeltaBufferContainer[State](var result: DeltaBuffer[State]) {

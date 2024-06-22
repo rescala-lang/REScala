@@ -28,9 +28,9 @@ class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit
   val remaining_vacation = Signal { vacation_days - vacation.value.data.elements.size }
 
   def add_appointment(calendar: Var[Calendar], appointment: Appointment): Unit =
-    calendar.transform(_.mod(_.add(appointment)))
+    calendar.transform(_.modd(_.add(appointment)))
   def remove_appointment(calendar: Var[Calendar], appointment: Appointment): Unit = {
-    synchronizationPoint("remove") { calendar.transform(_.mod(_.remove(appointment))) }
+    synchronizationPoint("remove") { calendar.transform(_.modd(_.remove(appointment))) }
   }
   def change_time(
       calendar: Var[Calendar],
@@ -38,6 +38,6 @@ class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit
       start: Int,
       end: Int
   ): Unit = calendar.transform { cal =>
-    cal.mod(_.remove(appointment)).mod(_.add(appointment.copy(start, end)))
+    cal.modd(_.remove(appointment)).modd(_.add(appointment.copy(start, end)))
   }
 }

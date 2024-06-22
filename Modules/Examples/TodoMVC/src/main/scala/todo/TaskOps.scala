@@ -27,12 +27,12 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
     val taskid = s"Task(${ThreadLocalRandom.current().nextLong().toHexString})"
     TaskReferences.lookupOrCreateTaskRef(taskid, Some(TaskData(desc)))
     val taskref = TaskRef(taskid)
-    current.mod(_.prepend(taskref))
+    current.modd(_.prepend(taskref))
   }
 
   def handleRemoveAll(removeAll: Event[Any]): Fold.Branch[State] =
     removeAll.branch: _ =>
-      current.mod(_.deleteBy { (taskref: TaskRef) =>
+      current.modd(_.deleteBy { (taskref: TaskRef) =>
         val isDone = taskref.task.value.state.read.exists(_.done)
         // todo, move to observer, disconnect during transaction does not respect rollbacks
         if isDone then taskref.task.disconnect()
@@ -40,7 +40,7 @@ class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
       })
 
   def handleRemove(state: State)(id: String): State = {
-    state.mod(_.deleteBy { (taskref: TaskRef) =>
+    state.modd(_.deleteBy { (taskref: TaskRef) =>
       val delete = taskref.id == id
       // todo, move to observer, disconnect during transaction does not respect rollbacks
       if delete then taskref.task.disconnect()

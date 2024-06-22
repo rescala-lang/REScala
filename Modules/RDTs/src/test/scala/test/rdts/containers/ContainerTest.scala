@@ -47,10 +47,10 @@ class ContainerTest extends munit.FunSuite {
 
     assertEquals(flag.data.read, false)
 
-    val enabled = flag.mod(_.enable())
+    val enabled = flag.modd(_.enable())
     assertEquals(enabled.data.read, true)
 
-    val disabled = enabled.mod(_.disable())
+    val disabled = enabled.modd(_.disable())
     assertEquals(disabled.data.read, false)
   }
 
@@ -91,12 +91,12 @@ class ContainerTest extends munit.FunSuite {
 
     assert(awSet.data.elements.isEmpty)
 
-    val added = awSet.mod(_.add("First"))
+    val added = awSet.modd(_.add("First"))
     assertEquals(added.data.elements.size, 1)
     assert(added.data.elements.contains("First"))
     assert(added.data.contains("First"))
 
-    val removed = added.mod(_.remove("First"))
+    val removed = added.modd(_.remove("First"))
     assert(removed.data.elements.isEmpty)
   }
 
@@ -221,34 +221,17 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(auction.state.status, AuctionInterface.Open)
     assertEquals(auction.state.winner, None)
 
-    val added = auction.modp(_.bid("First", 1))
+    val added = auction.modn(_.bid("First", 1))
     assertEquals(added.state.bids, Set(Bid("First", 1)))
     assertEquals(added.state.status, AuctionInterface.Open)
     assertEquals(added.state.winner, None)
 
-    val knockedDown = added.modp(_.knockDown())
+    val knockedDown = added.modn(_.knockDown())
     assertEquals(knockedDown.state.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.state.status, AuctionInterface.Closed)
     assertEquals(knockedDown.state.winner, Some("First"))
   }
 
-  test("Dotted DeltaBuffer can contain plain AuctionData") {
-    val auction: DeltaBuffer[Dotted[AuctionData]] = DeltaBuffer(Dotted.empty)
-
-    assertEquals(auction.state.data.bids, Set.empty)
-    assertEquals(auction.state.data.status, AuctionInterface.Open)
-    assertEquals(auction.state.data.winner, None)
-
-    val added = auction.modn(_.bid("First", 1))
-    assertEquals(added.state.data.bids, Set(Bid("First", 1)))
-    assertEquals(added.state.data.status, AuctionInterface.Open)
-    assertEquals(added.state.data.winner, None)
-
-    val knockedDown = added.modn(_.knockDown())
-    assertEquals(knockedDown.state.data.bids, Set(Bid("First", 1)))
-    assertEquals(knockedDown.state.data.status, AuctionInterface.Closed)
-    assertEquals(knockedDown.state.data.winner, Some("First"))
-  }
 
   test("Dotted DeltaBufferContainer can contain plain AuctionData") {
     val auction: DeltaBufferContainer[Dotted[AuctionData]] = DeltaBufferContainer(DeltaBuffer(Dotted.empty))
