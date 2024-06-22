@@ -5,6 +5,7 @@ import rdts.datatypes.GrowOnlyList.Node
 import rdts.datatypes.GrowOnlyList.Node.Elem
 import rdts.dotted.HasDots
 import rdts.syntax.OpsSyntaxHelper
+import GrowOnlyList.Node.*
 
 import scala.annotation.tailrec
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -18,7 +19,88 @@ import scala.math.Ordering.Implicits.infixOrderingOps
   * scale linearly with the length of the list. Similarly, toList always has to iterate the whole list, so for applications
   * that don't always need the whole list you should consider using toLazyList instead.
   */
-case class GrowOnlyList[E](inner: Map[Node[LastWriterWins[E]], Elem[LastWriterWins[E]]])
+case class GrowOnlyList[E](inner: Map[Node[LastWriterWins[E]], Elem[LastWriterWins[E]]]) {
+
+  type Delta = GrowOnlyList[E]
+
+  @tailrec
+  private def findNth(
+      state: GrowOnlyList[E],
+      current: Node[LastWriterWins[E]],
+      i: Int
+  ): Option[Node[LastWriterWins[E]]] = {
+    if i == 0 then Some(current)
+    else
+      state.inner.get(current) match {
+        case None       => None
+        case Some(elem) => findNth(state, elem, i - 1)
+      }
+  }
+
+  def read(i: Int): Option[E] =
+    findNth(this, Head, i + 1).flatMap {
+      case Head    => None
+      case Elem(e) => Some(e.payload)
+    }
+
+  def toList: List[E] =
+    val state = this
+
+    @tailrec
+    def toListRec(current: Node[LastWriterWins[E]], acc: List[E]): List[E] =
+      state.inner.get(current) match {
+        case None                  => acc.reverse
+        case Some(next @ Elem(tv)) => toListRec(next, tv.payload :: acc)
+      }
+
+    toListRec(Head, Nil)
+
+  def toLazyList: LazyList[E] =
+    LazyList.unfold[E, Node[LastWriterWins[E]]](Head) { node =>
+      inner.get(node) match {
+        case None                  => None
+        case Some(next @ Elem(tv)) => Some((tv.payload, next))
+      }
+    }
+
+  def size: Int = inner.size
+
+  def insertGL(i: Int, e: E): Delta = {
+    GrowOnlyList(findNth(this, Head, i) match {
+      case None => Map.empty
+      case Some(pred) =>
+        Map(pred -> Elem(LastWriterWins.now(e)))
+    })
+  }
+
+  def insertAllGL(i: Int, elems: Iterable[E]): Delta = {
+    if elems.isEmpty then
+      GrowOnlyList.empty[E]
+    else
+      GrowOnlyList(findNth(this, Head, i) match {
+        case None => Map.empty
+        case Some(after) =>
+          val order = elems.map(e => Elem(LastWriterWins.now(e)): Elem[LastWriterWins[E]])
+          Map((List(after) ++ order.init) zip order*)
+      })
+  }
+
+  @tailrec
+  private def withoutRec(state: GrowOnlyList[E], current: Node[LastWriterWins[E]], elems: Set[E]): GrowOnlyList[E] =
+    state.inner.get(current) match {
+      case None => state
+      case Some(next @ Elem(tv)) if elems.contains(tv.payload) =>
+        val edgeRemoved = state.inner.get(next) match {
+          case Some(nextnext) => state.inner.removed(current).removed(next) + (current -> nextnext)
+          case None           => state.inner.removed(current).removed(next)
+        }
+
+        withoutRec(GrowOnlyList(edgeRemoved), current, elems)
+      case Some(next) => withoutRec(state, next, elems)
+    }
+
+  def without(elems: Set[E]): Delta = withoutRec(this, Head, elems)
+}
 
 object GrowOnlyList {
   enum Node[+E]:
@@ -88,89 +170,5 @@ object GrowOnlyList {
           insertRec(state, right, startNode)
         }
     }
-
-  extension [C, E](container: C)
-    def growOnlyList: syntax[C, E] = syntax(container)
-
-  implicit class syntax[C, E](container: C)
-      extends OpsSyntaxHelper[C, GrowOnlyList[E]](container) {
-
-    @tailrec
-    private def findNth(
-        state: GrowOnlyList[E],
-        current: Node[LastWriterWins[E]],
-        i: Int
-    ): Option[Node[LastWriterWins[E]]] = {
-      if i == 0 then Some(current)
-      else
-        state.inner.get(current) match {
-          case None       => None
-          case Some(elem) => findNth(state, elem, i - 1)
-        }
-    }
-
-    def read(using IsQuery)(i: Int): Option[E] =
-      findNth(current, Head, i + 1).flatMap {
-        case Head    => None
-        case Elem(e) => Some(e.payload)
-      }
-
-    def toList(using IsQuery): List[E] =
-      val state = current
-      @tailrec
-      def toListRec(current: Node[LastWriterWins[E]], acc: List[E]): List[E] =
-        state.inner.get(current) match {
-          case None                  => acc.reverse
-          case Some(next @ Elem(tv)) => toListRec(next, tv.payload :: acc)
-        }
-
-      toListRec(Head, Nil)
-
-    def toLazyList(using IsQuery): LazyList[E] =
-      LazyList.unfold[E, Node[LastWriterWins[E]]](Head) { node =>
-        current.inner.get(node) match {
-          case None                  => None
-          case Some(next @ Elem(tv)) => Some((tv.payload, next))
-        }
-      }
-
-    def size(using IsQuery): Int = current.inner.size
-
-    def insertGL(i: Int, e: E): Mutator = {
-      GrowOnlyList(findNth(current, Head, i) match {
-        case None => Map.empty
-        case Some(pred) =>
-          Map(pred -> Elem(LastWriterWins.now(e)))
-      })
-    }.mutator
-
-    def insertAllGL(i: Int, elems: Iterable[E]): Mutator = {
-      if elems.isEmpty then
-        GrowOnlyList.empty[E]
-      else
-        GrowOnlyList(findNth(current, Head, i) match {
-          case None => Map.empty
-          case Some(after) =>
-            val order = elems.map(e => Elem(LastWriterWins.now(e)): Elem[LastWriterWins[E]])
-            Map((List(after) ++ order.init) zip order*)
-        })
-    }.mutator
-
-    @tailrec
-    private def withoutRec(state: GrowOnlyList[E], current: Node[LastWriterWins[E]], elems: Set[E]): GrowOnlyList[E] =
-      state.inner.get(current) match {
-        case None => state
-        case Some(next @ Elem(tv)) if elems.contains(tv.payload) =>
-          val edgeRemoved = state.inner.get(next) match {
-            case Some(nextnext) => state.inner.removed(current).removed(next) + (current -> nextnext)
-            case None           => state.inner.removed(current).removed(next)
-          }
-
-          withoutRec(GrowOnlyList(edgeRemoved), current, elems)
-        case Some(next) => withoutRec(state, next, elems)
-      }
-
-    def without(elems: Set[E])(using IsMutator): C = withoutRec(current, Head, elems).mutator
-  }
 
 }

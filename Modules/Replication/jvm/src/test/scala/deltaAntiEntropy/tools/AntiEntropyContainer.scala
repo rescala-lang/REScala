@@ -6,6 +6,8 @@ import rdts.dotted.{Dotted, DottedLattice}
 import rdts.syntax.{LocalUid, PermCausalMutate, PermMutate}
 import rdts.time.Dots
 
+import scala.annotation.targetName
+
 /** BasicCRDTs are Delta CRDTs that use [[IAntiEntropy]] and [[Network]] as Middleware for exchanging deltas between replicas.
   * They cannot actually be used on multiple connected replicas, but are useful for locally testing the behavior of
   * Delta CRDTs.
@@ -54,6 +56,14 @@ object AntiEntropyContainer {
 
   extension [A](curr: AntiEntropyContainer[A]) {
     def data: A = curr.state.data
+  }
+
+
+  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]]) {
+    @targetName("modNoDelta") inline def modn(f: A => A): AntiEntropyContainer[A] = {
+      val next = Dots.single(curr.state.context.nextDot(curr.replicaID.uid))
+      curr.applyDelta(Named(curr.replicaID.uid, Dotted(f(curr.state.data), next)))
+    }
   }
 
   given allPermissions[L: DottedLattice]

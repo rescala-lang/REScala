@@ -72,7 +72,7 @@ object ReplicatedList {
 
     def toList(using IsQuery): List[E] = {
       val ReplicatedList(fw, df) = current
-      fw.value.growOnlyList.toList.flatMap(df.get).map(_.payload)
+      fw.value.toList.flatMap(df.get).map(_.payload)
     }
 
     def sequence(using IsQuery): Long = {
@@ -178,7 +178,7 @@ object ReplicatedList {
     def purgeTombstones(using LocalUid, IsCausalMutator)(): C = {
       val ReplicatedList(epoche, df) = current
 
-      val known: List[Dot] = epoche.value.growOnlyList.toList
+      val known: List[Dot] = epoche.value.toList
 
       val contained = df.dots
 

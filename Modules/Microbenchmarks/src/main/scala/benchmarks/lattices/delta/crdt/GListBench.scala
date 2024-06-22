@@ -5,6 +5,8 @@ import rdts.base.Uid.asId
 import rdts.datatypes.GrowOnlyList
 
 import java.util.concurrent.TimeUnit
+import benchmarks.lattices.delta.crdt.NamedDeltaBuffer.mod
+
 
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -23,25 +25,25 @@ class GListBench {
   @Setup
   def setup(): Unit = {
     list = (0 until listSize).foldLeft(NamedDeltaBuffer("a".asId, GrowOnlyList.empty[Int])) {
-      case (c, i) => c.insertGL(0, i)
+      case (c, i) => c.mod(_.insertGL(0, i))
     }
   }
 
   @Benchmark
-  def toList: List[Int] = list.toList
+  def toList: List[Int] = list.state.toList
 
   @Benchmark
-  def size(): Int = list.size
+  def size(): Int = list.state.size
 
   @Benchmark
-  def readFirst(): Option[Int] = list.read(0)
+  def readFirst(): Option[Int] = list.state.read(0)
 
   @Benchmark
-  def readLast(): Option[Int] = list.read(listSize - 1)
+  def readLast(): Option[Int] = list.state.read(listSize - 1)
 
   @Benchmark
-  def insertStart(): NamedDeltaBuffer[GrowOnlyList[Int]] = list.insertGL(0, -1)
+  def insertStart(): NamedDeltaBuffer[GrowOnlyList[Int]] = list.mod(_.insertGL(0, -1))
 
   @Benchmark
-  def insertEnd(): NamedDeltaBuffer[GrowOnlyList[Int]] = list.insertGL(listSize, -1)
+  def insertEnd(): NamedDeltaBuffer[GrowOnlyList[Int]] = list.mod(_.insertGL(listSize, -1))
 }

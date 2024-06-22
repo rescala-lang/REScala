@@ -43,6 +43,13 @@ object NamedDeltaBuffer {
     }
   extension [A](curr: DeltaBufferDotted[A]) def data: A = curr.state.data
 
+  implicit object workaround {
+    extension [A](curr: NamedDeltaBuffer[A])(using Lattice[A])
+      inline def mod(f: A => A): NamedDeltaBuffer[A] = {
+        curr.applyDelta(curr.replicaID.uid, f(curr.state))
+      }
+  }
+
   def dotted[State](replicaID: Uid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())
 

@@ -44,49 +44,49 @@ class GListTest extends munit.ScalaCheckSuite {
   property("size, toList, read") {
     forAll { (gol: GrowOnlyList[Int], readIdx: Int) =>
       val list = makeNet(gol)
-      val l    = list.toList
+      val l    = list.data.toList
 
-      assertEquals(list.size, l.size)
-      assert(list.read(readIdx) == l.lift(readIdx))
+      assertEquals(list.data.size, l.size)
+      assert(list.data.read(readIdx) == l.lift(readIdx))
     }
   }
   property("insert") {
     forAll { (gol: GrowOnlyList[Int], insertIndex: Int, e: Int) =>
       val list = makeNet(gol)
 
-      val szeBefore = list.size
-      val l         = list.toList
+      val szeBefore = list.data.size
+      val l         = list.data.toList
 
       l.zipWithIndex.foreach: (e, i) =>
-        assertEquals(list.read(i), Some(e))
+        assertEquals(list.data.read(i), Some(e))
 
       assertEquals(szeBefore, l.size)
 
       val n = if szeBefore == 0 then 0 else (insertIndex % szeBefore).abs
 
-      list.insertGL(n, e)
+      list.modn(_.insertGL(n, e))
 
       val inserted =
         val (b, a) = l.splitAt(n)
         b ::: (e :: a)
 
-      assertEquals(list.read(n), Some(e), s"$n ${insertIndex},\n  ${l}\n  ${list.toList}\n  ${list.state}")
+      assertEquals(list.data.read(n), Some(e), s"$n ${insertIndex},\n  ${l}\n  ${list.data.toList}\n  ${list.state}")
 
       assert(
-        list.size == szeBefore + 1,
-        s"When an element is inserted into the list its size should increase by 1, but ${list.size} does not equal ${szeBefore} + 1"
+        list.data.size == szeBefore + 1,
+        s"When an element is inserted into the list its size should increase by 1, but ${list.data.size} does not equal ${szeBefore} + 1"
       )
 
-      assertEquals(list.toList.toSet, inserted.toSet)
-      assertEquals(list.toList.sorted, inserted.sorted)
-      assertEquals(list.toList, inserted)
+      assertEquals(list.data.toList.toSet, inserted.toSet)
+      assertEquals(list.data.toList.sorted, inserted.sorted)
+      assertEquals(list.data.toList, inserted)
     }
   }
   property("toLazyList") {
     forAll { (gol: GrowOnlyList[Int]) =>
       val list  = makeNet(gol)
-      val l     = list.toList
-      val lazyl = list.toLazyList.toList
+      val l     = list.data.toList
+      val lazyl = list.data.toLazyList.toList
 
       assert(
         lazyl == l,
@@ -102,7 +102,7 @@ class GListTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
-        case (l, e) => l.insertGL(0, e)
+        case (l, e) => l.modn(_.insertGL(0, e))
       }
 
       AntiEntropy.sync(aea, aeb)
@@ -112,24 +112,24 @@ class GListTest extends munit.ScalaCheckSuite {
       val idx1 = if size == 0 then 0 else math.floorMod(n1, size)
       val idx2 = if size == 0 then 0 else Math.floorMod(n2, size)
 
-      val la1 = la0.insertGL(idx1, e1)
-      lb0.insertGL(idx2, e2)
+      val la1 = la0.modn(_.insertGL(idx1, e1))
+      lb0.modn(_.insertGL(idx2, e2))
 
       AntiEntropy.sync(aea, aeb)
 
       val la2 = la1.processReceivedDeltas()
 
       assert(
-        idx1 < idx2 && la2.read(idx1).contains(e1) ||
-        idx1 > idx2 && la2.read(idx1 + 1).contains(e1) ||
-        idx1 == idx2 && (la2.read(idx1).contains(e1) || la2.read(idx1 + 1).contains(e1)),
-        s"After synchronization $e1 was not found at its expected location in ${la2.toList}"
+        idx1 < idx2 && la2.data.read(idx1).contains(e1) ||
+        idx1 > idx2 && la2.data.read(idx1 + 1).contains(e1) ||
+        idx1 == idx2 && (la2.data.read(idx1).contains(e1) || la2.data.read(idx1 + 1).contains(e1)),
+        s"After synchronization $e1 was not found at its expected location in ${la2.data.toList}"
       )
       assert(
-        idx1 < idx2 && la2.read(idx2 + 1).contains(e2) ||
-        idx1 > idx2 && la2.read(idx2).contains(e2) ||
-        idx1 == idx2 && (la2.read(idx2).contains(e2) || la2.read(idx2 + 1).contains(e2)),
-        s"After synchronization $e2 was not found at its expected location in ${la2.toList}"
+        idx1 < idx2 && la2.data.read(idx2 + 1).contains(e2) ||
+        idx1 > idx2 && la2.data.read(idx2).contains(e2) ||
+        idx1 == idx2 && (la2.data.read(idx2).contains(e2) || la2.data.read(idx2 + 1).contains(e2)),
+        s"After synchronization $e2 was not found at its expected location in ${la2.data.toList}"
       )
     }
   }
@@ -140,15 +140,15 @@ class GListTest extends munit.ScalaCheckSuite {
       val aeb     = new AntiEntropy[GrowOnlyList[Int]]("b", network, mutable.Buffer("a"))
 
       val la0 = base.reverse.foldLeft(AntiEntropyContainer[GrowOnlyList[Int]](aea)) {
-        case (l, e) => l.insertGL(0, e)
+        case (l, e) => l.modn(_.insertGL(0, e))
       }
       network.startReliablePhase()
       AntiEntropy.sync(aea, aeb)
       network.endReliablePhase()
       val lb0 = AntiEntropyContainer[GrowOnlyList[Int]](aeb).processReceivedDeltas()
 
-      val la1 = insertedA.foldLeft(la0) { (l, e) => l.insertGL(e, e) }
-      val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.insertGL(e, e) }
+      val la1 = insertedA.foldLeft(la0) { (l, e) => l.modn(_.insertGL(e, e)) }
+      val lb1 = insertedB.foldLeft(lb0) { (l, e) => l.modn(_.insertGL(e, e)) }
 
       AntiEntropy.sync(aea, aeb)
       network.startReliablePhase()
@@ -158,8 +158,8 @@ class GListTest extends munit.ScalaCheckSuite {
       val lb2 = lb1.processReceivedDeltas()
 
       assert(
-        la2.toList == lb2.toList,
-        s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.toList} does not equal ${lb2.toList}"
+        la2.data.toList == lb2.data.toList,
+        s"After synchronization messages were reliably exchanged all replicas should converge, but ${la2.data.toList} does not equal ${lb2.data.toList}"
       )
     }
   }
