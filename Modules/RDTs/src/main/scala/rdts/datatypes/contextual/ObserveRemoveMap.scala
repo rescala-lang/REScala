@@ -30,7 +30,7 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   def transformPlain(using LocalUid)(k: K)(m: Option[V] => Option[V])(using context: Dots): Delta = {
     m(inner.get(k)) match {
       case Some(value) => update(k, value)
-      case None        => Dotted.empty
+      case None        => Dotted(ObserveRemoveMap.empty, Dots.single(context.nextDot(LocalUid.replicaId)))
     }
   }
 
