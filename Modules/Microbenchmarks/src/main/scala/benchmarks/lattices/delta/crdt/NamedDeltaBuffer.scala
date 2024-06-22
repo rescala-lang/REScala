@@ -57,18 +57,4 @@ object NamedDeltaBuffer {
     val dot = Dots.empty.nextDot(replicaId)
     NamedDeltaBuffer(replicaId, Dotted(init(dot), Dots.single(dot)), List())
 
-  given dottedPermissions[L: DottedLattice]: PermCausalMutate[NamedDeltaBuffer[Dotted[L]], L] = new {
-    override def query(c: NamedDeltaBuffer[Dotted[L]]): L = c.state.data
-    override def mutateContext(
-        container: NamedDeltaBuffer[Dotted[L]],
-        withContext: Dotted[L]
-    ): NamedDeltaBuffer[Dotted[L]] = container.applyDelta(container.replicaID.uid, withContext)
-    override def context(c: NamedDeltaBuffer[Dotted[L]]): Dots = c.state.context
-  }
-
-  given plainPermissions[L: Lattice]: PermMutate[NamedDeltaBuffer[L], L] = new {
-    override def mutate(c: NamedDeltaBuffer[L], delta: L): NamedDeltaBuffer[L] =
-      c.applyDelta(c.replicaID.uid, delta)
-    override def query(c: NamedDeltaBuffer[L]): L = c.state
-  }
 }

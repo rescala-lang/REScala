@@ -19,9 +19,4 @@ object TestReplica {
   def apply[L](replicaID: Uid, anon: L): TestReplica[L] = new TestReplica(replicaID, anon)
   def unapply[L](wnc: TestReplica[L]): Some[(Uid, L)]   = Some((wnc.replicaId, wnc.anon))
 
-  given permissions[L](using Lattice[L]): PermMutate[TestReplica[L], L]
-  with {
-    override def mutate(c: TestReplica[L], delta: L): TestReplica[L] = c.apply(delta)
-    override def query(c: TestReplica[L]): L                         = c.anon
-  }
 }

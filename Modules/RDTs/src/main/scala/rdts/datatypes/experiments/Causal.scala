@@ -2,7 +2,6 @@ package rdts.datatypes.experiments
 
 import rdts.base.{Bottom, Lattice}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.PermCausalMutate
 import rdts.time.Dots
 
 case class CausalDelta[A](contained: Dots, predecessors: Dots, delta: A) derives Lattice, Bottom
@@ -33,12 +32,4 @@ object CausalStore {
 
   given hasDots[A: HasDots: Bottom]: HasDots[CausalStore[A]] = HasDots.derived
 
-  given syntaxPermissions[C, L: Bottom](using outer: PermCausalMutate[C, CausalStore[L]]): PermCausalMutate[C, L]
-  with {
-    override def mutateContext(container: C, withContext: Dotted[L]): C =
-      val res = CausalStore(CausalDelta(withContext.context, context(container), withContext.data), Bottom.empty)
-      outer.mutateContext(container, withContext.map(_ => res))
-    override def context(c: C): Dots = outer.context(c)
-    override def query(c: C): L      = outer.query(c).state
-  }
 }

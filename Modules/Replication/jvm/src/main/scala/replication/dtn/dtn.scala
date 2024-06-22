@@ -130,13 +130,6 @@ class ReplicaMutator[S](val replica: Replica[S]) {
     replica.applyLocalDelta(f(replica.data))
 }
 
-given fullPermission[L: Lattice: Bottom]: PermMutate[ReplicaMutator[L], L] with {
-  override def mutate(c: ReplicaMutator[L], delta: L): ReplicaMutator[L] =
-    c.replica.applyLocalDelta(delta)
-    c
-  override def query(c: ReplicaMutator[L]): L = c.replica.data
-}
-
 def traverse[T](list: List[Async[Any, T]]): Async[Any, List[T]] = list match
   case Nil => Async { Nil }
   case h :: t => Async {

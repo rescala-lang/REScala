@@ -3,7 +3,7 @@ package deltaAntiEntropy.tools
 import rdts.base.Uid.asId
 import rdts.base.{Lattice, Uid}
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{LocalUid, PermCausalMutate, PermMutate}
+import rdts.syntax.{LocalUid}
 import rdts.time.Dots
 
 import scala.annotation.targetName
@@ -65,19 +65,6 @@ object AntiEntropyContainer {
       curr.applyDelta(Named(curr.replicaID.uid, Dotted(f(curr.state.data), next)))
     }
   }
-
-  given allPermissions[L: DottedLattice]
-      : (PermMutate[AntiEntropyContainer[L], L] & PermCausalMutate[AntiEntropyContainer[L], L]) =
-    new PermMutate[AntiEntropyContainer[L], L] with PermCausalMutate[AntiEntropyContainer[L], L] {
-      override def mutate(c: AntiEntropyContainer[L], delta: L): AntiEntropyContainer[L] =
-        c.applyDelta(Named(c.replicaID.uid, Dotted(delta, Dots.empty)))
-      override def query(c: AntiEntropyContainer[L]): L = c.state.data
-      override def mutateContext(
-          container: AntiEntropyContainer[L],
-          withContext: Dotted[L]
-      ): AntiEntropyContainer[L] = container.applyDelta(Named(container.replicaID.uid, withContext))
-      override def context(c: AntiEntropyContainer[L]): Dots = c.state.context
-    }
 
   /** Creates a new PNCounter instance
     *
