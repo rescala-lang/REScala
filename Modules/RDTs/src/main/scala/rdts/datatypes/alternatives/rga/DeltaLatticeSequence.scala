@@ -13,7 +13,66 @@ case class DeltaSequence[A](
     vertices: ReplicatedSet[Vertex],
     edges: DeltaSequence.DeltaSequenceOrder,
     values: Map[Vertex, A]
-)
+) {
+
+  def current = this
+  type C = Dotted[DeltaSequence[A]]
+
+  def successor(v: Vertex): Option[Vertex] = {
+    current.edges.inner.get(v) match {
+      case None => None
+      case Some(u) =>
+        if current.vertices.contains(u) then Some(u) else successor(u)
+    }
+  }
+
+  def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using context: Dots): C = {
+    val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
+    val newVertices = current.vertices.add(using replica)(insertee)(using context)
+    val newValues   = Map(insertee -> value)
+    newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues))
+  }
+
+  def prependDelta(replica: Uid, value: A)(using context: Dots): C =
+    addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
+
+  def removeDelta(v: Vertex): C =
+    current.vertices.remove(v).map(vert => current.copy(vertices = vert))
+
+  def filterDelta(keep: A => Boolean)(using context: Dots): C = {
+    val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }
+    removed.foldLeft(context.wrap(current: DeltaSequence[A])) {
+      case (curr, toRemove) =>
+        val delta = curr.mod(_.removeDelta(toRemove))
+        Lattice.merge(curr, delta)
+    }
+  }
+
+  def toList: List[A] = iterator.toList
+
+  def iterator: Iterator[A] = vertexIterator.map(v => current.values(v))
+
+  def vertexIterator: Iterator[Vertex] =
+    new AbstractIterator[Vertex] {
+      var lastVertex: Vertex = Vertex.start
+
+      var currentSuccessor: Option[Vertex] = successor(lastVertex)
+
+      override def hasNext: Boolean = currentSuccessor.isDefined
+
+      override def next(): Vertex = {
+        currentSuccessor match {
+          case Some(v) =>
+            lastVertex = v
+            currentSuccessor = successor(v)
+            v
+          case _ => throw new NoSuchElementException(
+              "Requesting iterator value after Vertex.end!"
+            )
+        }
+      }
+    }
+}
 
 object DeltaSequence {
 
@@ -43,65 +102,6 @@ object DeltaSequence {
 
     def addRightEdge(left: Vertex, insertee: Vertex): DeltaSequenceOrder =
       DeltaSequenceOrder(inner ++ addRightEdgeDelta(left, insertee).inner)
-  }
-
-  implicit class DeltaSequenceOps[C, A](container: C)
-      extends OpsSyntaxHelper[C, DeltaSequence[A]](container) {
-
-    def successor(v: Vertex)(using IsQuery): Option[Vertex] = {
-      current.edges.inner.get(v) match {
-        case None => None
-        case Some(u) =>
-          if current.vertices.contains(u) then Some(u) else successor(u)
-      }
-    }
-
-    def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using IsCausalMutator): C = {
-      val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-      val newVertices = current.vertices.add(using replica)(insertee)(using context)
-      val newValues   = Map(insertee -> value)
-      newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues)).mutator
-    }
-
-    def prependDelta(replica: Uid, value: A)(using IsCausalMutator): C =
-      addRightDelta(replica, Vertex.start, Vertex.fresh(), value)
-
-    def removeDelta(v: Vertex)(using IsCausalMutator): C =
-      current.vertices.remove(v).map(vert => current.copy(vertices = vert)).mutator
-
-    def filterDelta(keep: A => Boolean)(using IsCausalMutator): C = {
-      val removed: immutable.Iterable[Vertex] = current.values.collect { case (k, v) if !keep(v) => k }
-      removed.foldLeft(context.wrap(current: DeltaSequence[A])) {
-        case (curr, toRemove) =>
-          val delta = curr.removeDelta(toRemove)
-          Lattice.merge(curr, delta)
-      }.mutator
-    }
-
-    def toList(using IsQuery): List[A] = iterator.toList
-
-    def iterator(using IsQuery): Iterator[A] = vertexIterator.map(v => current.values(v))
-
-    def vertexIterator(using IsQuery): Iterator[Vertex] =
-      new AbstractIterator[Vertex] {
-        var lastVertex: Vertex = Vertex.start
-
-        var currentSuccessor: Option[Vertex] = successor(lastVertex)
-
-        override def hasNext: Boolean = currentSuccessor.isDefined
-
-        override def next(): Vertex = {
-          currentSuccessor match {
-            case Some(v) =>
-              lastVertex = v
-              currentSuccessor = successor(v)
-              v
-            case _ => throw new NoSuchElementException(
-                "Requesting iterator value after Vertex.end!"
-              )
-          }
-        }
-      }
   }
 
   given hasDots[A]: HasDots[DeltaSequence[A]] with {
