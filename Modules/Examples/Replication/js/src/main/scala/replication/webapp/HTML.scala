@@ -32,7 +32,7 @@ object HTML {
         // tr(td("tick")).render.reattach(dataManager.tick.map(td(_).render)),
         tr(
           td("request queue"),
-        ).render.reattach(dataManager.mergedState.map(v => td(v.data.requests.elements.size).render)),
+        ).render.reattach(dataManager.mergedState.map(v => td(v.data.requests.data.elements.size).render)),
       )),
       section(
         button("disseminate local", onclick := leftClickHandler(dataManager.disseminateLocalBuffer())),
@@ -89,7 +89,7 @@ object HTML {
       "get fortune",
       onclick := leftClickHandler {
         exdat.dataManager.modReq { reqs =>
-          reqs.enqueue(using exdat.dataManager.replicaId)(Req.Fortune(id))
+          reqs.mod(_.enqueue(using exdat.dataManager.replicaId)(Req.Fortune(id)))
         }
       }
     ),
@@ -104,7 +104,7 @@ object HTML {
         "query northwind",
         onclick := leftClickHandler {
           exdat.dataManager.modReq { reqs =>
-            reqs.enqueue(using exdat.dataManager.replicaId)(Req.Northwind(id, ip.value))
+            reqs.mod(_.enqueue(using exdat.dataManager.replicaId)(Req.Northwind(id, ip.value)))
           }
         }
       ),

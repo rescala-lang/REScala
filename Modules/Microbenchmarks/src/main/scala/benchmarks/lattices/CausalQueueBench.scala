@@ -28,13 +28,13 @@ class CausalQueueBench {
 
   @Setup
   def setup(): Unit = {
-    lca = (1 to size).foldLeft(Dotted(CausalQueue.empty[Int])) { (q, e) => q.enqueue(using "lca".asId)(e) }
+    lca = (1 to size).foldLeft(Dotted(CausalQueue.empty[Int])) { (q, e) => q.mod(_.enqueue(using "lca".asId)(e)) }
   }
 
   def make(base: Dotted[CausalQueue[Int]], ops: Int, prefix: String) = {
     val s     = ops / 2
-    val added = (1 to s).foldLeft(base) { (acc, v) => acc.enqueue(using prefix.asId)(v) }
-    (1 to s).foldLeft(added) { (acc, _) => acc.dequeue() }
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc.mod(_.enqueue(using prefix.asId)(v)) }
+    (1 to s).foldLeft(added) { (acc, _) => acc.mod(_.dequeue()) }
   }
 
   @Benchmark

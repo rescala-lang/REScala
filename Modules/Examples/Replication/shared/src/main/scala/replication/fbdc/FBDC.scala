@@ -78,7 +78,7 @@ class FbdcExampleData {
       if reqs.nonEmpty
       then
         dataManager.modReq { aws =>
-          aws.removeBy { (req: Req) => req.executor == replicaId.uid }
+          aws.mod(_.removeBy { (req: Req) => req.executor == replicaId.uid })
         }
     }
     r

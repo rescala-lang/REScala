@@ -8,7 +8,31 @@ import rdts.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
 
-case class CausalQueue[+T](values: Queue[QueueElement[T]])
+case class CausalQueue[T](values: Queue[QueueElement[T]]) {
+
+  type Delta = Dotted[CausalQueue[T]]
+
+  def enqueue(using LocalUid)(e: T)(using context: Dots): Delta =
+    val time = context.clock.inc(LocalUid.replicaId)
+    val dot  = time.dotOf(LocalUid.replicaId)
+    Dotted(CausalQueue(Queue(QueueElement(e, dot, time))), Dots.single(dot))
+
+  def head =
+    val QueueElement(e, _, _) = values.head
+    e
+
+  def dequeue(): Delta =
+    val QueueElement(_, dot, _) = values.head
+    Dotted(CausalQueue.empty, Dots.single(dot))
+
+  def removeBy(p: T => Boolean): Delta =
+    val toRemove = values.filter(e => p(e.value)).map(_.dot)
+    Dotted(CausalQueue.empty, Dots.from(toRemove))
+
+  def elements: Queue[T] =
+    values.map(_.value)
+
+}
 
 object CausalQueue:
   case class QueueElement[+T](value: T, dot: Dot, order: VectorClock)
@@ -29,34 +53,6 @@ object CausalQueue:
   }
 
   given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived
-
-  extension [C, T](container: C)
-    def causalQueue: syntax[C, T] = syntax(container)
-
-  implicit class syntax[C, T](container: C)
-      extends OpsSyntaxHelper[C, CausalQueue[T]](container) {
-
-    def enqueue(using LocalUid, IsCausalMutator)(e: T): C =
-      val time = context.clock.inc(replicaId)
-      val dot  = time.dotOf(replicaId)
-      Dotted(CausalQueue(Queue(QueueElement(e, dot, time))), Dots.single(dot)).mutator
-
-    def head(using IsQuery) =
-      val QueueElement(e, _, _) = current.values.head
-      e
-
-    def dequeue(using IsCausalMutator)(): C =
-      val QueueElement(_, dot, _) = current.values.head
-      Dotted(CausalQueue.empty, Dots.single(dot)).mutator
-
-    def removeBy(using IsCausalMutator)(p: T => Boolean) =
-      val toRemove = current.values.filter(e => p(e.value)).map(_.dot)
-      Dotted(CausalQueue.empty, Dots.from(toRemove)).mutator
-
-    def elements(using IsQuery): Queue[T] =
-      current.values.map(_.value)
-
-  }
 
   given lattice[A]: Lattice[CausalQueue[A]] with {
     override def merge(left: CausalQueue[A], right: CausalQueue[A]): CausalQueue[A] =
