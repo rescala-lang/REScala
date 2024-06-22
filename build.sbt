@@ -8,7 +8,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   compileMacros.js,
   compileMacros.jvm,
   deltalens,
-  encryptedTodo,
   exampleLenses,
   examplesReactives,
   loCal,
@@ -96,19 +95,6 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     ),
   )
 
-lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
-  .enablePlugins(JmhPlugin)
-  .dependsOn(rdts.jvm, replication.jvm)
-  .settings(
-    scala3defaults,
-    libraryDependencies += LocalSettings.scalafx,
-    fork := true,
-    Dependencies.jsoniterScala,
-    Settings.javaOutputVersion(17),
-    LocalSettings.tink,
-    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-  )
-
 lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(reactives.js)
@@ -119,7 +105,7 @@ lazy val exampleLenses = project.in(file("Modules/Example ReactiveLenses"))
   )
 
 lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
-  .dependsOn(reactives.jvm)
+  .dependsOn(reactives.jvm, replication.jvm)
   .settings(
     scala3defaults,
     fork := true,
@@ -127,7 +113,10 @@ lazy val examplesReactives = project.in(file("Modules/Example Misc 2015"))
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
-    )
+    ),
+    Dependencies.jsoniterScala,
+    LocalSettings.tink,
+    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
   )
 
 lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
