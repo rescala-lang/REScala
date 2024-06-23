@@ -216,7 +216,6 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     LocalSettings.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
-    Settings.implicitConversions(Test / compile)
   )
   .jvmSettings(
     libraryDependencies += LocalSettings.scalafx % Provided,

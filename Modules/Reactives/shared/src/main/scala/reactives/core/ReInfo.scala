@@ -9,6 +9,8 @@ case class ReInfo(idCounter: Int, description: String, enclosing: String, file: 
 
 object ReInfo {
 
+  def apply(name: String)(using info: ReInfo): ReInfo = info.derive(name)
+
   def named[T](name: String)(f: ReInfo ?=> T)(using info: ReInfo) = f(using info.derive(name))
 
   given create(using

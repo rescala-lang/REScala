@@ -24,6 +24,9 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
     newVar
   }
 
+  def applyLens[V](lens: Lens[M, V])(using cs: CreationScope[State]): LVar[V] =
+    applyLens(SignalLens(Signal(lens)))
+
   /** Returns the first firing event of all registered events */
   def getEvent()(using ticket: CreationTicket[State]): Event[M] = events.list().flatten(using Flatten.firstFiringEvent)
 

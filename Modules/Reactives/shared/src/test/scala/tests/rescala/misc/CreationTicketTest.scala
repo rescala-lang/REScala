@@ -2,9 +2,11 @@ package tests.rescala.misc
 
 import reactives.SelectedScheduler.State
 import reactives.core.CreationScope.{DynamicCreationScope, StaticCreationScope}
-import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, DynamicScopeImpl, Scheduler, Transaction}
+import reactives.core.CreationTicket.given
+import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, Scheduler, Transaction}
 import reactives.default.transaction
 import tests.rescala.testtools.FunSuiteInvertedAssert
+
 
 class CreationTicketTest extends FunSuiteInvertedAssert {
 
@@ -37,10 +39,10 @@ class CreationTicketTest extends FunSuiteInvertedAssert {
   test("some Dynamic Some Implicit") {
     transaction() {
       given implicitTurn: Transaction[State] = getTurn
-      summon[CreationTicket[State]](using implicitTurn).scope match
+      summon[CreationTicket[State]](using implicitTurn.convert).scope match
         case StaticCreationScope(tx) => assertEquals(tx, implicitTurn)
         case other                   => assert(false)
-      assertEquals(summon[CreationTicket[State]](using implicitTurn).scope.embedCreation(x ?=> x), implicitTurn)
+      assertEquals(summon[CreationTicket[State]](using implicitTurn.convert).scope.embedCreation(x ?=> x), implicitTurn)
     }
   }
 

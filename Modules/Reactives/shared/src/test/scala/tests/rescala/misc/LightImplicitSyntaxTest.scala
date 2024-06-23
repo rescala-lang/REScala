@@ -4,6 +4,8 @@ import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.{CreationTicket, DynamicTicket}
 import tests.rescala.testtools.FunSuiteInvertedAssert
 
+import scala.language.implicitConversions
+
 class LightImplicitSyntaxTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {

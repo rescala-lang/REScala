@@ -2,6 +2,8 @@ package tests.rescala.dynamic
 
 import tests.rescala.testtools.FunSuiteInvertedAssert
 
+import scala.language.implicitConversions
+
 class ObserverCreation extends FunSuiteInvertedAssert {
   import reactives.default.*
   {

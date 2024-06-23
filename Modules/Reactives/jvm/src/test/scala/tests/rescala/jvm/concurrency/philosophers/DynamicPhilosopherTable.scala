@@ -10,7 +10,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.ty
   override def createTable(tableSize: Int): Seq[Seating] = {
     def mod(n: Int): Int = (n + tableSize) % tableSize
 
-    val phils = for i <- 0 until tableSize yield Var[Philosopher](Thinking)(using s"Phil($i)")
+    val phils = for i <- 0 until tableSize yield ReInfo.named(s"Phil($i)") { Var[Philosopher](Thinking) }
 
     val forks =
       for i <- 0 until tableSize yield {

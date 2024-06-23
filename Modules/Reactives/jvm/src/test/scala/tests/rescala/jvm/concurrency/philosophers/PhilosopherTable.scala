@@ -3,6 +3,8 @@ package tests.rescala.concurrency.philosophers
 import reactives.core.Transaction
 import reactives.parrp.Backoff
 
+import language.implicitConversions
+
 import java.util.concurrent.atomic.AtomicInteger
 
 class PhilosopherTable(philosopherCount: Int)(val interface: reactives.default.type) {
