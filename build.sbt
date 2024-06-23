@@ -109,7 +109,7 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
     Dependencies.jsoniterScala,
     LocalSettings.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-    Settings.implicitConversions()
+    Settings.implicitConversions(), // reswing uses this in a million places for no reason
   )
 
 lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
