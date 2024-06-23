@@ -73,6 +73,8 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
     Test / fork                       := true,
+    // jetty 12 requires java 17
+    Settings.javaOutputVersion(17, Test / compile),
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -124,7 +126,8 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
   .dependsOn(rdts.jvm % "compile->compile;test->test")
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(11),
+    // SunEC crypto provider does not support Ed25519 in jdk 11
+    Settings.javaOutputVersion(17),
     Settings.safeInit(Compile / compile, Test / compile),
     Dependencies.munit,
     Dependencies.munitCheck,

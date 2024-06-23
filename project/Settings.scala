@@ -44,8 +44,6 @@ object Settings {
     commonScalacOptions
   )
 
-  def javaOutputVersion(n: Int) = scalacOptions ++= List("-java-output-version", n.toString)
-
   def unusedWarnings(conf: TaskKey[?]*) = conf.map { c =>
     c / scalacOptions ++= List(
       "-Wunused:imports",
@@ -61,7 +59,15 @@ object Settings {
     )
   }
 
-  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = conf.map { c => c / scalacOptions += setting }
+  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = {
+    val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
+    c2.map { c => c / scalacOptions += setting }
+  }
+
+  def javaOutputVersion(n: Int, conf: TaskKey[?]*) = Def.settings(
+    taskSpecificScalacOption("-java-output-version", conf: _*),
+    taskSpecificScalacOption(n.toString, conf: _*)
+  )
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
   def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)
