@@ -23,7 +23,8 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
 
   override protected[reactives] def commit(base: Value): Value = Pulse.NoChange
 
-  override def internalAccess(v: Pulse[T]): Pulse[T] = v
+  extension (v: Pulse[T])
+    override def access: Pulse[T] = v
 
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")

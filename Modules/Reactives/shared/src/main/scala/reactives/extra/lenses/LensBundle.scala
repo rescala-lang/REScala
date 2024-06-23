@@ -1,7 +1,7 @@
 package reactives.extra.lenses
 
 import reactives.SelectedScheduler.State
-import reactives.core.{CreationScope, CreationTicket, CreationTicketCont, Disconnectable, PlanTransactionScope, Scheduler}
+import reactives.core.{CreationScope, CreationTicket, Disconnectable, PlanTransactionScope, Scheduler}
 import reactives.operator.{Event, Evt, Flatten, Signal}
 
 /** LVars serve as the basis for reactive lenses. To create the root of a new LVar cluster, use the apply() function
@@ -51,6 +51,12 @@ object LVar {
     new LVar[T](events.list().flatten(using Flatten.firstFiringEvent).hold(initval), events)
   }
 
+}
+
+object Lens {
+
+  /** Implicit conversion of a Lens to a SignalLens for uniform handling. */
+  given toSignalLens[M, V]: Conversion[Lens[M, V], SignalLens[M, V]] = lens => SignalLens(Signal(lens))
 }
 
 /** The base type for all lenses. If possible, use BijectiveLens instead as it provides more performance and additional functionality
@@ -123,9 +129,6 @@ class SignalLens[M, V](signalOfLens: Signal[Lens[M, V]]) {
 
   def toModel(v: V, m: M): M = signalOfLens.now.toModel(v, m)
 }
-
-/** Implicit conversion of a Lens to a SignalLens for uniform handling. */
-implicit def toSignalLens[M, V](lens: Lens[M, V]): SignalLens[M, V] = SignalLens(Signal(lens))
 
 /** A simple lens for addition
   *

@@ -16,7 +16,7 @@ class ChangeEventImpl[T](
   override protected[reactives] def commit(base: (Pulse[T], Pulse[Diff[T]])): (Pulse[T], Pulse[Diff[T]]) =
     base.copy(_2 = Pulse.NoChange)
 
-  def internalAccess(v: (Pulse[T], Pulse[Diff[T]])): Pulse[Diff[T]] = v._2
+  extension (v: (Pulse[T], Pulse[Diff[T]])) def access: Pulse[Diff[T]] = v._2
 
   override protected[reactives] def guardedReevaluate(rein: ReIn): Rout = {
     val to: Pulse[T]   = rein.collectStatic(signal)

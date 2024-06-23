@@ -31,13 +31,14 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
 
   type State[V] = reactives.SelectedScheduler.State[V]
 
-  implicit def internalAccess(v: Value): Pulse[T]
+  extension (v: Value) def access: Pulse[T]
+
 
   /** Interprets the pulse of the event by converting to an option
     *
     * @group internal
     */
-  override def read(v: Value): Option[T] = v.toOption
+  override def read(v: Value): Option[T] = v.access.toOption
 
   /** Add an observer.
     *
@@ -47,7 +48,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(
       using ticket: CreationTicket[State]
   ): Disconnectable =
-    Observe.strong(this, fireImmediately) { reevalVal => Observe.ObservePulsing(reevalVal, this, onValue, onError) }
+    Observe.strong(this, fireImmediately) { reevalVal => Observe.ObservePulsing(reevalVal.access, this, onValue, onError) }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None
@@ -59,7 +60,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
       st.collectStatic(this) match {
         case Exceptional(t) =>
           onFailure.applyOrElse[Exception, Option[R]](t, throw _).fold[Pulse[R]](Pulse.NoChange)(Pulse.Value(_))
-        case other => other
+        case other => other.access
       }
     }
 
@@ -71,7 +72,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def ||[U >: T](other: Event[U])(using ticket: CreationTicket[State]): Event[U] = {
     Event.Impl.staticNamed(s"(or $this $other)", this, other) { st =>
       val tp = st.collectStatic(this)
-      if tp.isChange then tp else st.collectStatic(other)
+      if tp.access.isChange then tp.access else st.collectStatic(other).access
     }
   }
 
@@ -81,7 +82,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final infix def except(exception: Event[Any])(using ticket: CreationTicket[State]): Event[T] = {
     Event.Impl.staticNamed(s"(except $this  $exception)", this, exception) { st =>
       st.collectStatic(exception) match {
-        case NoChange            => st.collectStatic(this)
+        case NoChange            => st.collectStatic(this).access
         case Value(_)            => Pulse.NoChange
         case ex @ Exceptional(_) => ex
       }
@@ -151,8 +152,8 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     */
   final def toggle[A](a: Signal[A], b: Signal[A])(using ticket: CreationTicket[State]): Signal[A] =
     ticket.scope.embedCreation { ict ?=>
-      val switched: Signal[Boolean] = iterate(false) { !_ }(using ict)
-      Signal.static { if switched.value then b.value else a.value }(using ict)
+      val switched: Signal[Boolean] = iterate(false) { !_ }
+      Signal.static { if switched.value then b.value else a.value }
     }
 
   /** Filters the event, only propagating the value when the filter is true.
@@ -300,7 +301,7 @@ object Event {
         ) { state =>
           new ChangeEventImpl(state, signal, ticket.info) with Event[Diff[T]]
         }
-        static(internal)(st => st.dependStatic(internal))(using tx)
+        static(internal)(st => st.dependStatic(internal))
       }
 
   }

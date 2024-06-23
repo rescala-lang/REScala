@@ -1,6 +1,6 @@
 package tests.rescala.static.lenses
 
-import reactives.extra.lenses.{AddLens, LVar, Lens, MulLens, SignalLens, toSignalLens}
+import reactives.extra.lenses.{AddLens, LVar, Lens, MulLens, SignalLens}
 import tests.rescala.testtools.FunSuiteInvertedAssert
 
 class LensTest extends FunSuiteInvertedAssert {

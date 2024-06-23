@@ -99,8 +99,8 @@ object ConversionTest {
     */
   def raceConditionTest(): Unit = {
     val a = LVar(0)
-    val b = a.applyLens(new AddLens(1))
-    val c = a.applyLens(new AddLens(2))
+    val b = a.applyLens(new AddLens(1).convert)
+    val c = a.applyLens(new AddLens(2).convert)
 
     println("a is " + a.now.toString)
     println("b is " + b.now.toString)

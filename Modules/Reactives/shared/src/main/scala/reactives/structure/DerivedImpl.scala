@@ -2,6 +2,7 @@ package reactives.structure
 
 import reactives.SelectedScheduler.State
 import reactives.core.*
+import reactives.operator.Event
 import reactives.structure.Pulse.NoChange
 
 abstract class DerivedImpl[T](
@@ -51,8 +52,7 @@ class EventImpl[T](
 
   override protected[reactives] def commit(base: Pulse[T]): Pulse[T] = Pulse.NoChange
 
-  /** This implements an abstract method on [[reactives.operator.Event]] */
-  def internalAccess(v: Pulse[T]): Pulse[T] = v
+  extension (v: Pulse[T]) def access: Pulse[T] = v
 
   override protected def computePulse(rein: ReevTicket[State, Pulse[T]]): Pulse[T] =
     Pulse.tryCatch(expr(rein), onEmpty = _ => NoChange)

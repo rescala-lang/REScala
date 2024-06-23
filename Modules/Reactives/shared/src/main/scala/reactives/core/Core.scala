@@ -3,7 +3,6 @@ package reactives.core
 import reactives.structure.RExceptions
 
 import scala.annotation.implicitNotFound
-import scala.util.DynamicVariable
 
 /** Source of (reactive) values. */
 trait ReSource {
@@ -104,15 +103,18 @@ trait Observation { def execute(): Unit }
 final class CreationTicket[State[_]](val scope: CreationScope[State], val info: ReInfo)
 
 object CreationTicket {
+
   given fromScope[State[_]](using scope: CreationScope[State], line: ReInfo): CreationTicket[State] =
     new CreationTicket(scope, line)
   // cases below are when one explicitly passes one of the parameters
-  implicit def fromTransaction[S[_]](tx: Transaction[S])(using line: ReInfo): CreationTicket[S] =
+
+  given fromTransaction[S[_]](using line: ReInfo): Conversion[Transaction[S], CreationTicket[S]] = tx =>
     new CreationTicket(CreationScope.StaticCreationScope(tx), line)
-  implicit def fromName[State[_]](str: String)(using
+
+  given fromName[State[_]](using
       scopeSearch: CreationScope[State],
       info: ReInfo
-  ): CreationTicket[State] =
+  ): Conversion[String, CreationTicket[State]] = str =>
     new CreationTicket(scopeSearch, info.derive(str))
 }
 
