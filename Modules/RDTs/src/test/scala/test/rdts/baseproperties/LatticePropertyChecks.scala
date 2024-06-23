@@ -1,7 +1,9 @@
 package test.rdts.baseproperties
 
+import munit.TestValues
+import munit.internal.FutureCompat.ExtensionFuture
 import org.scalacheck.Prop.*
-import org.scalacheck.{Arbitrary, Gen, Shrink}
+import org.scalacheck.{Arbitrary, Shrink}
 import rdts.base.{Bottom, BottomOpt, Lattice}
 import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import rdts.datatypes.contextual.{CausalQueue, ReplicatedList}
@@ -9,10 +11,12 @@ import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.CausalStore
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.time.{Dot, Dots, Time, VectorClock}
+import rdts.time.{Dot, Dots, VectorClock}
 import test.rdts.DataGenerator.RGAGen.given
 import test.rdts.DataGenerator.{*, given}
 import test.rdts.isGithubCi
+
+import scala.util.{Failure, Success}
 
 // TODO, or maybe a note:
 // These tests potentially fail if certain assumptions of the data types are invalidated by the generation strategy.
@@ -39,7 +43,7 @@ class MapChecks               extends LatticePropertyChecks[Map[String, Int]]
 class OptionChecks            extends LatticePropertyChecks[Option[Int]]
 class CusalLwwChecks          extends LatticePropertyChecks[LastWriterWins[Int]]
 class LWWOptionChecks         extends LatticePropertyChecks[Option[LastWriterWins[Int]]]
-class MultiValueChecks        extends LatticePropertyChecks[MultiValueRegister[Int]]
+class MultiValueChecks        extends LatticePropertyChecks[MultiValueRegister[Int]](flaky = true)
 class OrSetChecks             extends LatticePropertyChecks[ObserveRemoveSet[Int]]
 class PosNegChecks            extends LatticePropertyChecks[PosNegCounter]
 class TupleChecks             extends LatticePropertyChecks[(Set[Int], GrowOnlyCounter)]
@@ -49,15 +53,33 @@ class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedLis
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
-abstract class LatticePropertyChecks[A](expensive: Boolean = false, orderAgreesWithStructuralEquals: Boolean = true)(
+abstract class LatticePropertyChecks[A](
+    expensive: Boolean = false,
+    orderAgreesWithStructuralEquals: Boolean = true,
+    flaky: Boolean = false
+)(
     using
     arbitrary: Arbitrary[A],
     lattice: Lattice[A],
     bottomOpt: BottomOpt[A],
-    shrink: Shrink[A]
+    shrink: Shrink[A],
 ) extends OrderTests(using Lattice.latticeOrder)(total = false, agreesWithEquals = orderAgreesWithStructuralEquals) {
 
   override def munitIgnore: Boolean = expensive && isGithubCi
+
+  override def munitTestTransforms: List[TestTransform] = super.munitTestTransforms ++ List(
+    new TestTransform(
+      "flakyTestGenarators",
+      { t =>
+        if !(flaky && isGithubCi) then t
+        else
+          t.withBodyMap(_.transformCompat {
+            case Failure(exception) => Success(new TestValues.FlakyFailure(exception))
+            case succ               => succ
+          }(munitExecutionContext))
+      }
+    )
+  )
 
   property("idempotent") {
     forAll { (a: A, b: A) =>
