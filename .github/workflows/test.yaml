@@ -50,9 +50,9 @@ jobs:
       run: sbt "compile; Test/compile"
 
     - name: test
-      continue-on-error: true
+      # continue-on-error: true
       run: sbt test
 
-    - name: test again (quick)
-      run: sbt testQuick
+    # - name: test again (quick)
+    #   run: sbt testQuick
 
