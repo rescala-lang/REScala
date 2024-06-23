@@ -208,7 +208,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
 lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(9),
+    Settings.javaOutputVersion(9), // for java.util.Flow
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
@@ -230,6 +230,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Re
   .dependsOn(reactives, rdts, channels, aead, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
+    Settings.javaOutputVersion(11), // java webserver
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,
