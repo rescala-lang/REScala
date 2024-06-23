@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-12, ubuntu-22.04, windows-2019]
+        # macOS 13/14 uses different CPU architectures, older ubuntu because 24.04 is well tested outside of CI
+        os: [macOS-13, macOS-14, ubuntu-22.04, windows-2022]
         java-version: [17, 22]
 
     env:
@@ -32,6 +33,10 @@ jobs:
       with:
         java-version: ${{ matrix.java-version}}
         distribution: 'zulu'
+
+    - uses: sbt/setup-sbt@v1
+      with:
+        sbt-runner-version: 1.10.0
 
     - uses: actions/setup-node@v4
       with:
