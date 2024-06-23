@@ -1,8 +1,7 @@
 package rdts.datatypes
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.HasDots
-import rdts.syntax.LocalUid
 
 case class PosNegCounter(pos: GrowOnlyCounter, neg: GrowOnlyCounter) derives Lattice, Bottom {
   def value: Int =

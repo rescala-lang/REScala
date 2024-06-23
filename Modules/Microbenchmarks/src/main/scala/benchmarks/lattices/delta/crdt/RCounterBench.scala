@@ -1,10 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.LocalUid
 import rdts.base.Uid.asId
 import rdts.datatypes.alternatives.ResettableCounter
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 
 import java.util.concurrent.TimeUnit
 

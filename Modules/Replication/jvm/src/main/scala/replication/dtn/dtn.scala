@@ -3,7 +3,7 @@ package replication.dtn
 import com.github.plokhotnyuk.jsoniter_scala.core.*
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.*
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.PosNegCounter
 import rdts.syntax.*
 

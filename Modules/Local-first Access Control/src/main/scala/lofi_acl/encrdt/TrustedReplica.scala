@@ -2,8 +2,7 @@ package lofi_acl.encrdt
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.Aead
-import rdts.base.{Bottom, Lattice}
-import rdts.syntax.LocalUid
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.time.{Dot, Dots}
 
 abstract class TrustedReplica[T: Lattice: Bottom: JsonValueCodec](val replicaId: LocalUid, private val aead: Aead)(using

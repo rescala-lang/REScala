@@ -1,9 +1,8 @@
 package replication
 
 import com.github.ckuessner.aead.{Aead, AeadHelper, ByteArray}
-import rdts.base.Lattice
+import rdts.base.{Lattice, LocalUid}
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 type Secret = String

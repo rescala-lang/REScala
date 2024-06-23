@@ -1,7 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.Uid
-import rdts.syntax.LocalUid
+import rdts.base.{LocalUid, Uid}
 
 // Type class for consensus algorithms
 trait Consensus[C[_]] {

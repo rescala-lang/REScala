@@ -1,7 +1,7 @@
 package encfxtodo
 
 import javafx.collections.{FXCollections, ObservableList}
-import rdts.syntax.LocalUid
+import rdts.base.LocalUid
 import scalafx.application.Platform
 import scalafx.beans.property.ObjectProperty
 

@@ -6,10 +6,9 @@ import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.*
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 import replication.JsoniterCodecs.given
 import test.rdts.DataGenerator.RGAGen.{makeRGA, given}
 

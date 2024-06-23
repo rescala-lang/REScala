@@ -1,10 +1,9 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.{Bottom, Lattice, Orderings, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Orderings, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
-import rdts.syntax.LocalUid.replicaId
+import LocalUid.replicaId
 import rdts.time.Dots
 
 case class Ownership(epoch: Long, owner: Uid)

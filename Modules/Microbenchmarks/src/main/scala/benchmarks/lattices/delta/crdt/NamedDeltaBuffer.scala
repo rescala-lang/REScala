@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.dotted.Dotted
 import rdts.syntax.*
 import rdts.time.{Dot, Dots}

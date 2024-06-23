@@ -3,12 +3,11 @@ package replication.fbdc
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import rdts.base.Lattice.optionLattice
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.*
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.VectorClock
 import reactives.operator.{Event, Signal}
 import replication.DataManager

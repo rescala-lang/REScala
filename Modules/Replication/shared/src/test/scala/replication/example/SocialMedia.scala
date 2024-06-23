@@ -2,7 +2,7 @@ package example
 
 import rdts.base.Uid
 import rdts.datatypes.{GrowOnlyCounter as Counter, LastWriterWins as LWW}
-import rdts.syntax.LocalUid
+import rdts.base.LocalUid
 import reactives.default.*
 
 type ID = String

@@ -1,9 +1,8 @@
 package deltaAntiEntropy.tools
 
 import rdts.base.Uid.asId
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 import scala.annotation.targetName

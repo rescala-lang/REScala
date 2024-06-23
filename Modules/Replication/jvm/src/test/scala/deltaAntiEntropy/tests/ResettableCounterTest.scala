@@ -4,6 +4,7 @@ import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
+import rdts.base.LocalUid
 import rdts.datatypes.alternatives.ResettableCounter
 import replication.JsoniterCodecs.given
 
@@ -164,7 +165,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       assertEquals(ca0.data.value, cb0.data.value, s"${ca0.state}\n${cb0.state}")
 
       val ca1 =
-        given rdts.syntax.LocalUid = ca0.replicaID
+        given LocalUid = ca0.replicaID
         if op then ca0.mod(_.fresh()).mod(_.increment()) else ca0.mod(_.fresh()).mod(_.decrement())
       val cb1 = cb0.mod(_.reset())
 

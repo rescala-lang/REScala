@@ -1,9 +1,9 @@
 package test.rdts.containers
 
-import rdts.base.{Bottom, Uid}
+import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.contextual.EnableWinsFlag
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalUid}
+import rdts.syntax.DeltaBuffer
 
 class DeltaBufferDottedTest extends munit.FunSuite {
 

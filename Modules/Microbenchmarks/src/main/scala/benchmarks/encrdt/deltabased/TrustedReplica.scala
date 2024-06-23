@@ -1,7 +1,7 @@
 package benchmarks.encrdt.deltabased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import rdts.syntax.LocalUid
+import rdts.base.LocalUid
 import rdts.time.{Dot, Dots}
 import replication.Aead
 abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead)(

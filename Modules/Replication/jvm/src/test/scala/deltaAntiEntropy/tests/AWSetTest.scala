@@ -6,9 +6,8 @@ import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import rdts.base.Uid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
-import rdts.syntax.LocalUid
 import replication.JsoniterCodecs.given
 
 import scala.collection.mutable

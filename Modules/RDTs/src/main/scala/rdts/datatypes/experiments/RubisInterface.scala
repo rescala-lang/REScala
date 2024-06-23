@@ -1,10 +1,9 @@
 package rdts.datatypes.experiments
 
-import rdts.base.Uid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.AuctionInterface.Bid.User
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 /** A Rubis (Rice University Bidding System) is a Delta CRDT modeling an auction system.

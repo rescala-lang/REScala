@@ -1,7 +1,6 @@
 package rdts.dotted
 
-import rdts.base.{Bottom, Lattice}
-import rdts.syntax.LocalUid
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.time.{Dot, Dots}
 
 /** Associates a context of Dots with some data structure.

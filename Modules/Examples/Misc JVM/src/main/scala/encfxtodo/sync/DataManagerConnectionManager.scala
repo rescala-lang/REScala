@@ -4,9 +4,8 @@ import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle}
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 import replication.{DataManager, ProtocolDots}
 
 import java.net.URI

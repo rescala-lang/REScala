@@ -1,8 +1,7 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 
 /** An MultiVersionRegister (Multi-Value Register) is a Delta CRDT modeling a register.

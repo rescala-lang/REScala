@@ -11,7 +11,6 @@ import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.{CausalDelta, CausalStore}
 import rdts.dotted.*
 import rdts.dotted.HasDots.mapInstance
-import rdts.syntax.LocalUid
 import rdts.time.*
 
 import scala.annotation.nowarn

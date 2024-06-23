@@ -1,7 +1,7 @@
 package benchmarks.encrdt.statebased
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import rdts.syntax.LocalUid
+import rdts.base.LocalUid
 import rdts.time.VectorClock
 import replication.Aead
 

@@ -1,7 +1,7 @@
 package lofi_acl.ardt.datatypes
 
+import rdts.base.LocalUid
 import rdts.dotted.Dotted
-import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 
 import scala.language.implicitConversions

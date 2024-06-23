@@ -1,9 +1,8 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.{Epoch, GrowOnlySet}
-import rdts.syntax.LocalUid
-import rdts.syntax.LocalUid.replicaId
+import LocalUid.replicaId
 
 val numParticipants = 4
 

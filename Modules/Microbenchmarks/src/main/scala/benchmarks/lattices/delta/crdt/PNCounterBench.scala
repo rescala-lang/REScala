@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.LocalUid
 import rdts.base.Uid.asId
 import rdts.datatypes.PosNegCounter
 
@@ -24,7 +25,7 @@ class PNCounterBench {
   def setup(): Unit = {
     counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0".asId, PosNegCounter.zero).map(_.inc())) {
       case (c, n) =>
-        given rid: rdts.syntax.LocalUid = rdts.base.Uid.predefined(n.toString)
+        given rid: LocalUid = rdts.base.Uid.predefined(n.toString)
         val delta                       = PosNegCounter.zero.inc()
         c.applyDelta(rid.uid, delta)
     }

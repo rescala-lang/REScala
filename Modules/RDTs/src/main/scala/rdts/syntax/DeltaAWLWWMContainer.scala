@@ -1,6 +1,6 @@
 package rdts.syntax
 
-import rdts.base.Lattice
+import rdts.base.{Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry

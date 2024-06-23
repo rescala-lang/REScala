@@ -4,7 +4,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Network}
 import org.scalacheck.Prop.*
-import rdts.base.Bottom
+import rdts.base
+import rdts.base.{Bottom, LocalUid}
 import rdts.datatypes.contextual.{ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.Dotted
 import replication.JsoniterCodecs.given
@@ -15,7 +16,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
   implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("contains") {
-    given rdts.syntax.LocalUid = rdts.syntax.LocalUid.predefined("test")
+    given LocalUid = base.LocalUid.predefined("test")
     given Bottom[Int] with
       def empty = Int.MinValue
     forAll { (entries: List[Int]) =>

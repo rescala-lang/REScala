@@ -1,4 +1,4 @@
-package rdts.syntax
+package rdts.base
 
 import rdts.base.Uid
 
@@ -20,6 +20,7 @@ object LocalUid:
   inline given fromId: Conversion[Uid, LocalUid] with {
     override def apply(x: Uid): LocalUid = LocalUid(x)
   }
+
   def predefined(s: String): LocalUid     = LocalUid.fromId(Uid.predefined(s))
   def unwrap(id: LocalUid): Uid           = id.uid
   def gen(): LocalUid                     = Uid.gen()

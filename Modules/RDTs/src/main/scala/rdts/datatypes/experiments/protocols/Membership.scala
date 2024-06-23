@@ -1,7 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
-import rdts.base.{Lattice, Uid}
-import rdts.syntax.LocalUid
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.time.Time
 
 case class Membership[A, C[_]: Consensus, D[_]: Consensus](

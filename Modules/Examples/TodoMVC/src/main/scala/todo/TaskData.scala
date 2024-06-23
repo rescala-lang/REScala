@@ -3,10 +3,10 @@ package todo
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
-import rdts.base.Bottom
+import rdts.base.{Bottom, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.{DeltaBuffer, LocalUid}
+import rdts.syntax.DeltaBuffer
 import reactives.default.*
 import reactives.extra.Tags.*
 import replication.Storing

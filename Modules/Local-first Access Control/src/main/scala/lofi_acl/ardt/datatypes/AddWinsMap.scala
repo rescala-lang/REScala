@@ -1,8 +1,7 @@
 package lofi_acl.ardt.datatypes
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.Dot
 
 import java.time.Instant

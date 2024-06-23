@@ -1,12 +1,11 @@
 package test.rdts.bespoke
 
 import rdts.base.Uid.asId
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.GrowOnlySet.{elements, insert}
 import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.UtilHacks.*
 

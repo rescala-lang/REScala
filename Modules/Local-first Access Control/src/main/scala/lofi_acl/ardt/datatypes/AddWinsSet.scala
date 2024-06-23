@@ -1,8 +1,7 @@
 package lofi_acl.ardt.datatypes
 
-import rdts.base.Bottom
+import rdts.base.{Bottom, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 opaque type AddWinsSet[E] = Dotted[Map[E, Dots]]

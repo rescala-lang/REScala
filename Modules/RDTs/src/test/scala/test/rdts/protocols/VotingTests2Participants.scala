@@ -1,12 +1,11 @@
 package test.rdts.protocols
 
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.datatypes.experiments.protocols
 import rdts.datatypes.experiments.protocols.{Vote, Voting}
 import rdts.datatypes.{Epoch, LastWriterWins}
 import rdts.dotted.{Dotted, DottedLattice}
-import rdts.syntax.LocalUid
 import rdts.time.Dots
 
 class VotingTests2Participants extends munit.FunSuite {

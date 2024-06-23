@@ -1,9 +1,9 @@
 package todo
 
-import rdts.base.Uid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalUid}
+import rdts.syntax.DeltaBuffer
 import reactives.default.*
 import replication.ProtocolDots
 import todo.TodoDataManager.TodoRepState

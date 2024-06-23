@@ -5,8 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
-import rdts.base.{Bottom, Lattice, Uid}
-import rdts.syntax.LocalUid
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}

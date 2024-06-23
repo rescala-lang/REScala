@@ -1,11 +1,10 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.Lattice.setLattice
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.GrowOnlySet
 import rdts.datatypes.GrowOnlySet.*
-import rdts.syntax.LocalUid
-import rdts.syntax.LocalUid.replicaId
+import LocalUid.replicaId
 
 import scala.compiletime.{constValue, summonFrom}
 

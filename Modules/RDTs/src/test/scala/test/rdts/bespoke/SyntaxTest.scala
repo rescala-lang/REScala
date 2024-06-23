@@ -1,12 +1,11 @@
 package test.rdts.bespoke
 
 import org.scalacheck.{Arbitrary, Gen}
-import rdts.base.Lattice
+import rdts.base.{Lattice, LocalUid}
 import rdts.base.Uid.asId
 import rdts.datatypes.contextual.EnableWinsFlag
 import rdts.dotted.HasDots.*
 import rdts.dotted.{Dotted, HasDots}
-import rdts.syntax.LocalUid
 import rdts.time.{Dot, Dots}
 import test.rdts.DataGenerator.*
 

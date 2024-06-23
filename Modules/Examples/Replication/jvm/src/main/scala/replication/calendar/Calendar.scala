@@ -1,9 +1,9 @@
 package replication.calendar
 
-import rdts.base.{Bottom, Uid}
+import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
-import rdts.syntax.{DeltaBuffer, LocalUid}
+import rdts.syntax.DeltaBuffer
 import reactives.default.*
 
 case class Appointment(start: Int, end: Int)
