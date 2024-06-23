@@ -2,7 +2,6 @@ package benchmarks.lattices.delta.crdt
 
 import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.dotted.Dotted
-import rdts.syntax.*
 import rdts.time.{Dot, Dots}
 
 type DeltaBufferDotted[State] = NamedDeltaBuffer[Dotted[State]]
@@ -50,11 +49,11 @@ object NamedDeltaBuffer {
       }
   }
 
-  def dotted[State](replicaID: Uid, init: State): NamedDeltaBuffer[Dotted[State]] =
+  def dotted[State](replicaID: LocalUid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())
 
-  def dottedInit[State](replicaId: Uid, init: Dot => State): NamedDeltaBuffer[Dotted[State]] =
-    val dot = Dots.empty.nextDot(replicaId)
+  def dottedInit[State](replicaId: LocalUid, init: Dot => State): NamedDeltaBuffer[Dotted[State]] =
+    val dot = Dots.empty.nextDot(replicaId.uid)
     NamedDeltaBuffer(replicaId, Dotted(init(dot), Dots.single(dot)), List())
 
 }

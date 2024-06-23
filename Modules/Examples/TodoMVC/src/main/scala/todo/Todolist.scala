@@ -1,7 +1,7 @@
 package todo
 
 import org.scalajs.dom.{document, window}
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import reactives.extra.Tags.reattach
 import replication.WebRTCConnectionView
 import scalatags.JsDom.all
@@ -10,7 +10,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
 
-  val replicaId: Uid = Uid.gen()
+  val replicaId: LocalUid = LocalUid.gen()
 
   @JSExportTopLevel("Todolist")
   def run(): Unit = main(Array.empty[String])

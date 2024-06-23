@@ -1,7 +1,7 @@
 package test.rdts.containers
 
 import rdts.base.{Bottom, LocalUid}
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.{EnableWinsFlag, ReplicatedSet}
 import rdts.datatypes.experiments.AuctionInterface

@@ -2,7 +2,7 @@ package benchmarks.lattices.delta
 
 import org.openjdk.jmh.annotations
 import org.openjdk.jmh.annotations.*
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.time.{Dot, Dots}
@@ -26,7 +26,7 @@ class DeltaMergeBench {
   var plusOneDeltaState: Dotted[ReplicatedList[Long]] = scala.compiletime.uninitialized
 
   def makeCContext(replicaID: String): Dots = {
-    val dots = (0L until size).map(Dot(replicaID.asId, _)).toSet
+    val dots = (0L until size).map(Dot(replicaID.asId.uid, _)).toSet
     Dots.from(dots)
   }
 

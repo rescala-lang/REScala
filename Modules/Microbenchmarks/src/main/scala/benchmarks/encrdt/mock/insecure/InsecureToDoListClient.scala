@@ -5,12 +5,13 @@ import benchmarks.encrdt.mock.SecureToDoListClient.ToDoMapLattice
 import benchmarks.encrdt.mock.{SecureToDoListClient, ToDoListIntermediary}
 import benchmarks.encrdt.todolist.ToDoEntry
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
+import rdts.base.LocalUid
 import rdts.syntax.DeltaAWLWWMContainer
 
 import java.util.UUID
 
 class InsecureToDoListClient(
-    replicaId: String,
+    replicaId: LocalUid,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
     untrustedReplica: ToDoListIntermediary
 ) extends SecureToDoListClient(replicaId, crdt, null, untrustedReplica) {

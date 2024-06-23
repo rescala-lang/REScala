@@ -92,7 +92,7 @@ class WebRTCConnectionView(dataManager: DataManager[?]) {
               case BroadcastCommunication.Hello(id) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Request(selfId, id, sd)).run(Async.handler)
+                    conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(Async.handler)
                 })
                 autoconnections = autoconnections.updated(id, handling)
                 renderedConnectionTable.appendChild(handling.controlRow().render)
@@ -101,7 +101,7 @@ class WebRTCConnectionView(dataManager: DataManager[?]) {
               case BroadcastCommunication.Request(from, `selfId`, sessionDescription) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Response(selfId, from, sd)).run(Async.handler)
+                    conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(Async.handler)
                 })
                 autoconnections = autoconnections.updated(from, handling)
                 renderedConnectionTable.appendChild(handling.controlRow().render)

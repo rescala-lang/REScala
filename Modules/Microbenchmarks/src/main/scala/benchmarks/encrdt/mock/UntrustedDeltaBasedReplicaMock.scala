@@ -53,7 +53,7 @@ class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
   }
 
   def decrypt(aead: replication.Aead): DeltaAWLWWMContainer[String, String] = {
-    val crdt = new DeltaAWLWWMContainer[String, String]("")
+    val crdt = new DeltaAWLWWMContainer[String, String]("".convert)
     encryptedDeltaGroupStore.map { encDeltaGroup =>
       encDeltaGroup.decrypt(aead)(Codecs.deltaAwlwwmapJsonCodec)
     }.foreach { decDeltaGroup =>

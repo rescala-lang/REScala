@@ -8,6 +8,8 @@ import rdts.time.{ArrayRanges, Dot, Dots}
 import test.rdts.DataGenerator.ExampleData
 import test.rdts.given
 
+import scala.language.implicitConversions
+
 class CausalStoreTest extends munit.FunSuite {
 
   test("basic usage") {

@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
 import rdts.base.LocalUid
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.PosNegCounter
 
 import java.util.concurrent.TimeUnit
@@ -25,8 +25,8 @@ class PNCounterBench {
   def setup(): Unit = {
     counter = (1 until numReplicas).foldLeft(NamedDeltaBuffer("0".asId, PosNegCounter.zero).map(_.inc())) {
       case (c, n) =>
-        given rid: LocalUid = rdts.base.Uid.predefined(n.toString)
-        val delta                       = PosNegCounter.zero.inc()
+        given rid: LocalUid = LocalUid.predefined(n.toString)
+        val delta           = PosNegCounter.zero.inc()
         c.applyDelta(rid.uid, delta)
     }
   }

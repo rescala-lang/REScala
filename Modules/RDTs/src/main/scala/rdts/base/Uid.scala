@@ -20,6 +20,10 @@ object Uid:
 
   extension (s: String) def asId: Uid = Uid(s)
 
+  inline given toLocal: Conversion[Uid, LocalUid] with {
+    override def apply(x: Uid): LocalUid = LocalUid(x)
+  }
+
   private var idCounter: Long   = scala.util.Random.nextLong()
   private val bytes: ByteBuffer = ByteBuffer.wrap(new Array[Byte](8))
 
@@ -47,11 +51,10 @@ case class LocalUid(uid: Uid) {
 }
 object LocalUid:
   given ordering: Ordering[LocalUid] = Uid.ordering.on(_.uid)
-  inline given fromId: Conversion[Uid, LocalUid] with {
-    override def apply(x: Uid): LocalUid = LocalUid(x)
-  }
 
-  def predefined(s: String): LocalUid     = LocalUid.fromId(Uid.predefined(s))
+  extension (s: String) def asId: LocalUid = predefined(s)
+
+  def predefined(s: String): LocalUid     = Uid.predefined(s).convert
   def unwrap(id: LocalUid): Uid           = id.uid
-  def gen(): LocalUid                     = Uid.gen()
+  def gen(): LocalUid                     = Uid.gen().convert
   def replicaId(using rid: LocalUid): Uid = rid.uid

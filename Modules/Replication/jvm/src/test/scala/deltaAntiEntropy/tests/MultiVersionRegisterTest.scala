@@ -73,8 +73,8 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.uid)(vA))
-      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).mod(_.write(using aeb.uid)(vB))
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.localUid)(vA))
+      val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).mod(_.write(using aeb.localUid)(vB))
 
       AntiEntropy.sync(aea, aeb)
 
@@ -98,7 +98,7 @@ class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
       val aea = new AntiEntropy[MultiVersionRegister[Int]]("a", network, mutable.Buffer("b"))
       val aeb = new AntiEntropy[MultiVersionRegister[Int]]("b", network, mutable.Buffer("a"))
 
-      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.uid)(v))
+      val ra0 = AntiEntropyContainer[MultiVersionRegister[Int]](aea).mod(_.write(using aea.localUid)(v))
       val rb0 = AntiEntropyContainer[MultiVersionRegister[Int]](aeb).mod(_.clear())
 
       AntiEntropy.sync(aea, aeb)

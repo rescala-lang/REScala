@@ -1,7 +1,7 @@
 package benchmarks.lattices
 
 import org.openjdk.jmh.annotations.*
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.alternatives.rga.Sequence
 import rdts.datatypes.alternatives.rga.Sequence.{RGA, RGAOps}
 import rdts.datatypes.contextual.CausalQueue

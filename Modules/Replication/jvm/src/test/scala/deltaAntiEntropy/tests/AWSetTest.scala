@@ -22,7 +22,7 @@ object AWSetGenerators {
       val network = new Network(0, 0, 0)
       val ae      = new AntiEntropy[ReplicatedSet[A]]("a", network, mutable.Buffer())
 
-      given LocalUid = Uid.predefined(ae.replicaID)
+      given LocalUid = LocalUid.predefined(ae.replicaID)
 
       val setAdded = added.foldLeft(AntiEntropyContainer[ReplicatedSet[A]](ae)) {
         case (set, e) => set.mod(_.add(e))
@@ -135,7 +135,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given LocalUid = Uid.predefined(aea.replicaID)
+        given LocalUid = LocalUid.predefined(aea.replicaID)
         AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e)).mod(_.add(e1)).mod(_.add(e2))
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
@@ -184,7 +184,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given LocalUid = Uid.predefined(aea.replicaID)
+        given LocalUid = LocalUid.predefined(aea.replicaID)
         AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e2))
       aea.sendChangesToAllNeighbors()
       aeb.receiveFromNetwork()
@@ -233,7 +233,7 @@ class AWSetTest extends munit.ScalaCheckSuite {
       val aeb = new AntiEntropy[ReplicatedSet[Int]]("b", network, mutable.Buffer("a"))
 
       val seta0 =
-        given LocalUid = Uid.predefined(aea.replicaID)
+        given LocalUid = LocalUid.predefined(aea.replicaID)
         AntiEntropyContainer[ReplicatedSet[Int]](aea).mod(_.add(e1)).mod(_.add(e2))
       AntiEntropy.sync(aea, aeb)
       val setb0 = AntiEntropyContainer[ReplicatedSet[Int]](aeb).processReceivedDeltas()

@@ -17,7 +17,7 @@ import scala.annotation.targetName
 class AntiEntropyContainer[State](
     protected val antiEntropy: AntiEntropy[State]
 ) {
-  val replicaID: LocalUid = antiEntropy.replicaID.asId
+  val replicaID: LocalUid = antiEntropy.localUid
 
   def state: Dotted[State] = antiEntropy.state
 

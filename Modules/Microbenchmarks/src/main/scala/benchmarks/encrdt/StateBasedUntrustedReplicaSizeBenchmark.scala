@@ -6,9 +6,12 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.VectorClock
+import scala.language.implicitConversions
+
 
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
+import scala.language.implicitConversions
 
 object StateBasedUntrustedReplicaSizeBenchmark extends App {
   val minElementExponent   = 1 // 10 ** this as minimum tested total elements added to CRDT

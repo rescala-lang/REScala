@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tests.NetworkGenerators.*
 import deltaAntiEntropy.tools.{AntiEntropy, AntiEntropyContainer, Named, Network}
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.GrowOnlyList
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.{Dotted, HasDots}
@@ -28,7 +28,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     aec.mod(_.insert(using aec.replicaID)(0, "00"))
 
-    aec.mod(_.update(using Uid.predefined("b"))(0, "UPD"))
+    aec.mod(_.update(using LocalUid.predefined("b"))(0, "UPD"))
 
     assertEquals(aec.data.toList, List("UPD"))
 
@@ -44,7 +44,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
     assertEquals(aec.data.toList, lots.reverse ::: List("UPD", "100"))
 
-    aec.mod(_.insert(using Uid.predefined("b"))(1, "b00"))
+    aec.mod(_.insert(using LocalUid.predefined("b"))(1, "b00"))
 
     assertEquals(aec.data.read(1), Some("b00"))
 
@@ -97,7 +97,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
     val la0 = AntiEntropyContainer(aea)
     la0.applyDelta(Named(
       Uid.predefined(aea.replicaID),
-      makeRGA(inserted, removed, Uid.predefined(aea.replicaID))
+      makeRGA(inserted, removed, LocalUid.predefined(aea.replicaID))
     ))
     network.startReliablePhase()
     AntiEntropy.sync(aea, aeb)

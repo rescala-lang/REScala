@@ -22,7 +22,7 @@ object ToDoAppBenchmark extends App {
   private val interactions: Iterable[ToDoListInteraction] =
     new ToDoListInteractionGenerator(pruningThreshold, keptToDos).generateInteractions(numInteractions)
 
-  private val clientCrdt = new DeltaAWLWWMContainer[UUID, ToDoEntry]("client")
+  private val clientCrdt = new DeltaAWLWWMContainer[UUID, ToDoEntry]("client".convert)
 
   private var intermediarySizeInfo: IntermediarySizeInfo = scala.compiletime.uninitialized
   private var aead: replication.Aead                     = scala.compiletime.uninitialized
@@ -32,7 +32,7 @@ object ToDoAppBenchmark extends App {
     aead = AeadTranslation(Helper.setupAead("AES128_GCM"))
     val intermediaryReplica = new ToDoListIntermediary
     intermediarySizeInfo = intermediaryReplica
-    clientReplica = new SecureToDoListClient("client", clientCrdt, aead, intermediaryReplica)
+    clientReplica = new SecureToDoListClient("client".convert, clientCrdt, aead, intermediaryReplica)
   } else {
     val intermediaryReplica = new AlternativeInsecureToDoListIntermediary("intermediary")
     intermediarySizeInfo = intermediaryReplica

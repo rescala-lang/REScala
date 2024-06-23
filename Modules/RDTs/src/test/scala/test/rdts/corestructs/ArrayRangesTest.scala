@@ -79,7 +79,6 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
     assertEquals((right intersect left), ArrayRanges.empty)
   }
 
-  private implicit def iteratorConv(range: Iterator[Int]): Iterator[Time] = range.map(i => i)
 
   test("from") {
     assertEquals(ArrayRanges.from(Seq[Time](1, 2, 3)), ArrayRanges(Seq((1, 4))))

@@ -3,6 +3,8 @@ package test.rdts
 import munit.Compare
 import rdts.base.Uid
 
+import scala.language.implicitConversions
+
 implicit def idFromString(s: String): rdts.base.Uid = rdts.base.Uid.predefined(s)
 
 given munit.Compare[rdts.base.Uid, String] = new Compare[Uid, String]:

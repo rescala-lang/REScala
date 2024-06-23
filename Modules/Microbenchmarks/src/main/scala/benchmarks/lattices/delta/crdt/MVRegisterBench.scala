@@ -1,8 +1,8 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.LocalUid.asId
 import rdts.base.{Lattice, LocalUid}
-import rdts.base.Uid.asId
 import rdts.datatypes.contextual.MultiVersionRegister
 import rdts.dotted.Dotted
 
@@ -25,10 +25,10 @@ class MVRegisterBench {
 
   @Setup
   def setup(): Unit = {
-    reg = (0 until numWrites).foldLeft(NamedDeltaBuffer.dotted("-1", MultiVersionRegister.empty[Int])) {
+    reg = (0 until numWrites).foldLeft(NamedDeltaBuffer.dotted("-1".asId, MultiVersionRegister.empty[Int])) {
       case (r, i) =>
         given rid: LocalUid = i.toString.asId
-        val delta                       = Dotted(MultiVersionRegister.empty[Int]).mod(_.write(i))
+        val delta           = Dotted(MultiVersionRegister.empty[Int]).mod(_.write(i))
         r.applyDelta(rid.uid, delta)
     }
   }

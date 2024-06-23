@@ -15,14 +15,14 @@ class MultiVersionRegisterTest extends munit.FunSuite {
     val bob     = Uid.predefined("bob")
     val charlie = Uid.predefined("charlie")
 
-    val b = a.mod(_.write(using alice)("hi"))
-    val c = a.mod(_.write(using bob)("ho"))
+    val b = a.mod(_.write(using alice.convert)("hi"))
+    val c = a.mod(_.write(using bob.convert)("ho"))
 
     val m1 = b merge c
 
     assertEquals(m1.data.read, Set("hi", "ho"))
 
-    val d = m1.mod(_.write(using charlie)("lets go!"))
+    val d = m1.mod(_.write(using charlie.convert)("lets go!"))
 
     assertEquals(d.data.read, Set("lets go!"))
 

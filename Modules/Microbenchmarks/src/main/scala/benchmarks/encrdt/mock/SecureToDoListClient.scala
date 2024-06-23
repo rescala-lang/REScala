@@ -5,7 +5,7 @@ import benchmarks.encrdt.deltabased.{DecryptedDeltaGroup, EncryptedDeltaGroup, T
 import benchmarks.encrdt.localidFromString
 import benchmarks.encrdt.mock.SecureToDoListClient.{ToDoMapLattice, mergeDecryptedDeltas}
 import benchmarks.encrdt.todolist.ToDoEntry
-import com.google.crypto.tink.Aead
+import rdts.base.LocalUid
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.syntax.DeltaAWLWWMContainer.State
@@ -15,7 +15,7 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SecureToDoListClient(
-    replicaId: String,
+    replicaId: LocalUid,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
     aead: replication.Aead,
     private val intermediary: UntrustedReplica

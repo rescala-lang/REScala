@@ -16,7 +16,7 @@ object TestReplica {
 
 //  @targetName("fromString")
 //  def apply[L](replicaId: String, anon: L): TestReplica[L] = apply(Uid.predefined(replicaId), anon)
-  def apply[L](replicaID: Uid, anon: L): TestReplica[L] = new TestReplica(replicaID, anon)
+  def apply[L](replicaID: Uid, anon: L): TestReplica[L] = new TestReplica(replicaID.convert, anon)
   def unapply[L](wnc: TestReplica[L]): Some[(Uid, L)]   = Some((wnc.replicaId.uid, wnc.anon))
 
 }

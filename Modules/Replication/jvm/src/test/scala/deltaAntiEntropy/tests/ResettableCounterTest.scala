@@ -89,9 +89,9 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val aes = new AntiEntropy[ResettableCounter]("s", network, mutable.Buffer("s"))
 
       def processOpInto(op: Either[Unit, Boolean], into: AntiEntropy[ResettableCounter]) = op match {
-        case Left(_)      => AntiEntropyContainer[ResettableCounter](into).mod(_.increment(using into.uid)())
-        case Right(false) => AntiEntropyContainer[ResettableCounter](into).mod(_.decrement(using into.uid)())
-        case Right(true)  => AntiEntropyContainer[ResettableCounter](into).mod(_.fresh(using into.uid)())
+        case Left(_)      => AntiEntropyContainer[ResettableCounter](into).mod(_.increment(using into.localUid)())
+        case Right(false) => AntiEntropyContainer[ResettableCounter](into).mod(_.decrement(using into.localUid)())
+        case Right(true)  => AntiEntropyContainer[ResettableCounter](into).mod(_.fresh(using into.localUid)())
       }
 
       val ca0 = processOpInto(opA, aea)
@@ -123,7 +123,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[ResettableCounter]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
 
-    val ca0 = AntiEntropyContainer[ResettableCounter](aea).mod(_.increment(using aea.uid)())
+    val ca0 = AntiEntropyContainer[ResettableCounter](aea).mod(_.increment(using aea.localUid)())
     AntiEntropy.sync(aea, aeb)
     val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 
@@ -155,7 +155,7 @@ class ResettableCounterTest extends munit.ScalaCheckSuite {
       val aeb        = new AntiEntropy[ResettableCounter]("b", network, mutable.Buffer("a"))
       val sequential = AntiEntropyContainer(new AntiEntropy[ResettableCounter]("c", network, mutable.Buffer("c")))
 
-      val ca0 = AntiEntropyContainer[ResettableCounter](aea).mod(_.increment(using aea.uid)())
+      val ca0 = AntiEntropyContainer[ResettableCounter](aea).mod(_.increment(using aea.localUid)())
       AntiEntropy.sync(aea, aeb)
       val cb0 = AntiEntropyContainer[ResettableCounter](aeb).processReceivedDeltas()
 

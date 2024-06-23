@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReaderException, JsonValu
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import deltaAntiEntropy.tools.AntiEntropy.{AckMsg, DeltaMsg}
 import rdts.base.Uid.asId
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.dotted.{Dotted, DottedLattice}
 import replication.JsoniterCodecs.given
 
@@ -33,7 +33,7 @@ class AntiEntropy[A](
 
   def state: Dotted[A] = fullState
 
-  def uid: Uid = Uid.predefined(replicaID)
+  def localUid: LocalUid = LocalUid.predefined(replicaID)
 
   private val deltaBufferOut: mutable.Map[Int, Named[Dotted[A]]] = mutable.Map()
 

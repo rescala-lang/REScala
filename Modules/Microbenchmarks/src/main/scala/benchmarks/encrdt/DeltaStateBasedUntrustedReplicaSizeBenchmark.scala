@@ -9,6 +9,9 @@ import rdts.base.Bottom
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.{Dot, Dots}
 
+import scala.language.implicitConversions
+
+
 import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}
 

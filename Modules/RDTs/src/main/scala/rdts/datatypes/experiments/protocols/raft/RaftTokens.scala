@@ -19,7 +19,7 @@ case class RaftTokens(
     tokenFreed: DeltaBuffer[Dotted[ReplicatedSet[RaftToken]]]
 ) {
 
-  given LocalUid = replicaID
+  given LocalUid = replicaID.convert
 
   def owned(value: String): List[RaftToken] = {
     val freed  = tokenFreed.state.data.elements

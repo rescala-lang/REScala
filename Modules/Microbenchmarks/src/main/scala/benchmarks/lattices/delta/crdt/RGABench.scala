@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.ReplicatedList
 
 import java.util.concurrent.TimeUnit
@@ -25,7 +25,7 @@ class RGABench {
 
   @Setup
   def setup(): Unit = {
-    rga = NamedDeltaBuffer.dotted("a", ReplicatedList.empty[Int]).mod(_.appendAll(using "".asId)(0 until rgaSize))
+    rga = NamedDeltaBuffer.dotted("a".asId, ReplicatedList.empty[Int]).mod(_.appendAll(using "".asId)(0 until rgaSize))
     rgaCleared = rga.mod(_.clear())
   }
 

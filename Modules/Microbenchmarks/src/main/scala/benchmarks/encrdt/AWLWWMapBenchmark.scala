@@ -9,6 +9,9 @@ import org.openjdk.jmh.infra.Blackhole
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.VectorClock
 
+import scala.language.implicitConversions
+
+
 import java.util.concurrent.TimeUnit
 
 @OutputTimeUnit(TimeUnit.MILLISECONDS)

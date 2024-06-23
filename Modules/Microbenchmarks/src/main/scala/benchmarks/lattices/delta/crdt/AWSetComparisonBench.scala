@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
 import rdts.base.Lattice
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 

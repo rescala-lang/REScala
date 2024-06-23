@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.GrowOnlyCounter
 
 import java.util.concurrent.TimeUnit

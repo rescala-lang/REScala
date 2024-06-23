@@ -70,7 +70,7 @@ class NewAppointment(private val typeName: String) {
 
 class CalendarUI(val storagePrefix: String, val replicaId: Uid) {
 
-  given LocalUid = replicaId
+  given LocalUid = replicaId.convert
 
   type Calendar = DeltaBuffer[Dotted[ReplicatedSet[Appointment]]]
 

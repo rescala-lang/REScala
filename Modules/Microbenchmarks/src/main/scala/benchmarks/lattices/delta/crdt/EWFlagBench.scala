@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.EnableWinsFlag
 
 import java.util.concurrent.TimeUnit
@@ -20,8 +20,8 @@ class EWFlagBench {
 
   @Setup
   def setup(): Unit = {
-    flagEnabled = NamedDeltaBuffer.dotted("a", EnableWinsFlag.empty).mod(_.enable(using "a".asId)())
-    flagDisabled = NamedDeltaBuffer.dotted("b", EnableWinsFlag.empty).mod(_.disable())
+    flagEnabled = NamedDeltaBuffer.dotted("a".asId, EnableWinsFlag.empty).mod(_.enable(using "a".asId)())
+    flagDisabled = NamedDeltaBuffer.dotted("b".asId, EnableWinsFlag.empty).mod(_.disable())
   }
 
   @Benchmark

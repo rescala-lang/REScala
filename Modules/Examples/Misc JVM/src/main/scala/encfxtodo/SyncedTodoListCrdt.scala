@@ -18,7 +18,7 @@ import scala.util.Try
 class SyncedTodoListCrdt(val replicaId: LocalUid) {
 
   private val crdt: DeltaAWLWWMContainer[UUID, TodoEntry] =
-    new DeltaAWLWWMContainer[UUID, TodoEntry](replicaId.uid)
+    new DeltaAWLWWMContainer[UUID, TodoEntry](replicaId)
 
   private val crdtExecutorService: ExecutorService = Executors.newSingleThreadExecutor()
   private val crdtExecContext: ExecutionContext    = ExecutionContext.fromExecutor(crdtExecutorService)

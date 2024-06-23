@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.LocalUid.asId
 import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.GrowOnlyMap.given
 import rdts.datatypes.contextual.EnableWinsFlag
@@ -26,10 +27,11 @@ class GMapBench {
   @Setup
   def setup(): Unit = {
 
-    map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted("a", GrowOnlyMap.empty[Int, EnableWinsFlag]): SUT) {
-      case (rdc: SUT, i) =>
-        rdc.mod(_.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.mod(_.enable(using rdc.replicaID)())))
-    }
+    map =
+      (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted("a".asId, GrowOnlyMap.empty[Int, EnableWinsFlag]): SUT) {
+        case (rdc: SUT, i) =>
+          rdc.mod(_.mutateKeyNamedCtx(i, EnableWinsFlag.empty)(_.mod(_.enable(using rdc.replicaID)())))
+      }
   }
 
   @Benchmark

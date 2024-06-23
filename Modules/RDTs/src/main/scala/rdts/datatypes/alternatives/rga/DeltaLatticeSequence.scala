@@ -27,7 +27,7 @@ case class DeltaSequence[A](
 
   def addRightDelta(replica: Uid, left: Vertex, insertee: Vertex, value: A)(using context: Dots): C = {
     val newEdges    = current.edges.addRightEdgeDelta(left, insertee)
-    val newVertices = current.vertices.add(using replica)(insertee)(using context)
+    val newVertices = current.vertices.add(using replica.convert)(insertee)(using context)
     val newValues   = Map(insertee -> value)
     newVertices.context.wrap(DeltaSequence(newVertices.data, newEdges, newValues))
   }
@@ -80,7 +80,7 @@ object DeltaSequence {
   }
 
   def empty[A]: DeltaSequence[A] =
-    val addStart = ReplicatedSet.empty[Vertex].add(using Vertex.start.id)(Vertex.start)(using Dots.empty)
+    val addStart = ReplicatedSet.empty[Vertex].add(using Vertex.start.id.convert)(Vertex.start)(using Dots.empty)
     DeltaSequence(
       addStart.data,
       DeltaSequenceOrder(Map()),

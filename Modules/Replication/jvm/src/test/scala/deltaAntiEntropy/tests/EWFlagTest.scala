@@ -23,7 +23,7 @@ object EWFlagGenerators {
 
       ops.foldLeft(AntiEntropyContainer[EnableWinsFlag](ae)) {
         case (f, 0) => f.mod(_.disable())
-        case (f, 1) => f.mod(_.enable(using rdts.base.Uid.predefined(ae.replicaID))())
+        case (f, 1) => f.mod(_.enable(using rdts.base.LocalUid.predefined(ae.replicaID))())
         // default case is only needed to stop the compiler from complaining about non-exhaustive match
         case (f, _) => f
       }
@@ -63,8 +63,8 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).mod(_.enable(using aea.uid)())
-    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).mod(_.enable(using aeb.uid)())
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).mod(_.enable(using aea.localUid)())
+    val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).mod(_.enable(using aeb.localUid)())
 
     AntiEntropy.sync(aea, aeb)
 
@@ -114,7 +114,7 @@ class EWFlagTest extends munit.ScalaCheckSuite {
     val aea = new AntiEntropy[EnableWinsFlag]("a", network, mutable.Buffer("b"))
     val aeb = new AntiEntropy[EnableWinsFlag]("b", network, mutable.Buffer("a"))
 
-    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).mod(_.enable(using aea.uid)())
+    val fa0 = AntiEntropyContainer[EnableWinsFlag](aea).mod(_.enable(using aea.localUid)())
     val fb0 = AntiEntropyContainer[EnableWinsFlag](aeb).mod(_.disable())
 
     AntiEntropy.sync(aea, aeb)

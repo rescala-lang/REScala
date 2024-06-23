@@ -2,7 +2,7 @@ package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
 import rdts.base.LocalUid
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.datatypes.alternatives.ResettableCounter
 import rdts.dotted.Dotted
 
@@ -25,7 +25,7 @@ class RCounterBench {
   @Setup
   def setup(): Unit = {
     counter =
-      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0", ResettableCounter.zero).mod(_.increment(using
+      (1 until numReplicas).foldLeft(NamedDeltaBuffer.dotted("0".asId, ResettableCounter.zero).mod(_.increment(using
       "0".asId)())) {
         case (c, n) =>
           given rid: LocalUid = n.toString.asId

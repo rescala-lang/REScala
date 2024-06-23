@@ -41,7 +41,7 @@ case class SocialPost(
 
 object SocialMediaTest {
 
-  given LocalUid = LocalUid.fromId(Uid.gen())
+  given LocalUid = LocalUid.gen()
 
   val likeEvent: Event[ID]        = UI.likeButton.event.snap { UI.currentPostID.value }
   val commentEvent: Event[String] = UI.submitCommentButton.event.snap { UI.textInput.value }

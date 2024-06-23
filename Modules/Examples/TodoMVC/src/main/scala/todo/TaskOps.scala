@@ -17,7 +17,7 @@ object TaskOps {
 
 // `taskrefs` is unused as a reference, but is used indirectly so this parameter serves as a requirement
 // that a `taskrefs` needs to be created before taskops may be used
-class TaskOps(@unused taskrefs: TaskReferences, replicaID: Uid) {
+class TaskOps(@unused taskrefs: TaskReferences, replicaID: LocalUid) {
 
   type State = DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]
 

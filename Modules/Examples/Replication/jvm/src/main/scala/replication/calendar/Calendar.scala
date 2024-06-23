@@ -14,7 +14,7 @@ given intMaxBottom: Bottom[Int] with {
 
 class CalendarProgram(id: Uid, synchronizationPoint: String => (=> Unit) => Unit) {
 
-  given LocalUid = id
+  given LocalUid = id.convert
 
   type Calendar = DeltaBuffer[Dotted[ReplicatedSet[Appointment]]]
 

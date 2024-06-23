@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
-import rdts.base.Bottom
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.{EnableWinsFlag, ObserveRemoveMap}
 import rdts.dotted.Dotted
 
@@ -26,7 +26,7 @@ class ORMapBench {
   @Setup
   def setup(): Unit = {
     map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted[ObserveRemoveMap[Int, EnableWinsFlag]](
-      "a",
+      "a".asId,
       ObserveRemoveMap.empty
     )) {
       case (m, i) => m.mod(_.transform(i)(_.mod(_.enable(using m.replicaID)())))

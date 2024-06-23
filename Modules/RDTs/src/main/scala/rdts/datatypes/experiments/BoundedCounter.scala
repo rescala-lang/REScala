@@ -28,7 +28,7 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
     if amount > available(LocalUid.replicaId) then neutral
     else
       neutral.copy(reservations =
-        current.reservations.add(amount)(using target) merge
+        current.reservations.add(amount)(using target.convert) merge
         current.reservations.add(-amount)
       )
   }
@@ -53,8 +53,8 @@ case class BoundedCounter(reservations: PosNegCounter, allocations: GrowOnlyCoun
 
 object BoundedCounter {
   def init(value: Int, replicaID: Uid): BoundedCounter =
-    val countervalue = PosNegCounter.zero.add(-value)(using Uid.predefined("initial-allocation"))
-    val initial      = PosNegCounter.zero.add(value)(using replicaID)
+    val countervalue = PosNegCounter.zero.add(-value)(using Uid.predefined("initial-allocation").convert)
+    val initial      = PosNegCounter.zero.add(value)(using replicaID.convert)
     BoundedCounter(countervalue merge initial, GrowOnlyCounter.zero, Set(replicaID))
 
   private val neutral: BoundedCounter = BoundedCounter(PosNegCounter.zero, GrowOnlyCounter.zero, Set.empty)

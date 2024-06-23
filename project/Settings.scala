@@ -23,9 +23,6 @@ object Settings {
       "-source",
       "3.5",
 
-      // Allow definition and application of implicit conversions
-      "-language:implicitConversions",
-
       // more stuff that may be interesting in special contexts
 
       // Require then and do in control expressions. (handled by scalafmt)
@@ -68,6 +65,9 @@ object Settings {
     taskSpecificScalacOption("-java-output-version", conf: _*),
     taskSpecificScalacOption(n.toString, conf: _*)
   )
+
+  // Allow definition and application of implicit conversions
+  def implicitConversions(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:implicitConversions", conf: _*)
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
   def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)

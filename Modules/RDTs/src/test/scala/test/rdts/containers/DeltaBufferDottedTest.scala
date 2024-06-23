@@ -1,6 +1,6 @@
 package test.rdts.containers
 
-import rdts.base.{Bottom, LocalUid, Uid}
+import rdts.base.{Bottom, LocalUid}
 import rdts.datatypes.contextual.EnableWinsFlag
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
@@ -9,7 +9,7 @@ class DeltaBufferDottedTest extends munit.FunSuite {
 
   test("basic interaction") {
 
-    given LocalUid = Uid.gen()
+    given LocalUid = LocalUid.gen()
 
     val dbe = DeltaBuffer[Dotted[EnableWinsFlag]](Dotted(EnableWinsFlag.empty))
 

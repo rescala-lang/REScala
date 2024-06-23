@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 
@@ -21,7 +22,7 @@ class AWSetBench {
   var set: DeltaBufferDotted[ReplicatedSet[Int]] = scala.compiletime.uninitialized
 
   def createBySize(size: Int): DeltaBufferDotted[ReplicatedSet[Int]] =
-    (0 until size).foldLeft(NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])) {
+    (0 until size).foldLeft(NamedDeltaBuffer.dotted("a".asId, ReplicatedSet.empty[Int])) {
       case (s, e) => s.mod(_.add(using s.replicaID)(e))
     }
 
@@ -38,7 +39,7 @@ class AWSetBench {
 
   @Benchmark
   def addAll(): DeltaBufferDotted[ReplicatedSet[Int]] =
-    val ndb = NamedDeltaBuffer.dotted("a", ReplicatedSet.empty[Int])
+    val ndb = NamedDeltaBuffer.dotted("a".asId, ReplicatedSet.empty[Int])
     ndb.mod(_.addAll(using ndb.replicaID)(0 until size))
 
   @Benchmark

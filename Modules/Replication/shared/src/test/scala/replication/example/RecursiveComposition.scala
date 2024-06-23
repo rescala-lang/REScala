@@ -2,7 +2,7 @@ package example
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import rdts.base.Uid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedList
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
@@ -40,7 +40,7 @@ class RecursiveCompositionTest extends munit.FunSuite {
     val rlist = DeltaBuffer(Dotted(ReplicatedList.empty[Component]))
 
     // some operations on replicated data types require a unique ID per replica, here we just generate one randomly that is then used in the call to `append` below
-    given myId: rdts.base.LocalUid = Uid.gen()
+    given myId: rdts.base.LocalUid = LocalUid.gen()
 
     // okay, this is cheating, this just adds complex components to a replicated list, and would not be sufficient for fine grained editing of replicated UIs … however, it should be sufficient for a very simple usecase
     rlist.modd(_.append(exampleComposition))

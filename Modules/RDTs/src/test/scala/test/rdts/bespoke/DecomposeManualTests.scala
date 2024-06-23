@@ -1,6 +1,6 @@
 package test.rdts.bespoke
 
-import rdts.base.Uid.asId
+import rdts.base.LocalUid.asId
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.GrowOnlySet.{elements, insert}
 import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}

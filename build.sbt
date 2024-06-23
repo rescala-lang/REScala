@@ -109,6 +109,7 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
     Dependencies.jsoniterScala,
     LocalSettings.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
+    Settings.implicitConversions()
   )
 
 lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
@@ -215,6 +216,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     LocalSettings.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
+    Settings.implicitConversions()
   )
   .jvmSettings(
     libraryDependencies += LocalSettings.scalafx % Provided,

@@ -216,7 +216,7 @@ object DataGenerator {
         removed         <- Gen.containerOf[List, Int](Arbitrary.arbitrary[Int])
         id              <- Gen.oneOf('a' to 'g')
       yield {
-        makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString))
+        makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString).convert)
       }
 
     implicit def arbRGA[E](implicit
