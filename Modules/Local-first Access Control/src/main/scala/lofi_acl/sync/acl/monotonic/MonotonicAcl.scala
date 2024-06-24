@@ -3,9 +3,9 @@ package lofi_acl.sync.acl.monotonic
 import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.crypto.PublicIdentity
 
-class MonotonicAcl[RDT](
-    private val read: Map[PublicIdentity, PermissionTree],
-    private val write: Map[PublicIdentity, PermissionTree]
+case class MonotonicAcl[RDT](
+    read: Map[PublicIdentity, PermissionTree],
+    write: Map[PublicIdentity, PermissionTree]
 ) {
   def addReadPermissionIfAllowed(
       forPrincipal: PublicIdentity,
