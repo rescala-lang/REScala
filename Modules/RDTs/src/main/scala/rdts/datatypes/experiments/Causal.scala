@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments
 
 import rdts.base.{Bottom, Lattice}
-import rdts.dotted.{Dotted, HasDots}
+import rdts.dotted.HasDots
 import rdts.time.Dots
 
 case class CausalDelta[A](contained: Dots, predecessors: Dots, delta: A) derives Lattice, Bottom

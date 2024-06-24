@@ -1,6 +1,5 @@
 package rdts.base
 
-import scala.annotation.targetName
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
@@ -8,12 +7,11 @@ object Orderings {
 
   inline def lexicographic[T <: Product](using pm: Mirror.ProductOf[T]): Ordering[T] = {
     val orderings: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Ordering]]
-    new LexicographicOrdering[T](orderings, pm)
+    new LexicographicOrdering[T](orderings)
   }
 
   class LexicographicOrdering[T <: Product](
       orderings: Tuple,
-      pm: Mirror.ProductOf[T],
   ) extends Ordering[T] {
     override def compare(x: T, y: T): Int =
       def rec(idx: Int): Int =

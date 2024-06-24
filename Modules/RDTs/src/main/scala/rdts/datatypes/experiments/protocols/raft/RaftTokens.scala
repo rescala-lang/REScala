@@ -4,7 +4,6 @@ import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.contextual.ReplicatedSet
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
-import rdts.time.Dots
 
 import scala.util.Random
 

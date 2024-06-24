@@ -1,6 +1,5 @@
 package rdts.datatypes.experiments
 
-import rdts.base.Lattice.merge
 import rdts.base.{Lattice, Uid}
 import rdts.time.VectorClock
 
