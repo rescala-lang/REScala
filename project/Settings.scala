@@ -33,9 +33,31 @@ object Settings {
   // generally recommended to get consistent behaviour
   def scalaSourceLevel(level: String) = scalacOptions ++= List("-source", level)
 
+  // defines the output classfile version, and disables use of newer methods from the JDK classpath
   def javaOutputVersion(n: Int, conf: TaskKey[?]*) = Def.settings(
     taskSpecificScalacOption("-java-output-version", conf: _*),
     taskSpecificScalacOption(n.toString, conf: _*)
+  )
+
+  // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
+  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
+
+  // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
+  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf: _*)
+
+  // can be annoying with methods that have optional results, can also help with methods that have non optional results …
+  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
+
+  // seems to produce compiler crashes in some cases
+  // this is -Ysafe-init for scala 3.4 and below
+  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
+
+  // makes Null no longer be a sub type of all subtypes of AnyRef
+  // but is super annoying with java interop. The second flag tries to improve that interop by making java return types special, see https://github.com/scala/scala3/pull/17369
+  // however, that second flag does not seem to be in 3.5-RC1?
+  def explicitNulls(conf: TaskKey[?]*) = Def.settings(
+    taskSpecificScalacOption("-Yexplicit-nulls", conf: _*),
+    taskSpecificScalacOption("-Yflexible-types", conf: _*),
   )
 
   // Enforce then and do syntax, combine with rewrite to automatically rewrite
@@ -49,22 +71,6 @@ object Settings {
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
   def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)
-
-  // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
-  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
-
-  // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
-  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf: _*)
-
-  // can be annoying with methods that have optional results, can also help with methods that have non optional results …
-  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
-
-  // super hard with java interop
-  def explicitNulls(conf: TaskKey[?]*) = taskSpecificScalacOption("-Yexplicit-nulls", conf: _*)
-
-  // seems to produce compiler crashes in some cases
-  // this is -Ysafe-init for scala 3.4 and below
-  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
 
   // unused warnings should
   def unusedWarnings(conf: TaskKey[?]*) = {
