@@ -4,7 +4,7 @@ import rdts.base.{Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, Obrem}
 import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.Dots
 
@@ -64,17 +64,17 @@ class DeltaAWLWWMContainer[K, V](
   }
 
   private def mutate(delta: State[K, V]): Unit = {
-    _state = Dotted.lattice.merge(_state, delta)
+    _state = Obrem.lattice.merge(_state, delta)
   }
 }
 
 object DeltaAWLWWMContainer {
   type Inner[K, V] = ObserveRemoveMap[K, Entry[LastWriterWins[V]]]
-  type State[K, V] = Dotted[Inner[K, V]]
+  type State[K, V] = Obrem[Inner[K, V]]
 
   def empty[K, V]: State[K, V] =
-    Dotted(ObserveRemoveMap.empty[K, Entry[LastWriterWins[V]]])
+    Obrem(ObserveRemoveMap.empty[K, Entry[LastWriterWins[V]]])
 
-  given lattice[K, V]: Lattice[State[K, V]] = Dotted.lattice
+  given lattice[K, V]: Lattice[State[K, V]] = Obrem.lattice
 
 }

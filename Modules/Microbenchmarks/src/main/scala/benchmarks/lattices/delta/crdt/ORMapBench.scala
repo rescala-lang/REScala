@@ -3,7 +3,7 @@ package benchmarks.lattices.delta.crdt
 import org.openjdk.jmh.annotations.*
 import rdts.base.LocalUid.asId
 import rdts.datatypes.contextual.{EnableWinsFlag, ObserveRemoveMap}
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, Obrem}
 
 import java.util.concurrent.TimeUnit
 
@@ -19,13 +19,13 @@ class ORMapBench {
   @Param(Array("1", "10", "100", "1000"))
   var numEntries: Int = scala.compiletime.uninitialized
 
-  type SUT = DeltaBufferDotted[ObserveRemoveMap[Int, EnableWinsFlag]]
+  type SUT = NamedDeltaBuffer[Obrem[ObserveRemoveMap[Int, EnableWinsFlag]]]
 
   var map: SUT = scala.compiletime.uninitialized
 
   @Setup
   def setup(): Unit = {
-    map = (0 until numEntries).foldLeft(NamedDeltaBuffer.dotted[ObserveRemoveMap[Int, EnableWinsFlag]](
+    map = (0 until numEntries).foldLeft(NamedDeltaBuffer.obrem[ObserveRemoveMap[Int, EnableWinsFlag]](
       "a".asId,
       ObserveRemoveMap.empty
     )) {

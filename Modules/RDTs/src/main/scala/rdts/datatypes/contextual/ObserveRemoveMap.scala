@@ -2,7 +2,7 @@ package rdts.datatypes.contextual
 
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.HasDots.mapInstance
-import rdts.dotted.{Dotted, HasDots}
+import rdts.dotted.{Dotted, HasDots, Obrem}
 import rdts.time.Dots
 
 case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
@@ -10,7 +10,7 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
 
   import ObserveRemoveMap.make
 
-  type Delta = Dotted[ObserveRemoveMap[K, V]]
+  type Delta = Obrem[ObserveRemoveMap[K, V]]
 
   def contains(k: K): Boolean = inner.contains(k)
 
@@ -23,33 +23,39 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   def entries: Iterable[(K, V)] = inner.view
 
   def update(using LocalUid)(k: K, v: V)(using context: Dots): Delta = {
-    Dotted(ObserveRemoveMap(Map(k -> v)), Dots.single(context.nextDot(LocalUid.replicaId)))
+    Obrem(ObserveRemoveMap(Map(k -> v)), Dots.single(context.nextDot(LocalUid.replicaId)), Dots.empty)
   }
 
   def transformPlain(using LocalUid)(k: K)(m: Option[V] => Option[V])(using context: Dots): Delta = {
     m(inner.get(k)) match {
       case Some(value) => update(k, value)
-      case None        => Dotted(ObserveRemoveMap.empty, Dots.single(context.nextDot(LocalUid.replicaId)))
+      case None        => Obrem(ObserveRemoveMap.empty, Dots.single(context.nextDot(LocalUid.replicaId)), Dots.empty)
     }
   }
 
   def transform(using
-      bot: Bottom[V]
+      bot: Bottom[V],
+      hd: HasDots[V]
   )(k: K)(m: Dotted[V] => Dotted[V])(using context: Dots): Delta = {
-    val v                           = inner.getOrElse(k, Bottom[V].empty)
-    val Dotted(stateDelta, ccDelta) = m(Dotted(v, context))
-    ObserveRemoveMap.make[K, V](
-      dm = Map(k -> stateDelta),
-      cc = ccDelta
+    val v   = inner.getOrElse(k, Bottom[V].empty)
+    val res = m(Dotted(v, context))
+
+    Obrem(
+      ObserveRemoveMap(Map(k -> res.data)),
+      observed = res.contained,
+      deletions = res.deletions
     )
   }
 
   def remove(using HasDots[V])(k: K): Delta = {
     inner.get(k) match
-      case Some(value) => make[K, V](
-          cc = HasDots[V].dots(value)
+      case Some(value) =>
+        Obrem(
+          ObserveRemoveMap.empty,
+          observed = Dots.empty,
+          deletions = HasDots[V].dots(value)
         )
-      case None => make[K, V]()
+      case None => Obrem(ObserveRemoveMap.empty)
 
   }
 
@@ -59,8 +65,10 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
       case (set, v) => set union HasDots[V].dots(v)
     }
 
-    make(
-      cc = dots
+    Obrem(
+      ObserveRemoveMap.empty,
+      observed = Dots.empty,
+      deletions = dots
     )
   }
 
@@ -69,14 +77,18 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
       case v if cond(Dotted(v, context)) => v.dots
     }.fold(Dots.empty)(_ union _)
 
-    make(
-      cc = toRemove
+    Obrem(
+      ObserveRemoveMap.empty,
+      observed = Dots.empty,
+      deletions = toRemove
     )
   }
 
   def clear(using HasDots[V])(): Delta = {
-    make(
-      cc = inner.dots
+    Obrem(
+      ObserveRemoveMap.empty,
+      observed = Dots.empty,
+      deletions = inner.dots
     )
   }
 }

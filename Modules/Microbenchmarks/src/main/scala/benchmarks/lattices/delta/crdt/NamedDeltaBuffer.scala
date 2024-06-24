@@ -1,7 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, HasDots, Obrem}
 import rdts.time.{Dot, Dots}
 
 type DeltaBufferDotted[State] = NamedDeltaBuffer[Dotted[State]]
@@ -49,8 +49,20 @@ object NamedDeltaBuffer {
       }
   }
 
+  implicit object workaround2 {
+    extension [A](curr: NamedDeltaBuffer[Obrem[A]])(using Lattice[Obrem[A]])
+      inline def mod(f: Dots ?=> A => Obrem[A]): NamedDeltaBuffer[Obrem[A]] = {
+        curr.applyDelta(curr.replicaID.uid, curr.state.mod(f(_)))
+      }
+    extension [A](curr: NamedDeltaBuffer[Obrem[A]]) def data: A = curr.state.data
+
+  }
+
   def dotted[State](replicaID: LocalUid, init: State): NamedDeltaBuffer[Dotted[State]] =
     new NamedDeltaBuffer(replicaID, Dotted(init), List())
+
+  def obrem[State: HasDots](replicaID: LocalUid, init: State): NamedDeltaBuffer[Obrem[State]] =
+    new NamedDeltaBuffer(replicaID, Obrem(init), List())
 
   def dottedInit[State](replicaId: LocalUid, init: Dot => State): NamedDeltaBuffer[Dotted[State]] =
     val dot = Dots.empty.nextDot(replicaId.uid)

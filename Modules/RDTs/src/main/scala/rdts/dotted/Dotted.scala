@@ -3,6 +3,28 @@ package rdts.dotted
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.time.{Dot, Dots}
 
+case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
+
+  def context: Dots = observed union deletions
+
+  inline def mod[B](f: Dots ?=> A => Obrem[B]): Obrem[B] = f(using context)(data)
+  inline def modn[B](f: A => B): Dotted[B] = Dotted(f(data))
+}
+object Obrem {
+
+  def apply[A: HasDots](data: A): Obrem[A] = Obrem(data, data.dots, Dots.empty)
+
+  def empty[A: Bottom]: Obrem[A] = Obrem(Bottom.empty[A], Dots.empty, Dots.empty)
+
+
+  given lattice[A: HasDots: Bottom: Lattice]: Lattice[Obrem[A]] with {
+    def merge(left: Obrem[A], right: Obrem[A]): Obrem[A] =
+      val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
+      val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
+      Obrem(l merge r, left.observed union right.observed, left.deletions union right.deletions)
+  }
+}
+
 /** Associates a context of Dots with some data structure.
   * The most common use is to interpret the context as the set of:
   * • all dots that are present in data
@@ -18,8 +40,7 @@ case class Dotted[A](data: A, context: Dots) {
   def advanced(r: LocalUid): Dotted[A]  = Dotted(data, context.advanced(r.uid))
 
   inline def mod[B](f: Dots ?=> A => Dotted[B]): Dotted[B] = f(using context)(data)
-  inline def modn[B](f: A => B): Dotted[B] =
-    Dotted(f(data))
+  inline def modn[B](f: A => B): Dotted[B]                 = Dotted(f(data))
 
 }
 
@@ -57,6 +78,7 @@ object Dotted {
 
   }
 
+  // combines entries with overlapping dots
   def compact[T](rem: List[Dotted[T]], acc: List[Dotted[T]])(using dl: Lattice[T]): List[Dotted[T]] = rem match
     case Nil => acc
     case h :: tail =>
