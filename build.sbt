@@ -13,7 +13,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   lore.js,
   lore.jvm,
   loreCompilerPlugin,
-  loreCompilerPluginExamples,
   microbenchmarks,
   rdts.js,
   rdts.jvm,
