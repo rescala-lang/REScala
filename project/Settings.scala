@@ -10,61 +10,39 @@ object Settings {
   // also consider updating the -source param below
   val scala3VersionString = "3.5.0-RC1"
 
-  val featureOptions = Seq(
-    // see https://docs.scala-lang.org/overviews/compiler-options/
-    // and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
-    // and https://www.scala-lang.org/api/current/scala/language$.html
-    scalacOptions ++= List(
-      // Spell out feature and deprecation warnings instead of summarizing them into a single warning
-      "-feature",
-      "-deprecation",
+  val scala3VersionMinor = scala3VersionString.reverse.dropWhile(c => c != '.').drop(1).reverse
 
-      // set a specific source level for warnings/rewrites/features
-      "-source",
-      "3.5",
-
-      // more stuff that may be interesting in special contexts
-
-      // Require then and do in control expressions. (handled by scalafmt)
-      // "-new-syntax",
-
-      // combine with the above to automatically rewrite such expressions
-      // "-rewrite",
-    )
-  )
-
-  val commonScalacOptions =
-    fatalWarnings(Compile / compile, Test / compile) ++ featureOptions ++ valueDiscard(Compile / compile)
+  // see https://docs.scala-lang.org/overviews/compiler-options/
+  // and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
+  // and https://www.scala-lang.org/api/current/scala/language$.html
+  // and run: cs launch scala3-compiler -- -help
 
   val scala3defaults = Def.settings(
     scalaVersion := scala3VersionString,
-    commonScalacOptions
+    fullFeatureDeprecationWarnings,
+    scalaSourceLevel(scala3VersionMinor),
+    fatalWarnings(Compile / compile, Test / compile),
+    valueDiscard(Compile / compile),
   )
 
-  def unusedWarnings(conf: TaskKey[?]*) = conf.map { c =>
-    c / scalacOptions ++= List(
-      "-Wunused:imports",
-      "-Wunused:privates",
-      "-Wunused:locals",
-      "-Wunused:explicits",
-      "-Wunused:implicits",
-      "-Wunused:params",
-      // @nowarn annotations
-      "-Wunused:nowarn",
-      // why do all of the above if you can just do this? Who knows!
-      "-Wunused:all",
-    )
-  }
+  // Spell out feature and deprecation warnings instead of summarizing them into a single warning
+  // always turn this on to make the compiler less ominous
+  def fullFeatureDeprecationWarnings = scalacOptions ++= List("-feature", "-deprecation")
 
-  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = {
-    val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
-    c2.map { c => c / scalacOptions += setting }
-  }
+  // set a specific source level for warnings/rewrites/features
+  // generally recommended to get consistent behaviour
+  def scalaSourceLevel(level: String) = scalacOptions ++= List("-source", level)
 
   def javaOutputVersion(n: Int, conf: TaskKey[?]*) = Def.settings(
     taskSpecificScalacOption("-java-output-version", conf: _*),
     taskSpecificScalacOption(n.toString, conf: _*)
   )
+
+  // Enforce then and do syntax, combine with rewrite to automatically rewrite
+  def newSyntax = scalacOptions += "-new-syntax"
+
+  // combine with -new-syntax, -indent, or -source some-migration to rewrite changed behavior
+  def rewrite = scalacOptions += "-rewrite"
 
   // Allow definition and application of implicit conversions
   def implicitConversions(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:implicitConversions", conf: _*)
@@ -87,6 +65,36 @@ object Settings {
   // seems to produce compiler crashes in some cases
   // this is -Ysafe-init for scala 3.4 and below
   def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
+
+  // unused warnings should
+  def unusedWarnings(conf: TaskKey[?]*) = {
+    val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
+    c2.map { c =>
+      c / scalacOptions ++= List(
+        // Warn for unused @nowarn annotations
+        "-Wunused:nowarn",
+        // Warn if an import selector is not referenced.
+        "-Wunused:imports",
+        // Same as -Wunused:import, only for imports of explicit named members. NOTE : This overrides -Wunused:imports and NOT set by -Wunused:all,
+        "-Wunused:strict-no-implicit-warn",
+        // Warn if a private member is unused,
+        "-Wunused:privates",
+        // Warn if a local definition is unused,
+        "-Wunused:locals",
+        // Warn if an explicit parameter is unused,
+        "-Wunused:explicits",
+        // Warn if an implicit parameter is unused,
+        "-Wunused:implicits",
+        // (UNSAFE) Warn if a variable bound in a pattern is unused. This warning can generate false positive, as warning cannot be suppressed yet.
+        "-Wunused:unsafe-warn-patvars",
+      )
+    }
+  }
+
+  def taskSpecificScalacOption(setting: String, conf: TaskKey[?]*) = {
+    val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
+    c2.map { c => c / scalacOptions += setting }
+  }
 
   val resolverJitpack = resolvers += "jitpack" at "https://jitpack.io"
   val resolverS01     = resolvers += "sonatype staging" at "https://s01.oss.sonatype.org/content/groups/staging/"
