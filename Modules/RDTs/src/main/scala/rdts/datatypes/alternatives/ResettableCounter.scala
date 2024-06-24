@@ -11,7 +11,7 @@ import rdts.time.{Dot, Dots}
   * operations to be overwritten by concurrent reset operations.
   *
   * This counter was originally proposed by Baquera et al.
-  * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159?casa_token=D7n88K9dW7gAAAAA:m3WhHMFZxoCwGFk8DVoqJXBJpwJwrqKMLqtgKo_TSiwU_ErWgOZjo4UqYqDCb-bG3iJlXc_Ti7aB9w here]]
+  * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159 here]]
   */
 case class ResettableCounter(inner: Map[Dot, (Int, Int)]) derives Bottom {
 
