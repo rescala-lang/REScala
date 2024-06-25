@@ -2,6 +2,7 @@ package replication.fbdc
 
 import de.rmgk.script.{process, runOutput}
 import rdts.datatypes.LastWriterWins
+import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
 object Fortunes {
@@ -26,10 +27,12 @@ object Fortunes {
         val reqq = DeltaBuffer(reqqI).mutable
         fortunes.foreach { q =>
           val resp = processFortune(q.value)
-          reqq.modd(_.update(using dataManager.replicaId)(
-            "fortune",
-            Some(LastWriterWins.now(resp))
-          ))
+          reqq.modd { ormap =>
+            ormap.update(using dataManager.replicaId)(
+              "fortune",
+              Some(LastWriterWins.now(resp))
+            ).toDotted
+          }
         }
         reqq.result.state
       }

@@ -3,6 +3,7 @@ package encfxtodo
 import encfxtodo.SyncedTodoListCrdt.{InnerStateType, StateType, given}
 import encfxtodo.sync.{ConnectionManager, DataManagerConnectionManager}
 import rdts.base.LocalUid
+import rdts.dotted.Dotted
 
 object ConnectionManagerFactory {
   var impl: (LocalUid, () => StateType, StateType => Unit) => ConnectionManager[StateType] =

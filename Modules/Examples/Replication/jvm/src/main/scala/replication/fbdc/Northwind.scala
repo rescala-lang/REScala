@@ -1,6 +1,7 @@
 package replication.fbdc
 
 import rdts.datatypes.LastWriterWins
+import rdts.dotted.{Dotted, Obrem}
 import rdts.syntax.DeltaBuffer
 
 import java.nio.file.{Files, Path}
@@ -45,7 +46,10 @@ object Northwind {
           val ress = DeltaBuffer(res).mutable
           queries.foreach { q =>
             val resp = Res.Northwind(q.value, query(q.value.query))
-            ress.modd(_.update("northwind", Some(LastWriterWins.now(resp))))
+            ress.modd { ormap =>
+              val Obrem(data, obs, rem) = ormap.update("northwind", Some(LastWriterWins.now(resp)))
+              Dotted(data, obs union rem)
+            }
           }
           ress.result.state
         }

@@ -21,7 +21,7 @@ class ORMapTest extends munit.ScalaCheckSuite {
       def empty = Int.MinValue
     forAll { (entries: List[Int]) =>
       val orMap = entries.foldLeft(Dotted(ObserveRemoveMap.empty[Int, Int])) { (curr, elem) =>
-        curr.mod(_.update(elem, elem))
+        curr.mod(_.update(elem, elem).toDotted)
       }
       orMap.data.entries.foreach { (k, v) =>
         assert(orMap.data.contains(k))
@@ -49,11 +49,11 @@ class ORMapTest extends munit.ScalaCheckSuite {
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
           case (m, e) =>
-            m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))))
+            m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))).toDotted)
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))).toDotted)
         }
       }
 
@@ -77,15 +77,15 @@ class ORMapTest extends munit.ScalaCheckSuite {
 
       val map = {
         val added = add.foldLeft(AntiEntropyContainer[ObserveRemoveMap[Int, ReplicatedSet[Int]]](aea)) {
-          case (m, e) => m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.add(using m.replicaID)(e))).toDotted)
         }
 
         remove.foldLeft(added) {
-          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))))
+          case (m, e) => m.mod(_.transform(k)(_.mod(_.remove(e))).toDotted)
         }
       }
 
-      val removed = map.mod(_.remove(k))
+      val removed = map.mod(_.remove(k).toDotted)
 
       val queryResult = removed.data.queryKey(k).elements
 

@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle}
 import rdts.base.{Bottom, Lattice, LocalUid}
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, HasDots, Obrem}
 import replication.{DataManager, ProtocolDots}
 
 import java.net.URI
@@ -21,10 +21,10 @@ class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aea
   override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
 }
 
-class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
+class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDots](
     replicaId: LocalUid,
-    receiveCallback: Dotted[State] => Unit
-) extends ConnectionManager[Dotted[State]] {
+    receiveCallback: Obrem[State] => Unit
+) extends ConnectionManager[Obrem[State]] {
 
   AeadConfig.register()
   private val keysetFilePath: Path = Path.of("demokey.json")
@@ -43,7 +43,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
     DataManager[State](
       replicaId: LocalUid,
       _ => (),
-      pd => receiveCallback(Dotted(pd.data, pd.context)),
+      pd => receiveCallback(Dotted(pd.data, pd.context).toObrem),
       crypto = Some(AeadTranslation(aead))
     )
 
@@ -58,7 +58,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom](
 
   override val localReplicaId: String = replicaId.toString
 
-  override def stateChanged(newState: Dotted[State]): Unit = {
+  override def stateChanged(newState: Obrem[State]): Unit = {
     dataManager.applyLocalDelta(ProtocolDots(newState.data, newState.context))
   }
 

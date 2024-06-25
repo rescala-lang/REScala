@@ -7,11 +7,12 @@ import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.*
 import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
-import rdts.dotted.{Dotted, DottedLattice, HasDots}
+import rdts.dotted.{Dotted, DottedLattice, HasDots, Obrem}
 import rdts.time.VectorClock
 import reactives.operator.{Event, Signal}
 import replication.DataManager
 import replication.JsoniterCodecs.given
+import replication.fbdc.State.modParticipants
 
 import scala.collection.immutable.Queue
 import scala.reflect.ClassTag
@@ -56,18 +57,21 @@ object State:
 class FbdcExampleData {
   val replicaId = LocalUid(Uid.gen())
 
-  val dataManager = {
+  val dataManager: ExtraDataManager[State] = {
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
     val dm =
       Event.fromCallback {
         new DataManager[State](replicaId, _ => (), Event.handle)
       }
-    ExtraDataManager(dm.data, dm.event)
+    ExtraDataManager[State](dm.data, dm.event)
   }
 
   def addCapability(capability: String) =
     dataManager.modParticipants { part =>
-      part.mod(_.transform(replicaId.uid)(_.mod(_.add(using replicaId)(capability))))
+      part.mod { ormap =>
+        val Obrem(data, obs, rem) = ormap.transform(replicaId.uid)(_.mod(_.add(using replicaId)(capability)))
+        Dotted(data, obs union rem)
+      }
     }
 
   val requests = dataManager.mergedState.map(_.data.requests.data.values)

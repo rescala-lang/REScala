@@ -8,14 +8,16 @@ case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
   def context: Dots = observed union deletions
 
   inline def mod[B](f: Dots ?=> A => Obrem[B]): Obrem[B] = f(using context)(data)
-  inline def modn[B](f: A => B): Dotted[B] = Dotted(f(data))
+  inline def modn[B](f: A => B): Dotted[B]               = Dotted(f(data))
+
+  def toDotted: Dotted[A] = Dotted(data, observed union deletions)
 }
+
 object Obrem {
 
   def apply[A: HasDots](data: A): Obrem[A] = Obrem(data, data.dots, Dots.empty)
 
   def empty[A: Bottom]: Obrem[A] = Obrem(Bottom.empty[A], Dots.empty, Dots.empty)
-
 
   given lattice[A: HasDots: Bottom: Lattice]: Lattice[Obrem[A]] with {
     def merge(left: Obrem[A], right: Obrem[A]): Obrem[A] =
@@ -39,9 +41,12 @@ case class Dotted[A](data: A, context: Dots) {
   def contained(using HasDots[A]): Dots = data.dots
   def advanced(r: LocalUid): Dotted[A]  = Dotted(data, context.advanced(r.uid))
 
-  inline def mod[B](f: Dots ?=> A => Dotted[B]): Dotted[B] = f(using context)(data)
+  inline def mod[B](f: A => Dots ?=> Dotted[B]): Dotted[B] = f(data)(using context)
   inline def modn[B](f: A => B): Dotted[B]                 = Dotted(f(data))
 
+  def toObrem(using HasDots[A]) =
+    val dots = data.dots
+    Obrem(data, dots, context subtract dots)
 }
 
 type DottedLattice[T] = Lattice[Dotted[T]]
