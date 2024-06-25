@@ -22,8 +22,10 @@ object Obrem {
 
   given lattice[A: HasDots: Bottom: Lattice]: Lattice[Obrem[A]] with {
     def merge(left: Obrem[A], right: Obrem[A]): Obrem[A] =
-      val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
-      val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
+      val l =
+        if right.deletions.isEmpty then left.data else left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
+      val r =
+        if left.deletions.isEmpty then right.data else right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
       Obrem(l merge r, left.observed union right.observed, left.deletions union right.deletions)
   }
 }
