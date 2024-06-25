@@ -66,11 +66,10 @@ object HasDots {
         all.foldLeft(Dots.empty)(_ union _)
 
       def removeDots(dots: Dots): Option[Map[K, V]] =
-        val res = dotted.iterator.flatMap: (k, v) =>
+        val res = dotted.flatMap: (k, v) =>
           val nk = kdots.removeDots(k)(dots)
           val nv = vdots.removeDots(v)(dots)
           nk.zip(nv)
-        .toMap
         if res.isEmpty then None else Some(res)
   }
 
