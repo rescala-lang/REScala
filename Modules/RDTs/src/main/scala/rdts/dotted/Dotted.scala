@@ -10,6 +10,7 @@ case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
   inline def mod[B](f: Dots ?=> A => Obrem[B]): Obrem[B] = f(using context)(data)
   inline def modn[B](f: A => B): Dotted[B]               = Dotted(f(data))
 
+  /** For temporary compat */
   def toDotted: Dotted[A] = Dotted(data, observed union deletions)
 }
 
