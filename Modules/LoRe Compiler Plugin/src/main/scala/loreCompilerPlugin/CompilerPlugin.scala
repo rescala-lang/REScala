@@ -9,7 +9,7 @@ import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.core.Symbols.*
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
-import dotty.tools.dotc.transform.{Pickler, Staging}
+import dotty.tools.dotc.transform.{Pickler, Inlining}
 import lore.ast.*
 
 import scala.util.matching.Regex
@@ -26,18 +26,18 @@ class LoRePhase extends PluginPhase:
   val phaseName: String = "LoRe"
 
   override val runsAfter: Set[String]  = Set(Pickler.name)
-  override val runsBefore: Set[String] = Set(Staging.name)
+  override val runsBefore: Set[String] = Set(Inlining.name)
 
   private var loreTerms: List[Term] = List()
-  private val loreReactives: List[String] = List(
-    "rescala.default.Var",    // Source
-    "rescala.default.Signal", // Derived
+  private val reactiveClasses: List[String] = List(
+    "reactives.operator.Var",    // Source
+    "reactives.operator.Signal", // Derived
     "lore.dsl.InteractionWithTypes",
     "lore.dsl.InteractionWithRequires",
     "lore.dsl.InteractionWithRequiresAndModifies"
   )
-  private val reactiveSourcePattern: Regex      = """rescala\.default\.Var\[(\w+)\]""".r
-  private val reactiveDerivedPattern: Regex     = """rescala\.default\.Signal\[(\w+)\]""".r
+  private val reactiveSourcePattern: Regex      = """reactives\.operator\.Var\[(\w+)\]""".r
+  private val reactiveDerivedPattern: Regex     = """reactives\.operator\.Signal\[(\w+)\]""".r
   private val reactiveInteractionPattern: Regex = """lore\.dsl\.InteractionWithTypes\[(\w+), (\w+)\]""".r
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
@@ -180,7 +180,7 @@ class LoRePhase extends PluginPhase:
           buildLoreRhsTerm(rhs)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
         )
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
-      case ValDef(name, tpt, rhs) if loreReactives.exists(t => tpt.tpe.show.startsWith(t)) =>
+      case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
         tpt.tpe.show match
           case reactiveSourcePattern(typeArg) =>
@@ -191,13 +191,16 @@ class LoRePhase extends PluginPhase:
             }
             rhs match
               // Several notes to make here for future reference:
-              // * Source gets inlined to Rescala Var, so this needs to match for Inlined first of all.
-              // * Because the RHS is wrapped in a call to the Source type, there's one layer of an Apply call
-              //   wrapping the RHS we want, and the actual RHS tree we want is inside the Apply parameter list.
+              // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
+              //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
+              //   and the expressions being handled here use types that get inlined in REScala.
+              // * Because the RHS is wrapped in a call to the Source type, within that unknown Apply layer,
+              //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
+              //   actual RHS tree we want is inside the Apply parameter list (i.e. real RHS is 2 Apply layers deep).
               // * The Source parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)").
               // * Typechecking for whether the arguments both in the Source type call as well as within the expression
               //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
-              case Inlined(Apply(_, List(properRhs)), _, _) => // E.g. "foo: Source[bar] = Source(baz)"
+              case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
                 println(s"Adding a Source reactive with type parameter $typeArg and name \"$name\" to term list")
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
@@ -208,17 +211,17 @@ class LoRePhase extends PluginPhase:
                   TSource(buildLoreRhsTerm(properRhs)) // Source(baz), where baz is any recognized expression, see above
                 )
               case _ =>
-                // Anything that's not Inlined and not wrapped with Source, should not be possible at this point because of the Scala type-checker
+                // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
                 println(
-                  s"A non-Inlined definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs"
+                  s"A Source definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs"
                 )
-                report.error("Non-Inlined Source Definition not wrapped in Source call", tree.sourcePos)
+                report.error("Source definition not wrapped in Source call", tree.sourcePos)
+          // TODO: Implement
           case reactiveDerivedPattern(typeArg) =>
             println(s"Detected Derived definition with $typeArg type parameter")
           // TODO: Implement
           case reactiveInteractionPattern(typeArg1, typeArg2) =>
             println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")
-      // TODO: Implement
       case _ => () // All other ValDefs not covered above are ignored
     tree // Return the original tree to further compiler phases
   end transformValDef
