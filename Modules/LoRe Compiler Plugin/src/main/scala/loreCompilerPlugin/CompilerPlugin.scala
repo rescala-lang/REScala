@@ -40,6 +40,13 @@ class LoRePhase extends PluginPhase:
   private val reactiveDerivedPattern: Regex     = """reactives\.operator\.Signal\[(\w+)\]""".r
   private val reactiveInteractionPattern: Regex = """lore\.dsl\.InteractionWithTypes\[(\w+), (\w+)\]""".r
 
+  private def logRhsInfo(indentLevel: Integer, operandSide: String, rhsType: String, rhsValue: String): Unit =
+    if operandSide.nonEmpty then
+      println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a $rhsType $rhsValue")
+    else
+      println(s"${"\t".repeat(indentLevel)}The parameter is a $rhsType $rhsValue")
+  end logRhsInfo
+
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
     * @param tree The Scala AST Tree node for a RHS expression to convert
     * @param indentLevel How many tabs to add before the logs of this call (none by default)
@@ -51,81 +58,48 @@ class LoRePhase extends PluginPhase:
   ): Term =
     tree match
       case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
-        if operandSide.nonEmpty then
-          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal integer value $num")
-        else
-          println(s"${"\t".repeat(indentLevel)}The parameter is the literal integer value $num")
+        logRhsInfo(indentLevel, operandSide, "literal integer value", num.toString)
         TNum(num)
       case Literal(Constant(str: String)) => // Basic string values like "foo"
-        if operandSide.nonEmpty then
-          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal string value $str")
-        else
-          println(s"${"\t".repeat(indentLevel)}The parameter is the literal string value $str")
+        logRhsInfo(indentLevel, operandSide, "literal string value", str)
         TString(str)
       case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
-        if operandSide.nonEmpty then
-          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is the literal boolean value $bool")
-        else
-          println(s"${"\t".repeat(indentLevel)}The parameter is the literal boolean value $bool")
+        logRhsInfo(indentLevel, operandSide, "literal boolean value", bool.toString)
         if bool then TTrue() else TFalse()
       case Ident(referenceName: Name) => // References to variables (any type)
-        if operandSide.nonEmpty then
-          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a reference to the variable $referenceName")
-        else
-          println(s"${"\t".repeat(indentLevel)}The parameter is a reference to the variable $referenceName")
+        logRhsInfo(indentLevel, operandSide, "reference to variable", referenceName.toString)
         // No need to check whether the reference specified here actually exists, because if it didn't
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
-      case Select(arg, op) => // Field access and unary operator applications
-        op match
+      case Select(arg, opOrField) => // Field access and unary operator applications
+        opOrField match
           case nme.UNARY_! => // Overall case catching supported unary operators, add other unary operators via |s here
-            if operandSide.nonEmpty then
-              println(
-                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
-              )
-            else
-              println(
-                s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>"
-              )
-            op match // Match individual unary operators
+            logRhsInfo(indentLevel, operandSide, "unary operator application of", opOrField.show)
+            opOrField match // Match individual unary operators
               // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
               case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
               case _ => // Unsupported unary operators
                 report.error(
                   // No access to sourcePos here due to LazyTree
-                  s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
+                  s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree"
                 )
                 TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
             // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
-            if operandSide.nonEmpty then
-              println(
-                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a field access to the field ${op.show}"
-              )
-            else
-              println(
-                s"${"\t".repeat(indentLevel)}The parameter is a field access to the field ${op.show}"
-            )
+            logRhsInfo(indentLevel, operandSide, "field access to field", opOrField.show)
             TFCall( // foo.bar
               buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
               field.toString, // bar
               List() // Always empty as these are field accesses
             )
-      case Apply(Select(leftArg, op), params: List[_]) => // Method calls and binary operator applications
-        op match
+      case Apply(Select(leftArg, opOrMethod), params: List[_]) => // Method calls and binary operator applications
+        opOrMethod match
           case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
             // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
-            if operandSide.nonEmpty then
-              println(
-                s"${"\t".repeat(indentLevel)}The $operandSide parameter is an operator application of the form \"left ${op.show} right\""
-              )
-            else
-              println(
-                s"${"\t".repeat(indentLevel)}The parameter is an operator application of the form \"left ${op.show} right\""
-              )
+            logRhsInfo(indentLevel, operandSide, "operator application of operator", opOrMethod.show)
             val rightArg = params.head
-            op match
+            opOrMethod match
               case nme.ADD => TAdd( // left + right
                 buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                 buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
@@ -177,32 +151,18 @@ class LoRePhase extends PluginPhase:
               case _ => // Unsupported binary operators
                 report.error(
                   // No access to sourcePos here due to LazyTree
-                  s"${"\t".repeat(indentLevel)}Unsupported binary operator ${op.show} used:\n${"\t".repeat(indentLevel)}$tree"
+                  s"${"\t".repeat(indentLevel)}Unsupported binary operator ${opOrMethod.show} used:\n${"\t".repeat(indentLevel)}$tree"
                 )
                 TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
           case methodName => // Method calls outside of explicitly supported binary operators
-            if operandSide.nonEmpty then
-              println(
-                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a call to the method ${methodName.toString} with ${params.size} parameters"
-              )
-            else
-              println(
-                s"${"\t".repeat(indentLevel)}The parameter is a call to the method ${methodName.toString} with ${params.size} parameters"
-              )
+            logRhsInfo(indentLevel, operandSide, s"call to a method with ${params.size} parameters:", methodName.toString)
             TFCall( // foo.bar(baz, qux, ...)
               buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
               methodName.toString, // bar
               params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // baz, qux, ... (might each be more complex terms)
             )
       case Apply(Ident(name: Name), params: List[_]) => // Function calls
-        if operandSide.nonEmpty then
-          println(
-            s"${"\t".repeat(indentLevel)}The $operandSide parameter is a function call to the function ${name.toString} with ${params.size} parameters"
-          )
-        else
-          println(
-            s"${"\t".repeat(indentLevel)}The parameter is a function call to the function ${name.toString} with ${params.size} parameters"
-          )
+        logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} parameters:", name.toString)
         TFunC( // foo(bar, baz)
           name.toString, // foo
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // bar, baz, ... (might each be more complex terms)
@@ -257,6 +217,7 @@ class LoRePhase extends PluginPhase:
               // * Typechecking for whether the arguments both in the Source type call as well as within the expression
               //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
               case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
+                // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType( // Source[bar], where bar is one of Int, String, Boolean
@@ -291,6 +252,7 @@ class LoRePhase extends PluginPhase:
               // * Typechecking for whether the arguments both in the Derived type call as well as within the expression
               //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
               case Apply(Apply(_, List(Block(_, properRhs))), _) => // E.g. "foo: Derived[bar] = Derived { baz }"
+                // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType( // Derived[bar], where bar is one of Int, String, Boolean
