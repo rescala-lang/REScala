@@ -70,31 +70,37 @@ class LoRePhase extends PluginPhase:
         if bool then TTrue() else TFalse()
       case Ident(referenceName: Name) => // References to variables (any type)
         if operandSide.nonEmpty then
-          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a reference to \"$referenceName\"")
+          println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a reference to the variable $referenceName")
         else
-          println(s"${"\t".repeat(indentLevel)}The parameter is a reference to \"$referenceName\"")
+          println(s"${"\t".repeat(indentLevel)}The parameter is a reference to the variable $referenceName")
         // No need to check whether the reference specified here actually exists, because if it didn't
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
       case Select(arg, op) => // Unary operator application, proceeds recursively
-        if operandSide.nonEmpty then
-          println(
-            s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
-          )
+        // The "value" property passes the value of a given Source, establishing a dependency in a Derived
+        // This access is a unary operator in Scala, but translated to LoRe it should simply be a reference
+        // TODO: This probably needs work to function with property accesses on a general scale. Currently unsure here.
+        if op.toString.equals("value") then
+          buildLoreRhsTerm(arg, indentLevel, operandSide)
         else
-          println(
-            s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>"
-          )
-        op match
-          // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
-          case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg)) // !operand
-          case _ => // Unsupported unary operators
-            report.error(
-              // No access to sourcePos here due to LazyTree
-              s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
+          if operandSide.nonEmpty then
+            println(
+              s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
             )
-            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+          else
+            println(
+              s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>"
+            )
+          op match
+            // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
+            case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
+            case _ => // Unsupported unary operators
+              report.error(
+                // No access to sourcePos here due to LazyTree
+                s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
+              )
+              TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
         if operandSide.nonEmpty then
           println(
@@ -177,14 +183,14 @@ class LoRePhase extends PluginPhase:
         loreTerms = loreTerms :+ TAbs(
           name.toString,                    // foo (any valid Scala identifier)
           SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-          buildLoreRhsTerm(rhs)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+          buildLoreRhsTerm(rhs, 1)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
         )
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
         tpt.tpe.show match
           case reactiveSourcePattern(typeArg) =>
-            println(s"Detected Source definition with $typeArg type parameter")
+            println(s"Detected Source reactive with name \"$name\" and type parameter $typeArg, adding to term list")
             // Only Int, String and Boolean type parameters are supported
             if !typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean") then {
               report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
@@ -201,14 +207,13 @@ class LoRePhase extends PluginPhase:
               // * Typechecking for whether the arguments both in the Source type call as well as within the expression
               //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
               case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
-                println(s"Adding a Source reactive with type parameter $typeArg and name \"$name\" to term list")
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
-                  SimpleType(
+                  SimpleType( // Source[bar], where bar is one of Int, String, Boolean
                     "Source",
                     List(SimpleType(typeArg, List()))
-                  ),                                   // Source[bar], where bar is one of Int, String, Boolean
-                  TSource(buildLoreRhsTerm(properRhs)) // Source(baz), where baz is any recognized expression, see above
+                  ),
+                  TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz), where baz is any recognized expression, see above
                 )
               case _ =>
                 // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
@@ -218,7 +223,38 @@ class LoRePhase extends PluginPhase:
                 report.error("Source definition not wrapped in Source call", tree.sourcePos)
           // TODO: Implement
           case reactiveDerivedPattern(typeArg) =>
-            println(s"Detected Derived definition with $typeArg type parameter")
+            println(s"Detected Derived reactive with name \"$name\" and type parameter $typeArg, adding to term list")
+            // Only Int, String and Boolean type parameters are supported
+            if !typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean") then {
+              report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
+            }
+            rhs match
+              // Several notes to make here for future reference:
+              // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
+              //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
+              //   and the expressions being handled here use types that get inlined in REScala.
+              // * Because the RHS is wrapped in a call to the Derived type, within that unknown Apply layer,
+              //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
+              //   actual RHS tree we want is inside the Apply parameter list (i.e. real RHS is 2 Apply layers deep).
+              // * The Derived parameter list always has length 1, because you feed one expression to the Derived type
+              // * As the Derived type uses curly brackets, it wraps its contents in a Block type as well
+              // * Typechecking for whether the arguments both in the Derived type call as well as within the expression
+              //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
+              case Apply(Apply(_, List(Block(_, properRhs))), _) => // E.g. "foo: Derived[bar] = Derived { baz }"
+                loreTerms = loreTerms :+ TAbs(
+                  name.toString, // foo (any valid Scala identifier)
+                  SimpleType( // Derived[bar], where bar is one of Int, String, Boolean
+                    "Derived",
+                    List(SimpleType(typeArg, List()))
+                  ),
+                  TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz } , where baz is any recognized expression, see above
+                )
+              case _ =>
+                // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker
+                println(
+                  s"A Derived definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs"
+                )
+                report.error("Source definition not wrapped in Source call", tree.sourcePos)
           // TODO: Implement
           case reactiveInteractionPattern(typeArg1, typeArg2) =>
             println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")

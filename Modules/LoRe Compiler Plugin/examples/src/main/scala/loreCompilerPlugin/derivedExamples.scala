@@ -6,8 +6,8 @@ import reactives.default.{Var as Source, Signal as Derived}
 object derivedExamples:
   def derivedExamples(): Unit =
     // ========= Plain values and sources to use in below tests =========
-    val integerLiteral: Int     = 1
-    val stringLiteral: String   = "foo"
+    val integerLiteral: Int = 1
+    val stringLiteral: String = "foo"
     val booleanLiteral: Boolean = true
 
     val integerLiteralSource1: Source[Int] = Source(1)
