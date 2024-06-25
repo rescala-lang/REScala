@@ -77,98 +77,140 @@ class LoRePhase extends PluginPhase:
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
-      case Select(arg, op) => // Unary operator application, proceeds recursively
-        // The "value" property passes the value of a given Source, establishing a dependency in a Derived
-        // This access is a unary operator in Scala, but translated to LoRe it should simply be a reference
-        // TODO: This probably needs work to function with property accesses on a general scale. Currently unsure here.
-        if op.toString.equals("value") then
-          buildLoreRhsTerm(arg, indentLevel, operandSide)
-        else
-          if operandSide.nonEmpty then
-            println(
-              s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
-            )
-          else
-            println(
-              s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>"
-            )
-          op match
-            // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
-            case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
-            case _ => // Unsupported unary operators
-              report.error(
-                // No access to sourcePos here due to LazyTree
-                s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
+      case Select(arg, op) => // Field access and unary operator applications
+        op match
+          case nme.UNARY_! => // Overall case catching supported unary operators, add other unary operators via |s here
+            if operandSide.nonEmpty then
+              println(
+                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a unary operator application of the form ${op.show}<operand>"
               )
-              TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
-      case Apply(Select(leftArg, op), List(rightArg)) => // Binary operator applications, proceeds recursively
+            else
+              println(
+                s"${"\t".repeat(indentLevel)}The parameter is a unary operator application of the form ${op.show}<operand>"
+              )
+            op match // Match individual unary operators
+              // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
+              case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
+              case _ => // Unsupported unary operators
+                report.error(
+                  // No access to sourcePos here due to LazyTree
+                  s"${"\t".repeat(indentLevel)}Unsupported unary operator ${op.show} used:\n$tree"
+                )
+                TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+          case field => // Field access, like "operand.value" and so forth (no parameter lists)
+            // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
+            if operandSide.nonEmpty then
+              println(
+                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a field access to the field ${op.show}"
+              )
+            else
+              println(
+                s"${"\t".repeat(indentLevel)}The parameter is a field access to the field ${op.show}"
+            )
+            TFCall( // foo.bar
+              buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
+              field.toString, // bar
+              List() // Always empty as these are field accesses
+            )
+      case Apply(Select(leftArg, op), params: List[_]) => // Method calls and binary operator applications
+        op match
+          case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
+            // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
+            if operandSide.nonEmpty then
+              println(
+                s"${"\t".repeat(indentLevel)}The $operandSide parameter is an operator application of the form \"left ${op.show} right\""
+              )
+            else
+              println(
+                s"${"\t".repeat(indentLevel)}The parameter is an operator application of the form \"left ${op.show} right\""
+              )
+            val rightArg = params.head
+            op match
+              case nme.ADD => TAdd( // left + right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.SUB => TSub( // left - right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.MUL => TMul( // left * right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.DIV => TDiv( // left / right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.And => TConj( // left && right, Important: nme.AND is & and nme.And is &&
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.Or => TDisj( // left || right, Important: nme.OR is | and nme.Or is ||
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.LT => TLt( // left < right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.GT => TGt( // left > right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.LE => TLeq( // left <= right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.GE => TGeq( // left >= right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.EQ => TEq( // left == right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case nme.NE => TIneq( // left != right
+                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+              )
+              case _ => // Unsupported binary operators
+                report.error(
+                  // No access to sourcePos here due to LazyTree
+                  s"${"\t".repeat(indentLevel)}Unsupported binary operator ${op.show} used:\n${"\t".repeat(indentLevel)}$tree"
+                )
+                TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+          case methodName => // Method calls outside of explicitly supported binary operators
+            if operandSide.nonEmpty then
+              println(
+                s"${"\t".repeat(indentLevel)}The $operandSide parameter is a call to the method ${methodName.toString} with ${params.size} parameters"
+              )
+            else
+              println(
+                s"${"\t".repeat(indentLevel)}The parameter is a call to the method ${methodName.toString} with ${params.size} parameters"
+              )
+            TFCall( // foo.bar(baz, qux, ...)
+              buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
+              methodName.toString, // bar
+              params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // baz, qux, ... (might each be more complex terms)
+            )
+      case Apply(Ident(name: Name), params: List[_]) => // Function calls
         if operandSide.nonEmpty then
           println(
-            s"${"\t".repeat(indentLevel)}The $operandSide parameter is an operator application of the form \"left ${op.show} right\""
+            s"${"\t".repeat(indentLevel)}The $operandSide parameter is a function call to the function ${name.toString} with ${params.size} parameters"
           )
         else
           println(
-            s"${"\t".repeat(indentLevel)}The parameter is an operator application of the form \"left ${op.show} right\""
+            s"${"\t".repeat(indentLevel)}The parameter is a function call to the function ${name.toString} with ${params.size} parameters"
           )
-        op match
-          case nme.ADD => TAdd( // left + right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.SUB => TSub( // left - right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.MUL => TMul( // left * right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.DIV => TDiv( // left / right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.And => TConj( // left && right, Important: nme.AND is & and nme.And is &&
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.Or => TDisj( // left || right, Important: nme.OR is | and nme.Or is ||
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.LT => TLt( // left < right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.GT => TGt( // left > right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.LE => TLeq( // left <= right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.GE => TGeq( // left >= right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.EQ => TEq( // left == right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case nme.NE => TIneq( // left != right
-              buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-              buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-            )
-          case _ => // Unsupported binary operators
-            report.error(
-              // No access to sourcePos here due to LazyTree
-              s"${"\t".repeat(indentLevel)}Unsupported binary operator ${op.show} used:\n$tree"
-            )
-            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+        TFunC( // foo(bar, baz)
+          name.toString, // foo
+          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // bar, baz, ... (might each be more complex terms)
+        )
       case _ => // Unsupported RHS forms
         report.error(
           // No access to sourcePos here due to LazyTree
-          s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n$tree"
+          s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n${"\t".repeat(indentLevel)}$tree"
         )
         TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
   end buildLoreRhsTerm
@@ -176,15 +218,23 @@ class LoRePhase extends PluginPhase:
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs)
-          if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
+      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
-        // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
-        loreTerms = loreTerms :+ TAbs(
-          name.toString,                    // foo (any valid Scala identifier)
-          SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-          buildLoreRhsTerm(rhs, 1)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-        )
+        val term: Term = rhs match
+          case EmptyTree => // Function arguments, not actual variables, e.g. "foo: Bar"
+            TArgT(
+              name.toString,                    // foo (any valid Scala identifier)
+              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
+            )
+          case _ => // Actually defined variables
+            // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
+            TAbs(
+              name.toString,                    // foo (any valid Scala identifier)
+              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
+              buildLoreRhsTerm(rhs, 1)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+            )
+        // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
+        loreTerms = loreTerms :+ term
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
@@ -252,9 +302,9 @@ class LoRePhase extends PluginPhase:
               case _ =>
                 // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker
                 println(
-                  s"A Derived definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs"
+                  s"A Derived definition not wrapped in the Derived type has been detected. This should not be possible, please investigate:\n$rhs"
                 )
-                report.error("Source definition not wrapped in Source call", tree.sourcePos)
+                report.error("Derived definition not wrapped in Source call", tree.sourcePos)
           // TODO: Implement
           case reactiveInteractionPattern(typeArg1, typeArg2) =>
             println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")

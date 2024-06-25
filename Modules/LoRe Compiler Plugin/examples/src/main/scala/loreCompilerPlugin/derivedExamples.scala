@@ -3,12 +3,18 @@ package loreCompilerPlugin
 import lore.dsl.*
 import reactives.default.{Var as Source, Signal as Derived}
 
+def foo(bar: Int, baz: String): Int = 0
+
 object derivedExamples:
   def derivedExamples(): Unit =
     // ========= Plain values and sources to use in below tests =========
     val integerLiteral: Int = 1
     val stringLiteral: String = "foo"
     val booleanLiteral: Boolean = true
+    val functionCall: Int = foo(1, "foo")
+    val methodCallNoBraces: Int = 1.toInt
+    val methodCallWithBraces: String = "foo".strip()
+    val methodCallWithParams: String = "foo".repeat(5)
 
     val integerLiteralSource1: Source[Int] = Source(1)
     val integerLiteralSource2: Source[Int] = Source(2)
