@@ -21,4 +21,6 @@ object PublicIdentity {
     PublicIdentity(base64Encoder.encodeToString(pubKeyBytes))
 
   def fromUid(uid: Uid): PublicIdentity = PublicIdentity(uid.delegate)
+
+  extension (uid: Uid) inline def toPublicIdentity: PublicIdentity = PublicIdentity.fromUid(uid)
 }
