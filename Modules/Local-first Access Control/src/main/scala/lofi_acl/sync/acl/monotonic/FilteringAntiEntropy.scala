@@ -8,16 +8,13 @@ import lofi_acl.crypto.PublicIdentity.toPublicIdentity
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.{PartialDelta, messageJsonCodec}
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
-import lofi_acl.sync.{ConnectionManager, DeltaMapWithPrefix, MessageReceiver}
+import lofi_acl.sync.{ConnectionManager, DeltaMapWithPrefix, JsoniterCodecs, MessageReceiver}
 import rdts.base.Lattice
 import rdts.time.{Dot, Dots}
 
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{Executors, LinkedBlockingQueue}
 import scala.collection.immutable.Queue
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.{Duration, SECONDS}
 import scala.util.Random
 
 trait Sync[RDT] {
@@ -102,7 +99,7 @@ class FilteringAntiEntropy[RDT](
         handleMessage(msg, sender)
 
         // If we processed an ACLEntry, maybe we need now can process backlogged messages
-        if msg.isInstanceOf[AddAclEntry] // We don't consider causal dependencies between deltas
+        if msg.isInstanceOf[AddAclEntry[RDT]] // We don't consider causal dependencies between deltas
         then processBacklog()
       } catch
         case e: InterruptedException =>
@@ -159,7 +156,7 @@ class FilteringAntiEntropy[RDT](
 
         val missingRdtDeltas = rdtDots.subtract(remoteRdtDots)
         val deltas =
-          rdtDeltas.retrieveDeltas(missingRdtDeltas).map((dot, delta) => Delta(delta, dot, aclDots)).toArray[Delta[RDT]]
+          rdtDeltas.retrieveDeltas(missingRdtDeltas).map[Delta[RDT]]((dot, delta) => Delta(delta, dot, aclDots)).toArray
         val _ = disseminateFiltered(sender, deltas*)
 
         // Check if we're missing anything that the remote has
@@ -357,6 +354,8 @@ class FilteringAntiEntropy[RDT](
 }
 
 object FilteringAntiEntropy {
+  import JsoniterCodecs.{pubIdentityKeyCodec, uidKeyCodec}
+
   given messageJsonCodec[RDT: JsonValueCodec]: JsonValueCodec[MonotonicAclSyncMessage[RDT]] = JsonCodecMaker.make(
     CodecMakerConfig.withAllowRecursiveTypes(true) // Required for PermissionTree
   )
