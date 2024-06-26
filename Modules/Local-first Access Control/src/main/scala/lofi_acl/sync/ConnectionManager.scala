@@ -132,13 +132,15 @@ class ConnectionManager[MSG](
     connector.connect(host, port).onComplete {
       case Failure(exception) => exception.printStackTrace()
       case Success((socket, peerId: PublicIdentity)) =>
-        if expectedUser != peerId then connectionEstablished(socket, peerId, establishedByRemote = false)
-        else
+        if expectedUser == peerId
+        then connectionEstablished(socket, peerId, establishedByRemote = false)
+        else {
           sys.error(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
           try {
             socket.close()
           } catch
             case e: IOException => e.printStackTrace()
+        }
     }
   }
 
@@ -163,11 +165,13 @@ class ConnectionManager[MSG](
           if establishedByRemote && peerIdentity.id > localPublicId.id
             || !establishedByRemote && peerIdentity.id < localPublicId.id
           then
+            connections = connections.updated(peerIdentity, socket)
             try {
               existingConnection.close()
+              messageHandler.connectionShutdown(peerIdentity)
             } catch { case e: IOException => }
-            connections = connections.updated(peerIdentity, socket)
             receiveFrom(peerIdentity, socket)
+            messageHandler.connectionEstablished(peerIdentity)
           else
             try {
               socket.close()
@@ -180,10 +184,10 @@ class ConnectionManager[MSG](
 
   /** Start a thread that receives messages from the socket, parses them and forwards them to the MessageHandler.
     *
-    * @param identity The identity of the other side.
+    * @param peerIdentity The identity of the other side.
     * @param socket The socket to receive messages on.
     */
-  private def receiveFrom(identity: PublicIdentity, socket: SSLSocket): Unit = {
+  private def receiveFrom(peerIdentity: PublicIdentity, socket: SSLSocket): Unit = {
     val receiverFuture: util.concurrent.Future[?] = executor.submit(
       new Runnable:
         override def run(): Unit = {
@@ -191,17 +195,19 @@ class ConnectionManager[MSG](
           while !stopped do
             try {
               val msg = msgCodec.readFromStream(input)
-              messageHandler.receivedMessage(msg, identity)
+              messageHandler.receivedMessage(msg, peerIdentity)
             } catch {
               case e: IOException =>
                 try { socket.close() }
                 catch { case e: IOException => }
                 this.synchronized {
                   // Only remove socket from map, if it hasn't been replaced already
-                  connections.get(identity) match
+                  connections.get(peerIdentity) match
                     case Some(storedSocket) =>
-                      if storedSocket eq socket
-                      then connections = connections.removed(identity)
+                      if storedSocket eq socket // Only remove and notify if this socket wasn't already replaced
+                      then
+                        connections = connections.removed(peerIdentity)
+                        messageHandler.connectionShutdown(peerIdentity)
                     case None =>
                 }
               case e: InterruptedException =>
