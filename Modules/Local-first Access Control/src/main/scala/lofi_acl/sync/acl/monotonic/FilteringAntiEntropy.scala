@@ -1,11 +1,12 @@
 package lofi_acl.sync.acl.monotonic
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import lofi_acl.access
 import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.crypto.PublicIdentity.toPublicIdentity
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
+import lofi_acl.crypto.{Ed25519Util, PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.{PartialDelta, messageJsonCodec}
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.sync.{ConnectionManager, DeltaMapWithPrefix, JsoniterCodecs, MessageReceiver}
@@ -18,13 +19,13 @@ import scala.collection.immutable.Queue
 import scala.util.Random
 
 trait Sync[RDT] {
-  def receivedDelta(rdt: RDT): Unit
+  def receivedDelta(dot: Dot, rdt: RDT): Unit
 }
 
 // Responsible for enforcing ACL
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
-    initialAclMessages: List[AddAclEntry[RDT]],
+    initialAclMessages: List[AddAclEntry[RDT]], // TODO: Merge initial acl messages
     initialRdtDeltas: DeltaMapWithPrefix[RDT],
     syncInstance: Sync[RDT]
 )(using rdtCodec: JsonValueCodec[RDT], filter: Filter[RDT], rdtLattice: Lattice[RDT])
@@ -33,6 +34,8 @@ class FilteringAntiEntropy[RDT](
     localIdentity,
     this
   )(using SignatureVerifyingMessageSerialization[RDT](localIdentity.getPublic, localIdentity.identityKey.getPrivate))
+
+  private val localPublicId = localIdentity.getPublic
 
   // Access Control List ------
   private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] =
@@ -68,7 +71,7 @@ class FilteringAntiEntropy[RDT](
   // Executed in thread from ConnectionManager
   override def connectionEstablished(remote: PublicIdentity): Unit = {
     val (aclVersion, acl) = aclReference.get()
-    val permissions = acl.write(localIdentity.getPublic).intersect(acl.read.getOrElse(remote, PermissionTree.empty))
+    val permissions       = acl.write(localPublicId).intersect(acl.read.getOrElse(remote, PermissionTree.empty))
     outboundMessageLock.synchronized {
       localSendPermissions = localSendPermissions + (remote -> permissions)
       val _ = connectionManager.send(remote, PermissionsInUse(aclVersion, permissions))
@@ -199,11 +202,11 @@ class FilteringAntiEntropy[RDT](
       if existingPartialDelta.isEmpty then {
         val acl                     = aclReference.get()._2
         val authorsWritePermissions = acl.write(dot.place.toPublicIdentity)
-        val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localIdentity.getPublic))
+        val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localPublicId))
         if sendersPermissions <= requiredPermissions
         then // Immediately applicable
           rdtDeltas = rdtDeltas.addDelta(dot, delta)
-          syncInstance.receivedDelta(delta)
+          syncInstance.receivedDelta(dot, delta)
         else // delta is missing parts
           partialDeltaStore = partialDeltaStore + (dot -> PartialDelta(delta, sendersPermissions, requiredPermissions))
       } else {
@@ -213,7 +216,7 @@ class FilteringAntiEntropy[RDT](
             then // Existing partial delta merged with newly received partial delta is complete
               val completeDelta = delta.merge(storedDelta)
               rdtDeltas = rdtDeltas.addDelta(dot, completeDelta)
-              syncInstance.receivedDelta(completeDelta)
+              syncInstance.receivedDelta(dot, completeDelta)
               partialDeltaStore = partialDeltaStore.removed(dot)
             else // Existing partial delta merged with newly received partial delta is not yet complete
               partialDeltaStore = partialDeltaStore + (dot -> PartialDelta(
@@ -255,14 +258,16 @@ class FilteringAntiEntropy[RDT](
       receivedAclDots = receivedAclDots.add(dot)
 
       // Notify peers about updated sending permissions
-      if principal == localIdentity.getPublic && operation == WRITE
-      then updateLocalSendPermissions()
+      if principal == localPublicId
+      then
+        if operation == WRITE then updateLocalSendPermissions()
+        else ??? // TODO: Move invalidated deltas to partial delta store
     }
 
   private def updateLocalSendPermissions(): Unit = {
     val (aclDots, acl) = aclReference.get()
     // We take the intersection of our write permission and the receivers read permissions
-    val localWritePermissions = acl.write(localIdentity.getPublic)
+    val localWritePermissions = acl.write(localPublicId)
     outboundMessageLock.synchronized {
       val oldSendPermissions = localSendPermissions
       val newSendPermissions = oldSendPermissions.map { (remote, _) =>
@@ -302,12 +307,6 @@ class FilteringAntiEntropy[RDT](
     }
   }
 
-  def newPeers(peers: Map[PublicIdentity, (String, Int)]): Unit = ???
-
-  def newDelta(dot: Dot, delta: RDT): Unit = ???
-
-  def newPermission(operation: AddAclEntry[RDT]): Unit = ???
-
   private val antiEntropyThread = new Thread {
     private val rand = Random()
     override def run(): Unit =
@@ -342,7 +341,7 @@ class FilteringAntiEntropy[RDT](
             // - Provide union of requiredPermissions of partial deltas instead of local read permission
             val (replicasToRequestFrom, _) = PartialReplicationPeerSubsetSolver.randomSubsetThatAllowsReconstruction(
               sendersEffectiveWritePermissions,
-              aclReference.get()._2.read.getOrElse(localIdentity.getPublic, PermissionTree.empty)
+              aclReference.get()._2.read.getOrElse(localPublicId, PermissionTree.empty)
             )
             val msg = RequestMissing[RDT](rdtDeltas.allDots, receivedAclDots)
             replicasToRequestFrom.foreach { remote =>
@@ -351,6 +350,39 @@ class FilteringAntiEntropy[RDT](
       }
   }
   antiEntropyThread.start()
+
+  def newPeers(peers: Map[PublicIdentity, (String, Int)]): Unit = {
+    receivedMessage(AnnouncePeers(peers), localPublicId)
+  }
+
+  def mutateRdt(dot: Dot, delta: RDT): Unit = {
+    require(!rdtDeltas.allDots.contains(dot))
+    val (aclDots, acl) = aclReference.get()
+    val filteredDelta  = filter.filter(delta, acl.write(localPublicId))
+    syncInstance.receivedDelta(dot, filteredDelta)
+    val deltaMsg: Delta[RDT] = Delta(filteredDelta, dot, aclDots)
+    broadcastFiltered(deltaMsg)
+  }
+
+  def grantPermission(aclDot: Dot, affectedUser: PublicIdentity, realm: PermissionTree, operation: Operation): Unit = {
+    val (aclDots, acl) = aclReference.get()
+    require(!aclDots.contains(aclDot))
+
+    operation match
+      case Operation.READ  => require(realm <= acl.read(localPublicId))
+      case Operation.WRITE => require(realm <= acl.write(localPublicId))
+
+    val addAclMsg: AddAclEntry[RDT] = {
+      val unsignedMsg: AddAclEntry[RDT] =
+        AddAclEntry(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
+      val encodedMsg = writeToArray(unsignedMsg)(using messageJsonCodec)
+      val signature  = Ed25519Util.sign(encodedMsg, localIdentity.identityKey.getPrivate)
+      unsignedMsg.copy(signature = signature)
+    }
+
+    receivedMessage(addAclMsg, localPublicId)
+    val _ = connectionManager.broadcast(addAclMsg)
+  }
 }
 
 object FilteringAntiEntropy {
