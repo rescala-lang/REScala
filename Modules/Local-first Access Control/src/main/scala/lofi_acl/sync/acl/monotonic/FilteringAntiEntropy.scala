@@ -94,22 +94,29 @@ class FilteringAntiEntropy[RDT](
   }
 
   @volatile private var stopped = false
-  def setStopped(): Unit        = stopped = true
+  def stop(): Unit = {
+    stopped = true
+    connectionManager.shutdown()
+  }
 
-  def run(): Unit = {
-    while !stopped do {
-      try {
-        val (msg, sender) = msgQueue.take()
+  def start(): Thread = {
+    val thread = Thread(() =>
+      while !stopped do {
+        try {
+          val (msg, sender) = msgQueue.take()
 
-        // Process message immediately or backlog it if not processable
-        handleMessage(msg, sender)
+          // Process message immediately or backlog it if not processable
+          handleMessage(msg, sender)
 
-        // If we processed an ACLEntry, maybe we need now can process backlogged messages
-        if msg.isInstanceOf[AddAclEntry[RDT]] // We don't consider causal dependencies between deltas
-        then processBacklog()
-      } catch
-        case e: InterruptedException =>
-    }
+          // If we processed an ACLEntry, maybe we need now can process backlogged messages
+          if msg.isInstanceOf[AddAclEntry[RDT]] // We don't consider causal dependencies between deltas
+          then processBacklog()
+        } catch
+          case e: InterruptedException =>
+      }
+    )
+    thread.start()
+    thread
   }
 
   private def handleMessage(msg: MonotonicAclSyncMessage[RDT], sender: PublicIdentity): Unit = {

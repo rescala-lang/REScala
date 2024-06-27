@@ -23,6 +23,7 @@ class SyncWithMonotonicAcl[RDT](
 ) extends Sync[RDT] {
 
   private val antiEntropy = FilteringAntiEntropy[RDT](localIdentity, initialAclMessages, initialRdt, this)
+  @volatile private var antiEntropyThread: Option[Thread] = None
 
   private val localPublicId = localIdentity.getPublic
 
@@ -56,4 +57,20 @@ class SyncWithMonotonicAcl[RDT](
 
   override def receivedDelta(dot: Dot, rdt: RDT): Unit =
     val _ = rdtReference.updateAndGet((dots, rdt) => dots.add(dot) -> rdt.merge(rdt))
+
+  def start(): Unit = {
+    synchronized {
+      require(antiEntropyThread.isEmpty)
+      antiEntropyThread = Some(antiEntropy.start())
+    }
+  }
+
+  def stop(): Unit = {
+    synchronized {
+      require(antiEntropyThread.nonEmpty)
+      antiEntropy.stop()
+      antiEntropyThread.get.interrupt()
+      antiEntropyThread = None
+    }
+  }
 }
