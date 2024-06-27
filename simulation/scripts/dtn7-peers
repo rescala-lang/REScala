@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cea 'dtnquery peers | grep addr | wc -l' 2>&1 | grep "\S" | sed 's/\# HOST: //g' | sed 's/\r//g' | while read l1; do
+    read l2
+    printf ' %-15s' "$l1"
+    echo $l2
+done
+
+echo

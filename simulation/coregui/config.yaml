@@ -1,0 +1,55 @@
+!GuiConfig
+ips: !IpConfigs
+  ip4: 10.0.0.0
+  ip4s:
+    - 10.0.0.0
+    - 192.168.0.0
+    - 172.16.0.0
+  ip6: '2001::'
+  ip6s:
+    - '2001::'
+    - '2002::'
+    - 'a::'
+location: !LocationConfig
+  alt: 2.0
+  lat: 47.5791667
+  lon: -122.132322
+  scale: 100.0
+  x: 0.0
+  y: 0.0
+  z: 0.0
+mac: 00:00:00:aa:00:00
+nodes:
+  - !CustomNode
+    image: /root/.coregui/icons/uav.png
+    name: UAV
+    services:
+      - SSH
+  - !CustomNode
+    image: /root/.coregui/icons/dtn-router.png
+    name: DTN
+    services:
+      - DefaultMulticastRoute
+      - dtnd
+      - dtnecho
+  - !CustomNode
+    image: /root/.coregui/icons/dtn7zero-router.png
+    name: DTN7ZERO
+    services:
+      - dtn7zero
+  - !CustomNode
+    image: /root/.coregui/icons/dtn-router.png
+    name: CHECKER
+    services:
+      - rdtchecker
+observers: []
+preferences: !PreferencesConfig
+  editor: vim
+  gui3d: /usr/local/bin/std3d.sh
+  height: 2000
+  terminal: lxterminal -e
+  theme: black
+  width: 2000
+recentfiles: []
+scale: 1.0
+servers: []

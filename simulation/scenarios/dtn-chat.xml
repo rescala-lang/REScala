@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scenario name="/tmp/tmp_1kkow5r">
+  <networks>
+    <network id="4" name="WirelessNetwork" icon="" canvas="0" type="WIRELESS_LAN">
+      <position x="454.0" y="149.0" lat="47.5782634983756" lon="-122.12824586736008" alt="2.0"/>
+    </network>
+  </networks>
+  <devices>
+    <device id="1" name="anna" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="184.0" y="304.0" lat="47.577324208921404" lon="-122.1306713186272" alt="2.0"/>
+      <services>
+        <service name="UserDefined"/>
+        <service name="dtnmonitoring"/>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnecho"/>
+      </services>
+    </device>
+    <device id="2" name="bob" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="456.0" y="516.0" lat="47.576039476060764" lon="-122.1282279010544" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="UserDefined"/>
+        <service name="dtnecho"/>
+      </services>
+    </device>
+    <device id="3" name="charlie" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="712.0" y="304.0" lat="47.577324208921404" lon="-122.12592821392705" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="UserDefined"/>
+        <service name="dtnecho"/>
+      </services>
+    </device>
+    <device id="5" name="eliza" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="456.0" y="304.0" lat="47.577324208921404" lon="-122.1282279010544" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="dtneliza"/>
+        <service name="dtnecho"/>
+        <service name="DefaultMulticastRoute"/>
+      </services>
+    </device>
+  </devices>
+  <links>
+    <link node1="4" node2="1">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:00" ip4="10.0.1.20" ip4_mask="24" ip6="2001::14" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="2">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:01" ip4="10.0.1.21" ip4_mask="24" ip6="2001:0:0:1::15" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="3">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:02" ip4="10.0.1.22" ip4_mask="24" ip6="2001:0:0:1::16" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="5">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:03" ip4="10.0.1.23" ip4_mask="24" ip6="2001::17" ip6_mask="128"/>
+    </link>
+  </links>
+  <mobility_configurations>
+    <mobility_configuration node="4" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+  </mobility_configurations>
+  <emane_global_configuration>
+    <emulator>
+      <configuration name="antennaprofilemanifesturi" value=""/>
+      <configuration name="controlportendpoint" value="0.0.0.0:47000"/>
+      <configuration name="eventservicedevice" value="ctrl0"/>
+      <configuration name="eventservicegroup" value="224.1.2.8:45703"/>
+      <configuration name="eventservicettl" value="1"/>
+      <configuration name="otamanagerchannelenable" value="1"/>
+      <configuration name="otamanagerdevice" value="ctrl0"/>
+      <configuration name="otamanagergroup" value="224.1.2.8:45702"/>
+      <configuration name="otamanagerloopback" value="0"/>
+      <configuration name="otamanagermtu" value="0"/>
+      <configuration name="otamanagerpartcheckthreshold" value="2"/>
+      <configuration name="otamanagerparttimeoutthreshold" value="5"/>
+      <configuration name="otamanagerttl" value="1"/>
+      <configuration name="stats.event.maxeventcountrows" value="0"/>
+      <configuration name="stats.ota.maxeventcountrows" value="0"/>
+      <configuration name="stats.ota.maxpacketcountrows" value="0"/>
+    </emulator>
+    <core>
+      <configuration name="platform_id_start" value="1"/>
+      <configuration name="nem_id_start" value="1"/>
+      <configuration name="link_enabled" value="1"/>
+      <configuration name="loss_threshold" value="30"/>
+      <configuration name="link_interval" value="1"/>
+      <configuration name="link_timeout" value="4"/>
+    </core>
+  </emane_global_configuration>
+  <service_configurations>
+    <service name="UserDefined" node="1">
+      <startups>
+        <startup>bash -c "export DISPLAY=:1.0 &amp;&amp; sleep 2 &amp;&amp; xterm -rv -e dtnchat &amp;"</startup>
+      </startups>
+    </service>
+    <service name="UserDefined" node="2">
+      <startups>
+        <startup>bash -c "export DISPLAY=:1.0 &amp;&amp; sleep 2 &amp;&amp; xterm -rv -e dtnchat &amp;"</startup>
+      </startups>
+    </service>
+    <service name="UserDefined" node="3">
+      <startups>
+        <startup>bash -c "export DISPLAY=:1.0 &amp;&amp; sleep 2 &amp;&amp; xterm -rv -e dtnchat &amp;"</startup>
+      </startups>
+    </service>
+    <service name="UserDefined" node="5">
+      <startups>
+        <startup>bash -c "export DISPLAY=:1.0 &amp;&amp; sleep 2 &amp;&amp; xterm -rv -e dtnchat &amp;"</startup>
+      </startups>
+    </service>
+  </service_configurations>
+  <session_origin lat="47.579166412353516" lon="-122.13232421875" alt="2.0" scale="100.0"/>
+  <session_options>
+    <configuration name="controlnet" value="192.168.133.0/24"/>
+    <configuration name="controlnet0" value=""/>
+    <configuration name="controlnet1" value=""/>
+    <configuration name="controlnet2" value=""/>
+    <configuration name="controlnet3" value=""/>
+    <configuration name="controlnet_updown_script" value=""/>
+    <configuration name="enablerj45" value="1"/>
+    <configuration name="preservedir" value="0"/>
+    <configuration name="enablesdt" value="0"/>
+    <configuration name="sdturl" value="tcp://127.0.0.1:50000/"/>
+    <configuration name="ovs" value="0"/>
+  </session_options>
+  <session_metadata>
+    <configuration name="shapes" value="[{&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [450.0, 59.0], &quot;label&quot;: &quot;dtn chat&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 36, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: true, &quot;italic&quot;: false, &quot;underline&quot;: false}, {&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [477.0, 96.0], &quot;label&quot;: &quot;Use 'dtnchat' on the different nodes to exchange messages 1:1 or in global channels.&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 12, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: false, &quot;italic&quot;: false, &quot;underline&quot;: false}]"/>
+    <configuration name="hidden" value="[]"/>
+    <configuration name="canvas" value="{&quot;gridlines&quot;: false, &quot;dimensions&quot;: [2000, 2000], &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;wallpaper&quot;: null, &quot;wallpaper_style&quot;: 1, &quot;fit_image&quot;: false}]}"/>
+    <configuration name="edges" value="[]"/>
+  </session_metadata>
+  <default_services>
+    <node type="mdr">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="PC">
+      <service name="DefaultRoute"/>
+    </node>
+    <node type="prouter"/>
+    <node type="router">
+      <service name="zebra"/>
+      <service name="OSPFv2"/>
+      <service name="OSPFv3"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="host">
+      <service name="DefaultRoute"/>
+      <service name="SSH"/>
+    </node>
+  </default_services>
+</scenario>
