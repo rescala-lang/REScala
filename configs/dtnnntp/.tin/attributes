@@ -1,0 +1,11 @@
+scope=*
+x_headers=~/.tin/headers
+
+scope=*sources*
+post_process_type=1
+
+scope=*binaries*
+delete_tmp_files=ON
+followup_to=poster
+post_process_type=2
+tex2iso_conv=OFF

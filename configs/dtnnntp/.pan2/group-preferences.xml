@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<group name="monntpy.offtopic">
+    <flag name='header-pane-sort-ascending' value='false'/>
+    <int name='header-pane-sort-column' value='6'/>
+    <string name='character-encoding' value='UTF-8'/>
+    <string name='default-group-save-path' value='/root/News'/>
+</group>
+<group name="Sent">
+</group>
+<group name="Drafts">
+</group>
+<group name="monntpy.users.uni-frankfurt">
+    <flag name='header-pane-sort-ascending' value='false'/>
+    <int name='header-pane-sort-column' value='6'/>
+    <string name='character-encoding' value='UTF-8'/>
+    <string name='default-group-save-path' value='/root/News'/>
+</group>
+<group name="monntpy.dev">
+    <flag name='header-pane-sort-ascending' value='false'/>
+    <int name='header-pane-sort-column' value='6'/>
+    <string name='character-encoding' value='UTF-8'/>
+    <string name='default-group-save-path' value='/root/News'/>
+</group>
+<group name="monntpy.users.tu-darmstadt">
+    <flag name='header-pane-sort-ascending' value='false'/>
+    <int name='header-pane-sort-column' value='6'/>
+    <string name='character-encoding' value='UTF-8'/>
+    <string name='default-group-save-path' value='/root/News'/>
+</group>
+<group name="monntpy.users.jlu-giessen">
+    <flag name='header-pane-sort-ascending' value='false'/>
+    <int name='header-pane-sort-column' value='6'/>
+    <string name='character-encoding' value='UTF-8'/>
+    <string name='default-group-save-path' value='/root/News'/>
+</group>
+<group name="Local Folders">
+</group>
+<group name="Subscribed Groups">
+</group>
+<group name="Other Groups">
+</group>

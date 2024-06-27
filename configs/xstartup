@@ -1,0 +1,13 @@
+#!/bin/sh
+
+xrdb $HOME/.Xresources
+xsetroot -solid grey
+x-terminal-emulator -rv -geometry 80x24+10+10 -ls -title "$VNCDESKTOP Desktop" &
+#x-window-manager &
+# Fix to make GNOME work
+export XKL_XMODMAP_DISABLE=1
+xhost +
+(sleep 3 && core-pygui) &
+#(sleep 7 && wmctrl -ir $(wmctrl -l | grep CORE | cut -d ' ' -f 1) -b add,maximized_vert,maximized_horz) &
+#/etc/X11/Xsession
+startlxde &

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<server-properties>
+  <server id="1">
+    <host>10.0.0.21</host>
+    <port>1190</port>
+    <username></username>
+    <password></password>
+    <expire-articles-n-days-old>93</expire-articles-n-days-old>
+    <connection-limit>4</connection-limit>
+    <newsrc>newsrc-1</newsrc>
+    <rank>1</rank>
+    <use-ssl>0</use-ssl>
+    <trust>0</trust>
+    <compression-type>0</compression-type>
+    <cert></cert>
+  </server>
+</server-properties>

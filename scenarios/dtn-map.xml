@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scenario name="/tmp/tmpuv55b6se">
+  <networks>
+    <network id="5" name="WirelessNetwork" icon="" canvas="0" type="WIRELESS_LAN">
+      <position x="467.0" y="390.0" lat="47.57680304750437" lon="-122.12812908637315" alt="2.0"/>
+    </network>
+  </networks>
+  <devices>
+    <device id="1" name="commandcenter" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="460.0" y="281.0" lat="47.57746358842122" lon="-122.12819196844303" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+        <service name="UserDefined"/>
+        <service name="dtnd"/>
+        <service name="dtnecho"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnmonitoring"/>
+        <service name="fakegpslogger"/>
+      </services>
+    </device>
+    <device id="2" name="mobile1" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="271.0" y="471.0" lat="47.576312181426005" lon="-122.12988978433" alt="2.0"/>
+      <services>
+        <service name="fakegpslogger"/>
+        <service name="dtnd"/>
+        <service name="dtnecho"/>
+        <service name="DefaultMulticastRoute"/>
+      </services>
+    </device>
+    <device id="3" name="mobile2" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="673.0" y="491.0" lat="47.5761909792168" lon="-122.12627855688785" alt="2.0"/>
+      <services>
+        <service name="fakegpslogger"/>
+        <service name="dtnd"/>
+        <service name="dtnecho"/>
+        <service name="DefaultMulticastRoute"/>
+      </services>
+    </device>
+    <device id="4" name="mobile3" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="468.0" y="563.0" lat="47.5757546489407" lon="-122.1281201032203" alt="2.0"/>
+      <services>
+        <service name="fakegpslogger"/>
+        <service name="dtnd"/>
+        <service name="dtnecho"/>
+        <service name="DefaultMulticastRoute"/>
+      </services>
+    </device>
+  </devices>
+  <links>
+    <link node1="5" node2="1">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:00" ip4="10.0.0.20" ip4_mask="24" ip6="2001::14" ip6_mask="128"/>
+    </link>
+    <link node1="5" node2="2">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:01" ip4="10.0.0.21" ip4_mask="24" ip6="2001::15" ip6_mask="128"/>
+    </link>
+    <link node1="5" node2="3">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:02" ip4="10.0.0.22" ip4_mask="24" ip6="2001::16" ip6_mask="128"/>
+    </link>
+    <link node1="5" node2="4">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:03" ip4="10.0.0.23" ip4_mask="24" ip6="2001::17" ip6_mask="128"/>
+    </link>
+  </links>
+  <mobility_configurations>
+    <mobility_configuration node="5" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+  </mobility_configurations>
+  <emane_global_configuration>
+    <emulator>
+      <configuration name="antennaprofilemanifesturi" value=""/>
+      <configuration name="controlportendpoint" value="0.0.0.0:47000"/>
+      <configuration name="eventservicedevice" value="ctrl0"/>
+      <configuration name="eventservicegroup" value="224.1.2.8:45703"/>
+      <configuration name="eventservicettl" value="1"/>
+      <configuration name="otamanagerchannelenable" value="1"/>
+      <configuration name="otamanagerdevice" value="ctrl0"/>
+      <configuration name="otamanagergroup" value="224.1.2.8:45702"/>
+      <configuration name="otamanagerloopback" value="0"/>
+      <configuration name="otamanagermtu" value="0"/>
+      <configuration name="otamanagerpartcheckthreshold" value="2"/>
+      <configuration name="otamanagerparttimeoutthreshold" value="5"/>
+      <configuration name="otamanagerttl" value="1"/>
+      <configuration name="stats.event.maxeventcountrows" value="0"/>
+      <configuration name="stats.ota.maxeventcountrows" value="0"/>
+      <configuration name="stats.ota.maxpacketcountrows" value="0"/>
+    </emulator>
+    <core>
+      <configuration name="platform_id_start" value="1"/>
+      <configuration name="nem_id_start" value="1"/>
+      <configuration name="link_enabled" value="1"/>
+      <configuration name="loss_threshold" value="30"/>
+      <configuration name="link_interval" value="1"/>
+      <configuration name="link_timeout" value="4"/>
+    </core>
+  </emane_global_configuration>
+  <service_configurations>
+    <service name="UserDefined" node="1">
+      <startups>
+        <startup>bash -c "node-red /root/nodered/dtnmap.json &amp;&gt; nodered.log"</startup>
+        <startup>bash -c "sleep 3 &amp;&amp; export DISPLAY=:1.0 &amp;&amp; firefox http://127.0.0.1:1880/ui"</startup>
+        <startup>bash -c "sleep 2 &amp;&amp; dtngpsreceiver -e dtn://global/~pos -r http://127.0.0.1:1880/dtnpos -v &amp;&gt; gpsrecv.log"</startup>
+      </startups>
+    </service>
+    <service name="DefaultRoute" node="1">
+      <startups>
+        <startup>bash defaultroute.sh</startup>
+      </startups>
+      <files>
+        <file name="defaultroute.sh"><![CDATA[#!/bin/sh
+# auto-generated by DefaultRoute service (utility.py)
+ip route add default via 192.168.133.254
+
+]]></file>
+      </files>
+    </service>
+  </service_configurations>
+  <session_origin lat="47.579166412353516" lon="-122.13232421875" alt="2.0" scale="100.0"/>
+  <session_options>
+    <configuration name="controlnet" value="192.168.133.0/24"/>
+    <configuration name="controlnet0" value=""/>
+    <configuration name="controlnet1" value=""/>
+    <configuration name="controlnet2" value=""/>
+    <configuration name="controlnet3" value=""/>
+    <configuration name="controlnet_updown_script" value=""/>
+    <configuration name="enablerj45" value="1"/>
+    <configuration name="preservedir" value="0"/>
+    <configuration name="enablesdt" value="0"/>
+    <configuration name="sdturl" value="tcp://127.0.0.1:50000/"/>
+    <configuration name="ovs" value="0"/>
+  </session_options>
+  <session_metadata>
+    <configuration name="canvas" value="{&quot;gridlines&quot;: false, &quot;dimensions&quot;: [2000, 2000], &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;wallpaper&quot;: null, &quot;wallpaper_style&quot;: 1, &quot;fit_image&quot;: false}]}"/>
+    <configuration name="edges" value="[]"/>
+    <configuration name="shapes" value="[{&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [458.0, 43.0], &quot;label&quot;: &quot;dtn map&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 36, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: true, &quot;italic&quot;: false, &quot;underline&quot;: false}, {&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [473.0, 98.0], &quot;label&quot;: &quot;The mobile nodes use a custom location canonical block to report their positions.&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 12, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: false, &quot;italic&quot;: false, &quot;underline&quot;: false}, {&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [472.0, 129.0], &quot;label&quot;: &quot;The command center receives the coordinates and pushed them into a rest service.&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 12, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: false, &quot;italic&quot;: false, &quot;underline&quot;: false}, {&quot;canvas&quot;: 1, &quot;type&quot;: &quot;text&quot;, &quot;iconcoords&quot;: [479.0, 163.0], &quot;label&quot;: &quot;A node-red script then provides a graphical overview of node positions in the browser.&quot;, &quot;fontfamily&quot;: &quot;Droid Sans Fallback&quot;, &quot;fontsize&quot;: 12, &quot;labelcolor&quot;: &quot;#000000&quot;, &quot;color&quot;: &quot;&quot;, &quot;border&quot;: &quot;#000000&quot;, &quot;width&quot;: 1, &quot;bold&quot;: false, &quot;italic&quot;: false, &quot;underline&quot;: false}]"/>
+    <configuration name="hidden" value="[]"/>
+  </session_metadata>
+  <default_services>
+    <node type="mdr">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="PC">
+      <service name="DefaultRoute"/>
+    </node>
+    <node type="prouter"/>
+    <node type="router">
+      <service name="zebra"/>
+      <service name="OSPFv2"/>
+      <service name="OSPFv3"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="host">
+      <service name="DefaultRoute"/>
+      <service name="SSH"/>
+    </node>
+  </default_services>
+</scenario>

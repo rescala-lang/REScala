@@ -1,0 +1,544 @@
+[
+    {
+        "id": "ec1f2c4bf5eca19d",
+        "type": "subflow",
+        "name": "Process Pos Data",
+        "info": "",
+        "category": "",
+        "in": [
+            {
+                "x": 50,
+                "y": 30,
+                "wires": [
+                    {
+                        "id": "1b044d0d1c3e0e0a"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 620,
+                "y": 380,
+                "wires": [
+                    {
+                        "id": "8e11468bc331cc3c",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [],
+        "meta": {},
+        "color": "#DDAA99"
+    },
+    {
+        "id": "1b044d0d1c3e0e0a",
+        "type": "function",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "Data Selector",
+        "func": "\nif ('gps' in msg.payload) { \n    msg.payload = msg.payload.gps;\n    msg.loctype = \"gps\";\n} else if ('xy' in msg.payload) {\n    msg.payload = msg.payload.xy;\n    msg.loctype = \"xy\";\n} else {\n    msg.payload = msg.payload.data;\n    msg.loctype = \"gps\";\n\n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 240,
+        "y": 80,
+        "wires": [
+            [
+                "8f49e7c82dacf745"
+            ]
+        ]
+    },
+    {
+        "id": "8f49e7c82dacf745",
+        "type": "csv",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "ts,bid,coords,flags",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": false,
+        "x": 460,
+        "y": 80,
+        "wires": [
+            [
+                "27225a2cc8bbd9f1"
+            ]
+        ]
+    },
+    {
+        "id": "da5a0deeda78e67a",
+        "type": "function",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "Parse GPS coords",
+        "func": "var coords = msg.payload.coords.replace('(', '').replace(')', '').split(',');\n\nmsg.payload.lat = parseFloat(coords[0]);\nmsg.payload.lon = parseFloat(coords[1]);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 140,
+        "wires": [
+            [
+                "8e11468bc331cc3c"
+            ]
+        ]
+    },
+    {
+        "id": "27225a2cc8bbd9f1",
+        "type": "switch",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "Select GPS or XY",
+        "property": "loctype",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "gps",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "xy",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 320,
+        "y": 160,
+        "wires": [
+            [
+                "da5a0deeda78e67a"
+            ],
+            [
+                "d5e4cdad362126eb"
+            ]
+        ]
+    },
+    {
+        "id": "d5e4cdad362126eb",
+        "type": "function",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "Convert for proj4",
+        "func": "\nvar coords = msg.payload.coords.replace('(', '').replace(')', '').split(',');\nmsg.payload.x = parseFloat(coords[0]);\nmsg.payload.y = -1 * parseFloat(coords[1]);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 190,
+        "y": 220,
+        "wires": [
+            [
+                "f78790b497048005"
+            ]
+        ]
+    },
+    {
+        "id": "f78790b497048005",
+        "type": "proj4",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "XY to LONLAT",
+        "select": "epsg_code",
+        "firstProjection": "EPSG:3857",
+        "secondProjection": "EPSG:4326",
+        "firstCRS": "",
+        "secondCRS": "",
+        "x": 180,
+        "y": 280,
+        "wires": [
+            [
+                "54cfb3c085ee8e0d"
+            ]
+        ]
+    },
+    {
+        "id": "54cfb3c085ee8e0d",
+        "type": "function",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "add reference lon lat",
+        "func": "var msg2 = { payload: msg.payload };\n\nlet base_lat = 49.87759;\nlet base_lon = 8.65436;\nmsg2.payload.lon = msg.proj4_coords.x + base_lon;\nmsg2.payload.lat = msg.proj4_coords.y + base_lat;\nreturn msg2;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 180,
+        "y": 340,
+        "wires": [
+            [
+                "8e11468bc331cc3c"
+            ]
+        ]
+    },
+    {
+        "id": "8e11468bc331cc3c",
+        "type": "function",
+        "z": "ec1f2c4bf5eca19d",
+        "name": "Convert for Worldmap",
+        "func": "var data = msg.payload;\nvar msg2 = { payload : {}};\n\nfunction timeConverter(UNIX_timestamp){\n  var a = new Date(UNIX_timestamp * 1000);\n  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];\n  var year = a.getFullYear();\n  var month = months[a.getMonth()];\n  var date = a.getDate();\n  var hour = a.getHours();\n  var min = a.getMinutes();\n  var sec = a.getSeconds();\n  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;\n  return time;\n}\n\n//var coords = data.coords.replace('(','').replace(')','').split(',');\n\nmsg2.payload.name = data.bid.split(\"-\")[0];\nmsg2.payload.ts = data.ts;\nmsg2.payload.timestamp = timeConverter(data.ts);\nmsg2.payload.bid = data.bid\nmsg2.payload.label = msg2.payload.name;\nmsg2.payload.lat = data.lat;\nmsg2.payload.lon = data.lon;\n//msg2.payload.lon = parseFloat(coords[0]);\n//msg2.payload.lat = parseFloat(coords[1]);\n\n//msg2.payload.lat = 49.88002;\n//msg2.payload.lon = 8.6586;\n\nmsg2.payload.flags = data.flags;\nmsg2.payload.layer= \"DTN\"\n//msg2.payload.SIDC = \"EFFPK-------\";\n//msg2.payload.icon = \"fa-mobile\"\nif (data.flags.includes(\"MOBILE\")) {\n    if (msg2.payload.name.includes(\"commandcenter\")) {\n        msg2.payload.icon = \"fa-wifi\";\n    } else {\n        msg2.payload.icon = \"fa-mobile\"\n    }; \n} else if (data.flags.includes(\"STATION\")) {\n    msg2.payload.icon = \"fa-wifi\"\n} else {\n    msg2.payload.icon = \"fa-question\"\n};\nreturn msg2;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 280,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "6733a794.698058",
+        "type": "tab",
+        "label": "DTN Map",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "d2bacfc9.515e1",
+        "type": "http in",
+        "z": "6733a794.698058",
+        "name": "",
+        "url": "/dtnpos",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 90,
+        "y": 20,
+        "wires": [
+            [
+                "727336fd.442818",
+                "b9309660062c8c4c"
+            ]
+        ]
+    },
+    {
+        "id": "de92b2ba.87f4c",
+        "type": "debug",
+        "z": "6733a794.698058",
+        "name": "Worldmap Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "727336fd.442818",
+        "type": "http response",
+        "z": "6733a794.698058",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 620,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "873c622d.5499",
+        "type": "ui_worldmap",
+        "z": "6733a794.698058",
+        "group": "9ab43be9.e89478",
+        "order": 1,
+        "width": "0",
+        "height": "0",
+        "name": "",
+        "lat": "49.874",
+        "lon": "008.659",
+        "zoom": "16",
+        "layer": "OSMG",
+        "cluster": "",
+        "maxage": "",
+        "usermenu": "hide",
+        "layers": "show",
+        "panit": "false",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "dms",
+        "showgrid": "false",
+        "path": "/dtnmap",
+        "overlist": "DR,HM",
+        "maplist": "OSMG,OSMC,OSMH,EsriC,EsriS,EsriT,EsriDG,OpTop",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 640,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "938b9078.5443c",
+        "type": "ui_list",
+        "z": "6733a794.698058",
+        "group": "9ab43be9.e89478",
+        "name": "Log Output",
+        "order": 2,
+        "width": "0",
+        "height": "0",
+        "lineType": "three",
+        "actionType": "none",
+        "allowHTML": true,
+        "outputs": 0,
+        "topic": "",
+        "x": 570,
+        "y": 380,
+        "wires": [],
+        "info": "## APRS Message Log"
+    },
+    {
+        "id": "7c0ca25e.bbb2ac",
+        "type": "function",
+        "z": "6733a794.698058",
+        "name": "Logger",
+        "func": "\nvar logEntries = flow.get(\"logEntries\") || [];\n\nvar raws = flow.get(\"raws\") || {};\n\nvar entry = {};\nentry.title = msg.payload.timestamp + \" <b>\"+ msg.payload.name + \"</b>\";\nentry.description = \"Flags: <i>\" + msg.payload.flags + \"</i><br>\";\nentry.description += \"GPS: <i>\" + msg.payload.lat.toFixed(4) + \", \" + msg.payload.lon.toFixed(4) + \"</i>\";\n\nlogEntries.push(entry);\n\nraws[msg.payload.name] = msg.payload;\n\nflow.set(\"logEntries\", logEntries);\nflow.set(\"raws\", raws);\n\nmsg.payload = logEntries;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 380,
+        "wires": [
+            [
+                "938b9078.5443c"
+            ]
+        ]
+    },
+    {
+        "id": "9f20d4e1.b00148",
+        "type": "debug",
+        "z": "6733a794.698058",
+        "name": "Logger Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "b72cda65.ee1368",
+        "type": "function",
+        "z": "6733a794.698058",
+        "name": "Format log entry",
+        "func": "\nmsg.payload = msg.payload.name;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 180,
+        "y": 500,
+        "wires": [
+            [
+                "121246e.e4e69b9"
+            ]
+        ]
+    },
+    {
+        "id": "80fee621.d0b9f8",
+        "type": "ui_list",
+        "z": "6733a794.698058",
+        "group": "db19338a.1aa38",
+        "name": "Node List",
+        "order": 4,
+        "width": "6",
+        "height": "12",
+        "lineType": "one",
+        "actionType": "click",
+        "allowHTML": false,
+        "outputs": 1,
+        "topic": "",
+        "x": 610,
+        "y": 500,
+        "wires": [
+            [
+                "aa799bd3.e4f7a8"
+            ]
+        ]
+    },
+    {
+        "id": "121246e.e4e69b9",
+        "type": "function",
+        "z": "6733a794.698058",
+        "name": "Station List Store",
+        "func": "let pay = msg.payload;\n\nvar nodes = flow.get(\"nodes\") || {};\n\nnodes[pay] = true;\n\n// Update context for scrolling text\nflow.set(\"nodes\", nodes);\n\n// Shalow copy updated scrolling table to msg.payload\nmsg.payload = Object.keys(nodes);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 410,
+        "y": 500,
+        "wires": [
+            [
+                "80fee621.d0b9f8"
+            ]
+        ]
+    },
+    {
+        "id": "5a25ba82.ee5d84",
+        "type": "inject",
+        "z": "6733a794.698058",
+        "name": "Initial Setup",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 580,
+        "wires": [
+            [
+                "569f5412.e8d92c"
+            ]
+        ]
+    },
+    {
+        "id": "569f5412.e8d92c",
+        "type": "function",
+        "z": "6733a794.698058",
+        "name": "Clear Stores",
+        "func": "flow.set(\"nodes\", {});\nflow.set(\"logEntries\", []);\nflow.set(\"raws\", {});\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 360,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "82b91d54.a2c53",
+        "type": "inject",
+        "z": "6733a794.698058",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "raws",
+        "payloadType": "flow",
+        "x": 110,
+        "y": 160,
+        "wires": [
+            [
+                "366babbf.11df24"
+            ]
+        ]
+    },
+    {
+        "id": "366babbf.11df24",
+        "type": "split",
+        "z": "6733a794.698058",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 310,
+        "y": 160,
+        "wires": [
+            [
+                "873c622d.5499"
+            ]
+        ]
+    },
+    {
+        "id": "aa799bd3.e4f7a8",
+        "type": "function",
+        "z": "6733a794.698058",
+        "name": "Focus On Selected",
+        "func": "var raws = flow.get(\"raws\") || {};\n\nvar bid = msg.payload.title;\nvar data = raws[bid];\nmsg.payload = { \"command\": { \"lat\":data.lat, \"lon\":data.lon } };\n//msg.payload=data;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 440,
+        "wires": [
+            [
+                "873c622d.5499"
+            ]
+        ]
+    },
+    {
+        "id": "b9309660062c8c4c",
+        "type": "subflow:ec1f2c4bf5eca19d",
+        "z": "6733a794.698058",
+        "name": "",
+        "x": 290,
+        "y": 80,
+        "wires": [
+            [
+                "873c622d.5499",
+                "7c0ca25e.bbb2ac",
+                "b72cda65.ee1368"
+            ]
+        ]
+    },
+    {
+        "id": "9ab43be9.e89478",
+        "type": "ui_group",
+        "name": "Dtn Map",
+        "tab": "59737202.de575c",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false
+    },
+    {
+        "id": "db19338a.1aa38",
+        "type": "ui_group",
+        "name": "Dtn Nodes",
+        "tab": "59737202.de575c",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "59737202.de575c",
+        "type": "ui_tab",
+        "name": "Dtn",
+        "icon": "dashboard",
+        "order": 4,
+        "disabled": false,
+        "hidden": false
+    }
+]
