@@ -25,7 +25,7 @@ trait Sync[RDT] {
 // Responsible for enforcing ACL
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
-    initialAclMessages: List[AddAclEntry[RDT]], // TODO: Merge initial acl messages
+    initialAclMessages: List[AddAclEntry[RDT]], // Signatures are assumed to have been validated already
     initialRdtDeltas: DeltaMapWithPrefix[RDT],
     syncInstance: Sync[RDT]
 )(using rdtCodec: JsonValueCodec[RDT], filter: Filter[RDT], rdtLattice: Lattice[RDT])
@@ -39,9 +39,10 @@ class FilteringAntiEntropy[RDT](
 
   // Access Control List ------
   private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] =
-    AtomicReference((Dots.empty, MonotonicAcl.empty[RDT]))
-  @volatile private var receivedAclDots: Dots                 = aclReference.get._1 // received != applied
-  @volatile private var aclDeltas: Map[Dot, AddAclEntry[RDT]] = Map.empty
+    AtomicReference((Dots.empty, MonotonicAcl.empty[RDT])) // TODO: Initialize with root of trust
+  @volatile private var receivedAclDots: Dots = // received != applied
+    initialAclMessages.foldLeft(Dots.empty)((dots, msg) => dots.add(msg.dot))
+  @volatile private var aclDeltas: Map[Dot, AddAclEntry[RDT]] = initialAclMessages.map(msg => msg.dot -> msg).toMap
   @volatile private var sendersIntendedWritePermissions: Map[PublicIdentity, PermissionTree]  = Map.empty
   @volatile private var sendersEffectiveWritePermissions: Map[PublicIdentity, PermissionTree] = Map.empty
   // Lock for sendersIntendedWritePermissions and sendersEffectiveWritePermissions
@@ -58,7 +59,9 @@ class FilteringAntiEntropy[RDT](
   // Stores inbound messages
   val msgQueue: LinkedBlockingQueue[(MonotonicAclSyncMessage[RDT], PublicIdentity)] = LinkedBlockingQueue()
   // Stores deltas that couldn't be processed because of missing causal dependencies
-  private var aclMessageBacklog = Queue.empty[(AddAclEntry[RDT], PublicIdentity)]
+  private var aclMessageBacklog: Queue[(AddAclEntry[RDT], PublicIdentity)] =
+    Queue.from(initialAclMessages.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
+  receivedMessage(initialAclMessages.head, localPublicId) // Also causes processing of aclMessageBacklog
   // Note that this stores the *intended*, not the effective permissions of the user at the time of sending!
   // We are taking the intersection of the actual permissions and the intended permissions at use time.
   private var deltaMessageBacklog = Queue.empty[(Delta[RDT], PublicIdentity, PermissionTree)]
@@ -171,7 +174,7 @@ class FilteringAntiEntropy[RDT](
 
   private def processBacklog(): Unit = {
     // Process backlogged ACL entries
-    while {
+    while { // TODO: Could be optimized by processing them in topological order
       val aclDots = aclReference.get()._1
       val (processableAclDeltas, unprocessable) =
         aclMessageBacklog.partition((entry, _) => aclDots.contains(entry.cc))
