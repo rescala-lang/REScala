@@ -5,14 +5,11 @@ import kofre.base.Lattice
 import kofre.datatypes.contextual.ReplicatedList
 import kofre.dotted.Dotted
 import kofre.syntax.ReplicaId
-import loci.registry.{Binding, Registry}
-import loci.serializer.jsoniterScala.*
 import org.scalajs.dom.html.{Div, Input, Paragraph}
 import org.scalajs.dom.{HTMLElement, UIEvent, document, window}
 import rescala.default
 import rescala.default.*
 import rescala.extra.Tags.*
-import rescala.extra.distribution.Network
 import dtn.RdtConnector
 import scalatags.JsDom.all.*
 import scalatags.JsDom.{Attr, TypedTag}
@@ -28,8 +25,6 @@ case class Epoche[T](number: Int, payload: T)
 @JSExportTopLevel("ChatApp")
 object ChatApp {
 
-//  val registry = new Registry
-
   given ReplicaId = ReplicaId.gen()
 
   given epocheInstance[T: Lattice]: Lattice[Epoche[T]] = new Lattice[Epoche[T]] {
@@ -44,7 +39,6 @@ object ChatApp {
     val contents = getContents()
     document.body.replaceChild(contents.render, document.body.firstChild)
     document.body.appendChild(p(style := "height: 3em").render)
-//    document.body.appendChild(WebRTCHandling(registry).webrtcHandlingArea.render)
     document.body.appendChild(getConnectorContents())
   }
 
@@ -87,7 +81,6 @@ object ChatApp {
         )
       }
 
-    //Network.replicate(history, registry)(Binding("history"))
     RdtConnector.connectGraph(history)
 
     val chatDisplay = Signal.dynamic {
