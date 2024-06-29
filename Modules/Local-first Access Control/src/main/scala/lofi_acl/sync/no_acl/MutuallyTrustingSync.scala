@@ -1,6 +1,7 @@
 package lofi_acl.sync.no_acl
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import lofi_acl.collections.DeltaStore
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.no_acl.MutuallyTrustingSyncMessage.*

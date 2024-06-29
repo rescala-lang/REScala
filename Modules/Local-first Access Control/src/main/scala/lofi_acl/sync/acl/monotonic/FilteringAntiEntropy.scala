@@ -5,11 +5,12 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import lofi_acl.access
 import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
+import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.PublicIdentity.toPublicIdentity
 import lofi_acl.crypto.{Ed25519Util, PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.{PartialDelta, messageJsonCodec}
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
-import lofi_acl.sync.{ConnectionManager, DeltaMapWithPrefix, JsoniterCodecs, MessageReceiver}
+import lofi_acl.sync.{ConnectionManager, JsoniterCodecs, MessageReceiver}
 import rdts.base.Lattice
 import rdts.time.{Dot, Dots}
 

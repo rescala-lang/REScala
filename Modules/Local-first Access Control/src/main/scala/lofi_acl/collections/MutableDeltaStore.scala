@@ -1,4 +1,4 @@
-package lofi_acl.sync
+package lofi_acl.collections
 
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}

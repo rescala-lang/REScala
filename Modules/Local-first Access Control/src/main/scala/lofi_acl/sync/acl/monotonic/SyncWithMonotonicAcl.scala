@@ -2,6 +2,7 @@ package lofi_acl.sync.acl.monotonic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import lofi_acl.access.{Filter, Operation, PermissionTree}
+import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*

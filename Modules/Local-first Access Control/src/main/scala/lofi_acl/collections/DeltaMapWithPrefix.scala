@@ -1,4 +1,4 @@
-package lofi_acl.sync
+package lofi_acl.collections
 
 import lofi_acl.crypto.PublicIdentity
 import rdts.time.{Dot, Dots}

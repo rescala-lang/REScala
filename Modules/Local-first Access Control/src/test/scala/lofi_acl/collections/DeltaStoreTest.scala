@@ -1,4 +1,4 @@
-package lofi_acl.sync
+package lofi_acl.collections
 
 import munit.FunSuite
 import rdts.base.{Lattice, Uid}
