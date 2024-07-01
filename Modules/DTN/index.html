@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChatApp</title>
+</head>
+<body>
+<section class="chatapp">
+    <noscript>
+        <div style="padding:2em;text-align:center;font-size:2em">
+            Please enable JavaScript!
+        </div>
+    </noscript>
+</section>
+
+<script type="text/javascript" src="./js/target/scala-3.3.3/chat-fastopt.js"></script>
+<script>
+    window.reScalaEvents = [];
+    window.reScalaId = Math.random();
+    window.domAssocations = new Map();
+
+    DebugAdapter.setListener(data => {
+        if (data.type === 'DomAssociation') {
+            window.domAssocations.set(JSON.parse(data.reSource).idCounter, data.node);
+        } else if (typeof data === 'string') {
+            window.reScalaEvents.push(JSON.parse(data));
+        }
+    });
+
+    ChatApp.start()
+</script>
+</body>
+</html>

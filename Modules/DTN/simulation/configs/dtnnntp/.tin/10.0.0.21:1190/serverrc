@@ -1,0 +1,10 @@
+# tin server configuration file
+# This file was automatically saved by tin 2.4.4 20191224 ("Millburn")
+#
+# Do not edit while tin is running, since all your changes to this file
+# will be overwritten when you leave tin.
+# Do not edit at all if you don't know what you do.
+############################################################################
+
+version=1.0.0
+last_newnews=1665395180 (2022-10-10 09:46:20 UTC)
