@@ -10,8 +10,8 @@ import java.time.{ZonedDateTime, ZoneId, Duration}
 import java.time.temporal.{ChronoUnit, ChronoField}
 import io.bullet.borer.Reader
 import scala.collection.mutable.ArrayBuffer
-import kofre.base.Uid
-import kofre.time.{Dots, ArrayRanges, Time}
+import rdts.base.Uid
+import rdts.time.{Dots, ArrayRanges, Time}
 
 
 /* This module supports:
@@ -49,7 +49,7 @@ case class Endpoint(scheme: Int, specific_part: String | Int) {
       }
       case Endpoint.IPN_URI_SCHEME_ENCODED => throw Exception(s"cannot extract node endpoint from ipn endpoint: $this")
       case _ => throw Exception(s"unkown encoded dtn uri scheme: $scheme")
-    } 
+    }
   }
 
   def extract_node_name(): String = {
@@ -205,7 +205,7 @@ abstract class Flags() {
 }
 
 case class BundleProcessingControlFlags(
-  is_fragment: Boolean = false, 
+  is_fragment: Boolean = false,
   payload_is_admin_record: Boolean = false,
   do_not_fragment: Boolean = false,
   acknowledgement_is_requested: Boolean = false,
@@ -258,15 +258,15 @@ given Decoder[ArrayRanges] = Decoder { reader =>
 given Codec[Dots] = deriveCodec[Dots]
 
 
-given Encoder[Endpoint] = Encoder { (writer, endpoint) => 
+given Encoder[Endpoint] = Encoder { (writer, endpoint) =>
   writer
     .writeArrayOpen(2)
     .writeInt(endpoint.scheme)
-  
+
   endpoint.specific_part match
     case normal_endpint: String => writer.writeString(normal_endpint)
     case none_endpoint: Int => writer.writeInt(none_endpoint)
-  
+
   writer.writeArrayClose()
 }
 
@@ -283,7 +283,7 @@ given Decoder[Endpoint] = Decoder { reader =>
 
 
 
-given Encoder[CreationTimestamp] = Encoder { (writer, timestamp) => 
+given Encoder[CreationTimestamp] = Encoder { (writer, timestamp) =>
   writer
     .writeArrayOpen(2)
     .writeLong(timestamp.creation_time_as_dtn_timestamp)
@@ -304,7 +304,7 @@ given Decoder[CreationTimestamp] = Decoder { reader =>
 
 
 
-given Encoder[FragmentInfo] = Encoder { (writer, fragmentInfo) => 
+given Encoder[FragmentInfo] = Encoder { (writer, fragmentInfo) =>
   writer
     .writeInt(fragmentInfo.fragment_offset)
     .writeInt(fragmentInfo.total_application_data_length)
@@ -339,7 +339,7 @@ given Decoder[HopCount] = Decoder { reader =>
 
 
 
-given Encoder[BundleProcessingControlFlags] = Encoder { (writer, ctrlflags) => 
+given Encoder[BundleProcessingControlFlags] = Encoder { (writer, ctrlflags) =>
   def set(bit: Int, flags: Int): Int = flags | 1 << bit
 
   var flags: Int = 0
@@ -382,7 +382,7 @@ given Decoder[BundleProcessingControlFlags] = Decoder { reader =>
 
 
 
-given Encoder[PrimaryBlock] = Encoder { (writer, primaryBlock) => 
+given Encoder[PrimaryBlock] = Encoder { (writer, primaryBlock) =>
   // optional empty fields are not encoded, so we need to calculate our length beforehand
   var length = 8
   if (primaryBlock.fragment_info.isDefined) length += 1
@@ -398,7 +398,7 @@ given Encoder[PrimaryBlock] = Encoder { (writer, primaryBlock) =>
     .write[Endpoint](primaryBlock.report_to)
     .write[CreationTimestamp](primaryBlock.creation_timestamp)
     .writeInt(primaryBlock.lifetime)
-  
+
   if (primaryBlock.fragment_info.isDefined) {
     writer.write[FragmentInfo](primaryBlock.fragment_info.get)
   }
@@ -420,10 +420,10 @@ given Decoder[PrimaryBlock] = Decoder { reader =>
 
   val block = PrimaryBlock(
     version = reader.readInt(),
-    bundle_processing_control_flags = reader.read[BundleProcessingControlFlags](), 
+    bundle_processing_control_flags = reader.read[BundleProcessingControlFlags](),
     crc_type = reader.readInt(),
-    destination = reader.read[Endpoint](), 
-    source = reader.read[Endpoint](), 
+    destination = reader.read[Endpoint](),
+    source = reader.read[Endpoint](),
     report_to = reader.read[Endpoint](),
     creation_timestamp = reader.read[CreationTimestamp](),
     lifetime = reader.readInt(),
@@ -487,7 +487,7 @@ given Encoder[CanonicalBlock] = Encoder { (writer, block) =>
     .write[BlockProcessingControlFlags](block.block_processing_control_flags)
     .writeInt(block.crc_type)
     .writeBytes(block.data)
-  
+
   if (block.crc.isDefined) {
     writer.writeBytes(block.crc.get)
   }
@@ -526,13 +526,13 @@ given Decoder[CanonicalBlock] = Decoder { reader =>
 
 
 
-given Encoder[Bundle] = Encoder { (writer, bundle) => 
+given Encoder[Bundle] = Encoder { (writer, bundle) =>
   val length = 1 + bundle.other_blocks.size
 
   writer
     .writeArrayOpen(length)
     .write[PrimaryBlock](bundle.primary_block)
-  
+
   for (block <- bundle.other_blocks) {
     writer.write[CanonicalBlock](block)
   }

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.jdk.CollectionConverters._
 
 
-/* 
+/*
   Includes the standalone EpidemicRouter and the extracted EpidemicStrategy for use in other routers.
 */
 
@@ -66,14 +66,18 @@ class EpidemicStrategy {
       })
       .flatten
       .toList
-    
+
     Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
   }
 
   def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
     delivered.get(packet.bid) match {
-      case null => delivered.put(packet.bid, Set(packet.cla_sender))
-      case x: Set[String] => delivered.put(packet.bid, (x + packet.cla_sender))
+      case null =>
+        delivered.put(packet.bid, Set(packet.cla_sender))
+        ()
+      case x: Set[String] =>
+        delivered.put(packet.bid, (x + packet.cla_sender))
+        ()
     }
   }
 }

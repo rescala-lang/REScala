@@ -1,6 +1,6 @@
 package dtn
 
-import kofre.time.Dots
+import rdts.time.Dots
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -51,7 +51,7 @@ object RdtClient {
                 case None => println("no callback set. could not deliver rdt data. ignoring bundle.")
                 case Some(callback) => callback(payload.get, dots.get)
             }
-            
+
             flush_receive()
           })
         }

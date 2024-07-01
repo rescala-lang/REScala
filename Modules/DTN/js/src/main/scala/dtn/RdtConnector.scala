@@ -1,13 +1,14 @@
 package dtn
 
-import kofre.base.Lattice
-import rescala.core.InitialChange
-import rescala.default.scheduler
-import rescala.default.*
+import rdts.base.Lattice
+import reactives.core.InitialChange
+import reactives.default.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
+
+import scala.util.{Failure, Success}
 
 
 object RdtConnector {
@@ -16,7 +17,7 @@ object RdtConnector {
   private var ws: Option[WSEndpointClient] = None
 
   private var onChangedUpdateFunc: Array[Byte] => Unit = x => {}
-  
+
   def connectToWS(host: String, port: Int): Unit = {
     def receiveBundle(): Unit = {
       ws.get.receiveBundle().onComplete(bundle => {
@@ -28,7 +29,7 @@ object RdtConnector {
         receiveBundle()
       })
     }
-    
+
     WSEndpointClient(host, port).flatMap(conn => {
       ws = Some(conn)
       ws.get.registerEndpointAndSubscribe(cRDTGroupEndpoint)
@@ -45,15 +46,16 @@ object RdtConnector {
         full_source_uri = cRDTGroupEndpoint
       )
       ws match
-        case Some(value) => value.sendBundle(bundle)
+        case Some(value) =>
+          value.sendBundle(bundle).printError
         case None => println("cannot send update. not connected. throwing away.")
     })
 
     // push received updates into the crdt
     onChangedUpdateFunc = (v: Array[Byte]) => {
       val newValue: A = readFromArray[A](v)
-      
-      scheduler.forceNewTransaction(signal) {
+
+      reactives.SelectedScheduler.candidate.scheduler.forceNewTransaction(signal) {
         admissionTicket => admissionTicket.recordChange(new InitialChange {
           override val source: signal.type = signal
 

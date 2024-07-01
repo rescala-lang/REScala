@@ -1,6 +1,6 @@
 package dtn
 
-import kofre.time.Dots
+import rdts.time.Dots
 
 object BundleCreation {
   def createBundle(data: Array[Byte], full_destination_uri: String, full_source_uri: String): Bundle = {

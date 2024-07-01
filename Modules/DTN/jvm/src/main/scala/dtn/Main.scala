@@ -1,13 +1,13 @@
 package dtn
 
 import dtn.routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
-import kofre.time.{Dots, Dot, Time}
-import kofre.base.Uid
+import rdts.time.{Dots, Dot, Time}
+import rdts.base.Uid
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 
-/* 
+/*
   this file contains all jvm main methods
 */
 
@@ -148,7 +148,7 @@ def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, c
       // add dots here
 
       println(s"sending new dots: $dots")
-      client.send(Array(), dots)
+      client.send(Array(), dots).printError
     }
   }).recover(throwable => println(throwable))
 

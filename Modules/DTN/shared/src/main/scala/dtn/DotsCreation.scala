@@ -1,7 +1,7 @@
 package dtn
 
-import kofre.time.{Dots, Time}
-import kofre.base.Uid
+import rdts.time.{Dots, Time}
+import rdts.base.Uid
 import scala.util.Random
 
 

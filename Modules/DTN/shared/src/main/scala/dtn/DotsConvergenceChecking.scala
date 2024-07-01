@@ -1,6 +1,6 @@
 package dtn
 
-import kofre.time.Dots
+import rdts.time.Dots
 import java.util.concurrent.LinkedBlockingQueue
 import io.bullet.borer.Cbor
 
@@ -25,7 +25,7 @@ class DotsConvergenceChecker(server: TCPReadonlyServer) {
       }
     }
   }
-  
+
 }
 object DotsConvergenceChecker {
   def apply(interface: String, port: Int): DotsConvergenceChecker = {

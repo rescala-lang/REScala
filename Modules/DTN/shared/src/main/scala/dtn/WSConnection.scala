@@ -6,20 +6,21 @@ import sttp.client4.ws.async.*
 import sttp.client4.*
 import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
 import sttp.ws.WebSocket
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
 import dtn.CompatCode
-
 import io.bullet.borer.{Cbor, Json}
+
 import java.nio.charset.StandardCharsets
+import scala.util.{Failure, Success}
 
 
 class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
 
   def command(text: String): Unit = {
-    ws.sendText(text)
+    ws.sendText(text).printError
   }
 
   def receiveWholeMessage(): Future[String | Array[Byte]] = {
@@ -35,7 +36,7 @@ class WSConnection(ws: WebSocket[Future]) {
         }
       }
     }
-    
+
     ws.receive().flatMap {
       case Binary(payload: Array[Byte], finalFragment: Boolean, rsv: Option[Int]) => {
         if (finalFragment) {
@@ -52,7 +53,7 @@ class WSConnection(ws: WebSocket[Future]) {
         }
       }
       case Ping(payload: Array[Byte]) => {
-        // js FetchBackend and jvm HttpClientFutureBackend seem to answer these automatically 
+        // js FetchBackend and jvm HttpClientFutureBackend seem to answer these automatically
         // HttpClientFutureBackend forwards these messages to us, FetchBackend does not
         // in either case, no actions are required
         receiveWholeMessage()
@@ -91,7 +92,7 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
     SOLUTION: we only receive in this function, throwing an error if the command response indicates "non-successful".
     Not ideal, but should be sufficient for now.
     */
-    
+
     connection.receiveWholeMessage().flatMap {
       case s: String => {
         // string responses should always start with 200
@@ -149,7 +150,7 @@ object WSEndpointClient {
 
 
 class WSEroutingClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
-  def receivePacket(): Future[Packet] = {    
+  def receivePacket(): Future[Packet] = {
     connection.receiveWholeMessage().flatMap {
       case s: String => {
         Future(Json.decode(s.getBytes(StandardCharsets.UTF_8)).to[Packet].value)
@@ -171,7 +172,7 @@ object WSEroutingClient {
 
     CompatCode.uget(uri"http://${host}:${port}/status/nodeid")
       .flatMap(nId => {
-        println(s"connected to DTN node: $nId"); 
+        println(s"connected to DTN node: $nId");
         nodeId = Option(nId)
         if (nId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
         WSConnection(uri"ws://${host}:${port}/ws/erouting")
