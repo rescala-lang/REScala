@@ -20,7 +20,7 @@ object TodoDataManager {
   given Lattice[TodoRepState]        = Lattice.derived
   given Bottom[TodoRepState]         = Bottom.derived
 
-  val CBR(receivedCallback, dataManager) = Event.fromCallback {
+  val CBR(receivedCallback, dataManager: DataManager[TodoRepState]) = Event.fromCallback {
     DataManager[TodoRepState](Todolist.replicaId, Event.handle, _ => ())
   }
 

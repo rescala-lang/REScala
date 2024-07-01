@@ -1,10 +1,11 @@
 package todo
 
 import org.scalajs.dom.{document, window}
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Lattice, LocalUid}
 import reactives.extra.Tags.reattach
-import replication.WebRTCConnectionView
+import replication.{DTNChannel, WebRTCConnectionView}
 import scalatags.JsDom.all
+import scalatags.JsDom.all.given
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 
@@ -27,6 +28,8 @@ object Todolist {
 
     document.body.replaceChild(contents, document.body.firstElementChild)
 
+    document.body.appendChild(DTNTestConnector.getConnectorContents())
+
     document.body.appendChild(webrtc.render)
 
     document.body.appendChild:
@@ -38,4 +41,18 @@ object Todolist {
     ()
   }
 
+}
+
+object DTNTestConnector {
+  def getConnectorContents() = {
+    val portInput = all.input(all.placeholder := "dtnd ws port").render
+    val connectButton = all.button(all.onclick := { () =>
+      TodoDataManager.dataManager.addLatentConnection(
+        DTNChannel("127.0.0.1", portInput.value.toInt, scala.concurrent.ExecutionContext.global)
+      )
+    }).render
+    connectButton.textContent = "Connect"
+
+    all.div(portInput, connectButton).render
+  }
 }
