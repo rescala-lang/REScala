@@ -1,12 +1,11 @@
 package dtn.routing
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import dtn.{DtnPeer, Packet, WSEroutingClient, printError}
 
 import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
-
 
 trait Routing {
   def peers: ConcurrentHashMap[String, DtnPeer]
@@ -27,7 +26,7 @@ trait Routing {
 
 abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
   val peers: ConcurrentHashMap[String, DtnPeer] = ConcurrentHashMap()
-  val services: ConcurrentHashMap[Int, String] = ConcurrentHashMap()
+  val services: ConcurrentHashMap[Int, String]  = ConcurrentHashMap()
 
   def start_receiving(): Future[Unit] = {
     ws.receivePacket().flatMap(packet => {
@@ -40,33 +39,34 @@ abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
     packet match
       case p: Packet.RequestSenderForBundle => {
         onRequestSenderForBundle(p) match {
-          case None => {}  // nothing to send
-          case Some(response) => ws.sendPacket(response).printError
+          case None           => {} // nothing to send
+          case Some(response) => ws.sendPacket(response).printError()
         }
       }
-      case p: Packet.Error => onError(p)
-      case p: Packet.Timeout => onTimeout(p)
-      case p: Packet.SendingFailed => onSendingFailed(p)
-      case p: Packet.SendingSucceeded => onSendingSucceeded(p)
-      case p: Packet.IncomingBundle => onIncomingBundle(p)
+      case p: Packet.Error                             => onError(p)
+      case p: Packet.Timeout                           => onTimeout(p)
+      case p: Packet.SendingFailed                     => onSendingFailed(p)
+      case p: Packet.SendingSucceeded                  => onSendingSucceeded(p)
+      case p: Packet.IncomingBundle                    => onIncomingBundle(p)
       case p: Packet.IncomingBundleWithoutPreviousNode => onIncomingBundleWithoutPreviousNode(p)
-      case p: Packet.EncounteredPeer => onEncounteredPeer(p)
-      case p: Packet.DroppedPeer => onDroppedPeer(p)
-      case p: Packet.PeerState => onPeerState(p)
-      case p: Packet.ServiceState => onServiceState(p)
+      case p: Packet.EncounteredPeer                   => onEncounteredPeer(p)
+      case p: Packet.DroppedPeer                       => onDroppedPeer(p)
+      case p: Packet.PeerState                         => onPeerState(p)
+      case p: Packet.ServiceState                      => onServiceState(p)
       case p: Packet => println(s"warning: received unkown/unexpected packet $p for erouter. ignoring.")
   }
 
-  override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = ???
-  override def onError(packet: Packet.Error): Unit = ???
-  override def onTimeout(packet: Packet.Timeout): Unit = ???
-  override def onSendingFailed(packet: Packet.SendingFailed): Unit = ???
-  override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = ???
-  override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = ???
+  override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] =
+    ???
+  override def onError(packet: Packet.Error): Unit                                                         = ???
+  override def onTimeout(packet: Packet.Timeout): Unit                                                     = ???
+  override def onSendingFailed(packet: Packet.SendingFailed): Unit                                         = ???
+  override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit                                   = ???
+  override def onIncomingBundle(packet: Packet.IncomingBundle): Unit                                       = ???
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = ???
   override def onEncounteredPeer(packet: Packet.EncounteredPeer): Unit = {
-    if (!peers.containsKey(packet.name)) {
-      println(s"encountered new peer: ${packet.name}")  // limit log file spam
+    if !peers.containsKey(packet.name) then {
+      println(s"encountered new peer: ${packet.name}") // limit log file spam
     }
     peers.put(packet.name, packet.peer)
     ()

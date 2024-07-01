@@ -1,52 +1,52 @@
 package dtn
 
-import sttp.model.{Header, Uri}
-import sttp.capabilities.WebSockets
-import sttp.client4.ws.async.*
-import sttp.client4.*
-import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
-import sttp.ws.WebSocket
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import dtn.CompatCode
 import io.bullet.borer.{Cbor, Json}
+import sttp.capabilities.WebSockets
+import sttp.client4.*
+import sttp.client4.ws.async.*
+import sttp.model.Uri
+import sttp.ws.WebSocket
+import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
 
 import java.nio.charset.StandardCharsets
-import scala.util.{Failure, Success}
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
 
   def command(text: String): Unit = {
-    ws.sendText(text).printError
+    ws.sendText(text).printError()
   }
 
   def receiveWholeMessage(): Future[String | Array[Byte]] = {
     def combineFragments(f1: String | Array[Byte], f2: String | Array[Byte]): String | Array[Byte] = {
       f1 match {
         case s: String => f2 match {
-          case s2: String => s + s2
-          case b2: Array[Byte] => println("warning: cannot combine String and Array[Byte] fragment"); f1  // this looses f2, but will likely fail anyways more toplevel
-        }
+            case s2: String => s + s2
+            case b2: Array[Byte] =>
+              println("warning: cannot combine String and Array[Byte] fragment");
+              f1 // this looses f2, but will likely fail anyways more toplevel
+          }
         case b: Array[Byte] => f2 match {
-          case s2: String => println("cannot combine String and Array[Byte] fragment"); f1  // this looses f2, but will likely fail anyways more toplevel
-          case b2: Array[Byte] => b ++ b2
-        }
+            case s2: String =>
+              println("cannot combine String and Array[Byte] fragment");
+              f1 // this looses f2, but will likely fail anyways more toplevel
+            case b2: Array[Byte] => b ++ b2
+          }
       }
     }
 
     ws.receive().flatMap {
       case Binary(payload: Array[Byte], finalFragment: Boolean, rsv: Option[Int]) => {
-        if (finalFragment) {
+        if finalFragment then {
           Future(payload)
         } else {
           receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
         }
       }
       case Text(payload: String, finalFragment: Boolean, rsv: Option[Int]) => {
-        if (finalFragment) {
+        if finalFragment then {
           Future(payload)
         } else {
           receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
@@ -80,7 +80,6 @@ object WSConnection {
   }
 }
 
-
 class WSEndpointClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   protected var registeredServices: List[String] = List()
 
@@ -91,7 +90,7 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
     But, because of the Futures, if we wait on command() and receiveBundle(), we could wait concurrently, possibly returning the wrong result to the wrong function.
     SOLUTION: we only receive in this function, throwing an error if the command response indicates "non-successful".
     Not ideal, but should be sufficient for now.
-    */
+     */
 
     connection.receiveWholeMessage().flatMap {
       case s: String => {
@@ -99,7 +98,10 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
-        if (!s.startsWith("200")) println(s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s")
+        if !s.startsWith("200") then
+          println(
+            s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s"
+          )
         receiveBundle()
       }
       case b: Array[Byte] => {
@@ -138,7 +140,10 @@ object WSEndpointClient {
       .flatMap(nId => {
         println(s"connected to DTN node: $nId");
         nodeId = Option(nId)
-        if (nId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
+        if nId.startsWith("ipn") then {
+          println("DTN mode IPN is unsupported by this client. throwing");
+          throw Exception("DTN mode IPN is unsupported by this client")
+        }
         WSConnection(uri"ws://${host}:${port}/ws")
       })
       .map(connection => {
@@ -147,7 +152,6 @@ object WSEndpointClient {
       })
   }
 }
-
 
 class WSEroutingClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   def receivePacket(): Future[Packet] = {
@@ -174,7 +178,10 @@ object WSEroutingClient {
       .flatMap(nId => {
         println(s"connected to DTN node: $nId");
         nodeId = Option(nId)
-        if (nId.startsWith("ipn")) {println("DTN mode IPN is unsupported by this client. throwing"); throw Exception("DTN mode IPN is unsupported by this client")}
+        if nId.startsWith("ipn") then {
+          println("DTN mode IPN is unsupported by this client. throwing");
+          throw Exception("DTN mode IPN is unsupported by this client")
+        }
         WSConnection(uri"ws://${host}:${port}/ws/erouting")
       })
       .map(connection => new WSEroutingClient(host, port, connection, nodeId.get))

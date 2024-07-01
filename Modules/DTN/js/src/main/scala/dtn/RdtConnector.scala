@@ -1,15 +1,11 @@
 package dtn
 
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import rdts.base.Lattice
 import reactives.core.InitialChange
 import reactives.default.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-
-import scala.util.{Failure, Success}
-
 
 object RdtConnector {
   private val cRDTGroupEndpoint: String = "dtn://global/~rdt/app1"
@@ -21,10 +17,11 @@ object RdtConnector {
   def connectToWS(host: String, port: Int): Unit = {
     def receiveBundle(): Unit = {
       ws.get.receiveBundle().onComplete(bundle => {
-        for (block <- bundle.get.other_blocks) {
+        for block <- bundle.get.other_blocks do {
           block match
-            case PayloadBlock(block_type_code, block_number, block_processing_control_flags, crc_type, data) => onChangedUpdateFunc(block.data)
-            case _ => {}
+            case PayloadBlock(block_type_code, block_number, block_processing_control_flags, crc_type, data) =>
+              onChangedUpdateFunc(block.data)
+            case _ =>
         }
         receiveBundle()
       })
@@ -47,7 +44,7 @@ object RdtConnector {
       )
       ws match
         case Some(value) =>
-          value.sendBundle(bundle).printError
+          value.sendBundle(bundle).printError()
         case None => println("cannot send update. not connected. throwing away.")
     })
 
@@ -56,17 +53,18 @@ object RdtConnector {
       val newValue: A = readFromArray[A](v)
 
       reactives.SelectedScheduler.candidate.scheduler.forceNewTransaction(signal) {
-        admissionTicket => admissionTicket.recordChange(new InitialChange {
-          override val source: signal.type = signal
+        admissionTicket =>
+          admissionTicket.recordChange(new InitialChange {
+            override val source: signal.type = signal
 
-          override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
-            val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
-            if (merged != b) {
-              v(merged)
-              true
-            } else false
-          }
-        })
+            override def writeValue(b: source.Value, v: source.Value => Unit): Boolean = {
+              val merged = b.map(Lattice[A].merge(_, newValue)).asInstanceOf[source.Value]
+              if merged != b then {
+                v(merged)
+                true
+              } else false
+            }
+          })
       }
     }
   }

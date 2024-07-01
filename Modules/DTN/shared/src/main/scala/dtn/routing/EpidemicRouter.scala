@@ -1,23 +1,22 @@
 package dtn.routing
 
 import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import java.util.concurrent.ConcurrentHashMap
-import scala.jdk.CollectionConverters._
 
+import java.util.concurrent.ConcurrentHashMap
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.jdk.CollectionConverters.*
 
 /*
   Includes the standalone EpidemicRouter and the extracted EpidemicStrategy for use in other routers.
-*/
-
+ */
 
 class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
   val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
-  override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
+  override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle)
+      : Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
     epidemicStrategy.onRequestSenderForBundle(peers, services, packet)
@@ -37,7 +36,9 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
     epidemicStrategy.onSendingSucceeded(packet)
-    println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle.")
+    println(
+      s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. added node-name ${packet.cla_sender} to delivered list of bundle."
+    )
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
@@ -49,20 +50,26 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
   }
 }
 object EpidemicRouter {
-  def apply(host: String, port: Int): Future[EpidemicRouter] = WSEroutingClient(host, port).map(ws => new EpidemicRouter(ws))
+  def apply(host: String, port: Int): Future[EpidemicRouter] =
+    WSEroutingClient(host, port).map(ws => new EpidemicRouter(ws))
 }
 
-
 class EpidemicStrategy {
-  val delivered = ConcurrentHashMap[String, Set[String]]()  // will grow indefinitely as we do not garbage collect here
+  val delivered = ConcurrentHashMap[String, Set[String]]() // will grow indefinitely as we do not garbage collect here
 
-  def onRequestSenderForBundle(peers: ConcurrentHashMap[String, DtnPeer], services: ConcurrentHashMap[Int, String], packet: Packet.RequestSenderForBundle): Option[Packet.ResponseSenderForBundle] = {
+  def onRequestSenderForBundle(
+      peers: ConcurrentHashMap[String, DtnPeer],
+      services: ConcurrentHashMap[Int, String],
+      packet: Packet.RequestSenderForBundle
+  ): Option[Packet.ResponseSenderForBundle] = {
     val selected_clas = peers.asScala
       .filter((peer_name, peer) => !delivered.getOrDefault(packet.bp.id, Set()).contains(peer_name))
       .map((peer_name, peer) => {
         peer.cla_list
           .filter((agent, port_option) => packet.clas.contains(agent))
-          .map((agent, port_option) => Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid))
+          .map((agent, port_option) =>
+            Sender(remote = peer.addr, port = port_option, agent = agent, next_hop = peer.eid)
+          )
       })
       .flatten
       .toList

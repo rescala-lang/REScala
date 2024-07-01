@@ -97,9 +97,8 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     println(s"destination nodes: $destination_nodes")
 
     // for these destination nodes select the ideal neighbours to forward this bundle to
-    var ideal_neighbours = destination_nodes
-      .map(destination_node => deliveryLikelyhoodState.get_best_neighbours_for(destination_node))
-      .flatten
+    var ideal_neighbours =
+      destination_nodes.flatMap(destination_node => deliveryLikelyhoodState.get_best_neighbours_for(destination_node))
     println(s"ideal neighbours: $ideal_neighbours")
 
     // remove previous node and source node from ideal neighbours if available
@@ -121,23 +120,21 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     println(s"targets: $targets")
 
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
-    val selected_clas: List[Sender] = targets
-      .map(target => {
-        target.cla_list
-          .filter((agent, port_option) => packet.clas.contains(agent))
-          .map((agent, port_option) =>
-            Sender(remote = target.addr, port = port_option, agent = agent, next_hop = target.eid)
-          )
-      })
-      .flatten
+    val selected_clas: List[Sender] = targets.flatMap(target => {
+      target.cla_list
+        .filter((agent, port_option) => packet.clas.contains(agent))
+        .map((agent, port_option) =>
+          Sender(remote = target.addr, port = port_option, agent = agent, next_hop = target.eid)
+        )
+    })
     println(s"selected clas: $selected_clas")
 
     // if we found at least one cla to forward to then return our forwarding response
-    if !selected_clas.isEmpty then {
+    if selected_clas.nonEmpty then {
       println("clas selected via multicast strategy")
       return Option(Packet.ResponseSenderForBundle(
         bp = packet.bp,
-        clas = selected_clas.toList,
+        clas = selected_clas,
         delete_afterwards = false
       ))
     }
@@ -161,7 +158,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     println(s"peers without neighbours that already know the state: ${List.from(filtered_peers).map(peer => peer.eid)}")
 
     // choose one peer at random
-    return Random
+    Random
       .shuffle(filtered_peers)
       .map(peer => {
         peer.cla_list
@@ -173,14 +170,12 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
       .collectFirst({
         case head :: next => head :: next
       }) match
-      case None => {
+      case None =>
         println("could not find any cla to forward to via fallback strategy")
         Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
-      }
-      case Some(selected_clas) => {
-        println(s"clas selected via fallback strategy: ${selected_clas}")
+      case Some(selected_clas) =>
+        println(s"clas selected via fallback strategy: $selected_clas")
         Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
-      }
   }
 
   override def onError(packet: Packet.Error): Unit = {
@@ -223,24 +218,23 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
       case x: PreviousNodeBlock => x
     } match
       case None => println("received incoming bundle without previous node block. ignoring")
-      case Some(previous_node_block) => {
+      case Some(previous_node_block) =>
         val source_node   = packet.bndl.primary_block.source.extract_node_endpoint()
         val previous_node = previous_node_block.previous_node_id
 
         println(
-          s"received incoming bundle with previous node block. source node ${source_node}. previous node ${previous_node}. increasing score."
+          s"received incoming bundle with previous node block. source node $source_node. previous node $previous_node. increasing score."
         )
 
         deliveryLikelyhoodState.update_score(neighbour_node = previous_node, destination_node = source_node)
 
         tempPreviousNodeStore.put(packet.bndl.id, previous_node)
-      }
 
     packet.bndl.other_blocks.collectFirst {
       case x: RdtMetaBlock => x
     } match
       case None => println("received incoming bundle without rdt-meta block. ignoring")
-      case Some(rdt_meta_block) => {
+      case Some(rdt_meta_block) =>
         val source_node_endpoint = packet.bndl.primary_block.source.extract_node_endpoint()
         val rdt_id               = packet.bndl.primary_block.destination.extract_endpoint_id()
 
@@ -256,7 +250,6 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
           rdt_id
         ) // only needed in combination with the dots on successful forward, so add it here
         ()
-      }
   }
 
   override def onIncomingBundleWithoutPreviousNode(packet: Packet.IncomingBundleWithoutPreviousNode): Unit = {
@@ -326,12 +319,11 @@ class DestinationDotsState {
   def getNodeEndpointsToForwardBundleTo(node_endpoint: Endpoint, rdt_id: String, dots: Dots): Set[Endpoint] = {
     map.get(rdt_id) match
       case null => Set()
-      case rdt_map: ConcurrentHashMap[Endpoint, Dots] => {
+      case rdt_map: ConcurrentHashMap[Endpoint, Dots] =>
         rdt_map.asScala
           .filter((n: Endpoint, d: Dots) => !n.equals(node_endpoint) && !(dots <= d))
           .collect[Endpoint]((n: Endpoint, d: Dots) => n)
           .toSet
-      }
   }
 }
 

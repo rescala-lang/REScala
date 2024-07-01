@@ -1,9 +1,9 @@
 package dtn
 
-import rdts.time.{Dots, Time}
 import rdts.base.Uid
-import scala.util.Random
+import rdts.time.Dots
 
+import scala.util.Random
 
 object DotsCreation {
   val uid_pool: List[Uid] = List("A1", "B2", "C3", "D4", "E5", "F6", "G7", "H8", "I9", "J10").map(Uid.predefined)
@@ -13,13 +13,13 @@ object DotsCreation {
 
     var dots = Dots.empty
 
-    for (_ <- 0 to 7) {
+    for _ <- 0 to 7 do {
       val uid: Uid = uid_pool(rand.nextInt(uid_pool.size))
 
-      val current_time: Long = System.currentTimeMillis()
+      val current_time: Long  = System.currentTimeMillis()
       val earliest_time: Long = current_time - (1000 * 60 * 60 * 24 * 365 * 4)
 
-      for (_ <- 0 to 20) {
+      for _ <- 0 to 20 do {
         dots = dots.add(uid, rand.between(earliest_time, current_time))
       }
     }
@@ -27,5 +27,3 @@ object DotsCreation {
     dots
   }
 }
-
-

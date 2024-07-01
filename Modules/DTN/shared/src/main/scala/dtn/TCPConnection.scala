@@ -1,25 +1,22 @@
 package dtn
 
-
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException, EOFException}
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, EOFException, IOException}
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.LinkedBlockingQueue
-
+import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 
 class TCPConnection(socket: Socket) {
   val inputStream  = new DataInputStream(new BufferedInputStream(socket.getInputStream))
   val outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream))
 
-  val remoteHostName: String = socket.getInetAddress().getHostName()
+  val remoteHostName: String = socket.getInetAddress.getHostName
 
   def send(data: Array[Byte]): Unit = {
     try {
-      outputStream.writeInt(data.size)
+      outputStream.writeInt(data.length)
       outputStream.write(data)
       outputStream.flush()
     } catch {
-      case e: IOException => {println(s"could not send data: $e"); throw e}
+      case e: IOException => println(s"could not send data: $e"); throw e
     }
   }
 
@@ -35,8 +32,8 @@ class TCPConnection(socket: Socket) {
 
       bytes
     } catch {
-      case e: IOException => {println(s"read attempted on closed socket: $e"); throw e}
-      case e: EOFException => {println(s"socket closed down while reading: $e"); throw e}
+      case e: IOException  => println(s"read attempted on closed socket: $e"); throw e
+      case e: EOFException => println(s"socket closed down while reading: $e"); throw e
     }
   }
 }
@@ -46,17 +43,15 @@ object TCPConnection {
   }
 }
 
-
 class TCPReadonlyServer(socket: ServerSocket) {
   // this queue must be read externally in regular intervals to not block the senders
   val queue: LinkedBlockingQueue[Tuple2[TCPConnection, Array[Byte]]] = new LinkedBlockingQueue(2000)
 
   val runnables: ConcurrentHashMap[TCPConnection, ReceiverRunnable] = ConcurrentHashMap()
-  var listenerRunnable: Option[ListenerRunnable] = None
-
+  var listenerRunnable: Option[ListenerRunnable]                    = None
 
   def start(): Unit = {
-    if (listenerRunnable.nonEmpty) throw Exception("cannot start server twice")
+    if listenerRunnable.nonEmpty then throw Exception("cannot start server twice")
 
     listenerRunnable = Option(ListenerRunnable())
 
@@ -67,7 +62,7 @@ class TCPReadonlyServer(socket: ServerSocket) {
     println("initiated tcp server stop")
 
     listenerRunnable match
-      case None => println("server was never started")
+      case None        => println("server was never started")
       case Some(value) => value.keepRunning = false
 
     runnables.values().forEach((receiverRunnable: ReceiverRunnable) => receiverRunnable.keepRunning = false)
@@ -82,7 +77,7 @@ class TCPReadonlyServer(socket: ServerSocket) {
 
     override def run(): Unit = {
       try {
-        while(keepRunning) {
+        while keepRunning do {
           val connection = new TCPConnection(socket.accept())
 
           val receiverRunnable = ReceiverRunnable(connection)
@@ -103,7 +98,7 @@ class TCPReadonlyServer(socket: ServerSocket) {
     var keepRunning: Boolean = true
 
     override def run(): Unit = {
-      while(keepRunning) {
+      while keepRunning do {
         queue.put((connection, connection.receive))
       }
     }
@@ -124,6 +119,3 @@ object TCPReadonlyServer {
     new TCPReadonlyServer(socket)
   }
 }
-
-
-

@@ -1,20 +1,17 @@
 package dtn
 
 import dtn.routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
-import rdts.time.{Dots, Dot, Time}
-import rdts.base.Uid
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+import rdts.time.Dots
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /*
   this file contains all jvm main methods
-*/
+ */
 
-
-
-@main def rdt_tool(args: String*) = {
-  if (args.size == 0 || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0) {
+@main def rdt_tool(args: String*): Unit = {
+  if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
   -m => method (mandatory) | available options: checker, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous
@@ -26,36 +23,35 @@ commandline options:
   } else {
     var keyword_args: Map[String, String] = Map()
     args.sliding(2, 2).foreach(pair => {
-      if (!pair(0).startsWith("-")) throw Exception(s"could not parse commandline. ${pair(0)} is not a key. (corresponding value: ${pair(1)}")
-      keyword_args += (pair(0) -> pair(1))
+      if !pair.head.startsWith("-") then
+        throw Exception(s"could not parse commandline. ${pair.head} is not a key. (corresponding value: ${pair(1)}")
+      keyword_args += (pair.head -> pair(1))
     })
 
-    val method: String = keyword_args("-m")
-    val host_address: String = keyword_args.getOrElse("-a", if(method.equals("checker")) "0.0.0.0" else "127.0.0.1")
-    val host_port: Int = keyword_args.getOrElse("-p", if(method.equals("checker")) "5000" else "3000").toInt
+    val method: String       = keyword_args("-m")
+    val host_address: String = keyword_args.getOrElse("-a", if method.equals("checker") then "0.0.0.0" else "127.0.0.1")
+    val host_port: Int       = keyword_args.getOrElse("-p", if method.equals("checker") then "5000" else "3000").toInt
     val convergence_checker_address: String = keyword_args.getOrElse("-coa", "127.0.0.1")
-    val convergence_checker_port: Int = keyword_args.getOrElse("-cop", "5000").toInt
+    val convergence_checker_port: Int       = keyword_args.getOrElse("-cop", "5000").toInt
 
     method match
-      case "checker" => start_checker_server(host_address, host_port)
-      case "routing.direct" => _route_forever(DirectRouter(host_address, host_port))
+      case "checker"          => start_checker_server(host_address, host_port)
+      case "routing.direct"   => _route_forever(DirectRouter(host_address, host_port))
       case "routing.epidemic" => _route_forever(EpidemicRouter(host_address, host_port))
-      case "routing.rdt" => _route_forever(RdtRouter(host_address, host_port))
-      case "client.once" => send_one_rdt_package(host_address, host_port, convergence_checker_address, convergence_checker_port)
-      case "client.continuous" => send_continuous_rdt_packages(host_address, host_port, convergence_checker_address, convergence_checker_port)
+      case "routing.rdt"      => _route_forever(RdtRouter(host_address, host_port))
+      case "client.once" =>
+        send_one_rdt_package(host_address, host_port, convergence_checker_address, convergence_checker_port)
+      case "client.continuous" =>
+        send_continuous_rdt_packages(host_address, host_port, convergence_checker_address, convergence_checker_port)
       case s => throw Exception(s"could not partse commandline. unknown method: $s")
   }
 }
 
-
-
 // a bunch of main methods for testing
 
-@main def start_checker_server_default() = start_checker_server("0.0.0.0", 5000)
+@main def start_checker_server_default(): Unit = start_checker_server("0.0.0.0", 5000)
 
-
-
-@main def start_rdtdots_routing(): Unit = _route_forever(RdtRouter("127.0.0.1", 3000))
+@main def start_rdtdots_routing(): Unit      = _route_forever(RdtRouter("127.0.0.1", 3000))
 @main def start_rdtdots_routing_3000(): Unit = _route_forever(RdtRouter("127.0.0.1", 3000))
 @main def start_rdtdots_routing_4000(): Unit = _route_forever(RdtRouter("127.0.0.1", 4000))
 
@@ -63,20 +59,17 @@ commandline options:
 
 @main def start_direct_routing(): Unit = _route_forever(DirectRouter("127.0.0.1", 3000))
 
-
-
 @main def send_ping_to_node4000_from_3000(): Unit = send_ping_to_node4000("127.0.0.1", 3000)
 
 @main def send_one_rdt_package_from_3000(): Unit = send_one_rdt_package("127.0.0.1", 3000, "127.0.0.1", 5000)
 @main def send_one_rdt_package_from_4000(): Unit = send_one_rdt_package("127.0.0.1", 4000, "127.0.0.1", 5000)
 
-@main def send_continuous_rdt_packages_from_3000(): Unit = send_continuous_rdt_packages("127.0.0.1", 3000, "127.0.0.1", 5000)
-
-
+@main def send_continuous_rdt_packages_from_3000(): Unit =
+  send_continuous_rdt_packages("127.0.0.1", 3000, "127.0.0.1", 5000)
 
 // all helper methods
 
-def start_checker_server(interface_address: String, port: Int) = {
+def start_checker_server(interface_address: String, port: Int): Unit = {
   val checker = DotsConvergenceChecker(interface_address, port)
   checker.run()
 }
@@ -86,7 +79,7 @@ def _route_forever(router: Future[BaseRouter]): Unit = {
     router.start_receiving()
   }).recover(throwable => println(throwable))
 
-  while(true) {
+  while true do {
     Thread.sleep(200)
   }
 }
@@ -111,7 +104,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
     client.sendBundle(bundle)
   }).recover(throwable => println(throwable))
 
-  while(true) {
+  while true do {
     Thread.sleep(200)
   }
 }
@@ -128,7 +121,7 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
     client.send(payload = Array(), dots = dots)
   }).recover(throwable => println(throwable))
 
-  while(true) {
+  while true do {
     Thread.sleep(200)
   }
 }
@@ -142,17 +135,17 @@ def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, c
       println(s"merged rdt-meta data, new dots: $dots")
     })
 
-    while(true) {
+    while true do {
       Thread.sleep(5000)
 
       // add dots here
 
       println(s"sending new dots: $dots")
-      client.send(Array(), dots).printError
+      client.send(Array(), dots).printError()
     }
   }).recover(throwable => println(throwable))
 
-  while(true) {
+  while true do {
     Thread.sleep(200)
   }
 }
