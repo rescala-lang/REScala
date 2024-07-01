@@ -12,6 +12,7 @@ class ArrayRanges(
     val inner: Array[Time],
     /** Operations that combine array ranges often only know an upper bound of how many result ranges there will be.
       * To minimize copying, the inner array is created with the upper bound and stored as is.
+      * This is the number of used entries in the array.
       */
     val used: Int
 ) {
