@@ -95,9 +95,9 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
     scala3defaults,
     Dependencies.jsoniterScala,
     libraryDependencies ++= List(
-      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M11",
-      "io.bullet"                     %%% "borer-core"       % "1.14.0",
-      "io.bullet"                     %%% "borer-derivation" % "1.14.0"
+      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M16",
+      "io.bullet"                     %%% "borer-core"       % "1.14.1",
+      "io.bullet"                     %%% "borer-derivation" % "1.14.1"
     )
   )
   .jsSettings(
