@@ -5,6 +5,8 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   aead.jvm,
   channels.js,
   channels.jvm,
+  dtn.js,
+  dtn.jvm,
   deltalens,
   exampleLenses,
   examplesMiscJVM,
@@ -84,6 +86,23 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
       "org.scalatest" %%% s"scalatest-$m" % "3.2.18" % Test
     ),
+  )
+
+lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
+  .in(file("Modules/DTN"))
+  .dependsOn(reactives, rdts)
+  .settings(
+    scala3defaults,
+    Dependencies.jsoniterScala,
+    libraryDependencies ++= List(
+      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M11",
+      "io.bullet"                     %%% "borer-core"       % "1.14.0",
+      "io.bullet"                     %%% "borer-derivation" % "1.14.0"
+    )
+  )
+  .jsSettings(
+    Dependencies.scalajsDom,
+    Dependencies.scalatags,
   )
 
 lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
