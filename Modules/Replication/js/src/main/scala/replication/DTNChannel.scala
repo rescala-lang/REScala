@@ -8,6 +8,7 @@ import dtn.{Bundle, BundleCreation, PayloadBlock, WSEndpointClient}
 import replication.DTNChannel.cRDTGroupEndpoint
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 object DTNChannel {
   val cRDTGroupEndpoint: String = "dtn://global/~rdt/app1"
@@ -24,7 +25,11 @@ class DTNwsEndpointContext(connection: WSEndpointClient, executionContext: Execu
 
   override def send(message: MessageBuffer): Async[Any, Unit] =
     connection.sendBundle(makeBundle(message)).toAsync(using executionContext)
-  override def close(): Unit = ???
+
+  override def close(): Unit = connection.disconnect().onComplete {
+    case Failure(f)     => f.printStackTrace()
+    case Success(value) => ()
+  }(using executionContext)
 }
 
 class DTNChannel(host: String, port: Int, ec: ExecutionContext) extends LatentConnection {
