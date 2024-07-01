@@ -19,3 +19,5 @@ buildReplication:
 runReplication: buildReplication
 	java -cp "Modules/Example Replication/jvm/target/jars/*" replication.cli --help
 
+buildTodoMVC:
+	sbt --client --no-color 'print todolist/deploy'
