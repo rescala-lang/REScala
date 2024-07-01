@@ -10,17 +10,16 @@ class DotsConvergenceChecker(server: TCPReadonlyServer) {
     try {
       while true do {
         val (connection, data) = server.queue.take()
-
-        val old_dots = state.getOrElse(connection, Dots.empty)
-
-        state += (connection -> old_dots.merge(Cbor.decode(data).to[Dots].value))
+        val old_dots           = state.getOrElse(connection, Dots.empty)
+        val received           = Cbor.decode(data).to[Dots].value
+        state = state.updated(connection, old_dots merge received)
 
         println(
           s"states are equal? ${Set.from(state.values).size == 1} ${state.values.drop(1).forall(d => d == state.values.head)}"
         )
       }
     } catch {
-      case e: java.lang.Exception =>
+      case e: Exception =>
         println(s"checker ran into exception: $e")
         server.stop()
     }
