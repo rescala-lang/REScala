@@ -7,7 +7,7 @@ import rdts.time.{Dot, Dots}
 enum MonotonicAclSyncMessage[RDT]:
   case PermissionsInUse(minimumAclVersion: Dots, writePermission: PermissionTree)
   case AnnouncePeers(peers: Map[PublicIdentity, (String, Int)])
-  case AddAclEntry(
+  case AclDelta(
       subject: PublicIdentity,
       realm: PermissionTree,
       operation: Operation,

@@ -26,7 +26,7 @@ trait Sync[RDT] {
 // Responsible for enforcing ACL
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
-    initialAclMessages: List[AddAclEntry[RDT]], // Signatures are assumed to have been validated already
+    initialAclMessages: List[AclDelta[RDT]], // Signatures are assumed to have been validated already
     initialRdtDeltas: DeltaMapWithPrefix[RDT],
     syncInstance: Sync[RDT]
 )(using rdtCodec: JsonValueCodec[RDT], filter: Filter[RDT], rdtLattice: Lattice[RDT])
@@ -43,7 +43,7 @@ class FilteringAntiEntropy[RDT](
     AtomicReference((Dots.empty, MonotonicAcl.empty[RDT])) // TODO: Initialize with root of trust
   @volatile private var receivedAclDots: Dots = // received != applied
     initialAclMessages.foldLeft(Dots.empty)((dots, msg) => dots.add(msg.dot))
-  @volatile private var aclDeltas: Map[Dot, AddAclEntry[RDT]] = initialAclMessages.map(msg => msg.dot -> msg).toMap
+  @volatile private var aclDeltas: Map[Dot, AclDelta[RDT]] = initialAclMessages.map(msg => msg.dot -> msg).toMap
   @volatile private var sendersIntendedWritePermissions: Map[PublicIdentity, PermissionTree]  = Map.empty
   @volatile private var sendersEffectiveWritePermissions: Map[PublicIdentity, PermissionTree] = Map.empty
   // Lock for sendersIntendedWritePermissions and sendersEffectiveWritePermissions
@@ -60,7 +60,7 @@ class FilteringAntiEntropy[RDT](
   // Stores inbound messages
   val msgQueue: LinkedBlockingQueue[(MonotonicAclSyncMessage[RDT], PublicIdentity)] = LinkedBlockingQueue()
   // Stores deltas that couldn't be processed because of missing causal dependencies
-  private var aclMessageBacklog: Queue[(AddAclEntry[RDT], PublicIdentity)] =
+  private var aclMessageBacklog: Queue[(AclDelta[RDT], PublicIdentity)] =
     Queue.from(initialAclMessages.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
   receivedMessage(initialAclMessages.head, localPublicId) // Also causes processing of aclMessageBacklog
   // Note that this stores the *intended*, not the effective permissions of the user at the time of sending!
@@ -110,7 +110,7 @@ class FilteringAntiEntropy[RDT](
           handleMessage(msg, sender)
 
           // If we processed an ACLEntry, maybe we need now can process backlogged messages
-          if msg.isInstanceOf[AddAclEntry[RDT]] // We don't consider causal dependencies between deltas
+          if msg.isInstanceOf[AclDelta[RDT]] // We don't consider causal dependencies between deltas
           then processBacklog()
         } catch
           case e: InterruptedException =>
@@ -145,7 +145,7 @@ class FilteringAntiEntropy[RDT](
           connectionManager.connectToExpectingUserIfNoConnectionExists(host, port, user)
         }
 
-      case aclMsg @ AddAclEntry(_, _, _, _, cc, _) =>
+      case aclMsg @ AclDelta(_, _, _, _, cc, _) =>
         if aclReference.get()._1.contains(cc)
         then updateAcl(aclMsg)
         else aclMessageBacklog = aclMessageBacklog.appended(aclMsg -> sender)
@@ -237,9 +237,9 @@ class FilteringAntiEntropy[RDT](
               ))
       }
 
-  private def updateAcl(aclDelta: AddAclEntry[RDT]): Unit = aclDelta match
+  private def updateAcl(aclDelta: AclDelta[RDT]): Unit = aclDelta match
     // TODO: Root of trust
-    case AddAclEntry(principal, realm, operation, dot, _, _) => {
+    case AclDelta(principal, realm, operation, dot, _, _) => {
       var updateValidAndNew = false
       // Update ACL
       val (_, acl) = aclReference.updateAndGet {
@@ -383,9 +383,9 @@ class FilteringAntiEntropy[RDT](
       case Operation.READ  => require(realm <= acl.read(localPublicId))
       case Operation.WRITE => require(realm <= acl.write(localPublicId))
 
-    val addAclMsg: AddAclEntry[RDT] = {
-      val unsignedMsg: AddAclEntry[RDT] =
-        AddAclEntry(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
+    val addAclMsg: AclDelta[RDT] = {
+      val unsignedMsg: AclDelta[RDT] =
+        AclDelta(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
       val encodedMsg = writeToArray(unsignedMsg)(using messageJsonCodec)
       val signature  = Ed25519Util.sign(encodedMsg, localIdentity.identityKey.getPrivate)
       unsignedMsg.copy(signature = signature)

@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class SyncWithMonotonicAcl[RDT](
     private val localIdentity: PrivateIdentity,
-    initialAclMessages: List[AddAclEntry[RDT]],
+    initialAclMessages: List[AclDelta[RDT]],
     initialRdt: DeltaMapWithPrefix[RDT], // Assumed to correspond with ACL!
 )(using
     lattice: Lattice[RDT],

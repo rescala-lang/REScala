@@ -2,7 +2,7 @@ package lofi_acl.sync.acl.monotonic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import lofi_acl.crypto.{Ed25519Util, PublicIdentity}
-import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AddAclEntry
+import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.{InvalidMessageException, MessageSerialization}
 import rdts.time.Dot
 
@@ -20,7 +20,7 @@ class SignatureVerifyingMessageSerialization[RDT](
 
   override def writeToStream(msg: MonotonicAclSyncMessage[RDT], outputStream: DataOutputStream): Unit =
     msg match
-      case aclMsg: AddAclEntry[RDT] => writeSigned(aclMsg, outputStream)
+      case aclMsg: AclDelta[RDT] => writeSigned(aclMsg, outputStream)
       case _                        => writeUnsigned(msg, outputStream)
 
   override def readFromStream(inputStream: DataInputStream): MonotonicAclSyncMessage[RDT] =
@@ -28,7 +28,7 @@ class SignatureVerifyingMessageSerialization[RDT](
     then readSigned(inputStream)   /* Signed message */
     else readUnsigned(inputStream) /* Unsigned message */
 
-  private def readSigned(inputStream: DataInputStream): AddAclEntry[RDT] = {
+  private def readSigned(inputStream: DataInputStream): AclDelta[RDT] = {
     val signature = Array.ofDim[Byte](64)
     require(inputStream.read(signature, 0, 64) == 64) // 64 bytes
     val msgLength = inputStream.readInt() // 4 bytes
@@ -38,7 +38,7 @@ class SignatureVerifyingMessageSerialization[RDT](
     val deserializedMsg = readFromArray[MonotonicAclSyncMessage[RDT]](msgBytes)
 
     deserializedMsg match
-      case aclEntry @ AddAclEntry(_, _, _, Dot(author, _), _, _) => // Authorship is derived from dot
+      case aclEntry @ AclDelta(_, _, _, Dot(author, _), _, _) => // Authorship is derived from dot
         if !Ed25519Util.checkEd25519Signature(msgBytes, signature, PublicIdentity.fromUid(author))
         then throw SignatureException("Failed to verify signature of received message")
         // Splice (verified) signature into object (null in serialized version so signature doesn't depend on itself)
@@ -51,12 +51,12 @@ class SignatureVerifyingMessageSerialization[RDT](
     val msgBytes  = Array.ofDim[Byte](msgLength)
     require(inputStream.read(msgBytes, 0, msgLength) == msgLength)
     val deserializedMessage = readFromArray(msgBytes)
-    if deserializedMessage.isInstanceOf[AddAclEntry[RDT]] // Should be signed
+    if deserializedMessage.isInstanceOf[AclDelta[RDT]] // Should be signed
     then throw InvalidMessageException("Expected AddAclEntry message to be signed")
     deserializedMessage
   }
 
-  private def writeSigned(msg: AddAclEntry[RDT], outputStream: DataOutputStream): Unit =
+  private def writeSigned(msg: AclDelta[RDT], outputStream: DataOutputStream): Unit =
     require(msg.signature != null && msg.signature.length == 64)
     val msgBytes = writeToArray(msg.copy(signature = null))
     outputStream.writeBoolean(true /* signature following */ ) // 1 byte
