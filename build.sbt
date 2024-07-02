@@ -88,7 +88,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     ),
   )
 
-lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
+lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Full)
   .in(file("Modules/DTN"))
   .dependsOn(reactives, rdts)
   .settings(
@@ -245,7 +245,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Settings.sourcemapFromEnv(),
   )
 
-lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Replication"))
+lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Replication"))
   .dependsOn(reactives, rdts, channels, dtn, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
