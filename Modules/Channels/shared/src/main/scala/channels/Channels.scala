@@ -39,5 +39,10 @@ type Incoming = ConnectionContext => Callback[MessageBuffer]
   * Implementations should make it safe to establish multiple times, though the semantics of that is unclear.
   */
 trait LatentConnection {
+
+  /** The returned async, when run, should establish connections with the given callback atomically.
+    * That is, no messages should be lost.
+    * Similarly, the provider of the callback (the result of `incoming`) of this method should make sure that the other end of the callback is ready to receive callbacks before running the async.
+    */
   def prepare(incoming: Incoming): Async[Abort, ConnectionContext]
 }
