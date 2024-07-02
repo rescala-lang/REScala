@@ -11,7 +11,7 @@ import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}
 
 import java.util.Timer
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class Binding[T](key: String)(using lat: Lattice[T], codec: JsonValueCodec[T])
 
@@ -27,7 +27,7 @@ case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bott
 
 trait Aead {
   def encrypt(plain: Array[Byte], associated: Array[Byte]): Array[Byte]
-  def decrypt(cypher: Array[Byte], associated: Array[Byte]): Array[Byte]
+  def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
 }
 
 class DataManager[State](
@@ -65,7 +65,7 @@ class DataManager[State](
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
     case Success(msg) =>
-      val bytes = crypto.map(c => c.decrypt(msg.asArray, Array.empty)).getOrElse(msg.asArray)
+      val bytes = crypto.flatMap(c => c.decrypt(msg.asArray, Array.empty).toOption).getOrElse(msg.asArray)
       val res   = readFromArray[ProtocolMessage[TransferState]](bytes)
       println(s"$res")
       handleMessage(res, outChan)

@@ -1,9 +1,10 @@
 package replication
 
-import com.github.ckuessner.aead.{Aead, AeadHelper, ByteArray}
 import rdts.base.{Lattice, LocalUid}
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.time.Dots
+
+type ByteArray = Array[Byte]
 
 type Secret = String
 
@@ -19,7 +20,7 @@ extension [S](c: EncRDT[S])
   def send(data: Dotted[S], aead: Aead)(using
       rid: LocalUid
   )(using Conversion[S, ByteArray], Conversion[Dots, ByteArray]): EncRDT[S] =
-    EncRDT(Set(Dotted(AeadHelper.toBase64(aead.encrypt(data.data.convert, data.context.convert).get), data.context)))
+    EncRDT(Set(Dotted(new String(java.util.Base64.getEncoder.encode(aead.encrypt(data.data.convert, data.context.convert))), data.context)))
 
   def recombine(aead: Aead)(using
       DottedLattice[S],
@@ -28,7 +29,7 @@ extension [S](c: EncRDT[S])
   ): Option[Dotted[S]] =
     c.deltas.flatMap { ds =>
       aead
-        .decrypt(AeadHelper.fromBase64(ds.data), ds.context.convert)
+        .decrypt(java.util.Base64.getDecoder.decode(ds.data), ds.context.convert)
         .map(bytes => Dotted(bytes.convert: S, ds.context))
         .toOption
     }.reduceOption(Lattice.merge)

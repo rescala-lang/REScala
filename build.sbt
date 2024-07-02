@@ -246,7 +246,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val replication = crossProject(JVMPlatform, JSPlatform).in(file("Modules/Replication"))
-  .dependsOn(reactives, rdts, channels, aead, dtn, rdts % "compile->compile;test->test")
+  .dependsOn(reactives, rdts, channels, dtn, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(11), // java webserver

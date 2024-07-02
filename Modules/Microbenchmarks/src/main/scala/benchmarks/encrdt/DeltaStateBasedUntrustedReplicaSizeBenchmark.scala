@@ -10,10 +10,9 @@ import rdts.syntax.DeltaAWLWWMContainer
 import rdts.time.{Dot, Dots}
 
 import scala.language.implicitConversions
-
-
 import java.io.PrintWriter
 import java.nio.file.{Files, Path, Paths}
+import scala.util.Try
 
 object DeltaStateBasedUntrustedReplicaSizeBenchmark extends App with DeltaStateUntrustedReplicaSizeBenchEnvironment {
   val csvFile = new PrintWriter(Files.newOutputStream(Paths.get("./benchmarks/results/delta_state_size_benchmark.csv")))
@@ -136,5 +135,5 @@ trait DeltaStateUntrustedReplicaSizeBenchEnvironment {
 class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
   override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
 
-  override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
+  override def decrypt(data: Array[Byte], associated: Array[Byte]): Try[Array[Byte]] = Try(aead.decrypt(data, associated))
 }

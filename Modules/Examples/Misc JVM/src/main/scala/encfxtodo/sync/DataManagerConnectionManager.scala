@@ -12,13 +12,14 @@ import java.net.URI
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
-import scala.util.Random
 import scala.util.chaining.scalaUtilChainingOps
+import scala.util.{Random, Try}
 
 class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
   override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
 
-  override def decrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.decrypt(data, associated)
+  override def decrypt(data: Array[Byte], associated: Array[Byte]): Try[Array[Byte]] =
+    Try(aead.decrypt(data, associated))
 }
 
 class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDots](

@@ -46,7 +46,7 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
   lazy val versionVector: VectorClock = readFromArray[VectorClock](serialVersionVector)
 
   def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedState[T] = {
-    val plainText     = aead.decrypt(stateCiphertext, serialVersionVector)
+    val plainText     = aead.decrypt(stateCiphertext, serialVersionVector).get
     val state         = readFromArray[T](plainText)
     val versionVector = readFromArray[VectorClock](serialVersionVector)
     DecryptedState(state, versionVector)
