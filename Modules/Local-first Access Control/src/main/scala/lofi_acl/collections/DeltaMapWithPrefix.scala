@@ -1,10 +1,10 @@
 package lofi_acl.collections
 
-import lofi_acl.crypto.PublicIdentity
+import rdts.base.Bottom
 import rdts.time.{Dot, Dots}
 
 case class DeltaMapWithPrefix[RDT](prefixDots: Dots, prefix: RDT, deltaDots: Dots, deltas: Map[Dot, RDT]):
-  lazy val allDots = prefixDots.union(deltaDots)
+  lazy val allDots: Dots = prefixDots.union(deltaDots)
 
   def contains(dots: Dots): Boolean =
     allDots.contains(dots)
@@ -25,3 +25,8 @@ case class DeltaMapWithPrefix[RDT](prefixDots: Dots, prefix: RDT, deltaDots: Dot
       deltaDots = deltaDots.subtract(dotsToRemove),
       deltas = deltas.filterNot((dot, _) => dotsToRemove.contains(dot))
     )
+
+object DeltaMapWithPrefix {
+  def empty[RDT: Bottom]: DeltaMapWithPrefix[RDT] =
+    DeltaMapWithPrefix(Dots.empty, Bottom[RDT].empty, Dots.empty, Map.empty)
+}
