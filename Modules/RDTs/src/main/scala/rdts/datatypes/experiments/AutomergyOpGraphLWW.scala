@@ -49,7 +49,7 @@ object AutomergyOpGraphLWW {
 
   object OpGraph {
     given lattice[T]: Lattice[OpGraph[T]] =
-      given Lattice[Entry[T]] = Lattice.assertNoConflicts
+      given Lattice[Entry[T]] = Lattice.assertEquals
       Lattice.derived
     given bottom[T]: Bottom[OpGraph[T]] = Bottom.derived
   }

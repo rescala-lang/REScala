@@ -36,15 +36,8 @@ object MultiVersionRegister {
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
 
-  private val _assertEqualsOrdering: Ordering[Any] = (l, r) =>
-    if l == r then 0
-    else throw IllegalStateException(s"assumed equality does not hold for »$l« and »$r« ")
-  // we could replace this by casting …
-  def assertEqualsOrdering[A]: Ordering[A] = _assertEqualsOrdering.on(identity)
-  def assertEqualsLattice[A]: Lattice[A]   = Lattice.fromOrdering(using assertEqualsOrdering)
-
   given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
-    given Lattice[A] = Lattice.fromOrdering(using assertEqualsOrdering)
+    given Lattice[A] = Lattice.assertEquals
     Lattice.derived
 
   given hasDot[A]: HasDots[MultiVersionRegister[A]] = HasDots.derived
