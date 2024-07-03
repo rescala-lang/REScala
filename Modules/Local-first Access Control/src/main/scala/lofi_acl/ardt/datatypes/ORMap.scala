@@ -7,11 +7,9 @@ import rdts.datatypes.contextual.ObserveRemoveMap
 
 import scala.util.{Failure, Success, Try}
 
-type ORMap[K, V] = ObserveRemoveMap[K, V]
-
 object ORMap {
   given stringKeyORMapFilter[V: Filter]: Filter[ObserveRemoveMap[String, V]] with
-    override def filter(delta: ORMap[String, V], permission: PermissionTree): ORMap[String, V] =
+    override def filter(delta: ObserveRemoveMap[String, V], permission: PermissionTree): ObserveRemoveMap[String, V] =
       permission match
         case PermissionTree(ALLOW, _) => delta
         case PermissionTree(PARTIAL, mapOfEntryPermissions) =>
