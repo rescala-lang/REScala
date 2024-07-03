@@ -60,7 +60,6 @@ class TodoAppUI(val storagePrefix: String) {
             Fold.branch {
               current.data.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
             },
-            // todo: does not restore full state
             branch
           )
         }
