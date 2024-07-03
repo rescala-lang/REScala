@@ -10,6 +10,9 @@ import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.dotted.HasDots
 
+type Title = String
+given Bottom[Title] = Bottom.provide("")
+
 case class TravelPlan(
     title: LastWriterWins[Title],
     bucketList: ObserveRemoveMap[String, LastWriterWins[String]],
@@ -25,7 +28,4 @@ case class Expense(
 
 object TravelPlan {
   given jsonCodec: JsonValueCodec[TravelPlan] = JsonCodecMaker.make[TravelPlan]
-
-  type Title = String
-  given Bottom[Title] = Bottom.provide("")
 }
