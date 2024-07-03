@@ -3,7 +3,7 @@ package lofi_acl.ardt.base
 import lofi_acl.access.*
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
-import rdts.base.{Bottom, Lattice}
+import rdts.base.Lattice
 
 import scala.util.{Failure, Success, Try}
 
