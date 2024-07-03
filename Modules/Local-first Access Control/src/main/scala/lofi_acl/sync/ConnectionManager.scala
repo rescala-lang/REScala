@@ -5,7 +5,7 @@ import lofi_acl.transport.P2PTlsTcpConnector
 
 import java.io.{DataInputStream, DataOutputStream, IOException}
 import java.util
-import java.util.concurrent.Executors
+import java.util.concurrent.{ExecutorService, Executors}
 import javax.net.ssl.SSLSocket
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -14,8 +14,8 @@ class ConnectionManager[MSG](
     privateIdentity: PrivateIdentity,
     messageHandler: MessageReceiver[MSG]
 )(using msgCodec: MessageSerialization[MSG]) {
-  private val executor               = Executors.newCachedThreadPool()
-  private given ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
+  private val executor: ExecutorService = Executors.newCachedThreadPool()
+  private given ec: ExecutionContext    = ExecutionContext.fromExecutor(executor)
 
   private val connector = P2PTlsTcpConnector(privateIdentity)
 

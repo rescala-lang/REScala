@@ -19,10 +19,6 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.collection.immutable.Queue
 import scala.util.Random
 
-trait Sync[RDT] {
-  def receivedDelta(dot: Dot, rdt: RDT): Unit
-}
-
 // Responsible for enforcing ACL
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
@@ -60,9 +56,14 @@ class FilteringAntiEntropy[RDT](
   // Stores inbound messages
   val msgQueue: LinkedBlockingQueue[(MonotonicAclSyncMessage[RDT], PublicIdentity)] = LinkedBlockingQueue()
   // Stores deltas that couldn't be processed because of missing causal dependencies
-  private var aclMessageBacklog: Queue[(AclDelta[RDT], PublicIdentity)] =
-    Queue.from(initialAclMessages.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
-  receivedMessage(initialAclMessages.head, localPublicId) // Also causes processing of aclMessageBacklog
+  private var aclMessageBacklog: Queue[(AclDelta[RDT], PublicIdentity)] = {
+    if initialAclMessages.isEmpty
+    then Queue.empty
+    else
+      Queue.from(initialAclMessages.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
+  }
+  if initialAclMessages.nonEmpty
+  then receivedMessage(initialAclMessages.head, localPublicId) // Also causes processing of aclMessageBacklog
   // Note that this stores the *intended*, not the effective permissions of the user at the time of sending!
   // We are taking the intersection of the actual permissions and the intended permissions at use time.
   private var deltaMessageBacklog = Queue.empty[(Delta[RDT], PublicIdentity, PermissionTree)]
@@ -119,6 +120,8 @@ class FilteringAntiEntropy[RDT](
     thread.start()
     thread
   }
+
+  def listenPort: Option[Int] = connectionManager.listenPort
 
   private def handleMessage(msg: MonotonicAclSyncMessage[RDT], sender: PublicIdentity): Unit = {
     // Messages are processed in the order in which they were sent and only one at a time.

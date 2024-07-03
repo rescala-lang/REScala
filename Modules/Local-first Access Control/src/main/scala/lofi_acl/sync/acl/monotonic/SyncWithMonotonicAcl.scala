@@ -56,6 +56,19 @@ class SyncWithMonotonicAcl[RDT](
     antiEntropy.mutateRdt(dot, deltaMutator(rdtReference.get()._2))
   }
 
+  def connectionString: String = {
+    s"${localPublicId.id}@localhost:${antiEntropy.listenPort}"
+  }
+
+  def connect(connectionString: String): Unit = {
+    val parts = connectionString.split("@")
+    require(parts.length == 2)
+    val remoteUser = PublicIdentity(parts(0))
+    val hostParts  = parts(1).split(":")
+    require(hostParts.length == 2)
+    antiEntropy.newPeers(Map(remoteUser -> (hostParts(0), hostParts(1).toInt)))
+  }
+
   override def receivedDelta(dot: Dot, rdt: RDT): Unit =
     val _ = rdtReference.updateAndGet((dots, rdt) => dots.add(dot) -> rdt.merge(rdt))
 
