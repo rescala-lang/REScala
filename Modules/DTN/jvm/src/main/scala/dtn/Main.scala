@@ -111,8 +111,9 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 
 def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   val dots: Dots = DotsCreation.generate_pseudo_random_dots()
+  val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
 
-  RdtClient(host, port, "testapp", checkerHost, checkerPort).flatMap(client => {
+  RdtClient(host, port, "testapp", checkerClient).flatMap(client => {
     client.registerOnReceive((payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
@@ -128,8 +129,9 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
 
 def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   var dots: Dots = Dots.empty
+  val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
 
-  RdtClient(host, port, "testapp", checkerHost, checkerPort).map(client => {
+  RdtClient(host, port, "testapp", checkerClient).map(client => {
     client.registerOnReceive((payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")

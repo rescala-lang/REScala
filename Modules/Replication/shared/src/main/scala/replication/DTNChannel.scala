@@ -5,7 +5,7 @@ import de.rmgk.delay
 import de.rmgk.delay.syntax.toAsync
 import de.rmgk.delay.{Async, Callback}
 import rdts.time.Dots
-import dtn.RdtClient
+import _root_.dtn.{RdtClient, NoDotsConvergenceClient}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -24,7 +24,7 @@ class DTNRdtClientContext(connection: RdtClient, executionContext: ExecutionCont
 class DTNChannel(host: String, port: Int, appName: String, ec: ExecutionContext) extends LatentConnection {
   override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Async {
     // @rmgk: TODO creating the Rdt client starts receiving, thus there is a window in which messages will be lost
-    val client: RdtClient = RdtClient.create(host, port, appName).toAsync(using ec).bind
+    val client: RdtClient = RdtClient(host, port, appName, NoDotsConvergenceClient).toAsync(using ec).bind
     val conn = DTNRdtClientContext(client, ec)
     val cb = incoming(conn)
 
