@@ -57,7 +57,7 @@ class SyncWithMonotonicAcl[RDT](
   }
 
   def connectionString: String = {
-    s"${localPublicId.id}@localhost:${antiEntropy.listenPort}"
+    s"${localPublicId.id}@localhost:${antiEntropy.listenPort.getOrElse(-1)}"
   }
 
   def connect(connectionString: String): Unit = {
