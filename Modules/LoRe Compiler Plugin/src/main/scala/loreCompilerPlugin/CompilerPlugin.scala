@@ -167,6 +167,14 @@ class LoRePhase extends PluginPhase:
           name.toString, // foo
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // bar, baz, ... (might each be more complex terms)
         )
+      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) => // Type applications (e.g. Source or Derived)
+        logRhsInfo(indentLevel, operandSide, s"type application of the ${typeName.toString} type", "")
+        typeName.toString match
+          case "Source" => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case "Derived" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case _ => // Unsupported type application
+            report.error(s"${"\t".repeat(indentLevel)}Unsupported type application used in RHS:\n${"\t".repeat(indentLevel)}$tree")
+            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
         report.error(
           // No access to sourcePos here due to LazyTree
