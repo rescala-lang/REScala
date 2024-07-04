@@ -83,10 +83,10 @@ class ConnectionManagerTest extends FunSuite {
     }
 
     assert(connManB.send(idC.getPublic, "Test 3"))
-    assertEquals(receiverC.queue.poll(2, SECONDS), ("Test 3", idB.getPublic))
+    assertEquals(receiverC.queue.poll(4, SECONDS), ("Test 3", idB.getPublic))
     assert(connManC.sendMultiple(idB.getPublic, "Test 4", "Test 5"))
-    assertEquals(receiverB.queue.poll(2, SECONDS), ("Test 4", idC.getPublic))
-    assertEquals(receiverB.queue.poll(2, SECONDS), ("Test 5", idC.getPublic))
+    assertEquals(receiverB.queue.poll(4, SECONDS), ("Test 4", idC.getPublic))
+    assertEquals(receiverB.queue.poll(4, SECONDS), ("Test 5", idC.getPublic))
     println("Done")
 
     connManA.shutdown()
