@@ -102,6 +102,8 @@ class FilteringAntiEntropy[RDT](
   }
 
   def start(): Thread = {
+    require(connectionManager.listenPort.isEmpty) // TODO: Allow restart?
+    connectionManager.acceptIncomingConnections()
     val thread = Thread(() =>
       while !stopped do {
         try {
