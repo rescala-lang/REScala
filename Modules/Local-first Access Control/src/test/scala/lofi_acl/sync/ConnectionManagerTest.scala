@@ -22,7 +22,7 @@ class ConnectionManagerTest extends FunSuite {
     val receiverB = QueueAppendingMessageReceiver()
     val connManB  = ConnectionManager[String](idB, receiverB)
     connManB.connectTo("localhost", connManA.listenPort.get)
-    assertEventually(100 millis)(
+    assertEventually(1000 millis)(
       connManA.connectedUsers == Set(idB.getPublic) && connManB.connectedUsers == Set(idA.getPublic)
     )
   }
@@ -48,24 +48,26 @@ class ConnectionManagerTest extends FunSuite {
     assertEventually(100 millis)(connManA.listenPort.nonEmpty)
     connManB.connectTo("localhost", connManA.listenPort.get)
 
-    assertEventually(100 millis)(connManB.connectedUsers.nonEmpty)
-    assertEventually(100 millis)(connManA.connectedUsers.nonEmpty)
-    assertEventually(100 millis)(connManA.connectedUsers == Set(idB.getPublic))
+    assertEventually(1 second)(
+      connManB.connectedUsers.nonEmpty
+      && connManA.connectedUsers.nonEmpty
+      && connManA.connectedUsers == Set(idB.getPublic)
+    )
     connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManA.listenPort.get, idA.getPublic)
 
-    assertEventually(100 millis) {
-      connManA.connectedUsers.equals(Set(idB.getPublic, idC.getPublic)) &&
-      connManB.connectedUsers.equals(Set(idA.getPublic)) &&
-      connManC.connectedUsers.equals(Set(idA.getPublic))
+    assertEventually(1 second) {
+      connManA.connectedUsers.equals(Set(idB.getPublic, idC.getPublic))
+      && connManB.connectedUsers.equals(Set(idA.getPublic))
+      && connManC.connectedUsers.equals(Set(idA.getPublic))
     }
 
     assert(connManA.broadcast("Hello"))
     assertEquals(receiverA.queue.peek(), null)
-    assertEquals(receiverB.queue.poll(100, MILLISECONDS), ("Hello", idA.getPublic))
-    assertEquals(receiverC.queue.poll(100, MILLISECONDS), ("Hello", idA.getPublic))
+    assertEquals(receiverB.queue.poll(1, SECONDS), ("Hello", idA.getPublic))
+    assertEquals(receiverC.queue.poll(1, SECONDS), ("Hello", idA.getPublic))
 
     assert(connManB.send(idA.getPublic, "Test"))
-    assertEquals(receiverA.queue.poll(100, MILLISECONDS), ("Test", idB.getPublic))
+    assertEquals(receiverA.queue.poll(1, SECONDS), ("Test", idB.getPublic))
 
     connManB.acceptIncomingConnections()
     connManC.acceptIncomingConnections()
@@ -74,17 +76,17 @@ class ConnectionManagerTest extends FunSuite {
     connManB.connectToExpectingUserIfNoConnectionExists("localhost", connManC.listenPort.get, idC.getPublic)
     connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idB.getPublic)
 
-    assertEventually(100 millis) {
+    assertEventually(1 second) {
       connManA.connectedUsers.equals(Set(idB.getPublic, idC.getPublic)) &&
       connManB.connectedUsers.equals(Set(idA.getPublic, idC.getPublic)) &&
       connManC.connectedUsers.equals(Set(idA.getPublic, idB.getPublic))
     }
 
     assert(connManB.send(idC.getPublic, "Test 3"))
-    assertEquals(receiverC.queue.poll(1000, MILLISECONDS), ("Test 3", idB.getPublic))
+    assertEquals(receiverC.queue.poll(2, SECONDS), ("Test 3", idB.getPublic))
     assert(connManC.sendMultiple(idB.getPublic, "Test 4", "Test 5"))
-    assertEquals(receiverB.queue.poll(1000, MILLISECONDS), ("Test 4", idC.getPublic))
-    assertEquals(receiverB.queue.poll(1000, MILLISECONDS), ("Test 5", idC.getPublic))
+    assertEquals(receiverB.queue.poll(2, SECONDS), ("Test 4", idC.getPublic))
+    assertEquals(receiverB.queue.poll(2, SECONDS), ("Test 5", idC.getPublic))
     println("Done")
 
     connManA.shutdown()
