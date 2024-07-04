@@ -74,7 +74,7 @@ class ConnectionManager[MSG](
           case Failure(exception) =>
             exception.printStackTrace()
             running = false
-            sys.error("Stopping listener")
+            Console.err.println("Stopping listener")
           case Success((socket, peerIdentity)) =>
             if peerIdentity == localPublicId
             then // We don't want to connect to ourselves.
@@ -135,7 +135,7 @@ class ConnectionManager[MSG](
         if expectedUser == peerId
         then connectionEstablished(socket, peerId, establishedByRemote = false)
         else {
-          sys.error(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
+          Console.err.println(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
           try {
             socket.close()
           } catch
@@ -166,6 +166,7 @@ class ConnectionManager[MSG](
             || !establishedByRemote && peerIdentity.id < localPublicId.id
           then
             connections = connections.updated(peerIdentity, socket)
+            outputStreams = outputStreams.updated(peerIdentity, DataOutputStream(socket.getOutputStream))
             try {
               existingConnection.close()
               messageHandler.connectionShutdown(peerIdentity)
@@ -178,6 +179,7 @@ class ConnectionManager[MSG](
             } catch { case e: IOException => }
         case None =>
           connections = connections.updated(peerIdentity, socket)
+          outputStreams = outputStreams.updated(peerIdentity, DataOutputStream(socket.getOutputStream))
           receiveFrom(peerIdentity, socket)
     }
   }
@@ -207,6 +209,7 @@ class ConnectionManager[MSG](
                       if storedSocket eq socket // Only remove and notify if this socket wasn't already replaced
                       then
                         connections = connections.removed(peerIdentity)
+                        outputStreams = outputStreams.removed(peerIdentity)
                         messageHandler.connectionShutdown(peerIdentity)
                     case None =>
                 }
