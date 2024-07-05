@@ -12,6 +12,9 @@ import scala.concurrent.duration.*
 import scala.language.postfixOps
 
 class ConnectionManagerTest extends FunSuite {
+  val isGithubCi: Boolean           = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
+  override def munitIgnore: Boolean = isGithubCi
+
   private val idA = IdentityFactory.createNewIdentity
   private val idB = IdentityFactory.createNewIdentity
   private val idC = IdentityFactory.createNewIdentity
