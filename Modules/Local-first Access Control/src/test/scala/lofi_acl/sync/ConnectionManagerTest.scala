@@ -87,6 +87,7 @@ class ConnectionManagerTest extends FunSuite {
 
     connManA.shutdown()
     connManB.shutdown()
+    connManC.shutdown()
   }
 
   test("send message from initiator to acceptor and vice versa") {
@@ -117,6 +118,7 @@ class ConnectionManagerTest extends FunSuite {
 
     connManA.shutdown()
     connManB.shutdown()
+    connManC.shutdown()
   }
 
   test("broadcast") {
@@ -218,6 +220,11 @@ class ConnectionManagerTest extends FunSuite {
       && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic, idD.getPublic)
       && connManD.connectedUsers == Set(idA.getPublic, idB.getPublic, idC.getPublic)
     )
+
+    connManA.shutdown()
+    connManB.shutdown()
+    connManC.shutdown()
+    connManD.shutdown()
   }
 
   test("race connectTo ALTERNATIVE") {
@@ -259,10 +266,15 @@ class ConnectionManagerTest extends FunSuite {
 
     assertEventually(1 second)(
       connManA.connectedUsers == Set(idB.getPublic, idC.getPublic, idD.getPublic)
-        && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
-        && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic, idD.getPublic)
-        && connManD.connectedUsers == Set(idA.getPublic, idB.getPublic, idC.getPublic)
+      && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
+      && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic, idD.getPublic)
+      && connManD.connectedUsers == Set(idA.getPublic, idB.getPublic, idC.getPublic)
     )
+
+    connManA.shutdown()
+    connManB.shutdown()
+    connManC.shutdown()
+    connManD.shutdown()
   }
 
   test("end-to-end test") {
@@ -342,7 +354,6 @@ object ConnectionManagerTest {
     val queue: LinkedBlockingQueue[(String, PublicIdentity)] = LinkedBlockingQueue[(String, PublicIdentity)]()
 
     override def receivedMessage(msg: String, fromUser: PublicIdentity): Unit = {
-      println(s"Received $msg from $fromUser")
       queue.put((msg, fromUser))
     }
 
