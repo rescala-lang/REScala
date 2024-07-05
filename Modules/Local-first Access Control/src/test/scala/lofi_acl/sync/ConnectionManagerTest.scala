@@ -15,10 +15,12 @@ class ConnectionManagerTest extends FunSuite {
   private val idA = IdentityFactory.createNewIdentity
   private val idB = IdentityFactory.createNewIdentity
   private val idC = IdentityFactory.createNewIdentity
+  private val idD = IdentityFactory.createNewIdentity
 
-  println(s"idA = ${idA.getPublic}")
-  println(s"idB = ${idB.getPublic}")
-  println(s"idC = ${idC.getPublic}")
+  println(s"idA = ${idA.getPublic.id}")
+  println(s"idB = ${idB.getPublic.id}")
+  println(s"idC = ${idC.getPublic.id}")
+  println(s"idD = ${idD.getPublic.id}")
 
   test("Only establish connection and don't send anything") {
     val receiverA = QueueAppendingMessageReceiver()
@@ -48,6 +50,8 @@ class ConnectionManagerTest extends FunSuite {
     val receiverC = QueueAppendingMessageReceiver()
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
+
+    Thread.sleep(10)
 
     connManA.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idC.getPublic)
     connManA.connectToExpectingUserIfNoConnectionExists("localhost", connManC.listenPort.get, idB.getPublic)
@@ -92,11 +96,14 @@ class ConnectionManagerTest extends FunSuite {
 
     val receiverB = QueueAppendingMessageReceiver()
     val connManB  = ConnectionManager[String](idB, receiverB)
-    connManB.connectTo("localhost", connManA.listenPort.get)
 
     val receiverC = QueueAppendingMessageReceiver()
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
+
+    Thread.sleep(10)
+
+    connManB.connectTo("localhost", connManA.listenPort.get)
 
     assertEventually(1 second)(
       connManA.connectedUsers == Set(idB.getPublic) && connManB.connectedUsers == Set(idA.getPublic)
@@ -124,6 +131,8 @@ class ConnectionManagerTest extends FunSuite {
     val receiverC = QueueAppendingMessageReceiver()
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
+
+    Thread.sleep(10)
 
     connManA.connectTo("localhost", connManB.listenPort.get)
     connManA.connectTo("localhost", connManC.listenPort.get)
@@ -168,23 +177,110 @@ class ConnectionManagerTest extends FunSuite {
     connManC.shutdown()
   }
 
-  test("end-to-end test".ignore) {
-    println(s"idA= ${idA.getPublic}")
+  test("race connectTo") {
     val receiverA = QueueAppendingMessageReceiver()
     val connManA  = ConnectionManager[String](idA, receiverA)
-
-    println(s"idB= ${idB.getPublic}")
-    val receiverB = QueueAppendingMessageReceiver()
-    val connManB  = ConnectionManager[String](idB, receiverB)
-
-    println(s"idC= ${idC.getPublic}")
-    val receiverC = QueueAppendingMessageReceiver()
-    val connManC  = ConnectionManager[String](idC, receiverC)
-
     connManA.acceptIncomingConnections()
 
-    assertEventually(100 millis)(connManA.listenPort.nonEmpty)
+    val receiverB = QueueAppendingMessageReceiver()
+    val connManB  = ConnectionManager[String](idB, receiverB)
+    connManB.acceptIncomingConnections()
+
+    val receiverC = QueueAppendingMessageReceiver()
+    val connManC  = ConnectionManager[String](idC, receiverC)
+    connManC.acceptIncomingConnections()
+
+    val receiverD = QueueAppendingMessageReceiver()
+    val connManD  = ConnectionManager[String](idD, receiverD)
+    connManD.acceptIncomingConnections()
+
+    Thread.sleep(10)
+
     connManB.connectTo("localhost", connManA.listenPort.get)
+    connManC.connectTo("localhost", connManA.listenPort.get)
+    connManD.connectTo("localhost", connManA.listenPort.get)
+
+    connManA.connectTo("localhost", connManB.listenPort.get)
+    connManC.connectTo("localhost", connManB.listenPort.get)
+    connManD.connectTo("localhost", connManB.listenPort.get)
+
+    connManA.connectTo("localhost", connManC.listenPort.get)
+    connManB.connectTo("localhost", connManC.listenPort.get)
+    connManD.connectTo("localhost", connManC.listenPort.get)
+
+    connManA.connectTo("localhost", connManD.listenPort.get)
+    connManB.connectTo("localhost", connManD.listenPort.get)
+    connManC.connectTo("localhost", connManD.listenPort.get)
+
+    assertEventually(1 second)(
+      connManA.connectedUsers == Set(idB.getPublic, idC.getPublic, idD.getPublic)
+      && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
+      && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic, idD.getPublic)
+      && connManD.connectedUsers == Set(idA.getPublic, idB.getPublic, idC.getPublic)
+    )
+  }
+
+  test("race connectTo ALTERNATIVE") {
+    val receiverA = QueueAppendingMessageReceiver()
+    val connManA  = ConnectionManager[String](idA, receiverA)
+    connManA.acceptIncomingConnections()
+
+    val receiverB = QueueAppendingMessageReceiver()
+    val connManB  = ConnectionManager[String](idB, receiverB)
+    connManB.acceptIncomingConnections()
+
+    val receiverC = QueueAppendingMessageReceiver()
+    val connManC  = ConnectionManager[String](idC, receiverC)
+    connManC.acceptIncomingConnections()
+
+    val receiverD = QueueAppendingMessageReceiver()
+    val connManD  = ConnectionManager[String](idD, receiverD)
+    connManD.acceptIncomingConnections()
+
+    Thread.sleep(10)
+
+    connManA.connectTo("localhost", connManB.listenPort.get)
+    connManB.connectTo("localhost", connManA.listenPort.get)
+
+    connManA.connectTo("localhost", connManC.listenPort.get)
+    connManC.connectTo("localhost", connManA.listenPort.get)
+
+    connManB.connectTo("localhost", connManC.listenPort.get)
+    connManC.connectTo("localhost", connManB.listenPort.get)
+
+    connManA.connectTo("localhost", connManD.listenPort.get)
+    connManD.connectTo("localhost", connManA.listenPort.get)
+
+    connManB.connectTo("localhost", connManD.listenPort.get)
+    connManD.connectTo("localhost", connManB.listenPort.get)
+
+    connManC.connectTo("localhost", connManD.listenPort.get)
+    connManD.connectTo("localhost", connManC.listenPort.get)
+
+    assertEventually(1 second)(
+      connManA.connectedUsers == Set(idB.getPublic, idC.getPublic, idD.getPublic)
+        && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
+        && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic, idD.getPublic)
+        && connManD.connectedUsers == Set(idA.getPublic, idB.getPublic, idC.getPublic)
+    )
+  }
+
+  test("end-to-end test") {
+    val receiverA = QueueAppendingMessageReceiver()
+    val connManA  = ConnectionManager[String](idA, receiverA)
+    connManA.acceptIncomingConnections()
+
+    val receiverB = QueueAppendingMessageReceiver()
+    val connManB  = ConnectionManager[String](idB, receiverB)
+    connManB.acceptIncomingConnections()
+
+    val receiverC = QueueAppendingMessageReceiver()
+    val connManC  = ConnectionManager[String](idC, receiverC)
+    connManC.acceptIncomingConnections()
+
+    Thread.sleep(10) // Apparently we need to wait for the ServerSockets to actually accept connections
+
+    connManB.connectTo("localhost", connManA.listenPort.get) // Establish A <-> B
 
     assertEventually(1 second)(
       connManB.connectedUsers.nonEmpty
@@ -207,10 +303,6 @@ class ConnectionManagerTest extends FunSuite {
     assert(connManB.send(idA.getPublic, "Test"))
     assertEquals(receiverA.queue.poll(1, SECONDS), ("Test", idB.getPublic))
 
-    connManB.acceptIncomingConnections()
-    connManC.acceptIncomingConnections()
-    assertEventually(100 millis)(connManB.listenPort.nonEmpty && connManC.listenPort.nonEmpty)
-
     connManB.connectToExpectingUserIfNoConnectionExists("localhost", connManC.listenPort.get, idC.getPublic)
     connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idB.getPublic)
 
@@ -220,11 +312,13 @@ class ConnectionManagerTest extends FunSuite {
       connManC.connectedUsers.equals(Set(idA.getPublic, idB.getPublic))
     }
 
+    assert(connManB.connectedUsers.contains(idC.getPublic))
     assert(connManB.send(idC.getPublic, "Test 3"))
-    assertEquals(receiverC.queue.poll(4, SECONDS), ("Test 3", idB.getPublic))
+    assert(connManC.connectedUsers.contains(idB.getPublic))
+    assertEquals(receiverC.queue.poll(1, SECONDS), ("Test 3", idB.getPublic))
     assert(connManC.sendMultiple(idB.getPublic, "Test 4", "Test 5"))
-    assertEquals(receiverB.queue.poll(4, SECONDS), ("Test 4", idC.getPublic))
-    assertEquals(receiverB.queue.poll(4, SECONDS), ("Test 5", idC.getPublic))
+    assertEquals(receiverB.queue.poll(1, SECONDS), ("Test 4", idC.getPublic))
+    assertEquals(receiverB.queue.poll(1, SECONDS), ("Test 5", idC.getPublic))
     println("Done")
 
     connManA.shutdown()
