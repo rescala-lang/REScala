@@ -7,33 +7,22 @@ import lofi_acl.sync.acl.monotonic.SyncWithMonotonicAcl
 
 import java.util.concurrent.atomic.AtomicReference
 
-class TravelPlannerController private (isNewDocument: Boolean) {
+class TravelPlanModel(joinedDocument: Option[String]) {
   private val privateId: PrivateIdentity = IdentityFactory.createNewIdentity
+
+  private val crdt = AtomicReference[TravelPlan]()
+
   private val sync: SyncWithMonotonicAcl[TravelPlan] = SyncWithMonotonicAcl[TravelPlan](
     privateId,
     List.empty,
     DeltaMapWithPrefix.empty
   )
   sync.start()
+  joinedDocument.foreach(sync.connect)
 
-  println(sync.connectionString)
-
-  def connect(connectionString: String): Unit = {
-    sync.connect(connectionString)
-  }
+  def connectionString: Option[String] = Some(sync.connectionString)
 
   def shutdown(): Unit = {
     sync.stop()
   }
-
-  private val crdt = AtomicReference[TravelPlan]()
-}
-
-object TravelPlannerController {
-  def forNewDocument: TravelPlannerController = TravelPlannerController(true)
-
-  def forExistingDocument(connectionString: String): TravelPlannerController =
-    val controller = TravelPlannerController(false)
-    controller.connect(connectionString)
-    controller
 }
