@@ -61,6 +61,25 @@ class Ed25519UtilTest extends FunSuite {
     }
   }
 
+  test("privateKeyToRawPrivateKeyBytes should work with BC and SunEC providers") {
+    cryptoProviders.foreach { providerName =>
+      val gen     = KeyPairGenerator.getInstance("Ed25519", providerName)
+      val keyPair = gen.generateKeyPair()
+      val rawKey  = Ed25519Util.privateKeyToRawPrivateKeyBytes(keyPair.getPrivate)
+      assertEquals(rawKey.length, 32)
+
+      cryptoProviders.foreach { otherProvider =>
+        val parsedKey: PrivateKey = Ed25519Util.rawPrivateKeyBytesToPrivateKey(rawKey)
+        testKeyEqualityUsingSignature(
+          keyPair.getPublic,
+          parsedKey,
+          signProvider = otherProvider,
+          verifyProvider = providerName
+        )
+      }
+    }
+  }
+
   test("privateKeyToPkcs8EncodedPrivateKeyBytes should work with BC and SunEC providers") {
     cryptoProviders.foreach { providerName =>
       val gen               = KeyPairGenerator.getInstance("Ed25519", providerName)

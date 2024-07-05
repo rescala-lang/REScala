@@ -11,7 +11,7 @@ import org.bouncycastle.util.io.pem.{PemObject, PemWriter}
 
 import java.io.{ByteArrayInputStream, StringWriter}
 import java.security.*
-import java.security.spec.X509EncodedKeySpec
+import java.security.spec.{EdECPrivateKeySpec, NamedParameterSpec, X509EncodedKeySpec}
 import java.util.Base64
 
 object Ed25519Util {
@@ -84,6 +84,24 @@ object Ed25519Util {
     if bytes.length != 32 then
       throw IllegalArgumentException(s"Ed25519 public keys are 32 bytes long, got ${bytes.length}")
     bytes
+  }
+
+  def privateKeyToRawPrivateKeyBytes(privateKey: PrivateKey): Array[Byte] = {
+    if "Ed25519" != privateKey.getAlgorithm && "EdDSA" != privateKey.getAlgorithm then {
+      throw IllegalArgumentException(s"Expected an Ed25519 key, got ${privateKey.getAlgorithm}")
+    }
+    val asn1Primitive = new ASN1InputStream(new ByteArrayInputStream(privateKey.getEncoded)).readObject()
+    val octets        = PrivateKeyInfo.getInstance(asn1Primitive).getPrivateKey.getOctets
+    require(octets(0) == 4 && octets(1) == 32) // Starts with [4,32] (=> 32 bit long octet string)
+    val bytes = octets.drop(2)
+    if bytes.length != 32 then
+      throw IllegalArgumentException(s"Ed25519 private keys are 32 bytes long, got ${bytes.length}")
+    bytes
+  }
+
+  def rawPrivateKeyBytesToPrivateKey(ed25519Bytes: Array[Byte]): PrivateKey = {
+    val keySpec = EdECPrivateKeySpec(NamedParameterSpec.ED25519, ed25519Bytes)
+    KeyFactory.getInstance("Ed25519", "SunEC").generatePrivate(keySpec)
   }
 
   def privateKeyToPkcs8EncodedPrivateKeyBytes(ed25519PrivateKey: PrivateKey): Array[Byte] = {
