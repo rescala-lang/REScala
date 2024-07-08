@@ -24,7 +24,7 @@ class MainScene extends Scene {
     // hgrow = Priority.Always
   }
   remoteDocumentUriTextField.disable <== viewModel.documentIsOpen
-  remoteDocumentUriTextField.text <==> viewModel.joinDocumentUri
+  remoteDocumentUriTextField.text <==> viewModel.inviteString
 
   rootPane.center = VBox(
     createNewDocumentButton,

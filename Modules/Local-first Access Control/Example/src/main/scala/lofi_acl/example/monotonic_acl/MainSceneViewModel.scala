@@ -6,7 +6,7 @@ import scalafx.scene.layout.StackPane
 import scala.concurrent.ExecutionContext.global
 
 class MainSceneViewModel {
-  private var model: Option[TravelPlanModel] = None
+  @volatile private var model: TravelPlanModel = scala.compiletime.uninitialized
 
   val bucketListViewContainer: StackPane = new StackPane()
   bucketListViewContainer.minWidth = 400
@@ -19,20 +19,21 @@ class MainSceneViewModel {
   val documentIsOpen: BooleanProperty = new BooleanProperty()
   documentIsOpen.value = false
 
-  val joinDocumentUri: StringProperty = new StringProperty()
+  val inviteString: StringProperty = new StringProperty()
 
   def createNewDocumentButtonPressed(): Unit = {
-    require(model.isEmpty)
     documentIsOpen.value = true
+    require(model == null)
     global.execute { () =>
-      model = Some(TravelPlanModel(None))
+      model = TravelPlanModel.createNewDocument
     }
   }
 
   def joinDocumentButtonPressed(): Unit = {
     documentIsOpen.value = true
+    require(model == null)
     global.execute { () =>
-      model = Some(TravelPlanModel(Some(joinDocumentUri.value)))
+      model = TravelPlanModel.joinDocument(inviteString.value)
     }
   }
 }

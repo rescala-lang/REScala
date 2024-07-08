@@ -1,14 +1,14 @@
 package lofi_acl.sync.acl.monotonic
 
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import lofi_acl.access
 import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.PublicIdentity.toPublicIdentity
-import lofi_acl.crypto.{Ed25519Util, PrivateIdentity, PublicIdentity}
-import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.{PartialDelta, messageJsonCodec}
+import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
+import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.PartialDelta
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.sync.{ConnectionManager, JsoniterCodecs, MessageReceiver}
 import rdts.base.Lattice
@@ -22,21 +22,29 @@ import scala.util.Random
 // Responsible for enforcing ACL
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
+    rootOfTrust: PublicIdentity,
     initialAclMessages: List[AclDelta[RDT]], // Signatures are assumed to have been validated already
     initialRdtDeltas: DeltaMapWithPrefix[RDT],
     syncInstance: Sync[RDT]
-)(using rdtCodec: JsonValueCodec[RDT], filter: Filter[RDT], rdtLattice: Lattice[RDT])
-    extends MessageReceiver[MonotonicAclSyncMessage[RDT]] {
-  private val connectionManager = ConnectionManager[MonotonicAclSyncMessage[RDT]](
-    localIdentity,
-    this
-  )(using SignatureVerifyingMessageSerialization[RDT](localIdentity.getPublic, localIdentity.identityKey.getPrivate))
+)(using
+    rdtCodec: JsonValueCodec[RDT],
+    filter: Filter[RDT],
+    rdtLattice: Lattice[RDT],
+    msgCodec: JsonValueCodec[MonotonicAclSyncMessage[RDT]]
+) extends MessageReceiver[MonotonicAclSyncMessage[RDT]] {
+  private val connectionManager = ConnectionManager[MonotonicAclSyncMessage[RDT]](localIdentity, this)(using
+    SignatureVerifyingMessageSerialization[RDT](
+      localIdentity.getPublic,
+      localIdentity.identityKey.getPrivate
+    )
+  )
 
   private val localPublicId = localIdentity.getPublic
 
   // Access Control List ------
-  private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] =
-    AtomicReference((Dots.empty, MonotonicAcl.empty[RDT])) // TODO: Initialize with root of trust
+  private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] = {
+    AtomicReference((Dots.empty, MonotonicAcl[RDT](rootOfTrust, Map.empty, Map.empty)))
+  }
   @volatile private var receivedAclDots: Dots = // received != applied
     initialAclMessages.foldLeft(Dots.empty)((dots, msg) => dots.add(msg.dot))
   @volatile private var aclDeltas: Map[Dot, AclDelta[RDT]] = initialAclMessages.map(msg => msg.dot -> msg).toMap
@@ -389,11 +397,9 @@ class FilteringAntiEntropy[RDT](
       case Operation.WRITE => require(realm <= acl.write(localPublicId))
 
     val addAclMsg: AclDelta[RDT] = {
-      val unsignedMsg: AclDelta[RDT] =
+      val unsignedDelta: AclDelta[RDT] =
         AclDelta(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
-      val encodedMsg = writeToArray(unsignedMsg)(using messageJsonCodec)
-      val signature  = Ed25519Util.sign(encodedMsg, localIdentity.identityKey.getPrivate)
-      unsignedMsg.copy(signature = signature)
+      MonotonicAcl.signDelta(unsignedDelta, localIdentity)
     }
 
     receivedMessage(addAclMsg, localPublicId)
@@ -402,11 +408,5 @@ class FilteringAntiEntropy[RDT](
 }
 
 object FilteringAntiEntropy {
-  import JsoniterCodecs.{pubIdentityKeyCodec, uidKeyCodec}
-
-  given messageJsonCodec[RDT: JsonValueCodec]: JsonValueCodec[MonotonicAclSyncMessage[RDT]] = JsonCodecMaker.make(
-    CodecMakerConfig.withAllowRecursiveTypes(true) // Required for PermissionTree
-  )
-
   case class PartialDelta[RDT](delta: RDT, includedParts: PermissionTree, requiredPermissions: PermissionTree)
 }

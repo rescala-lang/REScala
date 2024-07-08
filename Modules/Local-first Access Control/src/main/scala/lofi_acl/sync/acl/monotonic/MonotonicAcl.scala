@@ -1,9 +1,14 @@
 package lofi_acl.sync.acl.monotonic
 
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
+import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
-import lofi_acl.crypto.PublicIdentity
+import lofi_acl.crypto.{Ed25519Util, PrivateIdentity, PublicIdentity}
+import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.{AclDelta, Signature}
+import rdts.time.{Dot, Dots}
 
 case class MonotonicAcl[RDT](
+    root: PublicIdentity,
     read: Map[PublicIdentity, PermissionTree],
     write: Map[PublicIdentity, PermissionTree]
 ) {
@@ -13,13 +18,15 @@ case class MonotonicAcl[RDT](
       realm: PermissionTree
   )(using Filter[RDT] /* required for minimization of PermissionTree */ ): Option[MonotonicAcl[RDT]] = {
     // Check if delegation is valid
-    if !(realm <= read.getOrElse(delegatingFrom, PermissionTree.empty))
-    then None
-    else
+    if realm <= read.getOrElse(delegatingFrom, PermissionTree.empty) || delegatingFrom == root
+    then
       Some(MonotonicAcl(
+        root,
         addPermissionWithValidationAndMinimization(read, forPrincipal, realm),
         write
       ))
+    else
+      None
   }
 
   def addWritePermissionIfAllowed(
@@ -28,10 +35,10 @@ case class MonotonicAcl[RDT](
       realm: PermissionTree
   )(using Filter[RDT] /* required for minimization of PermissionTree */ ): Option[MonotonicAcl[RDT]] = {
     // Check if delegation is valid
-    if !(realm <= write.getOrElse(delegatingFrom, PermissionTree.empty))
-    then None
-    else
+    if realm <= write.getOrElse(delegatingFrom, PermissionTree.empty) || delegatingFrom == root
+    then
       Some(MonotonicAcl(
+        root,
         addPermissionWithValidationAndMinimization(read, forPrincipal, realm),
         addPermissionWithValidationAndMinimization(
           write,
@@ -39,6 +46,8 @@ case class MonotonicAcl[RDT](
           realm
         ) // Write permission implies read permission
       ))
+    else
+      None
   }
 
   def filterReceivedDelta(delta: RDT, sender: PublicIdentity)(using filter: Filter[RDT]): RDT =
@@ -78,5 +87,19 @@ case class MonotonicAcl[RDT](
 }
 
 object MonotonicAcl {
-  def empty[RDT]: MonotonicAcl[RDT] = MonotonicAcl(Map.empty, Map.empty)
+  def createRootOfTrust[RDT](root: PrivateIdentity)(using
+      JsonValueCodec[MonotonicAclSyncMessage[RDT]]
+  ): AclDelta[RDT] = {
+    val delta: AclDelta[RDT] =
+      AclDelta[RDT](root.getPublic, PermissionTree.allow, WRITE, Dot(root.getPublic.toUid, 0), Dots.empty, null)
+    signDelta(delta, root)
+  }
+
+  def signDelta[RDT](unsignedDelta: AclDelta[RDT], localIdentity: PrivateIdentity)(using
+      JsonValueCodec[MonotonicAclSyncMessage[RDT]]
+  ): AclDelta[RDT] = {
+    val encodedMsg = writeToArray(unsignedDelta.asInstanceOf[MonotonicAclSyncMessage[RDT]])
+    val signature  = Ed25519Util.sign(encodedMsg, localIdentity.identityKey.getPrivate)
+    unsignedDelta.copy(signature = Signature(signature))
+  }
 }

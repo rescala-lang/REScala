@@ -4,12 +4,12 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import lofi_acl.crypto.{Ed25519Util, PublicIdentity}
 
-import java.security.PrivateKey
+import java.security.{KeyPair, PrivateKey}
 import java.util.Base64
 
 case class Invitation(
     rootOfTrust: PublicIdentity,
-    identityKey: PrivateKey,
+    identityKey: KeyPair,
     inviter: PublicIdentity,
     joinAddress: String
 )
@@ -26,12 +26,11 @@ object Invitation {
     val createdPrincipalId = Ed25519Util.generateNewKeyPair
     val publicIdentity =
       PublicIdentity(Ed25519Util.publicKeyToPublicKeyBytesBase64Encoded(createdPrincipalId.getPublic))
-    val key = createdPrincipalId.getPrivate
-    (publicIdentity, Invitation(rootOfTrust, key, inviter, joinAddress))
+    (publicIdentity, Invitation(rootOfTrust, createdPrincipalId, inviter, joinAddress))
   }
 
   def encode(invite: Invitation): String =
-    val privateKeyBytes = Ed25519Util.privateKeyToRawPrivateKeyBytes(invite.identityKey)
+    val privateKeyBytes = Ed25519Util.privateKeyToRawPrivateKeyBytes(invite.identityKey.getPrivate)
     s"${invite.rootOfTrust}|${base64Encoder.encodeToString(privateKeyBytes)}|${invite.inviter.id}|${invite.joinAddress}"
 
   def decode(inviteString: String): Invitation = {
@@ -39,7 +38,7 @@ object Invitation {
     require(parts.length == 4)
     Invitation(
       PublicIdentity(parts(0)),
-      Ed25519Util.rawPrivateKeyBytesToPrivateKey(base64Decoder.decode(parts(1))),
+      Ed25519Util.rawPrivateKeyBytesToKeyPair(base64Decoder.decode(parts(1))),
       PublicIdentity(parts(2)),
       parts(3)
     )

@@ -5,6 +5,7 @@ import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
+import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.{access, sync}
 import rdts.base.{Bottom, Lattice}
@@ -14,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class SyncWithMonotonicAcl[RDT](
     private val localIdentity: PrivateIdentity,
+    rootOfTrust: PublicIdentity,
     initialAclMessages: List[AclDelta[RDT]],
     initialRdt: DeltaMapWithPrefix[RDT], // Assumed to correspond with ACL!
 )(using
@@ -23,7 +25,7 @@ class SyncWithMonotonicAcl[RDT](
     filter: Filter[RDT]
 ) extends Sync[RDT] {
 
-  private val antiEntropy = FilteringAntiEntropy[RDT](localIdentity, initialAclMessages, initialRdt, this)
+  private val antiEntropy = FilteringAntiEntropy[RDT](localIdentity, rootOfTrust, initialAclMessages, initialRdt, this)
   @volatile private var antiEntropyThread: Option[Thread] = None
 
   private val localPublicId = localIdentity.getPublic
@@ -57,14 +59,11 @@ class SyncWithMonotonicAcl[RDT](
   }
 
   def connectionString: String = {
-    s"${localPublicId.id}@localhost:${antiEntropy.listenPort.getOrElse(-1)}"
+    s"localhost:${antiEntropy.listenPort.getOrElse(-1)}"
   }
 
-  def connect(connectionString: String): Unit = {
-    val parts = connectionString.split("@")
-    require(parts.length == 2)
-    val remoteUser = PublicIdentity(parts(0))
-    val hostParts  = parts(1).split(":")
+  def connect(remoteUser: PublicIdentity, remoteAddress: String): Unit = {
+    val hostParts = remoteAddress.split(":")
     require(hostParts.length == 2)
     antiEntropy.newPeers(Map(remoteUser -> (hostParts(0), hostParts(1).toInt)))
   }
@@ -86,5 +85,18 @@ class SyncWithMonotonicAcl[RDT](
       antiEntropyThread.get.interrupt()
       antiEntropyThread = None
     }
+  }
+}
+
+object SyncWithMonotonicAcl {
+  def createAsRootOfTrust[RDT](rootIdentity: PrivateIdentity)(using
+      lattice: Lattice[RDT],
+      bottom: Bottom[RDT],
+      rdtJsonCode: JsonValueCodec[RDT],
+      filter: Filter[RDT],
+      msgJsonCodec: JsonValueCodec[MonotonicAclSyncMessage[RDT]]
+  ): SyncWithMonotonicAcl[RDT] = {
+    val selfSignedAclDelta: AclDelta[RDT] = MonotonicAcl.createRootOfTrust[RDT](rootIdentity)
+    SyncWithMonotonicAcl(rootIdentity, rootIdentity.getPublic, List(selfSignedAclDelta), DeltaMapWithPrefix.empty)
   }
 }
