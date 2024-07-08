@@ -6,12 +6,13 @@ import org.bouncycastle.asn1.x509.{AlgorithmIdentifier, SubjectPublicKeyInfo}
 import org.bouncycastle.asn1.{ASN1InputStream, DEROctetString}
 import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator
 import org.bouncycastle.crypto.params.{Ed25519KeyGenerationParameters, Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters}
+import org.bouncycastle.jcajce.provider.asymmetric.edec.BCEdDSAPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.io.pem.{PemObject, PemWriter}
 
 import java.io.{ByteArrayInputStream, StringWriter}
 import java.security.*
-import java.security.spec.{EdECPrivateKeySpec, NamedParameterSpec, X509EncodedKeySpec}
+import java.security.spec.{PKCS8EncodedKeySpec, X509EncodedKeySpec}
 import java.util.Base64
 
 object Ed25519Util {
@@ -100,8 +101,25 @@ object Ed25519Util {
   }
 
   def rawPrivateKeyBytesToPrivateKey(ed25519Bytes: Array[Byte]): PrivateKey = {
-    val keySpec = EdECPrivateKeySpec(NamedParameterSpec.ED25519, ed25519Bytes)
-    KeyFactory.getInstance("Ed25519", "SunEC").generatePrivate(keySpec)
+    // Alternative implementation using SunEC Provider:
+    // val keySpec = EdECPrivateKeySpec(NamedParameterSpec.ED25519, ed25519Bytes)
+    // KeyFactory.getInstance("Ed25519", "SunEC").generatePrivate(keySpec)
+    rawPrivateKeyBytesToKeyPair(ed25519Bytes).getPrivate
+  }
+
+  def rawPrivateKeyBytesToKeyPair(ed25519Bytes: Array[Byte]): KeyPair = {
+    val algId                        = new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519)
+    val privateKeyInfo               = new PrivateKeyInfo(algId, DEROctetString(ed25519Bytes))
+    val pkcs8EncodedKey: Array[Byte] = privateKeyInfo.getEncoded()
+
+    val keySpec    = new PKCS8EncodedKeySpec(pkcs8EncodedKey)
+    val keyFactory = KeyFactory.getInstance("Ed25519", "BC")
+    val privateKey = keyFactory.generatePrivate(keySpec).asInstanceOf[BCEdDSAPrivateKey]
+
+    KeyPair(
+      privateKey.getPublicKey,
+      privateKey
+    )
   }
 
   def privateKeyToPkcs8EncodedPrivateKeyBytes(ed25519PrivateKey: PrivateKey): Array[Byte] = {
