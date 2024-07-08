@@ -22,8 +22,8 @@ object Dependencies {
   def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.3.1"
   def jsoniterScala =
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.30.3",
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.30.3" % Provided
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.30.4",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.30.4" % Provided
     )
 
   object slips {
