@@ -24,6 +24,7 @@ class TravelPlanModel(
       DeltaMapWithPrefix.empty
     )
   sync.start()
+  Runtime.getRuntime.addShutdownHook(new Thread(() => shutdown()))
 
   def createInvitation: Invitation =
     Invitation(rootOfTrust, Ed25519Util.generateNewKeyPair, localIdentity.getPublic, sync.connectionString)
