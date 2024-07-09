@@ -12,11 +12,12 @@ import rdts.dotted.HasDots
 
 type Title = String
 given Bottom[Title] = Bottom.provide("")
+type UniqueId = String
 
 case class TravelPlan(
     title: LastWriterWins[Title],
-    bucketList: ObserveRemoveMap[String, LastWriterWins[String]],
-    expenses: ObserveRemoveMap[String, Expense]
+    bucketList: ObserveRemoveMap[UniqueId, LastWriterWins[String]],
+    expenses: ObserveRemoveMap[UniqueId, Expense]
 ) derives Lattice, Bottom, Filter
 
 case class Expense(

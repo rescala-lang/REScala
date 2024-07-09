@@ -1,10 +1,9 @@
 package lofi_acl.example.monotonic_acl
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import lofi_acl.crypto.{Ed25519Util, PublicIdentity}
+import lofi_acl.example.monotonic_acl.Invitation.base64Encoder
 
-import java.security.{KeyPair, PrivateKey}
+import java.security.KeyPair
 import java.util.Base64
 
 case class Invitation(
@@ -12,7 +11,11 @@ case class Invitation(
     identityKey: KeyPair,
     inviter: PublicIdentity,
     joinAddress: String
-)
+) {
+  def encode: String =
+    val privateKeyBytes = Ed25519Util.privateKeyToRawPrivateKeyBytes(identityKey.getPrivate)
+    s"${rootOfTrust.id}|${base64Encoder.encodeToString(privateKeyBytes)}|${inviter.id}|$joinAddress"
+}
 
 object Invitation {
   private val base64Decoder = Base64.getDecoder
@@ -28,10 +31,6 @@ object Invitation {
       PublicIdentity(Ed25519Util.publicKeyToPublicKeyBytesBase64Encoded(createdPrincipalId.getPublic))
     (publicIdentity, Invitation(rootOfTrust, createdPrincipalId, inviter, joinAddress))
   }
-
-  def encode(invite: Invitation): String =
-    val privateKeyBytes = Ed25519Util.privateKeyToRawPrivateKeyBytes(invite.identityKey.getPrivate)
-    s"${invite.rootOfTrust}|${base64Encoder.encodeToString(privateKeyBytes)}|${invite.inviter.id}|${invite.joinAddress}"
 
   def decode(inviteString: String): Invitation = {
     val parts = inviteString.split('|')

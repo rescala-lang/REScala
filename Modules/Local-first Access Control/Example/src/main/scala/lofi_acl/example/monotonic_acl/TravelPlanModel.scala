@@ -6,6 +6,7 @@ import lofi_acl.example.travelplanner.TravelPlan
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.acl.monotonic.{MonotonicAcl, SyncWithMonotonicAcl}
+import scalafx.beans.property.StringProperty
 
 import java.util.concurrent.atomic.AtomicReference
 
@@ -24,18 +25,17 @@ class TravelPlanModel(
       DeltaMapWithPrefix.empty
     )
   sync.start()
-  Runtime.getRuntime.addShutdownHook(new Thread(() => shutdown()))
+  Runtime.getRuntime.addShutdownHook(new Thread(() => sync.stop()))
 
   def createInvitation: Invitation =
     Invitation(rootOfTrust, Ed25519Util.generateNewKeyPair, localIdentity.getPublic, sync.connectionString)
 
-  def shutdown(): Unit = {
-    sync.stop()
-  }
-
   def addConnection(remoteUser: PublicIdentity, address: String): Unit = {
     sync.connect(remoteUser, address)
   }
+
+  // TODO: Bind to crdt
+  val title: StringProperty = StringProperty("New Travel Plan")
 }
 
 object TravelPlanModel {
