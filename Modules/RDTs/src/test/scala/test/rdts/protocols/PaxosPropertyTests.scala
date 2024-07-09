@@ -11,11 +11,17 @@ class MembershipSuite extends ScalaCheckSuite {
   property("Membership works")(MembershipSpec.property())
 }
 
+class MembershipFunSuite extends munit.FunSuite {
+  MembershipSpec.property().check()
+}
+
 import scala.util.{Success, Try}
 import scala.util.Random
 
 object MembershipSpec extends Commands {
   type State = List[(LocalUid, Membership[Int, Paxos, Paxos])]
+  val minDevices = 3
+  val maxDevices = 6
 
   override type Sut = State
 
@@ -37,7 +43,7 @@ object MembershipSpec extends Commands {
       membership <- genMembership
       id = LocalUid.gen()
     } yield (id, membership)
-    val numDevices = Gen.choose(3, 6)
+    val numDevices = Gen.choose(minDevices, maxDevices)
     numDevices.flatMap(n => Gen.listOfN(n, genDevice))
 
   override def genCommand(state: State): Gen[MembershipSpec.Command] = Gen.oneOf(genMerge, genMerge)
@@ -53,12 +59,16 @@ object MembershipSpec extends Commands {
 
     override def preCondition(state: State): Boolean =
       leftIndex >= 0 && leftIndex < state.length &&
-      rightIndex >= 0 && rightIndex < state.length &&
-      leftIndex != rightIndex
+      rightIndex >= 0 && rightIndex < state.length
+//      && leftIndex != rightIndex
 
     override def postCondition(state: State, success: Boolean): Prop = success
 
-  val genMerge: Gen[Merge] = Gen.resultOf(Merge(_, _))
+  val genMerge: Gen[Merge] =
+    for
+      leftIndex  <- Gen.choose(minDevices, maxDevices).map(_ - minDevices)
+      rightIndex <- Gen.choose(minDevices, maxDevices).map(_ - minDevices)
+    yield Merge(leftIndex, rightIndex)
 }
 //class PaxosPropertyTests {
 //

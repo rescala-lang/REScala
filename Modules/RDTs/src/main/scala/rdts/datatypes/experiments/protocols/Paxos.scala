@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.Lattice.setLattice
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.GrowOnlySet
 import rdts.datatypes.GrowOnlySet.*
 import LocalUid.replicaId
@@ -137,9 +137,8 @@ object Paxos {
 
   given lattice[A]: Lattice[Paxos[A]] with
     override def merge(left: Paxos[A], right: Paxos[A]): Paxos[A] =
-      val newmembers = Lattice[Set[Uid]].merge(left.members, right.members)
       assert(
-        newmembers == left.members,
+        Lattice[Set[Uid]].merge(left.members, right.members) == left.members,
         "cannot merge two Paxos instances with differing members"
       ) // members should remain fixed
       Paxos[A](
@@ -159,11 +158,18 @@ object Paxos {
       Set.empty
     )
 
-  given Consensus[Paxos] with
-    extension [A](c: Paxos[A]) override def members: Set[Uid]                         = c.members
-    extension [A](c: Paxos[A]) override def read: Option[A]                           = c.read
-    extension [A](c: Paxos[A]) override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
-    extension [A](c: Paxos[A]) override def upkeep()(using LocalUid): Paxos[A]        = c.upkeep()
+  given consensus[A]: Consensus[Paxos] with
     extension [A](c: Paxos[A])
-      override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
+      override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
+    extension [A](c: Paxos[A])
+      override def read: Option[A] = c.read
+    extension [A](c: Paxos[A])
+      override def members: GrowOnlySet[Uid] = c.members
+    extension [A](c: Paxos[A])
+      override def reset(newMembers: GrowOnlySet[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
+    extension [A](c: Paxos[A])
+      override def upkeep()(using LocalUid): Paxos[A] = c.upkeep()
+
+  given bottom[A]: Bottom[Paxos[A]] with
+    override def empty: Paxos[A] = unchanged[A]
 }
