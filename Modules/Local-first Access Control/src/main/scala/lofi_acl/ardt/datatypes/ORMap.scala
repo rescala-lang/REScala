@@ -13,11 +13,16 @@ object ORMap {
       permission match
         case PermissionTree(ALLOW, _) => delta
         case PermissionTree(PARTIAL, mapOfEntryPermissions) =>
+          val wildcardPermission = mapOfEntryPermissions.get("*")
           ObserveRemoveMap(
             delta.inner.flatMap { case key -> value =>
+              // Assumes normalized PermissionTree
               mapOfEntryPermissions.get(key) match
-                case None /* No rule for key -> discard entry */ => None
                 case Some(entryPermission) => Some(key -> Filter[V].filter(value, entryPermission))
+                case None =>
+                  if wildcardPermission.nonEmpty
+                  then Some(key -> Filter[V].filter(value, wildcardPermission.get))
+                  else None /* No rule for key -> discard entry */
             }
           )
 
@@ -25,14 +30,17 @@ object ORMap {
       if permissionTree.children.isEmpty
       then Success(permissionTree)
       else
-        permissionTree.children.foldLeft[(String, Try[PermissionTree])]("" -> Success(permissionTree)) {
-          case (prevKeyPath -> prevResult, keyPath -> pt) =>
-            if prevResult.isFailure then prevKeyPath -> prevResult
-            else keyPath                             -> Filter[V].validatePermissionTree(pt)
-        } match
-          case keyPath -> Failure(InvalidPathException(subPath)) => Failure(InvalidPathException(keyPath :: subPath))
-          case (_, f @ scala.util.Failure(_))                    => f
-          case _ -> Success(_)                                   => Success(permissionTree)
+        Try {
+          PermissionTree(
+            PARTIAL,
+            permissionTree.children.map { (key, perm) =>
+              Filter[V].validatePermissionTree(perm) match
+                case Failure(e: InvalidPathException) => throw InvalidPathException(key :: e.path)
+                case Failure(e)                       => throw InvalidPathException(List(key))
+                case Success(validated)               => key -> validated
+            }
+          )
+        }
 
     override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
       val minimized = PermissionTree(
