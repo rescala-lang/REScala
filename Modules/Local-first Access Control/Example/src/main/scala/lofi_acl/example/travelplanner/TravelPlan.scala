@@ -8,7 +8,7 @@ import lofi_acl.ardt.datatypes.ORMap.stringKeyORMapFilter
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
-import rdts.dotted.HasDots
+import rdts.dotted.{Dotted, HasDots}
 
 type Title = String
 given Bottom[Title] = Bottom.provide("")
@@ -16,8 +16,8 @@ type UniqueId = String
 
 case class TravelPlan(
     title: LastWriterWins[Title],
-    bucketList: ObserveRemoveMap[UniqueId, LastWriterWins[String]],
-    expenses: ObserveRemoveMap[UniqueId, Expense]
+    bucketList: Dotted[ObserveRemoveMap[UniqueId, LastWriterWins[String]]],
+    expenses: Dotted[ObserveRemoveMap[UniqueId, Expense]]
 ) derives Lattice, Bottom, Filter
 
 case class Expense(
@@ -28,5 +28,12 @@ case class Expense(
 ) derives Lattice, HasDots, Bottom, Filter
 
 object TravelPlan {
+  val empty: TravelPlan = Bottom[TravelPlan].empty
+
+  import lofi_acl.sync.JsoniterCodecs.uidKeyCodec
   given jsonCodec: JsonValueCodec[TravelPlan] = JsonCodecMaker.make[TravelPlan]
+}
+
+object Expense {
+  val empty: Expense = Bottom[Expense].empty
 }
