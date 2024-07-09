@@ -1,10 +1,11 @@
 package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
-import lofi_acl.access.PermissionTree
 import lofi_acl.access.PermissionTree.allow
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import rdts.base.Bottom
+import rdts.dotted.Dotted
+import rdts.time.{ArrayRanges, Dots}
 
 import scala.compiletime.{constValue, erasedValue, summonAll}
 import scala.deriving.Mirror
@@ -97,11 +98,11 @@ object Filter:
 
     // Assumes a valid permission tree
     override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = {
-      if (permissionTree.permission == ALLOW) return allow
+      if permissionTree.permission == ALLOW then return allow
 
       val minimizedChildren = permissionTree.children.map { (label, subtree) =>
-        val idx = factorLabels(label)
-        val filter = factorFilters(idx)
+        val idx                            = factorLabels(label)
+        val filter                         = factorFilters(idx)
         val minimizedChild: PermissionTree = filter.minimizePermissionTree(subtree)
         label -> minimizedChild
       }
@@ -110,3 +111,55 @@ object Filter:
       then allow
       else PermissionTree(PARTIAL, minimizedChildren)
     }
+
+  given dotsFilter: Filter[Dots] with
+    override def filter(delta: Dots, permission: PermissionTree): Dots =
+      permission match
+        case PermissionTree(ALLOW, _)                              => delta
+        case PermissionTree(PARTIAL, children) if children.isEmpty => Dots.empty
+        case PermissionTree(PARTIAL, perms) =>
+          Dots(delta.internal.flatMap((uid, ranges) =>
+            perms.get(uid.delegate) match
+              case Some(PermissionTree(ALLOW, _)) => Some(uid -> ranges)
+              case Some(PermissionTree(PARTIAL, dotPermissions)) =>
+                val allowedRanges = ArrayRanges.from(
+                  dotPermissions.flatMap { (timeAsString, perm) =>
+                    if perm.isEmpty
+                    then None
+                    else Some(java.lang.Long.parseUnsignedLong(timeAsString))
+                  }
+                )
+                Some(uid -> ranges.intersect(allowedRanges))
+              case None => None
+          ))
+
+    override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
+      Try {
+        permissionTree match
+          case PermissionTree(ALLOW, _) => permissionTree
+          case pt @ PermissionTree(PARTIAL, children) =>
+            children.foreach { (_, childPerm) =>
+              childPerm.children.foreach { (key, value) =>
+                val _ = java.lang.Long.parseUnsignedLong(key)
+              }
+            }
+            pt
+      }
+    }
+
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+      if permissionTree.permission == ALLOW then return PermissionTree.allow
+      PermissionTree(
+        PARTIAL,
+        permissionTree.children.flatMap {
+          case (uid, PermissionTree(ALLOW, _))                              => Some(uid -> PermissionTree.allow)
+          case (uid, PermissionTree(PARTIAL, dotPerms)) if dotPerms.isEmpty => None
+          case (uid, PermissionTree(PARTIAL, dotPerms)) =>
+            dotPerms.flatMap {
+              case (time, PermissionTree(ALLOW, _))   => Some(time -> PermissionTree.allow)
+              case (time, PermissionTree(PARTIAL, _)) => None
+            }
+        }
+      )
+
+  given dottedFilter[A: Filter: Bottom]: Filter[Dotted[A]] = Filter.derived
