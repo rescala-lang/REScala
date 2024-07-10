@@ -213,7 +213,6 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .dependsOn(reactives.jvm, rdts.jvm, replication.jvm)
   .settings(
     scala3defaults,
-    Dependencies.upickle,
     Dependencies.jsoniterScala,
     Settings.jolSettings,
     LocalSettings.tink,
