@@ -4,7 +4,7 @@ import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree.allow
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import rdts.base.Bottom
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, Obrem}
 import rdts.time.{ArrayRanges, Dots}
 
 import scala.compiletime.{constValue, erasedValue, summonAll}
@@ -163,3 +163,5 @@ object Filter:
       )
 
   given dottedFilter[A: Filter: Bottom]: Filter[Dotted[A]] = Filter.derived
+
+  given obremFilter[A: Filter : Bottom]: Filter[Obrem[A]] = Filter.derived

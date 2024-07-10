@@ -1,6 +1,6 @@
 package rdts.base
 
-import rdts.dotted.Dotted
+import rdts.dotted.{Dotted, Obrem}
 import rdts.time.Dots
 
 import scala.collection.immutable.Queue
@@ -60,6 +60,7 @@ object Bottom {
 
   given dots: Bottom[Dots]                   = Bottom.derived
   given dotted[A: Bottom]: Bottom[Dotted[A]] = Bottom.derived
+  given obrem[A: Bottom]: Bottom[Obrem[A]]   = Bottom.derived
 
   given pairBottom[A: Bottom, B: Bottom]: Bottom[(A, B)] = Bottom.derived
 
