@@ -48,7 +48,12 @@ object ORMap {
         children = permissionTree.children.map((label, child) => label -> Filter[V].minimizePermissionTree(child))
       )
 
-      if minimized.children.contains("*")
-      then PermissionTree.lattice.normalizeWildcards(minimized)
-      else minimized
+      minimized.children.get("*") match
+        case Some(wildcard) =>
+          PermissionTree.lattice.normalizeWildcards(
+            permissionTree.copy(
+              children = minimized.children.filter { (label, child) => label == "*" || !(child <= wildcard) }
+            )
+          )
+        case None => minimized
 }
