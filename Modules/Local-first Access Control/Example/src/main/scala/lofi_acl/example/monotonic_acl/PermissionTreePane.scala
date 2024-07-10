@@ -1,5 +1,6 @@
 package lofi_acl.example.monotonic_acl
 
+import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.{Permission, PermissionTree}
 import lofi_acl.example.monotonic_acl.PermissionTreePane.{ExpensePermCheckBoxes, ExpensePermEntryCheckBoxes, wiredReadWriteCheckboxes}
 import lofi_acl.example.travelplanner.TravelPlan
@@ -85,7 +86,7 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
   // TODO: Add another header row for expenses
   expenseEntryCheckBoxes.foreach { (_, boxes) =>
     add(Text(" ↳ "), 0, curRowIdx)
-    add(Text(boxes.title), 1, curRowIdx)
+    add(Text(boxes.name), 1, curRowIdx)
     add(boxes.read, 2, curRowIdx)
     add(boxes.write, 3, curRowIdx)
     add(boxes.descriptionRead, 4, curRowIdx)
@@ -97,6 +98,8 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
 
     curRowIdx += 1
   }
+
+  disableCheckBoxesWithInsufficientPermissions(localReadPerm, localWritePerm)
 
   private def addParentRow(label: String, readCheckBox: CheckBox, writeCheckBox: CheckBox, rowIdx: Int): Unit = {
     add(Text(label), 0, rowIdx, 2, 1)
@@ -116,12 +119,74 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
     lbl.contentDisplay = ContentDisplay.Right
     add(lbl, colIdx, rowIdx)
   }
+
+  private def disableCheckBoxesWithInsufficientPermissions(
+      readPerm: PermissionTree,
+      writePerm: PermissionTree
+  ): Unit = {
+    if readPerm.permission != ALLOW then globalReadCheckBox.disable = true
+    if writePerm.permission != ALLOW then globalWriteCheckBox.disable = true
+
+    val title      = PermissionTree.fromPath("title")
+    val bucketList = PermissionTree.fromPath("bucketList")
+    val expenses   = PermissionTree.fromPath("expenses")
+
+    if !(title <= writePerm) then titleWriteCheckBox.disable = true
+    if !(title <= readPerm) then titleReadCheckBox.disable = true
+
+    if !(bucketList <= readPerm) then bucketListReadCheckBox.disable = true
+    if !(bucketList <= writePerm) then bucketListWriteCheckBox.disable = true
+    if !(PermissionTree.fromPath("bucketList.data") <= writePerm)
+    then
+      // Children that are not readable won't be in the list, so no need to disable the permission check boxes for them
+      val entryWritePerms = writePerm
+        .children.getOrElse("bucketList", PermissionTree.empty)
+        .children.getOrElse("data", PermissionTree.empty)
+      bucketListEntryCheckBoxes.foreach { case (id, (_, _, writeBox)) =>
+        if entryWritePerms.children.getOrElse(id, PermissionTree.empty).permission != ALLOW
+        then writeBox.disable = true
+      }
+
+    if !(expenses <= readPerm)
+    then
+      expensePermParentCheckBoxes.read.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.description") <= readPerm)
+      then expensePermParentCheckBoxes.descriptionRead.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.amount") <= readPerm)
+      then expensePermParentCheckBoxes.amountRead.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.comment") <= readPerm)
+      then expensePermParentCheckBoxes.commentRead.disable = true
+    if !(expenses <= writePerm)
+    then
+      expensePermParentCheckBoxes.write.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.description") <= writePerm)
+      then expensePermParentCheckBoxes.descriptionWrite.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.amount") <= writePerm)
+      then expensePermParentCheckBoxes.amountWrite.disable = true
+      if !(PermissionTree.fromPath("expenses.data.*.comment") <= writePerm)
+      then expensePermParentCheckBoxes.commentWrite.disable = true
+
+    if !(PermissionTree.fromPath("expenses.data") <= writePerm)
+    then
+      val entryWritePerms = writePerm
+        .children.getOrElse("expenses", PermissionTree.empty)
+        .children.getOrElse("data", PermissionTree.empty)
+      val entryReadPerms = readPerm
+        .children.getOrElse("expenses", PermissionTree.empty)
+        .children.getOrElse("data", PermissionTree.empty)
+      expenseEntryCheckBoxes.foreach { case (id, checkBoxes) =>
+        checkBoxes.disableCheckBoxesIfInsufficientPermissions(
+          entryReadPerms.children.getOrElse(id, PermissionTree.empty),
+          entryWritePerms.children.getOrElse(id, PermissionTree.empty)
+        )
+      }
+  }
 }
 
 object PermissionTreePane {
   // TODO: Add override from previous permission / max inheritable permission
   private class ExpensePermEntryCheckBoxes(
-      val title: String,
+      val name: String,
       parentRead: BooleanProperty,
       parentWrite: BooleanProperty,
       parentDescriptionRead: BooleanProperty,
@@ -141,6 +206,39 @@ object PermissionTreePane {
 
     Seq(read, write, descriptionRead, descriptionWrite, amountRead, amountWrite, commentRead, commentWrite).foreach {
       _.alignmentInParent = Pos.CenterRight
+    }
+
+    def disableCheckBoxesIfInsufficientPermissions(
+        entryReadPerm: PermissionTree,
+        entryWritePerm: PermissionTree
+    ): Unit = {
+      entryReadPerm match
+        case PermissionTree(ALLOW, _) =>
+        case PermissionTree(PARTIAL, children) =>
+          read.disable = true
+          children.get("description") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => descriptionRead.disable = true
+          children.get("amount") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => amountRead.disable = true
+          children.get("comment") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => commentRead.disable = true
+
+      entryWritePerm match
+        case PermissionTree(ALLOW, _) =>
+        case PermissionTree(PARTIAL, children) =>
+          write.disable = true
+          children.get("description") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => descriptionWrite.disable = true
+          children.get("amount") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => amountWrite.disable = true
+          children.get("comment") match
+            case Some(PermissionTree(ALLOW, _)) =>
+            case _                              => commentWrite.disable = true
     }
   }
 

@@ -24,7 +24,7 @@ case class Expense(
     // time: LastWriterWins[LocalDateTime], // For what do we need time?
     description: LastWriterWins[Option[String]],
     amount: LastWriterWins[Option[Float]],
-    comments: ObserveRemoveMap[String, LastWriterWins[String]]
+    comment: ObserveRemoveMap[String, LastWriterWins[String]]
 ) derives Lattice, HasDots, Bottom, Filter
 
 object TravelPlan {
