@@ -162,7 +162,8 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
         "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
         "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.6",
         "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.6",
-      )
+      ),
+    Test / fork := true,
   )
 
 lazy val lofiAclExample = project.in(file("Modules/Local-first Access Control/Example"))

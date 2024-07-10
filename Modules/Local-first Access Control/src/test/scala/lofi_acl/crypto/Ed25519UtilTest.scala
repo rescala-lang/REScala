@@ -80,7 +80,7 @@ class Ed25519UtilTest extends FunSuite {
     }
   }
 
-  test("privateKeyToRawPrivateKeyBytes should work with BC and SunEC providers") {
+  test("rawPrivateKeyBytesToKeyPair should work with BC and SunEC providers") {
     cryptoProviders.foreach { providerName =>
       val gen     = KeyPairGenerator.getInstance("Ed25519", providerName)
       val keyPair = gen.generateKeyPair()
