@@ -1,5 +1,6 @@
 package lofi_acl.example.monotonic_acl
 
+import lofi_acl.access.{Permission, PermissionTree}
 import lofi_acl.example.monotonic_acl.PermissionTreePane.{ExpensePermCheckBoxes, ExpensePermEntryCheckBoxes, wiredReadWriteCheckboxes}
 import lofi_acl.example.travelplanner.TravelPlan
 import scalafx.beans.property.BooleanProperty
@@ -8,7 +9,9 @@ import scalafx.scene.control.{CheckBox, ContentDisplay, Label}
 import scalafx.scene.layout.GridPane
 import scalafx.scene.text.Text
 
-class PermissionTreePane(rdt: TravelPlan) extends GridPane {
+class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWritePerm: PermissionTree)
+    extends GridPane {
+
   private var curRowIdx = 0
   vgap = 5
   hgap = 5

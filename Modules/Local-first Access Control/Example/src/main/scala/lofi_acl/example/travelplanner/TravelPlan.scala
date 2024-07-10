@@ -8,7 +8,7 @@ import lofi_acl.ardt.datatypes.ORMap.stringKeyORMapFilter
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
-import rdts.dotted.{Dotted, HasDots}
+import rdts.dotted.{HasDots, Obrem}
 
 type Title = String
 given Bottom[Title] = Bottom.provide("")
@@ -16,8 +16,8 @@ type UniqueId = String
 
 case class TravelPlan(
     title: LastWriterWins[Title],
-    bucketList: Dotted[ObserveRemoveMap[UniqueId, LastWriterWins[String]]],
-    expenses: Dotted[ObserveRemoveMap[UniqueId, Expense]]
+    bucketList: Obrem[ObserveRemoveMap[UniqueId, LastWriterWins[String]]],
+    expenses: Obrem[ObserveRemoveMap[UniqueId, Expense]]
 ) derives Lattice, Bottom, Filter
 
 case class Expense(

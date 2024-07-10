@@ -48,6 +48,8 @@ class SyncWithMonotonicAcl[RDT](
     )
   }
 
+  def currentAcl: MonotonicAcl[RDT] = antiEntropy.acl
+
   def grantPermissions(affectedUser: PublicIdentity, realm: PermissionTree, typeOfPermission: Operation): Unit = {
     val dot = lastLocalAclDot.updateAndGet(dot => dot.advance)
     antiEntropy.grantPermission(dot, affectedUser, realm, typeOfPermission)

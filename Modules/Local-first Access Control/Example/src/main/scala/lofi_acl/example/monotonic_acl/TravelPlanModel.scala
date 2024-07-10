@@ -2,10 +2,14 @@ package lofi_acl.example.monotonic_acl
 
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{Ed25519Util, IdentityFactory, PrivateIdentity, PublicIdentity}
-import lofi_acl.example.travelplanner.TravelPlan
+import lofi_acl.example.travelplanner.{Expense, TravelPlan}
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.acl.monotonic.{MonotonicAcl, SyncWithMonotonicAcl}
+import rdts.base.LocalUid
+import rdts.datatypes.LastWriterWins
+import rdts.datatypes.contextual.ObserveRemoveMap
+import rdts.time.CausalTime
 import scalafx.beans.property.StringProperty
 
 import java.util.concurrent.atomic.AtomicReference
@@ -15,7 +19,32 @@ class TravelPlanModel(
     rootOfTrust: PublicIdentity,
     initialAclDeltas: List[AclDelta[TravelPlan]] = List.empty
 ) {
-  private val crdt = AtomicReference[TravelPlan]()
+  private given localUid: LocalUid = LocalUid(localIdentity.getPublic.toUid)
+  private val crdt = AtomicReference[TravelPlan]({
+    var fakeRdt = TravelPlan.empty
+    fakeRdt = fakeRdt.merge(
+      TravelPlan.empty.copy(bucketList =
+        fakeRdt.bucketList.mod(_.update("1", LastWriterWins(CausalTime.now(), "A")))
+      )
+    )
+    fakeRdt = fakeRdt.merge(
+      TravelPlan.empty.copy(bucketList =
+        fakeRdt.bucketList.mod(_.update("2", LastWriterWins(CausalTime.now(), "B")))
+      )
+    )
+    fakeRdt = fakeRdt.merge(
+      TravelPlan.empty.copy(expenses =
+        fakeRdt.expenses.mod(_.update(
+          "3",
+          Expense(LastWriterWins.now(Some("Hello World!")), LastWriterWins.empty, ObserveRemoveMap.empty)
+        ))
+      )
+    )
+    fakeRdt
+  })
+
+  def state: TravelPlan                    = crdt.get()
+  def currentAcl: MonotonicAcl[TravelPlan] = sync.currentAcl
 
   private val sync: SyncWithMonotonicAcl[TravelPlan] =
     SyncWithMonotonicAcl[TravelPlan](

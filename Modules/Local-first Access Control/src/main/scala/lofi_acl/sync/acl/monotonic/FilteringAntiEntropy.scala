@@ -1,7 +1,6 @@
 package lofi_acl.sync.acl.monotonic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import lofi_acl.access
 import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
@@ -10,7 +9,7 @@ import lofi_acl.crypto.PublicIdentity.toPublicIdentity
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.PartialDelta
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
-import lofi_acl.sync.{ConnectionManager, JsoniterCodecs, MessageReceiver}
+import lofi_acl.sync.{ConnectionManager, MessageReceiver}
 import rdts.base.Lattice
 import rdts.time.{Dot, Dots}
 
@@ -101,6 +100,39 @@ class FilteringAntiEntropy[RDT](
         sendersEffectiveWritePermissions = sendersEffectiveWritePermissions.removed(remote)
       }
     }
+  }
+
+  def newPeers(peers: Map[PublicIdentity, (String, Int)]): Unit = {
+    receivedMessage(AnnouncePeers(peers), localPublicId)
+  }
+
+  def mutateRdt(dot: Dot, delta: RDT): Unit = {
+    require(!rdtDeltas.allDots.contains(dot))
+    val (aclDots, acl) = aclReference.get()
+    val filteredDelta  = filter.filter(delta, acl.write(localPublicId))
+    syncInstance.receivedDelta(dot, filteredDelta)
+    val deltaMsg: Delta[RDT] = Delta(filteredDelta, dot, aclDots)
+    broadcastFiltered(deltaMsg)
+  }
+
+  def acl: MonotonicAcl[RDT] = aclReference.get()._2
+
+  def grantPermission(aclDot: Dot, affectedUser: PublicIdentity, realm: PermissionTree, operation: Operation): Unit = {
+    val (aclDots, acl) = aclReference.get()
+    require(!aclDots.contains(aclDot))
+
+    operation match
+      case Operation.READ  => require(realm <= acl.read(localPublicId))
+      case Operation.WRITE => require(realm <= acl.write(localPublicId))
+
+    val addAclMsg: AclDelta[RDT] = {
+      val unsignedDelta: AclDelta[RDT] =
+        AclDelta(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
+      MonotonicAcl.signDelta(unsignedDelta, localIdentity)
+    }
+
+    receivedMessage(addAclMsg, localPublicId)
+    val _ = connectionManager.broadcast(addAclMsg)
   }
 
   @volatile private var stopped = false
@@ -374,37 +406,6 @@ class FilteringAntiEntropy[RDT](
       }
   }
   antiEntropyThread.start()
-
-  def newPeers(peers: Map[PublicIdentity, (String, Int)]): Unit = {
-    receivedMessage(AnnouncePeers(peers), localPublicId)
-  }
-
-  def mutateRdt(dot: Dot, delta: RDT): Unit = {
-    require(!rdtDeltas.allDots.contains(dot))
-    val (aclDots, acl) = aclReference.get()
-    val filteredDelta  = filter.filter(delta, acl.write(localPublicId))
-    syncInstance.receivedDelta(dot, filteredDelta)
-    val deltaMsg: Delta[RDT] = Delta(filteredDelta, dot, aclDots)
-    broadcastFiltered(deltaMsg)
-  }
-
-  def grantPermission(aclDot: Dot, affectedUser: PublicIdentity, realm: PermissionTree, operation: Operation): Unit = {
-    val (aclDots, acl) = aclReference.get()
-    require(!aclDots.contains(aclDot))
-
-    operation match
-      case Operation.READ  => require(realm <= acl.read(localPublicId))
-      case Operation.WRITE => require(realm <= acl.write(localPublicId))
-
-    val addAclMsg: AclDelta[RDT] = {
-      val unsignedDelta: AclDelta[RDT] =
-        AclDelta(affectedUser, realm, operation, aclDot, aclReference.get()._1, null)
-      MonotonicAcl.signDelta(unsignedDelta, localIdentity)
-    }
-
-    receivedMessage(addAclMsg, localPublicId)
-    val _ = connectionManager.broadcast(addAclMsg)
-  }
 }
 
 object FilteringAntiEntropy {

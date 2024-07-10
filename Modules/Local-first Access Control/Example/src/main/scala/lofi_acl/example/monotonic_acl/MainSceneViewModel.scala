@@ -1,10 +1,7 @@
 package lofi_acl.example.monotonic_acl
 
-import javafx.scene.control as jfxsc
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, StringProperty}
-import scalafx.event.ActionEvent
-import scalafx.scene.Parent
 import scalafx.scene.control.TextField
 import scalafx.scene.layout.StackPane
 import scalafx.stage.Stage
@@ -34,8 +31,8 @@ class MainSceneViewModel {
     global.execute { () =>
       val invitation = model.createInvitation
       Platform.runLater(() => {
-        val scene  = InvitationDialogScene(invitation, model)
-        val stage  = new Stage()
+        val scene = InvitationDialogScene(invitation, model)
+        val stage = new Stage()
         stage.setTitle("New Invitation")
         stage.scene = scene
         stage.show()
