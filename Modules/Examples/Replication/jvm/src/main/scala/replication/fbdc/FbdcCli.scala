@@ -1,6 +1,9 @@
 package replication.fbdc
 
 import channels.TCP
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import replication.JsoniterCodecs.given
 
 import java.nio.file.Path
 import java.util.concurrent.Executors
@@ -19,6 +22,8 @@ case class CliConnections(
 class FbdcCli(settings: CliConnections) {
 
   val exData = new FbdcExampleData()
+
+  given jsonCodec: JsonValueCodec[State] = JsonCodecMaker.make
 
   val executor             = Executors.newCachedThreadPool()
   val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)

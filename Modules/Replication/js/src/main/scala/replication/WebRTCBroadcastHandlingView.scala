@@ -29,12 +29,12 @@ object BroadcastCommunication {
   case class Response(from: Long, to: Long, sessionDescription: SessionDescription) extends BroadcastCommunication
 }
 
-given [T](using JsonValueCodec[T]): Conversion[MessageBuffer, T] = mb => readFromArray[T](mb.asArray)
-given [T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] = v => ArrayMessageBuffer(writeToArray[T](v))
+given converterRead[T](using JsonValueCodec[T]): Conversion[MessageBuffer, T] = mb => readFromArray[T](mb.asArray)
+given converterWrite[T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] = v => ArrayMessageBuffer(writeToArray[T](v))
 
 given JsonValueCodec[BroadcastCommunication] = JsonCodecMaker.make
 
-class WebRTCConnectionView(dataManager: DataManager[?]) {
+class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCodec[S]) {
 
   // label seems mostly for auto negotiation
   val channelLabel = "webrtc-channel"
@@ -86,7 +86,7 @@ class WebRTCConnectionView(dataManager: DataManager[?]) {
       {
         case Failure(ex) => errorReporter.fail(ex)
         case Success(msg) =>
-          val communication: BroadcastCommunication = msg.convert
+          val communication: BroadcastCommunication = converterRead[BroadcastCommunication].convert(msg)
           Async[Abort].fromCallback {
             communication match
               case BroadcastCommunication.Hello(id) =>
@@ -129,7 +129,7 @@ class WebRTCConnectionView(dataManager: DataManager[?]) {
       }
     )
 
-    dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
+    dataManager.addLatentConnection(DataManager.jsoniterMessages(WebRTCConnection.openLatent(channel)))
 
   }
 

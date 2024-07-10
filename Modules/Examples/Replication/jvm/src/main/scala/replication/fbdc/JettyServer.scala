@@ -1,6 +1,8 @@
 package replication.fbdc
 
 import channels.jettywebsockets.JettyWsListener
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.*
 import org.eclipse.jetty.server.handler.ResourceHandler
@@ -16,7 +18,7 @@ class JettyServer(
     contextPath: String,
     dataManager: DataManager[?],
     interface: String,
-) {
+)(using jsonCodec: JsonValueCodec[dataManager.CodecState]) {
 
   lazy val jettyServer: Server = {
     val threadPool = new QueuedThreadPool(3, 0)
@@ -25,6 +27,7 @@ class JettyServer(
   }
 
   def stop(): Unit = jettyServer.stop()
+
 
   def start(port: Int): Unit = {
 

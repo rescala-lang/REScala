@@ -23,6 +23,8 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.ArrayBuffer
 
+import replication.JsoniterCodecs.given
+
 case class MetaInfo(
     connection: Signal[Int],
     reconnecting: Signal[Int]
@@ -58,6 +60,9 @@ object WebRepMain {
     @nowarn given JsonValueCodec[ReplicatedList[String]] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     val exData = new FbdcExampleData()
+
+    @nowarn given JsonValueCodec[exData.dataManager.CodecState] = JsonCodecMaker.make
+
 
     val ccm = new ContentConnectionManager(exData.dataManager.dataManager)
 

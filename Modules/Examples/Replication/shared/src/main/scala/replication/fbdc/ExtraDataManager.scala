@@ -1,9 +1,11 @@
 package replication.fbdc
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.Dots
 import reactives.operator.{Event, Signal, Var}
+import replication.JsoniterCodecs.given
 import replication.{DataManager, ProtocolDots}
 
 import scala.collection.mutable
@@ -14,9 +16,9 @@ class ExtraDataManager[State](val dataManager: DataManager[State], changeEvt: Ev
     bottom: Bottom[State]
 ) {
 
-  export dataManager.{selfContext as _, *}
+  given JsonValueCodec[ProtocolDots[State]] = JsonCodecMaker.make
 
-  import dataManager.given
+  export dataManager.{selfContext as _, *}
 
   val changes: Event[TransferState] = changeEvt
   val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr merge ts }

@@ -1,10 +1,11 @@
 package replication.webapp
 
 import channels.webnativewebsockets.WebsocketConnect
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import org.scalajs.dom
 import replication.DataManager
 
-class ContentConnectionManager(dataManager: DataManager[?]) {
+class ContentConnectionManager(dataManager: DataManager[?])(using JsonValueCodec[dataManager.CodecState]) {
 
   val wsUri: String = {
     val wsProtocol = if dom.document.location.protocol == "https:" then "wss" else "ws"

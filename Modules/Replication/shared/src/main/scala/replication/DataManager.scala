@@ -13,14 +13,10 @@ import replication.ProtocolMessage.{Payload, Request}
 import java.util.Timer
 import scala.util.{Failure, Success, Try}
 
-class Binding[T](key: String)(using lat: Lattice[T], codec: JsonValueCodec[T])
-
-case class HMap(keys: Map[String, Binding[?]], values: Map[String, Any])
-
 sealed trait ProtocolMessage[+T]
 object ProtocolMessage {
-  case class Request(sender: Uid, knows: Dots) extends ProtocolMessage[Nothing]
-  case class Payload[T](sender: Uid, data: T)  extends ProtocolMessage[T]
+  case class Request(sender: Uid, knows: Dots)            extends ProtocolMessage[Nothing]
+  case class Payload[T](sender: Uid, dots: Dots, data: T) extends ProtocolMessage[T]
 }
 
 case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bottom
@@ -30,17 +26,33 @@ trait Aead {
   def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
 }
 
+object DataManager {
+  def jsoniterMessages[T: JsonValueCodec](conn: AbstractLatentConnection[MessageBuffer])
+      : AbstractLatentConnection[ProtocolMessage[T]] = {
+
+    given JsonValueCodec[ProtocolMessage[T]] = JsonCodecMaker.make
+
+    ConnectionMapper.adapt(
+      {
+        (mb: MessageBuffer) => readFromArray[ProtocolMessage[T]](mb.asArray)
+      },
+      { (pm: ProtocolMessage[T]) => ArrayMessageBuffer(writeToArray(pm)) }
+    )(conn)
+  }
+}
+
 class DataManager[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
     crypto: Option[Aead] = None
-)(using jsonCodec: JsonValueCodec[State], lattice: Lattice[State], bottom: Bottom[State]) {
-
-  given protocolDotsCodec: JsonValueCodec[ProtocolDots[State]]              = JsonCodecMaker.make
-  given protocolCodec: JsonValueCodec[ProtocolMessage[ProtocolDots[State]]] = JsonCodecMaker.make
+)(using lattice: Lattice[State], bottom: Bottom[State]) {
 
   given LocalUid = replicaId
+
+  type CodecState = State
+
+  type ConnectionContext = AbstractConnectionContext[ProtocolMessage[State]]
 
   type TransferState = ProtocolDots[State]
 
@@ -57,21 +69,17 @@ class DataManager[State](
   timer.scheduleAtFixedRate(
     { () =>
       connections.foreach: con =>
-        con.send(missingRequestMessage).run(using ())(debugCallback)
+        con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
     },
     10000,
     10000
   )
 
-  private def messageBufferCallback(outChan: ConnectionContext): Callback[MessageBuffer] =
-    case Success(msg) =>
-      val bytes = crypto.flatMap(c => c.decrypt(msg.asArray, Array.empty).toOption).getOrElse(msg.asArray)
-      val res   = readFromArray[ProtocolMessage[TransferState]](bytes)
-      println(s"$res")
-      handleMessage(res, outChan)
-    case Failure(error) => error.printStackTrace()
+  def addLatentConnection(latentConnection: AbstractLatentConnection[MessageBuffer])(using JsonValueCodec[CodecState]): Unit = {
+    addLatentConnection(DataManager.jsoniterMessages(latentConnection))
+  }
 
-  def addLatentConnection(latentConnection: LatentConnection): Unit = {
+  def addLatentConnection(latentConnection: AbstractLatentConnection[ProtocolMessage[State]]): Unit = {
     println(s"activating latent connection in data manager")
     latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort):
       case Success(conn) =>
@@ -111,21 +119,26 @@ class DataManager[State](
     contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
   }
 
-  def handleMessage(msg: ProtocolMessage[TransferState], biChan: ConnectionContext) = {
+  private def messageBufferCallback(outChan: ConnectionContext): Callback[ProtocolMessage[State]] =
+    case Success(msg)   => handleMessage(msg, outChan)
+    case Failure(error) => error.printStackTrace()
+
+  def handleMessage(msg: ProtocolMessage[State], biChan: ConnectionContext) = {
     msg match
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
-        relevant.map(encodeDelta).foreach: msg =>
-          biChan.send(msg).run(using ())(debugCallback)
+        relevant.foreach: msg =>
+          biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallback)
         updateContext(uid, selfContext merge knows)
-      case Payload(uid, named) =>
+      case Payload(uid, context, data) =>
+        val interalized = ProtocolDots[State](data, context)
         lock.synchronized {
-          updateContext(uid, named.context)
-          updateContext(replicaId.uid, named.context)
-          remoteDeltas = named :: remoteDeltas
+          updateContext(uid, context)
+          updateContext(replicaId.uid, context)
+          remoteDeltas = interalized :: remoteDeltas
         }
-        receiveCallback(named.data)
-        allChanges(named)
+        receiveCallback(data)
+        allChanges(interalized)
 
   }
 
@@ -138,21 +151,21 @@ class DataManager[State](
     }
     connections.foreach: con =>
       deltas.foreach: delta =>
-        con.send(encodeDelta(delta)).run(using ())(debugCallback)
+        con.send(Payload(replicaId.uid, delta.context, delta.data)).run(using ())(debugCallback)
   }
-
-  def encodeDelta(delta: TransferState): MessageBuffer = {
-    toEncBuffer:
-      writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta))
-  }
-
-  def missingRequestMessage: MessageBuffer = {
-    toEncBuffer:
-      writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext))
-  }
-
-  def toEncBuffer(bytes: Array[Byte]): MessageBuffer =
-    val enc = crypto.map(c => c.encrypt(bytes, Array.empty)).getOrElse(bytes)
-    ArrayMessageBuffer(enc)
 
 }
+
+//def encodeDelta(delta: TransferState): MessageBuffer = {
+//  toEncBuffer:
+//    writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta))
+//}
+//
+//def missingRequestMessage: MessageBuffer = {
+//  toEncBuffer:
+//    writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext))
+//}
+//
+//def toEncBuffer(bytes: Array[Byte]): MessageBuffer =
+//  val enc = crypto.map(c => c.encrypt(bytes, Array.empty)).getOrElse(bytes)
+//  ArrayMessageBuffer(enc)
