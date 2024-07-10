@@ -41,8 +41,8 @@ class TravelPlanModel(
 object TravelPlanModel {
   def createNewDocument: TravelPlanModel = {
     val privateId = IdentityFactory.createNewIdentity
-    MonotonicAcl.createRootOfTrust[TravelPlan](privateId)
-    TravelPlanModel(privateId, privateId.getPublic, List.empty)
+    val aclDelta  = MonotonicAcl.createRootOfTrust[TravelPlan](privateId)
+    TravelPlanModel(privateId, privateId.getPublic, List(aclDelta))
   }
 
   def joinDocument(inviteString: String): TravelPlanModel = {
