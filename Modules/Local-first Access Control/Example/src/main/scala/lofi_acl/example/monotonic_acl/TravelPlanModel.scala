@@ -1,5 +1,7 @@
 package lofi_acl.example.monotonic_acl
 
+import lofi_acl.access.Operation.{READ, WRITE}
+import lofi_acl.access.PermissionTree
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{Ed25519Util, IdentityFactory, PrivateIdentity, PublicIdentity}
 import lofi_acl.example.travelplanner.{Expense, TravelPlan}
@@ -58,6 +60,15 @@ class TravelPlanModel(
 
   def createInvitation: Invitation =
     Invitation(rootOfTrust, Ed25519Util.generateNewKeyPair, localIdentity.getPublic, sync.connectionString)
+
+  def grantPermission(
+      affectedUser: PublicIdentity,
+      readPermissions: PermissionTree,
+      writePermissions: PermissionTree
+  ): Unit = {
+    sync.grantPermissions(affectedUser, readPermissions, READ)
+    sync.grantPermissions(affectedUser, writePermissions, WRITE)
+  }
 
   def addConnection(remoteUser: PublicIdentity, address: String): Unit = {
     sync.connect(remoteUser, address)

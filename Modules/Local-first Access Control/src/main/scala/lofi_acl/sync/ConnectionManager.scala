@@ -72,7 +72,6 @@ class ConnectionManager[MSG](
         val connectionFuture = connector.acceptConnection
         connectionFuture.onComplete {
           case Failure(exception) =>
-            exception.printStackTrace()
             running = false
             Console.err.println("Stopping listener")
           case Success((socket, peerIdentity)) =>

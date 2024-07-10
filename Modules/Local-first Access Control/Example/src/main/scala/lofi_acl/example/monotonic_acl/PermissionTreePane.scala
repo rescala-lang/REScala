@@ -1,7 +1,7 @@
 package lofi_acl.example.monotonic_acl
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
-import lofi_acl.access.{Permission, PermissionTree}
+import lofi_acl.access.{Filter, Permission, PermissionTree}
 import lofi_acl.example.monotonic_acl.PermissionTreePane.{ExpensePermCheckBoxes, ExpensePermEntryCheckBoxes, wiredReadWriteCheckboxes}
 import lofi_acl.example.travelplanner.TravelPlan
 import scalafx.beans.property.BooleanProperty
@@ -83,10 +83,9 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
   addLabeled("W:", expensePermParentCheckBoxes.commentWrite, 9, curRowIdx)
   curRowIdx += 1
 
-  // TODO: Add another header row for expenses
   expenseEntryCheckBoxes.foreach { (_, boxes) =>
     add(Text(" ↳ "), 0, curRowIdx)
-    add(Text(boxes.name), 1, curRowIdx)
+    add(Text(boxes.description), 1, curRowIdx)
     add(boxes.read, 2, curRowIdx)
     add(boxes.write, 3, curRowIdx)
     add(boxes.descriptionRead, 4, curRowIdx)
@@ -181,12 +180,87 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
         )
       }
   }
+
+  def selectionToPermissions(using filter: Filter[TravelPlan]): (PermissionTree, PermissionTree) = {
+    extension (permissionTree: PermissionTree)
+      private def allowIfSelected(checkBox: CheckBox, path: String): PermissionTree =
+        if checkBox.isSelected then permissionTree.merge(PermissionTree.fromPath(path))
+        else permissionTree
+
+    var read  = if globalReadCheckBox.isSelected then PermissionTree.allow else PermissionTree.empty
+    var write = if globalWriteCheckBox.isSelected then PermissionTree.allow else PermissionTree.empty
+
+    read = read.allowIfSelected(titleReadCheckBox, "title")
+    write = write.allowIfSelected(titleWriteCheckBox, "title")
+
+    read = read.allowIfSelected(bucketListReadCheckBox, "bucketList")
+    write = write.allowIfSelected(bucketListWriteCheckBox, "bucketList")
+
+    val bucketListReadEntries = bucketListEntryCheckBoxes.flatMap { case (id, (_, entryRead, _)) =>
+      if entryRead.isSelected then Some(id -> PermissionTree.allow) else None
+    }
+    read = read.merge(PermissionTree(
+      PARTIAL,
+      Map("bucketList" -> PermissionTree(PARTIAL, Map("data" -> PermissionTree(PARTIAL, bucketListReadEntries))))
+    ))
+
+    val bucketListWriteEntries = bucketListEntryCheckBoxes.flatMap { case (id, (_, _, entryWrite)) =>
+      if entryWrite.isSelected then Some(id -> PermissionTree.allow) else None
+    }
+    write = write.merge(PermissionTree(
+      PARTIAL,
+      Map("bucketList" -> PermissionTree(PARTIAL, Map("data" -> PermissionTree(PARTIAL, bucketListWriteEntries))))
+    ))
+
+    read = read.allowIfSelected(expensePermParentCheckBoxes.read, "expenses")
+    write = write.allowIfSelected(expensePermParentCheckBoxes.write, "expenses")
+
+    read = read.allowIfSelected(expensePermParentCheckBoxes.descriptionRead, "expenses.data.*.description")
+    write = write.allowIfSelected(expensePermParentCheckBoxes.descriptionWrite, "expenses.data.*.description")
+    read = read.allowIfSelected(expensePermParentCheckBoxes.amountRead, "expenses.data.*.amount")
+    write = write.allowIfSelected(expensePermParentCheckBoxes.amountWrite, "expenses.data.*.amount")
+    read = read.allowIfSelected(expensePermParentCheckBoxes.commentRead, "expenses.data.*.comment")
+    write = write.allowIfSelected(expensePermParentCheckBoxes.commentWrite, "expenses.data.*.comment")
+
+    val expenseEntryPerms = expenseEntryCheckBoxes.map { case (id, boxes) =>
+      var read  = PermissionTree.empty
+      var write = PermissionTree.empty
+
+      read = read.allowIfSelected(boxes.descriptionRead, "description")
+      write = write.allowIfSelected(boxes.descriptionWrite, "description")
+      read = read.allowIfSelected(boxes.amountRead, "amount")
+      write = write.allowIfSelected(boxes.amountWrite, "amount")
+      read = read.allowIfSelected(boxes.commentRead, "comment")
+      write = write.allowIfSelected(boxes.commentWrite, "comment")
+
+      id -> (read, write)
+    }
+
+    read = read.merge(PermissionTree(
+      PARTIAL,
+      Map("expenses" -> PermissionTree(
+        PARTIAL,
+        Map("data" -> PermissionTree(PARTIAL, expenseEntryPerms.map { case (id, (read, _)) => id -> read }))
+      ))
+    ))
+    write = write.merge(PermissionTree(
+      PARTIAL,
+      Map("expenses" -> PermissionTree(
+        PARTIAL,
+        Map("data" -> PermissionTree(PARTIAL, expenseEntryPerms.map { case (id, (_, write)) => id -> write }))
+      ))
+    ))
+
+    read = filter.validatePermissionTree(filter.minimizePermissionTree(read)).get
+    write = filter.validatePermissionTree(filter.minimizePermissionTree(write)).get
+    (read, write)
+  }
 }
 
 object PermissionTreePane {
   // TODO: Add override from previous permission / max inheritable permission
   private class ExpensePermEntryCheckBoxes(
-      val name: String,
+      val description: String,
       parentRead: BooleanProperty,
       parentWrite: BooleanProperty,
       parentDescriptionRead: BooleanProperty,

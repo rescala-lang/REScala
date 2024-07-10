@@ -16,6 +16,9 @@ case class PublicIdentity(id: String) {
 object PublicIdentity {
   private val base64Encoder = Base64.getEncoder
 
+  def fromPublicKey(publicKey: PublicKey): PublicIdentity =
+    PublicIdentity(Ed25519Util.publicKeyToPublicKeyBytesBase64Encoded(publicKey))
+
   def fromRawPublicKeyBytes(pubKeyBytes: Array[Byte]): PublicIdentity =
     require(pubKeyBytes.length == 32)
     PublicIdentity(base64Encoder.encodeToString(pubKeyBytes))

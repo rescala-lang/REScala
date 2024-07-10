@@ -33,7 +33,7 @@ class MainSceneViewModel {
       Platform.runLater(() => {
         val scene = InvitationDialogScene(invitation, model)
         val stage = new Stage()
-        stage.setTitle("New Invitation")
+        stage.setTitle("New Invite")
         stage.scene = scene
         stage.show()
       })
