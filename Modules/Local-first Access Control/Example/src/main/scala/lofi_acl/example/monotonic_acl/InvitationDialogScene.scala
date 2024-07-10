@@ -35,6 +35,8 @@ class InvitationDialogScene(val invitation: Invitation, val travelPlanModel: Tra
     )
   )
 
+  private val permissionTreePane = PermissionTreePane(fakeRdt)
+
   private val inviteText = TextField()
   inviteText.setText(invitation.encode)
   inviteText.editable = false
@@ -45,9 +47,10 @@ class InvitationDialogScene(val invitation: Invitation, val travelPlanModel: Tra
     val content   = new ClipboardContent()
     val _         = clipboard.setContent(content)
     rootPane.bottom = inviteText
+    permissionTreePane.disable = true
   }
 
-  rootPane.center = PermissionTreePane(fakeRdt)
+  rootPane.center = permissionTreePane
   rootPane.bottom = createInviteButton
   content = rootPane
 }
