@@ -17,7 +17,7 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
       case ProtocolMessage.Request(sender, dots) =>
-        // TODO: how to handle this? We
+        // TODO: how to handle this? Optimally, this should be answered by sending all known payloads that are larger than the provided set of dots
         Sync { () }
       case ProtocolMessage.Payload(sender, dots, data) =>
         connection.send(writeToArray[T](data), dots).toAsync(using executionContext)
