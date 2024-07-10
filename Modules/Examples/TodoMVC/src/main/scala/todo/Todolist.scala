@@ -6,6 +6,8 @@ import reactives.extra.Tags.reattach
 import replication.{DTNChannel, WebRTCConnectionView}
 import scalatags.JsDom.all
 import scalatags.JsDom.all.given
+import Codecs.given
+import todo.TodoDataManager.TodoRepState
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 
@@ -48,7 +50,7 @@ object DTNTestConnector {
     val portInput = all.input(all.placeholder := "dtnd ws port").render
     val connectButton = all.button(all.onclick := { () =>
       TodoDataManager.dataManager.addLatentConnection(
-        DTNChannel("127.0.0.1", portInput.value.toInt, "app1", scala.concurrent.ExecutionContext.global)
+        DTNChannel[TodoRepState]("127.0.0.1", portInput.value.toInt, "app1", scala.concurrent.ExecutionContext.global)
       )
     }).render
     connectButton.textContent = "Connect"
