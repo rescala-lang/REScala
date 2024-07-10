@@ -30,8 +30,6 @@ object MembershipSpec extends Commands {
   val maxDevices = 3
   ////
 
-  //  case class LocalState(counter: Time, members: Set[Uid], log: List[Int])
-
   type State = List[(LocalUid, LocalState)]
   type LocalState = Membership[Int, Paxos, Paxos]
 
@@ -62,6 +60,29 @@ object MembershipSpec extends Commands {
     (10, genRead(state))
   )
 
+
+  def genIndex(state: State): Gen[Int] = Gen.choose(0, state.length - 1)
+
+  def genIndex2(state: State): Gen[(Int, Int)] =
+    for
+      leftIndex <- genIndex(state)
+      rightIndex = (leftIndex + 1) % state.length
+    yield (leftIndex, rightIndex)
+
+
+  def genMerge(state: State): Gen[Merge] =
+    genIndex2(state).map((l: Int, r: Int) => Merge(l, r))
+
+  def genWrite(state: State): Gen[Write] =
+    for
+      index <- genIndex(state)
+      value <- arbitrary[Int]
+    yield Write(index, value)
+
+  def genRead(state: State): Gen[Read] = genIndex(state).map(Read(_))
+
+  def genUpkeep(state: State): Gen[Upkeep] = genIndex(state).map(Upkeep(_))
+
   // commands: merge, upkeep, read, write, addMember, removeMember
   case class Merge(leftIndex: Int, rightIndex: Int) extends Command:
     type Result = Membership[Int, Paxos, Paxos]
@@ -86,28 +107,6 @@ object MembershipSpec extends Commands {
 
     override def postCondition(state: State, result: Try[Result]): Prop =
       Lattice[Membership[Int, Paxos, Paxos]].lteq(state(rightIndex)._2, result.get)
-
-  def genIndex(state: State): Gen[Int] = Gen.choose(0, state.length - 1)
-
-  def genIndex2(state: State): Gen[(Int, Int)] =
-    for
-      leftIndex <- genIndex(state)
-      rightIndex = (leftIndex + 1) % state.length
-    yield (leftIndex, rightIndex)
-
-
-  def genMerge(state: State): Gen[Merge] =
-    genIndex2(state).map((l: Int, r: Int) => Merge(l, r))
-
-  def genWrite(state: State): Gen[Write] =
-    for
-      index <- genIndex(state)
-      value <- arbitrary[Int]
-    yield Write(index, value)
-
-  def genRead(state: State): Gen[Read] = genIndex(state).map(Read(_))
-
-  def genUpkeep(state: State): Gen[Upkeep] = genIndex(state).map(Upkeep(_))
 
   case class Write(index: Int, value: Int) extends UnitCommand:
     def newLocalState(states: Seq[(LocalUid, LocalState)]) =
