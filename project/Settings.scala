@@ -8,7 +8,7 @@ import sbt.Keys._
 object Settings {
 
   // also consider updating the -source param below
-  val scala3VersionString = "3.5.0-RC2"
+  val scala3VersionString = "3.5.0-RC3"
 
   val scala3VersionMinor = scala3VersionString.reverse.dropWhile(c => c != '.').drop(1).reverse
 
