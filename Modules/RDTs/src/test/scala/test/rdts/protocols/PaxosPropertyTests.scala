@@ -89,11 +89,15 @@ object MembershipSpec extends Commands {
 
   def genIndex(state: State): Gen[Int] = Gen.choose(0, state.length - 1)
 
-  def genMerge(state: State): Gen[Merge] =
+  def genIndex2(state: State): Gen[(Int, Int)] =
     for
       leftIndex <- genIndex(state)
       rightIndex = (leftIndex + 1) % state.length
-    yield Merge(leftIndex, rightIndex)
+    yield (leftIndex, rightIndex)
+
+
+  def genMerge(state: State): Gen[Merge] =
+    genIndex2(state).map((l: Int, r: Int) => Merge(l, r))
 
   def genWrite(state: State): Gen[Write] =
     for
@@ -144,28 +148,33 @@ object MembershipSpec extends Commands {
               (membership.read.containsSlice(result.get) || result.get.containsSlice(membership.read)) :| "every log is a prefix of another log or vice versa"
       }
 
-  case class Upkeep(index: Int) extends UnitCommand:
+  case class Upkeep(index: Int) extends Command:
+    type Result = Sut
+
     def newLocalState(states: Seq[(LocalUid, LocalState)]) =
       val (id, membership) = states(index)
       (id, membership.merge(membership.upkeep()(using id)))
 
-    override def run(sut: Sut): Unit =
+    override def run(sut: Sut): Result =
       val newState = newLocalState(sut.toSeq)
-      if newState._2.counter > sut(index)._2.counter then
-        println(newState)
+      //      if newState._2.counter > sut(index)._2.counter then
+      //        println(newState)
       sut(index) = newLocalState(sut.toSeq)
+      sut
 
     override def nextState(state: State): State =
       state.updated(index, newLocalState(state))
 
     override def preCondition(state: State): Boolean = true
 
-    override def postCondition(state: State, success: Boolean): Prop =
-      Prop.forAll(genIndex(state)) {
-        index =>
-          state(index) match
-            case (id, membership) =>
-              (membership.membersConsensus.members == membership.innerConsensus.members) :| "members of both protocols never go out of sync"
+    override def postCondition(state: State, result: Try[Result]): Prop =
+      Prop.forAll(genIndex2(result.get.toList)) {
+        (index1, index2) =>
+          (result.get(index1), result.get(index2)) match
+            case ((_, membership1), (_, membership2)) =>
+              (membership1.membersConsensus.members == membership1.innerConsensus.members) :| "members of both protocols never go out of sync" &&
+                ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices"
+
       }
 
 }
