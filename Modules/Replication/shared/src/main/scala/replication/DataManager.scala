@@ -75,7 +75,9 @@ class DataManager[State](
     10000
   )
 
-  def addLatentConnection(latentConnection: AbstractLatentConnection[MessageBuffer])(using JsonValueCodec[CodecState]): Unit = {
+  def addLatentConnection(latentConnection: AbstractLatentConnection[MessageBuffer])(using
+      JsonValueCodec[CodecState]
+  ): Unit = {
     addLatentConnection(DataManager.jsoniterMessages(latentConnection))
   }
 
@@ -155,17 +157,3 @@ class DataManager[State](
   }
 
 }
-
-//def encodeDelta(delta: TransferState): MessageBuffer = {
-//  toEncBuffer:
-//    writeToArray[ProtocolMessage[TransferState]](Payload(replicaId.uid, delta))
-//}
-//
-//def missingRequestMessage: MessageBuffer = {
-//  toEncBuffer:
-//    writeToArray[ProtocolMessage[TransferState]](Request(replicaId.uid, selfContext))
-//}
-//
-//def toEncBuffer(bytes: Array[Byte]): MessageBuffer =
-//  val enc = crypto.map(c => c.encrypt(bytes, Array.empty)).getOrElse(bytes)
-//  ArrayMessageBuffer(enc)

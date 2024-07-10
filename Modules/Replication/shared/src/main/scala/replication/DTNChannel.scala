@@ -30,6 +30,11 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
 
 class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec: ExecutionContext)
     extends AbstractLatentConnection[ProtocolMessage[T]] {
+
+  // We use a local dtnid instead of a remote replica ID to signify that the local DTNd is the one providing information.
+  // If the local dtnd could be stopped and restarted without loosing data, this id should remain the same for performance reasons, but it will be correct even if it changes.
+  val dtnid = Uid.gen()
+
   override def prepare(incoming: AbstractIncoming[ProtocolMessage[T]])
       : Async[Abort, AbstractConnectionContext[ProtocolMessage[T]]] = Async {
     val client: RdtClient = RdtClient(host, port, appName, NoDotsConvergenceClient).toAsync(using ec).bind
@@ -38,13 +43,12 @@ class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec
 
     client.registerOnReceive { (payload: Array[Byte], dots: Dots) =>
       val data = readFromArray[T](payload)
-      // TODO: is Uid zero bad?
-      cb.succeed(ProtocolMessage.Payload(Uid.zero, dots, data))
+      cb.succeed(ProtocolMessage.Payload(dtnid, dots, data))
     }
 
     // TODO: create custom empty request to signal to the application that it should send us all data it has.
     // optimally, this should not be an empty set of dots, but those present in the network
-    cb.succeed(ProtocolMessage.Request(Uid.zero, Dots.empty))
+    cb.succeed(ProtocolMessage.Request(dtnid, Dots.empty))
 
     conn
   }
