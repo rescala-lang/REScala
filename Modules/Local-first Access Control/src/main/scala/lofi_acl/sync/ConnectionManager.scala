@@ -180,6 +180,7 @@ class ConnectionManager[MSG](
           connections = connections.updated(peerIdentity, socket)
           outputStreams = outputStreams.updated(peerIdentity, DataOutputStream(socket.getOutputStream))
           receiveFrom(peerIdentity, socket)
+          messageHandler.connectionEstablished(peerIdentity)
     }
   }
 
