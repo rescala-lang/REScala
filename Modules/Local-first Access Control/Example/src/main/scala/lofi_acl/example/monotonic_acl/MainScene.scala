@@ -45,7 +45,7 @@ class MainScene extends Scene {
       Platform.runLater {
         rootPane.center = VBox(
           HBox(viewModel.titleTextField, createInvitationButton),
-          viewModel.bucketListViewContainer,
+          viewModel.bucketListView,
           viewModel.expenseViewContainer,
         )
       }

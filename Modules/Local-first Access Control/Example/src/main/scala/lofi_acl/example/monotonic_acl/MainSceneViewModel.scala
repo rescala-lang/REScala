@@ -2,7 +2,7 @@ package lofi_acl.example.monotonic_acl
 
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, StringProperty}
-import scalafx.scene.control.TextField
+import scalafx.scene.control.{ListView, TextField}
 import scalafx.scene.layout.StackPane
 import scalafx.stage.Stage
 
@@ -19,13 +19,9 @@ class MainSceneViewModel {
   // Travel Plan:
   val titleTextField: TextField = TextField()
 
-  val bucketListViewContainer: StackPane = StackPane()
-  bucketListViewContainer.minWidth = 400
-  bucketListViewContainer.minHeight = 800
+  val bucketListView: ListView[String] = new ListView[String]()
 
   val expenseViewContainer: StackPane = StackPane()
-  expenseViewContainer.minWidth = 400
-  expenseViewContainer.minHeight = 800
 
   def createInviteButtonPressed(): Unit = {
     global.execute { () =>
@@ -60,5 +56,11 @@ class MainSceneViewModel {
 
   private def init(): Unit = {
     titleTextField.text <==> model.title
+    titleTextField.text.onChange((op, oldVal, newVal) =>
+      println(s"$oldVal -> $newVal ($op)")
+      model.changeTitle(newVal)
+    )
+    bucketListView.cellFactory = { (_: Any) => new BucketListEntryListCell(model) }
+    bucketListView.items = model.bucketListIds
   }
 }
