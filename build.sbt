@@ -143,8 +143,7 @@ lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
   )
 
 lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
-  .dependsOn(rdts.jvm % "compile->compile;test->test")
-  .dependsOn(deltalens)
+  .dependsOn(deltalens, rdts.jvm % "compile->compile;test->test")
   .settings(
     scala3defaults,
     // SunEC crypto provider does not support Ed25519 in jdk 11
