@@ -3,7 +3,9 @@ package lofi_acl.ardt.datatypes
 import lofi_acl.access.Permission.*
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import lofi_acl.access.{Filter, PermissionTree}
+import rdts.base.Bottom
 import rdts.datatypes.contextual.ObserveRemoveMap
+import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 
 import scala.util.{Failure, Success, Try}
 
@@ -56,4 +58,6 @@ object ORMap {
             )
           )
         case None => minimized
+
+  given observeRemoveMapEntryFilter[A: Filter: Bottom]: Filter[Entry[A]] = Filter.derived
 }
