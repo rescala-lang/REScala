@@ -39,6 +39,6 @@ class EnumLatticeChecks extends LatticePropertyChecks[TestEnum]:
   test("custom enum lattice tests"):
 
     import TestEnum.*
-    assertEquals(A merge B, B)
-    assertEquals(C(1) merge B merge A, C(1))
-    assertEquals((C(10) merge A) merge (C(100) merge B), C(100))
+    assertEquals(A `merge` B, B)
+    assertEquals(C(1) `merge` B `merge` A, C(1))
+    assertEquals((C(10) `merge` A) `merge` (C(100) `merge` B), C(100))

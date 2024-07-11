@@ -33,7 +33,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val testsig                     = dynsig.flatten
 
       assertEquals(testsig.readValueOnce, 1)
-      outside set 2
+      outside `set` 2
       assertEquals(testsig.readValueOnce, 2)
     }
 
@@ -121,7 +121,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val unwrapped = dynamicSignal.flatten
 
       var log = List[String]()
-      unwrapped observe (log ::= _)
+      unwrapped `observe` (log ::= _)
 
       e1.fire(0)
       assert(log == List("level 2"))
@@ -139,7 +139,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val unwrapped = dynamicSignal.flatten
 
       var log = List[String]()
-      unwrapped observe (log ::= _)
+      unwrapped `observe` (log ::= _)
 
       e1.fire(0)
       assert(log == List("B"))
@@ -155,13 +155,13 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val unwrapped     = selected.flatten
 
       var lastEvent = -1
-      unwrapped observe { lastEvent = _ }
+      unwrapped `observe` { lastEvent = _ }
 
       e1.fire(1)
       assert(lastEvent == 1)
       e2.fire(2)
       assert(lastEvent == 1)
-      eventSelector set e2 // select new event source
+      eventSelector `set` e2 // select new event source
       e2.fire(3)
       assert(lastEvent == 3)
       e1.fire(4)
@@ -183,7 +183,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
       var log = List[Int]()
 
-      combined.changed observe (log ::= _)
+      combined.changed `observe` (log ::= _)
 
       v1.set(10)
       assert(log == List(13))
@@ -195,7 +195,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
       var higherOrderLog = List[Int]()
 
-      flattened.changed observe (higherOrderLog ::= _)
+      flattened.changed `observe` (higherOrderLog ::= _)
 
       v1.set(10)
       assert(higherOrderLog == List(13))
@@ -225,8 +225,8 @@ class FlattenTest extends FunSuiteInvertedAssert {
       var sDerefChanged  = false
       var sHigherChanged = false
 
-      sDeref.change observe { _ => sDerefChanged = true }
-      sHigher.change observe { _ => sHigherChanged = true }
+      sDeref.change `observe` { _ => sDerefChanged = true }
+      sHigher.change `observe` { _ => sHigherChanged = true }
 
       assert(!sHigherChanged && !sDerefChanged)
 
@@ -248,8 +248,8 @@ class FlattenTest extends FunSuiteInvertedAssert {
       var sDerefChanged  = false
       var sHigherChanged = false
 
-      sDeref.change observe { _ => sDerefChanged = true }
-      sHigher.change observe { _ => sHigherChanged = true }
+      sDeref.change `observe` { _ => sDerefChanged = true }
+      sHigher.change `observe` { _ => sHigherChanged = true }
 
       // 1. Unrelated value changes, no updates
       v2.set(1234)
@@ -263,7 +263,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       sDerefChanged = false
 
       // 3. Selector changes, both signals fire changes
-      selector set s2
+      selector `set` s2
       assert(sDerefChanged)
       assert(sHigherChanged)
 
@@ -287,10 +287,10 @@ class FlattenTest extends FunSuiteInvertedAssert {
       var sDeref2_aChanged = false
       var sDeref2_bChanged = false
 
-      sDeref1.change observe { _ => sDeref1Changed = true }
-      sDeref2.change observe { _ => sDeref2Changed = true }
-      sDeref2_a.change observe { _ => sDeref2_aChanged = true }
-      sDeref2_b.change observe { _ => sDeref2_bChanged = true }
+      sDeref1.change `observe` { _ => sDeref1Changed = true }
+      sDeref2.change `observe` { _ => sDeref2Changed = true }
+      sDeref2_a.change `observe` { _ => sDeref2_aChanged = true }
+      sDeref2_b.change `observe` { _ => sDeref2_bChanged = true }
 
       v.set(0)
       assert(sDeref1Changed)
@@ -312,7 +312,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val dereferenced                             = selected.flatten
 
       var dereferencedChanged = false
-      dereferenced.changed observe { _ => dereferencedChanged = true }
+      dereferenced.changed `observe` { _ => dereferencedChanged = true }
 
       tick.fire()
       assert(count.readValueOnce == 1)

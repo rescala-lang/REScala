@@ -63,11 +63,11 @@ class Replica[S: Lattice: JsonValueCodec](val id: Uid, dtnNodeId: String, val se
   val mut: ReplicaMutator[S] = new ReplicaMutator[S](this)
 
   def applyRemoteDelta(delta: S): Unit = synchronized {
-    data = data merge delta
+    data = data `merge` delta
   }
 
   def applyLocalDelta(delta: S): Unit = synchronized {
-    data = data merge delta
+    data = data `merge` delta
     val msg = message(delta)
     connections.get().foreach { ws =>
       ws.sendBinary(msg, true)

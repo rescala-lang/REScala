@@ -12,10 +12,10 @@ class Fold3Test extends FunSuiteInvertedAssert {
       val count = Evt[Int]()
       val reset = Evt[Unit]()
 
-      val resetB = reset branch (_ => "")
+      val resetB = reset `branch` (_ => "")
 
-      val wordB  = word branch identity
-      val countB = count branch (Fold.current * _)
+      val wordB  = word `branch` identity
+      val countB = count `branch` (Fold.current * _)
 
       val res = Fold("")(resetB, wordB, countB)
 

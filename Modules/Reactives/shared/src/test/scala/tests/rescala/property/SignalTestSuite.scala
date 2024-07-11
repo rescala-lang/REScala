@@ -71,7 +71,7 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
       val s: Signal[Int] = e.count()
 
       var count = 0
-      s observe (c => {
+      s `observe` (c => {
         assert(c == count)
         count += 1
       })

@@ -23,14 +23,13 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
 
   override protected[reactives] def commit(base: Value): Value = Pulse.NoChange
 
-  extension (v: Pulse[T])
-    override def access: Pulse[T] = v
+  extension (v: Pulse[T]) override def access: Pulse[T] = v
 
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")
   def apply(value: T)(using PlanTransactionScope[State]): Unit                = fire(value)
-  infix def fire()(using PlanTransactionScope[State])(using Unit =:= T): Unit = fire(())
-  infix def fire(value: T)(using planTransactionScope: PlanTransactionScope[State]): Unit =
+  def fire()(using PlanTransactionScope[State])(using Unit =:= T): Unit = fire(())
+  def fire(value: T)(using planTransactionScope: PlanTransactionScope[State]): Unit =
     planTransactionScope.planTransaction(this)(admit(value)(using _))
   override def disconnect(): Unit = ()
   def admitPulse(pulse: Pulse[T])(using ticket: AdmissionTicket[State]): Unit = {
@@ -61,7 +60,7 @@ class Var[A] private[reactives] (initialState: State[Pulse[A]], name: ReInfo)
 
   override def disconnect(): Unit = ()
 
-  infix def set(value: A)(using planTransactionScope: PlanTransactionScope[State]): Unit =
+  def set(value: A)(using planTransactionScope: PlanTransactionScope[State]): Unit =
     planTransactionScope.planTransaction(this) { admit(value)(using _) }
 
   def transform(f: A => A)(using planTransactionScope: PlanTransactionScope[State]): Unit = {

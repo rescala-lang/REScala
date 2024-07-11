@@ -31,8 +31,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
     forAll { (dfA: Map[Dot, Int], deletedA: Dots, dfB: Map[Dot, Int], deletedB: Dots) =>
       val dotsA = dfA.dots
       val dotsB = dfB.dots
-      val ccA   = dotsA union deletedA
-      val ccB   = dotsB union deletedB
+      val ccA   = dotsA `union` deletedA
+      val ccB   = dotsB `union` deletedB
 
       val Dotted(dfMerged, ccMerged) =
         Lattice[Dotted[Map[Dot, Int]]].merge(
@@ -42,23 +42,23 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val dotsMerged = dfMerged.dots
 
       assert(
-        ccMerged == (ccA union ccB),
-        s"DotFun.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
+        ccMerged == (ccA `union` ccB),
+        s"DotFun.merge should have the same effect as set `union` on the causal context, but $ccMerged does not equal ${ccA `union` ccB}"
       )
       assert(
-        dotsMerged.toSet subsetOf (dotsA union dotsB).toSet,
-        s"DotFun.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA union dotsB}"
+        dotsMerged.toSet subsetOf (dotsA `union` dotsB).toSet,
+        s"DotFun.merge should not add new elements to the DotSet, but $dotsMerged is not a subset of ${dotsA `union` dotsB}"
       )
       assert(
-        (dotsMerged intersect (deletedA diff dotsA)).isEmpty,
-        s"The DotFun resulting from DotFun.merge should not contain dots that were deleted on the lhs, but $dotsMerged contains elements from ${deletedA diff dotsA}"
+        (dotsMerged `intersect` (deletedA `diff` dotsA)).isEmpty,
+        s"The DotFun resulting from DotFun.merge should not contain dots that were deleted on the lhs, but $dotsMerged contains elements from ${deletedA `diff` dotsA}"
       )
       assert(
-        (dotsMerged intersect (deletedB diff dotsB)).isEmpty,
-        s"The DotFun resulting from DotFun.merge should not contain dots that were deleted on the rhs, but $dotsMerged contains elements from ${deletedB diff dotsB}"
+        (dotsMerged `intersect` (deletedB `diff` dotsB)).isEmpty,
+        s"The DotFun resulting from DotFun.merge should not contain dots that were deleted on the rhs, but $dotsMerged contains elements from ${deletedB `diff` dotsB}"
       )
 
-      (dotsA intersect dotsB).iterator.foreach { d =>
+      (dotsA `intersect` dotsB).iterator.foreach { d =>
         assert(
           dfMerged(d) == Lattice[Int].merge(dfA(d), dfB(d)),
           s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
@@ -67,14 +67,14 @@ class DotFunTest extends munit.ScalaCheckSuite {
         )
       }
 
-      (dotsA diff ccB).iterator.foreach { d =>
+      (dotsA `diff` ccB).iterator.foreach { d =>
         assert(
           dfMerged(d) == dfA(d),
           s"If a dot only appears on the lhs of DotFun.merge then resulting DotFun should have the same mapping as the lhs, but ${dfMerged(d)} does not equal ${dfA(d)}"
         )
       }
 
-      (dotsB diff ccA).iterator.foreach { d =>
+      (dotsB `diff` ccA).iterator.foreach { d =>
         assert(
           dfMerged(d) == dfB(d),
           s"If a dot only appears on the rhs of DotFun.merge then resulting DotFun should have the same mapping as the rhs, but ${dfMerged(d)} does not equal ${dfB(d)}"
@@ -85,8 +85,8 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
   property("leq") {
     forAll { (dfA: Map[Dot, Int], deletedA: Dots, dfB: Map[Dot, Int], deletedB: Dots) =>
-      val ccA = dfA.dots union deletedA
-      val ccB = dfB.dots union deletedB
+      val ccA = dfA.dots `union` deletedA
+      val ccB = dfB.dots `union` deletedB
 
       assert(
         Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
@@ -130,14 +130,14 @@ class DotFunTest extends munit.ScalaCheckSuite {
     val data =
       Dotted[Map[Dot, Set[Int]]](Map(dot -> Set(1, 2, 3)), cc)
     val dec: Iterable[D] = data.decomposed
-    val rec              = dec.reduceLeft(_ merge _)
+    val rec              = dec.reduceLeft(_ `merge` _)
 
     assertEquals(rec, data)
   }
 
   property("decompose recompose") {
     forAll { (df: Map[Dot, Int], deleted: Dots) =>
-      val cc = df.dots union deleted
+      val cc = df.dots `union` deleted
 
       val withContext = Dotted(df, cc)
 
@@ -161,7 +161,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
           val contexts = decc.map(_.context)
           s"${cc.contains(Dot("c", 78))}, ${ccMerged.contains(Dot("c", 78))}, \n${contexts}\n${cc.rangeAt(
               "c"
-            )}\n${contexts.reduceLeft(_ merge _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
+            )}\n${contexts.reduceLeft(_ `merge` _)}\n${decc}\n${decc.mkString("--", "\n--", "")}"
         }
       )
     }

@@ -38,9 +38,9 @@ class ArrayContextBench {
   def merge() = rep1Set.union(rep2Set)
 
   @Benchmark
-  def mergeSelf() = (rep1Set union rep1Set)
+  def mergeSelf() = (rep1Set `union` rep1Set)
 
   @Benchmark
-  def mergeSelfPlusOne() = (rep1Set union rep1SetPlusOne)
+  def mergeSelfPlusOne() = (rep1Set `union` rep1SetPlusOne)
 
 }

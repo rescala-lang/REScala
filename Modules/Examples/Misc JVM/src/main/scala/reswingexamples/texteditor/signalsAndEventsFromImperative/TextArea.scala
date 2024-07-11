@@ -95,7 +95,7 @@ class TextArea extends ReComponent {
     // mark as offset
     private val markSignal = Signal { markVar.value }
     def mark               = markSignal
-    def mark_=(value: Int) = if value >= 0 && value <= buffer.length.readValueOnce then markVar set value
+    def mark_=(value: Int) = if value >= 0 && value <= buffer.length.readValueOnce then markVar `set` value
 
     // mark as position (row and column)
     private val markPosSignal      = Signal { LineOffset.position(buffer.iterable.value, mark.value) }

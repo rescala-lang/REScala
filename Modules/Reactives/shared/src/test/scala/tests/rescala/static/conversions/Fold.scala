@@ -199,9 +199,9 @@ class FoldTests extends FunSuiteInvertedAssert {
       val count = Evt[Int]()
       val reset = Evt[Unit]()
       val res = Fold("")(
-        reset branch (_ => ""),
-        word branch identity,
-        count branch (Fold.current * _)
+        reset `branch` (_ => ""),
+        word `branch` identity,
+        count `branch` (Fold.current * _)
       )
 
       assert(res.readValueOnce == "")
@@ -228,8 +228,8 @@ class FoldTests extends FunSuiteInvertedAssert {
       val e0 = Evt[Unit]()
       val e1 = Evt[Int]()
       val res = Fold(Option.empty[Int])(
-        e0 branch { _ => Some(1) },
-        e1 branch { _ => Option(2) }
+        e0 `branch` { _ => Some(1) },
+        e1 `branch` { _ => Option(2) }
       )
 
       assert(res.readValueOnce == None)

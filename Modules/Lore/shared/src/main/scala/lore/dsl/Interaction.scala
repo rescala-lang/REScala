@@ -268,12 +268,12 @@ implicit object Ex {
   }
 
   extension (left: Boolean) {
-    infix def implies(right: Boolean): Boolean = !left || right
+    def implies(right: Boolean): Boolean = !left || right
 
     @targetName("impliesOp")
     def ==>(right: Boolean): Boolean = !left || right
 
-    infix def equiv(right: Boolean): Boolean = left == right
+    def equiv(right: Boolean): Boolean = left == right
 
     @targetName("equivOP")
     def <==>(right: Boolean): Boolean = left == right

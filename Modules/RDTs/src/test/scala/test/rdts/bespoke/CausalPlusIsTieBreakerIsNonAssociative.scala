@@ -46,12 +46,12 @@ class CausalPlusIsTieBreakerIsNonAssociative extends munit.FunSuite {
     assert(b < c)
 
     // without the order being correct, the lattice is also incorrect:
-    val ab = a merge b
-    val bc = b merge c
-    val ac = a merge c
+    val ab = a `merge` b
+    val bc = b `merge` c
+    val ac = a `merge` c
 
-    assertNotEquals(ab merge c, a merge bc)
-    assertNotEquals(ac merge b, a merge bc)
+    assertNotEquals(ab `merge` c, a `merge` bc)
+    assertNotEquals(ac `merge` b, a `merge` bc)
 
     /* Ultimately, I currently believe such a structure cannot work.
      * Specifically, if we accept the causal order as truth (if defined), then we must ensure that the tiebreaker of a larger value also dominates all tiebreakers of values that are smaller than any causally smaller values.

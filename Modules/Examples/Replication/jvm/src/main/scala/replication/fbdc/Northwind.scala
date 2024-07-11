@@ -48,7 +48,7 @@ object Northwind {
             val resp = Res.Northwind(q.value, query(q.value.query))
             ress.modd { ormap =>
               val Obrem(data, obs, rem) = ormap.update("northwind", Some(LastWriterWins.now(resp)))
-              Dotted(data, obs union rem)
+              Dotted(data, obs `union` rem)
             }
           }
           ress.result.state

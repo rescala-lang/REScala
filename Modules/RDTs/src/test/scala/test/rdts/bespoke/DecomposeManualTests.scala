@@ -109,7 +109,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(delta_2.data.read, false)
     assertEquals(delta_2.data.dots, Dots.empty)
 
-    val val_2: Dotted[EnableWinsFlag] = val_1 merge delta_2
+    val val_2: Dotted[EnableWinsFlag] = val_1 `merge` delta_2
     assertEquals(val_2.data.read, false)
 
     val delta_3: Dotted[EnableWinsFlag] = val_2.mod(_.enable(using r2)())
@@ -118,7 +118,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(delta_3.data.read, true)
     assertEquals(delta_3.data.dots, Dots.single(Dot(r2.uid, 0)))
 
-    val val_3: Dotted[EnableWinsFlag] = val_2 merge delta_3
+    val val_3: Dotted[EnableWinsFlag] = val_2 `merge` delta_3
     assertEquals(val_3.data.read, true)
 
     val decomposed: Seq[Dotted[EnableWinsFlag]] =

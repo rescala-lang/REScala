@@ -23,7 +23,7 @@ case class ReplicatedSet[E](inner: Map[E, Dots]) {
 
     deltaState(
       dm = Map(e -> Dots.single(nextDot)),
-      cc = v add nextDot
+      cc = v `add` nextDot
     )
   }
 
@@ -33,7 +33,7 @@ case class ReplicatedSet[E](inner: Map[E, Dots]) {
 
     val ccontextSet = elems.foldLeft(nextDots) {
       case (dots, e) => inner.get(e) match {
-          case Some(ds) => dots union ds
+          case Some(ds) => dots `union` ds
           case None     => dots
         }
     }
@@ -53,7 +53,7 @@ case class ReplicatedSet[E](inner: Map[E, Dots]) {
   def removeAll(elems: Iterable[E]): Delta = {
     val dotsToRemove = elems.foldLeft(Dots.empty) {
       case (dots, e) => inner.get(e) match {
-          case Some(ds) => dots union ds
+          case Some(ds) => dots `union` ds
           case None     => dots
         }
     }
@@ -64,7 +64,7 @@ case class ReplicatedSet[E](inner: Map[E, Dots]) {
   def removeBy(cond: E => Boolean): Delta = {
     val removedDots = inner.collect {
       case (k, v) if cond(k) => v
-    }.foldLeft(Dots.empty)(_ union _)
+    }.foldLeft(Dots.empty)(_ `union` _)
 
     deltaState(
       cc = removedDots

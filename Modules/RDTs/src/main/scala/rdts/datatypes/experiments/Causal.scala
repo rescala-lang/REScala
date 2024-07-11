@@ -11,8 +11,8 @@ object CausalDelta {
       def dots: Dots = dotted.contained
       def removeDots(dots: Dots): Option[CausalDelta[A]] =
         dotted.delta.removeDots(dots).map: delta =>
-          val overlap = dotted.contained union dots
-          CausalDelta(dotted.contained subtract dots, dotted.predecessors subtract overlap, delta)
+          val overlap = dotted.contained `union` dots
+          CausalDelta(dotted.contained `subtract` dots, dotted.predecessors `subtract` overlap, delta)
   }
 }
 
@@ -21,10 +21,10 @@ case class CausalStore[A](pending: CausalDelta[A], state: A)
 object CausalStore {
   given lattice[A: Bottom: Lattice]: Lattice[CausalStore[A]] with {
     def merge(left: CausalStore[A], right: CausalStore[A]): CausalStore[A] =
-      val pending: CausalDelta[A] = left.pending merge right.pending
-      val state                   = left.state merge right.state
-      if pending.predecessors contains pending.contained
-      then CausalStore(Bottom.empty, pending.delta merge state)
+      val pending: CausalDelta[A] = left.pending `merge` right.pending
+      val state                   = left.state `merge` right.state
+      if pending.predecessors `contains` pending.contained
+      then CausalStore(Bottom.empty, pending.delta `merge` state)
       else CausalStore(pending, state)
   }
 

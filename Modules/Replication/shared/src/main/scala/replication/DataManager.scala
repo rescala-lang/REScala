@@ -118,7 +118,7 @@ class DataManager[State](
   }
 
   def updateContext(rr: Uid, dots: Dots) = lock.synchronized {
-    contexts = contexts.updatedWith(rr)(curr => curr merge Some(dots))
+    contexts = contexts.updatedWith(rr)(curr => curr `merge`Some(dots))
   }
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[ProtocolMessage[State]] =
@@ -131,7 +131,7 @@ class DataManager[State](
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
         relevant.foreach: msg =>
           biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallback)
-        updateContext(uid, selfContext merge knows)
+        updateContext(uid, selfContext `merge`knows)
       case Payload(uid, context, data) =>
         val interalized = ProtocolDots[State](data, context)
         lock.synchronized {

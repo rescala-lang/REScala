@@ -53,11 +53,11 @@ class CausalStoreTest extends munit.FunSuite {
       ))
     )
 
-    val ab = a merge b
-    val bc = b merge c
+    val ab = a `merge` b
+    val bc = b `merge` c
 
-    val ab_c = ab merge c
-    val a_bc = a merge bc
+    val ab_c = ab `merge` c
+    val a_bc = a `merge` bc
 
     assertEquals(ab_c, a_bc)
   }

@@ -70,7 +70,7 @@ class FbdcExampleData {
     dataManager.modParticipants { part =>
       part.mod { ormap =>
         val Obrem(data, obs, rem) = ormap.transform(replicaId.uid)(_.mod(_.add(using replicaId)(capability)))
-        Dotted(data, obs union rem)
+        Dotted(data, obs `union` rem)
       }
     }
 

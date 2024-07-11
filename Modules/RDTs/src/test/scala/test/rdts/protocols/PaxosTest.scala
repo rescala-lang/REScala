@@ -26,18 +26,18 @@ class PaxosTest extends munit.FunSuite {
     val p1: Paxos[Int] = Paxos.unchanged.copy(members = Set(id1).map(_.uid))
     val p2: Paxos[Int] = Paxos.unchanged.copy(members = Set(id2).map(_.uid))
     interceptMessage[AssertionError]("assertion failed: cannot merge two Paxos instances with differing members") {
-      p1 merge p2
+      p1 `merge` p2
     }
   }
 
   test("Paxos for 3 participants without errors") {
     var a: Paxos[Int] = Paxos.unchanged
 
-    a = a merge a.prepare()(using id1)
-    a = a merge a.upkeep()(using id1) merge a.upkeep()(using id2) merge a.upkeep()(using id3)
+    a = a `merge` a.prepare()(using id1)
+    a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
     assertEquals(a.read, None)
-    a = a merge a.accept(1)(using id1)
-    a = a merge a.upkeep()(using id1) merge a.upkeep()(using id2) merge a.upkeep()(using id3)
+    a = a `merge` a.accept(1)(using id1)
+    a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
     assertEquals(a.read, Some(1))
   }
 

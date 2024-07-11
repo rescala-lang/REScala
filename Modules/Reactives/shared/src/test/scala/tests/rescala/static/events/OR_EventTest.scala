@@ -29,8 +29,8 @@ class OR_EventTest extends FunSuiteInvertedAssert {
 
       val test     = new AtomicInteger(0)
       val e1       = Evt[Int]()
-      val e2       = e1 map (_ * 2)
-      val e3       = e1 map (_ * 2)
+      val e2       = e1 `map` (_ * 2)
+      val e3       = e1 `map` (_ * 2)
       val e2_OR_e3 = e2 || e3
       e1 observe { _ =>
         test.incrementAndGet(); ()

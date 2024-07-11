@@ -62,7 +62,7 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   def removeAll(using Bottom[V], HasDots[V])(keys: Iterable[K]): Delta = {
     val values = keys.map(k => inner.getOrElse(k, Bottom[V].empty))
     val dots = values.foldLeft(Dots.empty) {
-      case (set, v) => set union HasDots[V].dots(v)
+      case (set, v) => set `union` HasDots[V].dots(v)
     }
 
     Obrem(
@@ -75,7 +75,7 @@ case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
   def removeByValue(using HasDots[V])(cond: Dotted[V] => Boolean)(using context: Dots): Delta = {
     val toRemove = inner.values.collect {
       case v if cond(Dotted(v, context)) => v.dots
-    }.fold(Dots.empty)(_ union _)
+    }.fold(Dots.empty)(_ `union` _)
 
     Obrem(
       ObserveRemoveMap.empty,
@@ -112,7 +112,7 @@ object ObserveRemoveMap {
         override def dots: Dots = dotted.dots
 
         override def removeDots(dots: Dots): Option[Entry[V]] =
-          val res = dotted.dots subtract dots
+          val res = dotted.dots `subtract` dots
           Option.when(!res.isEmpty):
             Entry(res, dotted.value)
       }

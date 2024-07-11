@@ -18,7 +18,7 @@ object GListGenerators {
       elems <- Gen.listOfN(20, e.arbitrary)
     yield {
       elems.foldLeft(GrowOnlyList.empty[E]) {
-        case (list, el) => list merge list.insertGL(0, el)
+        case (list, el) => list `merge`list.insertGL(0, el)
       }
     }
 

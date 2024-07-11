@@ -41,7 +41,7 @@ class ColorWindow extends Frame {
   contents = new BoxPanel(Orientation.Vertical) {
     contents += colorChooser
     contents += new Button(Action("OK") {
-      color set colorChooser.peer.getColor
+      color `set` colorChooser.peer.getColor
       ColorWindow.this.visible = false
     })
   }

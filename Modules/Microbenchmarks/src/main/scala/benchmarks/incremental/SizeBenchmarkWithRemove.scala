@@ -31,7 +31,7 @@ class SizeBenchmarkWithRemove {
   def prepare(): Unit = {
     removeEvent = Evt[Int]()
     val seq = removeEvent.fold((1 to arg).toList)((s, x) => {
-      s diff Seq(x)
+      s `diff` Seq(x)
     })
     sizeOfSeq = Signal {
       seq.value.size

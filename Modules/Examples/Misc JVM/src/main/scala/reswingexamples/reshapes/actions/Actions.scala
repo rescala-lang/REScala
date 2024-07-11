@@ -16,7 +16,7 @@ class SaveAction extends Action("Save") {
     fileChooser.selectedFile = new File(ReShapes.drawingSpaceState.now.fileName.now)
     if fileChooser.showDialog(null, "save") == FileChooser.Result.Approve then {
       XML.save(fileChooser.selectedFile.getCanonicalPath, Shape.serialize(ReShapes.drawingSpaceState.now.shapes.now))
-      ReShapes.drawingSpaceState.now.fileName set fileChooser.selectedFile.getName
+      ReShapes.drawingSpaceState.now.fileName `set` fileChooser.selectedFile.getName
       ReShapes.ui.tabbedPane.pages(ReShapes.ui.tabbedPane.selection.index).title = fileChooser.selectedFile.getName
     }
   }

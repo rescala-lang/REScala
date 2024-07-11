@@ -102,7 +102,7 @@ abstract class LatticePropertyChecks[A](
       val a_bc = Lattice.merge(a, bc)
       assertEquals(ab_c, a_bc, s"merge not equal, steps:\n  $ab\n  $bc")
 
-      val bc_ab = bc merge ab
+      val bc_ab = bc `merge` ab
       assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work around insufficient test generators")
     }
   }
@@ -117,11 +117,11 @@ abstract class LatticePropertyChecks[A](
 
       decomposed.foreach { d =>
         assertEquals(
-          d merge theValue,
+          d `merge` theValue,
           normalized,
           s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
-        assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d merge theValue}")
+        assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d `merge` theValue}")
         if decomposed.sizeIs > 1
         then
           BottomOpt.explicit: bo =>
@@ -134,11 +134,11 @@ abstract class LatticePropertyChecks[A](
             then
               val thisCtx  = d.asInstanceOf[Dotted[?]].context
               val otherCtx = other.asInstanceOf[Dotted[?]].context
-              assert(thisCtx disjunct otherCtx, s"overlapping context\n  ${d}\n  ${other}")
+              assert(thisCtx `disjunct` otherCtx, s"overlapping context\n  ${d}\n  ${other}")
       }
 
       BottomOpt.explicit: bo =>
-        assertEquals(bo.empty merge theValue, normalized, "bottom is bottom")
+        assertEquals(bo.empty `merge` theValue, normalized, "bottom is bottom")
 
       val merged =
         if decomposed.sizeIs == 1
@@ -156,12 +156,12 @@ abstract class LatticePropertyChecks[A](
 
   property("merge agrees with order"):
     forAll: (left: A, right: A) =>
-      val merged = left merge right
+      val merged = left `merge` right
 
-      assertEquals(left merge merged, merged, "naive lteq")
-      assertEquals(right merge merged, merged, "naive lteq")
-      assert(left <= merged, s"merged:\n  ${merged}\n ${left merge merged}")
-      assert(right <= merged, s"merged:\n  ${merged}\n ${right merge merged}")
+      assertEquals(left `merge` merged, merged, "naive lteq")
+      assertEquals(right `merge` merged, merged, "naive lteq")
+      assert(left <= merged, s"merged:\n  ${merged}\n ${left `merge` merged}")
+      assert(right <= merged, s"merged:\n  ${merged}\n ${right `merge` merged}")
       assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}")
       assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
 

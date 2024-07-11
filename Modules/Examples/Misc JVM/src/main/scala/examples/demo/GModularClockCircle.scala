@@ -26,7 +26,7 @@ object GModularClockCircle extends SimpleSwingApplication {
     def tick()               = _nsTime.set(System.nanoTime())
     val nsTime: Signal[Long] = _nsTime
 
-    val ticks = nsTime.change.map { diff => diff.to.get - diff.from.get }
+    val ticks = nsTime.change.map { `diff` => diff.to.get - diff.from.get }
   }
 
   val shapes = Var[List[Shape]](List.empty)

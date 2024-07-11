@@ -18,7 +18,7 @@ case class EnableWinsFlag(inner: Dots) derives Bottom {
     val nextDot = context.nextDot(LocalUid.replicaId)
     Dotted(
       EnableWinsFlag(Dots.single(nextDot)),
-      inner add nextDot
+      inner `add` nextDot
     )
   }
 

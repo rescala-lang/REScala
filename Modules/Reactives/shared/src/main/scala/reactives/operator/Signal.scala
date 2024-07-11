@@ -49,7 +49,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     *
     * @group accessor
     */
-  final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
+  final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
       using ticket: CreationTicket[State]
   ): Disconnectable =
     Observe.strong(this, fireImmediately) { reevalVal => new Observe.ObservePulsing(reevalVal, this, onValue, onError) }
@@ -109,7 +109,7 @@ trait Signal[+T] extends Disconnectable with MacroAccess[T] with ReSource {
     *
     * @group operator
     */
-  final inline infix def map[B](inline expression: T => B)(using CreationTicket[State]): Signal[B] =
+  final inline def map[B](inline expression: T => B)(using CreationTicket[State]): Signal[B] =
     Signal.dynamic(expression(this.value))
 }
 

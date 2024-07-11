@@ -17,7 +17,7 @@ class LastWriterWinsTest extends munit.FunSuite {
 
     assertNotEquals(lww1.timestamp, lww2.timestamp)
 
-    val merged = lww1 merge lww2
+    val merged = lww1 `merge` lww2
 
     assertEquals(merged.read, "Hello Distributed World")
   }
@@ -30,7 +30,7 @@ class LastWriterWinsTest extends munit.FunSuite {
 
     assertNotEquals(lww1.timestamp, lww2.timestamp)
 
-    val merged = lww1 merge lww2
+    val merged = lww1 `merge` lww2
 
     assertEquals(merged.read, "Hello Distributed World")
   }
@@ -43,7 +43,7 @@ class LastWriterWinsTest extends munit.FunSuite {
 
     assertNotEquals(lww1.timestamp, lww2.timestamp)
 
-    val merged = lww1 merge lww2
+    val merged = lww1 `merge` lww2
 
     assertEquals(merged.read, "Hello Distributed World")
   }

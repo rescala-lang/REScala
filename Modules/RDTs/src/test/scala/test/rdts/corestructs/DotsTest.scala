@@ -36,15 +36,15 @@ class DotsTest extends munit.ScalaCheckSuite {
 
   property("union") {
     forAll { (cca: Dots, ccb: Dots) =>
-      val ccunion = (cca union ccb)
+      val ccunion = (cca `union` ccb)
 
       val seta     = cca.toSet
       val setb     = ccb.toSet
       val setunion = ccunion.toSet
 
       assert(
-        setunion == (seta union setb),
-        s"DietMapCContext.union should be equivalent to set union, but $setunion does not equal ${seta union setb}"
+        setunion == (seta `union` setb),
+        s"DietMapCContext.union should be equivalent to set union, but $setunion does not equal ${seta `union` setb}"
       )
     }
   }

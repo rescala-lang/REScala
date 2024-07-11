@@ -227,8 +227,8 @@ trait TopoBundle {
       reev.inputs().foreach { newDeps =>
         val incoming = reactive.state.incoming
         reactive.state.incoming = newDeps
-        val added   = newDeps diff incoming
-        val removed = incoming diff newDeps
+        val added   = newDeps `diff` incoming
+        val removed = incoming `diff` newDeps
         added.foreach { input =>
           input.state.outgoing = input.state.outgoing + reactive
         }

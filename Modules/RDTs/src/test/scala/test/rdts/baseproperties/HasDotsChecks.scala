@@ -25,7 +25,7 @@ abstract class HasDotsChecks[A: Arbitrary: HasDots] extends munit.ScalaCheckSuit
       val dots = a.dots
       dots.iterator.foreach: dot =>
         val single = Dots.single(dot)
-        val should = dots subtract single
+        val should = dots `subtract` single
         val remaining = a.removeDots(single) match
           case None        => Dots.empty
           case Some(value) => value.dots

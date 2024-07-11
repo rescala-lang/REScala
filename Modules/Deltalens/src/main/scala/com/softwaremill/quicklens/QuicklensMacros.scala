@@ -80,22 +80,22 @@ object QuicklensMacros {
               case Nil => this
               case symbol :: Nil =>
                 PathTree.Node {
-                  if !children.exists(_._1 equiv symbol)
+                  if !children.exists(_._1 `equiv` symbol)
                   then children :+ (symbol -> Seq(PathTree.Empty))
                   else
                     children.map {
-                      case (sym, trees) if sym equiv symbol =>
+                      case (sym, trees) if sym `equiv` symbol =>
                         sym -> (trees :+ PathTree.Empty)
                       case c => c
                     }
                 }
               case symbol :: tail =>
                 PathTree.Node {
-                  if !children.exists(_._1 equiv symbol)
+                  if !children.exists(_._1 `equiv` symbol)
                   then children :+ (symbol -> Seq(tail.toPathTree))
                   else
                     children.map {
-                      case (sym, trees) if sym equiv symbol =>
+                      case (sym, trees) if sym `equiv` symbol =>
                         sym -> (trees.init ++ {
                           trees.last match
                             case PathTree.Empty => Seq(PathTree.Empty, tail.toPathTree)
@@ -119,7 +119,7 @@ object QuicklensMacros {
       case Field(name: String)
       case FunctionDelegate(name: String, givn: Term, typeTree: TypeTree, args: List[Term])
 
-      infix def equiv(other: PathSymbol): Boolean = (this, other) match
+      def equiv(other: PathSymbol): Boolean = (this, other) match
         case (Field(name1), Field(name2)) => name1 == name2
         case (FunctionDelegate(name1, _, typeTree1, args1), FunctionDelegate(name2, _, typeTree2, args2)) =>
           name1 == name2 && typeTree1.tpe == typeTree2.tpe && args1 == args2

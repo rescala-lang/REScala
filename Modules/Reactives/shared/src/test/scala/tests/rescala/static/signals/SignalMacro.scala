@@ -123,15 +123,15 @@ class SignalMacro extends FunSuiteInvertedAssert {
       }
 
       assert(sig.readValueOnce == 0)
-      v1 set 5
+      v1 `set` 5
       assert(sig.readValueOnce == 0)
-      v2 set true
+      v2 `set` true
       assert(sig.readValueOnce == 5)
-      v1 set 2
+      v1 `set` 2
       assert(sig.readValueOnce == 2)
-      v2 set false
+      v2 `set` false
       assert(sig.readValueOnce == 0)
-      v1 set 8
+      v1 `set` 8
       assert(sig.readValueOnce == 0)
     }
 
@@ -150,13 +150,13 @@ class SignalMacro extends FunSuiteInvertedAssert {
       }
 
       assert(sig.readValueOnce == 2)
-      v2 set 50
+      v2 `set` 50
       assert(sig.readValueOnce == 2)
-      v1 set List(7, 8, 9)
+      v1 `set` List(7, 8, 9)
       assert(sig.readValueOnce == 50)
-      v2 set 4
+      v2 `set` 4
       assert(sig.readValueOnce == 4)
-      v1 set List(10, 11)
+      v1 `set` List(10, 11)
       assert(sig.readValueOnce == 11)
     }
 
@@ -180,7 +180,7 @@ class SignalMacro extends FunSuiteInvertedAssert {
     //  val sig = Signal.dynamic { getSignal(o)() }
     //
     //  assertEquals(sig.readValueOnce, 20)
-    //  v set 30
+    //  v `set` 30
     //  assertEquals(sig.readValueOnce, 30)
     // }
 

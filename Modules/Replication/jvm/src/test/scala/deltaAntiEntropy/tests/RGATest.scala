@@ -358,7 +358,7 @@ class RGATest extends munit.ScalaCheckSuite {
             beforeB1
           )
 
-          val directMergedState = beforeA1 merge beforeB1
+          val directMergedState = beforeA1 `merge`beforeB1
           assertEquals(lb2.state, directMergedState)
           assertEquals(la2.state, directMergedState)
 

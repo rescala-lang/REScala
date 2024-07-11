@@ -24,7 +24,7 @@ class CompactTest extends munit.ScalaCheckSuite {
       Nil
     )
 
-    assertEquals(res, List(middle, left merge right))
+    assertEquals(res, List(middle, left `merge` right))
 
   }
 

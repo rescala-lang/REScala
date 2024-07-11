@@ -95,7 +95,7 @@ class TaskReferences(toggleAll: Event[dom.Event], storePrefix: String) {
       div(`class` := "view", ondblclick := Event.handle)
     }
 
-    val changeEditing = (edittextStr map const(false)) || (editDiv.event map const(true))
+    val changeEditing = (edittextStr `map` const(false)) || (editDiv.event `map` const(true))
     val editingV      = changeEditing.hold(init = false)
 
     val doneClick = Event.fromCallback(onchange := Event.handle)

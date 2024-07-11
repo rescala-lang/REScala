@@ -15,7 +15,7 @@ case class MultiValueRegister[T](versions: Map[VectorClock, T]) {
   def values: Iterable[T] = versions.values
 
   def write(replica: Uid, value: T): MultiValueRegister[T] = {
-    val timeOfUpdate = currentTime merge currentTime.inc(replica)
+    val timeOfUpdate = currentTime `merge` currentTime.inc(replica)
     MultiValueRegister(Map(timeOfUpdate -> value))
   }
 }

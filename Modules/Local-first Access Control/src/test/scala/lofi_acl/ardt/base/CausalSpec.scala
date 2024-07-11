@@ -143,7 +143,7 @@ class CausalSpec extends FunSuite {
     val example = Dotted(Map(dot(1, "A") -> Set()), Dots.from(Map("A" -> 2)))
 
     assertEquals(
-      example merge example,
+      example `merge`example,
       example
     )
   }

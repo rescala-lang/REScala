@@ -21,7 +21,7 @@ class ExtraDataManager[State](val dataManager: DataManager[State], changeEvt: Ev
   export dataManager.{selfContext as _, *}
 
   val changes: Event[TransferState] = changeEvt
-  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr merge ts }
+  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr `merge`ts }
   val currentContext: Signal[Dots]  = mergedState.map(_.context)
 
   def transform(fun: State => State) = dataManager.lock.synchronized {

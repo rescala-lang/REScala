@@ -44,8 +44,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val c2 = s2 ++ t2
 
       // commutativity
-      val m1 = Dotted(Dots.from(s1), Dots.from(c1)) merge Dotted(Dots.from(s2), Dots.from(c2))
-      val m2 = Dotted(Dots.from(s2), Dots.from(c2)) merge Dotted(Dots.from(s1), Dots.from(c1))
+      val m1 = Dotted(Dots.from(s1), Dots.from(c1)) `merge` Dotted(Dots.from(s2), Dots.from(c2))
+      val m2 = Dotted(Dots.from(s2), Dots.from(c2)) `merge` Dotted(Dots.from(s1), Dots.from(c1))
       assert(m1 == m2)
 
       // check if all elements were added to the new causal context
@@ -57,7 +57,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
       }
 
       val deadElements = c1.filter(!s1.contains(_)) ++ c2.filter(!s2.contains(_))
-      val newElements  = (s1 union s2) -- deadElements
+      val newElements  = (s1 `union` s2) -- deadElements
 
       // check that already deleted elements are not added again
       for e <- deadElements yield {
@@ -75,8 +75,8 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
   property("merge 2") {
     forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
-      val ccA = dsA union deletedA
-      val ccB = dsB union deletedB
+      val ccA = dsA `union` deletedA
+      val ccB = dsB `union` deletedB
 
       val Dotted(dsMerged, ccMerged) = Lattice[Dotted[Dots]].merge(
         Dotted(dsA, ccA),
@@ -84,28 +84,28 @@ class DotSetTest extends munit.ScalaCheckSuite {
       )
 
       assert(
-        ccMerged == (ccA union ccB),
-        s"DotSet.merge should have the same effect as set union on the causal context, but $ccMerged does not equal ${ccA union ccB}"
+        ccMerged == (ccA `union` ccB),
+        s"DotSet.merge should have the same effect as set `union` on the causal context, but $ccMerged does not equal ${ccA `union` ccB}"
       )
       assert(
-        dsMerged.toSet subsetOf (dsA union dsB).toSet,
-        s"DotSet.merge should not add new elements to the DotSet, but $dsMerged is not a subset of ${dsA union dsB}"
+        dsMerged.toSet subsetOf (dsA `union` dsB).toSet,
+        s"DotSet.merge should not add new elements to the DotSet, but $dsMerged is not a subset of ${dsA `union` dsB}"
       )
       assert(
-        (dsMerged intersect (deletedA diff dsA)).isEmpty,
-        s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the lhs, but $dsMerged contains elements from ${deletedA diff dsA}"
+        (dsMerged `intersect` (deletedA `diff` dsA)).isEmpty,
+        s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the lhs, but $dsMerged contains elements from ${deletedA `diff` dsA}"
       )
       assert(
-        (dsMerged intersect (deletedB diff dsB)).isEmpty,
-        s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the rhs, but $dsMerged contains elements from ${deletedB diff dsB}"
+        (dsMerged `intersect` (deletedB `diff` dsB)).isEmpty,
+        s"The DotSet resulting from DotSet.merge should not contain dots that were deleted on the rhs, but $dsMerged contains elements from ${deletedB `diff` dsB}"
       )
     }
 
   }
   property("leq") {
     forAll { (dsA: Dots, deletedA: Dots, dsB: Dots, deletedB: Dots) =>
-      val ccA        = dsA union deletedA
-      val ccB        = dsB union deletedB
+      val ccA        = dsA `union` deletedA
+      val ccB        = dsB `union` deletedB
       val dottedSetA = Dotted(dsA, ccA)
       val dottedSetB = Dotted(dsB, ccB)
 
@@ -114,7 +114,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
       )
 
-      val dottedMerged @ Dotted(dsMerged, ccMerged) = dottedSetA merge dottedSetB
+      val dottedMerged @ Dotted(dsMerged, ccMerged) = dottedSetA `merge` dottedSetB
 
       assert(
         dottedSetA <= dottedMerged,
@@ -129,10 +129,10 @@ class DotSetTest extends munit.ScalaCheckSuite {
 
   property("decompose all") {
     forAll { (ds: Dots, deleted: Dots) =>
-      val cc = ds union deleted
+      val cc = ds `union` deleted
 
       val decomposed                 = Dotted(ds, cc).decomposed
-      val Dotted(dsMerged, ccMerged) = decomposed.foldLeft(Dotted.empty[Dots]) { _ merge _ }
+      val Dotted(dsMerged, ccMerged) = decomposed.foldLeft(Dotted.empty[Dots]) { _ `merge` _ }
 
       assertEquals(
         dsMerged,

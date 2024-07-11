@@ -19,12 +19,12 @@ class XmlParser {
   private def parseSuccessfull[A](res: Option[A]): Boolean = res.isDefined
 
   lazy val itemParsed: Event[RSSItem] = // #EVT
-    ((parseItem.after map discardArgument[Option[RSSItem]]) &&                             // #EF //#EF
-      { parseSuccessfull(_) } map { (o: Option[RSSItem]) => o.get }) || explicitItemParsed // #EF
+    ((parseItem.after `map` discardArgument[Option[RSSItem]]) &&                             // #EF //#EF
+      { parseSuccessfull(_) } `map` { (o: Option[RSSItem]) => o.get }) || explicitItemParsed // #EF
 
   lazy val channelParsed: Event[RSSChannel] = // #EVT
-    (parseChannel.after map discardArgument[Option[RSSChannel]]) &&  // #EF //#EF
-    { parseSuccessfull(_) } map { (o: Option[RSSChannel]) => o.get } // #EF
+    (parseChannel.after `map` discardArgument[Option[RSSChannel]]) &&  // #EF //#EF
+    { parseSuccessfull(_) } `map` { (o: Option[RSSChannel]) => o.get } // #EF
 
   lazy val entityParsed = channelParsed || itemParsed // #EVT //#EF //#EF
 

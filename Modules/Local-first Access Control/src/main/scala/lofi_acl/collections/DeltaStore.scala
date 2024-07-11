@@ -4,7 +4,7 @@ import lofi_acl.collections.DeltaStore
 import rdts.base.{Bottom, Lattice}
 import rdts.time.{Dot, Dots}
 
-/** Stores a larger state (i.e., the merge of multiple deltas, called the prefix) along with individual deltas.
+/** Stores a larger state (i.e., the `merge`of multiple deltas, called the prefix) along with individual deltas.
   *
   * Each individual delta group is addressed by a single `Dot` and is stored alongside the Dots of the delta group.
   * The value addressableDeltas stores the keys (key refers to a single Dot) of the stored delta groups. Note that while
@@ -16,7 +16,7 @@ import rdts.time.{Dot, Dots}
   *
   * @param prefixDots The dots of the prefix.
   * @param prefix The prefix delta.
-  * @param addressableDeltas The keys (dots) of stored deltas. (Not necessarily the same as the union of dots of the delta groups, but a subset).
+  * @param addressableDeltas The keys (dots) of stored deltas. (Not necessarily the same as the `union` of dots of the delta groups, but a subset).
   * @param deltas The delta groups addressed by a Dot.
   * @tparam RDT The type of the deltas.
   */
@@ -123,10 +123,10 @@ case class DeltaStore[RDT] private /* private to ensure invariant (see from(…)
 
   /** Creates a new DeltaStore that merges the deltas into the prefix and discards the deltas.
     *
-    * This implementation doesn't merge deltas already part of the prefix (according their dot address) or are duplicate
+    * This implementation doesn't `merge`deltas already part of the prefix (according their dot address) or are duplicate
     * entries in the delta map (according to their dot address).
     *
-    * @return A DeltaStore with the result of the merge of the old prefix and all irredundant deltas and no additional
+    * @return A DeltaStore with the result of the `merge`of the old prefix and all irredundant deltas and no additional
     *         deltas.
     */
   def compactAllDeltasIntoPrefixSkippingDuplicates(using

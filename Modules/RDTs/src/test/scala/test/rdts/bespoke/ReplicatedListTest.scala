@@ -19,18 +19,18 @@ class ReplicatedListTest extends munit.FunSuite {
     val vr = v0.insertGL(0, "0r")
     assertEquals(vr.toList, List("0r"))
 
-    val vmerged = v1 merge vr
+    val vmerged = v1 `merge` vr
     assertEquals(vmerged.toList, List("0r", "00"))
 
-    val v2 = v1 merge v1.insertGL(1, "01")
+    val v2 = v1 `merge` v1.insertGL(1, "01")
 
     assertEquals(v2.toList, List("00", "01"))
 
-    val v3 = v2 merge v2.insertGL(0, "02")
-    val v4 = v3 merge v3.insertGL(1, "10")
+    val v3 = v2 `merge` v2.insertGL(0, "02")
+    val v4 = v3 `merge` v3.insertGL(1, "10")
     assertEquals(v4.toList, List("02", "10", "00", "01"))
 
-    val recomposed = v4.decomposed.foldLeft(GrowOnlyList.empty[String])(_ merge _)
+    val recomposed = v4.decomposed.foldLeft(GrowOnlyList.empty[String])(_ `merge` _)
     assertEquals(v4, recomposed)
   }
 
@@ -46,10 +46,10 @@ class ReplicatedListTest extends munit.FunSuite {
 
     val v3d = v2.mod(_.insert(using aid)(1, "20"))
 
-    val mergedOrder = v2.data.order.value merge v3d.data.order.value
+    val mergedOrder = v2.data.order.value `merge` v3d.data.order.value
 
-    val mergedLists: ReplicatedList[String] = v3d.data merge v2.data
-    val v3                                  = v2 merge v3d
+    val mergedLists: ReplicatedList[String] = v3d.data `merge` v2.data
+    val v3                                  = v2 `merge` v3d
 
     assertEquals(
       v3.data.order.value.inner.get(GrowOnlyList.Node.Head),
@@ -64,7 +64,7 @@ class ReplicatedListTest extends munit.FunSuite {
 
     assertEquals(v3.data.toList, List("10", "20"))
 
-    val v4 = v3 merge v3.mod(_.insert(using aid)(1, "30"))
+    val v4 = v3 `merge` v3.mod(_.insert(using aid)(1, "30"))
 
     assertEquals(v4.data.toList, List("10", "30", "20"))
 

@@ -34,7 +34,7 @@ object HasDots {
 
   class HasDotsSet[A](kdots: Option[HasDots[A]]) extends HasDots[Set[A]] {
     extension (dotted: Set[A])
-      def dots: Dots = kdots.iterator.flatMap(kd => dotted.map(kd.dots)).foldLeft(Dots.empty)(_ union _)
+      def dots: Dots = kdots.iterator.flatMap(kd => dotted.map(kd.dots)).foldLeft(Dots.empty)(_ `union` _)
       def removeDots(dots: Dots): Option[Set[A]] =
         val res = dotted.iterator.flatMap: elem =>
           kdots.map(kd => kd.removeDots(elem)(dots)).getOrElse(Some(elem))
@@ -63,7 +63,7 @@ object HasDots {
     extension (dotted: Map[K, V])
       def dots: Dots =
         val all = dotted.keysIterator.map(kdots.dots) ++ dotted.valuesIterator.map(vdots.dots)
-        all.foldLeft(Dots.empty)(_ union _)
+        all.foldLeft(Dots.empty)(_ `union` _)
 
       def removeDots(dots: Dots): Option[Map[K, V]] =
         val res = dotted.flatMap: (k, v) =>

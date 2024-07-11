@@ -5,13 +5,13 @@ import rdts.time.{Dot, Dots}
 
 case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
 
-  def context: Dots = observed union deletions
+  def context: Dots = observed `union` deletions
 
   inline def mod[B](f: Dots ?=> A => Obrem[B]): Obrem[B] = f(using context)(data)
   inline def modn[B](f: A => B): Dotted[B]               = Dotted(f(data))
 
   /** For temporary compat */
-  def toDotted: Dotted[A] = Dotted(data, observed union deletions)
+  def toDotted: Dotted[A] = Dotted(data, observed `union` deletions)
 }
 
 object Obrem {
@@ -26,7 +26,7 @@ object Obrem {
         if right.deletions.isEmpty then left.data else left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
       val r =
         if left.deletions.isEmpty then right.data else right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
-      Obrem(l merge r, left.observed union right.observed, left.deletions union right.deletions)
+      Obrem(l `merge` r, left.observed `union` right.observed, left.deletions `union` right.deletions)
   }
 }
 
@@ -40,7 +40,7 @@ object Obrem {
 case class Dotted[A](data: A, context: Dots) {
   def map[B](f: A => B): Dotted[B]      = Dotted(f(data), context)
   def knows(dot: Dot): Boolean          = context.contains(dot)
-  def deletions(using HasDots[A]): Dots = context diff contained
+  def deletions(using HasDots[A]): Dots = context `diff` contained
   def contained(using HasDots[A]): Dots = data.dots
   def advanced(r: LocalUid): Dotted[A]  = Dotted(data, context.advanced(r.uid))
 
@@ -49,7 +49,7 @@ case class Dotted[A](data: A, context: Dots) {
 
   def toObrem(using HasDots[A]) =
     val dots = data.dots
-    Obrem(data, dots, context subtract dots)
+    Obrem(data, dots, context `subtract` dots)
 }
 
 type DottedLattice[T] = Lattice[Dotted[T]]
@@ -68,7 +68,7 @@ object Dotted {
     def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
       val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
       val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
-      Dotted(l merge r, left.context union right.context)
+      Dotted(l `merge` r, left.context `union` right.context)
 
     /** Dotted decompose guarantees decomposes its inner value, but recomposes any values with overlapping dots, such that each dot is present in exactly one of the returned deltas. */
     override def decompose(a: Dotted[A]): Iterable[Dotted[A]] =
@@ -78,9 +78,9 @@ object Dotted {
           Dotted(delta, delta.dots)
 
       val compacted   = compact(deltas.toList, Nil)
-      val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ union _)
+      val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ `union` _)
       assert(a.context.contains(presentDots), "fantasized new dots, this likely means a bug elsewhere")
-      val removed = a.context subtract presentDots
+      val removed = a.context `subtract` presentDots
       val empty   = Bottom[A].empty
       compacted concat removed.decomposed.flatMap(dots => Option.when(!dots.isEmpty)(Dotted(empty, dots)))
 
@@ -96,7 +96,7 @@ object Dotted {
       val (accin, accother) = acc.partition(overlap)
       val all               = tin ++ accin
       val compacted = all.foldLeft(h): (l, r) =>
-        Dotted(dl.merge(l.data, r.data), l.context union r.context)
+        Dotted(dl.merge(l.data, r.data), l.context `union` r.context)
 
       // have to repeat the check with compacted, until it did not grow
       if all.isEmpty
@@ -105,7 +105,7 @@ object Dotted {
 
   def liftLattice[A: Lattice]: Lattice[Dotted[A]] = new {
     def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
-      Dotted(left.data merge right.data, left.context union right.context)
+      Dotted(left.data `merge` right.data, left.context `union` right.context)
   }
 
 }

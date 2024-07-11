@@ -19,7 +19,7 @@ class ReevaluationCount extends FunSuiteInvertedAssert {
         if v1.value then v2.value else v3.value
       }
 
-      s.changed observe (_ => test += 1)
+      s.changed `observe` (_ => test += 1)
 
       assert(test == 0)
       v2.set(1)

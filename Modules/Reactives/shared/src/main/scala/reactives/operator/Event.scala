@@ -45,7 +45,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @return the resulting [[reactives.structure.Observe]] can be used to remove the observer.
     * @group accessor
     */
-  final infix def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(
+  final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(
       using ticket: CreationTicket[State]
   ): Disconnectable =
     Observe.strong(this, fireImmediately) { reevalVal => Observe.ObservePulsing(reevalVal.access, this, onValue, onError) }
@@ -79,7 +79,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   /** Propagates the event only when the other event `exception` does not fire.
     * @group operator
     */
-  final infix def except(exception: Event[Any])(using ticket: CreationTicket[State]): Event[T] = {
+  final def except(exception: Event[Any])(using ticket: CreationTicket[State]): Event[T] = {
     Event.Impl.staticNamed(s"(except $this  $exception)", this, exception) { st =>
       st.collectStatic(exception) match {
         case NoChange            => st.collectStatic(this).access
@@ -160,14 +160,14 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     *
     * @group operator
     */
-  final inline infix def filter(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
+  final inline def filter(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
     Event.static { this.value.filter(expression) }
 
   /** Filters the event, only propagating the value when the filter is true.
     *
     * @group operator
     */
-  final infix inline def &&(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
+  final inline def &&(inline expression: T => Boolean)(using ticket: CreationTicket[State]): Event[T] =
     filter(expression)
 
   /** Collects the results from a partial function
@@ -181,7 +181,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     *
     * @group operator
     */
-  final inline infix def map[B](inline expression: T => B)(using ticket: CreationTicket[State]): Event[B] =
+  final inline def map[B](inline expression: T => B)(using ticket: CreationTicket[State]): Event[B] =
     Event.static { this.value.map(expression) }
 
   /** Like map, but allows to ignore the parameter if its type is Unit.
@@ -204,7 +204,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     )
 
   /** This creates a branch that can be combined into a `Fold` */
-  final inline infix def branch[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
+  final inline def branch[S](inline f: FoldState[S] ?=> T => S): Fold.Branch[S] =
     Fold.branch {
       this.value.fold(Fold.current)(f)
     }

@@ -22,7 +22,7 @@ trait Lattice[A] {
   def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
   /** Decompose a state into potentially smaller parts.
-    * Guarantees for any two states a and b that `decompose(a).fold(b)(merge) == b merge a`, i.e., merging the decomposed values into b has the same result as merging the full a into b (assuming b is normalized).
+    * Guarantees for any two states a and b that `decompose(a).fold(b)(merge) == b `merge` a`, i.e., merging the decomposed values into b has the same result as merging the full a into b (assuming b is normalized).
     *
     * Note that the goal here is small individual storage size at reasonable computational cost. Minimalism of returned results is not guaranteed. It is also not guaranteed that the result does not overlap. The result may be the empty sequence.
     */
@@ -38,15 +38,15 @@ trait Lattice[A] {
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
     * Overriding this is discouraged.
     */
-  def normalize(v: A): A = v merge v
+  def normalize(v: A): A = v `merge` v
 
   /** Convenience extensions for the above. */
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
-    final inline infix def <=(right: A): Boolean = Lattice.this.lteq(left, right)
+    final inline def <=(right: A): Boolean = Lattice.this.lteq(left, right)
     @targetName("mergeInfix")
-    final inline infix def merge(right: A): A = Lattice.this.merge(left, right)
+    final inline def merge(right: A): A = Lattice.this.merge(left, right)
     final inline def decomposed: Iterable[A]  = Lattice.this.decompose(left)
   }
 }
@@ -67,7 +67,7 @@ object Lattice {
   // In case we ever want to fully migrate away from the  `implicit` keyword, the first line is equivalent to: `given syntax: {} with`, but that seems just weird.
   implicit object syntax:
     extension [A: Lattice](left: A)
-      infix def merge(right: A): A = Lattice[A].merge(left, right)
+      def merge(right: A): A = Lattice[A].merge(left, right)
 
   def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
     override def lteq(x: A, y: A): Boolean = Lattice.lteq(x, y)
@@ -101,7 +101,7 @@ object Lattice {
   // /////////////// common instances below ///////////////
 
   given setLattice[A]: Lattice[Set[A]] with
-    override def merge(left: Set[A], right: Set[A]): Set[A] = left union right
+    override def merge(left: Set[A], right: Set[A]): Set[A] = left `union` right
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
     override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
 
@@ -120,7 +120,7 @@ object Lattice {
       small.foldLeft(large) {
         case (current, (key, r)) =>
           current.updatedWith(key) {
-            case Some(l) => Some(l merge r)
+            case Some(l) => Some(l `merge` r)
             case None    => Some(r)
           }
       }
@@ -137,7 +137,7 @@ object Lattice {
       yield Map(k -> d)
   }
 
-  given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) merge right(k)
+  given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) `merge` right(k)
 
   /** This causes tuple lattices to be generally derivable implicitly,
     * without making all products derivable implicitly.

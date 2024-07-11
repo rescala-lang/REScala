@@ -182,14 +182,14 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added_delta.status, AuctionInterface.Open)
     assertEquals(added_delta.winner, None)
 
-    val added: AuctionData = auction merge added_delta
+    val added: AuctionData = auction `merge` added_delta
 
     val knockedDown_delta: AuctionData = added.knockDown()
     assertEquals(knockedDown_delta.bids, Set.empty)
     assertEquals(knockedDown_delta.status, AuctionInterface.Closed)
     assertEquals(knockedDown_delta.winner, None)
 
-    val knockedDown: AuctionData = added merge knockedDown_delta
+    val knockedDown: AuctionData = added `merge` knockedDown_delta
 
     assertEquals(knockedDown.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.status, AuctionInterface.Closed)
@@ -208,7 +208,7 @@ class ContainerTest extends munit.FunSuite {
     assertEquals(added.data.status, AuctionInterface.Open)
     assertEquals(added.data.winner, None)
 
-    val knockedDown = added merge added.modn(_.knockDown())
+    val knockedDown = added `merge` added.modn(_.knockDown())
     assertEquals(knockedDown.data.bids, Set(Bid("First", 1)))
     assertEquals(knockedDown.data.status, AuctionInterface.Closed)
     assertEquals(knockedDown.data.winner, Some("First"))

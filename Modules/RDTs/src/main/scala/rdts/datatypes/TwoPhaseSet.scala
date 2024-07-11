@@ -14,7 +14,7 @@ case class TwoPhaseSet[E](added: Set[E], removed: Set[E]) {
   type Delta = TwoPhaseSet[E]
 
   def elements: Set[E] = {
-    added diff removed
+    added `diff` removed
   }
 
   def contains(element: E): Boolean =

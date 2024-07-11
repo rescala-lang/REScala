@@ -18,7 +18,7 @@ class MultiVersionRegisterTest extends munit.FunSuite {
     val b = a.mod(_.write(using alice.convert)("hi"))
     val c = a.mod(_.write(using bob.convert)("ho"))
 
-    val m1 = b merge c
+    val m1 = b `merge` c
 
     assertEquals(m1.data.read, Set("hi", "ho"))
 
@@ -26,7 +26,7 @@ class MultiVersionRegisterTest extends munit.FunSuite {
 
     assertEquals(d.data.read, Set("lets go!"))
 
-    assertEquals(m1 merge d, d merge b)
+    assertEquals(m1 `merge` d, d `merge` b)
 
   }
 

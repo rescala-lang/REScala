@@ -14,7 +14,7 @@ type EnCRDT[S] = Set[AEAD[S, VectorClock]]
 
 given encrdtLattice[S]: Lattice[EnCRDT[S]] with
   def merge(left: EnCRDT[S], right: EnCRDT[S]): EnCRDT[S] =
-    val combined = left union right
+    val combined = left `union` right
     combined.filterNot(s => combined.exists(o => s.metadata < o.metadata))
 
 extension [S](c: EnCRDT[S])

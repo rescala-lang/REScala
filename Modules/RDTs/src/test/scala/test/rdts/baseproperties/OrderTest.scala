@@ -21,9 +21,9 @@ abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boo
     extends munit.ScalaCheckSuite {
 
   extension [A](using pa: PartialOrdering[A])(a: A)
-    infix def <(b: A)     = pa.lt(a, b)
-    infix def <=(b: A)    = pa.lteq(a, b)
-    infix def equiv(b: A) = pa.equiv(a, b)
+    def <(b: A)     = pa.lt(a, b)
+    def <=(b: A)    = pa.lteq(a, b)
+    def equiv(b: A) = pa.equiv(a, b)
 
   property("transitive") {
     forAll { (a: A, b: A, c: A) =>
@@ -35,7 +35,7 @@ abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boo
     forAll { (a: A, b: A) =>
       if a <= b && b <= a
       then
-        assert(a equiv b)
+        assert(a `equiv` b)
         if agreesWithEquals then assert(a == b)
     }
   }

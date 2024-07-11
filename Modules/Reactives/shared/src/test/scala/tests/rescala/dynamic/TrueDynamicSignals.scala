@@ -19,9 +19,9 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     val c = Signal.dynamic(b.value.value)
 
     assertEquals(c.readValueOnce, 3)
-    a set 4
+    a `set` 4
     assertEquals(c.readValueOnce, 4)
-    b set Signal(5)
+    b `set` Signal(5)
     assertEquals(c.readValueOnce, 5)
 
   }
@@ -34,9 +34,9 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     }
 
     assertEquals(b.readValueOnce, 3)
-    a set 4
+    a `set` 4
     assertEquals(b.readValueOnce, 4)
-    a set 5
+    a `set` 5
     assertEquals(b.readValueOnce, 5)
   }
 
@@ -52,8 +52,8 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     }
 
     assertEquals(testsig.readValueOnce, 10)
-    outside set 2
-    inside set 11
+    outside `set` 2
+    inside `set` 11
     assertEquals(testsig.readValueOnce, 11)
     assertEquals(sig.readValueOnce, 2)
   }
@@ -73,8 +73,8 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     }
 
     assertEquals(testsig.readValueOnce, 1)
-    outside set 2
-    inside set 11
+    outside `set` 2
+    inside `set` 11
     assertEquals(testsig.readValueOnce, 2)
   }
 
@@ -92,13 +92,13 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     assertEquals(testsig.readValueOnce, -1)
     evt.fire(100)
     assertEquals(testsig.readValueOnce, 100)
-    v set 10
+    v `set` 10
     assertEquals(testsig.readValueOnce, 110)
     evt.fire(10)
     assertEquals(testsig.readValueOnce, 20)
     evt.fire(5)
     assertEquals(testsig.readValueOnce, 15)
-    v set 50
+    v `set` 50
     assertEquals(testsig.readValueOnce, 55)
   }
 
@@ -115,17 +115,17 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
   //  val sig = Signal.dynamic { s().signal().signal.value }
   //
   //  assertEquals(sig.readValueOnce, 20)
-  //  v1 set 30
+  //  v1 `set` 30
   //  assertEquals(sig.readValueOnce, 30)
-  //  v2 set new { def signal(using ct: CreationTicket[REState]) = Signal { 7 + v1() } }
+  //  v2 `set` new { def signal(using ct: CreationTicket[REState]) = Signal { 7 + v1() } }
   //  assertEquals(sig.readValueOnce, 37)
-  //  v1 set 10
+  //  v1 `set` 10
   //  assertEquals(sig.readValueOnce, 17)
-  //  v3 set new { val signal = Signal { new { def signal(using ct: CreationTicket[REState]) = Signal { v1() } } } }
+  //  v3 `set` new { val signal = Signal { new { def signal(using ct: CreationTicket[REState]) = Signal { v1() } } } }
   //  assertEquals(sig.readValueOnce, 10)
-  //  v2 set new { def signal(using ct: CreationTicket[REState]) = Signal { 10 + v1() } }
+  //  v2 `set` new { def signal(using ct: CreationTicket[REState]) = Signal { 10 + v1() } }
   //  assertEquals(sig.readValueOnce, 10)
-  //  v1 set 80
+  //  v1 `set` 80
   //  assertEquals(sig.readValueOnce, 80)
   // }
 
@@ -160,11 +160,11 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
   //  val sig = Signal.dynamic { v() map (_.s()) }
   //
   //  assertEquals(sig.readValueOnce, List(1, 2))
-  //  v1 set 5
+  //  v1 `set` 5
   //  assertEquals(sig.readValueOnce, List(5, 2))
-  //  v2 set 7
+  //  v2 `set` 7
   //  assertEquals(sig.readValueOnce, List(5, 7))
-  //  v set v.readValueOnce.reverse
+  //  v `set` v.readValueOnce.reverse
   //  assertEquals(sig.readValueOnce, List(7, 5))
   // }
 
@@ -220,7 +220,7 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     }
 
     assertEquals(testsig.readValueOnce, 1)
-    outside set 2
+    outside `set` 2
     assertEquals(testsig.readValueOnce, 2)
   }
 

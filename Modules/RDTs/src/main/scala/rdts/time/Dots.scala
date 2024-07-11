@@ -3,6 +3,8 @@ package rdts.time
 import rdts.base.{Lattice, Uid}
 import rdts.dotted.{Dotted, HasDots}
 
+import scala.annotation.targetName
+
 /** Essentially a more efficient version of a [[Set[Dot] ]].
   * It typically tracks all dots known within some scope.
   *
@@ -33,7 +35,7 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
 
   def clock: VectorClock = VectorClock(internal.view.mapValues(_.next.fold(0L)(_ - 1)).toMap)
 
-  infix def add(dot: Dot): Dots = add(dot.place, dot.time)
+  def add(dot: Dot): Dots = add(dot.place, dot.time)
 
   def add(replicaId: Uid, time: Time): Dots =
     Dots(internal.updated(
@@ -50,25 +52,25 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
     this.add(next)
   }
 
-  infix def diff(other: Dots): Dots = subtract(other)
+  def diff(other: Dots): Dots = subtract(other)
 
-  infix def subtract(other: Dots): Dots = {
+  def subtract(other: Dots): Dots = {
     Dots(
       internal.map { case left @ (id, leftRanges) =>
         other.internal.get(id) match {
-          case Some(rightRanges) => id -> (leftRanges subtract rightRanges)
+          case Some(rightRanges) => id -> (leftRanges `subtract` rightRanges)
           case None              => left
         }
       }.filterNot(_._2.isEmpty)
     )
   }
 
-  infix def intersect(other: Dots): Dots =
+  def intersect(other: Dots): Dots =
     Dots {
       internal.flatMap { case (id, ranges) =>
         other.internal.get(id) match {
           case Some(otherRanges) =>
-            val intersection = ranges intersect otherRanges
+            val intersection = ranges `intersect` otherRanges
             if intersection.isEmpty then None
             else Some(id -> intersection)
           case None => None
@@ -76,17 +78,17 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
       }
     }
 
-  infix def disjunct(other: Dots): Boolean =
+  def disjunct(other: Dots): Boolean =
     val keys = internal.keySet intersect other.internal.keySet
     keys.forall { k =>
-      rangeAt(k) disjunct other.rangeAt(k)
+      rangeAt(k) `disjunct` other.rangeAt(k)
     }
 
-  infix def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
+  def union(other: Dots): Dots = Dots.contextLattice.merge(this, other)
 
-  infix def contains(d: Dot): Boolean = internal.get(d.place).exists(_.contains(d.time))
+  def contains(d: Dot): Boolean = internal.get(d.place).exists(_.contains(d.time))
 
-  infix def contains(other: Dots): Boolean = other <= this
+  def contains(other: Dots): Boolean = other <= this
 
   def iterator: Iterator[Dot] = internal.iterator.flatMap((k, v) => v.iterator.map(t => Dot(k, t)))
 
@@ -96,7 +98,8 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
   def max(replicaID: Uid): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
 
-  infix def <=(other: Dots): Boolean = internal.forall {
+  @targetName("lessThanEquals")
+  def <=(other: Dots): Boolean = internal.forall {
     case (id, leftRange) => leftRange <= other.rangeAt(id)
   }
 }

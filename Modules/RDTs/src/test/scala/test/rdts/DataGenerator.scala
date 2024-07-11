@@ -126,7 +126,7 @@ object DataGenerator {
   def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match
       case Nil    => acc
-      case h :: t => makeUnique(t, h.subtract(state) :: acc, state union h)
+      case h :: t => makeUnique(t, h.subtract(state) :: acc, state `union` h)
 
   case class SmallTimeSet(s: Set[Time])
 
@@ -161,7 +161,7 @@ object DataGenerator {
     for
       dots <- Arbitrary.arbitrary[Dots]
       elem <- arb.arbitrary
-    yield Dotted(elem, dots union elem.dots)
+    yield Dotted(elem, dots `union` elem.dots)
 
   given arbDotmap[K, V: HasDots](using arbElem: Arbitrary[K], arbKey: Arbitrary[V]): Arbitrary[Map[K, V]] =
     Arbitrary:
@@ -200,7 +200,7 @@ object DataGenerator {
         rid: LocalUid
     ): Dotted[ReplicatedList[E]] = {
       val afterInsert = inserted.foldLeft(Dotted(ReplicatedList.empty[E])) {
-        case (rga, (i, e)) => rga merge rga.mod(_.insert(using rid)(i, e))
+        case (rga, (i, e)) => rga `merge` rga.mod(_.insert(using rid)(i, e))
       }
 
       removed.foldLeft(afterInsert) {
@@ -230,6 +230,6 @@ object DataGenerator {
   given arbOpGraph[T](using arbData: Arbitrary[T]): Arbitrary[OpGraph[T]] = Arbitrary:
     Gen.containerOf[List, T](arbData.arbitrary).map: elems =>
       elems.foldLeft(OpGraph.bottom.empty): (curr, elem) =>
-        curr merge curr.set(elem)
+        curr `merge` curr.set(elem)
 
 }

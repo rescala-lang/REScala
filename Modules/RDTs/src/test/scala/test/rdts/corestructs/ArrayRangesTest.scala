@@ -32,51 +32,51 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
     var left  = ArrayRanges(Seq((1, 2)))
     var right = ArrayRanges(Seq((1, 2)))
 
-    assertEquals((left intersect right), ArrayRanges(Seq((1, 2))))
-    assertEquals((right intersect left), ArrayRanges(Seq((1, 2))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((1, 2))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((1, 2))))
 
     right = ArrayRanges(Seq((2, 3)))
 
-    assertEquals((left intersect right), ArrayRanges.empty)
-    assertEquals((right intersect left), ArrayRanges.empty)
+    assertEquals((left `intersect` right), ArrayRanges.empty)
+    assertEquals((right `intersect` left), ArrayRanges.empty)
 
     left = ArrayRanges.empty
     right = ArrayRanges.empty
 
-    assertEquals((left intersect right), ArrayRanges.empty)
-    assertEquals((right intersect left), ArrayRanges.empty)
+    assertEquals((left `intersect` right), ArrayRanges.empty)
+    assertEquals((right `intersect` left), ArrayRanges.empty)
 
     left = ArrayRanges(Seq((0, 10), (15, 20)))
-    assertEquals((left intersect right), ArrayRanges.empty)
-    assertEquals((right intersect left), ArrayRanges.empty)
+    assertEquals((left `intersect` right), ArrayRanges.empty)
+    assertEquals((right `intersect` left), ArrayRanges.empty)
 
     right = ArrayRanges(Seq((0, 10)))
-    assertEquals((left intersect right), ArrayRanges(Seq((0, 10))))
-    assertEquals((right intersect left), ArrayRanges(Seq((0, 10))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((0, 10))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((0, 10))))
 
     right = ArrayRanges(Seq((2, 8)))
-    assertEquals((left intersect right), ArrayRanges(Seq((2, 8))))
-    assertEquals((right intersect left), ArrayRanges(Seq((2, 8))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((2, 8))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((2, 8))))
 
     right = ArrayRanges(Seq((2, 3), (4, 6)))
-    assertEquals((left intersect right), ArrayRanges(Seq((2, 3), (4, 6))))
-    assertEquals((right intersect left), ArrayRanges(Seq((2, 3), (4, 6))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((2, 3), (4, 6))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((2, 3), (4, 6))))
 
     right = ArrayRanges(Seq((2, 3), (4, 12)))
-    assertEquals((left intersect right), ArrayRanges(Seq((2, 3), (4, 10))))
-    assertEquals((right intersect left), ArrayRanges(Seq((2, 3), (4, 10))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((2, 3), (4, 10))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((2, 3), (4, 10))))
 
     right = ArrayRanges(Seq((2, 3), (4, 12)))
-    assertEquals((left intersect right), ArrayRanges(Seq((2, 3), (4, 10))))
-    assertEquals((right intersect left), ArrayRanges(Seq((2, 3), (4, 10))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((2, 3), (4, 10))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((2, 3), (4, 10))))
 
     right = ArrayRanges(Seq((2, 3), (4, 16), (18, 22)))
-    assertEquals((left intersect right), ArrayRanges(Seq((2, 3), (4, 10), (15, 16), (18, 20))))
-    assertEquals((right intersect left), ArrayRanges(Seq((2, 3), (4, 10), (15, 16), (18, 20))))
+    assertEquals((left `intersect` right), ArrayRanges(Seq((2, 3), (4, 10), (15, 16), (18, 20))))
+    assertEquals((right `intersect` left), ArrayRanges(Seq((2, 3), (4, 10), (15, 16), (18, 20))))
 
     right = ArrayRanges(Seq((10, 15)))
-    assertEquals((left intersect right), ArrayRanges.empty)
-    assertEquals((right intersect left), ArrayRanges.empty)
+    assertEquals((left `intersect` right), ArrayRanges.empty)
+    assertEquals((right `intersect` left), ArrayRanges.empty)
   }
 
 
@@ -101,111 +101,111 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
   }
 
   test("subtract subrange") {
-    assertEquals(ArrayRanges.elems(1, 2, 3) subtract ArrayRanges.elems(2), ArrayRanges.elems(1, 3))
+    assertEquals(ArrayRanges.elems(1, 2, 3) `subtract` ArrayRanges.elems(2), ArrayRanges.elems(1, 3))
   }
 
   test("subtract should result in empty range for complete overlap") {
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((1, 10)))), ArrayRanges.empty)
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((0, 10)))), ArrayRanges.empty)
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((0, 11)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((1, 10)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((0, 10)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((0, 11)))), ArrayRanges.empty)
 
-    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) subtract ArrayRanges(Seq((1, 5), (6, 10)))), ArrayRanges.empty)
-    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) subtract ArrayRanges(Seq((1, 10)))), ArrayRanges.empty)
-    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) subtract ArrayRanges(Seq((0, 10)))), ArrayRanges.empty)
-    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) subtract ArrayRanges(Seq((0, 11)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) `subtract` ArrayRanges(Seq((1, 5), (6, 10)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) `subtract` ArrayRanges(Seq((1, 10)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) `subtract` ArrayRanges(Seq((0, 10)))), ArrayRanges.empty)
+    assertEquals((ArrayRanges(Seq((1, 5), (6, 10))) `subtract` ArrayRanges(Seq((0, 11)))), ArrayRanges.empty)
   }
 
   test("overlap on left but not right") {
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((0, 5)))), ArrayRanges(Seq((5, 10))))
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((0, 5)))), ArrayRanges(Seq((5, 10))))
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((0, 5)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((0, 5)))),
       ArrayRanges(Seq((5, 10), (11, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((11, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((11, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((10, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((10, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20), (21, 22))) subtract ArrayRanges(Seq((11, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20), (21, 22))) `subtract` ArrayRanges(Seq((11, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20), (21, 22)))
     )
   }
 
   test("overlap on right but not left") {
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((5, 10)))), ArrayRanges(Seq((1, 5))))
-    assertEquals((ArrayRanges(Seq((1, 10))) subtract ArrayRanges(Seq((5, 12)))), ArrayRanges(Seq((1, 5))))
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((5, 10)))), ArrayRanges(Seq((1, 5))))
+    assertEquals((ArrayRanges(Seq((1, 10))) `subtract` ArrayRanges(Seq((5, 12)))), ArrayRanges(Seq((1, 5))))
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((0, 5)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((0, 5)))),
       ArrayRanges(Seq((5, 10), (11, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((11, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((11, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20))) subtract ArrayRanges(Seq((10, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20))) `subtract` ArrayRanges(Seq((10, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((1, 10), (11, 20), (21, 22))) subtract ArrayRanges(Seq((11, 19)))),
+      (ArrayRanges(Seq((1, 10), (11, 20), (21, 22))) `subtract` ArrayRanges(Seq((11, 19)))),
       ArrayRanges(Seq((1, 10), (19, 20), (21, 22)))
     )
   }
 
   test("for combinations of overlap") {
     assertEquals(
-      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) subtract ArrayRanges(Seq((0, 5)))),
+      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) `subtract` ArrayRanges(Seq((0, 5)))),
       ArrayRanges(Seq((5, 10), (11, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) subtract ArrayRanges(Seq((0, 6)))),
+      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) `subtract` ArrayRanges(Seq((0, 6)))),
       ArrayRanges(Seq((6, 10), (11, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) subtract ArrayRanges(Seq((6, 19)))),
+      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) `subtract` ArrayRanges(Seq((6, 19)))),
       ArrayRanges(Seq((0, 2), (5, 6), (19, 20)))
     )
     assertEquals(
-      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) subtract ArrayRanges(Seq((6, 22)))),
+      (ArrayRanges(Seq((0, 2), (5, 10), (11, 20))) `subtract` ArrayRanges(Seq((6, 22)))),
       ArrayRanges(Seq((0, 2), (5, 6)))
     )
   }
 
   test("work with no overlap") {
     var left = ArrayRanges(Seq((5, 10), (11, 20)))
-    assertEquals((left subtract ArrayRanges(Seq((0, 5)))), left)
-    assertEquals((left subtract ArrayRanges(Seq((0, 4)))), left)
-    assertEquals((left subtract ArrayRanges(Seq((20, 25)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((0, 5)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((0, 4)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((20, 25)))), left)
 
     left = ArrayRanges(Seq((0, 2), (5, 10), (11, 20)))
-    assertEquals((left subtract ArrayRanges(Seq((2, 5)))), left)
-    assertEquals((left subtract ArrayRanges(Seq((2, 3)))), left)
-    assertEquals((left subtract ArrayRanges(Seq((3, 5)))), left)
-    assertEquals((left subtract ArrayRanges(Seq((10, 11)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((2, 5)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((2, 3)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((3, 5)))), left)
+    assertEquals((left `subtract` ArrayRanges(Seq((10, 11)))), left)
 
   }
 
   test("work if left is empty") {
     val left  = ArrayRanges.empty
     val right = ArrayRanges(Seq((1, 5)))
-    assertEquals((left subtract right), ArrayRanges.empty)
+    assertEquals((left `subtract` right), ArrayRanges.empty)
   }
 
   test("work if right is empty") {
     var left  = ArrayRanges(Seq((1, 5)))
     val right = ArrayRanges.empty
-    assertEquals((left subtract right), left)
+    assertEquals((left `subtract` right), left)
 
     left = ArrayRanges(Seq((0, 20), (25, 30)))
-    assertEquals((left subtract right), left)
+    assertEquals((left `subtract` right), left)
   }
 
   test("work if both are empty") {
-    assertEquals((ArrayRanges.empty subtract ArrayRanges.empty), ArrayRanges.empty)
+    assertEquals((ArrayRanges.empty `subtract` ArrayRanges.empty), ArrayRanges.empty)
   }
 
   test("<= should work for singles on left and right") {
@@ -254,8 +254,8 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
       val lr = ArrayRanges.from(leftSet)
       val rr = ArrayRanges.from(rightSet)
 
-      assertEquals(lr union rr, ArrayRanges.from((leftSet union rightSet)))
-      assertEquals(lr subtract rr, ArrayRanges.from((leftSet diff rightSet)))
+      assertEquals(lr `union` rr, ArrayRanges.from((leftSet `union` rightSet)))
+      assertEquals(lr `subtract` rr, ArrayRanges.from((leftSet `diff` rightSet)))
 
       if lr <= rr then
         assertEquals(leftSet.intersect(rightSet), leftSet, s"left: $left\nright: $right")

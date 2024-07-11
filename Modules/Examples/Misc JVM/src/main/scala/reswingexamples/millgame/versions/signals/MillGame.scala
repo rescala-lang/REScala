@@ -69,13 +69,13 @@ class MillGame {
 
   /* Event based game logic: */
   board.millClosed observe { color => // #HDL
-    stateVar set RemoveStone(color)
+    stateVar `set` RemoveStone(color)
   }
 
   board.numStonesChanged observe { // #HDL
     case (color, n) =>
       if remainCount.now.apply(color) == 0 && n < 3 then {
-        stateVar set GameOver(color.other)
+        stateVar `set` GameOver(color.other)
       }
   }
 
@@ -99,7 +99,7 @@ class MillGame {
 
       case PlaceStone(player) =>
         if board.canPlace.now.apply(i) then {
-          stateVar set nextState(player.other)
+          stateVar `set` nextState(player.other)
           decrementCount(player)
           board.place(i, player)
           true
@@ -108,39 +108,39 @@ class MillGame {
       case remove @ RemoveStone(player) =>
         if board(i) == remove.color then {
           board.remove(i)
-          stateVar set nextState(player.other)
+          stateVar `set` nextState(player.other)
           true
         } else false
 
       case MoveStoneSelect(player) =>
         if board(i) == player then {
-          stateVar set MoveStoneDrop(player, i)
+          stateVar `set` MoveStoneDrop(player, i)
           true
         } else false
 
       case MoveStoneDrop(player, stone) =>
         if board.canMove.now.apply(stone, i) then {
-          stateVar set nextState(player.other)
+          stateVar `set` nextState(player.other)
           board.move(stone, i)
           true
         } else {
-          stateVar set MoveStoneSelect(player)
+          stateVar `set` MoveStoneSelect(player)
           false
         }
 
       case JumpStoneSelect(player) =>
         if board(i) == player then {
-          stateVar set JumpStoneDrop(player, i)
+          stateVar `set` JumpStoneDrop(player, i)
           true
         } else false
 
       case JumpStoneDrop(player, stone) =>
         if board.canJump.now.apply(stone, i) then {
-          stateVar set nextState(player.other)
+          stateVar `set` nextState(player.other)
           board.move(stone, i)
           true
         } else {
-          stateVar set JumpStoneSelect(player)
+          stateVar `set` JumpStoneSelect(player)
           false
         }
 

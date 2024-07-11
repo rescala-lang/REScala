@@ -56,7 +56,7 @@ object ReShapes extends SimpleSwingApplication {
       }
     )
 
-    val merge = new ReMenu(
+    val `merge`= new ReMenu(
       text = "Merge with...", // #SIG //#IS( // )
       contents = Signal {     // #SIG //#IS( // )
         itemsEvents.value map { case (btn, _) => btn }

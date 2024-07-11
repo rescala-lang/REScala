@@ -34,7 +34,7 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
 
   export state.{now}
 
-  final infix def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
+  final def observe(onValue: M => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = true)(
       using ticket: CreationTicket[State]
   ): Disconnectable = state.observe(onValue, onError, fireImmediately)
 

@@ -135,7 +135,7 @@ class MillDrawer(val game: MillGame) extends ReComponent(preferredSize = new Dim
   val indexClicked =
     (mouse.clicks.released map { (e: MouseReleased) => // #EF
       val index = coordinates.value.indexWhere {
-        p => (p distance ((e.point.x, e.point.y))) < ClickArea
+        p => (p `distance` ((e.point.x, e.point.y))) < ClickArea
       }
       SlotIndex(index)
     }) && (_ != SlotIndex(-1)) // #EF

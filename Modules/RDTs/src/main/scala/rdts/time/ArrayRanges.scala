@@ -38,7 +38,7 @@ class ArrayRanges(
       if s == einc then s"$s" else s"$s:$einc"
   }.mkString("[", ", ", "]")
 
-  infix def disjunct(right: ArrayRanges): Boolean = {
+  def disjunct(right: ArrayRanges): Boolean = {
     if this.isEmpty then return true
     if right.isEmpty then return true
 
@@ -85,7 +85,7 @@ class ArrayRanges(
     return true
   }
 
-  infix def contains(x: Time): Boolean = {
+  def contains(x: Time): Boolean = {
     val index =
       // binary search returns either the index of x, or the position where x should be inserted (but shifted into negative numbers)
       val res = java.util.Arrays.binarySearch(inner, 0, used, x)
@@ -100,7 +100,7 @@ class ArrayRanges(
 
   def isEmpty: Boolean = used == 0
 
-  infix def add(x: Time): ArrayRanges =
+  def add(x: Time): ArrayRanges =
     union(new ArrayRanges(Array(x, x + 1), 2))
 
   def next: Option[Time] = Option.when(used != 0)(inner(used - 1))
@@ -128,7 +128,7 @@ class ArrayRanges(
     * Only allocates a single result array (size is the sum of the used size),
     * and traverses each input once fully.
     */
-  infix def union(other: ArrayRanges): ArrayRanges = {
+  def union(other: ArrayRanges): ArrayRanges = {
     var leftPos   = 0
     var rightPos  = 0
     var mergedPos = 0
@@ -196,7 +196,7 @@ class ArrayRanges(
 
   }
 
-  infix def intersect(right: ArrayRanges): ArrayRanges = {
+  def intersect(right: ArrayRanges): ArrayRanges = {
     var newInnerNextIndex = 0
     val newInner          = new Array[Time](used + right.used)
 
@@ -229,7 +229,7 @@ class ArrayRanges(
     new ArrayRanges(newInner, newInnerNextIndex)
   }
 
-  infix def subtract(right: ArrayRanges): ArrayRanges = {
+  def subtract(right: ArrayRanges): ArrayRanges = {
     if right.isEmpty then return this
     if isEmpty then return this
 
@@ -327,7 +327,7 @@ class ArrayRanges(
 object ArrayRanges {
   val empty: ArrayRanges = new ArrayRanges(Array.emptyLongArray, 0)
   def apply(elements: Seq[(Time, Time)]): ArrayRanges =
-    elements.map((s, e) => new ArrayRanges(Array(s, e), 2)).foldLeft(ArrayRanges.empty)(_ union _)
+    elements.map((s, e) => new ArrayRanges(Array(s, e), 2)).foldLeft(ArrayRanges.empty)(_ `union` _)
   def elems(elems: Time*): ArrayRanges = from(elems)
 
   def from(it: Iterable[Time]): ArrayRanges = {
@@ -362,7 +362,7 @@ object ArrayRanges {
   given latticeInstance: Lattice[ArrayRanges] with {
     override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
     override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
-    override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left union right
+    override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left `union` right
   }
 
   def leftRightToOrder: (Boolean, Boolean) => Option[Int] =

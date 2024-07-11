@@ -142,10 +142,10 @@ object Paxos {
         "cannot merge two Paxos instances with differing members"
       ) // members should remain fixed
       Paxos[A](
-        prepares = left.prepares merge right.prepares,
-        promises = left.promises merge right.promises,
-        accepts = left.accepts merge right.accepts,
-        accepteds = left.accepteds merge right.accepteds,
+        prepares = left.prepares `merge` right.prepares,
+        promises = left.promises `merge` right.promises,
+        accepts = left.accepts `merge` right.accepts,
+        accepteds = left.accepteds `merge` right.accepteds,
         members = left.members
       )
 

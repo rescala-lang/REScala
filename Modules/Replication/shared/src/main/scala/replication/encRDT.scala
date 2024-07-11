@@ -12,7 +12,7 @@ case class EncRDT[S](deltas: Set[Dotted[Secret]])
 
 given encrdtLattice[S]: Lattice[EncRDT[S]] with
   def merge(left: EncRDT[S], right: EncRDT[S]): EncRDT[S] =
-    val combined = left.deltas union right.deltas
+    val combined = left.deltas `union` right.deltas
     EncRDT(combined.filterNot(s => combined.exists(o => s.context <= o.context)))
 
 extension [S](c: EncRDT[S])

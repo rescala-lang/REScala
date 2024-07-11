@@ -12,6 +12,8 @@
 
 • rename event.act to event.branch to be consistent with fold API?
 
+• remove infix on most methods
+
 
 == v0.35.1
 date = 2024-03-08

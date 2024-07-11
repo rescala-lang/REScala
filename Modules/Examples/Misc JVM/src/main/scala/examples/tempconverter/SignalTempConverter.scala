@@ -26,8 +26,8 @@ object SignalTempConverter extends SimpleSwingApplication {
       // listener only changes model, doesn't care about the 'view' (setting the text of the textfields)
       listenTo(celsius, fahrenheit)
       reactions += {
-        case EditDone(`fahrenheit`) => degree_f set fahrenheit.text.toInt
-        case EditDone(`celsius`)    => degree_c set celsius.text.toInt
+        case EditDone(`fahrenheit`) => degree_f `set` fahrenheit.text.toInt
+        case EditDone(`celsius`)    => degree_c `set` celsius.text.toInt
       }
 
       contents = new FlowPanel {
