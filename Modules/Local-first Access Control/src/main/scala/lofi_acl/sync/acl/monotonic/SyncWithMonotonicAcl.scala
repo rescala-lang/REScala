@@ -17,7 +17,8 @@ class SyncWithMonotonicAcl[RDT](
     private val localIdentity: PrivateIdentity,
     rootOfTrust: PublicIdentity,
     initialAclMessages: List[AclDelta[RDT]],
-    initialRdt: DeltaMapWithPrefix[RDT], // Assumed to correspond with ACL!
+    initialRdt: DeltaMapWithPrefix[RDT],         // Assumed to correspond with ACL!
+    onDeltaReceive: RDT => Unit = (_: RDT) => {} // Consumes a delta
 )(using
     lattice: Lattice[RDT],
     bottom: Bottom[RDT],
@@ -30,6 +31,7 @@ class SyncWithMonotonicAcl[RDT](
 
   private val localPublicId = localIdentity.getPublic
 
+  def state: RDT = rdtReference.get()._2
   private val rdtReference: AtomicReference[(Dots, RDT)] = AtomicReference(
     initialRdt.allDots ->
     initialRdt.prefix.merge(initialRdt.deltas.foldLeft(bottom.empty) { case (l, (_, r)) => l.merge(r) })
@@ -70,8 +72,10 @@ class SyncWithMonotonicAcl[RDT](
     antiEntropy.newPeers(Map(remoteUser -> (hostParts(0), hostParts(1).toInt)))
   }
 
-  override def receivedDelta(dot: Dot, rdt: RDT): Unit =
+  override def receivedDelta(dot: Dot, delta: RDT): Unit =
+    println(s"Received: $delta")
     val _ = rdtReference.updateAndGet((dots, rdt) => dots.add(dot) -> rdt.merge(rdt))
+    onDeltaReceive(delta)
 
   def start(): Unit = {
     synchronized {
