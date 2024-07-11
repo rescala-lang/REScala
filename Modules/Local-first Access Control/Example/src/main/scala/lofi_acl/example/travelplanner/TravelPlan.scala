@@ -4,30 +4,31 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import lofi_acl.access.Filter
 import lofi_acl.ardt.datatypes.LWW.filter
-import lofi_acl.ardt.datatypes.ORMap.stringKeyORMapFilter
+import lofi_acl.ardt.datatypes.ORMap.{observeRemoveMapEntryFilter, stringKeyORMapFilter}
+import lofi_acl.example.travelplanner.Expense.Description
+import lofi_acl.example.travelplanner.TravelPlan.{Title, UniqueId}
 import rdts.base.{Bottom, Lattice}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
+import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 import rdts.dotted.{HasDots, Obrem}
-
-type Title = String
-given Bottom[Title] = Bottom.provide("")
-type UniqueId = String
 
 case class TravelPlan(
     title: LastWriterWins[Title],
-    bucketList: Obrem[ObserveRemoveMap[UniqueId, LastWriterWins[String]]],
-    expenses: Obrem[ObserveRemoveMap[UniqueId, Expense]]
+    bucketList: Obrem[ObserveRemoveMap[UniqueId, Entry[LastWriterWins[String]]]],
+    expenses: Obrem[ObserveRemoveMap[UniqueId, Entry[Expense]]]
 ) derives Lattice, Bottom, Filter
 
 case class Expense(
-    // time: LastWriterWins[LocalDateTime], // For what do we need time?
-    description: LastWriterWins[Option[String]],
+    description: LastWriterWins[Option[Description]],
     amount: LastWriterWins[Option[Float]],
-    comment: ObserveRemoveMap[String, LastWriterWins[String]]
+    comment: LastWriterWins[Option[String]],
 ) derives Lattice, HasDots, Bottom, Filter
 
 object TravelPlan {
+  type Title = String
+  given Bottom[Title] = Bottom.provide("")
+  type UniqueId = String
   val empty: TravelPlan = Bottom[TravelPlan].empty
 
   import lofi_acl.sync.JsoniterCodecs.uidKeyCodec
@@ -35,5 +36,7 @@ object TravelPlan {
 }
 
 object Expense {
-  val empty: Expense = Bottom[Expense].empty
+  type Description = String
+  given Bottom[Description] = Bottom.provide("")
+  val empty: Expense        = Bottom[Expense].empty
 }

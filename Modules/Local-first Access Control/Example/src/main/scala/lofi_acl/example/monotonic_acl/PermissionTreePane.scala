@@ -35,12 +35,12 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
 
   private val bucketListEntryCheckBoxes = rdt.bucketList.data.inner.map { (id, description) =>
     val (read, write) = wiredReadWriteCheckboxes(bucketListReadCheckBox.selected, bucketListWriteCheckBox.selected)
-    id -> (description.read, read, write)
+    id -> (description.value.read, read, write)
   }
 
   private val expenseEntryCheckBoxes = rdt.expenses.data.inner.map { (id, expense) =>
     id -> ExpensePermEntryCheckBoxes(
-      expense.description.read.getOrElse("N/A"),
+      expense.value.description.read.getOrElse("N/A"),
       parentRead = expensePermParentCheckBoxes.read.selected,
       parentWrite = expensePermParentCheckBoxes.write.selected,
       expensePermParentCheckBoxes.descriptionRead.selected,
@@ -186,6 +186,9 @@ class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWr
       private def allowIfSelected(checkBox: CheckBox, path: String): PermissionTree =
         if checkBox.isSelected then permissionTree.merge(PermissionTree.fromPath(path))
         else permissionTree
+
+    // TODO: Also add missing (read?) permissions for Obrem, if adding permissions for data
+    // TODO: Check Filter for ORMap.inner.key vs ORMap.key
 
     var read  = if globalReadCheckBox.isSelected then PermissionTree.allow else PermissionTree.empty
     var write = if globalWriteCheckBox.isSelected then PermissionTree.allow else PermissionTree.empty
