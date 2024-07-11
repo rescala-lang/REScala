@@ -21,3 +21,7 @@ runReplication: buildReplication
 
 buildTodoMVC:
 	sbt --client --no-color 'print todolist/deploy'
+
+webviewExample: buildTodoMVC
+	sbt --client --no-color 'webview / fetchResources'
+	sbt --client --no-color 'webview / run Modules/Examples/TodoMVC/target/index.html'

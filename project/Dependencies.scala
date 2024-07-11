@@ -1,9 +1,12 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import sbt._
-import sbt.Keys.libraryDependencies
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import sbt.*
+import sbt.Keys.{libraryDependencies, managedResourceDirectories, unmanagedResourceDirectories}
+
+import java.nio.file.{Files, Path, StandardOpenOption}
+import java.security.MessageDigest
 
 object Dependencies {
 
@@ -31,5 +34,35 @@ object Dependencies {
     def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.9.0"
     def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.9.0"
     def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.9.0"
+  }
+
+  case class ResourceDescription(localpath: Path, uri: URI, sha1sum: String)
+
+  lazy val fetchResourceKey = TaskKey[Seq[Path]]("fetchResources", "manually fetches dependencies")
+  def fetchResources(dependencies: ResourceDescription*) = fetchResourceKey := {
+
+    val sha1digester: MessageDigest = MessageDigest.getInstance("SHA-1")
+
+    def sha1hex(b: Array[Byte]): String =
+      sha1digester.clone().asInstanceOf[MessageDigest].digest(b)
+        .map { h => f"$h%02x" }.mkString
+
+    dependencies.map { dep =>
+      val filepath = (Compile / unmanagedResourceDirectories).value.head.toPath.resolve(dep.localpath)
+      Files.createDirectories(filepath.getParent)
+
+      val ResourceDescription(name, urlStr, sha1) = dep
+
+      val url = urlStr.toURL
+      val fos = Files.newOutputStream(filepath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+      try IO.transferAndClose(url.openStream(), fos)
+      finally fos.close()
+      val csha1 = sha1hex(Files.readAllBytes(filepath))
+      if (sha1 != csha1) {
+        Files.delete(filepath)
+        throw new AssertionError(s"sha1 of »$urlStr« did not match »$sha1«")
+      }
+      filepath
+    }
   }
 }

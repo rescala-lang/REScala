@@ -1,5 +1,8 @@
 import Settings.scala3defaults
 
+import java.net.URI
+import scala.scalanative.build.{LTO, Mode}
+
 lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   aead.js,
   aead.jvm,
@@ -302,3 +305,28 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
     LocalSettings.deployTask,
     Dependencies.pprint,
   )
+
+lazy val webview = project.in(file("Modules/Webview"))
+  .enablePlugins(ScalaNativePlugin)
+  .settings(
+    Settings.scala3defaults,
+    Dependencies.fetchResources(Dependencies.ResourceDescription(
+      java.nio.file.Path.of("scala-native/webview.h"),
+      URI.create("https://raw.githubusercontent.com/webview/webview/93be13a101e548c13d47ae36a6ea00300b2ecfc0/webview.h"),
+      "593cbc6714e5ea1239006991fff0cad55eee02b7"
+    )),
+    nativeConfig ~= { c =>
+      c.withLTO(LTO.thin)
+        .withMode(Mode.releaseFast)
+        .withLinkingOptions(c.linkingOptions ++ fromCommand("pkg-config", "--libs", "gtk+-3.0", "webkit2gtk-4.1"))
+        .withCompileOptions(co => co ++ fromCommand("pkg-config", "--cflags", "gtk+-3.0", "webkit2gtk-4.1"))
+        .withIncrementalCompilation(true)
+    }
+  )
+
+def fromCommand(args: String*): List[String] = {
+  val process = new ProcessBuilder(args: _*).start()
+  process.waitFor()
+  val res = new String(process.getInputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
+  res.split(raw"\s+").toList
+}
