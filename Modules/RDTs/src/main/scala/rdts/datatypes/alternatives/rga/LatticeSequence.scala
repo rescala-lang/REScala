@@ -2,9 +2,10 @@ package rdts.datatypes.alternatives.rga
 
 import rdts.base.Lattice
 
+import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 
-case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex, Vertex], values: Map[Vertex, A])(
+final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex, Vertex], values: Map[Vertex, A])(
     implicit val vertexSet: SetLike[Vertex, VertexSet]
 ) {
 
@@ -15,6 +16,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
       case v: Vertex    => vertexSet.contains(vertices, v)
     }
 
+  @tailrec
   def before(u: Vertex, v: Vertex): Boolean =
     u match {
       case Vertex.start => true
@@ -23,6 +25,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
       case null         => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
     }
 
+  @tailrec
   def successor(v: Vertex): Vertex = {
     edges.get(v) match {
       case None    => throw new IllegalArgumentException(s"CRDTSequence does not contain $v")
@@ -40,6 +43,7 @@ case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex,
     * @param insertee the vertex to be inserted right to position
     * @return A new RAG containing the inserted element
     */
+  @tailrec
   def addRight(left: Vertex, insertee: Vertex, value: A): LatticeSequence[A, VertexSet] = {
     if left == Vertex.end then throw new IllegalArgumentException("Cannot insert after end node!")
 
