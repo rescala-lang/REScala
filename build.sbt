@@ -28,9 +28,11 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   reactives.native,
   replication.js,
   replication.jvm,
+  replication.native,
   replicationExamples.js,
   replicationExamples.jvm,
   todolist,
+  webview
 )
 
 // aggregate projects allow compiling all variants (js, jvm, native) at the same time
@@ -258,7 +260,9 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
   )
 
 lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Replication"))
-  .dependsOn(reactives, rdts, channels, dtn, rdts % "compile->compile;test->test")
+  .dependsOn(reactives, rdts, channels, rdts % "compile->compile;test->test")
+  .jsConfigure(_.dependsOn(dtn.js))
+  .jvmConfigure(_.dependsOn(dtn.jvm))
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(11), // java webserver
@@ -308,7 +312,6 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
 
 lazy val webview = project.in(file("Modules/Webview"))
   .enablePlugins(ScalaNativePlugin)
-  .dependsOn(replication.native)
   .settings(
     Settings.scala3defaults,
     Dependencies.fetchResources(Dependencies.ResourceDescription(
