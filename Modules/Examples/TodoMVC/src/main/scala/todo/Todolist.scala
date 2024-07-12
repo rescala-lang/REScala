@@ -6,9 +6,10 @@ import reactives.extra.Tags.reattach
 import replication.{DTNChannel, WebRTCConnectionView}
 import scalatags.JsDom.all
 import scalatags.JsDom.all.given
-import Codecs.given
 import todo.TodoDataManager.TodoRepState
 
+import java.util.Timer
+import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
@@ -18,6 +19,8 @@ object Todolist {
   @JSExportTopLevel("Todolist")
   def run(): Unit = main(Array.empty[String])
 
+  val timer = new Timer()
+
   def main(args: Array[String]): Unit = {
 
     val storagePrefix = window.location.href
@@ -25,6 +28,8 @@ object Todolist {
 
     val todoApp  = new TodoAppUI(storagePrefix)
     val contents = todoApp.getContents()
+
+    TodoDataManager.dataManager.addLatentConnection(WebviewAdapterChannel.listen())
 
     val webrtc = WebRTCConnectionView(TodoDataManager.dataManager).example()
 
@@ -39,6 +44,14 @@ object Todolist {
         val state = TodoDataManager.dataManager.allDeltas.reduceOption(Lattice.merge)
         all.pre(all.stringFrag(pprint.apply(state).plainText)).render
       ).hold(all.span.render))
+
+    timer.scheduleAtFixedRate(
+      { () =>
+        TodoDataManager.dataManager.requestData()
+      },
+      1000,
+      1000
+    )
 
     ()
   }

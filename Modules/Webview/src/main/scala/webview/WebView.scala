@@ -26,6 +26,10 @@ class WebView private (val w: webview_t) {
       webview_run(w)
       ()
     } finally webview_destroy(w)
+    
+  def eval(js: String): Unit = Zone {
+    webview_eval(w, toCString(js))
+  }
 
   def navigate(uri: URI) = Zone { zone ?=>
     webview_navigate(w, toCString(uri.toASCIIString)(using zone))

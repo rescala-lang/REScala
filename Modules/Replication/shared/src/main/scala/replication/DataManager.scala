@@ -10,7 +10,6 @@ import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.{Payload, Request}
 
-import java.util.Timer
 import scala.util.{Failure, Success, Try}
 
 sealed trait ProtocolMessage[+T]
@@ -60,20 +59,14 @@ class DataManager[State](
 
   var connections: List[ConnectionContext] = Nil
 
-  val timer = new Timer()
-
   val debugCallback: Callback[Any] =
     case Success(value)     => ()
     case Failure(exception) => exception.printStackTrace()
 
-  timer.scheduleAtFixedRate(
-    { () =>
-      connections.foreach: con =>
-        con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
-    },
-    10000,
-    10000
-  )
+  def requestData() = {
+    connections.foreach: con =>
+      con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
+  }
 
   def addLatentConnection(latentConnection: AbstractLatentConnection[MessageBuffer])(using
       JsonValueCodec[CodecState]
@@ -118,7 +111,7 @@ class DataManager[State](
   }
 
   def updateContext(rr: Uid, dots: Dots) = lock.synchronized {
-    contexts = contexts.updatedWith(rr)(curr => curr `merge`Some(dots))
+    contexts = contexts.updatedWith(rr)(curr => curr `merge` Some(dots))
   }
 
   private def messageBufferCallback(outChan: ConnectionContext): Callback[ProtocolMessage[State]] =
@@ -131,7 +124,7 @@ class DataManager[State](
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
         relevant.foreach: msg =>
           biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallback)
-        updateContext(uid, selfContext `merge`knows)
+        updateContext(uid, selfContext `merge` knows)
       case Payload(uid, context, data) =>
         val interalized = ProtocolDots[State](data, context)
         lock.synchronized {

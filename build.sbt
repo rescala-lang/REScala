@@ -312,8 +312,10 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
 
 lazy val webview = project.in(file("Modules/Webview"))
   .enablePlugins(ScalaNativePlugin)
+  .dependsOn(replication.native)
   .settings(
     Settings.scala3defaults,
+    Dependencies.jsoniterScala,
     Dependencies.fetchResources(Dependencies.ResourceDescription(
       java.nio.file.Path.of("scala-native/webview.h"),
       URI.create("https://raw.githubusercontent.com/webview/webview/93be13a101e548c13d47ae36a6ea00300b2ecfc0/webview.h"),
