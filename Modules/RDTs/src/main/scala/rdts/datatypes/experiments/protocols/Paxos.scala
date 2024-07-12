@@ -102,6 +102,7 @@ case class Paxos[A](
   private def highestProposal: Option[Prepare] =
     prepares.maxOption
   private def myHighestProposal(using LocalUid): Option[Prepare] = prepares.filter(_.proposer == replicaId).maxOption
+  private def canWrite(using LocalUid): Boolean                  = members.contains(replicaId) && read.isEmpty
   private def canSendAccept(using LocalUid): Boolean =
     val promisesForProposal = myHighestProposal.map(p => promises.filter(_.proposal == p)).getOrElse(Set())
     promisesForProposal.size >= quorum
@@ -113,17 +114,19 @@ case class Paxos[A](
       Phase.One
 
   // API
-  def write(value: A)(using LocalUid): Paxos[A] = (phase, read, myHighestProposal, highestProposal) match
-    case (Phase.Two, Some(_), _, _) // we are in phase two and value is already decided, do nothing
-        => Paxos.unchanged
-    case (Phase.One, _, _, _)
-        if canSendAccept // we are in phase one and have received enough promises
-        => accept(value)
-    case (Phase.One, _, Some(p1), Some(p2))
-        if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
-        => Paxos.unchanged
-    case _ // we try to propose new value
-        => prepare()
+  def write(value: A)(using LocalUid): Paxos[A] =
+    if canWrite then
+      (phase, myHighestProposal, highestProposal) match
+        case (Phase.One, _, _)
+            if canSendAccept // we are in phase one and have received enough promises
+            => accept(value)
+        case (Phase.One, Some(p1), Some(p2))
+            if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
+            => Paxos.unchanged
+        case _ // we try to propose new value
+            => prepare()
+    else
+      Paxos.unchanged
 
   def read: Option[A] =
     val acceptedsPerProposal: Map[(Prepare, A), Set[Accepted[A]]] = accepteds.groupBy(a => (a.proposal, a.value))
@@ -137,9 +140,20 @@ object Paxos {
 
   given lattice[A]: Lattice[Paxos[A]] with
     override def merge(left: Paxos[A], right: Paxos[A]): Paxos[A] =
-      assert(
+      require(
         Lattice[Set[Uid]].merge(left.members, right.members) == left.members,
         "cannot merge two Paxos instances with differing members"
+      ) // members should remain fixed
+
+      def allUids(p: Paxos[?]): Set[Uid] =
+        p.prepares.map(_.proposer) union
+        p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
+        p.accepts.map(_.proposal.proposer) union
+        p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
+
+      require(
+        (allUids(left) union allUids(right)).subsetOf(left.members),
+        "updates only contain Uids of known members"
       ) // members should remain fixed
       Paxos[A](
         prepares = left.prepares `merge` right.prepares,
@@ -157,6 +171,9 @@ object Paxos {
       GrowOnlySet.empty[Accepted[A]],
       Set.empty
     )
+
+  def init[A](members: Set[Uid]): Paxos[A] =
+    unchanged[A].copy(members = members)
 
   given consensus[A]: Consensus[Paxos] with
     extension [A](c: Paxos[A])
