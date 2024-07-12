@@ -9,9 +9,6 @@ import webview.WebView
 import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.concurrent.Future
 
-// based on
-// https://github.com/lolgab/webview-scala
-
 object Main {
   def main(args: Array[String]): Unit = {
 
@@ -23,8 +20,18 @@ object Main {
       println(s"executing receive callback")
       println(state)
       try
-        Files.write(Path.of("webviewoutputtest.json"), writeToArray(state), StandardOpenOption.CREATE, StandardOpenOption.APPEND)
-        Files.write(Path.of("webviewoutputtest.json"), "\n".getBytes, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+        Files.write(
+          Path.of("webviewoutputtest.json"),
+          writeToArray(state),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.APPEND
+        )
+        Files.write(
+          Path.of("webviewoutputtest.json"),
+          "\n".getBytes,
+          StandardOpenOption.CREATE,
+          StandardOpenOption.APPEND
+        )
       catch
         case ex: Exception => ex.printStackTrace()
       ()
@@ -35,7 +42,6 @@ object Main {
     val w = WebView()
     dataManager.addLatentConnection(WebviewNativeChannel.listen(w))
     w.navigate(Path.of(args.head).toUri)
-
 
     w.run()
   }
@@ -87,7 +93,7 @@ object WebviewNativeChannel {
         { msg =>
           println(s"received message webview -> native")
           val arguments = readFromString[List[String]](msg)
-          val bytes = java.util.Base64.getDecoder.decode(arguments.head)
+          val bytes     = java.util.Base64.getDecoder.decode(arguments.head)
           println(s"successfully decoded base 64")
           println(new String(bytes))
           cb.succeed(ArrayMessageBuffer(bytes))

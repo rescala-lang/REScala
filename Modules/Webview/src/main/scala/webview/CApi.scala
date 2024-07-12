@@ -1,3 +1,10 @@
+// based on https://github.com/lolgab/webview-scala
+//
+// APIs are from webview, with license:
+// * MIT License
+// *
+// * Copyright (c) 2017 Serge Zaitsev
+// * Copyright (c) 2022 Steffen André Langnes
 package webview
 
 import scala.scalanative.unsafe.*

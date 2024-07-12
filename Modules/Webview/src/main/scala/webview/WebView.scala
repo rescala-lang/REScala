@@ -1,3 +1,4 @@
+// based on https://github.com/lolgab/webview-scala
 package webview
 
 import webview.CApi.*
@@ -26,7 +27,7 @@ class WebView private (val w: webview_t) {
       webview_run(w)
       ()
     } finally webview_destroy(w)
-    
+
   def eval(js: String): Unit = Zone {
     webview_eval(w, toCString(js))
   }
