@@ -308,6 +308,7 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
 
 lazy val webview = project.in(file("Modules/Webview"))
   .enablePlugins(ScalaNativePlugin)
+  .dependsOn(replication.native)
   .settings(
     Settings.scala3defaults,
     Dependencies.fetchResources(Dependencies.ResourceDescription(
