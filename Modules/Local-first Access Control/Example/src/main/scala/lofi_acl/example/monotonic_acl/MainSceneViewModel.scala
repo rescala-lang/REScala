@@ -2,6 +2,7 @@ package lofi_acl.example.monotonic_acl
 
 import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, StringProperty}
+import scalafx.collections.transformation.SortedBuffer
 import scalafx.scene.control.{ListView, TextField}
 import scalafx.scene.layout.StackPane
 import scalafx.stage.Stage
@@ -66,14 +67,11 @@ class MainSceneViewModel {
       if titleTextField.isFocused then
         model.changeTitle(newVal)
     )
-    titleTextField.focused.onChange((op, oldVal, newVal) =>
-     if !newVal then
-       Platform.runLater(() =>
-         val titleFromModel = model.title.get()
-         titleTextField.text = titleFromModel
-       )
+    titleTextField.focused.onChange((op, wasFocused, isNowFocused) =>
+      if !isNowFocused then
+        titleTextField.text = model.title.get()
     )
     bucketListView.cellFactory = { (_: Any) => new BucketListEntryListCell(model) }
-    bucketListView.items = model.bucketListIds
+    bucketListView.items = SortedBuffer(model.bucketListIds)
   }
 }

@@ -16,7 +16,6 @@ import scalafx.beans.property.StringProperty
 import scalafx.collections.ObservableBuffer
 
 import java.util.concurrent.atomic.AtomicReference
-import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.global
 
 class TravelPlanModel(
@@ -56,10 +55,6 @@ class TravelPlanModel(
     sync.connect(remoteUser, address)
   }
 
-  val bucketListIds: ObservableBuffer[String] = ObservableBuffer.from(state.bucketList.data.inner.keySet)
-  val bucketListProperties: AtomicReference[Map[String, StringProperty]] =
-    AtomicReference(state.bucketList.data.inner.map((id, lww) => id -> StringProperty(lww.value.read)))
-
   def changeTitle(newTitle: String): Unit = {
     mutateRdt(_.changeTitle(newTitle))
   }
@@ -94,11 +89,29 @@ class TravelPlanModel(
     }
   }
 
-  val title: StringProperty = StringProperty(state.title.read)
+  val title: StringProperty                   = StringProperty(state.title.read)
+  val bucketListIds: ObservableBuffer[String] = ObservableBuffer.from(state.bucketList.data.inner.keySet)
+  private var bucketListIdSet: Set[String]    = bucketListIds.toSet
+  val bucketListProperties: AtomicReference[Map[String, StringProperty]] =
+    AtomicReference(state.bucketList.data.inner.map((id, lww) => id -> StringProperty(lww.value.read)))
+
   private def deltaReceived(delta: TravelPlan): Unit = {
     val newTravelPlan = state
     if !delta.title.isEmpty then
       title.value = newTravelPlan.title.read
+
+    val bucketListEntriesInDelta = delta.bucketList.data.inner
+    if bucketListEntriesInDelta.nonEmpty then
+      val newIds = bucketListEntriesInDelta.filter((id, entry) => !bucketListIdSet.contains(id)).keySet
+      bucketListProperties.updateAndGet(oldProps =>
+        val newProps = oldProps ++ newIds.map(id => id -> StringProperty(""))
+        bucketListEntriesInDelta.foreach { (id, entry) =>
+          newProps(id).value = entry.value.read
+        }
+        newProps
+      )
+      bucketListIds.addAll(newIds)
+      bucketListIdSet = bucketListIdSet ++ newIds
   }
 }
 
