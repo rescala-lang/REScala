@@ -5,8 +5,6 @@ import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
 import rdts.base.Lattice
 
-import scala.util.{Failure, Success, Try}
-
 object StandardLibrary:
 
   // Option[T] with Some > None
@@ -22,9 +20,9 @@ object StandardLibrary:
                 // NOTE: PermissionTree(PARTIAL, Map("a" -> allow)) on Option[T] keeps the field a of T.
                 Some(Filter[T].filter(value, permission))
 
-      override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] =
-        if permissionTree.children.isEmpty then Success(permissionTree)
-        else Filter[T].validatePermissionTree(permissionTree)
+      override def validatePermissionTree(permissionTree: PermissionTree): Unit =
+        if permissionTree.children.nonEmpty then
+          Filter[T].validatePermissionTree(permissionTree)
 
       override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
         Filter[T].minimizePermissionTree(permissionTree)
@@ -41,10 +39,8 @@ object StandardLibrary:
         case PermissionTree(PARTIAL, entryPermissions) =>
           throw IllegalArgumentException("Non-terminal rule used in terminal filter")
 
-      override def validatePermissionTree(permission: PermissionTree): Try[PermissionTree] = permission match
-        case PermissionTree(ALLOW, _)                                              => Success(permission)
-        case PermissionTree(PARTIAL, entryPermissions) if entryPermissions.isEmpty => Success(permission)
-        case PermissionTree(PARTIAL, entryPermissions) => Failure(InvalidPathException(List.empty))
+      override def validatePermissionTree(permission: PermissionTree): Unit =
+        if permission.children.nonEmpty then throw InvalidPathException(permission.children.keys.head :: Nil)
 
       override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = permissionTree
 
@@ -59,15 +55,15 @@ object StandardLibrary:
             case Some(entryPermission) => delta.map(entry => Filter[T].filter(entry, entryPermission))
             case None                  => ???
 
-      override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] =
+      override def validatePermissionTree(permissionTree: PermissionTree): Unit =
         if permissionTree.children.isEmpty
-        then Success(permissionTree)
+        then return
         else if permissionTree.children.size > 1
-        then Failure(PermissionTreeValidationException.InvalidPathException(List.empty))
+        then throw InvalidPathException(List.empty)
         else
           permissionTree.children.get("*") match
             case Some(entryPermission) => Filter[T].validatePermissionTree(entryPermission)
-            case None                  => Failure(PermissionTreeValidationException.InvalidPathException(List.empty))
+            case None                  => throw InvalidPathException(List(permissionTree.children.keys.head))
 
       override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
         PermissionTree(
@@ -96,18 +92,14 @@ object StandardLibrary:
                 case Some(entryPermission) => Some(key -> Filter[V].filter(value, entryPermission))
             }
 
-      override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] =
-        if permissionTree.children.isEmpty
-        then Success(permissionTree)
-        else
-          permissionTree.children.foldLeft[(String, Try[PermissionTree])]("" -> Success(permissionTree)) {
-            case (prevKeyPath -> prevResult, keyPath -> pt) =>
-              if prevResult.isFailure then prevKeyPath -> prevResult
-              else keyPath                             -> Filter[V].validatePermissionTree(pt)
-          } match
-            case keyPath -> Failure(InvalidPathException(subPath)) => Failure(InvalidPathException(keyPath :: subPath))
-            case (_, f @ scala.util.Failure(_))                    => f
-            case _ -> Success(_)                                   => Success(permissionTree)
+      override def validatePermissionTree(permissionTree: PermissionTree): Unit =
+        permissionTree.children.foreach {
+          case keyPath -> pt =>
+            try {
+              Filter[V].validatePermissionTree(pt)
+            } catch
+              case e @ InvalidPathException(subPath) => InvalidPathException(keyPath :: subPath)
+        }
 
       override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
         val minimized = PermissionTree(

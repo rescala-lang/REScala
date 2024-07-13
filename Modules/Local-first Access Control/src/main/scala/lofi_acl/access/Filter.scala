@@ -9,7 +9,6 @@ import rdts.time.{ArrayRanges, Dots}
 
 import scala.compiletime.{constValue, erasedValue, summonAll}
 import scala.deriving.Mirror
-import scala.util.{Failure, Success, Try}
 
 trait Filter[T]:
   // TODO: Maybe the identity should be fixed at the creation point of the Filter. This would allow us to simply replace
@@ -25,7 +24,7 @@ trait Filter[T]:
     * @param permissionTree The tree to check
     * @return Success(the validated permission tree) or a Failure(with the cause).
     */
-  def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree]
+  def validatePermissionTree(permissionTree: PermissionTree): Unit
 
   def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree
 
@@ -89,22 +88,24 @@ object Filter:
     /** Checks whether all children labels are the field names of this product and validates the filters for the children.
       *
       * @param permissionTree The tree to check
-      *  @return Success(the validated permission tree) or a Failure(with the cause).
       */
-    override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
-      permissionTree match
-        case PermissionTree(_, children) =>
-          val validationResultsOfChildren = children.map { case (factorLabel, factorPermissionTree) =>
-            factorLabels.get(factorLabel) match
-              case None => Failure(InvalidPathException(List(factorLabel)))
-              case Some(factorIdx) =>
-                factorFilters(factorIdx).validatePermissionTree(factorPermissionTree) match
-                  case s @ Success(_) => s
-                  case Failure(InvalidPathException(path: List[String])) =>
-                    Failure(InvalidPathException(factorLabel :: path))
-                  case f @ Failure(_) => f
-          }
-          validationResultsOfChildren.find { _.isInstanceOf[Failure[?]] }.getOrElse(Success(permissionTree))
+    override def validatePermissionTree(permissionTree: PermissionTree): Unit = {
+      permissionTree.children.foreach { case (factorLabel, factorPermissionTree) =>
+        factorLabels.get(factorLabel) match
+          case None =>
+            try {
+              if factorLabel == "*" then factorFilters.foreach(_.validatePermissionTree(factorPermissionTree))
+            } catch {
+              case InvalidPathException(labels) => throw InvalidPathException("*" :: labels)
+            }
+            throw InvalidPathException(List(factorLabel))
+          case Some(factorIdx) =>
+            try {
+              factorFilters(factorIdx).validatePermissionTree(factorPermissionTree)
+            } catch {
+              case InvalidPathException(path) => throw InvalidPathException(factorLabel :: path)
+            }
+      }
     }
 
     // Assumes a valid permission tree
@@ -144,17 +145,15 @@ object Filter:
               case None => None
           ))
 
-    override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] = {
-      Try {
-        permissionTree match
-          case PermissionTree(ALLOW, _) => permissionTree
-          case pt @ PermissionTree(PARTIAL, children) =>
-            children.foreach { (_, childPerm) =>
-              childPerm.children.foreach { (key, value) =>
-                val _ = java.lang.Long.parseUnsignedLong(key)
-              }
-            }
-            pt
+    override def validatePermissionTree(permissionTree: PermissionTree): Unit = {
+      permissionTree.children.foreach { (_, childPerm) =>
+        childPerm.children.foreach { (key, value) =>
+          try {
+            val _ = java.lang.Long.parseUnsignedLong(key)
+          } catch {
+            case e: NumberFormatException => throw InvalidPathException(key :: Nil)
+          }
+        }
       }
     }
 

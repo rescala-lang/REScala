@@ -257,8 +257,10 @@ class PermissionTreePane(
       ))
     ))
 
-    read = filter.validatePermissionTree(filter.minimizePermissionTree(read)).get
-    write = filter.validatePermissionTree(filter.minimizePermissionTree(write)).get
+    read = filter.minimizePermissionTree(read)
+    filter.validatePermissionTree(read)
+    write = filter.minimizePermissionTree(write)
+    filter.validatePermissionTree(write)
     (read, write)
   }
 }

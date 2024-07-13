@@ -7,8 +7,6 @@ import rdts.base.Bottom
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.datatypes.contextual.ObserveRemoveMap.Entry
 
-import scala.util.{Failure, Success, Try}
-
 object ORMap {
   given stringKeyORMapFilter[V: Filter]: Filter[ObserveRemoveMap[String, V]] with
     override def filter(delta: ObserveRemoveMap[String, V], permission: PermissionTree): ObserveRemoveMap[String, V] =
@@ -28,20 +26,15 @@ object ORMap {
             }
           )
 
-    override def validatePermissionTree(permissionTree: PermissionTree): Try[PermissionTree] =
-      if permissionTree.children.isEmpty
-      then Success(permissionTree)
-      else
-        Try {
-          PermissionTree(
-            PARTIAL,
-            permissionTree.children.map { (key, perm) =>
-              Filter[V].validatePermissionTree(perm) match
-                case Failure(e: InvalidPathException) => throw InvalidPathException(key :: e.path)
-                case Failure(e)                       => throw InvalidPathException(List(key))
-                case Success(validated)               => key -> validated
-            }
-          )
+    override def validatePermissionTree(permissionTree: PermissionTree): Unit =
+      if permissionTree.children.nonEmpty
+      then
+        permissionTree.children.foreach { (key, perm) =>
+          try {
+            Filter[V].validatePermissionTree(perm)
+          } catch
+            case e: InvalidPathException => throw InvalidPathException(key :: e.path)
+            case _                       => throw InvalidPathException(List(key))
         }
 
     override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =

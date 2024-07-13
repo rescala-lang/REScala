@@ -4,9 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.softwaremill.quicklens.*
 import lofi_acl.access.Filter
-import lofi_acl.ardt.datatypes.LWW.filter
+import lofi_acl.ardt.datatypes.LWW
 import lofi_acl.ardt.datatypes.ORMap.{observeRemoveMapEntryFilter, stringKeyORMapFilter}
-import lofi_acl.example.travelplanner.TravelPlan.{Delta, Title, UniqueId, randomKey}
+import lofi_acl.example.travelplanner.TravelPlan.{*, given}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
@@ -119,7 +119,9 @@ object TravelPlan {
     base64Encoder.encodeToString(Random.nextBytes(6))
 
   type Title = String
-  given Bottom[Title] = Bottom.provide("")
+  given Bottom[Title]                                                 = Bottom.provide("")
+  given titleFilter: Filter[LastWriterWins[Title]]                    = LWW.terminalFilter
+  given lwwOptionStringFilter: Filter[LastWriterWins[Option[String]]] = LWW.terminalFilter
   type UniqueId = String
   val empty: TravelPlan = Bottom[TravelPlan].empty
 

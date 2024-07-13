@@ -80,8 +80,9 @@ case class MonotonicAcl[RDT](
       val updated = old match
         case None                      => permissionToAdd
         case Some(existingPermissions) => existingPermissions.merge(permissionToAdd)
-      // TODO: Probably a good idea to log invalid updates...
-      Filter[RDT].validatePermissionTree(Filter[RDT].minimizePermissionTree(updated)).toOption
+      val minimized = Filter[RDT].minimizePermissionTree(updated)
+      Filter[RDT].validatePermissionTree(minimized)
+      Some(minimized)
     }
   }
 }
