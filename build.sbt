@@ -31,8 +31,7 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   replication.native,
   replicationExamples.js,
   replicationExamples.jvm,
-  todolist,
-  webview
+  todolist
 )
 
 // aggregate projects allow compiling all variants (js, jvm, native) at the same time
