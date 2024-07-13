@@ -118,8 +118,8 @@ class FilteringAntiEntropy[RDT](
       Console.err.println("Could not mutate RDT: missing permissions")
       return
     val filteredDelta = filter.filter(delta, localWritePerms.get)
-    syncInstance.receivedDelta(dot, filteredDelta)
     val deltaMsg: Delta[RDT] = Delta(filteredDelta, dot, aclDots)
+    msgQueue.put((deltaMsg, localPublicId))
     broadcastFiltered(deltaMsg)
   }
 
