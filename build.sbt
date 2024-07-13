@@ -321,6 +321,7 @@ lazy val webview = project.in(file("Modules/Webview"))
       URI.create("https://raw.githubusercontent.com/webview/webview/93be13a101e548c13d47ae36a6ea00300b2ecfc0/webview.h"),
       "593cbc6714e5ea1239006991fff0cad55eee02b7"
     )),
+    nativeLink := (Compile / nativeLink).dependsOn(Dependencies.fetchResourceKey).value,
     nativeConfig ~= { c =>
       c.withLTO(LTO.thin)
         .withMode(Mode.releaseFast)
