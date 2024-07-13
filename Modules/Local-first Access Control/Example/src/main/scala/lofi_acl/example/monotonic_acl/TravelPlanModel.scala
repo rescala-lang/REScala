@@ -16,6 +16,8 @@ import scalafx.beans.property.StringProperty
 import scalafx.collections.ObservableBuffer
 
 import java.util.concurrent.atomic.AtomicReference
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.global
 
 class TravelPlanModel(
     private val localIdentity: PrivateIdentity,
@@ -58,8 +60,6 @@ class TravelPlanModel(
   val bucketListProperties: AtomicReference[Map[String, StringProperty]] =
     AtomicReference(state.bucketList.data.inner.map((id, lww) => id -> StringProperty(lww.value.read)))
 
-  // TODO: Bind to crdt
-  val title: StringProperty = StringProperty("")
   def changeTitle(newTitle: String): Unit = {
     mutateRdt(_.changeTitle(newTitle))
   }
@@ -94,11 +94,11 @@ class TravelPlanModel(
     }
   }
 
+  val title: StringProperty = StringProperty(state.title.read)
   private def deltaReceived(delta: TravelPlan): Unit = {
     val newTravelPlan = state
-    if !delta.title.isEmpty
-    then title.value = newTravelPlan.title.read
-    println(s"Delta received: $delta")
+    if !delta.title.isEmpty then
+      title.value = newTravelPlan.title.read
   }
 }
 

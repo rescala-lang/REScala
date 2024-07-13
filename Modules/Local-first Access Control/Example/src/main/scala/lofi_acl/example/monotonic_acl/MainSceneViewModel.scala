@@ -39,9 +39,10 @@ class MainSceneViewModel {
   def createNewDocumentButtonPressed(): Unit = {
     documentIsOpen.value = true
     require(model == null)
+    // TODO: Check if running this directly on the GUI Thread has better UX (glitches). Same on join.
     global.execute { () =>
       model = TravelPlanModel.createNewDocument
-      init()
+      Platform.runLater(init())
     }
   }
 
@@ -50,15 +51,27 @@ class MainSceneViewModel {
     require(model == null)
     global.execute { () =>
       model = TravelPlanModel.joinDocument(inviteString.value)
-      init()
+      Platform.runLater(init())
     }
   }
 
   private def init(): Unit = {
-    titleTextField.text <==> model.title
+    titleTextField.text = model.title.get()
+    model.title.onChange((op, oldVal, newVal) =>
+      if !titleTextField.isFocused then
+        titleTextField.text = model.state.title.read
+    )
+
     titleTextField.text.onChange((op, oldVal, newVal) =>
-      println(s"$oldVal -> $newVal ($op)")
-      model.changeTitle(newVal)
+      if titleTextField.isFocused then
+        model.changeTitle(newVal)
+    )
+    titleTextField.focused.onChange((op, oldVal, newVal) =>
+     if !newVal then
+       Platform.runLater(() =>
+         val titleFromModel = model.title.get()
+         titleTextField.text = titleFromModel
+       )
     )
     bucketListView.cellFactory = { (_: Any) => new BucketListEntryListCell(model) }
     bucketListView.items = model.bucketListIds

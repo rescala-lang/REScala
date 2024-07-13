@@ -48,6 +48,7 @@ class MainScene extends Scene {
           viewModel.bucketListView,
           viewModel.expenseViewContainer,
         )
+        createInvitationButton.requestFocus()
       }
     }
   }
