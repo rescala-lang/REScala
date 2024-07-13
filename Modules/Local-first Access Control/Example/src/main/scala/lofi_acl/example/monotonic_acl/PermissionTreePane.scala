@@ -10,8 +10,11 @@ import scalafx.scene.control.{CheckBox, ContentDisplay, Label}
 import scalafx.scene.layout.GridPane
 import scalafx.scene.text.Text
 
-class PermissionTreePane(rdt: TravelPlan, localReadPerm: PermissionTree, localWritePerm: PermissionTree)
-    extends GridPane {
+class PermissionTreePane(
+    rdt: TravelPlan,
+    localReadPerm: PermissionTree,
+    localWritePerm: PermissionTree
+) extends GridPane {
 
   private var curRowIdx = 0
   vgap = 5
