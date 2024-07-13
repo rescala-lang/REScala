@@ -176,6 +176,7 @@ lazy val lofiAclExample = project.in(file("Modules/Local-first Access Control/Ex
     scala3defaults,
     libraryDependencies += LocalSettings.scalafx,
     Dependencies.jsoniterScala,
+    Dependencies.munit,
   )
 
 lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).in(file("Modules/Lore"))

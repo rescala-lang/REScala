@@ -1,27 +1,21 @@
 package lofi_acl.example.monotonic_acl
 
-import com.softwaremill.quicklens.*
 import lofi_acl.access.Operation.{READ, WRITE}
 import lofi_acl.access.PermissionTree
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{Ed25519Util, IdentityFactory, PrivateIdentity, PublicIdentity}
+import lofi_acl.example.travelplanner.TravelPlan
 import lofi_acl.example.travelplanner.TravelPlan.given
-import lofi_acl.example.travelplanner.{Expense, TravelPlan}
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.acl.monotonic.{MonotonicAcl, SyncWithMonotonicAcl}
 import rdts.base.LocalUid
 import rdts.datatypes.LastWriterWins
-import rdts.datatypes.contextual.ObserveRemoveMap
-import rdts.datatypes.contextual.ObserveRemoveMap.Entry
-import rdts.time.Dots
 import scalafx.application.Platform
 import scalafx.beans.property.StringProperty
 import scalafx.collections.ObservableBuffer
 
-import java.util.Base64
 import java.util.concurrent.atomic.AtomicReference
-import scala.util.Random
 
 class TravelPlanModel(
     private val localIdentity: PrivateIdentity,
@@ -67,103 +61,36 @@ class TravelPlanModel(
   // TODO: Bind to crdt
   val title: StringProperty = StringProperty("")
   def changeTitle(newTitle: String): Unit = {
-    sync.mutateRdt { travelPlan =>
-      val delta = travelPlan.deltaModify(_.title).using(_.write(newTitle))
-      println(delta)
-      delta
-    }
+    mutateRdt(_.changeTitle(newTitle))
   }
 
-  private val base64Encoder = Base64.getEncoder
   def addBucketListEntry(text: String): Unit = {
-    val key = base64Encoder.encodeToString(Random.nextBytes(4))
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.bucketList).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[LastWriterWins[String]]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          ormap.transformPlain(key) {
-            case None => Some(Entry(nextDot, LastWriterWins.now(text)))
-            case _    => ???
-          }
-        }
-      }
-    }
+    mutateRdt(_.addBucketListEntry(text))
   }
 
-  def setBucketListEntryText(key: String, text: String): Unit = {
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.bucketList).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[LastWriterWins[String]]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          ormap.transformPlain(key) {
-            case Some(prior) => Some(Entry(nextDot, prior.value.write(text)))
-            case None        => Some(Entry(nextDot, LastWriterWins.now(text)))
-          }
-        }
-      }
-    }
+  def setBucketListEntryText(bucketListId: String, text: String): Unit = {
+    mutateRdt(_.setBucketListEntryText(bucketListId, text))
   }
 
   def addExpense(description: String, amount: Float): Unit = {
-    val key = base64Encoder.encodeToString(Random.nextBytes(4))
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.expenses).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          val expense =
-            Expense(LastWriterWins.now(Some(description)), LastWriterWins.now(Some(amount)), LastWriterWins.now(None))
-          ormap.transformPlain(key) {
-            case None => Some(Entry(nextDot, expense))
-            case _    => ???
-          }
-        }
-      }
-    }
+    mutateRdt(_.addExpense(description, amount))
   }
 
-  def setExpenseAmount(key: String, amount: Float): Unit = {
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.expenses).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          ormap.transformPlain(key) {
-            case Some(prior: Entry[Expense]) =>
-              Some(Entry(nextDot, prior.value.deltaModify(_.amount).using(_.write(Some(amount)))))
-            case None => ???
-          }
-        }
-      }
-    }
+  def setExpenseAmount(expenseId: String, amount: Float): Unit = {
+    mutateRdt(_.setExpenseAmount(expenseId, amount))
   }
 
-  def setExpenseDescription(key: String, description: String): Unit = {
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.expenses).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          ormap.transformPlain(key) {
-            case Some(prior: Entry[Expense]) =>
-              Some(Entry(nextDot, prior.value.deltaModify(_.description).using(_.write(Some(description)))))
-            case None => ???
-          }
-        }
-      }
-    }
+  def setExpenseDescription(expenseId: String, description: String): Unit = {
+    mutateRdt(_.setExpenseDescription(expenseId, description))
   }
 
-  def setExpenseComment(key: String, comment: String): Unit = {
-    val commentValue = if comment.isEmpty then None else Some(comment)
-    sync.mutateRdt { travelPlan =>
-      travelPlan.deltaModify(_.expenses).using {
-        _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
-          val nextDot = Dots.single(context.nextDot(localUid.uid))
-          ormap.transformPlain(key) {
-            case Some(prior: Entry[Expense]) =>
-              Some(Entry(nextDot, prior.value.deltaModify(_.comment).using(_.write(commentValue))))
-            case None => ???
-          }
-        }
-      }
+  def setExpenseComment(expenseId: String, comment: String): Unit = {
+    mutateRdt(_.setExpenseComment(expenseId, comment))
+  }
+
+  private def mutateRdt(mutator: TravelPlan => TravelPlan): Unit = {
+    global.execute { () =>
+      sync.mutateRdt(mutator)
     }
   }
 
