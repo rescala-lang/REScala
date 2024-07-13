@@ -62,17 +62,28 @@ object Filter:
     }
 
     private def filterProduct(product: Product, permissionTree: PermissionTree): Product = {
-      val filteredFactors = permissionTree.children.map { case (factorName, permissionSubTree) =>
-        // Assumes that permission tree is valid (i.e., factorName is a valid element)
-        val factorIndex   = factorLabels(factorName)
-        val factorOfDelta = product.productElement(factorIndex)
-        factorIndex -> factorFilters(factorIndex).filter(factorOfDelta, permissionSubTree)
-      }
-
-      new Product:
-        def canEqual(that: Any): Boolean = false
-        def productArity: Int            = factorBottoms.length
-        def productElement(i: Int): Any  = filteredFactors.getOrElse(i, () => factorBottoms(i))
+      permissionTree.children.get("*") match
+        case None =>
+          val filteredFactors = permissionTree.children.map { case (factorName, permissionSubTree) =>
+            // Assumes that permission tree is valid (i.e., factorName is a valid element)
+            val factorIndex   = factorLabels(factorName)
+            val factorOfDelta = product.productElement(factorIndex)
+            factorIndex -> factorFilters(factorIndex).filter(factorOfDelta, permissionSubTree)
+          }
+          new Product:
+            def canEqual(that: Any): Boolean = false
+            def productArity: Int            = factorBottoms.length
+            def productElement(i: Int): Any  = filteredFactors.getOrElse(i, factorBottoms(i).empty)
+        case Some(wildcard) =>
+          val filteredFactors = factorLabels.map { (label, factorIndex) =>
+            val permissions   = permissionTree.children.getOrElse(label, wildcard)
+            val factorOfDelta = product.productElement(factorIndex)
+            factorIndex -> factorFilters(factorIndex).filter(factorOfDelta, permissions)
+          }
+          new Product:
+            def canEqual(that: Any): Boolean = false
+            def productArity: Int            = factorBottoms.length
+            def productElement(i: Int): Any  = filteredFactors(i)
     }
 
     /** Checks whether all children labels are the field names of this product and validates the filters for the children.
