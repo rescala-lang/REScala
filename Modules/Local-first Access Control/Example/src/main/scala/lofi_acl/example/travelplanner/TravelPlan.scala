@@ -7,7 +7,7 @@ import lofi_acl.access.Filter
 import lofi_acl.ardt.datatypes.LWW.filter
 import lofi_acl.ardt.datatypes.ORMap.{observeRemoveMapEntryFilter, stringKeyORMapFilter}
 import lofi_acl.example.travelplanner.Expense.Description
-import lofi_acl.example.travelplanner.TravelPlan.{Delta, Title, UniqueId, base64Encoder}
+import lofi_acl.example.travelplanner.TravelPlan.{Delta, Title, UniqueId, randomKey}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap
@@ -28,7 +28,7 @@ case class TravelPlan(
   }
 
   def addBucketListEntry(text: String)(using localUid: LocalUid): Delta = {
-    val key = base64Encoder.encodeToString(Random.nextBytes(4))
+    val key = randomKey
     this.deltaModify(_.bucketList).using {
       _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[LastWriterWins[String]]]) =>
         val nextDot = Dots.single(context.nextDot(localUid.uid))
@@ -53,7 +53,7 @@ case class TravelPlan(
   }
 
   def addExpense(description: String, amount: Float)(using localUid: LocalUid): Delta = {
-    val key = base64Encoder.encodeToString(Random.nextBytes(4))
+    val key = randomKey
     this.deltaModify(_.expenses).using {
       _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
         val nextDot = Dots.single(context.nextDot(localUid.uid))
@@ -116,6 +116,8 @@ case class Expense(
 
 object TravelPlan {
   private val base64Encoder = Base64.getEncoder
+  private def randomKey: String =
+    base64Encoder.encodeToString(Random.nextBytes(6))
 
   type Title = String
   given Bottom[Title] = Bottom.provide("")
