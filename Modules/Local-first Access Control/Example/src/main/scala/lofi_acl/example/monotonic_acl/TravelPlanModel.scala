@@ -67,11 +67,11 @@ class TravelPlanModel(
     mutateRdt(_.setBucketListEntryText(bucketListId, text))
   }
 
-  def addExpense(description: String, amount: Float): Unit = {
+  def addExpense(description: String, amount: String): Unit = {
     mutateRdt(_.addExpense(description, amount))
   }
 
-  def setExpenseAmount(expenseId: String, amount: Float): Unit = {
+  def setExpenseAmount(expenseId: String, amount: String): Unit = {
     mutateRdt(_.setExpenseAmount(expenseId, amount))
   }
 
@@ -124,7 +124,7 @@ object TravelPlanModel {
     model.addBucketListEntry("Porto")
     model.addBucketListEntry("Lisbon")
     model.addBucketListEntry("Faro")
-    model.addExpense("Ice Cream", 3.14)
+    model.addExpense("Ice Cream", "3.14 €")
 
     model
   }

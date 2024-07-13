@@ -6,7 +6,6 @@ import com.softwaremill.quicklens.*
 import lofi_acl.access.Filter
 import lofi_acl.ardt.datatypes.LWW.filter
 import lofi_acl.ardt.datatypes.ORMap.{observeRemoveMapEntryFilter, stringKeyORMapFilter}
-import lofi_acl.example.travelplanner.Expense.Description
 import lofi_acl.example.travelplanner.TravelPlan.{Delta, Title, UniqueId, randomKey}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
@@ -52,7 +51,7 @@ case class TravelPlan(
     }
   }
 
-  def addExpense(description: String, amount: Float)(using localUid: LocalUid): Delta = {
+  def addExpense(description: String, amount: String)(using localUid: LocalUid): Delta = {
     val key = randomKey
     this.deltaModify(_.expenses).using {
       _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
@@ -67,7 +66,7 @@ case class TravelPlan(
     }
   }
 
-  def setExpenseAmount(expenseId: UniqueId, amount: Float)(using localUid: LocalUid): Delta = {
+  def setExpenseAmount(expenseId: UniqueId, amount: String)(using localUid: LocalUid): Delta = {
     this.deltaModify(_.expenses).using {
       _.mod { (context: Dots) ?=> (ormap: ObserveRemoveMap[String, Entry[Expense]]) =>
         val nextDot = Dots.single(context.nextDot(localUid.uid))
@@ -109,8 +108,8 @@ case class TravelPlan(
 }
 
 case class Expense(
-    description: LastWriterWins[Option[Description]],
-    amount: LastWriterWins[Option[Float]],
+    description: LastWriterWins[Option[String]],
+    amount: LastWriterWins[Option[String]],
     comment: LastWriterWins[Option[String]],
 ) derives Lattice, HasDots, Bottom, Filter
 
@@ -131,7 +130,5 @@ object TravelPlan {
 }
 
 object Expense {
-  type Description = String
-  given Bottom[Description] = Bottom.provide("")
-  val empty: Expense        = Bottom[Expense].empty
+  val empty: Expense = Bottom[Expense].empty
 }
