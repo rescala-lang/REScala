@@ -46,7 +46,7 @@ class MainScene extends Scene {
         rootPane.center = VBox(
           HBox(viewModel.titleTextField, createInvitationButton),
           viewModel.bucketListView,
-          viewModel.expenseViewContainer,
+          viewModel.expenseView,
         )
         createInvitationButton.requestFocus()
       }

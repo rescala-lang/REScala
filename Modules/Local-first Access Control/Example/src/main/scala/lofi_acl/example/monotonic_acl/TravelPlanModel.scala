@@ -89,29 +89,59 @@ class TravelPlanModel(
     }
   }
 
-  val title: StringProperty                   = StringProperty(state.title.read)
-  val bucketListIds: ObservableBuffer[String] = ObservableBuffer.from(state.bucketList.data.inner.keySet)
-  private var bucketListIdSet: Set[String]    = bucketListIds.toSet
+  val title: StringProperty                      = StringProperty(state.title.read)
+  val bucketListIdList: ObservableBuffer[String] = ObservableBuffer.from(state.bucketList.data.inner.keySet)
+  private var bucketListIdSet: Set[String]       = bucketListIdList.toSet
   val bucketListProperties: AtomicReference[Map[String, StringProperty]] =
     AtomicReference(state.bucketList.data.inner.map((id, lww) => id -> StringProperty(lww.value.read)))
+  val expenseIdList: ObservableBuffer[String] = ObservableBuffer.from(state.bucketList.data.inner.keySet)
+  private var expenseIdSet: Set[String]       = expenseIdList.toSet
+  val expenseListProperties: AtomicReference[Map[String, (StringProperty, StringProperty, StringProperty)]] =
+    AtomicReference(state.expenses.data.inner.map((id, orMapEntry) => {
+      val expense = orMapEntry.value
+      id -> (
+        StringProperty(expense.description.read.getOrElse("")),
+        StringProperty(expense.amount.read.getOrElse("0.00 €")),
+        StringProperty(expense.comment.read.getOrElse(""))
+      )
+    }))
 
   private def deltaReceived(delta: TravelPlan): Unit = {
     val newTravelPlan = state
+    // Title
     if !delta.title.isEmpty then
       title.value = newTravelPlan.title.read
 
+    // Bucket List Entries
     val bucketListEntriesInDelta = delta.bucketList.data.inner
     if bucketListEntriesInDelta.nonEmpty then
-      val newIds = bucketListEntriesInDelta.filter((id, entry) => !bucketListIdSet.contains(id)).keySet
-      bucketListProperties.updateAndGet(oldProps =>
-        val newProps = oldProps ++ newIds.map(id => id -> StringProperty(""))
-        bucketListEntriesInDelta.foreach { (id, entry) =>
-          newProps(id).value = entry.value.read
-        }
-        newProps
+      val newIds = bucketListEntriesInDelta.keySet.diff(bucketListIdSet)
+      val props = bucketListProperties.updateAndGet(oldProps =>
+        oldProps ++ newIds.map(id => id -> StringProperty(""))
       )
-      bucketListIds.addAll(newIds)
+      bucketListEntriesInDelta.foreach { (id, entry) =>
+        props(id).value = entry.value.read
+      }
+      bucketListIdList.addAll(newIds)
       bucketListIdSet = bucketListIdSet ++ newIds
+
+    // Expenses
+    val expenseEntriesInDelta = delta.expenses.data.inner
+    if expenseEntriesInDelta.nonEmpty then
+      val newIds = expenseEntriesInDelta.keySet.diff(expenseIdSet)
+      val props = expenseListProperties.updateAndGet(oldProps =>
+        oldProps ++ newIds.map(id =>
+          id -> (StringProperty(""), StringProperty("0.00 €"), StringProperty(""))
+        )
+      )
+      expenseEntriesInDelta.foreach { (id, expense) =>
+        val (description, amount, comment) = props(id)
+        expense.value.description.value.foreach { description.value = _ }
+        expense.value.amount.value.foreach { amount.value = _ }
+        expense.value.comment.value.foreach { comment.value = _ }
+      }
+      expenseIdList.addAll(newIds)
+      expenseIdSet = expenseIdSet ++ newIds
   }
 }
 
@@ -121,6 +151,7 @@ object TravelPlanModel {
     val aclDelta  = MonotonicAcl.createRootOfTrust[TravelPlan](privateId)
     val model     = TravelPlanModel(privateId, privateId.getPublic, List(aclDelta))
 
+    model.changeTitle("Portugal Trip")
     model.addBucketListEntry("Porto")
     model.addBucketListEntry("Lisbon")
     model.addBucketListEntry("Faro")

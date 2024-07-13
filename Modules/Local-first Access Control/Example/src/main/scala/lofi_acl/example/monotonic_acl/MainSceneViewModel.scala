@@ -4,7 +4,6 @@ import scalafx.application.Platform
 import scalafx.beans.property.{BooleanProperty, StringProperty}
 import scalafx.collections.transformation.SortedBuffer
 import scalafx.scene.control.{ListView, TextField}
-import scalafx.scene.layout.StackPane
 import scalafx.stage.Stage
 
 import scala.concurrent.ExecutionContext.global
@@ -20,9 +19,9 @@ class MainSceneViewModel {
   // Travel Plan:
   val titleTextField: TextField = TextField()
 
-  val bucketListView: ListView[String] = new ListView[String]()
+  val bucketListView: ListView[String] = ListView[String]()
 
-  val expenseViewContainer: StackPane = StackPane()
+  val expenseView: ListView[String] = ListView[String]()
 
   def createInviteButtonPressed(): Unit = {
     global.execute { () =>
@@ -72,6 +71,8 @@ class MainSceneViewModel {
         titleTextField.text = model.title.get()
     )
     bucketListView.cellFactory = { (_: Any) => new BucketListEntryListCell(model) }
-    bucketListView.items = SortedBuffer(model.bucketListIds)
+    bucketListView.items = SortedBuffer(model.bucketListIdList)
+    expenseView.cellFactory = { (_: Any) => new ExpenseListEntryListCell(model) }
+    expenseView.items = SortedBuffer(model.expenseIdList)
   }
 }
