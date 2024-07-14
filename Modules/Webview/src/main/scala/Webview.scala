@@ -9,7 +9,7 @@ import webview.WebView
 import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.concurrent.Future
 
-object Main {
+object Webview {
   def main(args: Array[String]): Unit = {
 
     if args.isEmpty then
