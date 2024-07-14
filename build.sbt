@@ -323,17 +323,10 @@ lazy val webview = project.in(file("Modules/Webview"))
     )),
     nativeLink := (Compile / nativeLink).dependsOn(Dependencies.fetchResourceKey).value,
     nativeConfig ~= { c =>
-      c.withLTO(LTO.thin)
+      val d = c.withLTO(LTO.thin)
         .withMode(Mode.releaseFast)
-        .withLinkingOptions(c.linkingOptions ++ fromCommand("pkg-config", "--libs", "gtk+-3.0", "webkit2gtk-4.1"))
-        .withCompileOptions(co => co ++ fromCommand("pkg-config", "--cflags", "gtk+-3.0", "webkit2gtk-4.1"))
         .withIncrementalCompilation(true)
+      LocalSettings.osSpecificWebviewConfig(d)
     }
   )
 
-def fromCommand(args: String*): List[String] = {
-  val process = new ProcessBuilder(args: _*).start()
-  process.waitFor()
-  val res = new String(process.getInputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
-  res.split(raw"\s+").toList
-}
