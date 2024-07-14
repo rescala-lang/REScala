@@ -48,7 +48,7 @@ object LocalSettings {
         nativeConfig.withLTO(LTO.none)
           .withLinkingOptions(nativeConfig.linkingOptions ++ Seq("-framework", "WebKit"))
           .withCompileOptions(co => co ++ Seq("-framework", "WebKit"))
-      case Some(linux) if linux.contains("nux") =>
+      case Some(linux) if linux.contains("linux") =>
         nativeConfig
           .withLinkingOptions(
             nativeConfig.linkingOptions ++ fromCommand("pkg-config", "--libs", "gtk+-3.0", "webkit2gtk-4.1")
