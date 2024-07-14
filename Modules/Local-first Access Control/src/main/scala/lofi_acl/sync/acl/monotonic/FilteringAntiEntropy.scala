@@ -42,7 +42,7 @@ class FilteringAntiEntropy[RDT](
   private val localPublicId = localIdentity.getPublic
 
   // Only updated in message queue thread
-  @volatile private var peerAddressCache = Set.empty[(PublicIdentity, (String, Int))]
+  private val peerAddressCache = AtomicReference(Set.empty[(PublicIdentity, (String, Int))])
 
   // Access Control List ------
   private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] = {
@@ -93,13 +93,13 @@ class FilteringAntiEntropy[RDT](
     outboundMessageLock.synchronized {
       localSendPermissions = localSendPermissions + (remote -> permissions)
       val _ = connectionManager.send(remote, PermissionsInUse(aclVersion, permissions))
-      // TODO: Maybe run after random time interval
-      val _ = connectionManager.broadcast(AnnouncePeers(peerAddressCache))
     }
+    val _ = connectionManager.broadcast(AnnouncePeers(peerAddressCache.get()))
   }
 
   // Executed in thread from ConnectionManager
   override def connectionShutdown(remote: PublicIdentity): Unit = {
+    println(s"Disconnected from $remote")
     // We never lock an outboundMessageLock inside of a sendersWritePermissionsLock
     outboundMessageLock.synchronized {
       sendersWritePermissionsLock.synchronized {
@@ -157,6 +157,7 @@ class FilteringAntiEntropy[RDT](
   def start(): Thread = {
     require(connectionManager.listenPort.isEmpty) // TODO: Allow restart?
     connectionManager.acceptIncomingConnections()
+    peerAddressCache.updateAndGet(cache => cache + (localPublicId -> ("localhost", connectionManager.listenPort.get)))
     val thread = Thread(() =>
       while !stopped do {
         try {
@@ -198,8 +199,12 @@ class FilteringAntiEntropy[RDT](
         }
 
       case AnnouncePeers(peers) =>
-        val newPeers = peers.filterNot((id, _) => connectionManager.connectedUsers.contains(id))
-        peerAddressCache = peerAddressCache ++ peers
+        println(s"Received: $msg")
+        val newPeers      = peers.diff(peerAddressCache.get())
+        val peerAddresses = peerAddressCache.updateAndGet(cache => cache ++ peers)
+        if newPeers.nonEmpty then {
+          val _ = connectionManager.broadcast(AnnouncePeers(peerAddresses))
+        }
         newPeers.foreach { case (user, (host, port)) =>
           connectionManager.connectToExpectingUserIfNoConnectionExists(host, port, user)
         }
@@ -216,8 +221,11 @@ class FilteringAntiEntropy[RDT](
           if partialDeltaStore.nonEmpty && msgQueue.isEmpty
           then antiEntropyThread.interrupt() // Request missing partial deltas immediately
         else
-          deltaMessageBacklog =
-            deltaMessageBacklog.appended((delta, sender, sendersIntendedWritePermissions(sender)))
+          deltaMessageBacklog = deltaMessageBacklog.appended((
+            delta,
+            sender,
+            sendersIntendedWritePermissions.getOrElse(sender, PermissionTree.empty)
+          ))
 
       case RequestMissing(remoteRdtDots, remoteAclDots) =>
         val aclDots = aclReference.get()._1
