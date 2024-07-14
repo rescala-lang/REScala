@@ -326,6 +326,8 @@ lazy val webview = project.in(file("Modules/Webview"))
       val d = c.withLTO(LTO.thin)
         .withMode(Mode.releaseFast)
         .withIncrementalCompilation(true)
+      // The below disables LTO for macos as that seems to cause problems.
+      // Windows not implemented, macos has known issues.
       LocalSettings.osSpecificWebviewConfig(d)
     }
   )
