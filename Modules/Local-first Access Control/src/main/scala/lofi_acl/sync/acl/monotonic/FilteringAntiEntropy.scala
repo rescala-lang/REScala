@@ -41,6 +41,9 @@ class FilteringAntiEntropy[RDT](
 
   private val localPublicId = localIdentity.getPublic
 
+  // Only updated in message queue thread
+  @volatile private var peerAddressCache = Set.empty[(PublicIdentity, (String, Int))]
+
   // Access Control List ------
   private val aclReference: AtomicReference[(Dots, MonotonicAcl[RDT])] = {
     AtomicReference((Dots.empty, MonotonicAcl[RDT](rootOfTrust, Map.empty, Map.empty)))
@@ -90,6 +93,8 @@ class FilteringAntiEntropy[RDT](
     outboundMessageLock.synchronized {
       localSendPermissions = localSendPermissions + (remote -> permissions)
       val _ = connectionManager.send(remote, PermissionsInUse(aclVersion, permissions))
+      // TODO: Maybe run after random time interval
+      val _ = connectionManager.broadcast(AnnouncePeers(peerAddressCache))
     }
   }
 
@@ -105,7 +110,7 @@ class FilteringAntiEntropy[RDT](
     }
   }
 
-  def newPeers(peers: Map[PublicIdentity, (String, Int)]): Unit = {
+  def newPeers(peers: Set[(PublicIdentity, (String, Int))]): Unit = {
     receivedMessage(AnnouncePeers(peers), localPublicId)
   }
 
@@ -117,7 +122,7 @@ class FilteringAntiEntropy[RDT](
     then
       Console.err.println("Could not mutate RDT: missing permissions")
       return
-    val filteredDelta = filter.filter(delta, localWritePerms.get)
+    val filteredDelta        = filter.filter(delta, localWritePerms.get)
     val deltaMsg: Delta[RDT] = Delta(filteredDelta, dot, aclDots)
     msgQueue.put((deltaMsg, localPublicId))
     broadcastFiltered(deltaMsg)
@@ -193,7 +198,8 @@ class FilteringAntiEntropy[RDT](
         }
 
       case AnnouncePeers(peers) =>
-        val newPeers = peers.removedAll(connectionManager.connectedUsers)
+        val newPeers = peers.filterNot((id, _) => connectionManager.connectedUsers.contains(id))
+        peerAddressCache = peerAddressCache ++ peers
         newPeers.foreach { case (user, (host, port)) =>
           connectionManager.connectToExpectingUserIfNoConnectionExists(host, port, user)
         }

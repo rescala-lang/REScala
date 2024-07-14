@@ -69,7 +69,7 @@ class SyncWithMonotonicAcl[RDT](
   def connect(remoteUser: PublicIdentity, remoteAddress: String): Unit = {
     val hostParts = remoteAddress.split(":")
     require(hostParts.length == 2)
-    antiEntropy.newPeers(Map(remoteUser -> (hostParts(0), hostParts(1).toInt)))
+    antiEntropy.newPeers(Set(remoteUser -> (hostParts(0), hostParts(1).toInt)))
   }
 
   override def receivedDelta(dot: Dot, delta: RDT): Unit =

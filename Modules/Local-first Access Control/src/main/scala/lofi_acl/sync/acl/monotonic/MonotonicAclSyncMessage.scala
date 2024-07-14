@@ -10,7 +10,7 @@ object MonotonicAclSyncMessage {
 
 enum MonotonicAclSyncMessage[RDT]:
   case PermissionsInUse(minimumAclVersion: Dots, writePermission: PermissionTree)
-  case AnnouncePeers(peers: Map[PublicIdentity, (String, Int)])
+  case AnnouncePeers(peers: Set[(PublicIdentity, (String, Int))])
   case AclDelta(
       subject: PublicIdentity,
       realm: PermissionTree,
