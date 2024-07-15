@@ -338,7 +338,7 @@ class ConnectionManagerTest extends FunSuite {
 
 object ConnectionManagerTest {
   val isGithubCi: Boolean            = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
-  private val assertionStabilityTime = if isGithubCi then 40 else 20
+  private val assertionStabilityTime = if isGithubCi then 100 else 20
 
   def assertEventually(timeout: Duration)(assertion: => Boolean): Unit = {
     val stopTime = System.currentTimeMillis() + timeout.toMillis
