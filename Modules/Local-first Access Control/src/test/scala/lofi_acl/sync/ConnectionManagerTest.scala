@@ -13,7 +13,7 @@ import scala.language.postfixOps
 
 class ConnectionManagerTest extends FunSuite {
   val isGithubCi: Boolean           = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
-  override def munitIgnore: Boolean = isGithubCi
+  //override def munitIgnore: Boolean = isGithubCi
 
   private val idA = IdentityFactory.createNewIdentity
   private val idB = IdentityFactory.createNewIdentity
@@ -267,6 +267,8 @@ class ConnectionManagerTest extends FunSuite {
     connManC.connectTo("localhost", connManD.listenPort.get)
     connManD.connectTo("localhost", connManC.listenPort.get)
 
+    Thread.sleep(10)
+
     assertEventually(1 second)(
       connManA.connectedUsers == Set(idB.getPublic, idC.getPublic, idD.getPublic)
       && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
@@ -281,15 +283,15 @@ class ConnectionManagerTest extends FunSuite {
   }
 
   test("end-to-end test") {
-    val receiverA = QueueAppendingMessageReceiver()
+    val receiverA = QueueAppendingMessageReceiver(idA.getPublic)
     val connManA  = ConnectionManager[String](idA, receiverA)
     connManA.acceptIncomingConnections()
 
-    val receiverB = QueueAppendingMessageReceiver()
+    val receiverB = QueueAppendingMessageReceiver(idB.getPublic)
     val connManB  = ConnectionManager[String](idB, receiverB)
     connManB.acceptIncomingConnections()
 
-    val receiverC = QueueAppendingMessageReceiver()
+    val receiverC = QueueAppendingMessageReceiver(idC.getPublic)
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
 
@@ -302,7 +304,8 @@ class ConnectionManagerTest extends FunSuite {
       && connManA.connectedUsers.nonEmpty
       && connManA.connectedUsers == Set(idB.getPublic)
     )
-    connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManA.listenPort.get, idA.getPublic)
+
+    connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManA.listenPort.get, idA.getPublic) // C <-> A
 
     assertEventually(1 second) {
       connManA.connectedUsers.equals(Set(idB.getPublic, idC.getPublic))
@@ -327,14 +330,11 @@ class ConnectionManagerTest extends FunSuite {
       connManC.connectedUsers.equals(Set(idA.getPublic, idB.getPublic))
     }
 
-    assert(connManB.connectedUsers.contains(idC.getPublic))
     assert(connManB.send(idC.getPublic, "Test 3"))
-    assert(connManC.connectedUsers.contains(idB.getPublic))
     assertEquals(receiverC.queue.poll(1, SECONDS), ("Test 3", idB.getPublic))
     assert(connManC.sendMultiple(idB.getPublic, "Test 4", "Test 5"))
     assertEquals(receiverB.queue.poll(1, SECONDS), ("Test 4", idC.getPublic))
     assertEquals(receiverB.queue.poll(1, SECONDS), ("Test 5", idC.getPublic))
-    println("Done")
 
     connManA.shutdown()
     connManB.shutdown()
@@ -346,20 +346,34 @@ object ConnectionManagerTest {
   def assertEventually(timeout: Duration)(assertion: => Boolean): Unit = {
     val stopTime = System.currentTimeMillis() + timeout.toMillis
 
+    // Repeated loop ensures that assertion was stable for 20ms
     while System.currentTimeMillis() < stopTime && !assertion do {
-      Thread.`yield`()
+      while System.currentTimeMillis() < stopTime && !assertion do {
+        while System.currentTimeMillis() < stopTime && !assertion do {
+          Thread.`yield`()
+        }
+        Thread.sleep(10)
+      }
+      Thread.sleep(10)
     }
 
     assert(assertion)
   }
 
-  class QueueAppendingMessageReceiver extends MessageReceiver[String] {
+  class QueueAppendingMessageReceiver(_id: PublicIdentity = null) extends MessageReceiver[String] {
+    private val localId = Option(_id)
+
     val queue: LinkedBlockingQueue[(String, PublicIdentity)] = LinkedBlockingQueue[(String, PublicIdentity)]()
 
     override def receivedMessage(msg: String, fromUser: PublicIdentity): Unit = {
       queue.put((msg, fromUser))
     }
 
+    override def connectionEstablished(publicIdentity: PublicIdentity): Unit =
+      println(s"${localId.map(_.id).getOrElse("Replica")} is now connected to ${publicIdentity.id}")
+
+    override def connectionShutdown(publicIdentity: PublicIdentity): Unit =
+      println(s"${localId.map(_.id).getOrElse("Replica")} connectionShutdown to $publicIdentity")
   }
 
   given JsonValueCodec[String]       = JsonCodecMaker.make
