@@ -12,9 +12,6 @@ import scala.concurrent.duration.*
 import scala.language.postfixOps
 
 class ConnectionManagerTest extends FunSuite {
-  val isGithubCi: Boolean           = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
-  //override def munitIgnore: Boolean = isGithubCi
-
   private val idA = IdentityFactory.createNewIdentity
   private val idB = IdentityFactory.createNewIdentity
   private val idC = IdentityFactory.createNewIdentity
@@ -54,7 +51,7 @@ class ConnectionManagerTest extends FunSuite {
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
 
-    Thread.sleep(10)
+    Thread.sleep(10) // Apparently we need to wait a bit for the ServerSockets to actually accept connections
 
     connManA.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idC.getPublic)
     connManA.connectToExpectingUserIfNoConnectionExists("localhost", connManC.listenPort.get, idB.getPublic)
@@ -63,10 +60,9 @@ class ConnectionManagerTest extends FunSuite {
     connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManA.listenPort.get, idC.getPublic)
     connManC.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idC.getPublic)
     // The remote will accept the connection, so we need to wait for the initiator to close the connection
-    Thread.sleep(100)
-    assertEquals(connManA.connectedUsers, Set.empty)
-    assertEquals(connManB.connectedUsers, Set.empty)
-    assertEquals(connManC.connectedUsers, Set.empty)
+    assertEventually(1 second)(
+      connManA.connectedUsers.isEmpty && connManB.connectedUsers.isEmpty && connManC.connectedUsers.isEmpty
+    )
 
     connManA.connectToExpectingUserIfNoConnectionExists("localhost", connManB.listenPort.get, idB.getPublic)
     connManB.connectToExpectingUserIfNoConnectionExists("localhost", connManC.listenPort.get, idC.getPublic)
@@ -78,13 +74,13 @@ class ConnectionManagerTest extends FunSuite {
       && connManC.connectedUsers == Set(idA.getPublic, idB.getPublic)
     )
 
-    connManA.broadcast("Test")
+    assert(connManA.broadcast("Test"))
     assertEquals(receiverB.queue.poll(1, SECONDS), ("Test", idA.getPublic))
     assertEquals(receiverC.queue.poll(1, SECONDS), ("Test", idA.getPublic))
-    connManB.broadcast("Test 2")
+    assert(connManB.broadcast("Test 2"))
     assertEquals(receiverA.queue.poll(1, SECONDS), ("Test 2", idB.getPublic))
     assertEquals(receiverC.queue.poll(1, SECONDS), ("Test 2", idB.getPublic))
-    connManC.broadcast("Test 3")
+    assert(connManC.broadcast("Test 3"))
     assertEquals(receiverA.queue.poll(1, SECONDS), ("Test 3", idC.getPublic))
     assertEquals(receiverB.queue.poll(1, SECONDS), ("Test 3", idC.getPublic))
 
@@ -267,8 +263,6 @@ class ConnectionManagerTest extends FunSuite {
     connManC.connectTo("localhost", connManD.listenPort.get)
     connManD.connectTo("localhost", connManC.listenPort.get)
 
-    Thread.sleep(10)
-
     assertEventually(1 second)(
       connManA.connectedUsers == Set(idB.getPublic, idC.getPublic, idD.getPublic)
       && connManB.connectedUsers == Set(idA.getPublic, idC.getPublic, idD.getPublic)
@@ -295,7 +289,7 @@ class ConnectionManagerTest extends FunSuite {
     val connManC  = ConnectionManager[String](idC, receiverC)
     connManC.acceptIncomingConnections()
 
-    Thread.sleep(10) // Apparently we need to wait for the ServerSockets to actually accept connections
+    Thread.sleep(10)
 
     connManB.connectTo("localhost", connManA.listenPort.get) // Establish A <-> B
 
@@ -343,18 +337,18 @@ class ConnectionManagerTest extends FunSuite {
 }
 
 object ConnectionManagerTest {
+  val isGithubCi: Boolean            = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
+  private val assertionStabilityTime = if isGithubCi then 40 else 20
+
   def assertEventually(timeout: Duration)(assertion: => Boolean): Unit = {
     val stopTime = System.currentTimeMillis() + timeout.toMillis
 
-    // Repeated loop ensures that assertion was stable for 20ms
+    // Repeated loop ensures that assertion is stable (length depends on how whether test is run in CI)
     while System.currentTimeMillis() < stopTime && !assertion do {
       while System.currentTimeMillis() < stopTime && !assertion do {
-        while System.currentTimeMillis() < stopTime && !assertion do {
-          Thread.`yield`()
-        }
-        Thread.sleep(10)
+        Thread.`yield`()
       }
-      Thread.sleep(10)
+      Thread.sleep(assertionStabilityTime)
     }
 
     assert(assertion)
