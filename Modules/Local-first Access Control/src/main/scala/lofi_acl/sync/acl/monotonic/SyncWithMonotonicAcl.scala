@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 class SyncWithMonotonicAcl[RDT](
     private val localIdentity: PrivateIdentity,
     rootOfTrust: PublicIdentity,
-    initialAclMessages: List[AclDelta[RDT]],
+    initialAclDeltas: List[AclDelta[RDT]],
     initialRdt: DeltaMapWithPrefix[RDT],         // Assumed to correspond with ACL!
     onDeltaReceive: RDT => Unit = (_: RDT) => {} // Consumes a delta
 )(using
@@ -26,7 +26,7 @@ class SyncWithMonotonicAcl[RDT](
     filter: Filter[RDT]
 ) extends Sync[RDT] {
 
-  private val antiEntropy = FilteringAntiEntropy[RDT](localIdentity, rootOfTrust, initialAclMessages, initialRdt, this)
+  private val antiEntropy = FilteringAntiEntropy[RDT](localIdentity, rootOfTrust, initialAclDeltas, initialRdt, this)
   @volatile private var antiEntropyThread: Option[Thread] = None
 
   private val localPublicId = localIdentity.getPublic
@@ -42,7 +42,7 @@ class SyncWithMonotonicAcl[RDT](
   private val lastLocalAclDot: AtomicReference[Dot] = {
     val localId = localIdentity.getPublic.id
     AtomicReference(
-      initialAclMessages
+      initialAclDeltas
         .filter(_.dot.place.delegate == localId)
         .maxByOption(_.dot.time)
         .map(_.dot)

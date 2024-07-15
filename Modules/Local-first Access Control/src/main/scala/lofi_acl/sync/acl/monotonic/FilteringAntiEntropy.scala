@@ -22,7 +22,7 @@ import scala.util.Random
 class FilteringAntiEntropy[RDT](
     localIdentity: PrivateIdentity,
     rootOfTrust: PublicIdentity,
-    initialAclMessages: List[AclDelta[RDT]], // Signatures are assumed to have been validated already
+    initialAclDeltas: List[AclDelta[RDT]], // Signatures are assumed to have been validated already
     initialRdtDeltas: DeltaMapWithPrefix[RDT],
     syncInstance: Sync[RDT]
 )(using
@@ -49,9 +49,10 @@ class FilteringAntiEntropy[RDT](
     AtomicReference((Dots.empty, MonotonicAcl[RDT](rootOfTrust, Map.empty, Map.empty)))
   }
   @volatile private var receivedAclDots: Dots = // received != applied
-    initialAclMessages.foldLeft(Dots.empty)((dots, msg) => dots.add(msg.dot))
-  @volatile private var aclDeltas: Map[Dot, AclDelta[RDT]] = initialAclMessages.map(msg => msg.dot -> msg).toMap
-  @volatile private var sendersIntendedWritePermissions: Map[PublicIdentity, PermissionTree]  = Map.empty
+    initialAclDeltas.foldLeft(Dots.empty)((dots, msg) => dots.add(msg.dot))
+  @volatile private var aclDeltas: Map[Dot, AclDelta[RDT]] = initialAclDeltas.map(msg => msg.dot -> msg).toMap
+  @volatile private var sendersIntendedWritePermissions: Map[PublicIdentity, PermissionTree] =
+    Map(localPublicId -> PermissionTree.allow)
   @volatile private var sendersEffectiveWritePermissions: Map[PublicIdentity, PermissionTree] = Map.empty
   // Lock for sendersIntendedWritePermissions and sendersEffectiveWritePermissions
   private val sendersWritePermissionsLock                                         = new {}
@@ -68,15 +69,19 @@ class FilteringAntiEntropy[RDT](
   val msgQueue: LinkedBlockingQueue[(MonotonicAclSyncMessage[RDT], PublicIdentity)] = LinkedBlockingQueue()
   // Stores deltas that couldn't be processed because of missing causal dependencies
   private var aclMessageBacklog: Queue[(AclDelta[RDT], PublicIdentity)] = {
-    if initialAclMessages.isEmpty
+    if initialAclDeltas.isEmpty
     then Queue.empty
     else
-      Queue.from(initialAclMessages.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
+      Queue.from(initialAclDeltas.tail.map(msg => msg -> localPublicId)) // Initialize queue with initial acl messages
   }
-  if initialAclMessages.nonEmpty
-  then receivedMessage(initialAclMessages.head, localPublicId) // Also causes processing of aclMessageBacklog
+  if initialAclDeltas.nonEmpty
+  then
+    // Also causes processing of aclMessageBacklog and updates intended/effective write permissions of this replica
+    receivedMessage(initialAclDeltas.head, localPublicId)
+
   // Note that this stores the *intended*, not the effective permissions of the user at the time of sending!
-  // We are taking the intersection of the actual permissions and the intended permissions at use time.
+  // We are taking the intersection of the actual permissions and the intended permissions at use time (after the
+  // missing acl deltas were processed).
   private var deltaMessageBacklog = Queue.empty[(Delta[RDT], PublicIdentity, PermissionTree)]
 
   // Executed in threads from ConnectionManager, thread safe
@@ -217,9 +222,9 @@ class FilteringAntiEntropy[RDT](
       case delta @ Delta(_, _, aclCC) =>
         if aclReference.get()._1.contains(aclCC)
         then
-          handlePartialDelta(delta, sendersEffectiveWritePermissions(sender))
-          if partialDeltaStore.nonEmpty && msgQueue.isEmpty
-          then antiEntropyThread.interrupt() // Request missing partial deltas immediately
+          handlePartialDelta(delta, sendersEffectiveWritePermissions.getOrElse(sender, PermissionTree.empty))
+          // if partialDeltaStore.nonEmpty && msgQueue.isEmpty
+          // then antiEntropyThread.interrupt() // Request missing partial deltas immediately
         else
           deltaMessageBacklog = deltaMessageBacklog.appended((
             delta,
@@ -268,41 +273,44 @@ class FilteringAntiEntropy[RDT](
       val effectivePermissions = intendedPermissions.intersect(acl.write(sender))
       handlePartialDelta(delta, effectivePermissions)
     }
-    if partialDeltaStore != partialDeltaStoreBeforeProcessing
-    then antiEntropyThread.interrupt() // Request missing partial deltas immediately
+    // if partialDeltaStore != partialDeltaStoreBeforeProcessing
+    // then antiEntropyThread.interrupt() // Request missing partial deltas immediately
   }
 
-  private def handlePartialDelta(delta: Delta[RDT], sendersPermissions: PermissionTree): Unit = delta match
-    // Causal dependency of delta on ACL already resolved
-    case Delta(delta, dot, _) =>
-      val existingPartialDelta = partialDeltaStore.get(dot)
+  private def handlePartialDelta(delta: Delta[RDT], sendersPermissions: PermissionTree): Unit =
+    if !sendersPermissions.isEmpty then
+      delta match
+        case Delta(delta, dot, _ /* Causal dependency of delta on ACL already resolved */ ) =>
+          val existingPartialDelta = partialDeltaStore.get(dot)
 
-      if existingPartialDelta.isEmpty then {
-        val acl                     = aclReference.get()._2
-        val authorsWritePermissions = acl.write(dot.place.toPublicIdentity)
-        val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localPublicId))
-        if sendersPermissions <= requiredPermissions
-        then // Immediately applicable
-          rdtDeltas = rdtDeltas.addDelta(dot, delta)
-          syncInstance.receivedDelta(dot, delta)
-        else // delta is missing parts
-          partialDeltaStore = partialDeltaStore + (dot -> PartialDelta(delta, sendersPermissions, requiredPermissions))
-      } else {
-        existingPartialDelta.get match
-          case PartialDelta(storedDelta, includedParts, requiredPermissions) =>
-            if includedParts.merge(sendersPermissions) <= requiredPermissions
-            then // Existing partial delta merged with newly received partial delta is complete
-              val completeDelta = delta.merge(storedDelta)
-              rdtDeltas = rdtDeltas.addDelta(dot, completeDelta)
-              syncInstance.receivedDelta(dot, completeDelta)
-              partialDeltaStore = partialDeltaStore.removed(dot)
-            else // Existing partial delta merged with newly received partial delta is not yet complete
-              partialDeltaStore = partialDeltaStore + (dot -> PartialDelta(
-                storedDelta.merge(delta),
-                includedParts.merge(sendersPermissions),
-                requiredPermissions
-              ))
-      }
+          if existingPartialDelta.isEmpty then {
+            val acl                     = aclReference.get()._2
+            val authorsWritePermissions = acl.write(dot.place.toPublicIdentity)
+            val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localPublicId))
+            if sendersPermissions <= requiredPermissions
+            then // Immediately applicable
+              rdtDeltas = rdtDeltas.addDelta(dot, delta)
+              syncInstance.receivedDelta(dot, delta)
+            else // delta is missing parts
+              partialDeltaStore =
+                partialDeltaStore + (dot -> PartialDelta(delta, sendersPermissions, requiredPermissions))
+          } else {
+            existingPartialDelta.get match
+              case PartialDelta(storedDelta, includedParts, requiredPermissions) =>
+                val combinedPermissions = includedParts.merge(sendersPermissions)
+                if requiredPermissions <= combinedPermissions
+                then // Existing partial delta merged with newly received partial delta is complete
+                  val completeDelta = delta.merge(storedDelta)
+                  rdtDeltas = rdtDeltas.addDelta(dot, completeDelta)
+                  syncInstance.receivedDelta(dot, completeDelta)
+                  partialDeltaStore = partialDeltaStore.removed(dot)
+                else // Existing partial delta merged with newly received partial delta is not yet complete
+                  partialDeltaStore = partialDeltaStore + (dot -> PartialDelta(
+                    storedDelta.merge(delta),
+                    combinedPermissions,
+                    requiredPermissions
+                  ))
+          }
 
   private def updateAcl(aclDelta: AclDelta[RDT]): Unit = aclDelta match
     case AclDelta(principal, realm, operation, dot, _, _) => {
