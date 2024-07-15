@@ -228,9 +228,9 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
+    Settings.javaOutputVersion(8),
     Settings.safeInit(Compile / compile),
     Settings.explicitNulls(Compile / compile),
-    Settings.javaOutputVersion(8),
     LocalSettings.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
@@ -267,6 +267,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(11), // java webserver
+    Settings.explicitNulls(Compile / compile),
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,

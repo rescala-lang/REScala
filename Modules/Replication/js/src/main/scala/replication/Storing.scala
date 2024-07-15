@@ -7,7 +7,7 @@ import reactives.default.Signal
 object Storing {
 
   def initializedOnce[A: JsonValueCodec](key: String, default: => A): A = {
-    val item = dom.window.localStorage.getItem(key)
+    val item: String | Null = dom.window.localStorage.getItem(key)
     if item == null then default
     else {
       val res =

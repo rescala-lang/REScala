@@ -37,10 +37,10 @@ class BinaryAsBase64(val payload: Array[Byte])
 
 given JsonValueCodec[BinaryAsBase64] = new JsonValueCodec[BinaryAsBase64] {
   override def decodeValue(in: JsonReader, default: BinaryAsBase64): BinaryAsBase64 =
-    BinaryAsBase64(in.readBase64AsBytes(null))
+    BinaryAsBase64(in.readBase64AsBytes(Array.empty))
   override def encodeValue(x: BinaryAsBase64, out: JsonWriter): Unit =
     out.writeBase64Val(x.payload, true)
-  override def nullValue: BinaryAsBase64 = null
+  override def nullValue: BinaryAsBase64 = BinaryAsBase64(Array.empty)
 }
 
 // what follows are the data type and codec definitions for receiving and sending bundles
