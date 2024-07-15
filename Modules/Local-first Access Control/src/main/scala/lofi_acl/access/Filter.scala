@@ -2,7 +2,7 @@ package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree.allow
-import lofi_acl.access.PermissionTreeValidationException.InvalidPathException
+import lofi_acl.access.InvalidPathException
 import rdts.base.Bottom
 import rdts.dotted.{Dotted, Obrem}
 import rdts.time.{ArrayRanges, Dots}

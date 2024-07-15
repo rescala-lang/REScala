@@ -34,12 +34,17 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
     rootPane.bottom = inviteText
     permissionTreePane.disable = true
     Platform.runLater { () =>
-      val perms = permissionTreePane.selectionToPermissions
-      travelPlanModel.grantPermission(
-        PublicIdentity.fromPublicKey(invitation.identityKey.getPublic),
-        perms._1,
-        perms._2
-      )
+      try {
+        val perms = permissionTreePane.selectionToPermissions
+        travelPlanModel.grantPermission(
+          PublicIdentity.fromPublicKey(invitation.identityKey.getPublic),
+          perms._1,
+          perms._2
+        )
+      } catch
+        case e: Exception =>
+          e.printStackTrace()
+          Alert(Alert.AlertType.Error, e.toString).show()
     }
   }
 
