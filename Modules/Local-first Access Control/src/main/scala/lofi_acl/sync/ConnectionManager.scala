@@ -213,10 +213,13 @@ class ConnectionManager[MSG](
                         messageHandler.connectionShutdown(peerIdentity)
                     case None =>
                 }
+                return
               case e: InterruptedException =>
                 try { socket.close() }
                 catch { case e: IOException => }
-              case runtimeException: RuntimeException => runtimeException.printStackTrace()
+              case runtimeException: RuntimeException =>
+                // TODO: Close socket here as well?
+                runtimeException.printStackTrace()
             }
         }
     )
