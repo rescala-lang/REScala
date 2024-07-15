@@ -6,7 +6,7 @@ import lofi_acl.crypto.{IdentityFactory, PublicIdentity}
 import lofi_acl.sync.ConnectionManagerTest.{QueueAppendingMessageReceiver, assertEventually, given}
 import munit.FunSuite
 
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.{LinkedBlockingQueue, TimeoutException}
 import scala.concurrent.duration
 import scala.concurrent.duration.*
 import scala.language.postfixOps
@@ -29,6 +29,9 @@ class ConnectionManagerTest extends FunSuite {
 
     val receiverB = QueueAppendingMessageReceiver()
     val connManB  = ConnectionManager[String](idB, receiverB)
+
+    Thread.sleep(10)
+
     connManB.connectTo("localhost", connManA.listenPort.get)
     assertEventually(1 second)(
       connManA.connectedUsers == Set(idB.getPublic) && connManB.connectedUsers == Set(idA.getPublic)
@@ -338,7 +341,7 @@ class ConnectionManagerTest extends FunSuite {
 
 object ConnectionManagerTest {
   val isGithubCi: Boolean            = Option(System.getenv("GITHUB_WORKFLOW")).exists(_.nonEmpty)
-  private val assertionStabilityTime = if isGithubCi then 100 else 20
+  private val assertionStabilityTime = if isGithubCi then 200 else 20
 
   def assertEventually(timeout: Duration)(assertion: => Boolean): Unit = {
     val stopTime = System.currentTimeMillis() + timeout.toMillis
@@ -350,6 +353,8 @@ object ConnectionManagerTest {
       }
       Thread.sleep(assertionStabilityTime)
     }
+
+    if System.currentTimeMillis() > stopTime then throw TimeoutException("Timeout in assertEventually")
 
     assert(assertion)
   }
