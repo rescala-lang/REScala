@@ -1,7 +1,7 @@
-#!/usr/bin/env rt-scala-runner
-//> using scala 3.4.0
-//> using dep de.rmgk.slips::options:0.7.0
-//> using dep de.rmgk.slips::script:0.8.0
+#!/usr/bin/env scala-cli
+//> using scala 3.4.2
+//> using dep de.rmgk.slips::options:0.9.0
+//> using dep de.rmgk.slips::script:0.9.0
 import java.nio.file.Path
 import java.nio.file.Files
 import de.rmgk.options
@@ -46,4 +46,5 @@ object SelectScheduler {
           StandardOpenOption.CREATE,
           StandardOpenOption.TRUNCATE_EXISTING
         )
+    .printHelp()
 }
