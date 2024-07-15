@@ -28,14 +28,13 @@ class TravelPlanModel(
   def state: TravelPlan                    = sync.state
   def currentAcl: MonotonicAcl[TravelPlan] = sync.currentAcl
 
-  private val sync: SyncWithMonotonicAcl[TravelPlan] =
-    SyncWithMonotonicAcl[TravelPlan](
-      localIdentity,
-      rootOfTrust,
-      initialAclDeltas,
-      DeltaMapWithPrefix.empty,
-      delta => Platform.runLater(deltaReceived(delta))
-    )
+  private val sync = SyncWithMonotonicAcl[TravelPlan](
+    localIdentity,
+    rootOfTrust,
+    initialAclDeltas,
+    DeltaMapWithPrefix.empty,
+    delta => Platform.runLater(deltaReceived(delta))
+  )
   sync.start()
   Runtime.getRuntime.addShutdownHook(new Thread(() => sync.stop()))
 

@@ -36,8 +36,8 @@ class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
 }
 
 class TravelPlanViewModel(model: TravelPlanModel) extends GridPane {
-  val bucketListIds: SortedBuffer[String] = SortedBuffer(model.bucketListIdList)
-  val expenseIds: SortedBuffer[String]    = SortedBuffer(model.expenseIdList)
+  val bucketListIds: SortedBuffer[String] = SortedBuffer(model.bucketListIdList, Ordering.String)
+  val expenseIds: SortedBuffer[String]    = SortedBuffer(model.expenseIdList, Ordering.String)
 
   // Travel Plan:
   val titleTextField: TextField = TextField()

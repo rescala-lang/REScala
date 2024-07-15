@@ -115,8 +115,9 @@ case class Expense(
 
 object TravelPlan {
   private val base64Encoder = Base64.getEncoder
+  private val random = Random
   private def randomKey: String =
-    base64Encoder.encodeToString(Random.nextBytes(6))
+    base64Encoder.encodeToString(random.nextBytes(6))
 
   type Title = String
   given Bottom[Title]                                                 = Bottom.provide("")
