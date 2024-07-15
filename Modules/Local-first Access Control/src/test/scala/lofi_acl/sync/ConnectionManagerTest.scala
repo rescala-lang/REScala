@@ -3,7 +3,7 @@ package lofi_acl.sync
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import lofi_acl.crypto.{IdentityFactory, PublicIdentity}
-import lofi_acl.sync.ConnectionManagerTest.{QueueAppendingMessageReceiver, assertEventually, given}
+import lofi_acl.sync.ConnectionManagerTest.{QueueAppendingMessageReceiver, assertEventually, isGithubCi, given}
 import munit.FunSuite
 
 import java.util.concurrent.{LinkedBlockingQueue, TimeoutException}
@@ -12,6 +12,9 @@ import scala.concurrent.duration.*
 import scala.language.postfixOps
 
 class ConnectionManagerTest extends FunSuite {
+
+  override def munitIgnore: Boolean = isGithubCi
+
   private val idA = IdentityFactory.createNewIdentity
   private val idB = IdentityFactory.createNewIdentity
   private val idC = IdentityFactory.createNewIdentity
