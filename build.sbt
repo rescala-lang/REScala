@@ -81,6 +81,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     Test / fork                       := true,
     // jetty 12 requires java 17
     Settings.javaOutputVersion(17, Test / compile),
+    Settings.explicitNulls(Compile / compile),
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -117,6 +118,7 @@ lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
     scala3defaults,
     Dependencies.scalatags,
     LocalSettings.deployTask,
+    Settings.explicitNulls(Compile / compile),
   )
 
 lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
