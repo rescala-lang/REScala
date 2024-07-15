@@ -53,11 +53,12 @@ object Settings {
   def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
 
   // makes Null no longer be a sub type of all subtypes of AnyRef
-  // but is super annoying with java interop. The second flag tries to improve that interop by making java return types special, see https://github.com/scala/scala3/pull/17369
-  // however, that second flag does not seem to be in 3.5-RC1?
+  // but is super annoying with java interop.
+  // Scala 3.5 tries to improve that interop by making java return types special, see https://github.com/scala/scala3/pull/17369
+  // If i understand correctly, that is enabled by default, and the second flag could be used to restore old behaviour
   def explicitNulls(conf: TaskKey[?]*) = Def.settings(
     taskSpecificScalacOption("-Yexplicit-nulls", conf: _*),
-    taskSpecificScalacOption("-Yflexible-types", conf: _*),
+    // taskSpecificScalacOption("-Yno-flexible-types", conf: _*),
   )
 
   // Enforce then and do syntax, combine with rewrite to automatically rewrite

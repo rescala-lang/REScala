@@ -229,6 +229,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .settings(
     scala3defaults,
     Settings.safeInit(Compile / compile),
+    Settings.explicitNulls(Compile / compile),
     Settings.javaOutputVersion(8),
     LocalSettings.publishSonatype,
     Dependencies.munit,

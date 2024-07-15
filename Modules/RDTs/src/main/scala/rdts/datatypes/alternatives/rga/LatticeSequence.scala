@@ -22,7 +22,6 @@ final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[V
       case Vertex.start => true
       case Vertex.end   => false
       case u: Vertex    => edges(u) == v || before(edges(u), v)
-      case null         => throw new IllegalArgumentException(s"CRDTSequence does not contain Vertex $u!")
     }
 
   @tailrec
@@ -80,12 +79,9 @@ final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[V
         }
 
       override def next(): Vertex = {
-        successor(lastVertex) match {
-          case v: Vertex => lastVertex = v; v
-          case null => throw new NoSuchElementException(
-              "Requesting iterator value after Vertex.end!"
-            )
-        }
+        val v = successor(lastVertex)
+        lastVertex = v
+        v
       }
     }
 }
