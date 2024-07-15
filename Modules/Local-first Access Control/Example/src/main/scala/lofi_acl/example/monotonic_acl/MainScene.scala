@@ -49,6 +49,7 @@ class MainScene extends Scene {
       Platform.runLater {
         val travelPlanViewModel = TravelPlanViewModel(travelPlanModel)
         content = TravelPlanView(travelPlanViewModel)
+        window.get().sizeToScene()
       }
     }
   }
@@ -60,6 +61,7 @@ class MainScene extends Scene {
       Platform.runLater {
         val travelPlanViewModel = TravelPlanViewModel(travelPlanModel)
         content = TravelPlanView(travelPlanViewModel)
+        window.get().sizeToScene()
       }
     }
   }

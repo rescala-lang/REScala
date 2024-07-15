@@ -2,7 +2,7 @@ package lofi_acl.example.monotonic_acl
 
 import javafx.scene.control.ListCell
 import javafx.scene.layout.HBox
-import lofi_acl.example.monotonic_acl.ExpenseListEntryListCell.pattern
+import lofi_acl.example.monotonic_acl.ExpenseListEntryListCell.amountTextFilter
 import scalafx.beans.property.StringProperty
 import scalafx.event.subscriptions.Subscription
 import scalafx.scene.control.{TextField, TextFormatter}
@@ -27,15 +27,14 @@ class ExpenseListEntryListCell(model: TravelPlanModel) extends ListCell[String] 
 
     val descriptionTextField = TextField()
     descriptionTextField.text = descriptionInModel.get()
-    val amountTextField      = TextField()
+    descriptionTextField.prefWidth = 130
+    val amountTextField = TextField()
     amountTextField.text = amountInModel.get()
-    amountTextField.textFormatter = TextFormatter((change: TextFormatter.Change) =>
-      if pattern.matches(change.controlNewText) then change
-      else null
-    )
-    amountTextField.prefWidth = 80
+    amountTextField.textFormatter = TextFormatter(amountTextFilter)
+    amountTextField.prefWidth = 70
     val commentTextField = TextField()
     commentTextField.text = commentInModel.get()
+    commentTextField.promptText = "Comment"
 
     bindBidirectionalWithFocusFilter(
       descriptionTextField,
@@ -80,4 +79,8 @@ class ExpenseListEntryListCell(model: TravelPlanModel) extends ListCell[String] 
 
 object ExpenseListEntryListCell {
   private val pattern = "\\d+(.\\d\\d)? €".r
+
+  val amountTextFilter: TextFormatter.Change => TextFormatter.Change = (change: TextFormatter.Change) =>
+    if pattern.matches(change.controlNewText) then change
+    else null
 }
