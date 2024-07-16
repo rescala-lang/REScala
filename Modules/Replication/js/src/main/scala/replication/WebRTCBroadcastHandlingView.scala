@@ -93,6 +93,7 @@ class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCo
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
                     conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(Async.handler)
+                  case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(id, handling)
                 renderedConnectionTable.appendChild(handling.controlRow().render)
@@ -102,6 +103,7 @@ class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCo
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
                     conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(Async.handler)
+                  case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(from, handling)
                 renderedConnectionTable.appendChild(handling.controlRow().render)
@@ -110,6 +112,10 @@ class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCo
               case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
                 autoconnections.get(from).foreach: handling =>
                   handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
+              
+              // ignore messages to other peers
+              case BroadcastCommunication.Request(from, to, desc) => 
+              case BroadcastCommunication.Response(from, to, desc) => 
           }.run(using Abort())(errorReporter)
       }
     }.run(using Abort()) {
