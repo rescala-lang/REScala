@@ -17,7 +17,7 @@ import scala.collection.mutable
 class SecureToDoListClient(
     replicaId: LocalUid,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
-    aead: replication.Aead,
+    aead: replication.Aead | Null,
     private val intermediary: UntrustedReplica
 ) extends TrustedReplica[ToDoMapLattice](replicaId, crdt.merge, aead) with ToDoListClient {
 
@@ -110,6 +110,7 @@ class SecureToDoListClient(
   }
 
   protected def encryptAndDisseminate(newDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice]): Unit = {
+    assert(aead ne null, "aead was null?")
     disseminate(newDeltaGroup.encrypt(aead)(stateJsonCodec, dotSetJsonCodec))
   }
 

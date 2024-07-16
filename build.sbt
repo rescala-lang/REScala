@@ -50,6 +50,8 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
   .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.munit,
     Dependencies.munitCheck,
   )
@@ -67,6 +69,10 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   .dependsOn(rdts)
   .settings(
     Settings.scala3defaults,
+    // jetty 12 requires java 17
+    Settings.javaOutputVersion(17, Test / compile),
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.slips.delay,
     Dependencies.munit,
   )
@@ -76,18 +82,17 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     Dependencies.scalatags,
   )
   .jvmSettings(
+    Test / fork := true,
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
     libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
-    Test / fork                       := true,
-    // jetty 12 requires java 17
-    Settings.javaOutputVersion(17, Test / compile),
-    Settings.explicitNulls(Compile / compile),
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
   .dependsOn(rdts.jvm)
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.munit,
     libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
       "org.scalatest" %%% s"scalatest-$m" % "3.2.19" % Test
@@ -99,6 +104,8 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(C
   .dependsOn(reactives, rdts)
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     libraryDependencies ++= List(
       "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M16",
@@ -116,9 +123,10 @@ lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
   .dependsOn(reactives.js)
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.scalatags,
     LocalSettings.deployTask,
-    Settings.explicitNulls(Compile / compile),
   )
 
 lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
@@ -220,6 +228,8 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .dependsOn(reactives.jvm, rdts.jvm, replication.jvm)
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     Settings.jolSettings,
     LocalSettings.tink,
@@ -272,6 +282,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
     scala3defaults,
     Settings.javaOutputVersion(11), // java webserver
     Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,
@@ -309,6 +320,8 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
   .dependsOn(replication.js)
   .settings(
     scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Settings.resolverJitpack,
     Dependencies.scalatags,
     Dependencies.jsoniterScala,
@@ -321,6 +334,8 @@ lazy val webview = project.in(file("Modules/Webview"))
   .dependsOn(replication.native)
   .settings(
     Settings.scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     FetchResources.fetchedResources += FetchResources.ResourceDescription(
       (Compile / unmanagedResourceDirectories).value.head.toPath.resolve("scala-native/webview.h"),

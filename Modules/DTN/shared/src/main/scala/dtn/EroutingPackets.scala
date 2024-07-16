@@ -100,7 +100,7 @@ given Encoder[PeerAddress] = Encoder { (writer, peerAddress) =>
 given Decoder[PeerAddress] = Decoder { reader =>
   val unbounded = reader.readMapOpen(1)
 
-  var peerAddress: PeerAddress = null
+  var peerAddress: PeerAddress| Null = null
 
   reader.readString() match
     case "Ip" => peerAddress = PeerAddress.Ip(reader.readString())
@@ -111,5 +111,5 @@ given Decoder[PeerAddress] = Decoder { reader =>
     case "Generic" => peerAddress = PeerAddress.Generic(reader.readString())
     case s: Any    => throw Exception(s"unknown PeerAddress type: $s")
 
-  reader.readMapClose(unbounded, peerAddress)
+  reader.readMapClose(unbounded, peerAddress.nn)
 }

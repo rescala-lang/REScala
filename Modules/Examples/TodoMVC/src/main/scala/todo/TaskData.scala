@@ -52,7 +52,7 @@ final class TaskRefData(
 object TaskReferences {
   private val taskRefMap: mutable.Map[String, TaskRefData] = mutable.Map.empty
 
-  var taskrefObj: TaskReferences = null
+  var taskrefObj: TaskReferences = scala.compiletime.uninitialized
 
   def lookupOrCreateTaskRef(id: String, task: Option[TaskData]): TaskRefData = {
     TaskReferences.taskRefMap.getOrElseUpdate(id, { taskrefObj.createTaskRef(id, task) })

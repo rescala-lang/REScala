@@ -22,7 +22,7 @@ class MultiReverseFan {
 
   var sources: Array[Var[Int]]    = scala.compiletime.uninitialized
   var results: Array[Signal[Int]] = scala.compiletime.uninitialized
-  var locks: Array[Lock]          = null
+  var locks: Array[Lock]  | Null         = null
   var groupSize: Int              = scala.compiletime.uninitialized
 
   @Setup
@@ -47,12 +47,12 @@ class MultiReverseFan {
   @Benchmark
   def run(step: Step, params: ThreadParams): Unit = {
     val index = params.getThreadIndex
-    if locks == null then sources(index).set(step.run())
+    if locks eq null then sources(index).set(step.run())
     else {
-      locks(index / groupSize).lock()
+      locks.nn(index / groupSize).lock()
       try {
         sources(index).set(step.run())
-      } finally locks(index / groupSize).unlock()
+      } finally locks.nn(index / groupSize).unlock()
     }
   }
 }

@@ -90,7 +90,7 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
     peerConnection.addEventListener(
       "icecandidate",
       (event: dom.RTCPeerConnectionIceEvent) =>
-        if !js.isUndefined(event.candidate) && event.candidate != null && event.candidate.candidate != "" then
+        if !js.isUndefined(event.candidate) && (event.candidate ne null) && event.candidate.candidate != "" then
           Async.handler.succeed(event.candidate)
     )
 
@@ -113,7 +113,7 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
       peerConnection.addEventListener(
         "icecandidate",
         (event: dom.RTCPeerConnectionIceEvent) =>
-          if event.candidate != null then
+          if event.candidate ne null then
             // we could do incremental ice, here, but seems fast enough, so eh
             Async.handler.succeed(())
           else // I guess this means we are done?

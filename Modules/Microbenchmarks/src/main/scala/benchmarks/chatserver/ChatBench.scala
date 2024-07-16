@@ -46,7 +46,7 @@ class BenchState {
 
   var cs: ChatServer[stableEngine.type] = scala.compiletime.uninitialized
   var clients: Array[Evt[String]]       = scala.compiletime.uninitialized
-  var locks: Array[Lock]                = null
+  var locks: Array[Lock]                = scala.compiletime.uninitialized
 
   @Setup
   def setup(params: BenchmarkParams, engineParam: EngineParam, size: Size, work: Workload) = {
