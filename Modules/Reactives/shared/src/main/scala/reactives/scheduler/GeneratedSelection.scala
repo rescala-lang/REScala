@@ -1,4 +1,4 @@
 package reactives.scheduler
 object GeneratedSelection {
-  inline val selection: "levelled" = "levelled"
+  inline val selection: "parrp" = "parrp"
 }

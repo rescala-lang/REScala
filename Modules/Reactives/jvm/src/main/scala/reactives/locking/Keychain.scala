@@ -4,16 +4,15 @@ import java.util
 import java.util.concurrent.ThreadLocalRandom
 
 object Keychain {
-  def apply[IT](init: Key[IT]): Keychain[IT] = {
-    val kc = new Keychain[IT]()
+  def apply[IT](init: Key[IT], id: Long): Keychain[IT] = {
+    val kc = new Keychain[IT](id)
     kc.keys.add(init)
     kc
   }
 }
 
-class Keychain[InterTurn]() {
+class Keychain[InterTurn](val id: Long) {
 
-  val id                = ThreadLocalRandom.current().nextLong()
   override def toString = s"Keychain($id)"
 
   /** synchronized on this */

@@ -1,25 +1,25 @@
 package reactives.locking
 
-import java.util.concurrent.Semaphore
+import java.util.concurrent.{Semaphore, ThreadLocalRandom}
 import scala.collection.mutable.ArrayBuffer
 
 
 object Key {
   def apply[IT](turn: IT): Key[IT] = {
-    val k = new Key(turn)
-    k.keychain = Keychain(k)
+    val id = ThreadLocalRandom.current().nextLong()
+    val k = new Key(turn, id)
+    k.keychain = Keychain(k, id)
     k
   }
 }
 
-final class Key[InterTurn] private(val turn: InterTurn) {
+final class Key[InterTurn] private(val turn: InterTurn, val id: Long) {
 
   /* access to this var is protected by the intrinsic lock of the current keychain,
    * i.e., the value pointed to by this reference … .
    * the lock keychain method ensures correct locking of this field */
   @volatile private[locking] var keychain: Keychain[InterTurn] = scala.compiletime.uninitialized
 
-  val id: Long                  = keychain.id
   override def toString: String = s"Key($id)"
 
   private val semaphore = new Semaphore(0)
@@ -53,7 +53,7 @@ final class Key[InterTurn] private(val turn: InterTurn) {
   def reset(): Unit =
     lockKeychain { kc =>
       kc.release(this)
-      keychain = Keychain(this)
+      keychain = Keychain(this, ThreadLocalRandom.current().nextLong())
     }
 
 }
