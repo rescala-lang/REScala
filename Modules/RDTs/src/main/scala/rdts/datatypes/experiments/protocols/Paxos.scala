@@ -173,6 +173,7 @@ object Paxos {
     )
 
   def init[A](members: Set[Uid]): Paxos[A] =
+    require(members.nonEmpty, "Cannot initialize Paxos with empty set of members.")
     unchanged[A].copy(members = members)
 
   given consensus[A]: Consensus[Paxos] with
