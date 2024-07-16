@@ -10,8 +10,7 @@
 • add channels module as an experiment to have rdt specific communication infrastructure
 • migrate all tests to munit
 
-• rename event.act to event.branch to be consistent with fold API?
-
+• rename event.act to event.branch for a more consistent API
 • remove infix on most methods
 
 
