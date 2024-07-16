@@ -3,12 +3,21 @@ package reactives.locking
 import java.util.concurrent.Semaphore
 import scala.collection.mutable.ArrayBuffer
 
-final class Key[InterTurn](val turn: InterTurn) {
+
+object Key {
+  def apply[IT](turn: IT): Key[IT] = {
+    val k = new Key(turn)
+    k.keychain = Keychain(k)
+    k
+  }
+}
+
+final class Key[InterTurn] private(val turn: InterTurn) {
 
   /* access to this var is protected by the intrinsic lock of the current keychain,
    * i.e., the value pointed to by this reference … .
    * the lock keychain method ensures correct locking of this field */
-  @volatile private[locking] var keychain: Keychain[InterTurn] = new Keychain(this)
+  @volatile private[locking] var keychain: Keychain[InterTurn] = scala.compiletime.uninitialized
 
   val id: Long                  = keychain.id
   override def toString: String = s"Key($id)"
@@ -44,7 +53,7 @@ final class Key[InterTurn](val turn: InterTurn) {
   def reset(): Unit =
     lockKeychain { kc =>
       kc.release(this)
-      keychain = new Keychain(this)
+      keychain = Keychain(this)
     }
 
 }

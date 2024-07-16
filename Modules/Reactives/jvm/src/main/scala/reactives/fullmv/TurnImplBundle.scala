@@ -31,11 +31,11 @@ class FullMVTurnImpl(
   @volatile var phase: TurnPhase.Type = TurnPhase.Uninitialized
 
   val subsumableLock: AtomicReference[SubsumableLock] = new AtomicReference(initialLock)
-  var successorsIncludingSelf: List[FullMVTurn]       = this :: Nil // this is implicitly a set
+  var successorsIncludingSelf: List[FullMVTurn]       = (this: @unchecked) :: Nil // this is implicitly a set
   @volatile var selfNode: MutableTransactionSpanningTreeNode[FullMVTurn] =
     new MutableTransactionSpanningTreeNode[FullMVTurn](this) // this is also implicitly a set
   @volatile var predecessorSpanningTreeNodes: Map[FullMVTurn, MutableTransactionSpanningTreeNode[FullMVTurn]] =
-    new scala.collection.immutable.Map.Map1(this, selfNode)
+    new scala.collection.immutable.Map.Map1(this: @unchecked, selfNode: @unchecked)
 
   override def ensurePredecessorReplication(startAt: TransactionSpanningTreeNode[FullMVTurn], clock: Int): Unit = {
     assert(clock <= predecessorReplicationClock, s"recevied newer predecessors from a remote copy?")

@@ -246,6 +246,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     scala3defaults,
     Settings.javaOutputVersion(9), // for java.util.Flow
     Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",

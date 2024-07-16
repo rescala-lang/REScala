@@ -3,14 +3,21 @@ package reactives.locking
 import java.util
 import java.util.concurrent.ThreadLocalRandom
 
-class Keychain[InterTurn](init: Key[InterTurn]) {
+object Keychain {
+  def apply[IT](init: Key[IT]): Keychain[IT] = {
+    val kc = new Keychain[IT]()
+    kc.keys.add(init)
+    kc
+  }
+}
+
+class Keychain[InterTurn]() {
 
   val id                = ThreadLocalRandom.current().nextLong()
   override def toString = s"Keychain($id)"
 
   /** synchronized on this */
   private val keys: util.ArrayDeque[Key[InterTurn]] = new util.ArrayDeque[Key[InterTurn]](2)
-  keys.add(init)
 
   /* fallthrough counts dynamic interactions:
    * every time a turn adds a new outgoing dependency to the reactive of another turn,

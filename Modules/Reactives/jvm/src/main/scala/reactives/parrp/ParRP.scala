@@ -48,7 +48,7 @@ trait ParRP extends Levelbased {
 
     override def toString: String = s"ParRP(${key.id})"
 
-    final val key: Key[ParRPInterTurn] = new Key(this)
+    final val key: Key[ParRPInterTurn] = Key(this)
 
     override protected def makeDerivedStructState[V](initialValue: V): ParRPState[V] = {
       val lock  = new ReLock[ParRPInterTurn]

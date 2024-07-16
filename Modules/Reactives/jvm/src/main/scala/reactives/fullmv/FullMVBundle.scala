@@ -132,12 +132,12 @@ class FullMVEngine(val timeout: Duration, val schedulerName: String)
     override def toString: String = s"[LockHost ${hashCode()} for $schedulerName ${schedulerName.hashCode}]"
   }
   override val dummy: FullMVTurnImpl = {
-    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock())
+    val dummy = new FullMVTurnImpl(this, Host.dummyGuid, null, lockHost.newLock()): @unchecked
     instances.put(Host.dummyGuid, dummy)
     dummy.beginExecuting()
     dummy.completeExecuting()
     if Host.DEBUG || SubsumableLockImpl.DEBUG || FullMVUtil.DEBUG then
-      println(s"[${Thread.currentThread().getName}] $this SETUP COMPLETE")
+      println(s"[${Thread.currentThread().getName}] ${this: @unchecked} SETUP COMPLETE")
     dummy
   }
   def newTurn(): FullMVTurnImpl = createLocal(new FullMVTurnImpl(this, _, Thread.currentThread(), lockHost.newLock()))
