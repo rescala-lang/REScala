@@ -151,7 +151,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
       beforeB1
     )
 
-    val directMergedState = beforeA1 `merge`beforeB1
+    val directMergedState = beforeA1 `merge` beforeB1
     assertEquals(la2.state, directMergedState)
     assertEquals(lb2.state, directMergedState)
 

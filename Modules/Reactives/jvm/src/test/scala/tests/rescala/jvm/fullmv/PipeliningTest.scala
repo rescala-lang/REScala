@@ -6,7 +6,6 @@ import tests.rescala.testtools.Spawn
 
 import scala.language.implicitConversions
 
-
 class PipeliningTest extends munit.FunSuite {
   if reactives.SelectedScheduler.candidate.scheduler.isInstanceOf[FullMVEngine] then {
     import reactives.default.*

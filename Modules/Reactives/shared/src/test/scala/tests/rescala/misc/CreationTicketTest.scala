@@ -7,7 +7,6 @@ import reactives.core.{AdmissionTicket, CreationScope, CreationTicket, Scheduler
 import reactives.default.transaction
 import tests.rescala.testtools.FunSuiteInvertedAssert
 
-
 class CreationTicketTest extends FunSuiteInvertedAssert {
 
   // if (engine != reactives.interfaces.toposort) {

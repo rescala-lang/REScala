@@ -1,7 +1,6 @@
 package reactives.locking
 
 import java.util
-import java.util.concurrent.ThreadLocalRandom
 
 object Keychain {
   def apply[IT](init: Key[IT], id: Long): Keychain[IT] = {

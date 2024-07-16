@@ -8,7 +8,6 @@ import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.VectorClock
 import scala.language.implicitConversions
 
-
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 import scala.language.implicitConversions

@@ -3,8 +3,9 @@ package lore.ast
 import cats.data.NonEmptyList
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import scala.util.{Failure, Success, Try}
+
 import java.nio.file.Path
+import scala.util.{Failure, Success, Try}
 
 object Codecs {
 

@@ -1,7 +1,7 @@
 package lore
-import lore.ast.*
-import cats.parse.Parser.Expectation
 import cats.data.NonEmptyList
+import cats.parse.Parser.Expectation
+import lore.ast.*
 import lore.test.util.ParserSuite
 
 def printExp(e: NonEmptyList[Expectation]) =

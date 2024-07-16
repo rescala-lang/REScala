@@ -7,7 +7,6 @@ import rdts.time.Dot
 
 import scala.language.implicitConversions
 
-
 class ReplicatedListTest extends munit.FunSuite {
 
   test("insert into grow only list") {

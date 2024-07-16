@@ -79,7 +79,6 @@ class ArrayRangesTest extends munit.ScalaCheckSuite {
     assertEquals((right `intersect` left), ArrayRanges.empty)
   }
 
-
   test("from") {
     assertEquals(ArrayRanges.from(Seq[Time](1, 2, 3)), ArrayRanges(Seq((1, 4))))
     assertEquals(ArrayRanges.from(Seq[Time](3, 2, 1)), ArrayRanges(Seq((1, 4))))

@@ -1,9 +1,9 @@
 package lore
-import lore.ast.*
-import munit.FunSuite
 import cats.data.NonEmptyList
+import lore.ast.*
 import lore.backends.traverseFromNode
 import lore.optics.{*, given}
+import munit.FunSuite
 
 class OpticsSuite extends FunSuite {
   test("Playground") {

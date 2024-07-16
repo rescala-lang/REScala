@@ -63,7 +63,6 @@ object WebRepMain {
 
     @nowarn given JsonValueCodec[exData.dataManager.CodecState] = JsonCodecMaker.make
 
-
     val ccm = new ContentConnectionManager(exData.dataManager.dataManager)
 
     val bodyParent = dom.document.body.parentElement

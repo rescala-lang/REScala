@@ -1,12 +1,10 @@
 package lore.optics
 
-import monocle.{Traversal}
-import cats.implicits.*
-import lore.ast.*
 import cats.Applicative
-import monocle.Lens
-import monocle.Fold
+import cats.implicits.*
 import cats.kernel.Monoid
+import lore.ast.*
+import monocle.{Fold, Lens, Traversal}
 
 // val traverseAST: Traverse[cats.Id[Term]] = new Traverse[cats.Id[Term]] {
 //   def traverse[F[_]: Applicative](as: Term)(f: Term => F[Term]): F[Term] = ???

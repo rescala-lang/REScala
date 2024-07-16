@@ -121,7 +121,10 @@ abstract class LatticePropertyChecks[A](
           normalized,
           s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
-        assert(Lattice[A].lteq(d, theValue), s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d `merge` theValue}")
+        assert(
+          Lattice[A].lteq(d, theValue),
+          s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d `merge` theValue}"
+        )
         if decomposed.sizeIs > 1
         then
           BottomOpt.explicit: bo =>

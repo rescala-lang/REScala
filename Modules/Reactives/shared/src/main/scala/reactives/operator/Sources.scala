@@ -27,7 +27,7 @@ class Evt[T] private[reactives] (initialState: State[Pulse[T]], name: ReInfo)
 
   /** Trigger the event */
   @deprecated("use .fire instead of apply", "0.21.0")
-  def apply(value: T)(using PlanTransactionScope[State]): Unit                = fire(value)
+  def apply(value: T)(using PlanTransactionScope[State]): Unit          = fire(value)
   def fire()(using PlanTransactionScope[State])(using Unit =:= T): Unit = fire(())
   def fire(value: T)(using planTransactionScope: PlanTransactionScope[State]): Unit =
     planTransactionScope.planTransaction(this)(admit(value)(using _))

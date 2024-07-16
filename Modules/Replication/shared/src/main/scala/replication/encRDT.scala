@@ -20,7 +20,10 @@ extension [S](c: EncRDT[S])
   def send(data: Dotted[S], aead: Aead)(using
       rid: LocalUid
   )(using Conversion[S, ByteArray], Conversion[Dots, ByteArray]): EncRDT[S] =
-    EncRDT(Set(Dotted(new String(java.util.Base64.getEncoder.encode(aead.encrypt(data.data.convert, data.context.convert))), data.context)))
+    EncRDT(Set(Dotted(
+      new String(java.util.Base64.getEncoder.encode(aead.encrypt(data.data.convert, data.context.convert))),
+      data.context
+    )))
 
   def recombine(aead: Aead)(using
       DottedLattice[S],

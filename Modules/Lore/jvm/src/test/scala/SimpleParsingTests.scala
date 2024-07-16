@@ -1,9 +1,10 @@
 package lore
+import cats.data.NonEmptyList
 import cats.implicits.*
 import lore.ast.*
 import lore.test.util.ParserSuite
+
 import java.nio.file.Path
-import cats.data.NonEmptyList
 
 class SimpleParsing extends ParserSuite {
   test("function call") {
@@ -318,7 +319,7 @@ class SimpleParsing extends ParserSuite {
 
     assertParsingResult(
       Parser.tuple,
-      """(				
+      """(
         	add(districts_temp, districtUpdated), // add updated district
 
 					addOrderLines(orderLines, newOrderLines) // add all new orderline

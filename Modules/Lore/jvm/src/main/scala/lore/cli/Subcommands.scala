@@ -1,8 +1,8 @@
 package lore.cli
 
+import cats.implicits.*
 import com.monovore.decline.Opts
 import lore.cli.OutputOptions.SplitMode
-import cats.implicits.*
 
 import java.nio.file.Path
 

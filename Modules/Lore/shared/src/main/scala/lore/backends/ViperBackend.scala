@@ -1,7 +1,7 @@
 package lore.backends
 
-import lore.ast.*
 import cats.implicits.*
+import lore.ast.*
 
 object ViperBackend {
   case class ViperCompilationException(message: String)

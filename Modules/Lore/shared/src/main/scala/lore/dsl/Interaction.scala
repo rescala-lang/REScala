@@ -1,12 +1,12 @@
 package lore.dsl
 
 import lore.dsl.*
+import reactives.SelectedScheduler.State as BundleState
 import reactives.core.ReSource
+import reactives.default.*
 
 import scala.annotation.{static, targetName}
 import scala.quoted.*
-import reactives.default.*
-import reactives.SelectedScheduler.State as BundleState
 
 trait Interaction[S <: Tuple, A] {
   type T[_ <: S, _ <: A] <: Interaction[S, A]

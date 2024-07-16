@@ -1,12 +1,11 @@
 package lore.backends
-import lore.ast.*
-import munit.FunSuite
-import lore.backends.*
-import cats.implicits.*
 import cats.data.NonEmptyList
+import cats.implicits.*
 import lore.Parser
-import OverlapAnalysis.*
-import lore.backends.flattenInteractions
+import lore.ast.*
+import lore.backends.OverlapAnalysis.*
+import lore.backends.{flattenInteractions, *}
+import munit.FunSuite
 
 class OverlapAnalysisTests extends FunSuite {
   // simple reaches test

@@ -33,7 +33,6 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
 
   extension (v: Value) def access: Pulse[T]
 
-
   /** Interprets the pulse of the event by converting to an option
     *
     * @group internal
@@ -48,7 +47,9 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
   final def observe(onValue: T => Unit, onError: (Throwable => Unit) | Null = null, fireImmediately: Boolean = false)(
       using ticket: CreationTicket[State]
   ): Disconnectable =
-    Observe.strong(this, fireImmediately) { reevalVal => Observe.ObservePulsing(reevalVal.access, this, onValue, onError) }
+    Observe.strong(this, fireImmediately) { reevalVal =>
+      Observe.ObservePulsing(reevalVal.access, this, onValue, onError)
+    }
 
   /** Uses a partial function `onFailure` to recover an error carried by the event into a value when returning Some(value),
     * or filters the error when returning None

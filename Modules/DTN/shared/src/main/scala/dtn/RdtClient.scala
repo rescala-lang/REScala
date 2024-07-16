@@ -5,7 +5,6 @@ import rdts.time.Dots
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-
 class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: ConvergenceClientInterface) {
   def send(payload: Array[Byte], dots: Dots): Future[Unit] = {
     val bundle: Bundle = BundleCreation.createBundleRdt(
@@ -45,7 +44,12 @@ class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: Convergenc
   def close(): Future[Unit] = ws.disconnect()
 }
 object RdtClient {
-  def apply(host: String, port: Int, appName: String, checkerClient: ConvergenceClientInterface = NoDotsConvergenceClient): Future[RdtClient] = {
+  def apply(
+      host: String,
+      port: Int,
+      appName: String,
+      checkerClient: ConvergenceClientInterface = NoDotsConvergenceClient
+  ): Future[RdtClient] = {
     WSEndpointClient(host, port)
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"dtn://global/~rdt/$appName"))
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"${ws.nodeId}rdt/$appName"))

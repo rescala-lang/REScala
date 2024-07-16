@@ -13,7 +13,6 @@ import reactives.operator.Event.CBR
 import replication.DataManager
 import replication.JsoniterCodecs.given
 
-
 object TodoDataManager {
 
   case class TodoRepState(list: Dotted[ReplicatedList[TaskRef]], entries: Map[String, LastWriterWins[Option[TaskData]]])

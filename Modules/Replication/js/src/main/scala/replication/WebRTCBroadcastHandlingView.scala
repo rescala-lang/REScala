@@ -30,7 +30,8 @@ object BroadcastCommunication {
 }
 
 given converterRead[T](using JsonValueCodec[T]): Conversion[MessageBuffer, T] = mb => readFromArray[T](mb.asArray)
-given converterWrite[T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] = v => ArrayMessageBuffer(writeToArray[T](v))
+given converterWrite[T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] =
+  v => ArrayMessageBuffer(writeToArray[T](v))
 
 given JsonValueCodec[BroadcastCommunication] = JsonCodecMaker.make
 
@@ -112,10 +113,10 @@ class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCo
               case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
                 autoconnections.get(from).foreach: handling =>
                   handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
-              
+
               // ignore messages to other peers
-              case BroadcastCommunication.Request(from, to, desc) => 
-              case BroadcastCommunication.Response(from, to, desc) => 
+              case BroadcastCommunication.Request(from, to, desc)  =>
+              case BroadcastCommunication.Response(from, to, desc) =>
           }.run(using Abort())(errorReporter)
       }
     }.run(using Abort()) {

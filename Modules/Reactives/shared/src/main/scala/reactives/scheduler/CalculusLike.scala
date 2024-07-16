@@ -80,7 +80,7 @@ object CalculusLike {
 
     override def schedulerName: String = "FormalizationLike"
 
-    var allReactives                    = Set.empty[ReSource.of[State]]
+    var allReactives                           = Set.empty[ReSource.of[State]]
     var currentPropagation: Propagation | Null = null
 
     var idle = true

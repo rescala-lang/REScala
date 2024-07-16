@@ -8,7 +8,6 @@ import reactives.structure.Pulse
 
 import scala.language.implicitConversions
 
-
 import scala.concurrent.duration.Duration
 
 class DeframeTest extends munit.FunSuite {

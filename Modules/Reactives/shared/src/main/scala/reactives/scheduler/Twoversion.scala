@@ -17,7 +17,7 @@ trait Twoversion {
   abstract class TwoVersionState[V](protected[reactives] var current: V) {
 
     private var owner: Token | Null = null
-    private var update: V    = scala.compiletime.uninitialized
+    private var update: V           = scala.compiletime.uninitialized
 
     def write(value: V, token: Token): Unit = {
       assert(owner == null, s"buffer owned by $owner written by $token")
@@ -25,7 +25,7 @@ trait Twoversion {
       owner = token
     }
     def base(token: Token | Null): V = current
-    def get(token: Token): V  = { if token eq owner then update else current }
+    def get(token: Token): V         = { if token eq owner then update else current }
 
     def commit(r: V => V): Unit = {
       if update != null then current = r(update)

@@ -38,7 +38,7 @@ class DietMapCContextBench {
   }
 
   @Benchmark
-  def `merge`= (cca `union` ccb)
+  def `merge` = (cca `union` ccb)
 
   @Benchmark
   def mergeSelf = (cca `union` cca)

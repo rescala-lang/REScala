@@ -46,8 +46,8 @@ trait Lattice[A] {
   extension (left: A) {
     final inline def <=(right: A): Boolean = Lattice.this.lteq(left, right)
     @targetName("mergeInfix")
-    final inline def merge(right: A): A = Lattice.this.merge(left, right)
-    final inline def decomposed: Iterable[A]  = Lattice.this.decompose(left)
+    final inline def merge(right: A): A      = Lattice.this.merge(left, right)
+    final inline def decomposed: Iterable[A] = Lattice.this.decompose(left)
   }
 }
 

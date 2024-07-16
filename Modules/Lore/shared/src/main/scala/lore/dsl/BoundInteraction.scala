@@ -1,8 +1,8 @@
 package lore.dsl
 
+import reactives.SelectedScheduler.State as BundleState
 import reactives.core.ReSource
 import reactives.default.*
-import reactives.SelectedScheduler.State as BundleState
 
 import scala.quoted.{Expr, Quotes, Type}
 import scala.reflect.ClassTag

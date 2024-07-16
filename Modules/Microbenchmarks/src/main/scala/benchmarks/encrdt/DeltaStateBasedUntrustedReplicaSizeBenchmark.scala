@@ -135,5 +135,6 @@ trait DeltaStateUntrustedReplicaSizeBenchEnvironment {
 class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
   override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
 
-  override def decrypt(data: Array[Byte], associated: Array[Byte]): Try[Array[Byte]] = Try(aead.decrypt(data, associated))
+  override def decrypt(data: Array[Byte], associated: Array[Byte]): Try[Array[Byte]] =
+    Try(aead.decrypt(data, associated))
 }

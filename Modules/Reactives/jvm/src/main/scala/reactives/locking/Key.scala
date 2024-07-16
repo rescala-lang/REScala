@@ -3,17 +3,16 @@ package reactives.locking
 import java.util.concurrent.{Semaphore, ThreadLocalRandom}
 import scala.collection.mutable.ArrayBuffer
 
-
 object Key {
   def apply[IT](turn: IT): Key[IT] = {
     val id = ThreadLocalRandom.current().nextLong()
-    val k = new Key(turn, id)
+    val k  = new Key(turn, id)
     k.keychain = Keychain(k, id)
     k
   }
 }
 
-final class Key[InterTurn] private(val turn: InterTurn, val id: Long) {
+final class Key[InterTurn] private (val turn: InterTurn, val id: Long) {
 
   /* access to this var is protected by the intrinsic lock of the current keychain,
    * i.e., the value pointed to by this reference … .

@@ -55,8 +55,8 @@ object Observe {
 
     override def execute(): Unit =
       (reevalVal: Pulse[T]) match {
-        case Pulse.empty(info) => ()
-        case Pulse.Value(v)    => onValue(v)
+        case Pulse.empty(info)    => ()
+        case Pulse.Value(v)       => onValue(v)
         case Pulse.Exceptional(f) =>
           // should generally be already checked by `checkExceptionAndRemoval`
           if onError == null

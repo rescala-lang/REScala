@@ -33,8 +33,8 @@ class CausalQueueBench {
 
   def make(base: Dotted[CausalQueue[Int]], ops: Int, prefix: String) = {
     val s     = ops / 2
-    val added = (1 to s).foldLeft(base) { (acc, v) => acc `merge`acc.mod(_.enqueue(using prefix.asId)(v)) }
-    (1 to s).foldLeft(added) { (acc, _) => acc `merge`acc.mod(_.dequeue()) }
+    val added = (1 to s).foldLeft(base) { (acc, v) => acc `merge` acc.mod(_.enqueue(using prefix.asId)(v)) }
+    (1 to s).foldLeft(added) { (acc, _) => acc `merge` acc.mod(_.dequeue()) }
   }
 
   @Benchmark
@@ -45,7 +45,7 @@ class CausalQueueBench {
     val left  = make(lca, operations, "left")
     val right = make(lca, operations, "right")
 
-    val res = left `merge`right
+    val res = left `merge` right
     res
   }
 
@@ -87,7 +87,7 @@ class CausalQueueBenchWithRGA {
     val left  = make(lca, operations)
     val right = make(lca, operations)
 
-    val res = left `merge`right
+    val res = left `merge` right
     res
   }
 
