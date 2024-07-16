@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, 
 import java.util.concurrent.locks.LockSupport
 import scala.annotation.{elidable, nowarn, tailrec}
 
+import scala.language.unsafeNulls
+
 sealed trait MaybeWritten[+V]
 case object NotFinal                                      extends MaybeWritten[Nothing]
 case object Unwritten                                     extends MaybeWritten[Nothing]

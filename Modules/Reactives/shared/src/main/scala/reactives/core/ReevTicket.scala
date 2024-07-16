@@ -8,17 +8,17 @@ final class ReevTicket[State[_], V](tx: Transaction[State], private var _before:
     extends DynamicTicket(tx)
     with Result[State, V] {
 
-  private var collectedDependencies: Set[ReSource.of[State]] = null
+  private var collectedDependencies: Set[ReSource.of[State]] | Null = null
 
   // dependency tracking accesses
   private[reactives] override def collectStatic(reactive: ReSource.of[State]): reactive.Value = {
-    assert(collectedDependencies == null || collectedDependencies.contains(reactive))
+    assert(collectedDependencies == null || collectedDependencies.nn.contains(reactive))
     accessHandler.staticAccess(reactive)
   }
 
   private[reactives] override def collectDynamic(reactive: ReSource.of[State]): reactive.Value = {
     assert(collectedDependencies != null, "may not access dynamic dependencies without tracking dependencies")
-    val updatedDeps = collectedDependencies + reactive
+    val updatedDeps = collectedDependencies.nn + reactive
     if updatedDeps eq collectedDependencies then {
       accessHandler.staticAccess(reactive)
     } else {
@@ -30,7 +30,7 @@ final class ReevTicket[State[_], V](tx: Transaction[State], private var _before:
   // inline result into ticket, to reduce the amount of garbage during reevaluation
   private var _propagate          = false
   private var value: V            = scala.compiletime.uninitialized
-  private var effect: Observation = null
+  private var effect: Observation | Null = null
   override def toString: String =
     s"Result(value = $value, propagate = $activate, deps = $collectedDependencies)"
   def before: V = _before
@@ -54,8 +54,8 @@ final class ReevTicket[State[_], V](tx: Transaction[State], private var _before:
 
   override def activate: Boolean                         = _propagate
   override def forValue(f: V => Unit): Unit              = if value != null then f(value)
-  override def forEffect(f: Observation => Unit): Unit   = if effect != null then f(effect)
-  override def inputs(): Option[Set[ReSource.of[State]]] = Option(collectedDependencies)
+  override def forEffect(f: Observation => Unit): Unit   = if effect != null then f(effect.nn)
+  override def inputs(): Option[Set[ReSource.of[State]]] = Option(collectedDependencies).asInstanceOf[Option[Set[ReSource.of[State]]]]
 
   def reset[NT](nb: NT): ReevTicket[State, NT] = {
     _propagate = false

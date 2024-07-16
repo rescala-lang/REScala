@@ -13,7 +13,7 @@ object Tracing {
   case class DomAssociation(reSource: ReSource, node: RawWrapper)                   extends Data
   case class Transaction(id: Int, phase: String)                                    extends Data
 
-  var observer: Data => Unit = null
+  var observer: (Data => Unit) | Null = null
 
-  @inline def observe(data: => Data): Unit = if observer != null then observer(data)
+  @inline def observe(data: => Data): Unit = if observer != null then observer.nn(data)
 }

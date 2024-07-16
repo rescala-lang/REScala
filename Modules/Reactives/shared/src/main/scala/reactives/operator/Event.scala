@@ -45,7 +45,7 @@ trait Event[+T] extends MacroAccess[Option[T]] with Disconnectable {
     * @return the resulting [[reactives.structure.Observe]] can be used to remove the observer.
     * @group accessor
     */
-  final def observe(onValue: T => Unit, onError: Throwable => Unit = null, fireImmediately: Boolean = false)(
+  final def observe(onValue: T => Unit, onError: (Throwable => Unit) | Null = null, fireImmediately: Boolean = false)(
       using ticket: CreationTicket[State]
   ): Disconnectable =
     Observe.strong(this, fireImmediately) { reevalVal => Observe.ObservePulsing(reevalVal.access, this, onValue, onError) }

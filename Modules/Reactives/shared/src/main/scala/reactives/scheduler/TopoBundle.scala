@@ -148,7 +148,7 @@ trait TopoBundle {
               sorted.foreach(reset)
 
               // wrapup
-              if admissionTicket.wrapUp != null then admissionTicket.wrapUp(transaction)
+              if admissionTicket.wrapUp != null then admissionTicket.wrapUp.nn(transaction)
               admissionResult
             }
           } finally {

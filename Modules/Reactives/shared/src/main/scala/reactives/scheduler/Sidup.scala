@@ -83,7 +83,7 @@ trait Sidup extends Twoversion {
 
   class SidupTransaction extends TwoVersionTransactionImpl {
 
-    var sources: Set[SourceId] = null
+    var sources: Set[SourceId] | Null = null
 
     override def initializationPhase(initialChanges: Map[ReSource, InitialChange[State]]): Unit = {
       val initsources = initialChanges.flatMap { case (s, ic) =>
@@ -145,8 +145,9 @@ trait Sidup extends Twoversion {
       reactive.state.outgoing.foreach(pokeLater)
     }
     def relevantIncoming(head: Derived): Seq[ReSource] = {
+      assert(sources != null, "sources was null?")
       head.state.incoming.iterator.filter { r =>
-        sources.exists(r.state.sources.contains)
+        sources.nn.exists(r.state.sources.contains)
       }.toSeq
     }
 

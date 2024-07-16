@@ -59,8 +59,8 @@ object CalculusLike {
     def requiresReev(reSource: ReSource.of[State]): Boolean = {
       if FScheduler.currentPropagation == null then false
       else
-        FScheduler.currentPropagation.isReady(reSource) &&
-        FScheduler.currentPropagation.isOutdated(reSource)
+        FScheduler.currentPropagation.nn.isReady(reSource) &&
+        FScheduler.currentPropagation.nn.isOutdated(reSource)
     }
 
   }
@@ -81,7 +81,7 @@ object CalculusLike {
     override def schedulerName: String = "FormalizationLike"
 
     var allReactives                    = Set.empty[ReSource.of[State]]
-    var currentPropagation: Propagation = null
+    var currentPropagation: Propagation | Null = null
 
     var idle = true
 
@@ -126,7 +126,7 @@ object CalculusLike {
 
             // wrapup, this is for a rarely used rescala features, where transactions can
             // do some cleanup when they complete. Not supported in the formalization
-            if admissionTicket.wrapUp != null then admissionTicket.wrapUp(transaction)
+            if admissionTicket.wrapUp != null then admissionTicket.wrapUp.nn(transaction)
 
             // commit cleans up some internal state
             result.commit()

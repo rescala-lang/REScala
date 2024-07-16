@@ -48,7 +48,7 @@ final class ReLock[InterTurn]() {
   }
 
   /** transfers the lock from the turn to the target. */
-  def transfer(target: Key[InterTurn], oldOwner: Key[InterTurn], transferWriteSet: Boolean = false) = {
+  def transfer(target: Key[InterTurn] | Null, oldOwner: Key[InterTurn], transferWriteSet: Boolean = false) = {
     // update locks back to read locks when transferring
     writeLock = transferWriteSet && writeLock
     // select the true target:

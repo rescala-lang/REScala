@@ -41,7 +41,7 @@ object Observe {
     }
   }
 
-  class ObservePulsing[T](reevalVal: Pulse[T], location: Any, onValue: T => Unit, onError: Exception => Unit)
+  class ObservePulsing[T](reevalVal: Pulse[T], location: Any, onValue: T => Unit, onError: (Exception => Unit) | Null)
       extends Observe.ObserveInteract {
     override def checkExceptionAndRemoval(): Boolean = {
       reevalVal match {
@@ -55,10 +55,14 @@ object Observe {
 
     override def execute(): Unit =
       (reevalVal: Pulse[T]) match {
-        case Pulse.empty(info)    => ()
-        case Pulse.Value(v)       => onValue(v)
-        case Pulse.Exceptional(f) => onError(f)
-        case Pulse.NoChange       => ()
+        case Pulse.empty(info) => ()
+        case Pulse.Value(v)    => onValue(v)
+        case Pulse.Exceptional(f) =>
+          // should generally be already checked by `checkExceptionAndRemoval`
+          if onError == null
+          then throw f
+          else onError(f)
+        case Pulse.NoChange => ()
       }
   }
 

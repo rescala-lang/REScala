@@ -33,5 +33,5 @@ final class AdmissionTicket[State[_]](val tx: Transaction[State], declaredWrites
   /** convenience method as many case studies depend on this being available directly on the AT */
   def now[A](reactive: ReadAs.of[State, A]): A = tx.now(reactive)
 
-  private[reactives] var wrapUp: Transaction[State] => Unit = null
+  private[reactives] var wrapUp: (Transaction[State] => Unit) | Null = null
 }

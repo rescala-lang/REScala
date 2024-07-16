@@ -16,7 +16,7 @@ trait Twoversion {
   /** State that implements both the buffered pulse and the buffering capabilities itself. */
   abstract class TwoVersionState[V](protected[reactives] var current: V) {
 
-    private var owner: Token = null
+    private var owner: Token | Null = null
     private var update: V    = scala.compiletime.uninitialized
 
     def write(value: V, token: Token): Unit = {
@@ -24,7 +24,7 @@ trait Twoversion {
       update = value
       owner = token
     }
-    def base(token: Token): V = current
+    def base(token: Token | Null): V = current
     def get(token: Token): V  = { if token eq owner then update else current }
 
     def commit(r: V => V): Unit = {
@@ -97,7 +97,7 @@ trait Twoversion {
             tx.propagationPhase()
             if admissionTicket.wrapUp != null then
               tracePhase("wrapUp")
-              admissionTicket.wrapUp(tx)
+              admissionTicket.wrapUp.nn(tx)
             admissionResult
           }
           tracePhase("commit")

@@ -16,6 +16,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.*
 import scala.util.Try
 
+import scala.language.unsafeNulls
+
 type State[V] = FullMVState[V, FullMVTurn]
 
 type Reactive = ReSource.of[State]
