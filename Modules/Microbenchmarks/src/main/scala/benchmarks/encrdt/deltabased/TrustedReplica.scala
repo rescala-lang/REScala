@@ -20,7 +20,7 @@ abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, pri
   }
 
   def receive(encryptedDeltaGroup: EncryptedDeltaGroup): Unit = {
-    assert(aead ne null, "aead was null?")
+    assert(aead != null, "aead was null?")
     val decryptedState: DecryptedDeltaGroup[T] = encryptedDeltaGroup.decrypt(aead)
     dottedVersionVector = dottedVersionVector.merge(decryptedState.dottedVersionVector)
     // TODO: synchronize
@@ -29,7 +29,7 @@ abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, pri
   }
 
   def localChange(state: T): Unit = {
-    assert(aead ne null, "aead was null?")
+    assert(aead != null, "aead was null?")
     val eventDot = nextDot()
     dottedVersionVector.add(eventDot)
     val encryptedDelta = DecryptedDeltaGroup(state, Dots.single(eventDot)).encrypt(aead)
