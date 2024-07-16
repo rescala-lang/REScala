@@ -73,7 +73,6 @@ class SyncWithMonotonicAcl[RDT](
   }
 
   override def receivedDelta(dot: Dot, delta: RDT): Unit =
-    println(s"Received: $delta")
     val _ = rdtReference.updateAndGet((dots, rdt) => dots.add(dot) -> rdt.merge(delta))
     onDeltaReceive(delta)
 

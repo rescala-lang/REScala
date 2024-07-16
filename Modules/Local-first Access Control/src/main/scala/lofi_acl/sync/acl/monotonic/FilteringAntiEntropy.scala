@@ -204,7 +204,6 @@ class FilteringAntiEntropy[RDT](
         }
 
       case AnnouncePeers(peers) =>
-        println(s"Received: $msg")
         val newPeers      = peers.diff(peerAddressCache.get())
         val peerAddresses = peerAddressCache.updateAndGet(cache => cache ++ peers)
         if newPeers.nonEmpty then {
@@ -412,9 +411,9 @@ class FilteringAntiEntropy[RDT](
     override def run(): Unit =
       while !stopped do {
         try {
-          // Execute every 0.5 to 1.5 seconds, avoiding synchronization of these requests among replicas.
+          // Execute every 5 to 15 seconds, avoiding synchronization of these requests among replicas.
           // See: https://dl.acm.org/doi/10.1145/167954.166241
-          val sleepAmount = 500 + rand.nextInt(1_000)
+          val sleepAmount = 5000 + rand.nextInt(10_000)
           Thread.sleep(sleepAmount)
         } catch {
           case _: InterruptedException => if stopped then return // Otherwise request missing deltas immediately
