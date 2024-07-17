@@ -56,14 +56,15 @@ import scala.util.{Random, Try}
 class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   // state will grow indefinitely. there is currently no garbage collector
   val likelihoodState: LikelihoodState = LikelihoodState()
-  val dotState: DotState = DotState()
+  val dotState: DotState               = DotState()
 
   // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
-  val tempDotsStore: ConcurrentHashMap[String, Dots] = ConcurrentHashMap()
+  val tempDotsStore: ConcurrentHashMap[String, Dots]             = ConcurrentHashMap()
   val tempPreviousNodeStore: ConcurrentHashMap[String, Endpoint] = ConcurrentHashMap()
   val tempRdtIdStore: ConcurrentHashMap[String, String]          = ConcurrentHashMap()
 
-  val delivered: ConcurrentHashMap[String, Int] = ConcurrentHashMap() // shows the number of nodes we have delivered a bundle to
+  val delivered: ConcurrentHashMap[String, Int] =
+    ConcurrentHashMap() // shows the number of nodes we have delivered a bundle to
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle)
       : Option[Packet.ResponseSenderForBundle] = {
@@ -241,7 +242,10 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
         dotState.mergeDots(source_node_endpoint, rdt_id, rdt_meta_block.dots)
 
         tempDotsStore.put(packet.bndl.id, rdt_meta_block.dots)
-        tempRdtIdStore.put(packet.bndl.id, rdt_id) // only needed in combination with the dots on successful forward, so add it here
+        tempRdtIdStore.put(
+          packet.bndl.id,
+          rdt_id
+        ) // only needed in combination with the dots on successful forward, so add it here
         ()
   }
 
@@ -270,7 +274,7 @@ class LikelihoodState {
 
     val sum = m.values.sum
 
-    m = m.map { case (neighbour_node, score) => neighbour_node -> score / sum}
+    m = m.map { case (neighbour_node, score) => neighbour_node -> score / sum }
 
     map.put(destination_node, m)
     ()
@@ -278,12 +282,12 @@ class LikelihoodState {
 
   /*
     returns all known neighbours for a destination in a set, sorted by delivery-likelihood, with the best neighbour (highest score) first
-  */
+   */
   def get_sorted_neighbours(destination_node: Endpoint): Set[Endpoint] = {
     map
       .get(destination_node)
       .toList
-      .sortBy(- _._2)
+      .sortBy(-_._2)
       .map(_._1)
       .toSet
   }
@@ -328,7 +332,7 @@ class DotState {
     })
   }
 
-  /* 
+  /*
     return all peer for which the provided dots are not already known to them
    */
   def filterPeers(peers: Iterable[DtnPeer], rdt_id: String, dots: Dots): Iterable[DtnPeer] = {
