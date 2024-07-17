@@ -176,12 +176,12 @@ RUN tar -xvzf graalvm-jdk-22_linux-x64_bin.tar.gz
 RUN rm graalvm-jdk-22_linux-x64_bin.tar.gz
 
 # project clone
-RUN git clone https://github.com/lh70/lecture-chat-example.git
+RUN git clone https://github.com/rescala-lang/REScala.git
 
 # compile native
-WORKDIR /root/temp/lecture-chat-example
+WORKDIR /root/temp/REScala
 RUN sbt stageJars
-RUN /root/temp/graalvm-jdk-22.0.1+8.1/bin/native-image --class-path /root/temp/lecture-chat-example/jvm/target/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
+RUN /root/temp/graalvm-jdk-22.0.1+8.1/bin/native-image --class-path /root/temp/REScala/Modules/DTN/jvm/target/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
 
 
 WORKDIR /root
