@@ -2,16 +2,24 @@
 
 == v.next
 
-• refactor API to no longer require bundle traits
-	• this removes the capability to select schedulers at runtime and instead moves the selection to compile time
+# Api changes
+
 • rename module imports to use generic names:
 	• rescala -> reactives
 	• kofre -> rdts
-• add channels module as an experiment to have rdt specific communication infrastructure
-• migrate all tests to munit
+
+• refactor API to no longer require bundle traits
+	• this removes the capability to select schedulers at runtime and instead moves the selection to compile time
 
 • rename event.act to event.branch for a more consistent API
+
 • remove infix on most methods
+
+# Internal improvements
+
+• add channels module as an experiment to have rdt specific communication infrastructure
+• migrate all tests to munit
+• compile with safe init and explicit nulls (most modules)
 
 
 == v0.35.1
