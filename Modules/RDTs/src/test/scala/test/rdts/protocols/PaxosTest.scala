@@ -153,7 +153,7 @@ class PaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
     id2)).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, None)
-    println(testPaxosObject.promises)
+    //println(testPaxosObject.promises)
     // replica 1 and 2 try to write again
     testPaxosObject =
       testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
