@@ -9,8 +9,7 @@ import org.bouncycastle.crypto.params.HKDFParameters
 import java.nio.charset.StandardCharsets
 import java.security.SecureRandom
 
-class KeyDerivationTests extends FunSuite {
-
+class HkdfTests extends FunSuite {
   test("BouncyCastle hkdf for AEAD with XChaCha20-Poly1305") {
     def deriveKey(inputKeyMaterial: Array[Byte], info: Array[Byte]): Array[Byte] = {
       // We don't need to extract, since we have uniformly distributed input-key-material
@@ -56,6 +55,35 @@ class KeyDerivationTests extends FunSuite {
       msg.toSeq,
       decrypt(ciphertext, associatedData, inputKeyMaterial, info).toSeq
     )
+  }
+
+  test("Combining keys") {
+    val inputKeyMaterial: Array[Byte] = Array.ofDim(32) // 256 bits
+    val kdkPart1 = {
+      val hkdfParameters = HKDFParameters.skipExtractParameters(inputKeyMaterial, "PART A".getBytes())
+      val hkdf           = HKDFBytesGenerator(SHA256Digest())
+      hkdf.init(hkdfParameters)
+      val outputKeyMaterial: Array[Byte] = Array.ofDim(32)
+      hkdf.generateBytes(outputKeyMaterial, 0, 32)
+      outputKeyMaterial
+    }
+    val kdkPart2 = {
+      val hkdfParameters = HKDFParameters.skipExtractParameters(inputKeyMaterial, "PART B".getBytes())
+      val hkdf           = HKDFBytesGenerator(SHA256Digest())
+      hkdf.init(hkdfParameters)
+      val outputKeyMaterial: Array[Byte] = Array.ofDim(32)
+      hkdf.generateBytes(outputKeyMaterial, 0, 32)
+      outputKeyMaterial
+    }
+    val okm = {
+      val combined       = kdkPart1.concat(kdkPart2)
+      val hkdfParameters = HKDFParameters.skipExtractParameters(combined, "COMBINATION".getBytes())
+      val hkdf           = HKDFBytesGenerator(SHA256Digest())
+      hkdf.init(hkdfParameters)
+      val outputKeyMaterial: Array[Byte] = Array.ofDim(32)
+      hkdf.generateBytes(outputKeyMaterial, 0, 32)
+      outputKeyMaterial
+    }
   }
 
 }
