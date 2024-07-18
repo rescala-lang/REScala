@@ -171,7 +171,7 @@ RUN sudo apt-get install sbt
 RUN sbt exit
 
 # graalvm setup
-RUN wget https://download.oracle.com/graalvm/22/latest/graalvm-jdk-22_linux-x64_bin.tar.gz
+RUN wget https://download.oracle.com/graalvm/22/archive/graalvm-jdk-22_linux-x64_bin.tar.gz
 RUN tar -xvzf graalvm-jdk-22_linux-x64_bin.tar.gz
 RUN rm graalvm-jdk-22_linux-x64_bin.tar.gz
 
@@ -180,8 +180,8 @@ RUN git clone https://github.com/rescala-lang/REScala.git
 
 # compile native
 WORKDIR /root/temp/REScala
-RUN sbt stageJars
-RUN /root/temp/graalvm-jdk-22.0.1+8.1/bin/native-image --class-path /root/temp/REScala/Modules/DTN/jvm/target/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
+RUN sbt "; project dtnJVM; packageJars"
+RUN /root/temp/graalvm-jdk-22+36.1/bin/native-image --class-path /root/temp/REScala/Modules/DTN/jvm/target/scala-3.5.1-RC1/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
 
 
 WORKDIR /root

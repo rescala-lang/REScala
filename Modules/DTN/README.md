@@ -22,7 +22,7 @@ show updateable dependencies and plugins:
 
 generate a folder with all jars needed to run standalone (works only for the jvm part):
 
-    sbt stageJars
+    sbt packageJars
 
 execute the standalone jars:
 
@@ -53,3 +53,13 @@ enable network emulation
 start emulation docker
 
   docker run --rm -it --name showroom -p 5901:5901 --privileged -v /home/kali/shared:/shared dtn7-showroom
+
+# docker commands to free up space
+
+delete all dangling resources
+
+  docker system prune
+
+delete all resources
+
+  docker system prune -a
