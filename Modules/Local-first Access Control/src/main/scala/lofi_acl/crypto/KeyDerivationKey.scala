@@ -66,6 +66,10 @@ object KeyDerivationKey {
   // WARNING: Only use on uniformly distributed input keying material
   private def derive256BitsOutputKeyMaterial(inputKeyMaterial: Array[Byte], info: Array[Byte]): Array[Byte] = {
     require(inputKeyMaterial.length == IKM_LENGTH)
+    // KMAC based KDF could be used instead, but it's not available in BC. Also: BC KMAC implementation uses XOF Mode
+    // (which NIST recommends against when used in KDF). Otherwise would be simple to construct (see: NIST
+    // SP.800-108r1-upd1)
+
     // We don't need to extract, since we have uniformly distributed input-key-material
     val hkdfParameters = HKDFParameters.skipExtractParameters(inputKeyMaterial, info)
     val hkdf           = HKDFBytesGenerator(DigestFactory.createSHA256())
