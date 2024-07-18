@@ -33,7 +33,7 @@ case class Membership[A, C[_], D[_]]
       membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers + id)))
 
   def removeMember(id: Uid)(using LocalUid): Membership[A, C, D] =
-    if (currentMembers.size > 1) then // cannot remove last member
+    if currentMembers.size > 1 then // cannot remove last member
       copy(
         membershipChanging = true,
         membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers - id)))
@@ -55,7 +55,7 @@ case class Membership[A, C[_], D[_]]
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
-        println(s"Member consensus reached on members $members")
+        //        println(s"Member consensus reached on members $members")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(members),
@@ -64,7 +64,7 @@ case class Membership[A, C[_], D[_]]
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        println(s"Inner consensus reached on value $value, log: ${log :+ value}")
+        //        println(s"Inner consensus reached on value $value, log: ${log :+ value}")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(currentMembers),

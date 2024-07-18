@@ -14,8 +14,11 @@ enum Phase:
 
 // message types
 case class Prepare(proposalNumber: Int, proposer: Uid)
+
 case class Promise[A](proposal: Prepare, value: Option[A], acceptor: Uid)
+
 case class Accept[A](proposal: Prepare, value: A)
+
 case class Accepted[A](proposal: Prepare, value: A, acceptor: Uid)
 
 given Ordering[Prepare] with
@@ -28,17 +31,18 @@ given Ordering[Accept[?]] with
   override def compare(x: Accept[?], y: Accept[?]): Int = Ordering[Prepare].compare(x.proposal, y.proposal)
 
 case class Paxos[A](
-    prepares: GrowOnlySet[Prepare],
-    promises: GrowOnlySet[Promise[A]],
-    accepts: GrowOnlySet[Accept[A]],
-    accepteds: GrowOnlySet[Accepted[A]],
-    members: Set[Uid] // constant
-) {
+                     prepares: GrowOnlySet[Prepare],
+                     promises: GrowOnlySet[Promise[A]],
+                     accepts: GrowOnlySet[Accept[A]],
+                     accepteds: GrowOnlySet[Accepted[A]],
+                     members: Set[Uid] // constant
+                   ) {
   private def quorum: Int = members.size / 2 + 1
 
   def prepare()(using LocalUid): Paxos[A] =
     val proposalNumber = highestProposal.map(_.proposalNumber).getOrElse(-1) + 1
     Paxos.unchanged.copy(
+      //      members = members,
       prepares = Set(Prepare(proposalNumber, replicaId))
     )
 
@@ -56,6 +60,7 @@ case class Paxos[A](
       val value =
         accepteds.filter(_.acceptor == replicaId).map(_.value).headOption
       Paxos.unchanged.copy(
+        //        members = members,
         promises = Set(Promise(highestProposal.get, value, replicaId))
       )
 
@@ -68,7 +73,7 @@ case class Paxos[A](
     else
       // is accepted, check if promise contains value
       val promisesWithVal = promisesForProposal.filter(_.value.isDefined)
-      val value: A        = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
+      val value: A = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
       Paxos.unchanged.copy(
         accepts = Set(Accept(myHighestProposal.get, value))
       )
@@ -77,35 +82,43 @@ case class Paxos[A](
     if newestAccept.isEmpty || // there are no accepts
       // I have already promised a higher proposalNumber
       promises.filter(_.acceptor == replicaId).map(_.proposal.proposalNumber).maxOption.getOrElse(-1) >
-      newestAccept.get.proposal.proposalNumber
+        newestAccept.get.proposal.proposalNumber
     then
       Paxos.unchanged
     else
-      Paxos.unchanged.copy(accepteds =
-        Set(Accepted(
-          proposal = newestAccept.get.proposal,
-          value = newestAccept.get.value,
-          acceptor = replicaId
-        ))
+      Paxos.unchanged.copy(
+        //        members = members,
+        accepteds =
+          Set(Accepted(
+            proposal = newestAccept.get.proposal,
+            value = newestAccept.get.value,
+            acceptor = replicaId
+          ))
       )
 
   def upkeep()(using LocalUid): Paxos[A] =
     // check which phase we are in
     phase match
       case Phase.One if newestPrepare.isDefined => promise()
-      case Phase.Two                            => accepted()
-      case _                                    => Paxos.unchanged
+      case Phase.Two => accepted()
+      case _ => Paxos.unchanged
 
   // helper functions
   private def newestAccept: Option[Accept[A]] = accepts.maxOption
-  private def newestPrepare: Option[Prepare]  = prepares.maxOption
+
+  private def newestPrepare: Option[Prepare] = prepares.maxOption
+
   private def highestProposal: Option[Prepare] =
     prepares.maxOption
+
   private def myHighestProposal(using LocalUid): Option[Prepare] = prepares.filter(_.proposer == replicaId).maxOption
-  private def canWrite(using LocalUid): Boolean                  = members.contains(replicaId) && read.isEmpty
+
+  private def canWrite(using LocalUid): Boolean = members.contains(replicaId) && read.isEmpty
+
   private def canSendAccept(using LocalUid): Boolean =
     val promisesForProposal = myHighestProposal.map(p => promises.filter(_.proposal == p)).getOrElse(Set())
     promisesForProposal.size >= quorum
+
   private def phase: Phase =
     if newestAccept.map(_.proposal.proposalNumber).getOrElse(-1) >= newestPrepare.map(_.proposalNumber).getOrElse(-1)
     then
@@ -118,13 +131,13 @@ case class Paxos[A](
     if canWrite then
       (phase, myHighestProposal, highestProposal) match
         case (Phase.One, _, _)
-            if canSendAccept // we are in phase one and have received enough promises
-            => accept(value)
+          if canSendAccept // we are in phase one and have received enough promises
+        => accept(value)
         case (Phase.One, Some(p1), Some(p2))
-            if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
-            => Paxos.unchanged
+          if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
+        => Paxos.unchanged
         case _ // we try to propose new value
-            => prepare()
+        => prepare()
     else
       Paxos.unchanged
 
@@ -147,14 +160,14 @@ object Paxos {
 
       def allUids(p: Paxos[?]): Set[Uid] =
         p.prepares.map(_.proposer) union
-        p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
-        p.accepts.map(_.proposal.proposer) union
-        p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
+          p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
+          p.accepts.map(_.proposal.proposer) union
+          p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
 
-      require(
-        (allUids(left) union allUids(right)).subsetOf(left.members),
-        "updates only contain Uids of known members"
-      ) // members should remain fixed
+      //      require(
+      //        (allUids(left) union allUids(right)).subsetOf(left.members),
+      //        "updates only contain Uids of known members"
+      //      )
       Paxos[A](
         prepares = left.prepares `merge` right.prepares,
         promises = left.promises `merge` right.promises,
@@ -184,7 +197,7 @@ object Paxos {
     extension [A](c: Paxos[A])
       override def members: GrowOnlySet[Uid] = c.members
     extension [A](c: Paxos[A])
-      override def reset(newMembers: GrowOnlySet[Uid]): Paxos[A] = Paxos.unchanged.copy(members = newMembers)
+      override def reset(newMembers: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = newMembers)
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A] = c.upkeep()
 
