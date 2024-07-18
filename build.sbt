@@ -225,7 +225,7 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(reactives.jvm, rdts.jvm, replication.jvm)
+  .dependsOn(reactives.jvm, rdts.jvm, replication.jvm, lofiAcl)
   .settings(
     scala3defaults,
     Settings.explicitNulls(Compile / compile),
