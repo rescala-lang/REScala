@@ -1,28 +1,28 @@
 package lofi_acl.crypto
 
-import com.google.crypto.tink.subtle.XChaCha20Poly1305
 import lofi_acl.crypto.KeyDerivationKey.*
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator
 import org.bouncycastle.crypto.params.HKDFParameters
 import org.bouncycastle.crypto.util.DigestFactory
+import rdts.time.Dot
 
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.{KeyPair, SecureRandom}
 
-class KeyDerivationKey /* private to make sure that ikm is not modified */ private (
+class KeyDerivationKey /* private constructor to make sure that ikm is not modifiable */ private (
     private val inputKeyMaterial: Array[Byte]
 ) {
   require(inputKeyMaterial.length == IKM_LENGTH)
 
-  lazy val encryptionKey: XChaCha20Poly1305 = {
-    XChaCha20Poly1305(
-      derive256BitsOutputKeyMaterial(inputKeyMaterial, contextForEncryptionKeys)
-    )
+  def encryptionKey(dot: Dot): Array[Byte] = {
+    derive256BitsOutputKeyMaterial(inputKeyMaterial, contextForEncryptionKeys(dot))
   }
 
   // It would probably be a good idea to separate encryptionKey and signingKey into two different classes, since the
   // type should indicate the use of the KeyDerivationKey (i.e., AeadKeyDerivationKey and SigningKeyDerivationKey).
+  // TODO: Remove?
   lazy val signingKey: Ed25519PrivateKey = {
     Ed25519Util.rawPrivateKeyBytesToKeyPair(
       derive256BitsOutputKeyMaterial(inputKeyMaterial, contextForSigningKeys)
@@ -34,7 +34,6 @@ class KeyDerivationKey /* private to make sure that ikm is not modified */ priva
   }
 
   def recursiveChildKeyDerivationKey(path: Array[String]): KeyDerivationKey = {
-    require(path.nonEmpty) // Prevents API misuse, don't leak inputKeyMaterial
     val outputKeyMaterial = path.foldLeft(inputKeyMaterial) { (ikm, pathElement) =>
       generateChildKeyDerivationKeyMaterial(inputKeyMaterial, pathElement)
     }
@@ -43,7 +42,17 @@ class KeyDerivationKey /* private to make sure that ikm is not modified */ priva
 }
 
 object KeyDerivationKey {
-  private val contextForEncryptionKeys: Array[Byte]       = "encryption".getBytes(UTF_8)
+  private val encryptionStringAsBytes = "encryption".getBytes(UTF_8)
+
+  private def contextForEncryptionKeys(dot: Dot): Array[Byte] = {
+    val replicaId = dot.place.delegate
+    require(replicaId.length == 44)
+    val buffer = ByteBuffer.allocate(encryptionStringAsBytes.length + replicaId.length + 8)
+    buffer.put(encryptionStringAsBytes)   // 10 bytes
+    buffer.put(replicaId.getBytes(UTF_8)) // Exactly 44 characters long (checked)
+    buffer.putLong(dot.time)
+    buffer.array()
+  }
   private val contextForSigningKeys: Array[Byte]          = "signing".getBytes(UTF_8)
   private val contextPrefixForDerivationKeys: Array[Byte] = "derivation".getBytes(UTF_8)
   inline val IKM_LENGTH                                   = 32 // 256 bits
