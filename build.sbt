@@ -246,6 +246,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
     LocalSettings.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
+    Dependencies.slips.logging,
   )
   .jsSettings(
     Settings.sourcemapFromEnv()

@@ -1,5 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
+import de.rmgk.logging.{Level, Logger}
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.time.Time
@@ -48,9 +49,9 @@ case class Membership[A, C[_], D[_]]
         innerConsensus = innerConsensus.merge(innerConsensus.write(value)))
     else this
 
-  def upkeep()(using LocalUid): Membership[A, C, D] =
   def isMember(using LocalUid) = currentMembers.contains(replicaId)
 
+  def upkeep()(using LocalUid)(using logger: Logger = Logger(level = Level.Warn)): Membership[A, C, D] =
     if !isMember then return this // do nothing if we are not a member anymore
     val memberUpkeep = membersConsensus.upkeep()
     val innerUpkeep = innerConsensus.upkeep()

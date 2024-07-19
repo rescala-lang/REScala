@@ -1,19 +1,17 @@
 package test.rdts.protocols
 
 import munit.ScalaCheckSuite
-import org.scalacheck.commands.Commands
-import org.scalacheck.Gen
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Prop
-import org.scalacheck.Prop.{forAll, propBoolean}
-import org.scalacheck.Properties
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.{Consensus, Membership, Paxos}
-import rdts.time.Time
+import org.scalacheck.{Gen, Prop}
+import org.scalacheck.Prop.propBoolean
+import org.scalacheck.commands.Commands
+import rdts.base.{LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.{Membership, Paxos}
+
 import scala.collection.mutable.ArrayBuffer
 
 class MembershipSuite extends ScalaCheckSuite {
-//  override def scalaCheckInitialSeed = "IaV7h8xy_oVGKNL_Fi_I7HOEy9ZZPDcZDBR_uSWH23C="
+  //  override def scalaCheckInitialSeed = "GTwNko29FJXYc0o7ixZt5-Jv7PJfM_EXBOp3ukz3BtN="
 
   override def scalaCheckTestParameters =
     super.scalaCheckTestParameters
@@ -24,25 +22,25 @@ class MembershipSuite extends ScalaCheckSuite {
   property("Membership specification")(MembershipSpec.property())
 }
 
-import scala.util.{Success, Try}
-import scala.util.Random
+import scala.util.Try
 
 object MembershipSpec extends Commands {
   //// config
   val minDevices = 3
   val maxDevices = 3
+  //given logger: Logger = Logger(level = Level.Info)
   ////
 
-  type State      = List[(LocalUid, LocalState)]
+  type State = List[(LocalUid, LocalState)]
   type LocalState = Membership[Int, Paxos, Paxos]
 
   override type Sut = scala.collection.mutable.ArrayBuffer[(LocalUid, LocalState)]
 
   override def canCreateNewSut(
-      newState: State,
-      initSuts: Iterable[State],
-      runningSuts: Iterable[Sut]
-  ): Boolean = true
+                                newState: State,
+                                initSuts: Iterable[State],
+                                runningSuts: Iterable[Sut]
+                              ): Boolean = true
 
   override def newSut(state: State): Sut = ArrayBuffer.from(state)
 
@@ -89,14 +87,14 @@ object MembershipSpec extends Commands {
 
   def genAddMember(state: State): Gen[AddMember] =
     for
-      index    <- genIndex(state)
+      index <- genIndex(state)
       addIndex <- genIndex(state)
       addId = state(addIndex)._1
     yield AddMember(index, addId)
 
   def genRemoveMember(state: State): Gen[RemoveMember] =
     for
-      index       <- genIndex(state)
+      index <- genIndex(state)
       removeIndex <- genIndex(state)
       removeId = state(removeIndex)._1
     yield RemoveMember(index, removeId)
@@ -120,11 +118,11 @@ object MembershipSpec extends Commands {
 
     override def preCondition(state: State): Boolean =
       leftIndex >= 0 && leftIndex < state.length &&
-      rightIndex >= 0 && rightIndex < state.length
-      && leftIndex != rightIndex
+        rightIndex >= 0 && rightIndex < state.length
+        && leftIndex != rightIndex
 
     override def postCondition(state: State, result: Try[Result]): Prop =
-      val (leftId, leftMembership)   = state(leftIndex)
+      val (leftId, leftMembership) = state(leftIndex)
       val (rightId, rightMembership) = state(rightIndex)
 
       def allUids(p: Paxos[?]): Set[Uid] =
@@ -134,9 +132,9 @@ object MembershipSpec extends Commands {
           p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
 
       (leftMembership.counter != rightMembership.counter || (allUids(leftMembership.innerConsensus) union allUids(rightMembership.innerConsensus) union allUids(leftMembership.membersConsensus) union allUids(rightMembership.membersConsensus)).subsetOf(leftMembership.currentMembers)) :| s"updates only contain Uids of known members. Tried merging ${allUids(leftMembership.innerConsensus)} and ${allUids(rightMembership.innerConsensus)}" &&
-      ((leftMembership.counter != rightMembership.counter) || leftMembership.currentMembers == rightMembership.currentMembers) :| "when two instances have the same counter, they have to have the same set of members" &&
-      result.isSuccess
-//      Lattice[Membership[Int, Paxos, Paxos]].lteq(state(rightIndex)._2, result.get) :| "Merge produces valid results"
+        ((leftMembership.counter != rightMembership.counter) || leftMembership.currentMembers == rightMembership.currentMembers) :| "when two instances have the same counter, they have to have the same set of members" &&
+        result.isSuccess
+  //      Lattice[Membership[Int, Paxos, Paxos]].lteq(state(rightIndex)._2, result.get) :| "Merge produces valid results"
 
   case class Write(index: Int, value: Int) extends UnitCommand:
     def newLocalState(states: Seq[(LocalUid, LocalState)]) =
@@ -158,7 +156,7 @@ object MembershipSpec extends Commands {
 
     override def run(sut: Sut): Result =
       val (id, membership) = sut(index)
-      val res              = membership.read
+      val res = membership.read
       //      if res.nonEmpty then
       //        println(s"members: ${membership.currentMembers}, res: $res, innerConsensus: ${membership.innerConsensus}")
       res
@@ -231,7 +229,7 @@ object MembershipSpec extends Commands {
           (result.get(index1), result.get(index2)) match
             case ((_, membership1), (_, membership2)) =>
               (membership1.membersConsensus.members == membership1.innerConsensus.members) :| "members of both protocols never go out of sync" &&
-              ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices"
+                ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices"
 
       }
 
