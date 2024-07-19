@@ -164,10 +164,10 @@ object Paxos {
           p.accepts.map(_.proposal.proposer) union
           p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
 
-      //      require(
-      //        (allUids(left) union allUids(right)).subsetOf(left.members),
-      //        "updates only contain Uids of known members"
-      //      )
+      require(
+        (allUids(left) union allUids(right)).subsetOf(left.members),
+        "updates only contain Uids of known members"
+      )
       Paxos[A](
         prepares = left.prepares `merge` right.prepares,
         promises = left.promises `merge` right.promises,

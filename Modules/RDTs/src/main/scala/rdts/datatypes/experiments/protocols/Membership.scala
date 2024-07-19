@@ -1,9 +1,8 @@
 package rdts.datatypes.experiments.protocols
 
+import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.time.Time
-import rdts.datatypes.GrowOnlyList
-import rdts.datatypes.experiments.protocols.Consensus
 
 case class Membership[A, C[_], D[_]]
 (counter: Time,
@@ -17,7 +16,7 @@ case class Membership[A, C[_], D[_]]
  Consensus[C],
  Consensus[D],
  Lattice[C[Set[Uid]]],
- Lattice[D[A]],
+ Lattice[D[A]]
 ) {
 
   override def toString: String =
@@ -28,12 +27,14 @@ case class Membership[A, C[_], D[_]]
     membersConsensus.members
 
   def addMember(id: Uid)(using LocalUid): Membership[A, C, D] =
-    copy(
-      membershipChanging = true,
-      membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers + id)))
+    if isMember then
+      copy(
+        membershipChanging = true,
+        membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers + id)))
+    else this
 
   def removeMember(id: Uid)(using LocalUid): Membership[A, C, D] =
-    if currentMembers.size > 1 then // cannot remove last member
+    if currentMembers.size > 1 && isMember then // cannot remove last member
       copy(
         membershipChanging = true,
         membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers - id)))
@@ -42,12 +43,15 @@ case class Membership[A, C[_], D[_]]
   def read: List[A] = log
 
   def write(value: A)(using LocalUid): Membership[A, C, D] =
-    if !membershipChanging then
+    if !membershipChanging && isMember then
       copy(
         innerConsensus = innerConsensus.merge(innerConsensus.write(value)))
     else this
 
   def upkeep()(using LocalUid): Membership[A, C, D] =
+  def isMember(using LocalUid) = currentMembers.contains(replicaId)
+
+    if !isMember then return this // do nothing if we are not a member anymore
     val memberUpkeep = membersConsensus.upkeep()
     val innerUpkeep = innerConsensus.upkeep()
     val newMembers = membersConsensus.merge(membersConsensus.upkeep())
@@ -55,7 +59,7 @@ case class Membership[A, C[_], D[_]]
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
-        //        println(s"Member consensus reached on members $members")
+        logger.info(s"Member consensus reached on members $members")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(members),
@@ -64,7 +68,7 @@ case class Membership[A, C[_], D[_]]
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        //        println(s"Inner consensus reached on value $value, log: ${log :+ value}")
+        logger.info(s"Inner consensus reached on value $value, log: ${log :+ value}")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(currentMembers),
@@ -80,6 +84,7 @@ case class Membership[A, C[_], D[_]]
 }
 
 object Membership {
+
   def init[A, C[_], D[_]]
   (initialMembers: Set[Uid])
   (using

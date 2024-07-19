@@ -126,6 +126,14 @@ object MembershipSpec extends Commands {
     override def postCondition(state: State, result: Try[Result]): Prop =
       val (leftId, leftMembership)   = state(leftIndex)
       val (rightId, rightMembership) = state(rightIndex)
+
+      def allUids(p: Paxos[?]): Set[Uid] =
+        p.prepares.map(_.proposer) union
+          p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
+          p.accepts.map(_.proposal.proposer) union
+          p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
+
+      (leftMembership.counter != rightMembership.counter || (allUids(leftMembership.innerConsensus) union allUids(rightMembership.innerConsensus) union allUids(leftMembership.membersConsensus) union allUids(rightMembership.membersConsensus)).subsetOf(leftMembership.currentMembers)) :| s"updates only contain Uids of known members. Tried merging ${allUids(leftMembership.innerConsensus)} and ${allUids(rightMembership.innerConsensus)}" &&
       ((leftMembership.counter != rightMembership.counter) || leftMembership.currentMembers == rightMembership.currentMembers) :| "when two instances have the same counter, they have to have the same set of members" &&
       result.isSuccess
 //      Lattice[Membership[Int, Paxos, Paxos]].lteq(state(rightIndex)._2, result.get) :| "Merge produces valid results"
