@@ -8,7 +8,6 @@ import java.util.concurrent.ForkJoinPool.ManagedBlocker
 import java.util.concurrent.atomic.{AtomicIntegerFieldUpdater, AtomicReference, AtomicReferenceFieldUpdater}
 import java.util.concurrent.locks.LockSupport
 import scala.annotation.{elidable, nowarn, tailrec}
-
 import scala.language.unsafeNulls
 
 sealed trait MaybeWritten[+V]
@@ -1237,11 +1236,13 @@ object NonblockingSkipListVersionHistory {
   val DEBUG        = false
   val TRACE_VALUES = false
 
-  val pendingUpdate = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "pending")
-  val changedUpdate = AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "changed")
-  val stableSleeperUpdate =
+  val pendingUpdate: AtomicIntegerFieldUpdater[LinkWithCounters[Any]] =
+    AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "pending")
+  val changedUpdate: AtomicIntegerFieldUpdater[LinkWithCounters[Any]] =
+    AtomicIntegerFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], "changed")
+  val stableSleeperUpdate: AtomicReferenceFieldUpdater[LinkWithCounters[Any], List[Thread]] =
     AtomicReferenceFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], classOf[List[Thread]], "stableSleepers")
-  val finalSleeperUpdate =
+  val finalSleeperUpdate: AtomicReferenceFieldUpdater[LinkWithCounters[Any], List[Thread]] =
     AtomicReferenceFieldUpdater.newUpdater(classOf[LinkWithCounters[Any]], classOf[List[Thread]], "finalSleepers")
 
   /** @param attemptPredecessor intended predecessor transaction
