@@ -6,25 +6,25 @@ import de.rmgk.delay.{Async, Callback, Sync}
 import java.net.{DatagramPacket, DatagramSocket, InetSocketAddress, SocketAddress, SocketTimeoutException}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
-import scala.util.Success
 import scala.util.control.NonFatal
+import scala.util.{Failure, Success}
 
 object UDP {
   def listen(socketFactory: () => DatagramSocket, executionContext: ExecutionContext): UDPPseudoConnection =
-    new UDPPseudoConnection(socketFactory, executionContext, None)
+    new UDPPseudoConnection(socketFactory, executionContext, Async.fromCallback(()))
 
   def connect(
       target: SocketAddress,
       socketFactory: () => DatagramSocket,
       executionContext: ExecutionContext
   ): UDPPseudoConnection =
-    new UDPPseudoConnection(socketFactory, executionContext, Some(target))
+    new UDPPseudoConnection(socketFactory, executionContext, Sync(target))
 }
 
 class UDPPseudoConnection(
     socketFactory: () => DatagramSocket,
     executionContext: ExecutionContext,
-    initializeOutbound: Option[SocketAddress],
+    initializeOutbound: Async[Any, SocketAddress],
 ) extends LatentConnection[MessageBuffer] {
   override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
     Async.fromCallback[Connection[MessageBuffer]] {
@@ -36,7 +36,7 @@ class UDPPseudoConnection(
 
       val connections: mutable.Map[SocketAddress, (UDPDatagramWrapper, Callback[MessageBuffer])] = mutable.Map.empty
 
-      def getOrCreateConnection(sa: SocketAddress) = {
+      def getOrCreateConnection(sa: SocketAddress) = connections.synchronized {
         connections.getOrElseUpdate(
           sa, {
             val dw = UDPDatagramWrapper(sa, datagramSocket)
@@ -71,7 +71,11 @@ class UDPPseudoConnection(
 
       executionContext.execute(() => receiveLoop(summon[Abort]))
 
-      initializeOutbound.foreach(getOrCreateConnection)
+      initializeOutbound.run:
+        case Success(target) =>
+          getOrCreateConnection(target)
+          ()
+        case Failure(exception) => connectionSuccess.fail(exception)
 
     }
 
