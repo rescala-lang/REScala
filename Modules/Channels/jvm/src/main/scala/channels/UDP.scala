@@ -9,7 +9,7 @@ import scala.util.Success
 import scala.util.control.NonFatal
 
 object UDP {
-  def sendreceive(target: SocketAddress, port: Int, executionContext: ExecutionContext) =
+  def sendreceive(target: SocketAddress, port: Int, executionContext: ExecutionContext): UDPPseudoConnection =
     new UDPPseudoConnection(target, () => new DatagramSocket(port), executionContext)
 
 }
@@ -24,7 +24,7 @@ class UDPPseudoConnection(
     val datagramWrapper = UDPDatagramWrapper(address, socketFactory())
 
     val messageCallback = incoming(datagramWrapper)
-    executionContext.execute(() => datagramWrapper.receiveLoop(context, messageCallback))
+    executionContext.execute(() => datagramWrapper.receiveLoop(summon[Abort], messageCallback))
 
     datagramWrapper
 

@@ -20,7 +20,6 @@ case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
 
 class Abort(@volatile var closeRequest: Boolean = false)
 
-inline def context(using ctx: Abort): Abort = ctx
 
 type Prod[A] = Async[Abort, A]
 
