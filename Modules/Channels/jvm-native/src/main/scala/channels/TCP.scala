@@ -17,7 +17,11 @@ object TCP {
     catch case NonFatal(exception) => Async.handler.fail(exception)
   }
 
-  def handleConnection(socket: Socket, incoming: MessageBuffer.Handler, executionContext: ExecutionContext): TCPConnection = {
+  def handleConnection(
+      socket: Socket,
+      incoming: MessageBuffer.Handler,
+      executionContext: ExecutionContext
+  ): TCPConnection = {
     println(s"handling new connection")
     val conn = new TCPConnection(socket)
     executionContext.execute: () =>
@@ -37,8 +41,7 @@ object TCP {
 
   def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Handler)
-          : Async[Abort, Connection[MessageBuffer]] =
+      override def prepare(incoming: Handler): Async[Abort, Connection[MessageBuffer]] =
         Async.fromCallback { abort ?=>
           try
             val socket = new ServerSocket
