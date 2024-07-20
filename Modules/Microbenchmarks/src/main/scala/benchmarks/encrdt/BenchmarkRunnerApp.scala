@@ -3,7 +3,7 @@ package benchmarks.encrdt
 import org.openjdk.jmh.results.RunResult
 import org.openjdk.jmh.results.format.ResultFormatType
 import org.openjdk.jmh.runner.Runner
-import org.openjdk.jmh.runner.options.OptionsBuilder
+import org.openjdk.jmh.runner.options.{Options, OptionsBuilder}
 
 import java.nio.file.Paths
 import java.util
@@ -14,7 +14,7 @@ object BenchmarkRunnerApp extends App {
 
   val timeBefore = System.currentTimeMillis()
 
-  val jmhOptions = new OptionsBuilder()
+  val jmhOptions: Options = new OptionsBuilder()
     .include("serializeOnly|encryptOnly")
     .resultFormat(ResultFormatType.CSV)
     .result("benchmarks/results/jmh_benchmark.csv")

@@ -80,7 +80,7 @@ object X509Util {
     *
     * @param certificate
     *   The certificate to extract the subject identity from.
-    * @throws CertificateException
+    * @throws java.security.cert.CertificateException
     *   if the validation failed
     */
   @throws[CertificateException]

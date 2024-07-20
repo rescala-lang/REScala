@@ -43,7 +43,7 @@ object WebRTCConnector {
   * Then create a channel directly on peer connection, which will trigger the connection initiation process.
   * Somehow transfer the local session description to a remote peer, and [[updateRemoteDescription]] there.
   * Accepting a remote description will update the local description,
-  * which then needs to be transferred back to the original peer and [[updateLocalDescription]] there should complete the connection.
+  * which then needs to be transferred back to the original peer and [[smartUpdateLocalDescription]] there should complete the connection.
   */
 class WebRTCConnector(configuration: dom.RTCConfiguration) {
 
@@ -83,7 +83,7 @@ class WebRTCConnector(configuration: dom.RTCConfiguration) {
     SessionDescription(peerConnection.localDescription).get
   }
 
-  /** Use [[peerConnection.addIceCandidate]] to apply on remote.
+  /** Use `peerConnection.addIceCandidate` to apply on remote.
     * Once an ICE candidate exists it is also automatically included in the local description, so this is not necessary.
     */
   def iceCandidates: Async[Any, RTCIceCandidate] = Async.fromCallback:

@@ -2,6 +2,7 @@ package dtn.routing
 
 import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
 
+import java.lang
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -11,7 +12,8 @@ import scala.concurrent.Future
  */
 
 class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
-  val delivered = ConcurrentHashMap.newKeySet[String]() // will grow indefinitely as we do not garbage collect here
+  val delivered: ConcurrentHashMap.KeySetView[String, lang.Boolean] =
+    ConcurrentHashMap.newKeySet[String]() // will grow indefinitely as we do not garbage collect here
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle)
       : Option[Packet.ResponseSenderForBundle] = {

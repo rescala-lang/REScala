@@ -23,7 +23,7 @@ def api(using scheme: String = "http"): String =
   val port = 3000
   s"$scheme://$ip:$port"
 
-val client = HttpClient.newBuilder()
+val client: HttpClient = HttpClient.newBuilder()
   .connectTimeout(Duration.ofSeconds(20))
   .build()
 

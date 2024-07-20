@@ -7,7 +7,7 @@ import java.nio.file.Path
 
 /** @param file          Path to a file
   * @param inline        inline sourcecode of a program
-  * @param outputOptions output mode. Can be either [[ToFile]], [[SplitMode]] or [[StdOut]]
+  * @param outputOptions output mode. Can be either [[lore.cli.OutputOptions.ToFile]], [[lore.cli.OutputOptions.SplitMode]] or [[lore.cli.OutputOptions.StdOut]]
   */
 case class Options(file: Option[Path] = None, inline: Option[String] = None, outputOptions: OutputOptions = StdOut) {
 

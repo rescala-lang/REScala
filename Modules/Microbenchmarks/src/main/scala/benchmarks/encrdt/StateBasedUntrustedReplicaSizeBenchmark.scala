@@ -6,10 +6,10 @@ import com.github.plokhotnyuk.jsoniter_scala.core.writeToArray
 import rdts.syntax.DeltaAWLWWMContainer
 import rdts.syntax.DeltaAWLWWMContainer.State
 import rdts.time.VectorClock
-import scala.language.implicitConversions
 
+import scala.language.implicitConversions
 import java.io.PrintWriter
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 import scala.language.implicitConversions
 
 object StateBasedUntrustedReplicaSizeBenchmark extends App {
@@ -18,7 +18,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
   val MAX_TESTED_ELEMENTS  = Math.pow(10, maxElementExponent.toDouble).toInt
   val MAX_PARALLEL_UPDATES = 4
 
-  val outDir = Paths.get("./benchmarks/results/")
+  val outDir: Path = Paths.get("./benchmarks/results/")
   if !outDir.toFile.exists() then
     outDir.toFile.mkdirs()
     ()

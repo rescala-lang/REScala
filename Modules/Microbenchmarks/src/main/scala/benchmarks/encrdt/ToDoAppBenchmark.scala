@@ -8,7 +8,7 @@ import com.google.crypto.tink.Aead
 import rdts.syntax.DeltaAWLWWMContainer
 
 import java.io.PrintWriter
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.util.UUID
 
 object ToDoAppBenchmark extends App {
@@ -39,7 +39,7 @@ object ToDoAppBenchmark extends App {
     clientReplica = new AlternativeInsecureToDoListClient("client", clientCrdt, intermediaryReplica)
   }
 
-  val csvFileF =
+  val csvFileF: Path =
     if USE_ENCRYPTION then Paths.get("./benchmarks/results/todoapp_benchmark.csv")
     else Paths.get("./benchmarks/results/todoapp_benchmark trusted intermediary.csv")
   Files.createDirectories(csvFileF.getParent)
