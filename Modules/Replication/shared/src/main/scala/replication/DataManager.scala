@@ -34,8 +34,8 @@ trait Aead {
 }
 
 object DataManager {
-  def jsoniterMessages[T: JsonValueCodec](conn: AbstractLatentConnection[MessageBuffer])
-      : AbstractLatentConnection[ProtocolMessage[T]] = {
+  def jsoniterMessages[T: JsonValueCodec](conn: LatentConnection[MessageBuffer])
+      : LatentConnection[ProtocolMessage[T]] = {
 
     given JsonValueCodec[ProtocolMessage[T]] = JsonCodecMaker.make
 
@@ -59,7 +59,7 @@ class DataManager[State](
 
   type CodecState = State
 
-  type ConnectionContext = AbstractConnectionContext[ProtocolMessage[State]]
+  type ConnectionContext = Connection[ProtocolMessage[State]]
 
   type TransferState = ProtocolDots[State]
 
@@ -76,13 +76,13 @@ class DataManager[State](
       con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
   }
 
-  def addLatentConnection(latentConnection: AbstractLatentConnection[MessageBuffer])(using
+  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
       JsonValueCodec[CodecState]
   ): Unit = {
     addLatentConnection(DataManager.jsoniterMessages(latentConnection))
   }
 
-  def addLatentConnection(latentConnection: AbstractLatentConnection[ProtocolMessage[State]]): Unit = {
+  def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
     println(s"activating latent connection in data manager")
     latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort):
       case Success(conn) =>

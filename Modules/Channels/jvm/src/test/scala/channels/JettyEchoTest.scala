@@ -8,7 +8,7 @@ import java.net.{InetSocketAddress, URI}
 
 class EchoServerTestJetty extends EchoCommunicationTest(
       _ =>
-        (incoming: Incoming) =>
+        (incoming: MessageBuffer.Handler) =>
           Async[Abort] {
             val listener   = JettyWsListener.prepareServer(54470)
             val echoServer = listener.listen(PathSpec.from("/registry/*"))

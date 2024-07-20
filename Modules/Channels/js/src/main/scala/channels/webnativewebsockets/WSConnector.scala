@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
 
 class WebsocketException(msg: String) extends IOException(msg)
 
-class WebsocketConnect(socket: dom.WebSocket) extends ConnectionContext {
+class WebsocketConnect(socket: dom.WebSocket) extends Connection[MessageBuffer] {
 
   def open(): Boolean = socket.readyState == dom.WebSocket.OPEN
 
@@ -26,9 +26,9 @@ class WebsocketConnect(socket: dom.WebSocket) extends ConnectionContext {
 
 object WebsocketConnect {
 
-  def connect(url: String): LatentConnection = new LatentConnection {
+  def connect(url: String): LatentConnection[MessageBuffer] = new LatentConnection {
 
-    override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Async.fromCallback {
+    override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
 
       println(s"preparing connection")
 
@@ -39,7 +39,7 @@ object WebsocketConnect {
         println(s"connection opened")
 
         val connect  = new WebsocketConnect(socket)
-        val callback = incoming(connect)
+        val callback = incomingHandler(connect)
 
         socket.onmessage = { (event: dom.MessageEvent) =>
           event.data match {

@@ -14,13 +14,13 @@ import scala.util.{Failure, Success}
 class BroadcastException(message: String, event: MessageEvent) extends Exception(message)
 
 object BroadcastChannelConnector {
-  def named(name: String): LatentConnection = new LatentConnection {
-    override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Async {
+  def named(name: String): LatentConnection[MessageBuffer] = new LatentConnection {
+    override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Async {
 
       val bc         = new BroadcastChannel(name)
       val connection = BroadcastChannelConnection(bc)
 
-      val handler = incoming(connection)
+      val handler = incomingHandler(connection)
 
       bc.onmessage = (event: dom.MessageEvent) =>
         println(js.typeOf(event.data))
@@ -44,7 +44,7 @@ object BroadcastChannelConnector {
   }
 }
 
-class BroadcastChannelConnection(bc: BroadcastChannel) extends ConnectionContext {
+class BroadcastChannelConnection(bc: BroadcastChannel) extends Connection[MessageBuffer] {
 
   def send(message: MessageBuffer): delay.Async[Any, Unit] =
     Sync(bc.postMessage(message.asArrayBuffer))

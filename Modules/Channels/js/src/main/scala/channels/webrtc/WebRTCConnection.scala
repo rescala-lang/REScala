@@ -12,7 +12,7 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 class WebRTCReceiveFailed(message: String)    extends Exception(message)
 class WebRTCConnectionFailed(message: String) extends Exception(message)
 
-class WebRTCConnection(channel: dom.RTCDataChannel) extends ConnectionContext {
+class WebRTCConnection(channel: dom.RTCDataChannel) extends Connection[MessageBuffer] {
   def receive: Prod[MessageBuffer] = Async.fromCallback {
     channel.onmessage = { (event: dom.MessageEvent) =>
       event.data match {
@@ -77,9 +77,9 @@ object WebRTCConnection {
     }
   }
 
-  def openLatent(channel: dom.RTCDataChannel): LatentConnection = new LatentConnection {
+  def openLatent(channel: dom.RTCDataChannel): LatentConnection[MessageBuffer] = new LatentConnection {
 
-    def succeedConnection(incoming: Incoming) = {
+    def succeedConnection(incoming: Handler) = {
       val connector = new WebRTCConnection(channel)
       val handler   = incoming(connector)
 
@@ -124,7 +124,7 @@ object WebRTCConnection {
       connector
     }
 
-    override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Async.fromCallback {
+    override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
 
       channel.readyState match {
         case dom.RTCDataChannelState.connecting =>
@@ -133,11 +133,11 @@ object WebRTCConnection {
 
           channel.onopen = { (_: dom.Event) =>
             // js.timers.clearTimeout(handle)
-            Async.handler.succeed(succeedConnection(incoming))
+            Async.handler.succeed(succeedConnection(incomingHandler))
           }
 
         case dom.RTCDataChannelState.open =>
-          Async.handler.succeed(succeedConnection(incoming))
+          Async.handler.succeed(succeedConnection(incomingHandler))
 
         case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
           Async.handler.fail(new WebRTCConnectionFailed("channel closed"))

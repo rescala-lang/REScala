@@ -1,7 +1,7 @@
 package replication
 
 import _root_.dtn.{NoDotsConvergenceClient, RdtClient}
-import channels.{Abort, AbstractConnectionContext, AbstractIncoming, AbstractLatentConnection}
+import channels.{Abort, Connection, LatentConnection}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
 import de.rmgk.delay.syntax.toAsync
@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionContext: ExecutionContext)
-    extends AbstractConnectionContext[ProtocolMessage[T]] {
+    extends Connection[ProtocolMessage[T]] {
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
       case ProtocolMessage.Request(sender, dots) =>
@@ -29,17 +29,17 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
 }
 
 class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec: ExecutionContext)
-    extends AbstractLatentConnection[ProtocolMessage[T]] {
+    extends LatentConnection[ProtocolMessage[T]] {
 
   // We use a local dtnid instead of a remote replica ID to signify that the local DTNd is the one providing information.
   // If the local dtnd could be stopped and restarted without loosing data, this id should remain the same for performance reasons, but it will be correct even if it changes.
   val dtnid = Uid.gen()
 
-  override def prepare(incoming: AbstractIncoming[ProtocolMessage[T]])
-      : Async[Abort, AbstractConnectionContext[ProtocolMessage[T]]] = Async {
+  override def prepare(incomingHandler: Handler)
+      : Async[Abort, Connection[ProtocolMessage[T]]] = Async {
     val client: RdtClient = RdtClient(host, port, appName, NoDotsConvergenceClient).toAsync(using ec).bind
     val conn              = DTNRdtClientContext[T](client, ec)
-    val cb                = incoming(conn)
+    val cb                = incomingHandler(conn)
 
     client.registerOnReceive { (payload: Array[Byte], dots: Dots) =>
       val data = readFromArray[T](payload)

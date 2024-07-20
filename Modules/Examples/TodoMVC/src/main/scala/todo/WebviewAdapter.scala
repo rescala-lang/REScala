@@ -1,6 +1,6 @@
 package todo
 
-import channels.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer}
+import channels.{Abort, ArrayMessageBuffer, Connection, LatentConnection, MessageBuffer}
 import de.rmgk.delay.{Async, Sync}
 
 import scala.scalajs.js
@@ -13,7 +13,7 @@ object WebviewAdapterChannel {
   @JSExportTopLevel("webview_channel_receive")
   def receive(msg: String) = receiveCallback(msg)
 
-  object WebviewConnectionContext extends ConnectionContext {
+  object WebviewConnectionContext extends Connection[MessageBuffer] {
     override def send(message: MessageBuffer): Async[Any, Unit] = Sync {
       val b64 = new String(java.util.Base64.getEncoder.encode(message.asArray))
       if !js.isUndefined(scala.scalajs.js.Dynamic.global.webview_channel_send) then
@@ -27,10 +27,10 @@ object WebviewAdapterChannel {
     override def close(): Unit = ()
   }
 
-  def listen(): LatentConnection = new LatentConnection {
-    def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Sync {
+  def listen(): LatentConnection[MessageBuffer] = new LatentConnection {
+    def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Sync {
       val conn = WebviewConnectionContext
-      val cb   = incoming(conn)
+      val cb   = incomingHandler(conn)
       receiveCallback = { (msg: String) =>
         val bytes = java.util.Base64.getDecoder.decode(msg)
         cb.succeed(ArrayMessageBuffer(bytes))

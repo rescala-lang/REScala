@@ -1,6 +1,6 @@
 package channels
 
-import channels.{Abort, ArrayMessageBuffer, ConnectionContext, Incoming, LatentConnection, MessageBuffer}
+import channels.{Abort, ArrayMessageBuffer, LatentConnection, MessageBuffer}
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
@@ -17,7 +17,7 @@ object TCP {
     catch case NonFatal(exception) => Async.handler.fail(exception)
   }
 
-  def handleConnection(socket: Socket, incoming: Incoming, executionContext: ExecutionContext): TCPConnection = {
+  def handleConnection(socket: Socket, incoming: MessageBuffer.Handler, executionContext: ExecutionContext): TCPConnection = {
     println(s"handling new connection")
     val conn = new TCPConnection(socket)
     executionContext.execute: () =>
@@ -26,19 +26,19 @@ object TCP {
     conn
   }
 
-  def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+  def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Incoming): Async[Any, ConnectionContext] =
+      override def prepare(incoming: Handler): Async[Any, Connection[MessageBuffer]] =
         TCP.syncAttempt {
           println(s"tcp sync attempt")
           TCP.handleConnection(new Socket(host, port), incoming, executionContext)
         }
     }
 
-  def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection =
+  def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: ConnectionContext => delay.Callback[MessageBuffer])
-          : Async[Abort, ConnectionContext] =
+      override def prepare(incoming: Handler)
+          : Async[Abort, Connection[MessageBuffer]] =
         Async.fromCallback { abort ?=>
           try
             val socket = new ServerSocket
@@ -74,7 +74,7 @@ object TCP {
 
 }
 
-class TCPConnection(socket: Socket) extends ConnectionContext {
+class TCPConnection(socket: Socket) extends Connection[MessageBuffer] {
 
   // socket streams
 

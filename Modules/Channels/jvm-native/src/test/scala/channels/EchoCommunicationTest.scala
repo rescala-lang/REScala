@@ -19,8 +19,8 @@ def printErrors[T](cb: T => Unit): Callback[T] =
       case ex                         => ex.printStackTrace()
 
 trait EchoCommunicationTest(
-    serverConn: ExecutionContext => LatentConnection,
-    clientConn: ExecutionContext => LatentConnection
+    serverConn: ExecutionContext => LatentConnection[MessageBuffer],
+    clientConn: ExecutionContext => LatentConnection[MessageBuffer]
 ) extends munit.FunSuite {
 
   // need an execution context that generates new tasks as TCP does lots of blocking
@@ -46,13 +46,13 @@ trait EchoCommunicationTest(
 
     trace(s"test starting")
 
-    val echoServer: Prod[ConnectionContext] =
+    val echoServer: Prod[Connection[MessageBuffer]] =
       serverConn(ec).prepare: conn =>
         printErrors: mb =>
           trace(s"server received; echoing")
           conn.send(mb).runToFuture
 
-    val client: Prod[ConnectionContext] =
+    val client: Prod[Connection[MessageBuffer]] =
       clientConn(ec).prepare: conn =>
         printErrors: mb =>
           trace(s"client received")

@@ -18,12 +18,12 @@ class UDPPseudoConnection(
     address: SocketAddress,
     socketFactory: () => DatagramSocket,
     executionContext: ExecutionContext
-) extends LatentConnection {
-  override def prepare(incoming: Incoming): Async[Abort, ConnectionContext] = Sync {
+) extends LatentConnection[MessageBuffer] {
+  override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Sync {
 
     val datagramWrapper = UDPDatagramWrapper(address, socketFactory())
 
-    val messageCallback = incoming(datagramWrapper)
+    val messageCallback = incomingHandler(datagramWrapper)
     executionContext.execute(() => datagramWrapper.receiveLoop(summon[Abort], messageCallback))
 
     datagramWrapper
@@ -32,7 +32,7 @@ class UDPPseudoConnection(
 
 }
 
-class UDPDatagramWrapper(address: SocketAddress, datagramSocket: DatagramSocket) extends ConnectionContext {
+class UDPDatagramWrapper(address: SocketAddress, datagramSocket: DatagramSocket) extends Connection[MessageBuffer] {
   def send(message: MessageBuffer): Async[Any, Unit] = Async {
     // Create a packet with the message, server address, and port
     val sendPacket: DatagramPacket =
