@@ -14,6 +14,10 @@ case class IsolatedDeltaParts(inner: Map[String, IsolatedDeltaParts] | Array[Byt
     case map: Map[?, ?]     => map.isEmpty
 }
 
+object IsolatedDeltaParts {
+  val empty: IsolatedDeltaParts = IsolatedDeltaParts(Map.empty)
+}
+
 trait DeltaSurgeon[T] {
   def isolate(delta: T): IsolatedDeltaParts
 
@@ -32,12 +36,15 @@ trait DeltaSurgeon[T] {
             pathElement -> filter(childParts, childPermission)
           }.filterNot(_._2.isEmpty)
         )
-      case (atomicValue: Array[Byte], PermissionTree(Permission.PARTIAL, _)) =>
-        ??? // Invalid PermissionTree or IsolatedDeltaParts
+      case (atomicValue: Array[Byte], PermissionTree(Permission.PARTIAL, children)) if children.isEmpty =>
+        IsolatedDeltaParts.empty
+      case _ => ??? // Invalid PermissionTree or IsolatedDeltaParts
   }
 }
 
 object DeltaSurgeon {
+  inline def apply[T](using deltaSurgeon: DeltaSurgeon[T]): DeltaSurgeon[T] = deltaSurgeon
+
   // From https://blog.philipp-martini.de/blog/magic-mirror-scala3/
   private inline def getFactorLabels[A <: Tuple]: List[String] = inline erasedValue[A] match {
     case _: EmptyTuple => Nil
