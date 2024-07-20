@@ -7,9 +7,9 @@ import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class EchoServerTestTCP extends EchoCommunicationTest(
-      TCP.listen("0", 54467, _),
-      TCP.connect("localhost", 54467, _)
+class EchoServerTestTCP extends EchoCommunicationTest[None.type](
+      ec => (None, TCP.listen("0", 54467, ec)),
+      ec => _ => TCP.connect("localhost", 54467, ec)
     )
 
 def printErrors[T](cb: T => Unit): Callback[T] =
@@ -18,9 +18,9 @@ def printErrors[T](cb: T => Unit): Callback[T] =
       case ex: ClosedChannelException =>
       case ex                         => ex.printStackTrace()
 
-trait EchoCommunicationTest(
-    serverConn: ExecutionContext => LatentConnection[MessageBuffer],
-    clientConn: ExecutionContext => LatentConnection[MessageBuffer]
+trait EchoCommunicationTest[Info](
+    serverConn: ExecutionContext => (Info, LatentConnection[MessageBuffer]),
+    clientConn: ExecutionContext => Info => LatentConnection[MessageBuffer]
 ) extends munit.FunSuite {
 
   // need an execution context that generates new tasks as TCP does lots of blocking
@@ -41,19 +41,22 @@ trait EchoCommunicationTest(
 
     var traced = List.empty[String]
 
-    def trace(msg: String) =
-      synchronized { traced = msg :: traced }
+    def trace(msg: String) = synchronized {
+      traced = msg :: traced
+    }
 
     trace(s"test starting")
 
+    val (info, serverLatent) = serverConn(ec)
+
     val echoServer: Prod[Connection[MessageBuffer]] =
-      serverConn(ec).prepare: conn =>
+      serverLatent.prepare: conn =>
         printErrors: mb =>
           trace(s"server received; echoing")
           conn.send(mb).runToFuture
 
     val client: Prod[Connection[MessageBuffer]] =
-      clientConn(ec).prepare: conn =>
+      clientConn.apply(ec).apply(info).prepare: conn =>
         printErrors: mb =>
           trace(s"client received")
           synchronized {
@@ -66,6 +69,7 @@ trait EchoCommunicationTest(
         ()
 
     val sending = Async: (_: Abort) ?=>
+      trace(s"starting sending")
       val conn = client.bind
       trace(s"sending")
       ec.execute: () =>
@@ -80,7 +84,7 @@ trait EchoCommunicationTest(
     trace(s"test waiting")
 
     messageCounter.acquire(toSend.size)
-    assertEquals(toSend.sorted, received.sorted)
+    assertEquals(toSend.sorted, received.sorted, traced)
   }
 
 }

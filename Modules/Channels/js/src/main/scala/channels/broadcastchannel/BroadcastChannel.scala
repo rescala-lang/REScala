@@ -15,12 +15,12 @@ class BroadcastException(message: String, event: MessageEvent) extends Exception
 
 object BroadcastChannelConnector {
   def named(name: String): LatentConnection[MessageBuffer] = new LatentConnection {
-    override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Async {
+    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async {
 
       val bc         = new BroadcastChannel(name)
       val connection = BroadcastChannelConnection(bc)
 
-      val handler = incomingHandler(connection)
+      val handler = incomingHandler.getCallbackFor(connection)
 
       bc.onmessage = (event: dom.MessageEvent) =>
         println(js.typeOf(event.data))

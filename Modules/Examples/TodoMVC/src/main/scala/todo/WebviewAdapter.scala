@@ -1,6 +1,6 @@
 package todo
 
-import channels.{Abort, ArrayMessageBuffer, Connection, LatentConnection, MessageBuffer}
+import channels.{Abort, ArrayMessageBuffer, Connection, Handler, LatentConnection, MessageBuffer}
 import de.rmgk.delay.{Async, Sync}
 
 import scala.scalajs.js
@@ -28,9 +28,9 @@ object WebviewAdapterChannel {
   }
 
   def listen(): LatentConnection[MessageBuffer] = new LatentConnection {
-    def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Sync {
+    def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Sync {
       val conn = WebviewConnectionContext
-      val cb   = incomingHandler(conn)
+      val cb   = incomingHandler.getCallbackFor(conn)
       receiveCallback = { (msg: String) =>
         val bytes = java.util.Base64.getDecoder.decode(msg)
         cb.succeed(ArrayMessageBuffer(bytes))

@@ -1,7 +1,7 @@
 package replication
 
 import _root_.dtn.{NoDotsConvergenceClient, RdtClient}
-import channels.{Abort, Connection, LatentConnection}
+import channels.{Abort, Connection, Handler, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
 import de.rmgk.delay.syntax.toAsync
@@ -35,11 +35,11 @@ class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec
   // If the local dtnd could be stopped and restarted without loosing data, this id should remain the same for performance reasons, but it will be correct even if it changes.
   val dtnid = Uid.gen()
 
-  override def prepare(incomingHandler: Handler)
+  override def prepare(incomingHandler: Handler[ProtocolMessage[T]])
       : Async[Abort, Connection[ProtocolMessage[T]]] = Async {
     val client: RdtClient = RdtClient(host, port, appName, NoDotsConvergenceClient).toAsync(using ec).bind
     val conn              = DTNRdtClientContext[T](client, ec)
-    val cb                = incomingHandler(conn)
+    val cb                = incomingHandler.getCallbackFor(conn)
 
     client.registerOnReceive { (payload: Array[Byte], dots: Dots) =>
       val data = readFromArray[T](payload)

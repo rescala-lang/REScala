@@ -13,7 +13,7 @@ object MessageBuffer {
   given Conversion[String, MessageBuffer] = str => ArrayMessageBuffer(str.getBytes(StandardCharsets.UTF_8))
   given Conversion[MessageBuffer, String] = buf => new String(buf.asArray, StandardCharsets.UTF_8)
 
-  type Handler          = Connection[MessageBuffer] => Callback[MessageBuffer]
+  type Handler = Connection[MessageBuffer] => Callback[MessageBuffer]
 }
 
 case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
@@ -24,10 +24,19 @@ class Abort(@volatile var closeRequest: Boolean = false)
 
 type Prod[A] = Async[Abort, A]
 
+case class ConnectionInfo(hostname: Option[String], port: Option[Int])
+
 /** Connections are bidirectional. Receiving is handled by the `AbstractLatentConnection.incomingHandler`. */
 trait Connection[T] {
+  // TODO: currently not consistently implemented
+  def info: ConnectionInfo = ConnectionInfo(None, None)
   def send(message: T): Async[Any, Unit]
   def close(): Unit
+}
+
+/** Provides a specification how to handle messages, given a connection context */
+trait Handler[T] {
+  def getCallbackFor(conn: Connection[T]): Callback[T]
 }
 
 /** Contains all the information required to try and establish a bidirectional connection.
@@ -38,14 +47,11 @@ trait Connection[T] {
   */
 trait LatentConnection[T] {
 
-  /** Provides a specification how to handle messages, given a connection context */
-  final type Handler = Connection[T] => Callback[T]
-
   /** The returned async, when run, should establish connections with the given callback atomically.
     * That is, no messages should be lost.
     * Similarly, the provider of the callback (the result of `incoming`) of this method should make sure that the other end of the callback is ready to receive callbacks before running the async.
     */
-  def prepare(incomingHandler: Handler): Async[Abort, Connection[T]]
+  def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]
 }
 
 object ConnectionMapper {
@@ -60,12 +66,12 @@ object ConnectionMapper {
   def adapt[A, B](f: A => B, g: B => A)(la: LatentConnection[A]): LatentConnection[B] = {
 
     new LatentConnection[B] {
-      def prepare(incomingHandler: Handler): Async[Abort, Connection[B]] =
+      def prepare(incomingHandler: Handler[B]): Async[Abort, Connection[B]] =
         Async[Abort] {
           val conn = Async.bind:
             la.prepare: conn =>
               val mapped = ConnectionMapper(g, conn)
-              val cb     = incomingHandler(mapped)
+              val cb     = incomingHandler.getCallbackFor(mapped)
               rs => cb.complete(rs.map(f))
           ConnectionMapper(g, conn)
         }

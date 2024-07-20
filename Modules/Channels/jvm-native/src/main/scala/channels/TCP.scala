@@ -19,20 +19,20 @@ object TCP {
 
   def handleConnection(
       socket: Socket,
-      incoming: MessageBuffer.Handler,
+      incoming: Handler[MessageBuffer],
       executionContext: ExecutionContext
   ): TCPConnection = {
     println(s"handling new connection")
     val conn = new TCPConnection(socket)
     executionContext.execute: () =>
       println(s"exeecuting task")
-      conn.handleReceivedMessages(incoming(conn))
+      conn.handleReceivedMessages(incoming.getCallbackFor(conn))
     conn
   }
 
   def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Handler): Async[Any, Connection[MessageBuffer]] =
+      override def prepare(incoming: Handler[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
         TCP.syncAttempt {
           println(s"tcp sync attempt")
           TCP.handleConnection(new Socket(host, port), incoming, executionContext)
@@ -41,7 +41,7 @@ object TCP {
 
   def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Handler): Async[Abort, Connection[MessageBuffer]] =
+      override def prepare(incoming: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
         Async.fromCallback { abort ?=>
           try
             val socket = new ServerSocket

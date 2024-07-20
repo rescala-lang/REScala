@@ -28,7 +28,7 @@ object WebsocketConnect {
 
   def connect(url: String): LatentConnection[MessageBuffer] = new LatentConnection {
 
-    override def prepare(incomingHandler: Handler): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
+    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
 
       println(s"preparing connection")
 
@@ -39,7 +39,7 @@ object WebsocketConnect {
         println(s"connection opened")
 
         val connect  = new WebsocketConnect(socket)
-        val callback = incomingHandler(connect)
+        val callback = incomingHandler.getCallbackFor(connect)
 
         socket.onmessage = { (event: dom.MessageEvent) =>
           event.data match {
