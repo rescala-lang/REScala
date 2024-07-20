@@ -6,6 +6,7 @@ import lofi_acl.crypto.PublicIdentity
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.Signature
 import rdts.base.Uid
+import rdts.time.Dots
 
 object JsoniterCodecs {
   given uidKeyCodec: JsonKeyCodec[rdts.base.Uid] = new JsonKeyCodec[Uid]:
@@ -25,6 +26,8 @@ object JsoniterCodecs {
       if sig == null then out.writeVal("")
       else out.writeBase64Val(sig.sig, true)
     override def nullValue: Signature = null
+
+  given dotsCodec: JsonValueCodec[Dots] = JsonCodecMaker.make
 
   given messageJsonCodec[RDT: JsonValueCodec]: JsonValueCodec[MonotonicAclSyncMessage[RDT]] = JsonCodecMaker.make(
     CodecMakerConfig

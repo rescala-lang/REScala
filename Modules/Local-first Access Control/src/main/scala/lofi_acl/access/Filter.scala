@@ -2,7 +2,6 @@ package lofi_acl.access
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree.allow
-import lofi_acl.access.InvalidPathException
 import rdts.base.Bottom
 import rdts.dotted.{Dotted, Obrem}
 import rdts.time.{ArrayRanges, Dots}
@@ -11,10 +10,6 @@ import scala.compiletime.{constValue, erasedValue, summonAll}
 import scala.deriving.Mirror
 
 trait Filter[T]:
-  // TODO: Maybe the identity should be fixed at the creation point of the Filter. This would allow us to simply replace
-  // the $userid variable when generating the filter instead of querying at runtime.
-  // This would also allow us to simplify the creation of filters for custom derived RDTs by preprocessing the ACL and
-  // Replacing the occurrence of $… with concrete values.
   def filter(delta: T, permission: PermissionTree): T
 
   /** Checks whether the permission tree is valid.

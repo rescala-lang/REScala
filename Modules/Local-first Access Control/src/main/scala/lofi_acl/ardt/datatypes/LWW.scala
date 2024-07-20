@@ -1,10 +1,12 @@
 package lofi_acl.ardt.datatypes
 
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import lofi_acl.access.*
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
-import lofi_acl.access.InvalidPathException
-import lofi_acl.access.{Filter, PermissionTree}
 import rdts.base.Bottom
 import rdts.datatypes.LastWriterWins
+import rdts.time.CausalTime
 
 type LWW[V] = LastWriterWins[V]
 
@@ -33,4 +35,10 @@ object LWW {
       if permissionTree.children.nonEmpty then throw InvalidPathException(permissionTree.children.keys.head :: Nil)
 
     override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = permissionTree
+
+  private given causalTimeDeltaSurgeon: DeltaSurgeon[CausalTime] = {
+    given codec: JsonValueCodec[CausalTime] = JsonCodecMaker.make[CausalTime]
+    DeltaSurgeon.ofTerminalValue
+  }
+  given deltaSurgeon[V: Bottom: DeltaSurgeon: JsonValueCodec]: DeltaSurgeon[LWW[V]] = DeltaSurgeon.derived
 }
