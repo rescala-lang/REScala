@@ -1,13 +1,10 @@
-import sbt.Keys._
-import sbt._
-
-import java.nio.file.{Files, Path, StandardOpenOption}
-import java.security.MessageDigest
-
-import java.net.URI
-import java.nio.file.Path
+import sbt.*
+import sbt.Keys.*
 
 import java.io.ByteArrayOutputStream
+import java.net.URI
+import java.nio.file.{Files, Path}
+import java.security.MessageDigest
 
 // Extending sbt.AutoPlugin causes this plugin to be automatically added to all sbt projects that match the triggers.
 // And because we don’t really specify any triggers, it is just added everywhere.

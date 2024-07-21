@@ -2,8 +2,8 @@
  * and may contain unused dependencies */
 
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt._
-import sbt.Keys._
+import sbt.*
+import sbt.Keys.*
 
 object Settings {
 

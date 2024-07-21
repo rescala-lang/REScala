@@ -1,7 +1,7 @@
 /* This file is shared between multiple projects
  * and may contain unused dependencies */
 
-import sbt.Keys.{crossTarget, fullClasspathAsJars, target}
+import sbt.Keys.{crossTarget, fullClasspathAsJars}
 import sbt.{Compile, File, IO, Setting, TaskKey}
 
 // Extending sbt.AutoPlugin causes this plugin to be automatically added to all sbt projects that match the triggers.
