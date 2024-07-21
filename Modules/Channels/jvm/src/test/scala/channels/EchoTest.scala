@@ -3,22 +3,19 @@ package channels
 import channels.jettywebsockets.{JettyWsConnection, JettyWsListener}
 import de.rmgk.delay.Async
 import org.eclipse.jetty.http.pathmap.PathSpec
+import org.eclipse.jetty.server.ServerConnector
 
 import java.net.{DatagramSocket, InetSocketAddress, URI}
 
 class EchoServerTestJetty extends EchoCommunicationTest(
-      _ =>
-        (
-          None,
-          (incoming: Handler[MessageBuffer]) =>
-            Async[Abort] {
-              val listener   = JettyWsListener.prepareServer(54470)
-              val echoServer = listener.listen(PathSpec.from("/registry/*"))
-              listener.server.start()
-              echoServer.prepare(incoming).bind
-            }
-        ),
-      _ => _ => JettyWsConnection.connect(URI.create(s"ws://localhost:54470/registry/"))
+      { ec =>
+        val listener   = JettyWsListener.prepareServer(0)
+        val echoServer = listener.listen(PathSpec.from("/registry/*"))
+        listener.server.start()
+        val port = listener.server.getConnectors.head.asInstanceOf[ServerConnector].getLocalPort
+        (port, echoServer)
+      },
+      _ => port => JettyWsConnection.connect(URI.create(s"ws://localhost:$port/registry/"))
     )
 
 class EchoServerTestUDP extends EchoCommunicationTest(

@@ -5,6 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import replication.JsoniterCodecs.given
 
+import java.net.Socket
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
@@ -32,7 +33,7 @@ class FbdcCli(settings: CliConnections) {
     settings.`tcp-listen-port` match
       case None =>
       case Some(port) =>
-        exData.dataManager.addLatentConnection(TCP.listen("0", port, ec))
+        exData.dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket("0", port), ec))
     settings.`webserver-listen-port` match
       case None =>
       case Some(port) =>
@@ -42,7 +43,7 @@ class FbdcCli(settings: CliConnections) {
       case (ip, port) =>
         (ip.trim, port)
     }.foreach: (ip, port) =>
-      exData.dataManager.addLatentConnection(TCP.connect(ip, port, ec))
+      exData.dataManager.addLatentConnection(TCP.connect(() => Socket(ip, port), ec))
     settings.`northwind-path` match
       case None    =>
       case Some(p) => Northwind.enableConditional(exData, p)

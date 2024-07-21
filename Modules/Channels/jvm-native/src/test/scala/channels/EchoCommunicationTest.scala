@@ -2,14 +2,28 @@ package channels
 
 import de.rmgk.delay.{Async, Callback}
 
+import java.net.{InetAddress, InetSocketAddress, ServerSocket, SocketException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class EchoServerTestTCP extends EchoCommunicationTest[None.type](
-      ec => (None, TCP.listen("0", 54467, ec)),
-      ec => _ => TCP.connect("localhost", 54467, ec)
+class EchoServerTestTCP extends EchoCommunicationTest(
+      { ec =>
+        val socket = new ServerSocket
+
+        try socket.setReuseAddress(true)
+        catch {
+          case _: SocketException =>
+          // some implementations may not allow SO_REUSEADDR to be set
+        }
+
+        socket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), 0))
+
+        val port = socket.getLocalPort
+        (port, TCP.listen(() => socket, ec))
+      },
+      ec => port => TCP.connect("localhost", port, ec)
     )
 
 def printErrors[T](cb: T => Unit): Callback[T] =

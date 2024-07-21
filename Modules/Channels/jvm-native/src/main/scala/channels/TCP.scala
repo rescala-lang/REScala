@@ -31,28 +31,37 @@ object TCP {
   }
 
   def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
+    connect(() => new Socket(host, port), executionContext)
+
+  def connect(bindsocket: () => Socket, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
       override def prepare(incoming: Handler[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
         TCP.syncAttempt {
           println(s"tcp sync attempt")
-          TCP.handleConnection(new Socket(host, port), incoming, executionContext)
+          TCP.handleConnection(bindsocket(), incoming, executionContext)
         }
     }
 
-  def listen(interface: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
+  def defaultSocket(interface: String, port: Int): () => ServerSocket = () => {
+    val socket = new ServerSocket
+
+    try socket.setReuseAddress(true)
+    catch {
+      case _: SocketException =>
+      // some implementations may not allow SO_REUSEADDR to be set
+    }
+
+    socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
+    socket
+  }
+
+  def listen(bindsocket: () => ServerSocket, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
       override def prepare(incoming: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
         Async.fromCallback { abort ?=>
           try
-            val socket = new ServerSocket
 
-            try socket.setReuseAddress(true)
-            catch {
-              case _: SocketException =>
-              // some implementations may not allow SO_REUSEADDR to be set
-            }
-
-            socket.bind(new InetSocketAddress(InetAddress.getByName(interface), port))
+            val socket = bindsocket()
 
             executionContext.execute { () =>
               try
