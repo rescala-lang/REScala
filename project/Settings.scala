@@ -21,9 +21,10 @@ object Settings {
     scalaVersion := scala3VersionString,
     fullFeatureDeprecationWarnings,
     scalaSourceLevel(scala3VersionMinor),
-    fatalWarnings(Compile / compile, Test / compile),
+    warningsAreErrors(Compile / compile, Test / compile),
     valueDiscard(Compile / compile),
-    warnOnShadowing(Compile / compile)
+    typeParameterShadow(Compile / compile),
+    privateShadow(Compile / compile),
   )
 
   // Spell out feature and deprecation warnings instead of summarizing them into a single warning
@@ -41,7 +42,7 @@ object Settings {
   )
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
-  def fatalWarnings(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
+  def warningsAreErrors(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
 
   // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
   def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf: _*)
@@ -49,8 +50,12 @@ object Settings {
   // can be annoying with methods that have optional results, can also help with methods that have non optional results …
   def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
 
-  // can be annoying with methods that have optional results, can also help with methods that have non optional results …
-  def warnOnShadowing(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:all", conf: _*)
+  // type parameter shadowing often is accidental, and especially for short type names keeping them separate seems good
+  def typeParameterShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:type-parameter-shadow", conf: _*)
+
+  // shadowing fields causes names inside and outside of the class to resolve to different things, and is quite weird.
+  // however, this has some kinda false positives when subclasses pass parameters to superclasses.
+  def privateShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:private-shadow", conf: _*)
 
   // seems to produce compiler crashes in some cases
   // this is -Ysafe-init for scala 3.4 and below
@@ -113,9 +118,9 @@ object Settings {
 
   // this is a tool to analyse memory consumption/layout
   val jolSettings = Seq(
+    libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.17",
     javaOptions += "-Djdk.attach.allowAttachSelf",
     fork := true,
-    Dependencies.jol
   )
 
   // see https://www.scala-js.org/doc/project/js-environments.html

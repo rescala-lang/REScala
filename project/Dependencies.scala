@@ -7,7 +7,6 @@ import sbt.Keys.libraryDependencies
 
 object Dependencies {
 
-  def jol           = libraryDependencies += "org.openjdk.jol"              % "jol-core"         % "0.17"
   def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.18.1"
   def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.0"  % Test
   def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.0.0"  % Test
