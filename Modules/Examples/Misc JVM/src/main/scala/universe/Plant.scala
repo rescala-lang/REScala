@@ -2,7 +2,7 @@ package universe
 
 import reactives.default.*
 
-class Plant(implicit world: World) extends BoardElement {
+class Plant(implicit _world: World) extends BoardElement {
 
   val energy                     = Var(Plant.Energy)
   val isDead                     = energy `map` (_ <= 0)

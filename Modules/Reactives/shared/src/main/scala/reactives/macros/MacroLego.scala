@@ -6,21 +6,21 @@ import scala.quoted.*
 
 object MacroLegos {
 
-  inline def getDependencies[Res, ReSource, Ticket, ForceStatic <: Boolean](inline expr: Res)
-      : (List[ReSource], Ticket => Res, Boolean) =
-    ${ reactives.macros.MacroLegos.reactiveMacro[Res, ReSource, Ticket, ForceStatic]('{ expr }) }
+  inline def getDependencies[Res, ReSourceT, Ticket, ForceStatic <: Boolean](inline expr: Res)
+      : (List[ReSourceT], Ticket => Res, Boolean) =
+    ${ reactives.macros.MacroLegos.reactiveMacro[Res, ReSourceT, Ticket, ForceStatic]('{ expr }) }
 
-  def reactiveMacro[Res: Type, ReSource: Type, Ticket: Type, ForceStatic <: Boolean: Type](
+  def reactiveMacro[Res: Type, ReSourceT: Type, Ticket: Type, ForceStatic <: Boolean: Type](
       expr: Expr[Res]
-  )(using q: Quotes): Expr[(List[ReSource], Ticket => Res, Boolean)] =
+  )(using q: Quotes): Expr[(List[ReSourceT], Ticket => Res, Boolean)] =
     import q.reflect.*
 
     val forceStatic =
       Type.valueOfConstant[ForceStatic].getOrElse(report.errorAndAbort("requires literal type for force static"))
-    MacroLego[ReSource, Ticket](forceStatic)
-      .makeReactive[Res](expr).asInstanceOf[Expr[(List[ReSource], Ticket => Res, Boolean)]]
+    MacroLego[ReSourceT, Ticket](forceStatic)
+      .makeReactive[Res](expr).asInstanceOf[Expr[(List[ReSourceT], Ticket => Res, Boolean)]]
 
-  class MacroLego[ReSource: Type, Ticket: Type](
+  class MacroLego[ReSourceT: Type, Ticket: Type](
       forceStatic: Boolean
   )(using val quotes: Quotes) {
 
@@ -151,7 +151,7 @@ object MacroLegos {
 
         '{
           (
-            List.from(${ Expr.ofList(defs.map(_.asExprOf[ReSource])) }),
+            List.from(${ Expr.ofList(defs.map(_.asExprOf[ReSourceT])) }),
             ${ rdef.asExprOf[Ticket => Res] },
             ${ Expr(isStatic) }
           )

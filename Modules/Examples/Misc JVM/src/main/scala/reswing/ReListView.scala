@@ -1,10 +1,12 @@
 package reswing
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 import scala.swing.ListView.IntervalMode
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, ListSelectionChanged}
 import scala.swing.{Color, Dimension, Font, ListView}
 
+@nowarn("msg=shadows field")
 class ReListView[A](
     val listData: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]](),
     val visibleRowCount: ReSwingValue[Int] = (),

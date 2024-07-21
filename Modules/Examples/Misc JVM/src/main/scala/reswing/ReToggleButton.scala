@@ -3,6 +3,7 @@ package reswing
 import javax.swing.Icon
 import scala.swing.{Alignment, Color, Dimension, Font, ToggleButton}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReToggleButton(
     text: ReSwingValue[String] = (),
     selected: ReSwingValue[Boolean] = (),

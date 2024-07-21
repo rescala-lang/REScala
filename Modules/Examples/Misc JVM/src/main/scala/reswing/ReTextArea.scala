@@ -3,6 +3,7 @@ package reswing
 import scala.swing.event.ValueChanged
 import scala.swing.{Color, Dimension, Font, TextArea}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReTextArea(
     text: ReSwingValue[String] = (),
     editable: ReSwingValue[Boolean] = (),

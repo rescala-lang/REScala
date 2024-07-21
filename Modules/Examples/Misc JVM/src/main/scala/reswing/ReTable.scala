@@ -4,6 +4,7 @@ import scala.swing.Table.{AutoResizeMode, ElementMode, IntervalMode}
 import scala.swing.event.{TableChanged, TableColumnsSelected, TableRowsAdded, TableRowsRemoved, TableRowsSelected, TableStructureChanged, TableUpdated}
 import scala.swing.{Color, Dimension, Font, Table}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReTable[A <: AnyRef](
     val rowData: ReSwingValue[Seq[Seq[A]]] = ReSwingNoValue[Seq[Seq[A]]](),
     val columnNames: ReSwingValue[Seq[String]] = (),

@@ -61,9 +61,9 @@ case class InteractionWithExecutes[S <: Tuple, A] private[dsl] (
   }
 
   @targetName("actWithT1")
-  inline def actWith[T](inline event: FoldState[T] ?=> Event[A])(using ev: S =:= Tuple1[T]): Fold.Branch[T] =
-    Fold.branch[T] {
-      event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T])), _)._1)
+  inline def actWith[T1](inline event: FoldState[T1] ?=> Event[A])(using ev: S =:= Tuple1[T1]): Fold.Branch[T1] =
+    Fold.branch[T1] {
+      event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T1])), _)._1)
     }
 
 }

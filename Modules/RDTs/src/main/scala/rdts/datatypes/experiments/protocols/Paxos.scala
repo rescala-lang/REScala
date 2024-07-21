@@ -189,7 +189,7 @@ object Paxos {
     require(members.nonEmpty, "Cannot initialize Paxos with empty set of members.")
     unchanged[A].copy(members = members)
 
-  given consensus[A]: Consensus[Paxos] with
+  given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
       override def write(value: A)(using LocalUid): Paxos[A] = c.write(value)
     extension [A](c: Paxos[A])

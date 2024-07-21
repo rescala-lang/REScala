@@ -3,6 +3,7 @@ package reswing
 import scala.swing.event.ValueChanged
 import scala.swing.{Color, Dimension, Font, Label, Slider}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReSlider(
     val min: ReSwingValue[Int] = (),
     val max: ReSwingValue[Int] = (),

@@ -3,6 +3,7 @@ package reswing
 import scala.swing.event.*
 import scala.swing.{Component, Dimension, Point, Rectangle, Window}
 
+@scala.annotation.nowarn("msg=shadows field")
 abstract class ReWindow(
     val contents: ReSwingValue[Component] = (),
     override val size: ReSwingValue[Dimension] = (),

@@ -18,14 +18,14 @@ class ReAbstractButton(
     val disabledSelectedIcon: ReSwingValue[Icon] = (),
     val rolloverIcon: ReSwingValue[Icon] = (),
     val rolloverSelectedIcon: ReSwingValue[Icon] = (),
-    background: ReSwingValue[Color] = (),
-    foreground: ReSwingValue[Color] = (),
-    font: ReSwingValue[Font] = (),
-    enabled: ReSwingValue[Boolean] = (),
-    minimumSize: ReSwingValue[Dimension] = (),
-    maximumSize: ReSwingValue[Dimension] = (),
-    preferredSize: ReSwingValue[Dimension] = ()
-) extends ReComponent(background, foreground, font, enabled, minimumSize, maximumSize, preferredSize) {
+    background1: ReSwingValue[Color] = (),
+    foreground1: ReSwingValue[Color] = (),
+    font1: ReSwingValue[Font] = (),
+    enabled1: ReSwingValue[Boolean] = (),
+    minimumSize1: ReSwingValue[Dimension] = (),
+    maximumSize1: ReSwingValue[Dimension] = (),
+    preferredSize1: ReSwingValue[Dimension] = ()
+) extends ReComponent(background1, foreground1, font1, enabled1, minimumSize1, maximumSize1, preferredSize1) {
   override protected lazy val peer: AbstractButton & ComponentMixin = new AbstractButton with ComponentMixin
 
   text.using({ () => peer.text }, peer.text_=, "text")

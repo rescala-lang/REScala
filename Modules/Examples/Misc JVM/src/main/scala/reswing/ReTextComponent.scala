@@ -3,6 +3,7 @@ package reswing
 import scala.swing.event.{CaretUpdate, ValueChanged}
 import scala.swing.{Color, Dimension, Font, TextComponent}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReTextComponent(
     val text: ReSwingValue[String] = (),
     val editable: ReSwingValue[Boolean] = (),

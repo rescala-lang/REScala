@@ -10,21 +10,21 @@ import replication.{DataManager, ProtocolDots}
 
 import scala.collection.mutable
 
-class ExtraDataManager[State](val dataManager: DataManager[State], changeEvt: Event[ProtocolDots[State]])(using
-    jsonCodec: JsonValueCodec[State],
-    lattice: Lattice[State],
-    bottom: Bottom[State]
+class ExtraDataManager[St](val dataManager: DataManager[St], changeEvt: Event[ProtocolDots[St]])(using
+    jsonCodec: JsonValueCodec[St],
+    lattice: Lattice[St],
+    bottom: Bottom[St]
 ) {
 
-  given JsonValueCodec[ProtocolDots[State]] = JsonCodecMaker.make
+  given JsonValueCodec[ProtocolDots[St]] = JsonCodecMaker.make
 
   export dataManager.{selfContext as _, *}
 
   val changes: Event[TransferState] = changeEvt
-  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[State]]) { (curr, ts) => curr `merge` ts }
+  val mergedState                   = changes.fold(Bottom.empty[ProtocolDots[St]]) { (curr, ts) => curr `merge` ts }
   val currentContext: Signal[Dots]  = mergedState.map(_.context)
 
-  def transform(fun: State => State) = dataManager.lock.synchronized {
+  def transform(fun: St => St) = dataManager.lock.synchronized {
     val current = mergedState.now
     dataManager.applyLocalDelta(ProtocolDots(
       fun(current.data),

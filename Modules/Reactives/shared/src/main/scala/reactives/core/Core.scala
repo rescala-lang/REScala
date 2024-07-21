@@ -65,7 +65,7 @@ sealed abstract class StaticTicket[State[_]](val tx: Transaction[State]) {
 }
 
 /** User facing low level API to access values in a dynamic context. */
-abstract class DynamicTicket[State[_]](tx: Transaction[State]) extends StaticTicket[State](tx) {
+abstract class DynamicTicket[State[_]](tx2: Transaction[State]) extends StaticTicket[State](tx2) {
   private[reactives] def collectDynamic(reactive: ReSource.of[State]): reactive.Value
   final def depend[A](reactive: ReadAs.of[State, A]): A = reactive.read(collectDynamic(reactive))
 }

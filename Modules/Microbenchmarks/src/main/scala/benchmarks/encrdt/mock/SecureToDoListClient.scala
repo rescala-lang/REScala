@@ -15,11 +15,11 @@ import java.util.UUID
 import scala.collection.mutable
 
 class SecureToDoListClient(
-    replicaId: LocalUid,
+    replicaId1: LocalUid,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
     aead: replication.Aead | Null,
     private val intermediary: UntrustedReplica
-) extends TrustedReplica[ToDoMapLattice](replicaId, crdt.merge, aead) with ToDoListClient {
+) extends TrustedReplica[ToDoMapLattice](replicaId1, crdt.merge, aead) with ToDoListClient {
 
   private val uuidToDeltaGroupMap: mutable.Map[UUID, DecryptedDeltaGroup[ToDoMapLattice]] = mutable.Map.empty
   private var cleanupDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice] =

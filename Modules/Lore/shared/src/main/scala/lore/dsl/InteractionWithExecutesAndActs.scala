@@ -59,9 +59,9 @@ case class InteractionWithExecutesAndActs[S <: Tuple, A] private[dsl] (
     }
 
   @targetName("foldIntoT1")
-  inline def foldInto[T](using ev: S =:= Tuple1[T]): Fold.Branch[T] =
+  inline def foldInto[T1](using ev: S =:= Tuple1[T1]): Fold.Branch[T1] =
     event.branch { arg =>
-      executes(ev.flip.apply(Tuple1(current[T])), arg)._1
+      executes(ev.flip.apply(Tuple1(current[T1])), arg)._1
     }
 
   @targetName("foldIntoBranchN")
@@ -69,7 +69,7 @@ case class InteractionWithExecutesAndActs[S <: Tuple, A] private[dsl] (
     event.value.fold(current)(executes(current, _))
 
   @targetName("foldIntoBranchT1")
-  inline def foldIntoBranch[T](using FoldState[T])(using ev: S =:= Tuple1[T]): T =
-    event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T])), _)._1)
+  inline def foldIntoBranch[T1](using FoldState[T1])(using ev: S =:= Tuple1[T1]): T1 =
+    event.value.fold(current)(executes(ev.flip.apply(Tuple1(current[T1])), _)._1)
 
 }

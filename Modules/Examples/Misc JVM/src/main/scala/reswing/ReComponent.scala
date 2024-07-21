@@ -1,8 +1,10 @@
 package reswing
 
+import scala.annotation.nowarn
 import scala.swing.event.*
 import scala.swing.{Color, Component, Dimension, Font, Graphics2D}
 
+@nowarn("msg=shadows field")
 abstract class ReComponent(
     val background: ReSwingValue[Color] = (),
     val foreground: ReSwingValue[Color] = (),

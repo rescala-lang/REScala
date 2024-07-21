@@ -1,7 +1,9 @@
 package reswing
 
+import scala.annotation.nowarn
 import scala.swing.{Component, Dimension, Frame, Point, Rectangle}
 
+@nowarn("msg=shadows field")
 class ReFrame(
     contents: ReSwingValue[Component] = (),
     val title: ReSwingValue[String] = (),

@@ -2,6 +2,7 @@ package reswing
 
 import scala.swing.{Color, Dimension, Font, MenuBar}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReMenuBar(
     val contents: ReSwingValue[CompList] = (),
     background: ReSwingValue[Color] = (),

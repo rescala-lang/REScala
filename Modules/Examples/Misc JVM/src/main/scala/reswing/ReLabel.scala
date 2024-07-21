@@ -1,8 +1,10 @@
 package reswing
 
 import javax.swing.Icon
+import scala.annotation.nowarn
 import scala.swing.{Alignment, Color, Dimension, Font, Label}
 
+@nowarn("msg=shadows field")
 class ReLabel(
     val text: ReSwingValue[String] = (),
     val horizontalAlignment: ReSwingValue[Alignment.Value] = (),

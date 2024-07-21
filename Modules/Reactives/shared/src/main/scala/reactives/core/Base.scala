@@ -11,7 +11,7 @@ abstract class Base[V](
     override val info: ReInfo
 ) extends ReSource {
 
-  override type State[V] = reactives.SelectedScheduler.State[V]
+  override type State[V2] = reactives.SelectedScheduler.State[V2]
   override type Value    = V
   override def toString: String = s"${info.description}($state)"
 }

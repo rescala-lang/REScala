@@ -4,6 +4,7 @@ import reswingexamples.reshapes.drawing.DrawingSpaceState
 
 import java.awt.{Color, Graphics2D, Point}
 
+@scala.annotation.nowarn("msg=shadows field")
 class Freedraw(
     drawingSpaceState: DrawingSpaceState,
     strokeWidth: Int = 1,

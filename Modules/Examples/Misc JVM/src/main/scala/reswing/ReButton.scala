@@ -1,8 +1,10 @@
 package reswing
 
 import javax.swing.Icon
+import scala.annotation.nowarn
 import scala.swing.{Action, Alignment, Button, Color, Dimension, Font}
 
+@nowarn("msg=shadows field")
 class ReButton(
     text: ReSwingValue[String] = (),
     action: Action = null,

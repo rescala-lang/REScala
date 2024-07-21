@@ -2,6 +2,7 @@ package reswing
 
 import scala.swing.{Color, Dimension, Font, Panel}
 
+@scala.annotation.nowarn("msg=shadows field")
 class RePanel(
     background: ReSwingValue[Color] = (),
     foreground: ReSwingValue[Color] = (),

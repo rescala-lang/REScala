@@ -23,6 +23,7 @@ object Settings {
     scalaSourceLevel(scala3VersionMinor),
     fatalWarnings(Compile / compile, Test / compile),
     valueDiscard(Compile / compile),
+    warnOnShadowing(Compile / compile)
   )
 
   // Spell out feature and deprecation warnings instead of summarizing them into a single warning
@@ -47,6 +48,9 @@ object Settings {
 
   // can be annoying with methods that have optional results, can also help with methods that have non optional results …
   def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
+
+  // can be annoying with methods that have optional results, can also help with methods that have non optional results …
+  def warnOnShadowing(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:all", conf: _*)
 
   // seems to produce compiler crashes in some cases
   // this is -Ysafe-init for scala 3.4 and below
@@ -73,7 +77,8 @@ object Settings {
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
   def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)
 
-  // unused warnings should
+  // this unused warnings definition is meant to enabled only sometimes when looking for unused elements
+  // t does not play well with -Werror and makes developing quite annoying
   def unusedWarnings(conf: TaskKey[?]*) = {
     val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
     c2.map { c =>

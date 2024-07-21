@@ -11,10 +11,10 @@ import rdts.syntax.DeltaAWLWWMContainer
 import java.util.UUID
 
 class InsecureToDoListClient(
-    replicaId: LocalUid,
+    replicaId1: LocalUid,
     crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
     untrustedReplica: ToDoListIntermediary
-) extends SecureToDoListClient(replicaId, crdt, null, untrustedReplica) {
+) extends SecureToDoListClient(replicaId1, crdt, null, untrustedReplica) {
   override protected def encryptAndDisseminate(newDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice]): Unit = {
     // Serialize but don't encrypt!
     val serialPlaintextDeltaGroup = writeToArray(newDeltaGroup.deltaGroup)

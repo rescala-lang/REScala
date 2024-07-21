@@ -3,6 +3,7 @@ package reswingexamples.reader.gui
 import reactives.default.*
 import reswing.{ReListView, ReSwingValue}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReListViewEx[A](
     listData: ReSwingValue[Seq[A]],
     visibleRowCount: ReSwingValue[Int] = ()

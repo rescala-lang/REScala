@@ -1,8 +1,10 @@
 package reswing
 
 import javax.swing.Icon
+import scala.annotation.nowarn
 import scala.swing.{Alignment, CheckBox, Color, Dimension, Font}
 
+@nowarn("msg=shadows field")
 class ReCheckBox(
     text: ReSwingValue[String] = (),
     selected: ReSwingValue[Boolean] = (),

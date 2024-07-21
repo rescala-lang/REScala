@@ -41,7 +41,7 @@ object Animal {
   case object Sleeping                   extends AnimalState
 }
 
-abstract class Animal(implicit world: World) extends BoardElement {
+abstract class Animal(implicit _world: World) extends BoardElement {
 
   final override def isAnimal: Boolean = true
 

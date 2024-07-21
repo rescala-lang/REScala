@@ -1,8 +1,10 @@
 package reswing
 
+import scala.annotation.nowarn
 import scala.swing.event.{ListChanged, ListElementsAdded, ListElementsRemoved, SelectionChanged}
 import scala.swing.{Color, ComboBox, Dimension, Font}
 
+@nowarn("msg=shadows field")
 class ReComboBox[A](
     val items: ReSwingValue[Seq[A]] = ReSwingNoValue[Seq[A]](),
     `selection.index`: ReSwingValue[Int] = (),

@@ -3,6 +3,7 @@ package reswing
 import javax.swing.Icon
 import scala.swing.{Action, Alignment, Color, Dimension, Font, MenuItem}
 
+@scala.annotation.nowarn("msg=shadows field")
 class ReMenuItem(
     text: ReSwingValue[String] = (),
     action: Action = null,
