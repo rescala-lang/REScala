@@ -9,16 +9,18 @@ import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.core.Symbols.*
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
-import dotty.tools.dotc.transform.{Pickler, Inlining}
+import dotty.tools.dotc.transform.{Inlining, Pickler}
 import lore.ast.*
 
+import scala.annotation.nowarn
 import scala.util.matching.Regex
 
 class CompilerPlugin extends StandardPlugin:
   val name: String        = "LoRe Compiler Plugin"
   val description: String = "Constructs a LoRe AST from the given Scala AST"
 
-  override def initialize(options: List[String])(using Context): List[PluginPhase] = List(new LoRePhase)
+  @nowarn // which variant to override depends on the scala version, use the old one until 3.5 is more stable
+  override def init(options: List[String]): List[PluginPhase] = List(new LoRePhase)
 end CompilerPlugin
 
 class LoRePhase extends PluginPhase:

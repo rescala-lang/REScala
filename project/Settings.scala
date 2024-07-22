@@ -8,7 +8,7 @@ import sbt.Keys.*
 object Settings {
 
   // also consider updating the -source param below
-  val scala3VersionString = "3.5.0-RC5"
+  val scala3VersionString = "3.4.2"
 
   val scala3VersionMinor = scala3VersionString.reverse.dropWhile(c => c != '.').drop(1).reverse
 
@@ -59,16 +59,22 @@ object Settings {
 
   // seems to produce compiler crashes in some cases
   // this is -Ysafe-init for scala 3.4 and below
-  def safeInit(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wsafe-init", conf: _*)
+  def safeInit(conf: TaskKey[?]*) =
+    if (scala3VersionString.startsWith("3.5"))
+      taskSpecificScalacOption("-Wsafe-init", conf: _*)
+    else Seq()
 
   // makes Null no longer be a sub type of all subtypes of AnyRef
   // but is super annoying with java interop.
   // Scala 3.5 tries to improve that interop by making java return types special, see https://github.com/scala/scala3/pull/17369
   // If i understand correctly, that is enabled by default, and the second flag could be used to restore old behaviour
-  def explicitNulls(conf: TaskKey[?]*) = Def.settings(
-    taskSpecificScalacOption("-Yexplicit-nulls", conf: _*),
-    // taskSpecificScalacOption("-Yno-flexible-types", conf: _*),
-  )
+  def explicitNulls(conf: TaskKey[?]*) =
+    if (scala3VersionString.startsWith("3.5"))
+      Def.settings(
+        taskSpecificScalacOption("-Yexplicit-nulls", conf: _*),
+        // taskSpecificScalacOption("-Yno-flexible-types", conf: _*),
+      )
+    else Seq()
 
   // Enforce then and do syntax, combine with rewrite to automatically rewrite
   def newSyntax = scalacOptions += "-new-syntax"
