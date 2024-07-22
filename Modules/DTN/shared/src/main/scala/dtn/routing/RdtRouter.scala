@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient}
+import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType}
 import rdts.time.Dots
 
 import java.util.concurrent.ConcurrentHashMap
@@ -9,49 +9,59 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.math.{addExact, max}
 import scala.util.{Random, Try}
-import dtn.RdtMetaInfo
 
 // Variables, chosen number, for this routing
 val MIN_DELIVERED    = 10
 val N_TOP_NEIGHBOURS = 3
 
 /*
-  We need to determine two things in this router for a given bundle:
+  This router only routes rdt-bundles. Other bundles are currently ignored.
 
-  1. to which destinations must we forward this bundle?
+  There are two types of rdt-bundles:
+    1. Request-Bundles, which only contains a dot-set that represents the known state and thereby requests anything unknown.
+    2. Payload-Bundles, which contain a dot-set and a payload, where the dot-set represents everything included in the payload.
 
-      what do we do:
+  Request-Bundle routing:
+    We use epidemic routing here, as the dot-set without a payload does not contribute to our known state that we can intelligently route.
+    Also, the requests should reach everybody as fast as possible with as few messages as possible, because we do not know who is contributing to our rdt.
 
-        To be able to merge source-node-information, the bundle-source will be a unicast endpoint like: dtn://node-id/rdt/app-name
-        In contrast to the bundle-destination, which will be a group endpoint like: dtn://global/~rdt/app-name
+  Payload-Bundle routing:
+    We need to determine two things in this router for a given payload-bundle:
 
-        this means that each rdt-app must subscribe to two endpoints.
-        currently bundles will be only addressed to the global one, but this may change.
+    1. to which destinations must we forward this bundle?
 
-        we have a map(~crdt-group-endpoint -> map(dtn://node-id -> Dots))
+        what do we do:
 
-        we store the dot-set for each endpoint, grouped by crdt for faster processing
+          To be able to merge source-node-information, the bundle-source will be a unicast endpoint like: dtn://node-id/rdt/app-name
+          In contrast to the bundle-destination, which will be a group endpoint like: dtn://global/~rdt/app-name
 
-        on each incoming bundle with a dot-set we temporarily store this dot-set until a forward-request is issued
+          this means that each rdt-app must subscribe to two endpoints.
+          currently bundles will be only addressed to the global one, but this may change.
 
-        on each forward-request we use our temporarily stored dot-set (if available) to compare it to the other known dot-sets in our store,
-        thereby determining the nodes to forward our bundle to
+          we have a map(~crdt-group-endpoint -> map(dtn://node-id -> Dots))
 
-  2. which neighbour is our best choice to forward this bundle over for a given destination?
+          we store the dot-set for each endpoint, grouped by crdt for faster processing
 
-      what do we do:
+          on each incoming bundle with a dot-set we temporarily store this dot-set until a forward-request is issued
 
-        we store a score for each destination node per neighbour
+          on each forward-request we use our temporarily stored dot-set (if available) to compare it to the other known dot-sets in our store,
+          thereby determining the nodes to forward our bundle to
 
-        the higher the score, the more likely it is that the bundle will reach the destination node via this neighbour
+    2. which neighbour is our best choice to forward this bundle over for a given destination?
 
-        structure is like: Map[destination_node: Endpoint, Map[neighbour_node: Endpoint, score: Long]]
+        what do we do:
 
-        each received bundle from a neighbour:
-          1. increases the score for the destination=bundle-source-node and neighbour=bundle-previous-node by 1
-          2. normalizes scores over all combinations with that destination
+          we store a score for each destination node per neighbour
 
-        on a forward request, the sorted list with the highest score first is returned. the first n neighbours are picked.
+          the higher the score, the more likely it is that the bundle will reach the destination node via this neighbour
+
+          structure is like: Map[destination_node: Endpoint, Map[neighbour_node: Endpoint, score: Long]]
+
+          each received bundle from a neighbour:
+            1. increases the score for the destination=bundle-source-node and neighbour=bundle-previous-node by 1
+            2. normalizes scores over all combinations with that destination
+
+          on a forward request, the sorted list with the highest score first is returned. the first n neighbours are picked.
  */
 
 class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
@@ -229,15 +239,16 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     }
 
     if previous_node.nonEmpty && rdt_meta_info.nonEmpty then {
-      println(s"received incoming bundle ${packet.bndl.id} with rdt-meta block and previous-node block.")
+      println(s"received incoming bundle ${packet.bndl.id} with rdt-meta block and previous-node block. ")
+
+      likelihoodState.update_score(neighbour_node = previous_node.get, destination_node = source_node)
 
       rdt_meta_info.get.message_type match
         case RdtMessageType.Request => {
           println("rdt-request-message. not merging")
         }
         case RdtMessageType.Payload => {
-          println("rdt-payload-message. merging")
-          likelihoodState.update_score(neighbour_node = previous_node.get, destination_node = source_node)
+          println("rdt-payload-message. merging dots")
           dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
           dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
         }

@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient}
+import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType}
 import rdts.time.Dots
 
 import java.util.concurrent.ConcurrentHashMap
@@ -9,28 +9,36 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.math.{addExact, max}
 import scala.util.{Random, Try}
-import dtn.RdtMetaInfo
-import dtn.RdtMessageType
 
 /*
   This alternative RdtRouter does a simple limited flooding approach.
+  It also only routes rdt-bundles. Other bundles are currently ignored.
 
-  Essentially it gathers all dot-state information it can and
-  forwards bundles to those who it things do not have that information.
+  There are two types of rdt-bundles:
+    1. Request-Bundles, which only contains a dot-set that represents the known state and thereby requests anything unknown.
+    2. Payload-Bundles, which contain a dot-set and a payload, where the dot-set represents everything included in the payload.
 
-  To be able to merge source-node-information, the bundle-source will be a unicast endpoint like: dtn://node-id/rdt/app-name
-  In contrast to the bundle-destination, which will be a group endpoint like: dtn://global/~rdt/app-name
+  Request-Bundle routing:
+    We use epidemic routing here, as the dot-set without a payload does not contribute to our known state that we can intelligently route.
+    Also, the requests should reach everybody as fast as possible with as few messages as possible, because we do not know who is contributing to our rdt.
 
-  Information Gathering:
-    1. On an rdt-bundle-reception, merge the dots for the source-node and previous-node
-    2. On a succesfull bundle-forwarding, merge the dots for the forwarded-node
-  --> Note: all these nodes should now also have that state (and should also have seen that bundle)
-  --> Note: this dot-store is essentially the same as in the RdtRouter.scala
+  Payload-Bundle routing:
+    Essentially it gathers all dot-state information it can and
+    forwards bundles to those who it things do not have that information.
 
-  Forwarding:
-    1. If a bundle-request was sent without any meta-information, we cannot route this bundle, ignore request.
-    3. Filter all peers for those who do not know this dot-state.
-    4. Map peers to clas and return the sender-list.
+    To be able to merge source-node-information, the bundle-source will be a unicast endpoint like: dtn://node-id/rdt/app-name
+    In contrast to the bundle-destination, which will be a group endpoint like: dtn://global/~rdt/app-name
+
+    Information Gathering:
+      1. On an rdt-bundle-reception, merge the dots for the source-node and previous-node
+      2. On a succesfull bundle-forwarding, merge the dots for the forwarded-node
+    --> Note: all these nodes should now also have that state (and should also have seen that bundle)
+    --> Note: this dot-store is essentially the same as in the RdtRouter.scala
+
+    Forwarding:
+      1. If a bundle-request was sent without any meta-information, we cannot route this bundle, ignore request.
+      3. Filter all peers for those who do not know this dot-state.
+      4. Map peers to clas and return the sender-list.
  */
 
 class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
