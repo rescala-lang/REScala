@@ -55,6 +55,9 @@ val N_TOP_NEIGHBOURS = 3
  */
 
 class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+  // epidemic routing is for rdt-request-bundles. they do not contain any payload that contributes to our state (in contrast to rdt-payload-bundles)
+  val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
+
   // state will grow indefinitely. there is currently no garbage collector
   val likelihoodState: LikelihoodState = LikelihoodState()
   val dotState: DotState               = DotState()
@@ -80,6 +83,15 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     val source_node: Endpoint      = packet.bp.source.extract_node_endpoint()
     val rdt_id: String             = packet.bp.destination.extract_endpoint_id()
     val rdt_meta_info: RdtMetaInfo = tempRdtMetaInfoStore.get(packet.bp.id)
+
+    rdt_meta_info.message_type match
+      case RdtMessageType.Request => {
+        println("got rdt request bundle. routing with epidemic strategy")
+        return epidemicStrategy.onRequestSenderForBundle(peers, services, packet)
+      }
+      case RdtMessageType.Payload => {
+        println("got rdt payload bundle. routing with rdt strategy")
+      }
 
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
     if delivered.getOrDefault(packet.bp.id, 0) >= MIN_DELIVERED then {
@@ -173,18 +185,25 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
-    delivered.merge(packet.bid, 1, (x1, x2) => x1 + x2)
-
     val rdt_meta_info = tempRdtMetaInfoStore.get(packet.bid)
     val rdt_id        = tempRdtIdStore.get(packet.bid)
 
-    if rdt_meta_info != null && rdt_id != null then {
-      println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. merging dots.")
-      dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, rdt_meta_info.dots)
+    print(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. ")
+
+    if rdt_meta_info == null || rdt_id == null then {
+      println("no rdt-meta-information are available. ignoring")
     } else {
-      println(
-        s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. could not merge dots because dots or rdt_id are no longer available in temp-store."
-      )
+      rdt_meta_info.message_type match
+        case RdtMessageType.Request => {
+          println("rdt-request-message. feeding epidemic strat")
+          epidemicStrategy.onSendingSucceeded(packet)
+        }
+        case RdtMessageType.Payload => {
+          delivered.merge(packet.bid, 1, (x1, x2) => x1 + x2)
+          println("rdt-payload-message. merging dots")
+          dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, rdt_meta_info.dots)
+        }
+
     }
   }
 
@@ -210,11 +229,18 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
     }
 
     if previous_node.nonEmpty && rdt_meta_info.nonEmpty then {
-      println(s"received incoming bundle ${packet.bndl.id} with rdt-meta block and previous-node block. merging.")
+      println(s"received incoming bundle ${packet.bndl.id} with rdt-meta block and previous-node block.")
 
-      likelihoodState.update_score(neighbour_node = previous_node.get, destination_node = source_node)
-      dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
-      dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
+      rdt_meta_info.get.message_type match
+        case RdtMessageType.Request => {
+          println("rdt-request-message. not merging")
+        }
+        case RdtMessageType.Payload => {
+          println("rdt-payload-message. merging")
+          likelihoodState.update_score(neighbour_node = previous_node.get, destination_node = source_node)
+          dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
+          dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
+        }
 
       tempPreviousNodeStore.put(packet.bndl.id, previous_node.get)
       tempRdtMetaInfoStore.put(packet.bndl.id, rdt_meta_info.get)
