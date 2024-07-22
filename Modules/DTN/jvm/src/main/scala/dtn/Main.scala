@@ -114,12 +114,12 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
   val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
 
   RdtClient(host, port, "testapp", checkerClient).flatMap(client => {
-    client.registerOnReceive((payload: Array[Byte], dots: Dots) => {
+    client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
 
     println(s"sending dots: $dots")
-    client.send(payload = Array(), dots = dots)
+    client.send(message_type = RdtMessageType.Payload, payload = Array(), dots = dots)
   }).recover(throwable => println(throwable))
 
   while true do {
@@ -132,7 +132,7 @@ def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, c
   val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
 
   RdtClient(host, port, "testapp", checkerClient).map(client => {
-    client.registerOnReceive((payload: Array[Byte], d: Dots) => {
+    client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")
     })
@@ -143,7 +143,7 @@ def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, c
       // add dots here
 
       println(s"sending new dots: $dots")
-      client.send(Array(), dots).printError()
+      client.send(RdtMessageType.Payload, Array(), dots).printError()
     }
   }).recover(throwable => println(throwable))
 

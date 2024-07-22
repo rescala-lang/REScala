@@ -6,8 +6,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: ConvergenceClientInterface) {
-  def send(payload: Array[Byte], dots: Dots): Future[Unit] = {
+  def send(message_type: RdtMessageType, payload: Array[Byte], dots: Dots): Future[Unit] = {
     val bundle: Bundle = BundleCreation.createBundleRdt(
+      message_type = message_type,
       data = payload,
       dots = dots,
       node = Endpoint.createFrom(ws.nodeId),
@@ -18,20 +19,20 @@ class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: Convergenc
     ws.sendBundle(bundle)
   }
 
-  def registerOnReceive(callback: (Array[Byte], Dots) => Unit): Unit = {
+  def registerOnReceive(callback: (RdtMessageType, Array[Byte], Dots) => Unit): Unit = {
     // flush receive forever and call callback
     def flush_receive(): Future[Bundle] = {
       ws.receiveBundle().flatMap(bundle => {
         println(s"received bundle: ${bundle.id}")
 
-        val payload: Option[Array[Byte]] = bundle.other_blocks.collectFirst({ case x: PayloadBlock => x.data })
-        val dots: Option[Dots]           = bundle.other_blocks.collectFirst({ case x: RdtMetaBlock => x.dots })
+        val payload: Option[Array[Byte]]       = bundle.other_blocks.collectFirst({ case x: PayloadBlock => x.data })
+        val rdt_meta_info: Option[RdtMetaInfo] = bundle.other_blocks.collectFirst({ case x: RdtMetaBlock => x.info })
 
-        if payload.isEmpty || dots.isEmpty then {
+        if payload.isEmpty || rdt_meta_info.isEmpty then {
           println("did not contain dots or payload. bundle is no rdt bundle. ignoring bundle.")
         } else {
-          checkerClient.send(dots.get)
-          callback(payload.get, dots.get)
+          checkerClient.send(rdt_meta_info.get.dots)
+          callback(rdt_meta_info.get.message_type, payload.get, rdt_meta_info.get.dots)
         }
 
         flush_receive()

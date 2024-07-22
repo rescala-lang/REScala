@@ -44,6 +44,7 @@ object BundleCreation {
   }
 
   def createBundleRdt(
+      message_type: RdtMessageType,
       data: Array[Byte],
       dots: Dots,
       node: Endpoint,
@@ -61,7 +62,7 @@ object BundleCreation {
       lifetime = 1000 * 3600 * 24
     )
 
-    val rdtmeta_block: RdtMetaBlock = RdtMetaBlock.createFrom(dots).copy(block_number = 4)
+    val rdtmeta_block: RdtMetaBlock = RdtMetaBlock.createFrom(RdtMetaInfo(dots, message_type)).copy(block_number = 4)
 
     val hop_count_block: HopCountBlock =
       HopCountBlock.createFrom(HopCount(hop_limit = 32, current_count = 0)).copy(block_number = 3)

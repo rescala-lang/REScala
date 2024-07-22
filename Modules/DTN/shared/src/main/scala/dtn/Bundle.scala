@@ -18,6 +18,9 @@ deserialization: CBOR -> object && JSON -> object
 todo: for object -> JSON serialization the corresponding counter-method to readBytes(reader: Reader): Array[Byte] is missing. we would need info on the desired serialized presentation (JSON or CBOR) for this.
  */
 
+enum RdtMessageType:
+  case Request, Payload
+
 case class Endpoint(scheme: Int, specific_part: String | Int) {
   def full_uri: String = {
     scheme match {
@@ -136,6 +139,8 @@ case class FragmentInfo(fragment_offset: Int, total_application_data_length: Int
 
 case class HopCount(hop_limit: Int, current_count: Int)
 
+case class RdtMetaInfo(dots: Dots, message_type: RdtMessageType)
+
 case class PrimaryBlock(
     version: Int,
     bundle_processing_control_flags: BundleProcessingControlFlags,
@@ -245,15 +250,15 @@ case class RdtMetaBlock(
     crc_type: Int,
     data: Array[Byte]
 ) extends CanonicalBlock {
-  def dots: Dots = Cbor.decode(data).to[Dots].value
+  def info: RdtMetaInfo = Cbor.decode(data).to[RdtMetaInfo].value
 }
 object RdtMetaBlock {
-  def createFrom(dots: Dots): RdtMetaBlock = RdtMetaBlock(
+  def createFrom(info: RdtMetaInfo): RdtMetaBlock = RdtMetaBlock(
     CanonicalBlock.RDT_META_BLOCK_TYPE_CPDE,
     0,
     BlockProcessingControlFlags(),
     0,
-    Cbor.encode(dots).toByteArray
+    Cbor.encode(info).toByteArray
   )
 }
 
@@ -301,6 +306,9 @@ private def readBytes(reader: Reader): Array[Byte] = {
     reader.readArrayClose(unbounded = true, buffer.toArray)
   }
 }
+
+given Codec[RdtMessageType] = deriveCodec[RdtMessageType]
+given Codec[RdtMetaInfo]    = deriveCodec[RdtMetaInfo]
 
 given Encoder[Uid] = Encoder.forString.asInstanceOf[Encoder[Uid]]
 given Decoder[Uid] = Decoder.forString.asInstanceOf[Decoder[Uid]]

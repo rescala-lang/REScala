@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.math.{addExact, max}
 import scala.util.{Random, Try}
+import dtn.RdtMetaInfo
 
 /*
   This alternative RdtRouter does a simple limited flooding approach.
@@ -36,27 +37,27 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
   val dotState: DotState2 = DotState2()
 
   // grows indefinitely
-  val tempDotsStore: ConcurrentHashMap[String, Dots]    = ConcurrentHashMap()
-  val tempRdtIdStore: ConcurrentHashMap[String, String] = ConcurrentHashMap()
+  val tempRdtMetaInfoStore: ConcurrentHashMap[String, RdtMetaInfo] = ConcurrentHashMap()
+  val tempRdtIdStore: ConcurrentHashMap[String, String]            = ConcurrentHashMap()
 
   override def onRequestSenderForBundle(packet: Packet.RequestSenderForBundle)
       : Option[Packet.ResponseSenderForBundle] = {
     println(s"received sender-request for bundle: ${packet.bp}")
 
-    val rdt_id: String = packet.bp.destination.extract_endpoint_id()
-
-    if !tempDotsStore.contains(packet.bp.id) then {
+    // we only route rdt packets rn
+    if !tempRdtMetaInfoStore.contains(packet.bp.id) then {
       println(s"bundle meta information for bundle-id ${packet.bp.id} are not available. not routing rn.")
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
     }
 
-    val dots: Dots = tempDotsStore.getOrDefault(packet.bp.id, Dots.empty)
+    val rdt_id: String             = packet.bp.destination.extract_endpoint_id()
+    val rdt_meta_info: RdtMetaInfo = tempRdtMetaInfoStore.get(packet.bp.id)
 
     val all_peers = peers.values().asScala
     println(s"all peers: ${all_peers.toList}")
 
     // filter peers for peers that still need this bundles dot-state
-    val filtered_peers = dotState.filterPeers(all_peers, rdt_id, dots)
+    val filtered_peers = dotState.filterPeers(all_peers, rdt_id, rdt_meta_info.dots)
     println(s"filtered peers: ${filtered_peers.toList}")
 
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
@@ -89,12 +90,12 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
   }
 
   override def onSendingSucceeded(packet: Packet.SendingSucceeded): Unit = {
-    val dots   = tempDotsStore.get(packet.bid)
-    val rdt_id = tempRdtIdStore.get(packet.bid)
+    val rdt_id        = tempRdtIdStore.get(packet.bid)
+    val rdt_meta_info = tempRdtMetaInfoStore.get(packet.bid)
 
-    if dots != null && rdt_id != null then {
+    if rdt_meta_info != null && rdt_id != null then {
       println(s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. merging dots.")
-      dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, dots)
+      dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, rdt_meta_info.dots)
     } else {
       println(
         s"sending succeeded for bundle ${packet.bid} on cla ${packet.cla_sender}. could not merge dots because dots or rdt_id are no longer available in temp-store."
@@ -105,10 +106,10 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
     // we always merge the bundle information, as we might receive it from multiple nodes, which is valuable information to us
 
-    val source_node                     = packet.bndl.primary_block.source.extract_node_endpoint()
-    val rdt_id                          = packet.bndl.primary_block.destination.extract_endpoint_id()
-    var previous_node: Option[Endpoint] = None
-    var dots: Option[Dots]              = None
+    val source_node                        = packet.bndl.primary_block.source.extract_node_endpoint()
+    val rdt_id                             = packet.bndl.primary_block.destination.extract_endpoint_id()
+    var previous_node: Option[Endpoint]    = None
+    var rdt_meta_info: Option[RdtMetaInfo] = None
 
     packet.bndl.other_blocks.collectFirst {
       case x: PreviousNodeBlock => x
@@ -120,15 +121,15 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
       case x: RdtMetaBlock => x
     } match {
       case None                 => println("received incoming bundle without rdt-meta block. ignoring")
-      case Some(rdt_meta_block) => dots = Option(rdt_meta_block.dots)
+      case Some(rdt_meta_block) => rdt_meta_info = Option(rdt_meta_block.info)
     }
 
-    if previous_node.nonEmpty && dots.nonEmpty then {
+    if previous_node.nonEmpty && rdt_meta_info.nonEmpty then {
       println(s"received incoming bundle ${packet.bndl.id} with rdt-meta block and previous-node block. merging.")
-      dotState.mergeDots(source_node, rdt_id, dots.get)
-      dotState.mergeDots(previous_node.get, rdt_id, dots.get)
+      dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
+      dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
 
-      tempDotsStore.put(packet.bndl.id, dots.get)
+      tempRdtMetaInfoStore.put(packet.bndl.id, rdt_meta_info.get)
       tempRdtIdStore.put(packet.bndl.id, rdt_id)
       ()
     }
