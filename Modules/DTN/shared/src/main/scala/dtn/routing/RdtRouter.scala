@@ -210,7 +210,7 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
         }
         case RdtMessageType.Payload => {
           delivered.merge(packet.bid, 1, (x1, x2) => x1 + x2)
-          println("rdt-payload-message. merging dots")
+          println("rdt-payload-message. merging dots for next hop")
           dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, rdt_meta_info.dots)
         }
 
@@ -245,10 +245,11 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
 
       rdt_meta_info.get.message_type match
         case RdtMessageType.Request => {
-          println("rdt-request-message. not merging")
+          println("rdt-request-message. merging only source")
+          dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
         }
         case RdtMessageType.Payload => {
-          println("rdt-payload-message. merging dots")
+          println("rdt-payload-message. merging source and previous node")
           dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
           dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
         }

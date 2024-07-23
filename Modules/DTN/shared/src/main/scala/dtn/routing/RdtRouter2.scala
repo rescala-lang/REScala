@@ -125,7 +125,7 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
           epidemicStrategy.onSendingSucceeded(packet)
         }
         case RdtMessageType.Payload => {
-          println("rdt-payload-message. merging dots")
+          println("rdt-payload-message. merging dots for next hop")
           dotState.mergeDots(Endpoint.createFromName(packet.cla_sender), rdt_id, rdt_meta_info.dots)
         }
 
@@ -158,10 +158,11 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
 
       rdt_meta_info.get.message_type match
         case RdtMessageType.Request => {
-          println("rdt-request-message. not merging")
+          println("rdt-request-message. merging only source node")
+          dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
         }
         case RdtMessageType.Payload => {
-          println("rdt-payload-message. merging dots")
+          println("rdt-payload-message. merging source and previous node")
           dotState.mergeDots(source_node, rdt_id, rdt_meta_info.get.dots)
           dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
         }
