@@ -40,5 +40,5 @@ object LWW {
     given codec: JsonValueCodec[CausalTime] = JsonCodecMaker.make[CausalTime]
     DeltaSurgeon.ofTerminalValue
   }
-  given deltaSurgeon[V: Bottom: DeltaSurgeon: JsonValueCodec]: DeltaSurgeon[LWW[V]] = DeltaSurgeon.derived
+  given deltaSurgeon[V: Bottom: DeltaSurgeon]: DeltaSurgeon[LWW[V]] = DeltaSurgeon.derived
 }

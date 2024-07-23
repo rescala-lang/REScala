@@ -159,10 +159,11 @@ object DeltaSurgeon {
   given dotsDeltaSurgeon: DeltaSurgeon[Dots]                                 = ofTerminalValue[Dots]
   given dottedDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Dotted[T]] = DeltaSurgeon.derived
   given obremDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Obrem[T]]   = DeltaSurgeon.derived
-  given noneDeltaSurgeon: DeltaSurgeon[None.type]                            = DeltaSurgeon.ofCaseObject(None)
-  given someSurgeon[T: Bottom: DeltaSurgeon]: DeltaSurgeon[Some[T]] = {
-    given someBottom: Bottom[Some[T]] = Bottom.derived
-    DeltaSurgeon.derived
+  given optionSurgeon[T: Bottom: DeltaSurgeon]: DeltaSurgeon[Option[T]] = {
+    given noneDeltaSurgeon: DeltaSurgeon[None.type] = DeltaSurgeon.ofCaseObject(None)
+    given someBottom: Bottom[Some[T]]               = Bottom.derived
+    given someSurgeon: DeltaSurgeon[Some[T]]        = DeltaSurgeon.derived
+    DeltaSurgeon.derived[Option[T]]
   }
 
 }
