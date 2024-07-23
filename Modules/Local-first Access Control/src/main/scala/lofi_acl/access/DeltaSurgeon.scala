@@ -52,26 +52,24 @@ object DeltaSurgeon {
   }
 
   inline def derived[T](using m: Mirror.Of[T], bottom: Bottom[T]): DeltaSurgeon[T] =
-    val elementLabels  = getLabels[m.MirroredElemLabels].toArray
-    val elementBottoms = summonAll[Tuple.Map[m.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
+    val elementLabels = getLabels[m.MirroredElemLabels].toArray
     val elementSurgeons =
       summonAll[Tuple.Map[m.MirroredElemTypes, DeltaSurgeon]].toIArray.map(_.asInstanceOf[DeltaSurgeon[Any]])
     inline m match
-      case sumMirror: Mirror.SumOf[T] =>
-        SumTypeDeltaSurgeon[T](sumMirror, bottom, elementLabels, elementBottoms, elementSurgeons)
+      case sumMirror: Mirror.SumOf[T] => SumTypeDeltaSurgeon[T](elementLabels, elementSurgeons)(using sumMirror)
       case productMirror: Mirror.ProductOf[T] =>
-        ProductTypeSurgeon[T](productMirror, bottom, elementLabels, elementBottoms, elementSurgeons)
+        val elementBottoms = summonAll[Tuple.Map[m.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
+        ProductTypeSurgeon[T](bottom, elementLabels, elementBottoms, elementSurgeons)(using productMirror)
 
   private inline given sumElemLabels[T](using sm: Mirror.SumOf[T]): List[Any] =
     constValueTuple[sm.MirroredElemLabels].map[[X] =>> String]([X] => (x: X) => x.toString).toList
 
   class ProductTypeSurgeon[T](
-      pm: Mirror.ProductOf[T],
       productBottom: Bottom[T],                  // The bottom of the product (derivable as the product of bottoms)
       factorLabels: Array[String],               // Maps the factor label to the factor index
       factorBottoms: IArray[Bottom[Any]],        // The Bottom TypeClass instance for each factor
       factorSurgeons: IArray[DeltaSurgeon[Any]], // The DeltaSurgeon TypeClass instance for each factor
-  ) extends DeltaSurgeon[T]:
+  )(using pm: Mirror.ProductOf[T]) extends DeltaSurgeon[T]:
     private val factorLabelToIndexMap = factorLabels.zipWithIndex.toMap
 
     override def isolate(delta: T): IsolatedDeltaParts = {
@@ -109,12 +107,9 @@ object DeltaSurgeon {
     }
 
   class SumTypeDeltaSurgeon[T](
-      sm: Mirror.SumOf[T],
-      sumBottom: Bottom[T],                       // The bottom of the product (derivable as the product of bottoms)
-      elementLabels: Array[String],               // Maps the factor label to the factor index
-      elementBottoms: IArray[Bottom[Any]],        // The Bottom TypeClass instance for each factor
-      elementSurgeons: IArray[DeltaSurgeon[Any]], // The DeltaSurgeon TypeClass instance for each factor
-  ) extends DeltaSurgeon[T]:
+      elementLabels: Array[String], // Maps the ordinal value to the string representation of the element type
+      elementSurgeons: IArray[DeltaSurgeon[Any]], // The DeltaSurgeon TypeClass instance for each type
+  )(using sm: Mirror.SumOf[T]) extends DeltaSurgeon[T]:
     private val ordinalLookup = elementLabels.zipWithIndex.toMap
 
     override def isolate(delta: T): IsolatedDeltaParts = {
@@ -165,10 +160,10 @@ object DeltaSurgeon {
   given dotsDeltaSurgeon: DeltaSurgeon[Dots]                                 = ofTerminalValue[Dots]
   given dottedDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Dotted[T]] = DeltaSurgeon.derived
   given obremDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Obrem[T]]   = DeltaSurgeon.derived
-  given noneBottom: Bottom[None.type]                                        = Bottom.provide(None)
   given noneDeltaSurgeon: DeltaSurgeon[None.type]                            = DeltaSurgeon.ofCaseObject(None)
-  given optionBottom[T]: Bottom[Option[T]]                                   = Bottom.provide(None)
-  given someBottom[T: Bottom]: Bottom[Some[T]]                               = Bottom.derived
-  given someSurgeon[T: Bottom: DeltaSurgeon]: DeltaSurgeon[Some[T]]          = DeltaSurgeon.derived
+  given someSurgeon[T: Bottom: DeltaSurgeon]: DeltaSurgeon[Some[T]] = {
+    given someBottom: Bottom[Some[T]] = Bottom.derived
+    DeltaSurgeon.derived
+  }
 
 }
