@@ -53,6 +53,7 @@ object DeltaSurgeon {
 
   inline def derived[T](using m: Mirror.Of[T], bottom: Bottom[T]): DeltaSurgeon[T] =
     val elementLabels = getLabels[m.MirroredElemLabels].toArray
+    // TODO: Don't summon case object delta surgeons but provide them here
     val elementSurgeons =
       summonAll[Tuple.Map[m.MirroredElemTypes, DeltaSurgeon]].toIArray.map(_.asInstanceOf[DeltaSurgeon[Any]])
     inline m match
@@ -133,9 +134,7 @@ object DeltaSurgeon {
   // Used for values that should not be further isolated
   def ofTerminalValue[V: Bottom: JsonValueCodec]: DeltaSurgeon[V] = new TerminalValueDeltaSurgeon[V]
 
-  // TODO: could be used inside of sum type derivation to avoid the need to specify instances externally
-  // TODO: Restrict type to case objects
-  def ofCaseObject[V](obj: V): DeltaSurgeon[V] = {
+  def ofCaseObject[V <: Singleton & Product](obj: V): DeltaSurgeon[V] = {
     new DeltaSurgeon[V]:
       override def isolate(delta: V): IsolatedDeltaParts = IsolatedDeltaParts(Array.empty)
       override def recombine(parts: IsolatedDeltaParts): V = parts.inner match
