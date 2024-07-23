@@ -2,12 +2,17 @@ package lofi_acl.access
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import lofi_acl.access.DeltaSurgeon.getLabels
 import lofi_acl.access.DeltaSurgeonTest.given
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.PermissionTree.{allow, empty}
 import munit.FunSuite
 import org.junit.Assert
+import rdts.base
 import rdts.base.Bottom
+
+import scala.compiletime.{constValue, constValueTuple, erasedValue, summonAll}
+import scala.deriving.Mirror
 
 case class A(a: String, b: B)
 case class B(c: String)
@@ -81,6 +86,41 @@ class DeltaSurgeonTest extends FunSuite {
     assertEquals(
       DeltaSurgeon[A].recombine(DeltaSurgeon[A].filter(isolated, empty)),
       A("", B(""))
+    )
+  }
+
+  private inline given sumElemLabels[T](using sm: Mirror.SumOf[T]): Tuple.Map[sm.MirroredElemLabels, [X] =>> String] =
+    constValueTuple[sm.MirroredElemLabels].map[[X] =>> String]([X] => (x: X) => x.toString)
+
+  inline def testDerive[T](using m: Mirror.Of[T], bottom: Bottom[T]): Unit =
+    val elementSurgeons =
+      summonAll[Tuple.Map[m.MirroredElemTypes, DeltaSurgeon]].toIArray.map(_.asInstanceOf[DeltaSurgeon[Any]])
+    val elementBottoms = summonAll[Tuple.Map[m.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
+    val elementLabels  = getLabels[m.MirroredElemLabels].toArray
+    println(elementSurgeons)
+    println(elementBottoms)
+    println(elementLabels)
+
+  private inline def getLabels[A <: Tuple]: List[String] = inline erasedValue[A] match {
+    case _: EmptyTuple => Nil
+    case _: (t *: ts)  => constValue[t].toString :: getLabels[ts]
+  }
+
+  import DeltaSurgeon.given
+  private given stringBottom: Bottom[String] = Bottom.provide("")
+  private val optionSurgeon                  = DeltaSurgeon.derived[Option[String]]
+
+  test("derivation of sums") {
+    val some: Option[String] = Some("Test")
+    val none: Option[String] = None
+
+    assertEquals(
+      optionSurgeon.recombine(optionSurgeon.isolate(some)),
+      some
+    )
+    assertEquals(
+      optionSurgeon.recombine(optionSurgeon.isolate(none)),
+      none
     )
   }
 }
