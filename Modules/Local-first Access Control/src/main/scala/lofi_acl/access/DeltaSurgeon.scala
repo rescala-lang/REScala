@@ -53,11 +53,14 @@ object DeltaSurgeon {
 
   inline def derived[T](using m: Mirror.Of[T], bottom: Bottom[T]): DeltaSurgeon[T] =
     val elementLabels = getLabels[m.MirroredElemLabels].toArray
-    // TODO: Don't summon case object delta surgeons but provide them here
+    // TODO: Don't summon singleton delta surgeons but derive from here
     val elementSurgeons =
       summonAll[Tuple.Map[m.MirroredElemTypes, DeltaSurgeon]].toIArray.map(_.asInstanceOf[DeltaSurgeon[Any]])
     inline m match
       case sumMirror: Mirror.SumOf[T] => SumTypeDeltaSurgeon[T](elementLabels, elementSurgeons)(using sumMirror)
+      case singletonMirror: Mirror.Singleton =>
+        given bottom: Bottom[T] = Bottom.provide(singletonMirror.fromProduct(null))
+        ProductTypeSurgeon[T](bottom, elementLabels, IArray.empty, elementSurgeons)(using singletonMirror)
       case productMirror: Mirror.ProductOf[T] =>
         val elementBottoms = summonAll[Tuple.Map[m.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
         ProductTypeSurgeon[T](bottom, elementLabels, elementBottoms, elementSurgeons)(using productMirror)
@@ -134,14 +137,6 @@ object DeltaSurgeon {
   // Used for values that should not be further isolated
   def ofTerminalValue[V: Bottom: JsonValueCodec]: DeltaSurgeon[V] = new TerminalValueDeltaSurgeon[V]
 
-  def ofCaseObject[V <: Singleton & Product](obj: V): DeltaSurgeon[V] = {
-    new DeltaSurgeon[V]:
-      override def isolate(delta: V): IsolatedDeltaParts = IsolatedDeltaParts(Array.empty)
-      override def recombine(parts: IsolatedDeltaParts): V = parts.inner match
-        case array: Array[Byte] if array.isEmpty => obj
-        case _                                   => ???
-  }
-
   private class TerminalValueDeltaSurgeon[V: Bottom: JsonValueCodec] extends DeltaSurgeon[V] {
     override def isolate(delta: V): IsolatedDeltaParts =
       if Bottom[V].isEmpty(delta) then IsolatedDeltaParts(Map.empty)
@@ -160,7 +155,8 @@ object DeltaSurgeon {
   given dottedDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Dotted[T]] = DeltaSurgeon.derived
   given obremDeltaSurgeon[T: DeltaSurgeon: Bottom]: DeltaSurgeon[Obrem[T]]   = DeltaSurgeon.derived
   given optionSurgeon[T: Bottom: DeltaSurgeon]: DeltaSurgeon[Option[T]] = {
-    given noneDeltaSurgeon: DeltaSurgeon[None.type] = DeltaSurgeon.ofCaseObject(None)
+    given noneBottom: Bottom[None.type] = Bottom.provide(None) // TODO: Bottom for singletons should be derivable
+    given noneDeltaSurgeon: DeltaSurgeon[None.type] = DeltaSurgeon.derived
     given someBottom: Bottom[Some[T]]               = Bottom.derived
     given someSurgeon: DeltaSurgeon[Some[T]]        = DeltaSurgeon.derived
     DeltaSurgeon.derived[Option[T]]
