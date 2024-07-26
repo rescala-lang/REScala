@@ -35,14 +35,14 @@ class RdtCheckerService(CoreService):
     :cvar shutdown: shutdown commands to stop this service
     """
 
-    name: str = "rdtchecker"
+    name: str = "rdtmonitoring"
     group: str = "Dtn7"
     executables: Tuple[str, ...] = ()
     dependencies: Tuple[str, ...] = ()
     dirs: Tuple[str, ...] = ()
     configs: Tuple[str, ...] = ()
     startup: Tuple[str, ...] = (
-        "bash -c '/root/.coregui/scripts/rdt_tool -m checker &> checker.log'", )
+        "bash -c '/root/.coregui/scripts/rdt_tool -m monitoring &> monitoring.log'", )
     validate: Tuple[str, ...] = ()
     validation_mode: ServiceMode = ServiceMode.NON_BLOCKING
     validation_timer: int = 5

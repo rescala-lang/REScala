@@ -157,7 +157,7 @@ service_defaults = {}
 for existing_default in core.get_service_defaults(session_id).defaults:
   service_defaults[existing_default.node_type] = existing_default.services
 service_defaults["DTN"] = ["DefaultMulticastRoute", "dtnd", "rdtrouter"]
-service_defaults["CHECKER"] = ["rdtchecker"]
+service_defaults["MONITORING"] = ["rdtmonitoring"]
 
 core.set_service_defaults(session_id, service_defaults)
 print("set service defaults for nodes")
@@ -167,7 +167,7 @@ core.set_session_options(session_id, {'controlnet': '172.16.0.0/24'})
 print("added control network 172.16.0.0/24")
 
 
-core.add_node(session_id, Node(id=global_node_counter.next(), name="control", type=NodeType.DEFAULT, model="CHECKER", position=Position(x=50, y=50)))
+core.add_node(session_id, Node(id=global_node_counter.next(), name="control", type=NodeType.DEFAULT, model="MONITORING", position=Position(x=50, y=50)))
 print ("added control node")
 
 

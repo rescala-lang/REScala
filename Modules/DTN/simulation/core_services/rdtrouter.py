@@ -42,7 +42,7 @@ class RdtRouterService(CoreService):
     dirs: Tuple[str, ...] = ()
     configs: Tuple[str, ...] = ()
     startup: Tuple[str, ...] = (
-        "bash -c '/root/.coregui/scripts/rdt_tool -m routing.rdt &> routing.log'", )
+        "bash -c '/root/.coregui/scripts/rdt_tool -m routing.rdt -ma 172.16.0.1 &> routing.log'", )
     validate: Tuple[str, ...] = ()
     validation_mode: ServiceMode = ServiceMode.NON_BLOCKING
     validation_timer: int = 5

@@ -14,11 +14,11 @@ import scala.concurrent.Future
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m => method (mandatory) | available options: checker, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous
-  -a => host address | default: 0.0.0.0 (for checker), 127.0.0.1 (everything else)
-  -p => host port | default: 5000 (for checker), 3000 (for everything else)
-  -coa => convergence checker address | default: 127.0.0.1
-  -cop => convergence checker port | default: 5000
+  -m => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous
+  -a => host address | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
+  -p => host port | default: 5000 (for monitoring), 3000 (for everything else)
+  -ma => monitoring address | default: 127.0.0.1
+  -mp => monitoring port | default: 5000
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -28,28 +28,32 @@ commandline options:
       keyword_args += (pair.head -> pair(1))
     })
 
-    val method: String       = keyword_args("-m")
-    val host_address: String = keyword_args.getOrElse("-a", if method.equals("checker") then "0.0.0.0" else "127.0.0.1")
-    val host_port: Int       = keyword_args.getOrElse("-p", if method.equals("checker") then "5000" else "3000").toInt
-    val convergence_checker_address: String = keyword_args.getOrElse("-coa", "127.0.0.1")
-    val convergence_checker_port: Int       = keyword_args.getOrElse("-cop", "5000").toInt
+    val method: String = keyword_args("-m")
+    val host_address: String =
+      keyword_args.getOrElse("-a", if method.equals("monitoring") then "0.0.0.0" else "127.0.0.1")
+    val host_port: Int = keyword_args.getOrElse("-p", if method.equals("monitoring") then "5000" else "3000").toInt
+    val monitoring_address: String = keyword_args.getOrElse("-ma", "127.0.0.1")
+    val monitoring_port: Int       = keyword_args.getOrElse("-mp", "5000").toInt
 
     method match
-      case "checker"          => start_checker_server(host_address, host_port)
-      case "routing.direct"   => _route_forever(DirectRouter(host_address, host_port))
-      case "routing.epidemic" => _route_forever(EpidemicRouter(host_address, host_port))
-      case "routing.rdt"      => _route_forever(RdtRouter(host_address, host_port))
+      case "monitoring" => start_monitoring_server(host_address, host_port)
+      case "routing.direct" =>
+        _route_forever(DirectRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
+      case "routing.epidemic" =>
+        _route_forever(EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
+      case "routing.rdt" =>
+        _route_forever(RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
       case "client.once" =>
-        send_one_rdt_package(host_address, host_port, convergence_checker_address, convergence_checker_port)
+        send_one_rdt_package(host_address, host_port, monitoring_address, monitoring_port)
       case "client.continuous" =>
-        send_continuous_rdt_packages(host_address, host_port, convergence_checker_address, convergence_checker_port)
+        send_continuous_rdt_packages(host_address, host_port, monitoring_address, monitoring_port)
       case s => throw Exception(s"could not partse commandline. unknown method: $s")
   }
 }
 
 // a bunch of main methods for testing
 
-@main def start_checker_server_default(): Unit = start_checker_server("0.0.0.0", 5000)
+@main def start_monitoring_server_default(): Unit = start_monitoring_server("0.0.0.0", 5000)
 
 @main def start_rdtdots_routing(): Unit      = _route_forever(RdtRouter("127.0.0.1", 3000))
 @main def start_rdtdots_routing_3000(): Unit = _route_forever(RdtRouter("127.0.0.1", 3000))
@@ -69,9 +73,9 @@ commandline options:
 
 // all helper methods
 
-def start_checker_server(interface_address: String, port: Int): Unit = {
-  val checker = MonitoringServer(interface_address, port)
-  checker.run()
+def start_monitoring_server(interface_address: String, port: Int): Unit = {
+  val monitoring_server = MonitoringServer(interface_address, port)
+  monitoring_server.run()
 }
 
 def _route_forever(router: Future[BaseRouter]): Unit = {
@@ -110,10 +114,9 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 }
 
 def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
-  val dots: Dots    = DotsCreation.generate_pseudo_random_dots()
-  val checkerClient = MonitoringClient(checkerHost, checkerPort)
+  val dots: Dots = DotsCreation.generate_pseudo_random_dots()
 
-  RdtClient(host, port, "testapp", checkerClient).flatMap(client => {
+  RdtClient(host, port, "testapp", MonitoringClient(checkerHost, checkerPort)).flatMap(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
@@ -128,10 +131,9 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
 }
 
 def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
-  var dots: Dots    = Dots.empty
-  val checkerClient = MonitoringClient(checkerHost, checkerPort)
+  var dots: Dots = Dots.empty
 
-  RdtClient(host, port, "testapp", checkerClient).map(client => {
+  RdtClient(host, port, "testapp", MonitoringClient(checkerHost, checkerPort)).map(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")
