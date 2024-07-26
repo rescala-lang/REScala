@@ -63,7 +63,10 @@ class JettyWsListener(val server: Server) {
         }
     }
 
-  def webSocketCreator(incoming: ChannelHandler[MessageBuffer], delayCallback: DelayCallback[Connection[MessageBuffer]]) =
+  def webSocketCreator(
+      incoming: ChannelHandler[MessageBuffer],
+      delayCallback: DelayCallback[Connection[MessageBuffer]]
+  ) =
     new WebSocketCreator {
       override def createWebSocket(
           request: ServerUpgradeRequest,
@@ -87,8 +90,9 @@ object JettyWsConnection {
         client.start()
         println(s"client started")
         // this returns a future
-        client.connect(new JettyWsHandler(incomingHandler, Async.handler[Connection[MessageBuffer]]), uri).toAsync.run { sess =>
-          println(s"connect returned $sess")
+        client.connect(new JettyWsHandler(incomingHandler, Async.handler[Connection[MessageBuffer]]), uri).toAsync.run {
+          sess =>
+            println(s"connect returned $sess")
         }
       }
   }
@@ -110,8 +114,10 @@ class JettySessionWrapper(session: Session) extends Connection[MessageBuffer] {
   }
 }
 
-class JettyWsHandler(incoming: ChannelHandler[MessageBuffer], connectionEstablished: DelayCallback[Connection[MessageBuffer]])
-    extends Listener.Abstract {
+class JettyWsHandler(
+    incoming: ChannelHandler[MessageBuffer],
+    connectionEstablished: DelayCallback[Connection[MessageBuffer]]
+) extends Listener.Abstract {
 
   @volatile private var internalCallback: DelayCallback[MessageBuffer] = scala.compiletime.uninitialized
 

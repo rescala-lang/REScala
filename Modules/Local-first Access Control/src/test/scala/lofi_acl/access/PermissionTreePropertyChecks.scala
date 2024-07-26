@@ -32,7 +32,7 @@ def arbPermissionTreeMaxDepth(maxDepth: Int): Gen[PermissionTree] =
 given arbPermissionTree: Arbitrary[PermissionTree] = Arbitrary(arbPermissionTreeMaxDepth(50))
 
 val normalizedArbPermissionTree: Arbitrary[PermissionTree] = Arbitrary(
-  arbPermissionTree.arbitrary.map(tree => tree `merge`tree)
+  arbPermissionTree.arbitrary.map(tree => tree `merge` tree)
 )
 
 class PermissionTreeLatticeChecks extends LatticePropertyChecks[PermissionTree](orderAgreesWithStructuralEquals = false)

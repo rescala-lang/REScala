@@ -124,25 +124,26 @@ object WebRTCConnection {
       connector
     }
 
-    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
+    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+      Async.fromCallback {
 
-      channel.readyState match {
-        case dom.RTCDataChannelState.connecting =>
-          // strange fix for strange issue with Chromium
-          // val handle = js.timers.setTimeout(1.day) { channel.readyState; () }
+        channel.readyState match {
+          case dom.RTCDataChannelState.connecting =>
+            // strange fix for strange issue with Chromium
+            // val handle = js.timers.setTimeout(1.day) { channel.readyState; () }
 
-          channel.onopen = { (_: dom.Event) =>
-            // js.timers.clearTimeout(handle)
+            channel.onopen = { (_: dom.Event) =>
+              // js.timers.clearTimeout(handle)
+              Async.handler.succeed(succeedConnection(incomingHandler))
+            }
+
+          case dom.RTCDataChannelState.open =>
             Async.handler.succeed(succeedConnection(incomingHandler))
-          }
 
-        case dom.RTCDataChannelState.open =>
-          Async.handler.succeed(succeedConnection(incomingHandler))
-
-        case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
-          Async.handler.fail(new WebRTCConnectionFailed("channel closed"))
+          case dom.RTCDataChannelState.closing | dom.RTCDataChannelState.closed =>
+            Async.handler.fail(new WebRTCConnectionFailed("channel closed"))
+        }
       }
-    }
 
   }
 

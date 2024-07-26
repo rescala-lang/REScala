@@ -25,7 +25,9 @@ class PaxosTest extends munit.FunSuite {
   test("Merge fails with different members") {
     val p1: Paxos[Int] = Paxos.unchanged.copy(members = Set(id1).map(_.uid))
     val p2: Paxos[Int] = Paxos.unchanged.copy(members = Set(id2).map(_.uid))
-    interceptMessage[IllegalArgumentException]("requirement failed: cannot merge two Paxos instances with differing members") {
+    interceptMessage[IllegalArgumentException](
+      "requirement failed: cannot merge two Paxos instances with differing members"
+    ) {
       p1 `merge` p2
     }
   }
@@ -153,7 +155,7 @@ class PaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
     id2)).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, None)
-    //println(testPaxosObject.promises)
+    // println(testPaxosObject.promises)
     // replica 1 and 2 try to write again
     testPaxosObject =
       testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))

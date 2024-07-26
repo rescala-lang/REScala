@@ -90,12 +90,12 @@ class LoRePhase extends PluginPhase:
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
             // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
             logRhsInfo(indentLevel, operandSide, "field access to field", opOrField.show)
-            TFCall( // foo.bar
+            TFCall(                                                // foo.bar
               buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
-              field.toString, // bar
-              List() // Always empty as these are field accesses
+              field.toString,                                      // bar
+              List()                                               // Always empty as these are field accesses
             )
-      case Apply(Select(leftArg, opOrMethod), params: List[_]) => // Method calls and binary operator applications
+      case Apply(Select(leftArg, opOrMethod), params: List[?]) => // Method calls and binary operator applications
         opOrMethod match
           case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
             // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
@@ -103,53 +103,53 @@ class LoRePhase extends PluginPhase:
             val rightArg = params.head
             opOrMethod match
               case nme.ADD => TAdd( // left + right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.SUB => TSub( // left - right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.MUL => TMul( // left * right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.DIV => TDiv( // left / right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.And => TConj( // left && right, Important: nme.AND is & and nme.And is &&
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.Or => TDisj( // left || right, Important: nme.OR is | and nme.Or is ||
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.LT => TLt( // left < right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.GT => TGt( // left > right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.LE => TLeq( // left <= right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.GE => TGeq( // left >= right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.EQ => TEq( // left == right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case nme.NE => TIneq( // left != right
-                buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
-              )
+                  buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                )
               case _ => // Unsupported binary operators
                 report.error(
                   // No access to sourcePos here due to LazyTree
@@ -157,25 +157,39 @@ class LoRePhase extends PluginPhase:
                 )
                 TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
           case methodName => // Method calls outside of explicitly supported binary operators
-            logRhsInfo(indentLevel, operandSide, s"call to a method with ${params.size} parameters:", methodName.toString)
-            TFCall( // foo.bar(baz, qux, ...)
-              buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
-              methodName.toString, // bar
-              params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // baz, qux, ... (might each be more complex terms)
+            logRhsInfo(
+              indentLevel,
+              operandSide,
+              s"call to a method with ${params.size} parameters:",
+              methodName.toString
             )
-      case Apply(Ident(name: Name), params: List[_]) => // Function calls
+            TFCall(                                                    // foo.bar(baz, qux, ...)
+              buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
+              methodName.toString,                                     // bar
+              params.map(p =>
+                buildLoreRhsTerm(p, indentLevel + 1, operandSide)
+              ) // baz, qux, ... (might each be more complex terms)
+            )
+      case Apply(Ident(name: Name), params: List[?]) => // Function calls
         logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} parameters:", name.toString)
-        TFunC( // foo(bar, baz)
+        TFunC(           // foo(bar, baz)
           name.toString, // foo
-          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)) // bar, baz, ... (might each be more complex terms)
+          params.map(p =>
+            buildLoreRhsTerm(p, indentLevel + 1, operandSide)
+          ) // bar, baz, ... (might each be more complex terms)
         )
-      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) => // Type applications (e.g. Source or Derived)
+      case Apply(
+            Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]),
+            _
+          ) => // Type applications (e.g. Source or Derived)
         logRhsInfo(indentLevel, operandSide, s"type application of the ${typeName.toString} type", "")
         typeName.toString match
-          case "Source" => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case "Source"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
           case "Derived" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
           case _ => // Unsupported type application
-            report.error(s"${"\t".repeat(indentLevel)}Unsupported type application used in RHS:\n${"\t".repeat(indentLevel)}$tree")
+            report.error(
+              s"${"\t".repeat(indentLevel)}Unsupported type application used in RHS:\n${"\t".repeat(indentLevel)}$tree"
+            )
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
         report.error(
@@ -188,7 +202,8 @@ class LoRePhase extends PluginPhase:
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
+      case ValDef(name, tpt, rhs)
+          if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
         // -------------
         // Code for handling arguments too, should be handled but not just attached to a flat list, so commented
@@ -208,17 +223,17 @@ class LoRePhase extends PluginPhase:
 //            )
 //        // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
 //        loreTerms = loreTerms :+ term
-          // -------------
-          // See above
-          rhs match
-            case EmptyTree => () // Ignore func args for now
-            case _ =>
-                val term: Term = TAbs(
-                    name.toString,                    // foo (any valid Scala identifier)
-                    SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-                    buildLoreRhsTerm(rhs, 1)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-                )
-                loreTerms = loreTerms :+ term
+        // -------------
+        // See above
+        rhs match
+          case EmptyTree => () // Ignore func args for now
+          case _ =>
+            val term: Term = TAbs(
+              name.toString,                    // foo (any valid Scala identifier)
+              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
+              buildLoreRhsTerm(rhs, 1)          // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+            )
+            loreTerms = loreTerms :+ term
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
@@ -245,11 +260,14 @@ class LoRePhase extends PluginPhase:
                 // TODO: Add similar code to above for handling sources as func args
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
-                  SimpleType( // Source[bar], where bar is one of Int, String, Boolean
+                  SimpleType(    // Source[bar], where bar is one of Int, String, Boolean
                     "Source",
                     List(SimpleType(typeArg, List()))
                   ),
-                  TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz), where baz is any recognized expression, see above
+                  TSource(buildLoreRhsTerm(
+                    properRhs,
+                    1
+                  )) // Source(baz), where baz is any recognized expression, see above
                 )
               case _ =>
                 // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
@@ -280,11 +298,14 @@ class LoRePhase extends PluginPhase:
                 // TODO: Add similar code to above for handling sources as func args
                 loreTerms = loreTerms :+ TAbs(
                   name.toString, // foo (any valid Scala identifier)
-                  SimpleType( // Derived[bar], where bar is one of Int, String, Boolean
+                  SimpleType(    // Derived[bar], where bar is one of Int, String, Boolean
                     "Derived",
                     List(SimpleType(typeArg, List()))
                   ),
-                  TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz } , where baz is any recognized expression, see above
+                  TDerived(buildLoreRhsTerm(
+                    properRhs,
+                    1
+                  )) // Derived { baz } , where baz is any recognized expression, see above
                 )
               case _ =>
                 // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker

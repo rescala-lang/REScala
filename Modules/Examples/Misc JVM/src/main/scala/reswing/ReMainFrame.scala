@@ -2,7 +2,6 @@ package reswing
 
 import scala.swing.{Component, Dimension, MainFrame, Point, Rectangle}
 
-
 @scala.annotation.nowarn("msg=shadows field")
 class ReMainFrame(
     contents: ReSwingValue[Component] = (),

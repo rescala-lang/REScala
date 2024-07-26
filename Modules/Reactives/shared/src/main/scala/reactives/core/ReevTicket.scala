@@ -4,8 +4,11 @@ package reactives.core
   * The ticket tracks return values, such as dependencies, the value, and if the value should be propagated.
   * Such usages make it unsuitable as an API for the user, where [[StaticTicket]] or [[DynamicTicket]] should be used instead.
   */
-final class ReevTicket[State[_], V](tx2: Transaction[State], private var _before: V, accessHandler: AccessHandler[State])
-    extends DynamicTicket(tx2)
+final class ReevTicket[State[_], V](
+    tx2: Transaction[State],
+    private var _before: V,
+    accessHandler: AccessHandler[State]
+) extends DynamicTicket(tx2)
     with Result[State, V] {
 
   private var collectedDependencies: Set[ReSource.of[State]] | Null = null

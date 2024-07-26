@@ -31,12 +31,12 @@ given Ordering[Accept[?]] with
   override def compare(x: Accept[?], y: Accept[?]): Int = Ordering[Prepare].compare(x.proposal, y.proposal)
 
 case class Paxos[A](
-                     prepares: GrowOnlySet[Prepare],
-                     promises: GrowOnlySet[Promise[A]],
-                     accepts: GrowOnlySet[Accept[A]],
-                     accepteds: GrowOnlySet[Accepted[A]],
-                     members: Set[Uid] // constant
-                   ) {
+    prepares: GrowOnlySet[Prepare],
+    promises: GrowOnlySet[Promise[A]],
+    accepts: GrowOnlySet[Accept[A]],
+    accepteds: GrowOnlySet[Accepted[A]],
+    members: Set[Uid] // constant
+) {
   private def quorum: Int = members.size / 2 + 1
 
   def prepare()(using LocalUid): Paxos[A] =
@@ -73,7 +73,7 @@ case class Paxos[A](
     else
       // is accepted, check if promise contains value
       val promisesWithVal = promisesForProposal.filter(_.value.isDefined)
-      val value: A = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
+      val value: A        = promisesWithVal.map(_.value).headOption.flatten.getOrElse(v)
       Paxos.unchanged.copy(
         accepts = Set(Accept(myHighestProposal.get, value))
       )
@@ -82,7 +82,7 @@ case class Paxos[A](
     if newestAccept.isEmpty || // there are no accepts
       // I have already promised a higher proposalNumber
       promises.filter(_.acceptor == replicaId).map(_.proposal.proposalNumber).maxOption.getOrElse(-1) >
-        newestAccept.get.proposal.proposalNumber
+      newestAccept.get.proposal.proposalNumber
     then
       Paxos.unchanged
     else
@@ -100,8 +100,8 @@ case class Paxos[A](
     // check which phase we are in
     phase match
       case Phase.One if newestPrepare.isDefined => promise()
-      case Phase.Two => accepted()
-      case _ => Paxos.unchanged
+      case Phase.Two                            => accepted()
+      case _                                    => Paxos.unchanged
 
   // helper functions
   private def newestAccept: Option[Accept[A]] = accepts.maxOption
@@ -131,13 +131,13 @@ case class Paxos[A](
     if canWrite then
       (phase, myHighestProposal, highestProposal) match
         case (Phase.One, _, _)
-          if canSendAccept // we are in phase one and have received enough promises
-        => accept(value)
+            if canSendAccept // we are in phase one and have received enough promises
+            => accept(value)
         case (Phase.One, Some(p1), Some(p2))
-          if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
-        => Paxos.unchanged
+            if p1.proposalNumber == p2.proposalNumber // my proposal is already the highest or there is a draw
+            => Paxos.unchanged
         case _ // we try to propose new value
-        => prepare()
+            => prepare()
     else
       Paxos.unchanged
 
@@ -160,9 +160,9 @@ object Paxos {
 
       def allUids(p: Paxos[?]): Set[Uid] =
         p.prepares.map(_.proposer) union
-          p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
-          p.accepts.map(_.proposal.proposer) union
-          p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
+        p.promises.flatMap(p => Set(p.proposal.proposer, p.acceptor)) union
+        p.accepts.map(_.proposal.proposer) union
+        p.accepteds.flatMap(p => Set(p.proposal.proposer, p.acceptor))
 
       require(
         (allUids(left) union allUids(right)).subsetOf(left.members),

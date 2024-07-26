@@ -100,7 +100,7 @@ given Encoder[PeerAddress] = Encoder { (writer, peerAddress) =>
 given Decoder[PeerAddress] = Decoder { reader =>
   val unbounded = reader.readMapOpen(1)
 
-  var peerAddress: PeerAddress| Null = null
+  var peerAddress: PeerAddress | Null = null
 
   reader.readString() match
     case "Ip" => peerAddress = PeerAddress.Ip(reader.readString())

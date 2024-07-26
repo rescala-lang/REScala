@@ -4,7 +4,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import rdts.base.LocalUid
 import rdts.time.{Dot, Dots}
 import replication.Aead
-abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead|Null)(
+abstract class TrustedReplica[T](val replicaId: LocalUid, mutate: T => Unit, private val aead: Aead | Null)(
     implicit
     val stateJsonCodec: JsonValueCodec[T],
     val dotSetJsonCodec: JsonValueCodec[Dots]

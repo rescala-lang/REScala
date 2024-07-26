@@ -28,47 +28,48 @@ object WebsocketConnect {
 
   def connect(url: String): LatentConnection[MessageBuffer] = new LatentConnection {
 
-    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
+    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+      Async.fromCallback {
 
-      println(s"preparing connection")
+        println(s"preparing connection")
 
-      val socket = new dom.WebSocket(url)
+        val socket = new dom.WebSocket(url)
 
-      socket.onopen = (_: dom.Event) => {
+        socket.onopen = (_: dom.Event) => {
 
-        println(s"connection opened")
+          println(s"connection opened")
 
-        val connect  = new WebsocketConnect(socket)
-        val callback = incomingHandler.getCallbackFor(connect)
+          val connect  = new WebsocketConnect(socket)
+          val callback = incomingHandler.getCallbackFor(connect)
 
-        socket.onmessage = { (event: dom.MessageEvent) =>
-          event.data match {
-            case data: ArrayBuffer =>
-              callback.succeed(JsArrayBufferMessageBuffer(data))
+          socket.onmessage = { (event: dom.MessageEvent) =>
+            event.data match {
+              case data: ArrayBuffer =>
+                callback.succeed(JsArrayBufferMessageBuffer(data))
 
-            case data: dom.Blob =>
-              val reader = new dom.FileReader
-              reader.onload = { (event: dom.Event) =>
-                val buffer = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
-                callback.succeed(JsArrayBufferMessageBuffer(buffer))
-              }
-              reader.readAsArrayBuffer(data)
+              case data: dom.Blob =>
+                val reader = new dom.FileReader
+                reader.onload = { (event: dom.Event) =>
+                  val buffer = event.target.asInstanceOf[js.Dynamic].result.asInstanceOf[ArrayBuffer]
+                  callback.succeed(JsArrayBufferMessageBuffer(buffer))
+                }
+                reader.readAsArrayBuffer(data)
 
-            case data: String =>
-              callback.succeed(ArrayMessageBuffer(data.getBytes))
+              case data: String =>
+                callback.succeed(ArrayMessageBuffer(data.getBytes))
+            }
           }
+
+          socket.onerror = (event: dom.Event) =>
+            socket.close()
+            callback.fail(new WebsocketException("Error during websocket communication"))
+
+          Async.handler.succeed(connect)
         }
 
         socket.onerror = (event: dom.Event) =>
           socket.close()
-          callback.fail(new WebsocketException("Error during websocket communication"))
-
-        Async.handler.succeed(connect)
+          Async.handler.fail(new WebsocketException("Websocket failed to connect"))
       }
-
-      socket.onerror = (event: dom.Event) =>
-        socket.close()
-        Async.handler.fail(new WebsocketException("Websocket failed to connect"))
-    }
   }
 }

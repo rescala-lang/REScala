@@ -119,12 +119,12 @@ class DotMapTest extends FunSuite {
     }
 
     val map = DotMap.from(List(
-      Dot(a, 0) -> "a0",
-      Dot(a, 1) -> "a1",
-      Dot(a, 3) -> "a3",
+      Dot(a, 0)  -> "a0",
+      Dot(a, 1)  -> "a1",
+      Dot(a, 3)  -> "a3",
       Dot(b, 10) -> "b10",
       Dot(b, 42) -> "b42",
-      Dot(c, 0) -> "c0"
+      Dot(c, 0)  -> "c0"
     ))
 
     assertEquals(map.get(Dot(a, 2)), None)

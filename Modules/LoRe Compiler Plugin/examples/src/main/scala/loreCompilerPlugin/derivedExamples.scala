@@ -8,23 +8,23 @@ def foo(bar: Int, baz: String): Int = 0
 object derivedExamples:
   def derivedExamples(): Unit =
     // ========= Plain values and sources to use in below tests =========
-    val integerLiteral: Int = 1
-    val stringLiteral: String = "foo"
-    val booleanLiteral: Boolean = true
-    val functionCall: Int = foo(1, "foobar")
-    val methodCallNoBraces: Int = 1.toInt
+    val integerLiteral: Int          = 1
+    val stringLiteral: String        = "foo"
+    val booleanLiteral: Boolean      = true
+    val functionCall: Int            = foo(1, "foobar")
+    val methodCallNoBraces: Int      = 1.toInt
     val methodCallWithBraces: String = "foo".strip()
     val methodCallWithParams: String = "foo".repeat(5)
 
-    val integerLiteralSource1: Source[Int] = Source(1)
-    val integerLiteralSource2: Source[Int] = Source(2)
+    val integerLiteralSource1: Source[Int]  = Source(1)
+    val integerLiteralSource2: Source[Int]  = Source(2)
     val stringLiteralSource: Source[String] = Source("bar")
-    val boolLiteralSource: Source[Boolean] = Source(false)
+    val boolLiteralSource: Source[Boolean]  = Source(false)
 
     // ========= Derived tests =========
 
     // These will have constant values, as they depend on values that are not mutable
-    val integerLiteralDerived: Derived[Int] = Derived { 1 + 2 }
+    val integerLiteralDerived: Derived[Int]    = Derived { 1 + 2 }
     val integerReferenceDerived1: Derived[Int] = Derived { integerLiteral + 2 }
     val integerReferenceDerived2: Derived[Int] = Derived { 1 + integerLiteral }
 

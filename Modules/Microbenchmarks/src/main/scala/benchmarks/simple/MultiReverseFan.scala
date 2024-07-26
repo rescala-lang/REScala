@@ -22,7 +22,7 @@ class MultiReverseFan {
 
   var sources: Array[Var[Int]]    = scala.compiletime.uninitialized
   var results: Array[Signal[Int]] = scala.compiletime.uninitialized
-  var locks: Array[Lock]  | Null         = null
+  var locks: Array[Lock] | Null   = null
   var groupSize: Int              = scala.compiletime.uninitialized
 
   @Setup
