@@ -1,11 +1,12 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Packet, WSEroutingClient, printError}
+import dtn.{MonitoringMessage, DtnPeer, Packet, WSEroutingClient, printError}
 
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
+import dtn.MonitoringClientInterface
 
 trait Routing {
   def peers: ConcurrentHashMap[String, DtnPeer]
@@ -24,7 +25,7 @@ trait Routing {
   def onServiceState(packet: Packet.ServiceState): Unit
 }
 
-abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
+abstract class BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) extends Routing {
   val peers: ConcurrentHashMap[String, DtnPeer] = ConcurrentHashMap()
   val services: ConcurrentHashMap[Int, String]  = ConcurrentHashMap()
 
@@ -43,11 +44,17 @@ abstract class BaseRouter(ws: WSEroutingClient) extends Routing {
           case Some(response) => ws.sendPacket(response).printError()
         }
       }
-      case p: Packet.Error                             => onError(p)
-      case p: Packet.Timeout                           => onTimeout(p)
-      case p: Packet.SendingFailed                     => onSendingFailed(p)
-      case p: Packet.SendingSucceeded                  => onSendingSucceeded(p)
-      case p: Packet.IncomingBundle                    => onIncomingBundle(p)
+      case p: Packet.Error         => onError(p)
+      case p: Packet.Timeout       => onTimeout(p)
+      case p: Packet.SendingFailed => onSendingFailed(p)
+      case p: Packet.SendingSucceeded => {
+        monitoringClient.send(MonitoringMessage.BundleForwardedAtRouter(ws.nodeId, p.bid))
+        onSendingSucceeded(p)
+      }
+      case p: Packet.IncomingBundle => {
+        monitoringClient.send(MonitoringMessage.BundleReceivedAtRouter(ws.nodeId, p.bndl.id))
+        onIncomingBundle(p)
+      }
       case p: Packet.IncomingBundleWithoutPreviousNode => onIncomingBundleWithoutPreviousNode(p)
       case p: Packet.EncounteredPeer                   => onEncounteredPeer(p)
       case p: Packet.DroppedPeer                       => onDroppedPeer(p)

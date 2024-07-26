@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
+import dtn.{DtnPeer, Packet, Sender, WSEroutingClient, MonitoringClientInterface, NoMonitoringClient}
 
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,7 +11,8 @@ import scala.jdk.CollectionConverters.*
   Includes the standalone EpidemicRouter and the extracted EpidemicStrategy for use in other routers.
  */
 
-class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+class EpidemicRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface)
+    extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
 
   val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
@@ -50,8 +51,12 @@ class EpidemicRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClie
   }
 }
 object EpidemicRouter {
-  def apply(host: String, port: Int): Future[EpidemicRouter] =
-    WSEroutingClient(host, port).map(ws => new EpidemicRouter(ws))
+  def apply(
+      host: String,
+      port: Int,
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient
+  ): Future[EpidemicRouter] =
+    WSEroutingClient(host, port).map(ws => new EpidemicRouter(ws, monitoringClient))
 }
 
 class EpidemicStrategy {

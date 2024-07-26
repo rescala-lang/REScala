@@ -1,6 +1,6 @@
 package replication
 
-import _root_.dtn.{NoDotsConvergenceClient, RdtClient, RdtMessageType}
+import _root_.dtn.{MonitoringClientInterface, NoMonitoringClient, RdtClient, RdtMessageType}
 import channels.{Abort, Connection, Handler, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
@@ -17,7 +17,10 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
       case ProtocolMessage.Request(sender, dots) =>
-        connection.send(RdtMessageType.Request, Array(), dots).toAsync(using executionContext)
+        // we could send requests into the network. the routing handles them correctly. but they are unnecessary with the cb.succeed() down below.
+        // todo: actually there should be no requests being sent anymore then. is that the case?
+        // connection.send(RdtMessageType.Request, Array(), dots).toAsync(using executionContext)
+        Sync { () }
       case ProtocolMessage.Payload(sender, dots, data) =>
         connection.send(RdtMessageType.Payload, writeToArray[T](data), dots).toAsync(using executionContext)
 
@@ -27,8 +30,13 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
   }(using executionContext)
 }
 
-class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec: ExecutionContext)
-    extends LatentConnection[ProtocolMessage[T]] {
+class DTNChannel[T: JsonValueCodec](
+    host: String,
+    port: Int,
+    appName: String,
+    ec: ExecutionContext,
+    monitoringClient: MonitoringClientInterface = NoMonitoringClient
+) extends LatentConnection[ProtocolMessage[T]] {
 
   // We use a local dtnid instead of a remote replica ID to signify that the local DTNd is the one providing information.
   // If the local dtnd could be stopped and restarted without loosing data, this id should remain the same for performance reasons, but it will be correct even if it changes.
@@ -36,7 +44,7 @@ class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec
 
   override def prepare(incomingHandler: Handler[ProtocolMessage[T]]): Async[Abort, Connection[ProtocolMessage[T]]] =
     Async {
-      val client: RdtClient = RdtClient(host, port, appName, NoDotsConvergenceClient).toAsync(using ec).bind
+      val client: RdtClient = RdtClient(host, port, appName, monitoringClient).toAsync(using ec).bind
       val conn              = DTNRdtClientContext[T](client, ec)
       val cb                = incomingHandler.getCallbackFor(conn)
 
@@ -46,8 +54,8 @@ class DTNChannel[T: JsonValueCodec](host: String, port: Int, appName: String, ec
           case RdtMessageType.Payload => cb.succeed(ProtocolMessage.Payload(dtnid, dots, readFromArray[T](payload)))
       }
 
-      // TODO: create custom empty request to signal to the application that it should send us all data it has.
-      // optimally, this should not be an empty set of dots, but those present in the network
+      // This tells the rdt to send everything it has and new following stuff into the network.
+      // It makes any requests unnecessary.
       cb.succeed(ProtocolMessage.Request(dtnid, Dots.empty))
 
       conn

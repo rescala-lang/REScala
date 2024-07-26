@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType}
+import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType, MonitoringClientInterface, NoMonitoringClient}
 import rdts.time.Dots
 
 import java.util.concurrent.ConcurrentHashMap
@@ -64,7 +64,8 @@ val N_TOP_NEIGHBOURS = 3
           on a forward request, the sorted list with the highest score first is returned. the first n neighbours are picked.
  */
 
-class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface)
+    extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
   // epidemic routing is for rdt-request-bundles. they do not contain any payload that contributes to our state (in contrast to rdt-payload-bundles)
   val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
@@ -268,7 +269,11 @@ class RdtRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
   }
 }
 object RdtRouter {
-  def apply(host: String, port: Int): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws))
+  def apply(
+      host: String,
+      port: Int,
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient
+  ): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws, monitoringClient))
 }
 
 class LikelihoodState {

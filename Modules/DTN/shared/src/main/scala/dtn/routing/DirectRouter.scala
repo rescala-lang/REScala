@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Packet, Sender, WSEroutingClient}
+import dtn.{DtnPeer, Packet, Sender, WSEroutingClient, MonitoringClientInterface, NoMonitoringClient}
 
 import java.lang
 import java.util.concurrent.ConcurrentHashMap
@@ -11,7 +11,8 @@ import scala.concurrent.Future
     Includes the standalone DirectRouter, but, no DirectStrategy because it cannot handle and will not deliver to group-endpoints, so, this routing-strategy has no use in our rdt-setting.
  */
 
-class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+class DirectRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface)
+    extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
   val delivered: ConcurrentHashMap.KeySetView[String, lang.Boolean] =
     ConcurrentHashMap.newKeySet[String]() // will grow indefinitely as we do not garbage collect here
 
@@ -71,6 +72,10 @@ class DirectRouter(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient
   }
 }
 object DirectRouter {
-  def apply(host: String, port: Int): Future[DirectRouter] =
-    WSEroutingClient(host, port).map(ws => new DirectRouter(ws))
+  def apply(
+      host: String,
+      port: Int,
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient
+  ): Future[DirectRouter] =
+    WSEroutingClient(host, port).map(ws => new DirectRouter(ws, monitoringClient))
 }

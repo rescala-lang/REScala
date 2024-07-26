@@ -5,7 +5,9 @@ import rdts.time.Dots
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: ConvergenceClientInterface) {
+class RdtClient(ws: WSEndpointClient, appName: String, monitoringClient: MonitoringClientInterface) {
+  val full_source_uri: String = s"${ws.nodeId}rdt/$appName"
+
   def send(message_type: RdtMessageType, payload: Array[Byte], dots: Dots): Future[Unit] = {
     val bundle: Bundle = BundleCreation.createBundleRdt(
       message_type = message_type,
@@ -13,9 +15,10 @@ class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: Convergenc
       dots = dots,
       node = Endpoint.createFrom(ws.nodeId),
       full_destination_uri = s"dtn://global/~rdt/$appName",
-      full_source_uri = s"${ws.nodeId}rdt/$appName"
+      full_source_uri = full_source_uri
     )
 
+    monitoringClient.send(MonitoringMessage.BundleCreatedAtClient(full_source_uri, bundle.id, dots))
     ws.sendBundle(bundle)
   }
 
@@ -31,7 +34,11 @@ class RdtClient(ws: WSEndpointClient, appName: String, checkerClient: Convergenc
         if payload.isEmpty || rdt_meta_info.isEmpty then {
           println("did not contain dots or payload. bundle is no rdt bundle. ignoring bundle.")
         } else {
-          checkerClient.send(rdt_meta_info.get.dots)
+          monitoringClient.send(MonitoringMessage.BundleDeliveredAtClient(
+            full_source_uri,
+            bundle.id,
+            rdt_meta_info.get.dots
+          ))
           callback(rdt_meta_info.get.message_type, payload.get, rdt_meta_info.get.dots)
         }
 
@@ -49,11 +56,11 @@ object RdtClient {
       host: String,
       port: Int,
       appName: String,
-      checkerClient: ConvergenceClientInterface = NoDotsConvergenceClient
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient
   ): Future[RdtClient] = {
     WSEndpointClient(host, port)
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"dtn://global/~rdt/$appName"))
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"${ws.nodeId}rdt/$appName"))
-      .map(ws => new RdtClient(ws, appName, checkerClient))
+      .map(ws => new RdtClient(ws, appName, monitoringClient))
   }
 }

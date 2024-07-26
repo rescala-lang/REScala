@@ -70,7 +70,7 @@ commandline options:
 // all helper methods
 
 def start_checker_server(interface_address: String, port: Int): Unit = {
-  val checker = DotsConvergenceChecker(interface_address, port)
+  val checker = MonitoringServer(interface_address, port)
   checker.run()
 }
 
@@ -111,7 +111,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 
 def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   val dots: Dots    = DotsCreation.generate_pseudo_random_dots()
-  val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
+  val checkerClient = MonitoringClient(checkerHost, checkerPort)
 
   RdtClient(host, port, "testapp", checkerClient).flatMap(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
@@ -129,7 +129,7 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
 
 def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
   var dots: Dots    = Dots.empty
-  val checkerClient = DotsConvergenceClient(checkerHost, checkerPort)
+  val checkerClient = MonitoringClient(checkerHost, checkerPort)
 
   RdtClient(host, port, "testapp", checkerClient).map(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {

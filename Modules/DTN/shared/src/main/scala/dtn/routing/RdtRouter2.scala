@@ -1,6 +1,6 @@
 package dtn.routing
 
-import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType}
+import dtn.{DtnPeer, Endpoint, Packet, PreviousNodeBlock, RdtMetaBlock, Sender, WSEroutingClient, RdtMetaInfo, RdtMessageType, MonitoringClientInterface, NoMonitoringClient}
 import rdts.time.Dots
 
 import java.util.concurrent.ConcurrentHashMap
@@ -41,7 +41,8 @@ import scala.util.{Random, Try}
       4. Map peers to clas and return the sender-list.
  */
 
-class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) {
+class RdtRouter2(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface)
+    extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
   // epidemic routing is for rdt-request-bundles. they do not contain any payload that contributes to our state (in contrast to rdt-payload-bundles)
   val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
@@ -180,7 +181,11 @@ class RdtRouter2(ws: WSEroutingClient) extends BaseRouter(ws: WSEroutingClient) 
   }
 }
 object RdtRouter2 {
-  def apply(host: String, port: Int): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws))
+  def apply(
+      host: String,
+      port: Int,
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient
+  ): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws, monitoringClient))
 }
 
 class DotState2 {
