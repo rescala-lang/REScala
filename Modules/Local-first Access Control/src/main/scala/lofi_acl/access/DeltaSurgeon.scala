@@ -74,6 +74,7 @@ object DeltaSurgeon {
       factorBottoms: IArray[Bottom[Any]],        // The Bottom TypeClass instance for each factor
       factorSurgeons: IArray[DeltaSurgeon[Any]], // The DeltaSurgeon TypeClass instance for each factor
   )(using pm: Mirror.ProductOf[T]) extends DeltaSurgeon[T]:
+    require(factorLabels.toSet.size == factorLabels.length)
     private val factorLabelToIndexMap = factorLabels.zipWithIndex.toMap
 
     override def isolate(delta: T): IsolatedDeltaParts = {
@@ -114,6 +115,7 @@ object DeltaSurgeon {
       elementLabels: Array[String], // Maps the ordinal value to the string representation of the element type
       elementSurgeons: IArray[DeltaSurgeon[Any]], // The DeltaSurgeon TypeClass instance for each type
   )(using sm: Mirror.SumOf[T]) extends DeltaSurgeon[T]:
+    require(elementLabels.toSet.size == elementLabels.length)
     private val ordinalLookup = elementLabels.zipWithIndex.toMap
 
     override def isolate(delta: T): IsolatedDeltaParts = {

@@ -27,16 +27,67 @@ object Filter:
   inline def apply[T](using filter: Filter[T]): Filter[T] = filter
 
   // From https://blog.philipp-martini.de/blog/magic-mirror-scala3/
-  private inline def getFactorLabels[A <: Tuple]: List[String] = inline erasedValue[A] match {
+  private inline def getElementNames[A <: Tuple]: List[String] = inline erasedValue[A] match {
     case _: EmptyTuple => Nil
-    case _: (t *: ts)  => constValue[t].toString :: getFactorLabels[ts]
+    case _: (t *: ts)  => constValue[t].toString :: getElementNames[ts]
   }
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T], productBottom: Bottom[T]): Filter[T] =
-    val factorBottoms = summonAll[Tuple.Map[pm.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
-    val factorFilters = summonAll[Tuple.Map[pm.MirroredElemTypes, Filter]].toIArray.map(_.asInstanceOf[Filter[Any]])
-    val factorLabels  = getFactorLabels[pm.MirroredElemLabels].zipWithIndex.toMap
-    ProductTypeFilter[T](pm, productBottom, factorLabels, factorBottoms, factorFilters)
+  inline def derived[T](using m: Mirror.Of[T], productBottom: Bottom[T]): Filter[T] =
+    // Element is either a factor of a product or an element in a sum
+    val elementBottoms = summonAll[Tuple.Map[m.MirroredElemTypes, Bottom]].toIArray.map(_.asInstanceOf[Bottom[Any]])
+    val elementFilters = summonAll[Tuple.Map[m.MirroredElemTypes, Filter]].toIArray.map(_.asInstanceOf[Filter[Any]])
+    val elementNames   = getElementNames[m.MirroredElemLabels]
+    require(elementNames.toSet.size == elementNames.length) // Ensure uniqueness of element names
+    inline m match
+      case prodMirror: Mirror.ProductOf[T] =>
+        ProductTypeFilter[T](prodMirror, productBottom, elementNames.zipWithIndex.toMap, elementBottoms, elementFilters)
+      case sumMirror: Mirror.SumOf[T] =>
+        SumTypeFilter[T](sumMirror, productBottom, elementNames.toArray, elementBottoms, elementFilters)
+
+  protected abstract class AlgebraicFilter[T](
+      elementLabels: Map[String, Int],
+      elementFilters: IArray[Filter[Any]],
+  ) extends Filter[T] {
+
+    /** Checks whether all children labels are the field/type names of this product and validates the filters for the children.
+      *
+      * @param permissionTree The tree to check
+      */
+    override def validatePermissionTree(permissionTree: PermissionTree): Unit = {
+      permissionTree.children.foreach { case (factorLabel, factorPermissionTree) =>
+        elementLabels.get(factorLabel) match
+          case None =>
+            try {
+              if factorLabel == "*" then elementFilters.foreach(_.validatePermissionTree(factorPermissionTree))
+            } catch {
+              case InvalidPathException(labels) => throw InvalidPathException("*" :: labels)
+            }
+            throw InvalidPathException(List(factorLabel))
+          case Some(factorIdx) =>
+            try {
+              elementFilters(factorIdx).validatePermissionTree(factorPermissionTree)
+            } catch {
+              case InvalidPathException(path) => throw InvalidPathException(factorLabel :: path)
+            }
+      }
+    }
+
+    // Assumes a valid permission tree
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = {
+      if permissionTree.permission == ALLOW then return allow
+
+      val minimizedChildren = permissionTree.children.map { (label, subtree) =>
+        val idx                            = elementLabels(label)
+        val filter                         = elementFilters(idx)
+        val minimizedChild: PermissionTree = filter.minimizePermissionTree(subtree)
+        label -> minimizedChild
+      }
+
+      if minimizedChildren.size == elementFilters.size && minimizedChildren.forall(_._2.permission == ALLOW)
+      then allow
+      else PermissionTree(PARTIAL, minimizedChildren)
+    }
+  }
 
   class ProductTypeFilter[T](
       pm: Mirror.ProductOf[T],
@@ -44,11 +95,12 @@ object Filter:
       factorLabels: Map[String, Int],     // Maps the factor label to the factor index
       factorBottoms: IArray[Bottom[Any]], // The Bottom TypeClass instance for each factor
       factorFilters: IArray[Filter[Any]]  // The Filter TypeClass instance for each factor
-  ) extends Filter[T]:
+  ) extends AlgebraicFilter[T](factorLabels, factorFilters):
     override def filter(delta: T, permissionTree: PermissionTree): T = {
       permissionTree match
-        case PermissionTree(ALLOW, _)          => delta
-        case PermissionTree(PARTIAL, children) =>
+        case PermissionTree(ALLOW, _)                              => delta
+        case PermissionTree(PARTIAL, children) if children.isEmpty => productBottom.empty
+        case PermissionTree(PARTIAL, children)                     =>
           // Apply filters to factors, if rule for factor is specified.
           // Otherwise use bottom for factor
           val filteredProduct = filterProduct(delta.asInstanceOf[Product], permissionTree)
@@ -80,44 +132,25 @@ object Filter:
             def productElement(i: Int): Any  = filteredFactors(i)
     }
 
-    /** Checks whether all children labels are the field names of this product and validates the filters for the children.
-      *
-      * @param permissionTree The tree to check
-      */
-    override def validatePermissionTree(permissionTree: PermissionTree): Unit = {
-      permissionTree.children.foreach { case (factorLabel, factorPermissionTree) =>
-        factorLabels.get(factorLabel) match
-          case None =>
-            try {
-              if factorLabel == "*" then factorFilters.foreach(_.validatePermissionTree(factorPermissionTree))
-            } catch {
-              case InvalidPathException(labels) => throw InvalidPathException("*" :: labels)
-            }
-            throw InvalidPathException(List(factorLabel))
-          case Some(factorIdx) =>
-            try {
-              factorFilters(factorIdx).validatePermissionTree(factorPermissionTree)
-            } catch {
-              case InvalidPathException(path) => throw InvalidPathException(factorLabel :: path)
-            }
-      }
-    }
-
-    // Assumes a valid permission tree
-    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree = {
-      if permissionTree.permission == ALLOW then return allow
-
-      val minimizedChildren = permissionTree.children.map { (label, subtree) =>
-        val idx                            = factorLabels(label)
-        val filter                         = factorFilters(idx)
-        val minimizedChild: PermissionTree = filter.minimizePermissionTree(subtree)
-        label -> minimizedChild
-      }
-
-      if minimizedChildren.size == factorFilters.size && minimizedChildren.forall(_._2.permission == ALLOW)
-      then allow
-      else PermissionTree(PARTIAL, minimizedChildren)
-    }
+  class SumTypeFilter[T](
+      sm: Mirror.SumOf[T],
+      bottom: Bottom[T],                   // The bottom of the sum
+      elementNames: Array[String],         // The names of the types
+      elementBottoms: IArray[Bottom[Any]], // The Bottom TypeClass instance for each element
+      elementFilters: IArray[Filter[Any]]  // The Filter TypeClass instance for each element
+  ) extends AlgebraicFilter[T](elementNames.zipWithIndex.toMap, elementFilters):
+    override def filter(delta: T, permission: PermissionTree): T =
+      permission match
+        case PermissionTree(ALLOW, _)                              => delta
+        case PermissionTree(PARTIAL, children) if children.isEmpty => bottom.empty
+        case PermissionTree(PARTIAL, children) =>
+          val ordinal     = sm.ordinal(delta)
+          val elementName = elementNames(ordinal)
+          children.getOrElse(elementName, children.getOrElse("*", PermissionTree.empty)) match
+            case PermissionTree(ALLOW, _)                              => delta
+            case PermissionTree(PARTIAL, children) if children.isEmpty => bottom.empty
+            case childPerm @ PermissionTree(PARTIAL, children) =>
+              elementFilters(ordinal).filter(delta, childPerm).asInstanceOf[T]
 
   given dotsFilter: Filter[Dots] with
     override def filter(delta: Dots, permission: PermissionTree): Dots =
@@ -166,6 +199,20 @@ object Filter:
             }
         }
       )
+
+  class TerminalFilter[T: Bottom] extends Filter[T]:
+    override def filter(delta: T, permission: PermissionTree): T =
+      permission match
+        case PermissionTree(ALLOW, _)   => delta
+        case PermissionTree(PARTIAL, _) => Bottom[T].empty
+    override def validatePermissionTree(permissionTree: PermissionTree): Unit =
+      require(permissionTree.children.isEmpty)
+    override def minimizePermissionTree(permissionTree: PermissionTree): PermissionTree =
+      permissionTree match
+        case PermissionTree(ALLOW, _)   => PermissionTree.allow
+        case PermissionTree(PARTIAL, _) => PermissionTree.empty
+
+  def ofTerminalValue[T: Bottom]: Filter[T] = TerminalFilter[T]()
 
   given dottedFilter[A: Filter: Bottom]: Filter[Dotted[A]] = Filter.derived
 
