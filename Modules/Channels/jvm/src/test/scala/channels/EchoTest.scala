@@ -4,6 +4,7 @@ import channels.jettywebsockets.{JettyWsConnection, JettyWsListener}
 import com.sun.net.httpserver.HttpServer
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.ServerConnector
+import rdts.base.LocalUid
 
 import java.net.http.HttpClient
 import java.net.{DatagramSocket, InetSocketAddress, URI}
@@ -28,19 +29,16 @@ class EchoServerTestUDP extends EchoCommunicationTest(
       ec => info => UDP.connect(InetSocketAddress("localhost", info), () => new DatagramSocket(), ec)
     )
 
-class EchoServerTestSunJavaHTTP extends SubscribeCommunicationTest(
+class EchoServerTestSunJavaHTTP extends EchoCommunicationTest(
       ec => {
 
         val server = HttpServer.create()
 
         server.bind(InetSocketAddress("0", 58004), 0)
 
-        val handler = SunHttpSSE.SSEServer(
-          handler => {
-            server.createContext("/path", handler)
-          },
-          ec
-        )
+        val handler = JavaHttp.SSEServer(handler => {
+          server.createContext("/path", handler)
+        })
 
         server.start()
         val port = server.getAddress.getPort
@@ -53,6 +51,6 @@ class EchoServerTestSunJavaHTTP extends SubscribeCommunicationTest(
       ec =>
         port => {
           val client = HttpClient.newHttpClient()
-          SSEConnection.SSEClient(client, new URI(s"http://localhost:$port/path"), ec)
+          JavaHttp.SSEClient(client, new URI(s"http://localhost:$port/path"), LocalUid.gen(), ec)
         }
     )
