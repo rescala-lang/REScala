@@ -4,7 +4,10 @@ import de.rmgk.delay.{Async, Callback}
 
 import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException, InputStream, OutputStream}
 
-class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Unit) extends Connection[MessageBuffer] {
+class SendingClosedException extends IOException
+
+class JIOStreamConnection(in: InputStream | Null, out: OutputStream | Null, doClose: () => Unit)
+    extends Connection[MessageBuffer] {
 
   // socket streams
 
@@ -18,17 +21,21 @@ class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Uni
   // connection interface
 
   def send(data: MessageBuffer): Async[Any, Unit] = Async.fromCallback {
-    println(s"sending data on tcp socket")
-    try {
-      val outArray = data.asArray
-      outputStream.write(sizedContent)
-      outputStream.writeInt(outArray.size)
-      outputStream.write(outArray)
-      outputStream.flush()
-      println(s"sending done")
-      Async.handler.succeed(())
-    } catch {
-      case ioe: IOException => Async.handler.fail(ioe)
+
+    if out == null then Async.handler.fail(SendingClosedException())
+    else {
+      println(s"sending data on jio stream")
+      try {
+        val outArray = data.asArray
+        outputStream.write(sizedContent)
+        outputStream.writeInt(outArray.size)
+        outputStream.write(outArray)
+        outputStream.flush()
+        println(s"sending done")
+        Async.handler.succeed(())
+      } catch {
+        case ioe: IOException => Async.handler.fail(ioe)
+      }
     }
   }
 
