@@ -10,25 +10,22 @@ object SunHttpSSE {
   class SSEServer(addHandler: HttpHandler => Unit, ec: ExecutionContext) extends LatentConnection[MessageBuffer] {
     def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
 
-      val handler = new HttpHandler {
+      addHandler { (exchange: HttpExchange) =>
+        val headers = exchange.getResponseHeaders
+        headers.add("Content-Type", "text/event-stream")
+        headers.add("Connection", "keep-alive")
 
-        override def handle(exchange: HttpExchange): Unit = {
-          val headers = exchange.getResponseHeaders
-          headers.add("Content-Type", "text/event-stream")
-          headers.add("Connection", "keep-alive")
+        exchange.sendResponseHeaders(200, 0)
+        val outstream = exchange.getResponseBody
 
-          exchange.sendResponseHeaders(200, 0)
-          val outstream = exchange.getResponseBody
+        val instream = exchange.getRequestBody
 
-          val instream = exchange.getRequestBody
+        val conn = JIOStreamConnection(instream, outstream, () => exchange.close())
 
-          val conn = JIOStreamConnection(instream, outstream, () => exchange.close())
+        ec.execute(() => conn.loopHandler(incomingHandler))
 
-          ec.execute(() => conn.loopHandler(incomingHandler))
-        }
-
+        Async.handler.succeed(conn)
       }
-
     }
   }
 
