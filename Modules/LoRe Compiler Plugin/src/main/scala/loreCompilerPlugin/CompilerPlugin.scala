@@ -201,6 +201,7 @@ class LoRePhase extends PluginPhase:
   end buildLoreRhsTerm
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
+    var newLoreTerm: Option[Term] = None // Value is defined in below individual cases to avoid code dupe
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
       case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
@@ -208,21 +209,11 @@ class LoRePhase extends PluginPhase:
         rhs match
           case EmptyTree => () // Ignore func args (ArgT) for now
           case _ =>
-            val term: Term = TAbs(
+            newLoreTerm = Some(TAbs(
               name.toString,                    // foo (any valid Scala identifier)
               SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
               buildLoreRhsTerm(rhs, 1)          // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-            )
-            // Find term list for this source file and append new term to it
-            // Alternatively, make new term list for this file if it doesn't exist
-            val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
-            fileTermList match
-              case Some(list) =>
-                val newList: List[Term] = list :+ term
-                loreTerms = loreTerms.updated(tree.source, newList)
-              case None =>
-                val newList: List[Term] = List(term)
-                loreTerms = loreTerms.updated(tree.source, newList)
+            ))
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
@@ -247,24 +238,14 @@ class LoRePhase extends PluginPhase:
               case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
                 // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 // TODO: Add similar code to above for handling sources as func args
-                val term: Term = TAbs(
+                newLoreTerm = Some(TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType(    // Source[bar], where bar is one of Int, String, Boolean
                     "Source",
                     List(SimpleType(typeArg, List()))
                   ),
                   TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz), where baz is any recognized expression, see above
-                )
-                // Find term list for this source file and append new term to it
-                // Alternatively, make new term list for this file if it doesn't exist
-                val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
-                fileTermList match
-                  case Some(list) =>
-                    val newList: List[Term] = list :+ term
-                    loreTerms = loreTerms.updated(tree.source, newList)
-                  case None =>
-                    val newList: List[Term] = List(term)
-                    loreTerms = loreTerms.updated(tree.source, newList)
+                ))
               case _ =>
                 // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
                 println(
@@ -292,24 +273,14 @@ class LoRePhase extends PluginPhase:
               case Apply(Apply(_, List(Block(_, properRhs))), _) => // E.g. "foo: Derived[bar] = Derived { baz }"
                 // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 // TODO: Add similar code to above for handling sources as func args
-                val term: Term = TAbs(
+                newLoreTerm = Some(TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType(    // Derived[bar], where bar is one of Int, String, Boolean
                     "Derived",
                     List(SimpleType(typeArg, List()))
                   ),
                   TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz } , where baz is any recognized expression, see above
-                )
-                // Find term list for this source file and append new term to it
-                // Alternatively, make new term list for this file if it doesn't exist
-                val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
-                fileTermList match
-                  case Some(list) =>
-                    val newList: List[Term] = list :+ term
-                    loreTerms = loreTerms.updated(tree.source, newList)
-                  case None =>
-                    val newList: List[Term] = List(term)
-                    loreTerms = loreTerms.updated(tree.source, newList)
+                ))
               case _ =>
                 // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker
                 println(
@@ -320,6 +291,22 @@ class LoRePhase extends PluginPhase:
           case reactiveInteractionPattern(typeArg1, typeArg2) =>
             println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")
       case _ => () // All other ValDefs not covered above are ignored
-    tree // Return the original tree to further compiler phases
+
+    // Actually add the newly generated LoRe term to the list (if applicable ValDef)
+    newLoreTerm match
+      case None =>
+        tree // No term created, return tree to further compiler phases
+      case Some(loreTerm) =>
+        // Find term list for this source file and append new term to it
+        // Alternatively, make new term list for this file if it doesn't exist
+        val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
+        fileTermList match
+          case Some(list) =>
+            val newList: List[Term] = list :+ loreTerm
+            loreTerms = loreTerms.updated(tree.source, newList)
+          case None =>
+            val newList: List[Term] = List(loreTerm)
+            loreTerms = loreTerms.updated(tree.source, newList)
+        tree // Return the original tree to further compiler phases
   end transformValDef
 end LoRePhase
