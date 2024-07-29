@@ -36,6 +36,9 @@ class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Uni
 
   // frame parsing
 
+  def loopHandler(handler: Handler[MessageBuffer]) =
+    handleReceivedMessages(handler.getCallbackFor(this))
+
   def handleReceivedMessages(handler: Callback[MessageBuffer]) = {
 
     def readNextByte() = {
