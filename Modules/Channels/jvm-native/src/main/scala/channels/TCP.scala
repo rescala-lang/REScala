@@ -4,8 +4,6 @@ import channels.Abort
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
-
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException, InputStream, OutputStream}
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
