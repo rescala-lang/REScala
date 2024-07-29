@@ -4,6 +4,7 @@ import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
+import dotty.tools.dotc.util.SourceFile
 import dotty.tools.dotc.core.Names.Name
 import dotty.tools.dotc.core.StdNames.*
 import dotty.tools.dotc.core.Symbols.*
@@ -30,7 +31,7 @@ class LoRePhase extends PluginPhase:
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
-  private var loreTerms: List[Term] = List()
+  private var loreTerms: Map[SourceFile, List[Term]] = Map()
   private val reactiveClasses: List[String] = List(
     "reactives.operator.Var",    // Source
     "reactives.operator.Signal", // Derived
@@ -202,38 +203,26 @@ class LoRePhase extends PluginPhase:
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
     tree match
       // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs)
-          if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
+      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
         println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
-        // -------------
-        // Code for handling arguments too, should be handled but not just attached to a flat list, so commented
-        // out until it's clear how these should be handled exactly
-//        val term: Term = rhs match
-//          case EmptyTree => // Function arguments, not actual variables, e.g. "foo: Bar"
-//            TArgT(
-//              name.toString,                    // foo (any valid Scala identifier)
-//              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-//            )
-//          case _ => // Actually defined variables
-//            // Construct LoRe term AST node from Scala term of the form "foo: Bar = baz"
-//            TAbs(
-//              name.toString,                    // foo (any valid Scala identifier)
-//              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-//              buildLoreRhsTerm(rhs, 1)             // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-//            )
-//        // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
-//        loreTerms = loreTerms :+ term
-        // -------------
-        // See above
         rhs match
-          case EmptyTree => () // Ignore func args for now
+          case EmptyTree => () // Ignore func args (ArgT) for now
           case _ =>
             val term: Term = TAbs(
               name.toString,                    // foo (any valid Scala identifier)
               SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
               buildLoreRhsTerm(rhs, 1)          // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
             )
-            loreTerms = loreTerms :+ term
+            // Find term list for this source file and append new term to it
+            // Alternatively, make new term list for this file if it doesn't exist
+            val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
+            fileTermList match
+              case Some(list) =>
+                val newList: List[Term] = list :+ term
+                loreTerms = loreTerms.updated(tree.source, newList)
+              case None =>
+                val newList: List[Term] = List(term)
+                loreTerms = loreTerms.updated(tree.source, newList)
       // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
       case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
         // Match which reactive it actually is, and what its type arguments are
@@ -258,17 +247,24 @@ class LoRePhase extends PluginPhase:
               case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
                 // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 // TODO: Add similar code to above for handling sources as func args
-                loreTerms = loreTerms :+ TAbs(
+                val term: Term = TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType(    // Source[bar], where bar is one of Int, String, Boolean
                     "Source",
                     List(SimpleType(typeArg, List()))
                   ),
-                  TSource(buildLoreRhsTerm(
-                    properRhs,
-                    1
-                  )) // Source(baz), where baz is any recognized expression, see above
+                  TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz), where baz is any recognized expression, see above
                 )
+                // Find term list for this source file and append new term to it
+                // Alternatively, make new term list for this file if it doesn't exist
+                val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
+                fileTermList match
+                  case Some(list) =>
+                    val newList: List[Term] = list :+ term
+                    loreTerms = loreTerms.updated(tree.source, newList)
+                  case None =>
+                    val newList: List[Term] = List(term)
+                    loreTerms = loreTerms.updated(tree.source, newList)
               case _ =>
                 // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
                 println(
@@ -296,23 +292,30 @@ class LoRePhase extends PluginPhase:
               case Apply(Apply(_, List(Block(_, properRhs))), _) => // E.g. "foo: Derived[bar] = Derived { baz }"
                 // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
                 // TODO: Add similar code to above for handling sources as func args
-                loreTerms = loreTerms :+ TAbs(
+                val term: Term = TAbs(
                   name.toString, // foo (any valid Scala identifier)
                   SimpleType(    // Derived[bar], where bar is one of Int, String, Boolean
                     "Derived",
                     List(SimpleType(typeArg, List()))
                   ),
-                  TDerived(buildLoreRhsTerm(
-                    properRhs,
-                    1
-                  )) // Derived { baz } , where baz is any recognized expression, see above
+                  TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz } , where baz is any recognized expression, see above
                 )
+                // Find term list for this source file and append new term to it
+                // Alternatively, make new term list for this file if it doesn't exist
+                val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
+                fileTermList match
+                  case Some(list) =>
+                    val newList: List[Term] = list :+ term
+                    loreTerms = loreTerms.updated(tree.source, newList)
+                  case None =>
+                    val newList: List[Term] = List(term)
+                    loreTerms = loreTerms.updated(tree.source, newList)
               case _ =>
                 // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker
                 println(
                   s"A Derived definition not wrapped in the Derived type has been detected. This should not be possible, please investigate:\n$rhs"
                 )
-                report.error("Derived definition not wrapped in Source call", tree.sourcePos)
+                report.error("Derived definition not wrapped in Derived call", tree.sourcePos)
           // TODO: Implement
           case reactiveInteractionPattern(typeArg1, typeArg2) =>
             println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")
