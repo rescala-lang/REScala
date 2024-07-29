@@ -1,7 +1,6 @@
 package channels
 
 import channels.jettywebsockets.{JettyWsConnection, JettyWsListener}
-import de.rmgk.delay.Async
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.ServerConnector
 

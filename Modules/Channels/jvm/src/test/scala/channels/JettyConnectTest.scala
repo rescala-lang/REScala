@@ -1,7 +1,7 @@
 package channels
 
+import channels.Abort
 import channels.jettywebsockets.JettyWsConnection
-import channels.{Abort, ArrayMessageBuffer}
 import de.rmgk.delay.*
 
 import java.net.URI
