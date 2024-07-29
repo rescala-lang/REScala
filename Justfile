@@ -1,5 +1,11 @@
 # https://github.com/casey/just
 
+readme:
+	pager README.md
+
+authors:
+	git shortlog -sn
+
 test sbtOpts="":
 	sbt {{sbtOpts}} test
 
