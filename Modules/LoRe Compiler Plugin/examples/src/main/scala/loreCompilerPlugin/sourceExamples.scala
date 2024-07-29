@@ -3,8 +3,8 @@ package loreCompilerPlugin
 import lore.dsl.*
 import reactives.default.Var as Source
 
-object sourceExamples:
-  def sourceExamples(): Unit =
+object sourceExamplesObject:
+  def sourceExamplesFunction(): Unit =
     // ========= Non-Source Values to use in below tests =========
     val integerLiteral: Int     = 1
     val integerExpression1: Int = 1 + 2
@@ -76,5 +76,5 @@ object sourceExamples:
     val boolReferenceNumeralBinaryOpSource1: Source[Boolean] = Source(integerLiteral >= integerLiteral + 1)
     val boolReferenceNumeralBinaryOpSource2: Source[Boolean] = Source(1 != integerLiteral)
     val boolReferenceNumeralBinaryOpSource3: Source[Boolean] = Source(integerLiteral <= 2)
-  end sourceExamples
-end sourceExamples
+  end sourceExamplesFunction
+end sourceExamplesObject

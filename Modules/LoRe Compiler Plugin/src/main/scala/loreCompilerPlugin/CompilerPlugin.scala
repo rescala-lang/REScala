@@ -6,8 +6,8 @@ import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.util.SourceFile
 import dotty.tools.dotc.core.Names.Name
-import dotty.tools.dotc.core.StdNames.*
-import dotty.tools.dotc.core.Symbols.*
+import dotty.tools.dotc.core.StdNames.nme
+import dotty.tools.dotc.core.Symbols.defn
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Inlining, Pickler}
@@ -25,30 +25,55 @@ class CompilerPlugin extends StandardPlugin:
 end CompilerPlugin
 
 class LoRePhase extends PluginPhase:
-  import tpd.*
   val phaseName: String = "LoRe"
 
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
   private var loreTerms: Map[SourceFile, List[Term]] = Map()
-  private val reactiveClasses: List[String] = List(
-    "reactives.operator.Var",    // Source
-    "reactives.operator.Signal", // Derived
-    "lore.dsl.InteractionWithTypes",
-    "lore.dsl.InteractionWithRequires",
-    "lore.dsl.InteractionWithRequiresAndModifies"
-  )
-  private val reactiveSourcePattern: Regex      = """reactives\.operator\.Var\[(\w+)\]""".r
-  private val reactiveDerivedPattern: Regex     = """reactives\.operator\.Signal\[(\w+)\]""".r
-  private val reactiveInteractionPattern: Regex = """lore\.dsl\.InteractionWithTypes\[(\w+), (\w+)\]""".r
 
+  /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
+    * @param indentLevel How many tabs should be placed before the text that will be logged
+    * @param operandSide Additional text to indicate more information about the parameter (e.g. "left" will result in "left parameter")
+    * @param rhsType The type of the RHS in question
+    * @param rhsValue The value of the RHS in question
+    */
   private def logRhsInfo(indentLevel: Integer, operandSide: String, rhsType: String, rhsValue: String): Unit =
     if operandSide.nonEmpty then
       println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a $rhsType $rhsValue")
     else
       println(s"${"\t".repeat(indentLevel)}The parameter is a $rhsType $rhsValue")
   end logRhsInfo
+
+  /** Builds a LoRe Type node based on a scala type tree
+    * @param typeTree The scala type tree
+    * @return The LoRe Type node
+    */
+  private def buildLoreTypeNode(typeTree: tpd.Tree)(using Context): Type =
+    // May need to also support LoRe TupleTypes at one point in the future
+    // Object definitions seems to use "SingletonTypeTrees" instead, but those are ignored in this plugin
+    typeTree match
+      case Ident(typeName) => // Plain type names
+        SimpleType(typeName.toString, List())
+      case AppliedTypeTree(outerTypeTree, innerTypeArgs) => // Parameterized type names
+        outerTypeTree match
+          case Ident(outerTypeName) => // Plain type name of parameterized type
+            SimpleType(
+              outerTypeName.toString,
+              innerTypeArgs.map(innerType => buildLoreTypeNode(innerType)) // Type parameters of parameterized type
+            )
+          case _ =>
+            report.error(
+              s"An error occurred building the LoRe type tree for the following tree:\n$outerTypeTree",
+              typeTree.sourcePos
+            )
+            SimpleType("", List()) // Have to return a dummy Type value even on error to satisfy the compiler
+      case _ =>
+        report.error(
+          s"An error occurred building the LoRe type tree for the following tree:\n$typeTree",
+          typeTree.sourcePos
+        )
+        SimpleType("", List()) // Have to return a dummy Type value even on error to satisfy the compiler
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
     * @param tree The Scala AST Tree node for a RHS expression to convert
@@ -83,10 +108,8 @@ class LoRePhase extends PluginPhase:
               // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
               case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
               case _ => // Unsupported unary operators
-                report.error(
-                  // No access to sourcePos here due to LazyTree
-                  s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree"
-                )
+                // No access to sourcePos here due to LazyTree
+                report.error(s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree")
                 TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
             // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
@@ -152,8 +175,8 @@ class LoRePhase extends PluginPhase:
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
               case _ => // Unsupported binary operators
+                // No access to sourcePos here due to LazyTree
                 report.error(
-                  // No access to sourcePos here due to LazyTree
                   s"${"\t".repeat(indentLevel)}Unsupported binary operator ${opOrMethod.show} used:\n${"\t".repeat(indentLevel)}$tree"
                 )
                 TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
@@ -167,32 +190,31 @@ class LoRePhase extends PluginPhase:
             TFCall(                                                    // foo.bar(baz, qux, ...)
               buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
               methodName.toString,                                     // bar
-              params.map(p =>
+              params.map(p =>                                          // baz, qux, ... (each can be more complex terms)
                 buildLoreRhsTerm(p, indentLevel + 1, operandSide)
-              ) // baz, qux, ... (might each be more complex terms)
+              )
             )
       case Apply(Ident(name: Name), params: List[?]) => // Function calls
         logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} parameters:", name.toString)
-        TFunC(           // foo(bar, baz)
-          name.toString, // foo
-          params.map(p =>
+        TFunC(            // foo(bar, baz)
+          name.toString,  // foo
+          params.map(p => // bar, baz, ... (might each be more complex terms)
             buildLoreRhsTerm(p, indentLevel + 1, operandSide)
-          ) // bar, baz, ... (might each be more complex terms)
+          )
         )
-      case Apply(
-            Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]),
-            _
-          ) => // Type applications (e.g. Source or Derived)
+      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]), _) =>
         logRhsInfo(indentLevel, operandSide, s"type application of the ${typeName.toString} type", "")
         typeName.toString match
           case "Source"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
           case "Derived" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case _ => // Unsupported type application
+          case _         => // Unsupported type application
+            // No access to sourcePos here due to LazyTree
             report.error(
               s"${"\t".repeat(indentLevel)}Unsupported type application used in RHS:\n${"\t".repeat(indentLevel)}$tree"
             )
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
+        // No access to sourcePos here due to LazyTree
         report.error(
           // No access to sourcePos here due to LazyTree
           s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n${"\t".repeat(indentLevel)}$tree"
@@ -201,100 +223,58 @@ class LoRePhase extends PluginPhase:
   end buildLoreRhsTerm
 
   override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
-    var newLoreTerm: Option[Term] = None // Value is defined in below individual cases to avoid code dupe
-    tree match
-      // Match value definitions for base types Int, String, Boolean, these also exist in LoRe, e.g. used to feed Reactives
-      case ValDef(name, tpt, rhs) if tpt.tpe =:= defn.IntType || tpt.tpe =:= defn.StringType || tpt.tpe =:= defn.BooleanType =>
-        println(s"Detected ${tpt.tpe.show} definition with name \"$name\", adding to term list")
-        rhs match
-          case EmptyTree => () // Ignore func args (ArgT) for now
-          case _ =>
-            newLoreTerm = Some(TAbs(
-              name.toString,                    // foo (any valid Scala identifier)
-              SimpleType(tpt.tpe.show, List()), // Bar (one of Int, String, Boolean)
-              buildLoreRhsTerm(rhs, 1)          // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-            ))
-      // Match ValDefs for LoRe reactives (Source, Derived, Interaction)
-      case ValDef(name, tpt, rhs) if reactiveClasses.exists(t => tpt.tpe.show.startsWith(t)) =>
-        // Match which reactive it actually is, and what its type arguments are
-        tpt.tpe.show match
-          case reactiveSourcePattern(typeArg) =>
-            println(s"Detected Source reactive with name \"$name\" and type parameter $typeArg, adding to term list")
-            // Only Int, String and Boolean type parameters are supported
-            if !typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean") then {
-              report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
-            }
-            rhs match
-              case EmptyTree => () // Ignore func args (ArgT) for now
-              // Several notes to make here for future reference:
-              // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
-              //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
-              //   and the expressions being handled here use types that get inlined in REScala.
-              // * Because the RHS is wrapped in a call to the Source type, within that unknown Apply layer,
-              //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
-              //   actual RHS tree we want is inside the Apply parameter list (i.e. real RHS is 2 Apply layers deep).
-              // * The Source parameter list always has length 1, because Sources only have 1 parameter ("Source(foo)", not "Source(foo, bar)").
-              // * Typechecking for whether the arguments both in the Source type call as well as within the expression
-              //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
-              case Apply(Apply(_, List(properRhs)), _) => // E.g. "foo: Source[bar] = Source(baz)"
-                // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
-                // TODO: Add similar code to above for handling sources as func args
-                newLoreTerm = Some(TAbs(
-                  name.toString, // foo (any valid Scala identifier)
-                  SimpleType(    // Source[bar], where bar is one of Int, String, Boolean
-                    "Source",
-                    List(SimpleType(typeArg, List()))
-                  ),
-                  TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz), where baz is any recognized expression, see above
-                ))
-              case _ =>
-                // Anything that's not wrapped with Source, should not be possible at this point because of the Scala type-checker
-                println(
-                  s"A Source definition not wrapped in the Source type has been detected. This should not be possible, please investigate:\n$rhs"
-                )
-                report.error("Source definition not wrapped in Source call", tree.sourcePos)
-          case reactiveDerivedPattern(typeArg) =>
-            println(s"Detected Derived reactive with name \"$name\" and type parameter $typeArg, adding to term list")
-            // Only Int, String and Boolean type parameters are supported
-            if !typeArg.equals("Int") && !typeArg.equals("String") && !typeArg.equals("Boolean") then {
-              report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
-            }
-            rhs match
-              case EmptyTree => () // Ignore func args (ArgT) for now
-              // Several notes to make here for future reference:
-              // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
-              //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
-              //   and the expressions being handled here use types that get inlined in REScala.
-              // * Because the RHS is wrapped in a call to the Derived type, within that unknown Apply layer,
-              //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
-              //   actual RHS tree we want is inside the Apply parameter list (i.e. real RHS is 2 Apply layers deep).
-              // * The Derived parameter list always has length 1, because you feed one expression to the Derived type
-              // * As the Derived type uses curly brackets, it wraps its contents in a Block type as well
-              // * Typechecking for whether the arguments both in the Derived type call as well as within the expression
-              //   contained within any part of that call are of the expected type are handled by the Scala type-checker already
-              case Apply(Apply(_, List(Block(_, properRhs))), _) => // E.g. "foo: Derived[bar] = Derived { baz }"
-                // TODO: Actually build a tree structure for the terms instead of just slamming them all into a flat list
-                // TODO: Add similar code to above for handling sources as func args
-                newLoreTerm = Some(TAbs(
-                  name.toString, // foo (any valid Scala identifier)
-                  SimpleType(    // Derived[bar], where bar is one of Int, String, Boolean
-                    "Derived",
-                    List(SimpleType(typeArg, List()))
-                  ),
-                  TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz } , where baz is any recognized expression, see above
-                ))
-              case _ =>
-                // Anything that's not wrapped with Derived, should not be possible at this point because of the Scala type-checker
-                println(
-                  s"A Derived definition not wrapped in the Derived type has been detected. This should not be possible, please investigate:\n$rhs"
-                )
-                report.error("Derived definition not wrapped in Derived call", tree.sourcePos)
-          // TODO: Implement
-          case reactiveInteractionPattern(typeArg1, typeArg2) =>
-            println(s"Detected Interaction definition with $typeArg1 and $typeArg2 type parameters")
-      case _ => () // All other ValDefs not covered above are ignored
+    var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
 
-    // Actually add the newly generated LoRe term to the list (if applicable ValDef)
+    tree match
+      case ValDef(name, tpt, rhs) =>
+        rhs match
+          case tpd.EmptyTree => () // Function parameters (ArgT) and object/package definitions (i think), skip these
+          case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Object definitions (i think), skip these
+          case _ => // Other definitions, these are the ones we care about
+            val loreTypeNode = buildLoreTypeNode(tpt)
+            // Several notes to make here regarding handling the RHS of reactives for future reference:
+            // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
+            //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
+            //   and the expressions being handled here use types that get inlined in REScala.
+            // * Because the RHS is wrapped in a call to the respective reactive type, within that unknown Apply layer,
+            //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
+            //   actual RHS tree we want is inside the second Apply parameter list (i.e. real RHS is 2 Apply layers deep).
+            // * As the Derived type uses curly brackets in definitions on top, it additionally wraps its RHS in a Block type.
+            // * The Source and Derived parameter lists always have length 1, those of Interactions always have length 2.
+            // * Typechecking for whether all of this is correct is already done by the Scala type-checker before this phase,
+            //   so we can assume everything we see here is of suitable types instead of doing any further checks.
+            loreTypeNode match
+              case SimpleType(reactiveName, typeArgs) =>
+                println(s"Detected $reactiveName definition with name \"$name\"")
+                rhs match
+                  case tpd.EmptyTree => () // Ignore func args (ArgT) for now
+                  case Apply(Apply(_, List(properRhs)), _)
+                      if reactiveName == "Source" => // E.g. "foo: Source[bar] = Source(baz)"
+                    newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
+                      name.toString,                          // foo
+                      buildLoreTypeNode(tpt),                 // Source[Bar]
+                      TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
+                    ))
+                  case Apply(Apply(_, List(Block(_, properRhs))), _)
+                      if reactiveName == "Derived" => // E.g. "foo: Derived[bar] = Derived { baz }"
+                    newLoreTerm = Some(TAbs(                   // foo: Derived[Bar] = Derived { baz }
+                      name.toString,                           // foo
+                      buildLoreTypeNode(tpt),                  // Derived[Bar]
+                      TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
+                    ))
+                  // TODO: Interaction case
+                  // case ... if reactiveName == "Interaction" =>
+                  case _ => // Any non-reactive values (Int, String, Bool, ...)
+                    newLoreTerm = Some(TAbs(   // foo: Bar = baz
+                      name.toString,           // foo (any valid Scala identifier)
+                      buildLoreTypeNode(tpt),  // Bar
+                      buildLoreRhsTerm(rhs, 1) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+                    ))
+              case TupleType(_) => // TODO tuple types?
+                println("surprise tuple type")
+                report.error("Tuple Types are not currently supported", tree.sourcePos)
+
+    // Add the newly generated LoRe term to the respective source file's term list (if one was generated)
     newLoreTerm match
       case None =>
         tree // No term created, return tree to further compiler phases
