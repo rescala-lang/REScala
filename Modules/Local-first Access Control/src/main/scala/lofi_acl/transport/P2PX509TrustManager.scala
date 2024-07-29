@@ -13,15 +13,7 @@ class P2PX509TrustManager extends X509TrustManager {
       throw CertificateException("Only Ed25519 is supported as signature algo")
     if certificate.getVersion != 3 then throw CertificateException("Only X509v3 Certificates are supported")
 
-    // Certificate still valid?
-    certificate.checkValidity()
-
-    // Self issued?
-    val subject = certificate.getSubjectX500Principal
-    val issuer  = certificate.getIssuerX500Principal
-    if !subject.equals(issuer) then throw CertificateException("certificate not self-issued")
-
-    // Verifies that certificate is actually signed by identity in certificate
+    // Validates and verifies the certificate
     val id = X509Util.certificateToPublicIdentity(certificate)
   }
 

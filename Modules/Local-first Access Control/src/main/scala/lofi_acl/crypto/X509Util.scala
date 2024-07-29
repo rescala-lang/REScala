@@ -85,6 +85,9 @@ object X509Util {
     */
   @throws[CertificateException]
   def certificateToPublicIdentity(certificate: X509Certificate): PublicIdentity = {
+    // Certificate still valid?
+    certificate.checkValidity()
+
     val subject = certificate.getSubjectX500Principal
     val issuer  = certificate.getIssuerX500Principal
 
