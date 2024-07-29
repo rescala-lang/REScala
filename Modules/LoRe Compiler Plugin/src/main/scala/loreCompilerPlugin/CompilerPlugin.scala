@@ -225,6 +225,7 @@ class LoRePhase extends PluginPhase:
               report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
             }
             rhs match
+              case EmptyTree => () // Ignore func args (ArgT) for now
               // Several notes to make here for future reference:
               // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
               //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
@@ -259,6 +260,7 @@ class LoRePhase extends PluginPhase:
               report.error(s"Unsupported LHS type parameter used: $typeArg", tree.sourcePos)
             }
             rhs match
+              case EmptyTree => () // Ignore func args (ArgT) for now
               // Several notes to make here for future reference:
               // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
               //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
