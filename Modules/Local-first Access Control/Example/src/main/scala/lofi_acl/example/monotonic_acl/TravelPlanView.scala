@@ -3,7 +3,8 @@ package lofi_acl.example.monotonic_acl
 import javafx.geometry.Pos
 import scalafx.application.Platform
 import scalafx.scene.control.{Button, ListView, TextField, TextFormatter}
-import scalafx.scene.layout.GridPane
+import scalafx.scene.layout.{GridPane, HBox, Priority}
+import scalafx.scene.text.Text
 
 class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
   private val shareButton = Button()
@@ -29,7 +30,8 @@ class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
   expenseView.cellFactory = viewModel.expenseViewCellFactory
   expenseView.items = viewModel.expenseIds
   expenseView.prefHeight = 200
-  private val addExpenseEntryTextField  = TextField()
+  private val addExpenseEntryTextField = TextField()
+  addExpenseEntryTextField.promptText = "Expense"
   private val addExpenseAmountTextField = TextField()
   addExpenseAmountTextField.text = "0.00 €"
   addExpenseAmountTextField.textFormatter = TextFormatter(ExpenseListEntryListCell.amountTextFilter)
@@ -44,18 +46,52 @@ class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
     viewModel.addExpenseButtonPressed(description, amount)
   }
 
-  add(viewModel.titleTextField, 0, 0, 2, 1)
-  viewModel.titleTextField.setAlignment(Pos.CENTER)
-  add(shareButton, 2, 0)
-
-  add(bucketListView, 0, 1, 3, 1)
-
-  add(addBucketListEntryTextField, 0, 2, 2, 1)
-  add(addBucketListEntryButton, 2, 2)
-  add(expenseView, 0, 3, 3, 1)
-  add(addExpenseEntryTextField, 0, 4)
-  add(addExpenseAmountTextField, 1, 4)
-  add(addExpenseEntryButton, 2, 4)
+  {
+    var rowIdx = 0
+    add(viewModel.titleTextField, 0, rowIdx, 2, 1)
+    viewModel.titleTextField.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;")
+    viewModel.titleTextField.setAlignment(Pos.CENTER)
+    shareButton.prefWidth = 100
+    shareButton.vgrow = Priority.Always
+    shareButton.maxHeight = 50
+    add(shareButton, 2, rowIdx)
+    rowIdx += 1
+    val bucketListTitle = new HBox {
+      children = new Text {
+        text = "Bucket List"
+        style = "-fx-font-size: 15px; -fx-font-weight: bold;"
+      }
+      alignment = scalafx.geometry.Pos.Center
+    }
+    add(bucketListTitle, 0, rowIdx, 3, 1)
+    // --------------
+    rowIdx += 1
+    add(bucketListView, 0, rowIdx, 3, 1)
+    // --------------
+    rowIdx += 1
+    add(addBucketListEntryTextField, 0, rowIdx, 2, 1)
+    addBucketListEntryButton.prefWidth = 100
+    add(addBucketListEntryButton, 2, rowIdx)
+    // --------------
+    rowIdx += 1
+    val expenseListTitle = new HBox {
+      children = new Text {
+        text = "Expenses"
+        style = "-fx-font-size: 15px; -fx-font-weight: bold;"
+      }
+      alignment = scalafx.geometry.Pos.Center
+    }
+    add(expenseListTitle, 0, rowIdx, 3, 1)
+    // --------------
+    rowIdx += 1
+    add(expenseView, 0, rowIdx, 3, 1)
+    // --------------
+    rowIdx += 1
+    add(addExpenseEntryTextField, 0, rowIdx)
+    add(addExpenseAmountTextField, 1, rowIdx)
+    addExpenseEntryButton.prefWidth = 100
+    add(addExpenseEntryButton, 2, rowIdx)
+  }
 
   Platform.runLater(shareButton.requestFocus())
 }
