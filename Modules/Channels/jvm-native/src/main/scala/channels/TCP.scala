@@ -1,10 +1,11 @@
 package channels
 
-import channels.{Abort, ArrayMessageBuffer, LatentConnection, MessageBuffer}
+import channels.Abort
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException}
+
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException, InputStream, OutputStream}
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
@@ -21,9 +22,9 @@ object TCP {
       socket: Socket,
       incoming: Handler[MessageBuffer],
       executionContext: ExecutionContext
-  ): TCPConnection = {
+  ): JIOStreamConnection = {
     println(s"handling new connection")
-    val conn = new TCPConnection(socket)
+    val conn = new JIOStreamConnection(socket.getInputStream, socket.getOutputStream, () => socket.close())
     executionContext.execute: () =>
       println(s"exeecuting task")
       conn.handleReceivedMessages(incoming.getCallbackFor(conn))
@@ -86,69 +87,3 @@ object TCP {
 
 }
 
-class TCPConnection(socket: Socket) extends Connection[MessageBuffer] {
-
-  // socket streams
-
-  val inputStream  = new DataInputStream(new BufferedInputStream(socket.getInputStream))
-  val outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream))
-
-  // control codes
-
-  val sizedContent: Byte = 1
-
-  // connection interface
-
-  def send(data: MessageBuffer): Async[Any, Unit] = Async.fromCallback {
-    println(s"sending data on tcp socket")
-    try {
-      val outArray = data.asArray
-      outputStream.write(sizedContent)
-      outputStream.writeInt(outArray.size)
-      outputStream.write(outArray)
-      outputStream.flush()
-      println(s"sending done")
-      Async.handler.succeed(())
-    } catch {
-      case ioe: IOException => Async.handler.fail(ioe)
-    }
-  }
-
-  def close(): Unit = socket.close()
-
-  // frame parsing
-
-  def handleReceivedMessages(handler: Callback[MessageBuffer]) = {
-
-    def readNextByte() = {
-      val byte = inputStream.read
-      if byte == -1
-      then throw new IOException("end of connection stream")
-      else byte.toByte
-    }
-
-    try while true do {
-        println(s"receiving messages")
-        readNextByte() match {
-          case `sizedContent` =>
-            val size = inputStream.readInt()
-
-            val bytes = new Array[Byte](size)
-            inputStream.readFully(bytes, 0, size)
-
-            println(s"received message buffer of size $size")
-
-            handler.succeed(ArrayMessageBuffer(bytes))
-
-          case _ =>
-            throw IOException("unexpected read")
-        }
-      }
-    catch {
-      case ioe: IOException =>
-        close()
-        handler.fail(ioe)
-    }
-  }
-
-}
