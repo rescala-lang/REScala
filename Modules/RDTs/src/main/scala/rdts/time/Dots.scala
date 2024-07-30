@@ -95,6 +95,9 @@ case class Dots(internal: Map[Uid, ArrayRanges]) {
   def toSet: Set[Dot] =
     internal.flatMap((key, tree) => tree.iterator.map(time => Dot(key, time))).toSet
 
+  // todo, optimize later
+  def size: Long = iterator.size
+
   def max(replicaID: Uid): Option[Dot] =
     internal.get(replicaID).flatMap(_.next.map(c => Dot(replicaID, c - 1)))
 
