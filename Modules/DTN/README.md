@@ -52,7 +52,7 @@ enable network emulation
 
 start emulation docker
 
-  docker run --rm -it --name showroom -p 5901:5901 --privileged -v /home/kali/shared:/shared dtn7-showroom
+  docker run --rm -it --name showroom -p 5901:5901 --privileged -v /home/kali/REScala/Modules/DTN/simulation/shared:/shared dtn7-showroom
 
 # docker commands to free up space
 

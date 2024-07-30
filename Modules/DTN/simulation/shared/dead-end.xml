@@ -1,0 +1,949 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<scenario name="/tmp/tmpjx0xun5y">
+  <networks>
+    <network id="4" name="wlan4" icon="" canvas="0" type="WIRELESS_LAN">
+      <position x="136.0" y="73.0" lat="47.57872404704818" lon="-122.1311025099636" alt="2.0"/>
+    </network>
+  </networks>
+  <devices>
+    <device id="1" name="n1" icon="" canvas="0" type="MONITORING" class="" image="">
+      <position x="40.0" y="255.0" lat="47.57762114740901" lon="-122.13196489263633" alt="2.0"/>
+      <services>
+        <service name="rdtmonitoring"/>
+      </services>
+    </device>
+    <device id="2" name="n2" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="453.0" y="225.0" lat="47.57780294565194" lon="-122.12825485051292" alt="2.0"/>
+      <services>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnd"/>
+        <service name="rdtclient"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="3" name="n3" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="452.0" y="452.0" lat="47.576427323264895" lon="-122.12826383366576" alt="2.0"/>
+      <services>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnd"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="5" name="n5" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="754.6666870117188" y="646.3333129882812" lat="47.57524963263096" lon="-122.1255449325564" alt="2.0"/>
+      <services>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnd"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="6" name="n6" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="756.0" y="448.0" lat="47.57645156361978" lon="-122.12553295520205" alt="2.0"/>
+      <services>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnd"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="7" name="n7" icon="" canvas="0" type="DTN" class="" image="">
+      <position x="756.0" y="231.0" lat="47.577766586053855" lon="-122.12553295520205" alt="2.0"/>
+      <services>
+        <service name="DefaultMulticastRoute"/>
+        <service name="dtnd"/>
+        <service name="rdtclient"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="8" name="n8" icon="" canvas="1" type="DTN" class="" image="">
+      <position x="193.0" y="225.0" lat="47.57780294565194" lon="-122.13059047025163" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="9" name="n9" icon="" canvas="1" type="DTN" class="" image="">
+      <position x="456.0" y="49.0" lat="47.57886948262946" lon="-122.1282279010544" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="10" name="n10" icon="" canvas="1" type="DTN" class="" image="">
+      <position x="741.0" y="37.0" lat="47.57894220026861" lon="-122.12566770249467" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+    <device id="11" name="n11" icon="" canvas="1" type="DTN" class="" image="">
+      <position x="1018.3333129882812" y="234.6666717529297" lat="47.577744366256226" lon="-122.12317637495613" alt="2.0"/>
+      <services>
+        <service name="dtnd"/>
+        <service name="DefaultMulticastRoute"/>
+        <service name="rdtrouter"/>
+      </services>
+    </device>
+  </devices>
+  <links>
+    <link node1="4" node2="2">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:00" ip4="10.0.0.20" ip4_mask="24" ip6="2001::14" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="3">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:01" ip4="10.0.0.21" ip4_mask="24" ip6="2001::15" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="5">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:02" ip4="10.0.0.22" ip4_mask="24" ip6="2001::16" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="6">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:03" ip4="10.0.0.23" ip4_mask="24" ip6="2001::17" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="7">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:04" ip4="10.0.0.24" ip4_mask="24" ip6="2001::18" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="8">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:05" ip4="10.0.0.25" ip4_mask="24" ip6="2001::19" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="9">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:06" ip4="10.0.0.26" ip4_mask="24" ip6="2001::1a" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="10">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:07" ip4="10.0.0.27" ip4_mask="24" ip6="2001::1b" ip6_mask="128"/>
+    </link>
+    <link node1="4" node2="11">
+      <iface2 id="0" name="eth0" mac="00:00:00:aa:00:08" ip4="10.0.0.28" ip4_mask="24" ip6="2001::1c" ip6_mask="128"/>
+    </link>
+  </links>
+  <mobility_configurations>
+    <mobility_configuration node="4" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+  </mobility_configurations>
+  <emane_global_configuration>
+    <emulator/>
+    <core>
+      <configuration name="platform_id_start" value="1"/>
+      <configuration name="nem_id_start" value="1"/>
+      <configuration name="link_enabled" value="1"/>
+      <configuration name="loss_threshold" value="30"/>
+      <configuration name="link_interval" value="1"/>
+      <configuration name="link_timeout" value="4"/>
+    </core>
+  </emane_global_configuration>
+  <service_configurations>
+    <service name="dtnd" node="2">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n2"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+        <file name="start-dtnd.sh"><![CDATA[#!/bin/sh
+dtnd -c dtnd.toml &> dtnd.log
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="3">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n3"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="5">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n5"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="6">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n6"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="7">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n7"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="8">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n8"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="9">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n9"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="10">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n10"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+]]></file>
+      </files>
+    </service>
+    <service name="dtnd" node="11">
+      <startups>
+        <startup>bash -c 'dtnd -c dtnd.toml &amp;&gt; dtnd.log'</startup>
+      </startups>
+      <files>
+        <file name="dtnd.toml"><![CDATA[# auto-generated by DtndService (dtnd.py)
+
+# Example config file for dtn7 daemon
+debug = false
+nodeid = "n11"
+# Enables advertisement of the beaon period in discovery beacons
+beacon-period = true
+
+generate-status-reports = false
+
+webport = 3000
+
+workdir = "."
+
+db = "mem"
+
+[routing]
+strategy = "external"
+
+[core]
+# the janitor is responsible for cleaning the bundle buffer
+# and schedule resubmissions.
+# a value of 0 deactives the janitor
+janitor = "10s"
+
+
+[discovery]
+# interval of 0 deactives discovery service
+interval = "2s"
+peer-timeout = "20s"
+
+[convergencylayers]
+
+cla.0.id = "mtcp"
+cla.0.port = 16163
+
+# Define user specified discovery targets to send announcement beacons to, if not specified the default targets "224.0.0.26:3003" for IPv4 and "[FF02::1]:3003" will be used
+# If a IPv4 address is specified the IPv4 flag has to be enabled, same goes for specifying an IPv6 address
+[discovery_destinations]
+target.0.destination = "10.0.0.255:3003"
+#
+# target.1.destination = "[FF02::1]:3004"
+
+
+# Define user specified services that will be advertised with discovery beacons
+# Each service takes a u8 tag and a payload value who's content depends on the used tag
+#[services]
+# So far 4 Tags are defined and can be used like this:
+#
+# Tag 63 advertises a custom, unformatted string message
+# service.0.tag = 63
+# service.0.payload = "This is a custom string message"
+#
+# Tag 127 advertises 2 floating point numbers represented as geographical location in latitude/longitude
+# service.1.tag = 127
+# service.1.payload = "52.32 24.42"
+#
+# Tag 191 advertises 1 integer represented as battery level in %
+# service.2.tag = 191
+# service.1.payload = "75"
+#
+# Tag 255 advertises an address represented like this: (Street Number PostalNumber City CountryCode)
+# service.3.tag = 255
+# service.3.payload = "Samplestreet 42 12345 SampleCity SC"
+
+[statics]
+#peers = [
+#    "mtcp://192.168.2.101/testnode",    
+#]
+
+[endpoints]
+# local endpoints are always reachable under dtn://<nodeid>/<localname>
+#local.0 = "incoming"
+#group.0 = "dtn://hometown/weather" # atm ignored
+
+        
+]]></file>
+      </files>
+    </service>
+  </service_configurations>
+  <session_origin lat="47.579166412353516" lon="-122.13232421875" alt="2.0" scale="100.0"/>
+  <session_options>
+    <configuration name="controlnet" value="172.16.0.0/24"/>
+    <configuration name="controlnet0" value=""/>
+    <configuration name="controlnet1" value=""/>
+    <configuration name="controlnet2" value=""/>
+    <configuration name="controlnet3" value=""/>
+    <configuration name="controlnet_updown_script" value=""/>
+    <configuration name="enablerj45" value="1"/>
+    <configuration name="preservedir" value="0"/>
+    <configuration name="enablesdt" value="0"/>
+    <configuration name="sdturl" value="tcp://127.0.0.1:50000/"/>
+    <configuration name="ovs" value="0"/>
+  </session_options>
+  <session_metadata>
+    <configuration name="canvas" value="{&quot;gridlines&quot;: true, &quot;dimensions&quot;: [2000, 2000], &quot;canvases&quot;: [{&quot;id&quot;: 1, &quot;wallpaper&quot;: null, &quot;wallpaper_style&quot;: 1, &quot;fit_image&quot;: false}]}"/>
+    <configuration name="edges" value="[]"/>
+    <configuration name="shapes" value="[]"/>
+    <configuration name="hidden" value="[]"/>
+  </session_metadata>
+  <default_services>
+    <node type="mdr">
+      <service name="zebra"/>
+      <service name="OSPFv3MDR"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="PC">
+      <service name="DefaultRoute"/>
+    </node>
+    <node type="prouter"/>
+    <node type="router">
+      <service name="zebra"/>
+      <service name="OSPFv2"/>
+      <service name="OSPFv3"/>
+      <service name="IPForward"/>
+    </node>
+    <node type="host">
+      <service name="DefaultRoute"/>
+      <service name="SSH"/>
+    </node>
+  </default_services>
+</scenario>

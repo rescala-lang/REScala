@@ -27,12 +27,9 @@ class MonitoringServer(server: TCPReadonlyServer) {
     val dir = Paths.get("/shared/monitoring")
 
     Using.Manager { use =>
-      val streamReceived =
-        use(BufferedOutputStream(Files.newOutputStream(RECEIVED_DATA_FP, StandardOpenOption.APPEND)))
-      val streamForwarded =
-        use(BufferedOutputStream(Files.newOutputStream(FORWARDED_DATA_FP, StandardOpenOption.APPEND)))
-      val streamCreatedAndDelivered =
-        use(BufferedOutputStream(Files.newOutputStream(CREATED_AND_DELIVERED_DATA_FP, StandardOpenOption.APPEND)))
+      val streamReceived            = use(BufferedOutputStream(Files.newOutputStream(RECEIVED_DATA_FP)))
+      val streamForwarded           = use(BufferedOutputStream(Files.newOutputStream(FORWARDED_DATA_FP)))
+      val streamCreatedAndDelivered = use(BufferedOutputStream(Files.newOutputStream(CREATED_AND_DELIVERED_DATA_FP)))
 
       try {
         while true do {
@@ -64,7 +61,7 @@ class MonitoringServer(server: TCPReadonlyServer) {
       } finally {
         server.stop()
       }
-    }
+    }.recover(throwable => println(throwable))
     ()
   }
 }
@@ -116,8 +113,7 @@ class MonitoringBundlesReceivedPrinter {
             }
           }
       }
-    }
-
+    }.recover(throwable => println(throwable))
     ()
   }
 }
@@ -150,8 +146,7 @@ class MonitoringBundlesForwardedPrinter {
             }
           }
       }
-    }
-
+    }.recover(throwable => println(throwable))
     ()
   }
 }
@@ -192,18 +187,20 @@ class MonitoringStateDevelopmentPrinter {
             case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)  => ()
             case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => ()
 
+          val creationStateNum: Double = creationState.size.toDouble
+
           print("\u001b[2J") // clear console screen
           println(s"${newestTime}\n")
-          println("States Ratio of num-dots")
+          println(s"States Ratio of num-dots (bundles created: ${creationStateNum})")
           for (clientId: String, dots: Dots) <- deliveredStates do {
-            val ratio: Double = dots.toSet.size.toDouble / creationState.toSet.size.toDouble
-            println(s"${clientId}: ${ratio}")
+            val deliveredStateNum: Double = dots.size.toDouble
+            val ratio                     = deliveredStateNum / creationStateNum
+            println(s"${clientId} |  ration: ${ratio}, bundles delivered: ${deliveredStateNum}")
           }
           println(s"\nNum bundles created at other nodes: ${bundlesCreatedAtOtherNodesCounter}")
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")
         }
-    }
-
+    }.recover(throwable => println(throwable))
     ()
   }
 }
