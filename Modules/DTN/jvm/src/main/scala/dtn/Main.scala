@@ -14,11 +14,12 @@ import scala.concurrent.Future
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous
-  -a => host address | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
-  -p => host port | default: 5000 (for monitoring), 3000 (for everything else)
-  -ma => monitoring address | default: 127.0.0.1
-  -mp => monitoring port | default: 5000
+  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous, print.received, print.forwarded, print.statedev
+  -a   => host address       | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
+  -p   => host port          | default: 5000 (for monitoring), 3000 (for everything else)
+  -ma  => monitoring address | default: 127.0.0.1
+  -mp  => monitoring port    | default: 5000
+  -cid => creation client id | default: n2
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -34,6 +35,7 @@ commandline options:
     val host_port: Int = keyword_args.getOrElse("-p", if method.equals("monitoring") then "5000" else "3000").toInt
     val monitoring_address: String = keyword_args.getOrElse("-ma", "127.0.0.1")
     val monitoring_port: Int       = keyword_args.getOrElse("-mp", "5000").toInt
+    val creation_client_id: String = keyword_args.getOrElse("-mid", "n2")
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
@@ -47,11 +49,21 @@ commandline options:
         send_one_rdt_package(host_address, host_port, monitoring_address, monitoring_port)
       case "client.continuous" =>
         send_continuous_rdt_packages(host_address, host_port, monitoring_address, monitoring_port)
+      case "print.received" =>
+        MonitoringBundlesReceivedPrinter().run()
+      case "print.forwarded" =>
+        MonitoringBundlesForwardedPrinter().run()
+      case "print.statedev" =>
+        MonitoringStateDevelopmentPrinter().run(creationClientId = creation_client_id)
       case s => throw Exception(s"could not partse commandline. unknown method: $s")
   }
 }
 
 // a bunch of main methods for testing
+
+@main def start_printing_received(): Unit  = MonitoringBundlesReceivedPrinter().run()
+@main def start_printing_forwarded(): Unit = MonitoringBundlesForwardedPrinter().run()
+@main def start_printing_state_n2(): Unit  = MonitoringStateDevelopmentPrinter().run("n2")
 
 @main def start_monitoring_server_default(): Unit = start_monitoring_server("0.0.0.0", 5000)
 
