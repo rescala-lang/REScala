@@ -30,6 +30,9 @@ object JavaHttp {
 
       addHandler { (exchange: HttpExchange) =>
         val requestHeaders = exchange.getRequestHeaders
+        exchange.getResponseHeaders.add("Access-Control-Allow-Origin", "*")
+        exchange.getResponseHeaders.add("Access-Control-Allow-Methods", "POST, GET")
+        exchange.getResponseHeaders.add("Access-Control-Allow-Headers", "x-replica-id")
         val uid = Option(requestHeaders.get(replicaIdHeader)).flatMap(_.asScala.headOption) match
           case None =>
             println(s"no replica ID on request?")
@@ -54,7 +57,8 @@ object JavaHttp {
           }
 
           Async.handler.succeed(conn)
-        else
+        else if exchange.getRequestMethod == "POST"
+        then
           SSEServer.this.synchronized {
             connections.get(uid)
           } match
@@ -65,6 +69,9 @@ object JavaHttp {
               cb.succeed(ArrayMessageBuffer(exchange.getRequestBody.readAllBytes()))
               exchange.sendResponseHeaders(200, 0)
               exchange.close()
+        else
+          exchange.sendResponseHeaders(200, 0)
+          exchange.close()
       }
     }
   }
