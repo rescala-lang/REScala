@@ -1,21 +1,18 @@
 package dtn
 
 import io.bullet.borer.Json
+import rdts.base.Lattice.syntax
+import rdts.time.Dots
 
 import java.io.BufferedOutputStream
+import java.io.BufferedReader
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.nio.file.StandardOpenOption
+import java.time.Duration
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import java.time.Duration
 import scala.util.Using
-import java.io.BufferedInputStream
-import java.util.Scanner
-import java.io.File
-import rdts.time.Dots
-import rdts.base.Lattice.syntax
 
 val MONITORING_DIR                = Paths.get("/shared/monitoring")
 val RECEIVED_DATA_FP              = MONITORING_DIR.resolve("received.data")
@@ -87,31 +84,34 @@ object MonitoringClient {
 
 class MonitoringBundlesReceivedPrinter {
   def run(): Unit = {
-    Using(Scanner(BufferedInputStream(Files.newInputStream(RECEIVED_DATA_FP, StandardOpenOption.READ)))) { in =>
-      in.useDelimiter("\n")
-
+    Using(Files.newBufferedReader(RECEIVED_DATA_FP, StandardCharsets.UTF_8)) { in =>
       var oldTime: Option[ZonedDateTime] = None
+      var messageCount: Long             = 0
 
-      var messageCount: Long = 0
+      while true do {
+        val line = in.readLine()
 
-      while in.hasNext() do {
-        Json.decode(in.next().getBytes()).to[MonitoringMessage].value match
-          case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time)         => ()
-          case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => ()
-          case MonitoringMessage.BundleCreatedAtClient(clientId, bundleId, dots, time)   => ()
-          case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time) => {
-            if oldTime.isEmpty then oldTime = time
+        if line == null then {
+          Thread.sleep(10)
+        } else {
+          Json.decode(line.getBytes()).to[MonitoringMessage].value match
+            case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time)         => ()
+            case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => ()
+            case MonitoringMessage.BundleCreatedAtClient(clientId, bundleId, dots, time)   => ()
+            case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time) => {
+              if oldTime.isEmpty then oldTime = time
 
-            if Duration.between(time.get, oldTime.get).toSeconds() >= 1 then {
-              print("\u001b[2J") // clear console screen
-              println("Total Messages Received\n")
-              println(s"${time.get}: ${messageCount}")
-              oldTime = time
-              messageCount = 1
-            } else {
-              messageCount += 1
+              if Duration.between(time.get, oldTime.get).toSeconds() >= 1 then {
+                print("\u001b[2J") // clear console screen
+                println("Total Messages Received\n")
+                println(s"${time.get}: ${messageCount}")
+                oldTime = time
+                messageCount = 1
+              } else {
+                messageCount += 1
+              }
             }
-          }
+        }
       }
     }.recover(throwable => println(throwable))
     ()
@@ -120,31 +120,34 @@ class MonitoringBundlesReceivedPrinter {
 
 class MonitoringBundlesForwardedPrinter {
   def run(): Unit = {
-    Using(Scanner(BufferedInputStream(Files.newInputStream(FORWARDED_DATA_FP, StandardOpenOption.READ)))) { in =>
-      in.useDelimiter("\n")
-
+    Using(Files.newBufferedReader(FORWARDED_DATA_FP, StandardCharsets.UTF_8)) { in =>
       var oldTime: Option[ZonedDateTime] = None
+      var messageCount: Long             = 0
 
-      var messageCount: Long = 0
+      while true do {
+        val line = in.readLine()
 
-      while in.hasNext() do {
-        Json.decode(in.next().getBytes()).to[MonitoringMessage].value match
-          case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => ()
-          case MonitoringMessage.BundleCreatedAtClient(clientId, bundleId, dots, time)   => ()
-          case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)          => ()
-          case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => {
-            if oldTime.isEmpty then oldTime = time
+        if line == null then {
+          Thread.sleep(10)
+        } else {
+          Json.decode(line.getBytes()).to[MonitoringMessage].value match
+            case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => ()
+            case MonitoringMessage.BundleCreatedAtClient(clientId, bundleId, dots, time)   => ()
+            case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)          => ()
+            case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => {
+              if oldTime.isEmpty then oldTime = time
 
-            if Duration.between(time.get, oldTime.get).toSeconds() >= 1 then {
-              print("\u001b[2J") // clear console screen
-              println("Total Messages Forwarded\n")
-              println(s"${time.get}: ${messageCount}")
-              oldTime = time
-              messageCount = 1
-            } else {
-              messageCount += 1
+              if Duration.between(time.get, oldTime.get).toSeconds() >= 1 then {
+                print("\u001b[2J") // clear console screen
+                println("Total Messages Forwarded\n")
+                println(s"${time.get}: ${messageCount}")
+                oldTime = time
+                messageCount = 1
+              } else {
+                messageCount += 1
+              }
             }
-          }
+        }
       }
     }.recover(throwable => println(throwable))
     ()
@@ -153,21 +156,25 @@ class MonitoringBundlesForwardedPrinter {
 
 class MonitoringStateDevelopmentPrinter {
   def run(creationClientId: String): Unit = {
-    Using(Scanner(BufferedInputStream(Files.newInputStream(CREATED_AND_DELIVERED_DATA_FP, StandardOpenOption.READ)))) {
-      in =>
-        in.useDelimiter("\n")
+    Using(Files.newBufferedReader(CREATED_AND_DELIVERED_DATA_FP, StandardCharsets.UTF_8)) { in =>
+      var creationState: Dots                = Dots.empty
+      var deliveredStates: Map[String, Dots] = Map()
 
-        var creationState: Dots                = Dots.empty
-        var deliveredStates: Map[String, Dots] = Map()
+      // these count anomalies that should not happen!?
+      var bundlesCreatedAtOtherNodesCounter: Long = 0
+      var bundlesDeliveredAtCreationCounter: Long = 0
 
-        // these count anomalies that should not happen!?
-        var bundlesCreatedAtOtherNodesCounter: Long = 0
-        var bundlesDeliveredAtCreationCounter: Long = 0
+      var newestTime: Option[ZonedDateTime] = None
 
-        var newestTime: Option[ZonedDateTime] = None
+      while true do {
+        val line = in.readLine()
 
-        while in.hasNext() do {
-          Json.decode(in.next().getBytes()).to[MonitoringMessage].value match
+        if line == null then {
+          Thread.sleep(10)
+        } else {
+          Json.decode(line.getBytes()).to[MonitoringMessage].value match
+            case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)  => ()
+            case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => ()
             case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => {
               if clientId == creationClientId then {
                 bundlesDeliveredAtCreationCounter += 1
@@ -184,22 +191,21 @@ class MonitoringStateDevelopmentPrinter {
               }
               newestTime = time
             }
-            case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)  => ()
-            case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => ()
 
           val creationStateNum: Double = creationState.size.toDouble
 
           print("\u001b[2J") // clear console screen
           println(s"${newestTime}\n")
-          println(s"States Ratio of num-dots (bundles created: ${creationStateNum})")
+          println(s"States Ratio of num-dots (num dots created: ${creationStateNum})")
           for (clientId: String, dots: Dots) <- deliveredStates do {
             val deliveredStateNum: Double = dots.size.toDouble
             val ratio                     = deliveredStateNum / creationStateNum
-            println(s"${clientId} |  ration: ${ratio}, bundles delivered: ${deliveredStateNum}")
+            println(s"${clientId} |  ration: ${ratio}, num dots delivered: ${deliveredStateNum}")
           }
           println(s"\nNum bundles created at other nodes: ${bundlesCreatedAtOtherNodesCounter}")
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")
         }
+      }
     }.recover(throwable => println(throwable))
     ()
   }

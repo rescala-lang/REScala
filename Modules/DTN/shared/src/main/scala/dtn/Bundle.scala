@@ -310,14 +310,6 @@ private def readBytes(reader: Reader): Array[Byte] = {
 given Codec[RdtMessageType] = deriveCodec[RdtMessageType]
 given Codec[RdtMetaInfo]    = deriveCodec[RdtMetaInfo]
 
-given Encoder[Uid] = Encoder { (writer, uid) =>
-  writer.writeString(uid.toString)
-}
-
-given Decoder[Uid] = Decoder { reader =>
-  Uid(reader.readString())
-}
-
 given Encoder[ArrayRanges] = Encoder { (writer, arrayRanges) =>
   writer.write[Array[Time]](arrayRanges.inner.slice(0, arrayRanges.used))
 }
@@ -330,6 +322,7 @@ given Decoder[ArrayRanges] = Decoder { reader =>
   )
 }
 
+given Codec[Uid]  = deriveCodec[Uid]
 given Codec[Dots] = deriveCodec[Dots]
 
 given Encoder[Endpoint] = Encoder { (writer, endpoint) =>
