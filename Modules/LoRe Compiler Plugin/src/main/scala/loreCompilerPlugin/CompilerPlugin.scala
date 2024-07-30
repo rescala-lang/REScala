@@ -119,7 +119,7 @@ class LoRePhase extends PluginPhase:
               field.toString,                                      // bar
               List()                                               // Always empty as these are field accesses
             )
-      case Apply(Select(leftArg, opOrMethod), params: List[?]) => // Method calls and binary operator applications
+      case Apply(Select(leftArg, opOrMethod), params: List[_]) => // Method calls and binary operator applications
         opOrMethod match
           case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
             // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
@@ -194,7 +194,7 @@ class LoRePhase extends PluginPhase:
                 buildLoreRhsTerm(p, indentLevel + 1, operandSide)
               )
             )
-      case Apply(Ident(name: Name), params: List[?]) => // Function calls
+      case Apply(Ident(name: Name), params: List[_]) => // Function calls
         logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} parameters:", name.toString)
         TFunC(            // foo(bar, baz)
           name.toString,  // foo
@@ -202,15 +202,23 @@ class LoRePhase extends PluginPhase:
             buildLoreRhsTerm(p, indentLevel + 1, operandSide)
           )
         )
-      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]), _) =>
-        logRhsInfo(indentLevel, operandSide, s"type application of the ${typeName.toString} type", "")
+      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), List(Typed(SeqLiteral(params: List[_], _), _))) =>
+        // Type instantiations like Lists etc
+        logRhsInfo(indentLevel, operandSide, s"type call to the ${typeName.toString} type with ${params.length} parameters", "")
+        TFunC(
+          typeName.toString,
+          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
+        )
+      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) =>
+        // Type instantiations for reactives
+        logRhsInfo(indentLevel, operandSide, s"definition of a ${typeName.toString} reactive", "")
         typeName.toString match
-          case "Source"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case "Derived" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case _         => // Unsupported type application
+          case "Source" | "Var"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case "Derived" | "Signal" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case _         => // Unsupported reactive
             // No access to sourcePos here due to LazyTree
             report.error(
-              s"${"\t".repeat(indentLevel)}Unsupported type application used in RHS:\n${"\t".repeat(indentLevel)}$tree"
+              s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree"
             )
             TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
       case _ => // Unsupported RHS forms
@@ -244,26 +252,26 @@ class LoRePhase extends PluginPhase:
             // * Typechecking for whether all of this is correct is already done by the Scala type-checker before this phase,
             //   so we can assume everything we see here is of suitable types instead of doing any further checks.
             loreTypeNode match
-              case SimpleType(reactiveName, typeArgs) =>
-                println(s"Detected $reactiveName definition with name \"$name\"")
+              case SimpleType(typeName, typeArgs) =>
+                println(s"Detected $typeName definition with name \"$name\"")
                 rhs match
                   case tpd.EmptyTree => () // Ignore func args (ArgT) for now
                   case Apply(Apply(_, List(properRhs)), _)
-                      if reactiveName == "Source" => // E.g. "foo: Source[bar] = Source(baz)"
+                      if typeName == "Source" || typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
                     newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
                       name.toString,                          // foo
                       buildLoreTypeNode(tpt),                 // Source[Bar]
                       TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
                     ))
                   case Apply(Apply(_, List(Block(_, properRhs))), _)
-                      if reactiveName == "Derived" => // E.g. "foo: Derived[bar] = Derived { baz }"
+                      if typeName == "Derived" | typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz }"
                     newLoreTerm = Some(TAbs(                   // foo: Derived[Bar] = Derived { baz }
                       name.toString,                           // foo
                       buildLoreTypeNode(tpt),                  // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
                   // TODO: Interaction case
-                  // case ... if reactiveName == "Interaction" =>
+                  // case ... if typeName == "Interaction" =>
                   case _ => // Any non-reactive values (Int, String, Bool, ...)
                     newLoreTerm = Some(TAbs(   // foo: Bar = baz
                       name.toString,           // foo (any valid Scala identifier)
