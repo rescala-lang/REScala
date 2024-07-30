@@ -36,9 +36,9 @@ object JSHttpPseudoChannel {
       val input = chunk.value
       buffer = buffer.appendedAll(new Int8Array(input.buffer, input.byteOffset, input.length).toArray)
 
-      if buffer.size >= 4 then
+      if buffer.length >= 4 then
         val len = ByteBuffer.wrap(buffer.slice(0, 4)).getInt()
-        if buffer.size >= len + 4 then
+        if buffer.length >= len + 4 then
           val mb = ArrayMessageBuffer(buffer.slice(4, len + 4))
           buffer = buffer.slice(len + 4, buffer.length)
           cb.succeed(mb)
