@@ -1,10 +1,10 @@
-package test.rdts.protocols
+package test.rdts
 
 import munit.ScalaCheckSuite
 import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.{Gen, Prop}
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.commands.Commands
+import org.scalacheck.{Gen, Prop}
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{Membership, Paxos}
 

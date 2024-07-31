@@ -1,8 +1,7 @@
 package rdts.datatypes
 
-import rdts.base.Lattice.{mapLattice, *}
-import rdts.base.{Bottom, Lattice, Uid}
-import rdts.dotted.HasDots
+import rdts.base.Lattice.mapLattice
+import rdts.base.{Bottom, Lattice}
 
 import java.security.MessageDigest
 import java.util
