@@ -14,12 +14,12 @@ import scala.concurrent.Future
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client.once, client.continuous, print.received, print.forwarded, print.statedev
+  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client, client.once, client.continuous, print.received, print.forwarded, print.statedev
   -a   => host address       | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
   -p   => host port          | default: 5000 (for monitoring), 3000 (for everything else)
   -ma  => monitoring address | default: 127.0.0.1
   -mp  => monitoring port    | default: 5000
-  -cid => creation client id | default: n2
+  -cid => creation client id | default: dtn://n2/rdt/testapp
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -35,7 +35,7 @@ commandline options:
     val host_port: Int = keyword_args.getOrElse("-p", if method.equals("monitoring") then "5000" else "3000").toInt
     val monitoring_address: String = keyword_args.getOrElse("-ma", "127.0.0.1")
     val monitoring_port: Int       = keyword_args.getOrElse("-mp", "5000").toInt
-    val creation_client_id: String = keyword_args.getOrElse("-mid", "n2")
+    val creation_client_id: String = keyword_args.getOrElse("-mid", "dtn://n2/rdt/testapp")
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
@@ -45,6 +45,8 @@ commandline options:
         _route_forever(EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
       case "routing.rdt" =>
         _route_forever(RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
+      case "client" =>
+        receiving_client(host_address, host_port, monitoring_address, monitoring_port)
       case "client.once" =>
         send_one_rdt_package(host_address, host_port, monitoring_address, monitoring_port)
       case "client.continuous" =>
@@ -125,14 +127,16 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
   }
 }
 
-def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
+def send_one_rdt_package(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
   val dots: Dots = DotsCreation.generate_pseudo_random_dots()
 
-  RdtClient(host, port, "testapp", MonitoringClient(checkerHost, checkerPort)).flatMap(client => {
+  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).flatMap(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
 
+    println("waiting 5 seconds")
+    Thread.sleep(5000)
     println(s"sending dots: $dots")
     client.send(message_type = RdtMessageType.Payload, payload = Array(), dots = dots)
   }).recover(throwable => println(throwable))
@@ -142,10 +146,22 @@ def send_one_rdt_package(host: String, port: Int, checkerHost: String, checkerPo
   }
 }
 
-def send_continuous_rdt_packages(host: String, port: Int, checkerHost: String, checkerPort: Int): Unit = {
+def receiving_client(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
+  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
+    client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
+      println(s"received dots: $dots")
+    })
+  }).recover(throwable => println(throwable))
+
+  while true do {
+    Thread.sleep(200)
+  }
+}
+
+def send_continuous_rdt_packages(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
   var dots: Dots = Dots.empty
 
-  RdtClient(host, port, "testapp", MonitoringClient(checkerHost, checkerPort)).map(client => {
+  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")

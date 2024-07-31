@@ -35,14 +35,14 @@ class RdtClientService(CoreService):
     :cvar shutdown: shutdown commands to stop this service
     """
 
-    name: str = "rdtclient"
+    name: str = "rdtclientonce"
     group: str = "Dtn7"
     executables: Tuple[str, ...] = ()
     dependencies: Tuple[str, ...] = ('dtnd', )
     dirs: Tuple[str, ...] = ()
     configs: Tuple[str, ...] = ()
     startup: Tuple[str, ...] = (
-        "bash -c '/root/.coregui/scripts/rdt_tool -m client -ma 172.16.0.1 &> client.log'", )
+        "bash -c '/root/.coregui/scripts/rdt_tool -m client.once -ma 172.16.0.1 &> client.log'", )
     validate: Tuple[str, ...] = ()
     validation_mode: ServiceMode = ServiceMode.NON_BLOCKING
     validation_timer: int = 5
