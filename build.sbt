@@ -145,7 +145,7 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
     Settings.implicitConversions(), // reswing uses this in a million places for no reason
   )
 
-lazy val loCal = project.in(file("Modules/Example Lore Calendar"))
+lazy val loCal = project.in(file("Modules/Examples/Lore Calendar"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(rdts.js, reactives.js, channels.js, lore.js, replication.js)
   .settings(
