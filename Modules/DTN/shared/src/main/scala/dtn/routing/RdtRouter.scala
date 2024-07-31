@@ -86,7 +86,7 @@ class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfac
     println(s"received sender-request for bundle: ${packet.bp}")
 
     // we only route rdt packets rn
-    if !tempRdtMetaInfoStore.contains(packet.bp.id) then {
+    if !tempRdtMetaInfoStore.containsKey(packet.bp.id) then {
       println(s"bundle meta information for bundle-id ${packet.bp.id} are not available. not routing rn.")
       return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = false))
     }
