@@ -101,7 +101,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
 
 lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Full)
   .in(file("Modules/DTN"))
-  .dependsOn(reactives, rdts)
+  .dependsOn(reactives, rdts, replication)
   .settings(
     scala3defaults,
     Settings.explicitNulls(Compile / compile),
@@ -277,8 +277,6 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
 
 lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Replication"))
   .dependsOn(reactives, rdts, channels, rdts % "compile->compile;test->test")
-  .jsConfigure(_.dependsOn(dtn.js))
-  .jvmConfigure(_.dependsOn(dtn.jvm))
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(11), // java webserver
@@ -318,7 +316,7 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(replication.js)
+  .dependsOn(replication.js, dtn.js)
   .settings(
     scala3defaults,
     Settings.explicitNulls(Compile / compile),
