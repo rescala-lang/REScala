@@ -48,14 +48,14 @@ class UntrustedDeltaBasedReplicaMock extends UntrustedReplica {
     val os          = Files.newOutputStream(outFilePath)
     val printWriter = new PrintWriter(os)
     val crdt        = decrypt(aead)
-    printWriter.write(writeToString(crdt.state)(Codecs.deltaAwlwwmapJsonCodec))
+    printWriter.write(writeToString(crdt.state)(using Codecs.deltaAwlwwmapJsonCodec))
     printWriter.close()
   }
 
   def decrypt(aead: replication.Aead): DeltaAWLWWMContainer[String, String] = {
     val crdt = new DeltaAWLWWMContainer[String, String]("".convert)
     encryptedDeltaGroupStore.map { encDeltaGroup =>
-      encDeltaGroup.decrypt(aead)(Codecs.deltaAwlwwmapJsonCodec)
+      encDeltaGroup.decrypt(aead)(using Codecs.deltaAwlwwmapJsonCodec)
     }.foreach { decDeltaGroup =>
       crdt.merge(decDeltaGroup.deltaGroup)
     }

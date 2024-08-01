@@ -2,7 +2,7 @@ package universe
 
 import reactives.default.*
 
-class Seed(implicit _world: World) extends BoardElement {
+class Seed(using _world: World) extends BoardElement {
 
   val growTime: Signal[Int]   = world.time.hour.changed.iterate(Plant.GrowTime)(_ - 1)
   val isDead: Signal[Boolean] = growTime map { _ <= 0 }

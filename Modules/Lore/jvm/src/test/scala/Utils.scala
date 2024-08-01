@@ -17,7 +17,7 @@ class ParserSuite extends FunSuite {
       parser: P[Term],
       input: String,
       result: Term
-  )(implicit
+  )(using
       loc: munit.Location
   ): Unit =
     parser.parseAll(input) match {
@@ -33,7 +33,7 @@ class ParserSuite extends FunSuite {
       parser: P[A],
       input: String,
       result: A
-  )(implicit
+  )(using
       loc: munit.Location
   ): Unit =
     parser.parseAll(input) match {

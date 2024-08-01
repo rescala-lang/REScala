@@ -8,7 +8,7 @@ import scala.scalajs.js.typedarray.Uint8Array
 import scala.util.{Failure, Success}
 
 class AeadHelperTest extends munit.FunSuite {
-  implicit def executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+  given executionContext: ExecutionContext = scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
   private var key: Uint8Array               = null
   private var otherKey: Uint8Array          = null

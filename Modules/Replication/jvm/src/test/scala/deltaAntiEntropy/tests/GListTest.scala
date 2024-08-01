@@ -13,7 +13,7 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object GListGenerators {
-  def genGList[E](implicit e: Arbitrary[E]): Gen[GrowOnlyList[E]] =
+  def genGList[E](using e: Arbitrary[E]): Gen[GrowOnlyList[E]] =
     for
       elems <- Gen.listOfN(20, e.arbitrary)
     yield {
@@ -22,7 +22,7 @@ object GListGenerators {
       }
     }
 
-  implicit def arbGList[E: JsonValueCodec: HasDots](implicit
+  given arbGList[E: JsonValueCodec: HasDots](using
       e: Arbitrary[E]
   ): Arbitrary[GrowOnlyList[E]] =
     Arbitrary(genGList)
@@ -36,7 +36,7 @@ object GListGenerators {
 }
 
 class GListTest extends munit.ScalaCheckSuite {
-  import GListGenerators.*
+  import GListGenerators.{*, given}
 
   given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   given HasDots[Int]                         = HasDots.noDots

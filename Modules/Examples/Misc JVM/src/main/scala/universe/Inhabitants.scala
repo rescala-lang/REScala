@@ -3,7 +3,7 @@ package universe
 import reactives.default.*
 import universe.Animal.*
 
-class Carnivore(implicit _world: World) extends Animal {
+class Carnivore(using _world: World) extends Animal {
 
   private val sleepy  = energy map { _ < Animal.SleepThreshold }
   private val canHunt = energy map { _ > Animal.AttackThreshold }
@@ -27,7 +27,7 @@ class Carnivore(implicit _world: World) extends Animal {
   }
 }
 
-class Herbivore(implicit _world: World) extends Animal {
+class Herbivore(using _world: World) extends Animal {
 
   override val findFood: Signal[PartialFunction[BoardElement, BoardElement]] = // #SIG
     Var {
@@ -113,7 +113,7 @@ trait Male extends Animal {
   }
 }
 
-class FemaleHerbivore(implicit _world: World) extends Herbivore with Female
-class MaleHerbivore(implicit _world: World)   extends Herbivore with Male
-class FemaleCarnivore(implicit _world: World) extends Carnivore with Female
-class MaleCarnivore(implicit _world: World)   extends Carnivore with Male
+class FemaleHerbivore(using _world: World) extends Herbivore with Female
+class MaleHerbivore(using _world: World)   extends Herbivore with Male
+class FemaleCarnivore(using _world: World) extends Carnivore with Female
+class MaleCarnivore(using _world: World)   extends Carnivore with Male

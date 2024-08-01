@@ -7,7 +7,7 @@ object Sequence {
 
   type RGA[A] = LatticeSequence[A, TwoPhaseSet[Vertex]]
 
-  implicit def lattice[A]: Lattice[RGA[A]] = LatticeSequence.lattice[A, TwoPhaseSet[Vertex]]
+  given lattice[A]: Lattice[RGA[A]] = LatticeSequence.lattice[A, TwoPhaseSet[Vertex]]
 
   def apply[A](values: Seq[A]): RGA[A] = {
     values.reverseIterator.foldLeft(empty[A]) {

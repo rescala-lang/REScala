@@ -30,11 +30,11 @@ object RCounterGenerators {
       }
     }
 
-  implicit def arbRCounter: Arbitrary[AntiEntropyContainer[ResettableCounter]] = Arbitrary(genRCounter)
+  given arbRCounter: Arbitrary[AntiEntropyContainer[ResettableCounter]] = Arbitrary(genRCounter)
 }
 
 class ResettableCounterTest extends munit.ScalaCheckSuite {
-  import RCounterGenerators.*
+  import RCounterGenerators.{*, given}
 
   property("increment") {
     forAll { (counter: AntiEntropyContainer[ResettableCounter]) =>

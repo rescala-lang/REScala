@@ -111,7 +111,7 @@ class SecureToDoListClient(
 
   protected def encryptAndDisseminate(newDeltaGroup: DecryptedDeltaGroup[ToDoMapLattice]): Unit = {
     assert(aead ne null, "aead was null?")
-    disseminate(newDeltaGroup.encrypt(aead)(stateJsonCodec, dotSetJsonCodec))
+    disseminate(newDeltaGroup.encrypt(aead)(using stateJsonCodec, dotSetJsonCodec))
   }
 
   // call localChange instead of localChangeOptimized
@@ -126,7 +126,7 @@ object SecureToDoListClient {
       right: DecryptedDeltaGroup[ToDoMapLattice]
   ): DecryptedDeltaGroup[ToDoMapLattice] = {
     DecryptedDeltaGroup.decryptedDeltaGroupSemiLattice[ToDoMapLattice](
-      DeltaAWLWWMContainer.lattice
+      using DeltaAWLWWMContainer.lattice
     ).merge(left, right)
   }
 }

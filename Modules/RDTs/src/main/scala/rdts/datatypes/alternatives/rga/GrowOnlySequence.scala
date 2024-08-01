@@ -8,7 +8,7 @@ object GrowOnlySequence {
 
   type GrowOnlySequence[A] = LatticeSequence[A, Set[Vertex]]
 
-  implicit def lattice[A]: Lattice[GrowOnlySequence[A]] = LatticeSequence.lattice[A, Set[Vertex]]
+  given lattice[A]: Lattice[GrowOnlySequence[A]] = LatticeSequence.lattice[A, Set[Vertex]]
 
   def empty[A]: GrowOnlySequence[A] =
     LatticeSequence(Set[Vertex](), HashMap[Vertex, Vertex](Vertex.start -> Vertex.end), Map())

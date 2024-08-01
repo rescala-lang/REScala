@@ -14,7 +14,7 @@ class DeframeTest extends munit.FunSuite {
   if reactives.SelectedScheduler.candidate.scheduler.isInstanceOf[FullMVEngine] then {
     import reactives.default.*
 
-    implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf
+    implicit def assumeSignalsAreFullMV(sig: ReSource): ReSource.of[State] = sig.asInstanceOf[ReSource.of[State]]
 
     val engine: FullMVEngine = reactives.SelectedScheduler.candidate.scheduler.asInstanceOf[FullMVEngine]
 

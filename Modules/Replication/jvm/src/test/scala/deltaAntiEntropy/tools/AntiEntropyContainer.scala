@@ -39,7 +39,7 @@ class AntiEntropyContainer[State](
         this
     }
 
-  def processReceivedDeltas()(implicit u: Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def processReceivedDeltas()(using u: Lattice[Dotted[State]]): AntiEntropyContainer[State] =
     antiEntropy.getReceivedDeltas.foldLeft(this) {
       (crdt, delta) => crdt.applyDelta(delta)
     }

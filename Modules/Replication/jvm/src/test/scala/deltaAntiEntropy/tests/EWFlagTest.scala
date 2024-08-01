@@ -29,11 +29,11 @@ object EWFlagGenerators {
       }
     }
 
-  implicit def arbEWFlag: Arbitrary[AntiEntropyContainer[EnableWinsFlag]] = Arbitrary(genEWFlag)
+  given arbEWFlag: Arbitrary[AntiEntropyContainer[EnableWinsFlag]] = Arbitrary(genEWFlag)
 }
 
 class EWFlagTest extends munit.ScalaCheckSuite {
-  import EWFlagGenerators.*
+  import EWFlagGenerators.given
 
   property("enable") {
     forAll { (flag: AntiEntropyContainer[EnableWinsFlag]) =>

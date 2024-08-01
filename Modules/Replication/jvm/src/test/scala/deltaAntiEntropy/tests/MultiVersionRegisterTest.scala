@@ -14,7 +14,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 object MVRegisterGenerators {
-  def genMVRegister[A: Lattice](implicit
+  def genMVRegister[A: Lattice](using
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Gen[AntiEntropyContainer[MultiVersionRegister[A]]] =
@@ -33,7 +33,7 @@ object MVRegisterGenerators {
       }
     }
 
-  implicit def arbMVRegister[A: Lattice](implicit
+  given arbMVRegister[A: Lattice](using
       a: Arbitrary[A],
       cA: JsonValueCodec[A],
   ): Arbitrary[AntiEntropyContainer[MultiVersionRegister[A]]] =
@@ -41,7 +41,7 @@ object MVRegisterGenerators {
 }
 
 class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
-  import MVRegisterGenerators.*
+  import MVRegisterGenerators.{*, given}
 
   given Lattice[Int]                         = math.max
   given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make

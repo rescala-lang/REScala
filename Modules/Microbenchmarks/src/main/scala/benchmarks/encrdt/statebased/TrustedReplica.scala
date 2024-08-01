@@ -5,7 +5,7 @@ import rdts.base.LocalUid
 import rdts.time.VectorClock
 import replication.Aead
 
-abstract class TrustedReplica[T](val localReplicaId: LocalUid, private val aead: Aead)(implicit
+abstract class TrustedReplica[T](val localReplicaId: LocalUid, private val aead: Aead)(using
     val stateJsonCodec: JsonValueCodec[T]
 ) extends Replica {
 

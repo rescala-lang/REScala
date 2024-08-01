@@ -48,7 +48,7 @@ class CreationTicketTest extends FunSuiteInvertedAssert {
   test("implicit In Closures") {
     val closureDefinition: Transaction[State] = getTurn(using reactives.SelectedScheduler.candidate.scheduler)
     val closure = {
-      implicit def it: Transaction[State] = closureDefinition
+      given it: Transaction[State] = closureDefinition
       () => implicitly[CreationTicket[State]]
     }
     transaction() {

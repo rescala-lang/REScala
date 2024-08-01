@@ -6,7 +6,7 @@ import rdts.time.Dots
 import replication.Aead
 
 case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: Dots) {
-  def encrypt(aead: Aead)(implicit
+  def encrypt(aead: Aead)(using
       tJsonCodec: JsonValueCodec[T],
       dotSetJsonCodec: JsonValueCodec[Dots]
   ): EncryptedDeltaGroup = {
@@ -19,7 +19,7 @@ case class DecryptedDeltaGroup[T](deltaGroup: T, dottedVersionVector: Dots) {
 }
 
 object DecryptedDeltaGroup {
-  implicit def decryptedDeltaGroupSemiLattice[T](implicit
+  given decryptedDeltaGroupSemiLattice[T](using
       tLattice: Lattice[T]
   ): Lattice[DecryptedDeltaGroup[T]] = (l, r) =>
     DecryptedDeltaGroup(

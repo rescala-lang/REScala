@@ -13,7 +13,7 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object AWSetGenerators {
-  def genAWSet[A: JsonValueCodec](implicit a: Arbitrary[A]): Gen[AntiEntropyContainer[ReplicatedSet[A]]] =
+  def genAWSet[A: JsonValueCodec](using a: Arbitrary[A]): Gen[AntiEntropyContainer[ReplicatedSet[A]]] =
     for
       added   <- Gen.containerOf[List, A](a.arbitrary)
       n       <- Gen.choose(0, added.size)

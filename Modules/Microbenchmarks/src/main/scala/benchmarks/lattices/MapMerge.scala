@@ -47,7 +47,7 @@ object MergeImpl {
           }
       }
 
-  implicit def IntLattice: Lattice[Int] = _ max _
+  given IntLattice: Lattice[Int] = _ max _
 }
 
 @BenchmarkMode(Array(Mode.Throughput))

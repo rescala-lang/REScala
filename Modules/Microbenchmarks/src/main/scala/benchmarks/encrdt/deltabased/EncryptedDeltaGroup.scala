@@ -9,7 +9,7 @@ case class EncryptedDeltaGroup(stateCiphertext: Array[Byte], serialDottedVersion
 ) {
   lazy val dottedVersionVector: Dots = readFromArray(serialDottedVersionVector)
 
-  def decrypt[T](aead: Aead)(implicit tJsonCodec: JsonValueCodec[T]): DecryptedDeltaGroup[T] = {
+  def decrypt[T](aead: Aead)(using tJsonCodec: JsonValueCodec[T]): DecryptedDeltaGroup[T] = {
     val plainText           = aead.decrypt(stateCiphertext, serialDottedVersionVector).get
     val state               = readFromArray[T](plainText)
     val dottedVersionVector = readFromArray[Dots](serialDottedVersionVector)

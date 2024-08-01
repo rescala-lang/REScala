@@ -208,7 +208,7 @@ object DataGenerator {
       }
     }
 
-    def genRGA[E](implicit e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] =
+    def genRGA[E](using e: Arbitrary[E]): Gen[Dotted[ReplicatedList[E]]] =
       for
         nInserted       <- Gen.choose(0, 20)
         insertedIndices <- Gen.containerOfN[List, Int](nInserted, Arbitrary.arbitrary[Int])
@@ -219,7 +219,7 @@ object DataGenerator {
         makeRGA(insertedIndices zip insertedValues, removed, Uid.predefined(id.toString).convert)
       }
 
-    implicit def arbRGA[E](implicit
+    given arbRGA[E](using
         e: Arbitrary[E],
     ): Arbitrary[Dotted[ReplicatedList[E]]] =
       Arbitrary(genRGA)

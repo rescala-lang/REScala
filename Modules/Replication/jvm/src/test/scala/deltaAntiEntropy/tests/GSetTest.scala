@@ -13,7 +13,7 @@ import replication.JsoniterCodecs.{*, given}
 import scala.collection.mutable
 
 object GSetGenerators {
-  def genGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlySet[E]]] =
+  def genGSet[E: JsonValueCodec](using e: Arbitrary[E]): Gen[AntiEntropyContainer[GrowOnlySet[E]]] =
     for
       elements <- Gen.containerOf[List, E](e.arbitrary)
     yield {
@@ -25,12 +25,12 @@ object GSetGenerators {
       }
     }
 
-  implicit def arbGSet[E: JsonValueCodec](implicit e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlySet[E]]] =
+  given arbGSet[E: JsonValueCodec](using e: Arbitrary[E]): Arbitrary[AntiEntropyContainer[GrowOnlySet[E]]] =
     Arbitrary(genGSet)
 }
 
 class GSetTest extends munit.ScalaCheckSuite {
-  import GSetGenerators.*
+  import GSetGenerators.{*, given}
 
   given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("insert") {

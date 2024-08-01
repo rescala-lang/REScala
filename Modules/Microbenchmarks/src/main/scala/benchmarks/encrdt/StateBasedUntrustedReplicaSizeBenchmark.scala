@@ -63,7 +63,7 @@ object StateBasedUntrustedReplicaSizeBenchmark extends App {
         val replicaSpecificEncState = replicaSpecificDecState.encrypt(aead)
         untrustedReplica.receive(replicaSpecificEncState)
         decryptedStatesMerged =
-          DecryptedState.lattice[State[String, String]](DeltaAWLWWMContainer.lattice).merge(
+          DecryptedState.lattice[State[String, String]](using DeltaAWLWWMContainer.lattice).merge(
             decryptedStatesMerged,
             replicaSpecificDecState
           )
