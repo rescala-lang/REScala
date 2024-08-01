@@ -6,7 +6,7 @@ import org.scalacheck.Prop.propBoolean
 import org.scalacheck.commands.Commands
 import org.scalacheck.{Gen, Prop}
 import rdts.base.{LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.{Membership, Paxos}
+import rdts.datatypes.experiments.protocols.{LogHack, Membership, Paxos}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -213,7 +213,7 @@ object MembershipSpec extends Commands {
 
     def newLocalState(states: Seq[(LocalUid, LocalState)]) =
       val (id, membership) = states(index)
-      (id, membership.merge(membership.upkeep()(using id)))
+      (id, membership.merge(membership.upkeep()(using id, LogHack(false))))
 
     override def run(sut: Sut): Result =
       val newState = newLocalState(sut.toSeq)

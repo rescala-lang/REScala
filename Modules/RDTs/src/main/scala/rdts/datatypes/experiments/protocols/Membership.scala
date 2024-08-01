@@ -4,6 +4,10 @@ import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.time.Time
 
+class LogHack(on: Boolean) {
+  inline def info(arg: String): Unit = if on then println(arg) else ()
+}
+
 case class Membership[A, C[_], D[_]](
     counter: Time,
     membersConsensus: C[Set[Uid]],
@@ -18,6 +22,7 @@ case class Membership[A, C[_], D[_]](
     Lattice[C[Set[Uid]]],
     Lattice[D[A]]
 ) {
+
 
   override def toString: String =
     s"Membership(counter: $counter, members: ${currentMembers},log: $log, membershipChanging: $membershipChanging)".stripMargin
@@ -53,7 +58,7 @@ case class Membership[A, C[_], D[_]](
 
   def isMember(using LocalUid) = currentMembers.contains(replicaId)
 
-  def upkeep()(using LocalUid): Membership[A, C, D] =
+  def upkeep()(using rid: LocalUid, logger: LogHack): Membership[A, C, D] =
     if !isMember then return this // do nothing if we are not a member anymore
     val memberUpkeep = membersConsensus.upkeep()
     val innerUpkeep  = innerConsensus.upkeep()
@@ -62,7 +67,7 @@ case class Membership[A, C[_], D[_]](
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
-        println(s"Member consensus reached on members $members")
+        logger.info(s"Member consensus reached on members $members")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(members),
@@ -71,7 +76,7 @@ case class Membership[A, C[_], D[_]](
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        println(s"Inner consensus reached on value $value, log: ${log :+ value}")
+        logger.info(s"Inner consensus reached on value $value, log: ${log :+ value}")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(currentMembers),
