@@ -23,15 +23,11 @@ class WSConnection(ws: WebSocket[Future]) {
     def combineFragments(f1: String | Array[Byte], f2: String | Array[Byte]): String | Array[Byte] = {
       f1 match {
         case s: String => f2 match {
-            case s2: String => s + s2
-            case b2: Array[Byte] =>
-              println("warning: cannot combine String and Array[Byte] fragment");
-              f1 // this looses f2, but will likely fail anyways more toplevel
+            case s2: String      => s + s2
+            case b2: Array[Byte] => throw Exception("cannot combine String and Array[Byte] fragment")
           }
         case b: Array[Byte] => f2 match {
-            case s2: String =>
-              println("cannot combine String and Array[Byte] fragment");
-              f1 // this looses f2, but will likely fail anyways more toplevel
+            case s2: String      => throw Exception("cannot combine String and Array[Byte] fragment")
             case b2: Array[Byte] => b ++ b2
           }
       }

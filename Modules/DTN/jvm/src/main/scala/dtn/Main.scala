@@ -1,10 +1,12 @@
 package dtn
 
-import dtn.routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
 import rdts.time.Dots
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+
+import routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
+import rdt.Client
 
 /*
   this file contains all jvm main methods
@@ -130,7 +132,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
 def send_one_rdt_package(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
   val dots: Dots = DotsCreation.generate_pseudo_random_dots()
 
-  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).flatMap(client => {
+  Client(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).flatMap(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
@@ -147,7 +149,7 @@ def send_one_rdt_package(host: String, port: Int, monitoringHost: String, monito
 }
 
 def receiving_client(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
-  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
+  Client(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
@@ -161,7 +163,7 @@ def receiving_client(host: String, port: Int, monitoringHost: String, monitoring
 def send_continuous_rdt_packages(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
   var dots: Dots = Dots.empty
 
-  RdtClient(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
+  Client(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {
       dots = dots.merge(d)
       println(s"merged rdt-meta data, new dots: $dots")

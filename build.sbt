@@ -113,10 +113,6 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(C
       "io.bullet"                     %%% "borer-derivation" % "1.14.1"
     )
   )
-  .jsSettings(
-    Dependencies.scalajsDom,
-    Dependencies.scalatags,
-  )
 
 lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
   .enablePlugins(ScalaJSPlugin)

@@ -1,6 +1,6 @@
-package replication
+package dtn.rdt
 
-import _root_.dtn.{MonitoringClientInterface, NoMonitoringClient, RdtClient, RdtMessageType}
+import dtn.{MonitoringClientInterface, NoMonitoringClient, RdtMessageType}
 import channels.{Abort, Connection, Handler, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
@@ -11,8 +11,9 @@ import rdts.time.Dots
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
+import replication.ProtocolMessage
 
-class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionContext: ExecutionContext)
+class ClientContext[T: JsonValueCodec](connection: Client, executionContext: ExecutionContext)
     extends Connection[ProtocolMessage[T]] {
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
@@ -30,7 +31,7 @@ class DTNRdtClientContext[T: JsonValueCodec](connection: RdtClient, executionCon
   }(using executionContext)
 }
 
-class DTNChannel[T: JsonValueCodec](
+class Channel[T: JsonValueCodec](
     host: String,
     port: Int,
     appName: String,
@@ -44,9 +45,9 @@ class DTNChannel[T: JsonValueCodec](
 
   override def prepare(incomingHandler: Handler[ProtocolMessage[T]]): Async[Abort, Connection[ProtocolMessage[T]]] =
     Async {
-      val client: RdtClient = RdtClient(host, port, appName, monitoringClient).toAsync(using ec).bind
-      val conn              = DTNRdtClientContext[T](client, ec)
-      val cb                = incomingHandler.getCallbackFor(conn)
+      val client: Client = Client(host, port, appName, monitoringClient).toAsync(using ec).bind
+      val conn           = ClientContext[T](client, ec)
+      val cb             = incomingHandler.getCallbackFor(conn)
 
       client.registerOnReceive { (message_type: RdtMessageType, payload: Array[Byte], dots: Dots) =>
         message_type match

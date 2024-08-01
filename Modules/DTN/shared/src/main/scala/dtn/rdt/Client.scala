@@ -1,11 +1,22 @@
-package dtn
+package dtn.rdt
 
+import dtn.Bundle
+import dtn.BundleCreation
+import dtn.Endpoint
+import dtn.MonitoringClientInterface
+import dtn.MonitoringMessage
+import dtn.NoMonitoringClient
+import dtn.PayloadBlock
+import dtn.RdtMessageType
+import dtn.RdtMetaBlock
+import dtn.RdtMetaInfo
+import dtn.WSEndpointClient
 import rdts.time.Dots
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class RdtClient(ws: WSEndpointClient, appName: String, monitoringClient: MonitoringClientInterface) {
+class Client(ws: WSEndpointClient, appName: String, monitoringClient: MonitoringClientInterface) {
   val full_source_uri: String = s"${ws.nodeId}rdt/$appName"
 
   def send(message_type: RdtMessageType, payload: Array[Byte], dots: Dots): Future[Unit] = {
@@ -51,16 +62,16 @@ class RdtClient(ws: WSEndpointClient, appName: String, monitoringClient: Monitor
 
   def close(): Future[Unit] = ws.disconnect()
 }
-object RdtClient {
+object Client {
   def apply(
       host: String,
       port: Int,
       appName: String,
       monitoringClient: MonitoringClientInterface = NoMonitoringClient
-  ): Future[RdtClient] = {
+  ): Future[Client] = {
     WSEndpointClient(host, port)
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"dtn://global/~rdt/$appName"))
       .flatMap(ws => ws.registerEndpointAndSubscribe(s"${ws.nodeId}rdt/$appName"))
-      .map(ws => new RdtClient(ws, appName, monitoringClient))
+      .map(ws => new Client(ws, appName, monitoringClient))
   }
 }
