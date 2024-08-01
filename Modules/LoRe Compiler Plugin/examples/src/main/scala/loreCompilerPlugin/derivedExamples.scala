@@ -32,22 +32,5 @@ object derivedExamplesObject:
     val integerSourceDerived1: Derived[Int] = Derived { integerLiteralSource1.value + 2 }
     val integerSourceDerived2: Derived[Int] = Derived { 1 + integerLiteralSource2.value }
     val integerSourceDerived3: Derived[Int] = Derived { integerLiteralSource1.value + integerLiteralSource2.value }
-
-//   ========= TODO: Interactions (in separate example file) =========
-//      val integerInteraction = Interaction[Int, Int]
-//        .requires { (curr, _) => curr < 20 }
-//        .modifies { integerSource }
-//        .executes { (curr, _) => curr + 10 }
-//
-//      println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-//
-//      integerInteraction(0)
-//      println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-//
-//      integerInteraction(0)
-//      println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
-//
-//      integerInteraction(0)
-//      println(s"integerSource: ${integerSource.now}, integerDerived: ${integerDerived.now}")
   end derivedExamplesFunction
 end derivedExamplesObject

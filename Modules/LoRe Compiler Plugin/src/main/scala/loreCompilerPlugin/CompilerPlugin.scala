@@ -208,6 +208,13 @@ class LoRePhase extends PluginPhase:
           typeName.toString,
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
+      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]) =>
+        // Tuple definitions, may also catch currently unknown other cases (and has to stay below type instant. case)
+        logRhsInfo(indentLevel, operandSide, s"type call to the ${typeName.toString} type with ${params.length} parameters", " ")
+        TFunC(
+          typeName.toString,
+          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
+        )
       case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) =>
         // Type instantiations for reactives
         logRhsInfo(indentLevel, operandSide, s"definition of a ${typeName.toString} reactive", "")
