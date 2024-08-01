@@ -4,17 +4,15 @@ import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
-import dotty.tools.dotc.util.SourceFile
 import dotty.tools.dotc.core.Names.Name
 import dotty.tools.dotc.core.StdNames.nme
-import dotty.tools.dotc.core.Symbols.defn
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Inlining, Pickler}
+import dotty.tools.dotc.util.SourceFile
 import lore.ast.*
 
 import scala.annotation.nowarn
-import scala.util.matching.Regex
 
 class CompilerPlugin extends StandardPlugin:
   val name: String        = "LoRe Compiler Plugin"
