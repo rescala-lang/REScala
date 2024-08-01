@@ -16,8 +16,8 @@ import scala.collection.mutable
 class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
   given IntCodec: JsonValueCodec[String] = JsonCodecMaker.make
-  given HasDots[Int]                            = HasDots.noDots
-  given HasDots[String]                         = HasDots.noDots
+  given HasDots[Int]                     = HasDots.noDots
+  given HasDots[String]                  = HasDots.noDots
 
   test("basic") {
 

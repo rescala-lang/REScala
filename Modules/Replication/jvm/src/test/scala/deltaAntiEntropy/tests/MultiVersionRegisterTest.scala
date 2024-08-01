@@ -43,7 +43,7 @@ object MVRegisterGenerators {
 class MultiVersionRegisterTest extends munit.ScalaCheckSuite {
   import MVRegisterGenerators.{*, given}
 
-  given Lattice[Int]                         = math.max
+  given Lattice[Int]                  = math.max
   given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("write") {

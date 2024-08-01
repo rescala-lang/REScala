@@ -3,7 +3,7 @@ package universe
 import reactives.default.*
 
 abstract class BoardElement(using World) {
-  
+
   val world: World = summon[World]
 
   lazy val dies: Event[Any] = isDead.changed.filter(_ == true)

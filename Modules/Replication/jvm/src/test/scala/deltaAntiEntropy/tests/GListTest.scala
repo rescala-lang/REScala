@@ -39,7 +39,7 @@ class GListTest extends munit.ScalaCheckSuite {
   import GListGenerators.{*, given}
 
   given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
-  given HasDots[Int]                         = HasDots.noDots
+  given HasDots[Int]                  = HasDots.noDots
 
   property("size, toList, read") {
     forAll { (gol: GrowOnlyList[Int], readIdx: Int) =>

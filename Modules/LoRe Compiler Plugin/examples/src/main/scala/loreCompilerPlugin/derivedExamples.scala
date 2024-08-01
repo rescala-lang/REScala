@@ -15,7 +15,7 @@ object derivedExamplesObject:
     val methodCallNoBraces: Int      = 1.toInt
     val methodCallWithBraces: String = "foo".strip()
     val methodCallWithParams: String = "foo".repeat(5)
-    
+
     val integerLiteralSource1: Source[Int]  = Source(1)
     val integerLiteralSource2: Source[Int]  = Source(2)
     val stringLiteralSource: Source[String] = Source("bar")

@@ -23,7 +23,6 @@ case class Membership[A, C[_], D[_]](
     Lattice[D[A]]
 ) {
 
-
   override def toString: String =
     s"Membership(counter: $counter, members: ${currentMembers},log: $log, membershipChanging: $membershipChanging)".stripMargin
 
