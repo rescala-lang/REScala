@@ -28,7 +28,8 @@ class LoRePhase extends PluginPhase:
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
-  private var loreTerms: Map[SourceFile, List[Term]] = Map()
+  private var loreTerms: Map[(SourceFile, String), List[Term]] = Map()
+  private var lastSeenObject: String = ""
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
     * @param indentLevel How many tabs should be placed before the text that will be logged
@@ -234,8 +235,11 @@ class LoRePhase extends PluginPhase:
     tree match
       case ValDef(name, tpt, rhs) =>
         rhs match
-          case tpd.EmptyTree => () // Function parameters (ArgT) and object/package definitions (i think), skip these
-          case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Object definitions (i think), skip these
+          case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
+          case Apply(Select(_, n), _) if n.toString.equals("<init>") => // Part 2 of Object and package definitions
+            // Remember name of last defined object to save terms into
+            println(s"Detected a new object being defined called $name")
+            lastSeenObject = name.toString
           case _ => // Other definitions, these are the ones we care about
             val loreTypeNode = buildLoreTypeNode(tpt)
             // Several notes to make here regarding handling the RHS of reactives for future reference:
@@ -258,14 +262,14 @@ class LoRePhase extends PluginPhase:
                       if typeName == "Source" || typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
                     newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
                       name.toString,                          // foo
-                      buildLoreTypeNode(tpt),                 // Source[Bar]
+                      loreTypeNode,                           // Source[Bar]
                       TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
                     ))
                   case Apply(Apply(_, List(Block(_, properRhs))), _)
-                      if typeName == "Derived" | typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz }"
+                      if typeName == "Derived" | typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
                     newLoreTerm = Some(TAbs(                   // foo: Derived[Bar] = Derived { baz }
                       name.toString,                           // foo
-                      buildLoreTypeNode(tpt),                  // Derived[Bar]
+                      loreTypeNode,                            // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
                   // TODO: Interaction case
@@ -273,7 +277,7 @@ class LoRePhase extends PluginPhase:
                   case _ => // Any non-reactive values (Int, String, Bool, ...)
                     newLoreTerm = Some(TAbs(   // foo: Bar = baz
                       name.toString,           // foo (any valid Scala identifier)
-                      buildLoreTypeNode(tpt),  // Bar
+                      loreTypeNode,            // Bar
                       buildLoreRhsTerm(rhs, 1) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
                     ))
               case TupleType(_) => // TODO tuple types?
@@ -287,14 +291,14 @@ class LoRePhase extends PluginPhase:
       case Some(loreTerm) =>
         // Find term list for this source file and append new term to it
         // Alternatively, make new term list for this file if it doesn't exist
-        val fileTermList: Option[List[Term]] = loreTerms.get(tree.source)
+        val fileTermList: Option[List[Term]] = loreTerms.get((tree.source, lastSeenObject))
         fileTermList match
           case Some(list) =>
             val newList: List[Term] = list :+ loreTerm
-            loreTerms = loreTerms.updated(tree.source, newList)
+            loreTerms = loreTerms.updated((tree.source, lastSeenObject), newList)
           case None =>
             val newList: List[Term] = List(loreTerm)
-            loreTerms = loreTerms.updated(tree.source, newList)
+            loreTerms = loreTerms.updated((tree.source, lastSeenObject), newList)
         tree // Return the original tree to further compiler phases
   end transformValDef
 end LoRePhase
