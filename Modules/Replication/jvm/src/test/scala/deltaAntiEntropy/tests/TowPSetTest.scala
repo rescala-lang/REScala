@@ -12,7 +12,7 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 object TwoPSetGenerators {
-  def genTwoPSet[E: Arbitrary](implicit c: JsonValueCodec[E]): Gen[AntiEntropyContainer[TwoPhaseSet[E]]] =
+  def genTwoPSet[E: Arbitrary](using c: JsonValueCodec[E]): Gen[AntiEntropyContainer[TwoPhaseSet[E]]] =
     for
       added   <- Gen.containerOf[List, E](Arbitrary.arbitrary[E])
       n       <- Gen.choose(0, added.size)
@@ -20,7 +20,7 @@ object TwoPSetGenerators {
     yield {
       val network = new Network(0, 0, 0)
       val ae =
-        new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(implicitly, twoPSetContext[E], implicitly)
+        new AntiEntropy[TwoPhaseSet[E]]("a", network, mutable.Buffer())(using summon, twoPSetContext[E], summon)
       val setAdded = added.foldLeft(AntiEntropyContainer[TwoPhaseSet[E]](ae)) {
         case (set, e) => set.modn(_.insert(e))
       }
@@ -29,16 +29,17 @@ object TwoPSetGenerators {
       }
     }
 
-  implicit def arbTwoPSet[E: Arbitrary](implicit
+  given arbTwoPSet[E: Arbitrary](using
       c: JsonValueCodec[E]
   ): Arbitrary[AntiEntropyContainer[TwoPhaseSet[E]]] =
     Arbitrary(genTwoPSet)
 }
 
 class TowPSetTest extends munit.ScalaCheckSuite {
-  import TwoPSetGenerators.*
+  import TwoPSetGenerators.{*, given}
 
-  implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+
   property("insert") {
     forAll { (insert: List[Int], remove: List[Int], e: Int) =>
       val network = new Network(0, 0, 0)

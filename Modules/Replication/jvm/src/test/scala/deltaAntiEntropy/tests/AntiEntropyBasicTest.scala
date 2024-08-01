@@ -15,7 +15,7 @@ import scala.collection.mutable
 
 class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
-  implicit val IntCodec: JsonValueCodec[String] = JsonCodecMaker.make
+  given IntCodec: JsonValueCodec[String] = JsonCodecMaker.make
   given HasDots[Int]                            = HasDots.noDots
   given HasDots[String]                         = HasDots.noDots
 
@@ -82,7 +82,7 @@ class AntiEntropyBasicTest extends munit.ScalaCheckSuite {
 
   test("specific property example") {
 
-    implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+    given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
     val inserted: List[(Int, Int)]                       = List((0, 100))
     val removed: List[Int]                               = Nil

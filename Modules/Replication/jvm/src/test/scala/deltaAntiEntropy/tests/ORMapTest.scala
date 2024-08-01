@@ -13,7 +13,7 @@ import replication.JsoniterCodecs.given
 import scala.collection.mutable
 
 class ORMapTest extends munit.ScalaCheckSuite {
-  implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("contains") {
     given LocalUid = base.LocalUid.predefined("test")

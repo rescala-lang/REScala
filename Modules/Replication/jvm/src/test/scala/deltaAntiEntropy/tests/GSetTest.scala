@@ -32,7 +32,7 @@ object GSetGenerators {
 class GSetTest extends munit.ScalaCheckSuite {
   import GSetGenerators.*
 
-  implicit val intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given intCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("insert") {
     forAll { (set: AntiEntropyContainer[GrowOnlySet[Int]], e: Int) =>
       val setInserted = set.modn(_.insert(e))

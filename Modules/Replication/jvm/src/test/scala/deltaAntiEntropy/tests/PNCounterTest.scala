@@ -27,11 +27,11 @@ object PosNegCounterGenerator {
       }
     }
 
-  implicit val arbPosNegCounter: Arbitrary[AntiEntropyContainer[PosNegCounter]] = Arbitrary(genPosNegCounter)
+  given arbPosNegCounter: Arbitrary[AntiEntropyContainer[PosNegCounter]] = Arbitrary(genPosNegCounter)
 }
 
 class PosNegCounterTest extends munit.ScalaCheckSuite {
-  import PosNegCounterGenerator.*
+  import PosNegCounterGenerator.given
 
   extension (aec: AntiEntropyContainer[PosNegCounter]) def value = aec.state.data.value
 

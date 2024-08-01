@@ -27,7 +27,7 @@ object RGAGenerators {
 class RGATest extends munit.ScalaCheckSuite {
   import RGAGenerators.*
 
-  implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
 
   property("size, toList, read") {
     forAll { (rl: Dotted[ReplicatedList[Int]], readIdx: Int) =>

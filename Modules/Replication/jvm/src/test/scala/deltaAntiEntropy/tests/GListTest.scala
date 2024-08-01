@@ -38,7 +38,7 @@ object GListGenerators {
 class GListTest extends munit.ScalaCheckSuite {
   import GListGenerators.*
 
-  implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   given HasDots[Int]                         = HasDots.noDots
 
   property("size, toList, read") {

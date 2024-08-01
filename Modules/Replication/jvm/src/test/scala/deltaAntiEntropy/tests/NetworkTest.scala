@@ -16,7 +16,7 @@ object NetworkGenerators {
       delayChance     <- Gen.choose(0.0, 1.0)
     yield new NetworkGenerator(lossChance, duplicateChance, delayChance)
 
-  implicit val arbNetwork: Arbitrary[NetworkGenerator] = Arbitrary(genNetwork)
+  given arbNetwork: Arbitrary[NetworkGenerator] = Arbitrary(genNetwork)
 }
 
 class NetworkTest extends munit.ScalaCheckSuite {

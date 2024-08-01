@@ -151,7 +151,7 @@ package object quicklens {
 
     given QuicklensFunctor[Array] with {
       def map[A](fa: Array[A], f: A => A): Array[A] =
-        implicit val aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
+        given aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
         fa.map(f)
     }
 
@@ -184,13 +184,13 @@ package object quicklens {
 
     given QuicklensIndexedFunctor[Array, Int] with {
       def at[A](fa: Array[A], f: A => A, idx: Int): Array[A] =
-        implicit val aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
+        given aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
         fa.updated(idx, f(fa(idx)))
       def atOrElse[A](fa: Array[A], f: A => A, idx: Int, default: => A): Array[A] =
-        implicit val aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
+        given aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
         fa.updated(idx, f(fa.applyOrElse(idx, Function.const(default))))
       def index[A](fa: Array[A], f: A => A, idx: Int): Array[A] =
-        implicit val aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
+        given aClassTag: ClassTag[A] = fa.elemTag.asInstanceOf[ClassTag[A]]
         if fa.isDefinedAt(idx) then fa.updated(idx, f(fa(idx))) else fa
     }
 

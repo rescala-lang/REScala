@@ -15,7 +15,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.ty
     val forks =
       for i <- 0 until tableSize yield {
         val nextCircularIndex      = mod(i + 1)
-        implicit val name: ReInfo  = ReInfo.create.derive(s"Fork($i, $nextCircularIndex)")
+        given name: ReInfo  = ReInfo.create.derive(s"Fork($i, $nextCircularIndex)")
         val left: Var[Philosopher] = phils(i)
         val right                  = phils(nextCircularIndex)
         Signal {
@@ -34,7 +34,7 @@ class DynamicPhilosopherTable[S](philosopherCount: Int)(ri: reactives.default.ty
       val ownName               = i.toString
       val fork1                 = forks(i)
       val fork2                 = forks(mod(i - 1))
-      implicit val info: ReInfo = ReInfo.create.derive(s"Vision($i)")
+      given info: ReInfo = ReInfo.create.derive(s"Vision($i)")
       val vision = Signal {
         fork1.value match {
           case Taken(`ownName`) => Eating

@@ -39,7 +39,7 @@ abstract class PaperPhilosophers(val size: Int, val engine: Any, dynamicity: Dyn
 
   val forks =
     for idx <- 0 until size yield {
-      implicit val ct: CreationTicket[BundleState] = (CreationTicket.fromName(s"fork(${idx + 1})"))
+      given ct: CreationTicket[BundleState] = (CreationTicket.fromName(s"fork(${idx + 1})"))
       Signal.dynamic[Fork] {
         val nextIdx = (idx + 1) % size
         (phils(idx).value, phils(nextIdx).value) match {
@@ -242,7 +242,7 @@ object PaperPhilosophers {
     object engine extends reactives.fullmv.FullMVEngine(Duration.Zero, s"PaperPhilosophers($tableSize,$threadCount)")
     val table =
       new PaperPhilosophers(tableSize, reactives.default, Dynamicity.Dynamic) with SignalPyramidTopper
-//    implicit val engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
+//    given engine = rescala.levelbased.LevelBasedPropagationEngines.unmanaged
 //    val table = new PaperPhilosophers(tableSize, engine, Dynamicity.Static) with NoTopper[rescala.levelbased.SimpleStruct] with ManualLocking[rescala.levelbased.SimpleStruct]
 
 //    println("====================================================================================================")

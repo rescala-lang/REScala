@@ -13,8 +13,8 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
   import ie.api.*
   import ie.assertLevel
 
-  implicit val shortlists: Arbitrary[Seq[Int]]  = Arbitrary(Gen.someOf(0 to 1000))
-  implicit val positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])
+  given shortlists: Arbitrary[Seq[Int]]  = Arbitrary(Gen.someOf(0 to 1000))
+  given positiveIntegers: Arbitrary[Int] = Arbitrary(Gen.posNum[Int])
 
   property("get last n signals") {
     forAll { (fireValues: Seq[Int], lastN: Int) =>
@@ -42,7 +42,7 @@ class SignalTestSuite extends munit.ScalaCheckSuite {
     }
   }
 
-  implicit val signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
+  given signalsGen: Arbitrary[List[Signal[Int]]] = Arbitrary(
     for
       i <- Gen.oneOf(0 to 1000)
     yield {

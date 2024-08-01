@@ -22,11 +22,11 @@ object GCounterGenerators {
       }
     }
 
-  implicit val arbGCounter: Arbitrary[AntiEntropyContainer[GrowOnlyCounter]] = Arbitrary(genGCounter)
+  given arbGCounter: Arbitrary[AntiEntropyContainer[GrowOnlyCounter]] = Arbitrary(genGCounter)
 }
 
 class GCounterTest extends munit.ScalaCheckSuite {
-  import GCounterGenerators.*
+  import GCounterGenerators.given
 
   extension (aec: AntiEntropyContainer[GrowOnlyCounter]) def value = aec.state.data.value
 

@@ -54,7 +54,7 @@ case class EncryptedState(stateCiphertext: Array[Byte], serialVersionVector: Arr
 }
 
 object EncryptedState {
-  implicit val encStateJsonCodec: JsonValueCodec[EncryptedState] = JsonCodecMaker.make
+  given encStateJsonCodec: JsonValueCodec[EncryptedState] = JsonCodecMaker.make
 }
 
 case class DecryptedState[T](state: T, versionVector: VectorClock) {
@@ -69,7 +69,7 @@ case class DecryptedState[T](state: T, versionVector: VectorClock) {
 }
 
 object DecryptedState {
-  implicit val vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
+  given vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
 
   implicit def lattice[T](implicit tLattice: Lattice[T]): Lattice[DecryptedState[T]] = (left, right) => {
     DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merge(right.versionVector))

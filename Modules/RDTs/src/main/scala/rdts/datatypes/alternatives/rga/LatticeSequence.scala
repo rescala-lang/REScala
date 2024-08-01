@@ -6,8 +6,10 @@ import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 
 final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[Vertex, Vertex], values: Map[Vertex, A])(
-    implicit val vertexSet: SetLike[Vertex, VertexSet]
+    using vertexSetParam: SetLike[Vertex, VertexSet]
 ) {
+
+  def vertexSet: SetLike[Vertex, VertexSet] = vertexSetParam
 
   def contains(v: Vertex): Boolean =
     v match {
@@ -53,7 +55,7 @@ final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[V
       val newVertices = vertexSet.add(vertices, insertee)
       val newEdges    = edges + (left -> insertee) + (insertee -> right)
       val newValues   = values.updated(insertee, value)
-      copy(newVertices, newEdges, newValues)(vertexSet)
+      copy(newVertices, newEdges, newValues)(using vertexSet)
     }
   }
 
@@ -87,7 +89,7 @@ final case class LatticeSequence[A, VertexSet](vertices: VertexSet, edges: Map[V
 }
 
 object LatticeSequence {
-  implicit def lattice[A, VS: Lattice](implicit sl: SetLike[Vertex, VS]): Lattice[LatticeSequence[A, VS]] =
+  given lattice[A, VS: Lattice](using sl: SetLike[Vertex, VS]): Lattice[LatticeSequence[A, VS]] =
     new Lattice[LatticeSequence[A, VS]] {
       override def merge(left: LatticeSequence[A, VS], right: LatticeSequence[A, VS]): LatticeSequence[A, VS] = {
         val newVertices = right.vertexIterator.toList.filter(!left.edges.contains(_))
@@ -108,7 +110,7 @@ object LatticeSequence {
           vertices = vertices,
           edges = partialnew.edges,
           values = partialnew.values.filterKeys(sl.contains(vertices, _)).toMap: @scala.annotation.nowarn()
-        )(partialnew.vertexSet)
+        )(using partialnew.vertexSet)
       }
     }
 }

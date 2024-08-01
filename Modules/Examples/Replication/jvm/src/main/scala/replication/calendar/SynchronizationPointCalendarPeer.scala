@@ -11,7 +11,7 @@ import scala.util.matching.Regex
 
 class SynchronizationPointCalendarPeer(id: Uid, listenPort: Int, connectTo: List[(String, Int)]) {
 
-  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+  given ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val add: Regex    = """add (\w+) (\d+) (\d+)""".r
   val remove: Regex = """remove (\w+) (\d+) (\d+)""".r

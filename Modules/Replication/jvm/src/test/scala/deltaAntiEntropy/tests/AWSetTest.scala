@@ -32,16 +32,16 @@ object AWSetGenerators {
       }
     }
 
-  implicit def arbAWSet[A: JsonValueCodec](implicit
+  given arbAWSet[A: JsonValueCodec](using
       a: Arbitrary[A]
   ): Arbitrary[AntiEntropyContainer[ReplicatedSet[A]]] =
     Arbitrary(genAWSet[A])
 }
 
 class AWSetTest extends munit.ScalaCheckSuite {
-  import AWSetGenerators.*
+  import AWSetGenerators.{*, given}
 
-  implicit val IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
+  given IntCodec: JsonValueCodec[Int] = JsonCodecMaker.make
   property("add") {
     forAll { (set: AntiEntropyContainer[ReplicatedSet[Int]], e: Int) =>
       given LocalUid                                      = set.replicaID

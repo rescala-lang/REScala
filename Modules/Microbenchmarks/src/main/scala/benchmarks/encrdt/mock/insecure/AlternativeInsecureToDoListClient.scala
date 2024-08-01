@@ -14,8 +14,10 @@ class AlternativeInsecureToDoListClient(
     private val crdt: DeltaAWLWWMContainer[UUID, ToDoEntry],
     private val intermediary: AlternativeInsecureToDoListIntermediary
 )(
-    private implicit val stateCodec: JsonValueCodec[ToDoListState]
+    using JsonValueCodec[ToDoListState]
 ) extends ToDoListClient {
+
+  private val stateCodec: JsonValueCodec[ToDoListState] = summon
 
   override def completeToDoItem(uuid: UUID): Unit = {
     val _disseminatedBefore = _disseminatedDataInBytes

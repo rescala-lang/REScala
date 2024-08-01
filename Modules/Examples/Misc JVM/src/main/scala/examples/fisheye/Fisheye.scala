@@ -19,7 +19,7 @@ object Box {
   val Margin     = 10
 }
 
-class Box(val color: java.awt.Color, val xOffset: Signal[Int])(implicit val mouse: Mouse) {
+class Box(val color: java.awt.Color, val xOffset: Signal[Int])(using mouse: Mouse) {
 
   private def interpolation(d: Double) = math.max(0, math.min(1, 5 - math.log(d)))
 
@@ -46,7 +46,7 @@ class Fisheye {
   val Max_Y     = 200
   val initPoint = Signal { 30 }
 
-  implicit val mouse: Mouse = new Mouse
+  given mouse: Mouse = new Mouse
 
   var boxes: List[Box] = Nil
   def addBox(color: java.awt.Color): Unit = {

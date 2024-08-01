@@ -10,7 +10,7 @@ import rdts.syntax.DeltaAWLWWMContainer.State
 import java.util.UUID
 
 class AlternativeInsecureToDoListIntermediary(val intermediaryReplicaId: String)(
-    implicit val stateJsonCodec: JsonValueCodec[State[UUID, ToDoEntry]]
+    using stateJsonCodec: JsonValueCodec[State[UUID, ToDoEntry]]
 ) extends IntermediarySizeInfo {
   private val crdt = new DeltaAWLWWMContainer[UUID, ToDoEntry]("intermediary".convert)
 

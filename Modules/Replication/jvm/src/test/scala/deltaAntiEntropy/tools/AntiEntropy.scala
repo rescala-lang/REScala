@@ -29,7 +29,7 @@ class AntiEntropy[A](
     val replicaID: String,
     network: Network,
     neighbors: mutable.Buffer[String] = mutable.Buffer()
-)(implicit bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedLattice[A]) {
+)(using bottom: Bottom[A], codec: JsonValueCodec[Dotted[A]], withContextLattice: DottedLattice[A]) {
 
   def state: Dotted[A] = fullState
 
@@ -45,13 +45,13 @@ class AntiEntropy[A](
 
   private var fullState: Dotted[A] = Bottom.dotted.empty
 
-  implicit val AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
+  given AckMsgCodec: JsonValueCodec[AckMsg] = JsonCodecMaker.make
 
-  implicit val DeltaMsgCodec: JsonValueCodec[DeltaMsg[A]] = JsonCodecMaker.make
+  given DeltaMsgCodec: JsonValueCodec[DeltaMsg[A]] = JsonCodecMaker.make
 
   type Message = Either[AckMsg, DeltaMsg[A]]
 
-  implicit val EitherCodec: JsonValueCodec[Message] = JsonCodecMaker.make
+  given EitherCodec: JsonValueCodec[Message] = JsonCodecMaker.make
 
   def addNeighbor(newNeighbor: String): Unit = {
     neighbors.append(newNeighbor)
