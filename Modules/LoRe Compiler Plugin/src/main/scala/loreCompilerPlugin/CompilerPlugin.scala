@@ -12,6 +12,7 @@ import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.SourceFile
 import dotty.tools.dotc.core.Symbols.Symbol
 import lore.ast.*
+import cats.data.NonEmptyList
 
 import scala.annotation.nowarn
 
@@ -66,13 +67,13 @@ class LoRePhase extends PluginPhase:
               s"An error occurred building the LoRe type tree for the following tree:\n$outerTypeTree",
               typeTree.sourcePos
             )
-            SimpleType("", List()) // Have to return a dummy Type value even on error to satisfy the compiler
+            SimpleType("<error>", List())
       case _ =>
         report.error(
           s"An error occurred building the LoRe type tree for the following tree:\n$typeTree",
           typeTree.sourcePos
         )
-        SimpleType("", List()) // Have to return a dummy Type value even on error to satisfy the compiler
+        SimpleType("<error>", List())
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
     * @param tree The Scala AST Tree node for a RHS expression to convert
@@ -109,7 +110,7 @@ class LoRePhase extends PluginPhase:
               case _ => // Unsupported unary operators
                 // No access to sourcePos here due to LazyTree
                 report.error(s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree")
-                TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+                TVar("<error>")
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
             // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
             logRhsInfo(indentLevel, operandSide, "field access to field", opOrField.show)
@@ -178,7 +179,7 @@ class LoRePhase extends PluginPhase:
                 report.error(
                   s"${"\t".repeat(indentLevel)}Unsupported binary operator ${opOrMethod.show} used:\n${"\t".repeat(indentLevel)}$tree"
                 )
-                TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+                TVar("<error>")
           case methodName => // Method calls outside of explicitly supported binary operators
             logRhsInfo(
               indentLevel,
@@ -226,14 +227,41 @@ class LoRePhase extends PluginPhase:
             report.error(
               s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree"
             )
-            TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+            TVar("<error>")
+      case Block(List(fun), Closure(_, Ident(name), _)) if name.toString == "$anonfun" => // Arrow functions
+        fun match // Arrow function def is a DefDef, arrowLhs is a list of ValDefs
+          case DefDef(_, List(arrowLhs), _, arrowRhs) =>
+            TArrow( // (foo: Int) => foo + 1
+              TSeq(NonEmptyList.fromList(arrowLhs.map { // (foo: Int)
+                // This breaks when the parameter list of the arrow function
+                // is empty, but I don't know what lore node I am supposed
+                // to use otherwise as TArrow only allows one node for the lhs
+                // and all available lore nodes with lists require NonEmptyLists
+                case ValDef(paramName, paramType, tpd.EmptyTree) =>
+                  TArgT(
+                    paramName.toString,
+                    buildLoreTypeNode(paramType)
+                  )
+                case _ =>
+                  report.error(
+                    s"${"\t".repeat(indentLevel)}Error building LHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree"
+                  )
+                  TVar("<error>")
+              }).get), // Error would show up in the get on empty param list, see above
+              buildLoreRhsTerm(arrowRhs) // foo + 1
+            )
+          case _ =>
+            // No access to sourcePos here due to LazyTree
+            report.error(
+              s"${"\t".repeat(indentLevel)}Error building RHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree"
+            )
+            TVar("<error>")
       case _ => // Unsupported RHS forms
         // No access to sourcePos here due to LazyTree
         report.error(
-          // No access to sourcePos here due to LazyTree
           s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n${"\t".repeat(indentLevel)}$tree"
         )
-        TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
+        TVar("<error>")
   end buildLoreRhsTerm
 
   override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree =
