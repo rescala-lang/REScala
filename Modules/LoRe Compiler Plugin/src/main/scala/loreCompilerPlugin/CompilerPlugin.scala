@@ -10,6 +10,7 @@ import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.SourceFile
+import dotty.tools.dotc.core.Symbols.Symbol
 import lore.ast.*
 
 import scala.annotation.nowarn
@@ -28,8 +29,7 @@ class LoRePhase extends PluginPhase:
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
-  private var loreTerms: Map[(SourceFile, String), List[Term]] = Map()
-  private var lastSeenObject: String = ""
+  private var loreTerms: Map[(SourceFile, Symbol), List[Term]] = Map()
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
     * @param indentLevel How many tabs should be placed before the text that will be logged
@@ -216,7 +216,7 @@ class LoRePhase extends PluginPhase:
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
       case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) =>
-        // Type instantiations for reactives
+        // Type instantiations for Source/Var and Derived/Signal reactives
         logRhsInfo(indentLevel, operandSide, s"definition of a ${typeName.toString} reactive", "")
         typeName.toString match
           case "Source" | "Var"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
@@ -236,17 +236,14 @@ class LoRePhase extends PluginPhase:
         TVar("") // Have to return a dummy Term value even on error to satisfy the compiler
   end buildLoreRhsTerm
 
-  override def transformValDef(tree: tpd.ValDef)(using Context): tpd.Tree =
+  override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree =
     var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
 
     tree match
       case ValDef(name, tpt, rhs) =>
         rhs match
           case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
-          case Apply(Select(_, n), _) if n.toString.equals("<init>") => // Part 2 of Object and package definitions
-            // Remember name of last defined object to save terms into
-            println(s"Detected a new object being defined called $name")
-            lastSeenObject = name.toString
+          case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
           case _ => // Other definitions, these are the ones we care about
             val loreTypeNode = buildLoreTypeNode(tpt)
             // Several notes to make here regarding handling the RHS of reactives for future reference:
@@ -298,14 +295,14 @@ class LoRePhase extends PluginPhase:
       case Some(loreTerm) =>
         // Find term list for this source file and append new term to it
         // Alternatively, make new term list for this file if it doesn't exist
-        val fileTermList: Option[List[Term]] = loreTerms.get((tree.source, lastSeenObject))
+        val fileTermList: Option[List[Term]] = loreTerms.get((tree.source, ctx.owner))
         fileTermList match
           case Some(list) =>
             val newList: List[Term] = list :+ loreTerm
-            loreTerms = loreTerms.updated((tree.source, lastSeenObject), newList)
+            loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
           case None =>
             val newList: List[Term] = List(loreTerm)
-            loreTerms = loreTerms.updated((tree.source, lastSeenObject), newList)
+            loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
         tree // Return the original tree to further compiler phases
   end transformValDef
 end LoRePhase
