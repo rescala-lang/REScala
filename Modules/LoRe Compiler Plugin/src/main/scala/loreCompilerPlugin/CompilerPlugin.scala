@@ -329,6 +329,7 @@ class LoRePhase extends PluginPhase:
             val newList: List[Term] = list :+ loreTerm
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
           case None =>
+            println(s"Adding new term list to Map for the ${ctx.owner.toString} in ${tree.source.name}")
             val newList: List[Term] = List(loreTerm)
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
         tree // Return the original tree to further compiler phases
