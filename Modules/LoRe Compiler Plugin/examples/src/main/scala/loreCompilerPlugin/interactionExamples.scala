@@ -23,9 +23,16 @@ object interactionExamplesObject:
 
     // ========= Interaction tests =========
 
-    val integerInteraction: UnboundInteraction[Tuple1[Int], Int] = Interaction[Int, Int]
+    val addAppointment1: UnboundInteraction[Tuple1[Int], Int] = Interaction[Int, Int]
 
-    val addAppointment: InteractionWithExecutes[Tuple1[Int], Int] = Interaction[Int, Int]
+    val addAppointment2: UnboundInteraction[Tuple1[Int], Int] = Interaction[Int, Int]
+      .requires { (a: Int, b: Int) => a > b }
+
+    val addAppointment3: InteractionWithExecutes[Tuple1[Int], Int] = Interaction[Int, Int]
+      .requires { (a: Int, b: Int) => a > b }
+      .executes { (a: Int, b: Int) => a }
+
+    val addAppointment4: InteractionWithExecutes[Tuple1[Int], Int] = Interaction[Int, Int]
       .requires { (a: Int, b: Int) => a > b }
       .executes { (a: Int, b: Int) => a }
       .ensures { (a: Int, b: Int) => a > b }

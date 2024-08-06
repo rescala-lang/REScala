@@ -304,8 +304,16 @@ class LoRePhase extends PluginPhase:
                       loreTypeNode,                            // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
-                  // TODO: Interaction case
-                  // case ... if typeName == "Interaction" =>
+                  case TypeApply(Select(Ident(tp), _), List(reactiveType, argumentType)) if typeName == "UnboundInteraction" =>
+                    newLoreTerm = Some(TAbs(
+                      name.toString,
+                      loreTypeNode,
+                      TInteraction(
+                        buildLoreTypeNode(reactiveType),
+                        buildLoreTypeNode(argumentType)
+                      )
+                    ))
+                  // TODO: Interactions with requires/ensures/modifies
                   case _ => // Any non-reactive values (Int, String, Bool, ...)
                     newLoreTerm = Some(TAbs(   // foo: Bar = baz
                       name.toString,           // foo (any valid Scala identifier)
