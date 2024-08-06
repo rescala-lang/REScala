@@ -16,7 +16,7 @@ import rdt.Client
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client, client.once, client.continuous, print.received, print.forwarded, print.statedev
+  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client, client.once, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
   -a   => host address       | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
   -p   => host port          | default: 5000 (for monitoring), 3000 (for everything else)
   -ma  => monitoring address | default: 127.0.0.1
@@ -51,8 +51,10 @@ commandline options:
         receiving_client(host_address, host_port, monitoring_address, monitoring_port)
       case "client.once" =>
         send_one_rdt_package(host_address, host_port, monitoring_address, monitoring_port)
-      case "client.continuous" =>
-        send_continuous_rdt_packages(host_address, host_port, monitoring_address, monitoring_port)
+      case "client.addwins.listen" =>
+        addwins_case_study_listen(host_address, host_port, monitoring_address, monitoring_port)
+      case "client.addwins.active" =>
+        addwins_case_study_active(host_address, host_port, monitoring_address, monitoring_port)
       case "print.received" =>
         MonitoringBundlesReceivedPrinter().run()
       case "print.forwarded" =>
@@ -83,9 +85,6 @@ commandline options:
 
 @main def send_one_rdt_package_from_3000(): Unit = send_one_rdt_package("127.0.0.1", 3000, "127.0.0.1", 5000)
 @main def send_one_rdt_package_from_4000(): Unit = send_one_rdt_package("127.0.0.1", 4000, "127.0.0.1", 5000)
-
-@main def send_continuous_rdt_packages_from_3000(): Unit =
-  send_continuous_rdt_packages("127.0.0.1", 3000, "127.0.0.1", 5000)
 
 // all helper methods
 
@@ -160,26 +159,16 @@ def receiving_client(host: String, port: Int, monitoringHost: String, monitoring
   }
 }
 
-def send_continuous_rdt_packages(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
-  var dots: Dots = Dots.empty
+def addwins_case_study_listen(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
+  val rdt = AddWinsSetRDT()
 
-  Client(host, port, "testapp", MonitoringClient(monitoringHost, monitoringPort)).map(client => {
-    client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], d: Dots) => {
-      dots = dots.merge(d)
-      println(s"merged rdt-meta data, new dots: $dots")
-    })
+  rdt.connect(host, port, MonitoringClient(monitoringHost, monitoringPort))
+  rdt.caseStudyListen()
+}
 
-    while true do {
-      Thread.sleep(5000)
+def addwins_case_study_active(host: String, port: Int, monitoringHost: String, monitoringPort: Int): Unit = {
+  val rdt = AddWinsSetRDT()
 
-      // add dots here
-
-      println(s"sending new dots: $dots")
-      client.send(RdtMessageType.Payload, Array(), dots).printError()
-    }
-  }).recover(throwable => println(throwable))
-
-  while true do {
-    Thread.sleep(200)
-  }
+  rdt.connect(host, port, MonitoringClient(monitoringHost, monitoringPort))
+  rdt.caseStudyActive()
 }
