@@ -97,7 +97,7 @@ class LoRePhase extends PluginPhase:
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
         TVar(referenceName.toString)
-      case Select(arg, opOrField) => // Field access and unary operator applications
+      case fieldUnaryTree @ Select(arg, opOrField) => // Field access and unary operator applications
         opOrField match
           case nme.UNARY_! => // Overall case catching supported unary operators, add other unary operators via |s here
             logRhsInfo(indentLevel, operandSide, "unary operator application of", opOrField.show)
@@ -105,8 +105,10 @@ class LoRePhase extends PluginPhase:
               // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
               case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
               case _ => // Unsupported unary operators
-                // No access to sourcePos here due to LazyTree
-                report.error(s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree")
+                report.error(
+                  s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree",
+                  fieldUnaryTree.sourcePos
+                )
                 TVar("<error>")
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
             // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
@@ -116,7 +118,8 @@ class LoRePhase extends PluginPhase:
               field.toString,                                      // bar
               List()                                               // Always empty as these are field accesses
             )
-      case Apply(Select(leftArg, opOrMethod), params: List[?]) => // Method calls and binary operator applications
+      case methodBinaryTree @ Apply(Select(leftArg, opOrMethod), params: List[?]) =>
+        // Method calls and binary operator applications
         opOrMethod match
           case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
             // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
@@ -172,9 +175,9 @@ class LoRePhase extends PluginPhase:
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
               case _ => // Unsupported binary operators
-                // No access to sourcePos here due to LazyTree
                 report.error(
-                  s"${"\t".repeat(indentLevel)}Unsupported binary operator ${opOrMethod.show} used:\n${"\t".repeat(indentLevel)}$tree"
+                  s"${"\t".repeat(indentLevel)}Unsupported binary operator ${opOrMethod.show} used:\n${"\t".repeat(indentLevel)}$tree",
+                  methodBinaryTree.sourcePos
                 )
                 TVar("<error>")
           case methodName => // Method calls outside of explicitly supported binary operators
@@ -208,19 +211,29 @@ class LoRePhase extends PluginPhase:
           typeName.toString,
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
-      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]), _) =>
-        // Type instantiations for Source/Var and Derived/Signal reactives
-        logRhsInfo(indentLevel, operandSide, s"definition of a ${typeName.toString} reactive", "")
-        typeName.toString match
-          case "Source" | "Var"     => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case "Derived" | "Signal" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case _                    => // Unsupported reactive
-            // No access to sourcePos here due to LazyTree
-            report.error(
-              s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree"
-            )
+      case reactiveTree @ Apply(Apply(TypeApply(Select(Ident(_), _), _), params: List[?]), _) =>
+        // Type instantiations for Source/Var and Derived/Signal reactives (that hopefully does not match other types)
+        val rhsType = buildLoreTypeNode(reactiveTree.tpe, reactiveTree.sourcePos)
+        rhsType match
+          case SimpleType(loreTypeName, typeArgs) =>
+            loreTypeName match
+              case "Var" =>
+                logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
+                TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+              case "Signal" =>
+                logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
+                TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
+              case _ => // Unsupported reactive
+                report.error(
+                  s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree",
+                  reactiveTree.sourcePos
+                )
+                TVar("<error>")
+          case TupleType(_) => // TODO tuple types?
+            println("surprise tuple type")
+            report.error("LoRe Tuple Types are not currently supported", reactiveTree.sourcePos)
             TVar("<error>")
-      case Block(List(fun), Closure(_, Ident(name), _)) if name.toString == "$anonfun" => // Arrow functions
+      case arrowTree @ Block(List(fun), Closure(_, Ident(name), _)) if name.toString == "$anonfun" => // Arrow functions
         fun match // Arrow function def is a DefDef, arrowLhs is a list of ValDefs
           case DefDef(_, List(arrowLhs), _, arrowRhs) =>
             TArrow(                 // (foo: Int) => foo + 1
@@ -232,16 +245,17 @@ class LoRePhase extends PluginPhase:
                   )
                 case _ =>
                   report.error(
-                    s"${"\t".repeat(indentLevel)}Error building LHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree"
+                    s"${"\t".repeat(indentLevel)}Error building LHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree",
+                    arrowTree.sourcePos
                   )
                   TVar("<error>")
               }),
               buildLoreRhsTerm(arrowRhs) // foo + 1
             )
           case _ =>
-            // No access to sourcePos here due to LazyTree
             report.error(
-              s"${"\t".repeat(indentLevel)}Error building RHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree"
+              s"${"\t".repeat(indentLevel)}Error building RHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree",
+              arrowTree.sourcePos
             )
             TVar("<error>")
       case _ => // Unsupported RHS forms
@@ -311,7 +325,7 @@ class LoRePhase extends PluginPhase:
                     ))
               case TupleType(_) => // TODO tuple types?
                 println("surprise tuple type")
-                report.error("Tuple Types are not currently supported", tree.sourcePos)
+                report.error("LoRe Tuple Types are not currently supported", tree.sourcePos)
 
     // Add the newly generated LoRe term to the respective source file's term list (if one was generated)
     newLoreTerm match
