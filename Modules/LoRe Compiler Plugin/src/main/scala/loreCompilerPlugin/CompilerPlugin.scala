@@ -5,12 +5,15 @@ import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Names.Name
+import dotty.tools.dotc.core.Types.Type as ScalaType
 import dotty.tools.dotc.core.StdNames.nme
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Inlining, Pickler}
-import dotty.tools.dotc.util.SourceFile
-import dotty.tools.dotc.core.Symbols.Symbol
+import dotty.tools.dotc.util.{SourceFile, SourcePosition}
+import dotty.tools.dotc.core.Symbols.{ClassSymbol, Symbol}
+import dotty.tools.dotc.core.Types.{AppliedType, CachedTypeRef, TypeRef}
+import lore.ast.Type as LoReType
 import lore.ast.*
 import cats.data.NonEmptyList
 
@@ -49,30 +52,24 @@ class LoRePhase extends PluginPhase:
     * @param typeTree The scala type tree
     * @return The LoRe Type node
     */
-  private def buildLoreTypeNode(typeTree: tpd.Tree)(using Context): Type =
+  private def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
     // May need to also support LoRe TupleTypes at one point in the future
-    // Object definitions seems to use "SingletonTypeTrees" instead, but those are ignored in this plugin
     typeTree match
-      case Ident(typeName) => // Plain type names
-        SimpleType(typeName.toString, List())
-      case AppliedTypeTree(outerTypeTree, innerTypeArgs) => // Parameterized type names
-        outerTypeTree match
-          case Ident(outerTypeName) => // Plain type name of parameterized type
-            SimpleType(
-              outerTypeName.toString,
-              innerTypeArgs.map(innerType => buildLoreTypeNode(innerType)) // Type parameters of parameterized type
-            )
-          case _ =>
-            report.error(
-              s"An error occurred building the LoRe type tree for the following tree:\n$outerTypeTree",
-              typeTree.sourcePos
-            )
-            SimpleType("<error>", List())
-      case _ =>
-        report.error(
-          s"An error occurred building the LoRe type tree for the following tree:\n$typeTree",
-          typeTree.sourcePos
+      case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
+        SimpleType(typeTree.asInstanceOf[CachedTypeRef].name.toString, List())
+      case AppliedType(outerType: CachedTypeRef, args: List[_]) => // Parameterized types like List, Map, etc
+        SimpleType(
+         outerType.name.toString,
+         args.map {
+           case tp @ TypeRef(_, _) => SimpleType(tp.asInstanceOf[CachedTypeRef].name.toString, List())
+           case tp @ AppliedType(_, _) => buildLoreTypeNode(tp, sourcePos)
+           case _ =>
+             report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
+             SimpleType("<error>", List())
+         }
         )
+      case _ =>
+        report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
         SimpleType("<error>", List())
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
@@ -240,7 +237,7 @@ class LoRePhase extends PluginPhase:
                 case ValDef(paramName, paramType, tpd.EmptyTree) =>
                   TArgT(
                     paramName.toString,
-                    buildLoreTypeNode(paramType)
+                    buildLoreTypeNode(paramType.tpe, paramType.sourcePos)
                   )
                 case _ =>
                   report.error(
@@ -273,7 +270,7 @@ class LoRePhase extends PluginPhase:
           case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
           case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
           case _ => // Other definitions, these are the ones we care about
-            val loreTypeNode = buildLoreTypeNode(tpt)
+            val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
             // Several notes to make here regarding handling the RHS of reactives for future reference:
             // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
             //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
@@ -309,8 +306,8 @@ class LoRePhase extends PluginPhase:
                       name.toString,
                       loreTypeNode,
                       TInteraction(
-                        buildLoreTypeNode(reactiveType),
-                        buildLoreTypeNode(argumentType)
+                        buildLoreTypeNode(reactiveType.tpe, reactiveType.sourcePos),
+                        buildLoreTypeNode(argumentType.tpe, argumentType.sourcePos)
                       )
                     ))
                   // TODO: Interactions with requires/ensures/modifies
