@@ -314,7 +314,7 @@ class SimpleParsing extends ParserSuite {
     assertParsingResult(
       Parser.term,
       "(a, b)",
-      TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))
+      TTuple(List(TVar("a"), TVar("b")))
     )
 
     assertParsingResult(
@@ -325,13 +325,11 @@ class SimpleParsing extends ParserSuite {
 					addOrderLines(orderLines, newOrderLines) // add all new orderline
 				)""",
       TTuple(
-        NonEmptyList.fromListUnsafe(
-          List(
-            TFunC("add", List(TVar("districts_temp"), TVar("districtUpdated"))),
-            TFunC(
-              "addOrderLines",
-              List(TVar("orderLines"), TVar("newOrderLines"))
-            )
+        List(
+          TFunC("add", List(TVar("districts_temp"), TVar("districtUpdated"))), 
+          TFunC(
+            "addOrderLines", 
+            List(TVar("orderLines"), TVar("newOrderLines"))
           )
         )
       )
@@ -341,7 +339,7 @@ class SimpleParsing extends ParserSuite {
       Parser.term,
       "(a, b,co)",
       TTuple(
-        NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"), TVar("co")))
+        List(TVar("a"), TVar("b"), TVar("co"))
       )
     )
 
@@ -349,7 +347,7 @@ class SimpleParsing extends ParserSuite {
       Parser.term,
       """|(a ,
          |  b)""".stripMargin,
-      TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("b"))))
+      TTuple(List(TVar("a"), TVar("b")))
     )
   }
 

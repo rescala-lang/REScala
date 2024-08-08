@@ -249,7 +249,7 @@ class BooleanExpressionParsing extends ParserSuite {
       Parser.booleanExpr,
       "(a, u) in invitations",
       TInSet(
-        TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("u")))),
+        TTuple(List(TVar("a"), TVar("u"))),
         TVar("invitations")
       )
     )
@@ -343,7 +343,7 @@ class BooleanExpressionParsing extends ParserSuite {
         triggers = List.empty,
         body = TImpl(
           TInSet(
-            TTuple(NonEmptyList.fromListUnsafe(List(TVar("a"), TVar("u")))),
+            TTuple(List(TVar("a"), TVar("u"))),
             TVar("invitations")
           ),
           TInSet(TVar("a"), TVar("all_appointments"))
