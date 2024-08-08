@@ -88,7 +88,8 @@ object Parser {
         .repSep(2, ws.soft ~ P.char(',') ~ wsOrNl) <* wsOrNl ~ P
         .char(')')
     )
-      .map((t, s) => TTuple(t, Some(s)))
+      // TODO: Adjust code so that t is a List by default instead of a NonEmptyList
+      .map((t, s) => TTuple(t.toList, Some(s)))
       .withContext("Expected a tuple.")
 
   //// arithmetic expressions

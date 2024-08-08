@@ -70,7 +70,7 @@ case class TAbs( // abstractions
     with TViper
 
 case class TTuple( // tuples
-    factors: NonEmptyList[Term],
+    factors: List[Term],
     sourcePos: Option[SourcePos] = None
 ) extends Term
 

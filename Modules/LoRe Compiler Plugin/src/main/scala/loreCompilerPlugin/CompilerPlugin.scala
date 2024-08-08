@@ -229,11 +229,7 @@ class LoRePhase extends PluginPhase:
         fun match // Arrow function def is a DefDef, arrowLhs is a list of ValDefs
           case DefDef(_, List(arrowLhs), _, arrowRhs) =>
             TArrow( // (foo: Int) => foo + 1
-              TSeq(NonEmptyList.fromList(arrowLhs.map { // (foo: Int)
-                // This breaks when the parameter list of the arrow function
-                // is empty, but I don't know what lore node I am supposed
-                // to use otherwise as TArrow only allows one node for the lhs
-                // and all available lore nodes with lists require NonEmptyLists
+              TTuple(arrowLhs.map { // (foo: Int)
                 case ValDef(paramName, paramType, tpd.EmptyTree) =>
                   TArgT(
                     paramName.toString,
@@ -244,7 +240,7 @@ class LoRePhase extends PluginPhase:
                     s"${"\t".repeat(indentLevel)}Error building LHS term for arrow function:\n${"\t".repeat(indentLevel)}$tree"
                   )
                   TVar("<error>")
-              }).get), // Error would show up in the get on empty param list, see above
+              }),
               buildLoreRhsTerm(arrowRhs) // foo + 1
             )
           case _ =>
