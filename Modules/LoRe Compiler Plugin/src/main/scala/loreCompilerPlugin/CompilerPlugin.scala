@@ -57,16 +57,16 @@ class LoRePhase extends PluginPhase:
     typeTree match
       case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
         SimpleType(typeTree.asInstanceOf[CachedTypeRef].name.toString, List())
-      case AppliedType(outerType: CachedTypeRef, args: List[_]) => // Parameterized types like List, Map, etc
+      case AppliedType(outerType: CachedTypeRef, args: List[?]) => // Parameterized types like List, Map, etc
         SimpleType(
-         outerType.name.toString,
-         args.map {
-           case tp @ TypeRef(_, _) => SimpleType(tp.asInstanceOf[CachedTypeRef].name.toString, List())
-           case tp @ AppliedType(_, _) => buildLoreTypeNode(tp, sourcePos)
-           case _ =>
-             report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
-             SimpleType("<error>", List())
-         }
+          outerType.name.toString,
+          args.map {
+            case tp @ TypeRef(_, _)     => SimpleType(tp.asInstanceOf[CachedTypeRef].name.toString, List())
+            case tp @ AppliedType(_, _) => buildLoreTypeNode(tp, sourcePos)
+            case _ =>
+              report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
+              SimpleType("<error>", List())
+          }
         )
       case _ =>
         report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
@@ -116,7 +116,7 @@ class LoRePhase extends PluginPhase:
               field.toString,                                      // bar
               List()                                               // Always empty as these are field accesses
             )
-      case Apply(Select(leftArg, opOrMethod), params: List[_]) => // Method calls and binary operator applications
+      case Apply(Select(leftArg, opOrMethod), params: List[?]) => // Method calls and binary operator applications
         opOrMethod match
           case nme.ADD | nme.SUB | nme.MUL | nme.DIV | nme.And | nme.Or | nme.LT | nme.GT | nme.LE | nme.GE | nme.EQ | nme.NE =>
             // Supported Binary operator applications (as operator applications are methods on types, like left.+(right), etc)
@@ -178,12 +178,7 @@ class LoRePhase extends PluginPhase:
                 )
                 TVar("<error>")
           case methodName => // Method calls outside of explicitly supported binary operators
-            logRhsInfo(
-              indentLevel,
-              operandSide,
-              s"call to a method with ${params.size} parameters:",
-              methodName.toString
-            )
+            logRhsInfo(indentLevel, operandSide, s"call to a method with ${params.size} params:", methodName.toString)
             TFCall(                                                    // foo.bar(baz, qux, ...)
               buildLoreRhsTerm(leftArg, indentLevel + 1, operandSide), // foo (might be a more complex term)
               methodName.toString,                                     // bar
@@ -191,35 +186,35 @@ class LoRePhase extends PluginPhase:
                 buildLoreRhsTerm(p, indentLevel + 1, operandSide)
               )
             )
-      case Apply(Ident(name: Name), params: List[_]) => // Function calls
-        logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} parameters:", name.toString)
+      case Apply(Ident(name: Name), params: List[?]) => // Function calls
+        logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} params:", name.toString)
         TFunC(            // foo(bar, baz)
           name.toString,  // foo
           params.map(p => // bar, baz, ... (might each be more complex terms)
             buildLoreRhsTerm(p, indentLevel + 1, operandSide)
           )
         )
-      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), List(Typed(SeqLiteral(params: List[_], _), _))) =>
+      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), List(Typed(SeqLiteral(params: List[?], _), _))) =>
         // Type instantiations like Lists etc
-        logRhsInfo(indentLevel, operandSide, s"type call to the ${typeName.toString} type with ${params.length} parameters", "")
+        logRhsInfo(indentLevel, operandSide, s"type call to ${typeName.toString} with ${params.length} params", "")
         TFunC(
           typeName.toString,
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
-      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]) =>
+      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]) =>
         // Tuple definitions, may also catch currently unknown other cases (and has to stay below type instant. case)
-        logRhsInfo(indentLevel, operandSide, s"type call to the ${typeName.toString} type with ${params.length} parameters", " ")
+        logRhsInfo(indentLevel, operandSide, s"type call to ${typeName.toString}  with ${params.length} params", "")
         TFunC(
           typeName.toString,
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
-      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[_]), _) =>
+      case Apply(Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]), _) =>
         // Type instantiations for Source/Var and Derived/Signal reactives
         logRhsInfo(indentLevel, operandSide, s"definition of a ${typeName.toString} reactive", "")
         typeName.toString match
-          case "Source" | "Var"  => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+          case "Source" | "Var"     => TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
           case "Derived" | "Signal" => TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
-          case _         => // Unsupported reactive
+          case _                    => // Unsupported reactive
             // No access to sourcePos here due to LazyTree
             report.error(
               s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree"
@@ -228,7 +223,7 @@ class LoRePhase extends PluginPhase:
       case Block(List(fun), Closure(_, Ident(name), _)) if name.toString == "$anonfun" => // Arrow functions
         fun match // Arrow function def is a DefDef, arrowLhs is a list of ValDefs
           case DefDef(_, List(arrowLhs), _, arrowRhs) =>
-            TArrow( // (foo: Int) => foo + 1
+            TArrow(                 // (foo: Int) => foo + 1
               TTuple(arrowLhs.map { // (foo: Int)
                 case ValDef(paramName, paramType, tpd.EmptyTree) =>
                   TArgT(
@@ -284,26 +279,27 @@ class LoRePhase extends PluginPhase:
                 rhs match
                   case tpd.EmptyTree => () // Ignore func args (ArgT) for now
                   case Apply(Apply(_, List(properRhs)), _)
-                      if typeName == "Source" || typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
+                      if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
                     newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
                       name.toString,                          // foo
                       loreTypeNode,                           // Source[Bar]
                       TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
                     ))
                   case Apply(Apply(_, List(Block(_, properRhs))), _)
-                      if typeName == "Derived" | typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
+                      if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
                     newLoreTerm = Some(TAbs(                   // foo: Derived[Bar] = Derived { baz }
                       name.toString,                           // foo
                       loreTypeNode,                            // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
-                  case TypeApply(Select(Ident(tp), _), List(reactiveType, argumentType)) if typeName == "UnboundInteraction" =>
+                  case TypeApply(Select(Ident(tp), _), List(reactiveType, argumentType))
+                      if typeName == "UnboundInteraction" => // E.g. "foo = Interaction[Int, String]"
                     newLoreTerm = Some(TAbs(
-                      name.toString,
-                      loreTypeNode,
+                      name.toString, // foo
+                      loreTypeNode,  // Interaction type (mostly inferred, so no example here)
                       TInteraction(
-                        buildLoreTypeNode(reactiveType.tpe, reactiveType.sourcePos),
-                        buildLoreTypeNode(argumentType.tpe, argumentType.sourcePos)
+                        buildLoreTypeNode(reactiveType.tpe, reactiveType.sourcePos), // Int
+                        buildLoreTypeNode(argumentType.tpe, argumentType.sourcePos)  // String
                       )
                     ))
                   // TODO: Interactions with requires/ensures/modifies

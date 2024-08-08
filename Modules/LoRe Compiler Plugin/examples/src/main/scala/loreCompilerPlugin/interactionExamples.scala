@@ -10,14 +10,16 @@ object interactionExamplesObject:
     // ========= Misc tests =========
     val arrowFun = (x: Int, y: String) => x * 2
 
-    val emptyList: List[Int] = List()
-    val stringList: List[String] = List("cool value", "dope value")
+    val emptyList: List[Int]                             = List()
+    val stringList: List[String]                         = List("cool value", "dope value")
     val derivedSourceList: Derived[Source[List[String]]] = Derived { Source(List("cool value", "dope value")) }
 
     // Map syntax "x -> y" in RHS currently does not work
-    val emptyMap: Map[Int, String] = Map()
+    val emptyMap: Map[Int, String]            = Map()
     val stringMap: Map[Int, (String, String)] = Map((0, ("cool", "value")), (1, Tuple2("dope", "value")))
-    val derivedSourceMap: Derived[Source[Map[Int, String]]] = Derived { Source(Map((0, "cool value"), (1, "dope value"))) }
+    val derivedSourceMap: Derived[Source[Map[Int, String]]] = Derived {
+      Source(Map((0, "cool value"), (1, "dope value")))
+    }
 
     // ========= Interaction tests =========
 
@@ -35,7 +37,7 @@ object interactionExamplesObject:
       .executes { (a: Int, b: Int) => a }
       .ensures { (a: Int, b: Int) => a > b }
 
-    val integerSource: Source[Int] = Source(1)
+    val integerSource: Source[Int]   = Source(1)
     val integerDerived: Derived[Int] = Derived { integerSource.value + integerSource.value }
 
     val integerInteraction5 = Interaction[Int, Int]
