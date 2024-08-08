@@ -8,8 +8,6 @@ import scala.collection.immutable.Map
 object interactionExamplesObject:
   def interactionExamplesFunction(): Unit =
     // ========= Misc tests =========
-
-    // LHS "x => y" format for arrow functions doesn't work, but FunctionN does
     val arrowFun = (x: Int, y: String) => x * 2
 
     val emptyList: List[Int] = List()
