@@ -31,7 +31,6 @@ object interactionExamplesObject:
     val integerInteraction3 = Interaction[Int, Int]
       .requires ((a: Int, b: Int) => a > b)
       .executes ((a: Int, b: Int) => a )
-      .requires ((a: Int, b: Int) => a > b + 1)
 
     val integerInteraction4 = Interaction[Int, Int]
       .requires ( (a: Int, b: Int) => a > b )
@@ -45,5 +44,6 @@ object interactionExamplesObject:
       .requires ( (curr: Int, _) => curr < 3 )
       .modifies ( integerSource )
       .executes ( (curr: Int, _) => curr + 1 )
+      .ensures ( (curr: Int, _) => curr < 3 )
   end interactionExamplesFunction
 end interactionExamplesObject

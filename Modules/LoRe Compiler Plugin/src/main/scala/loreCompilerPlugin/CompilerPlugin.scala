@@ -220,6 +220,7 @@ class LoRePhase extends PluginPhase:
             // TODO: reactiveType and argumentType are based on the type tree here, not the types written in the RHS
             // Because Interactions use Tuple1 for the first parameters in the type annotation, but the RHS does not,
             // this may cause issues and require fixing.
+            logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
             TInteraction(
               reactiveType,
               argumentType
@@ -234,13 +235,14 @@ class LoRePhase extends PluginPhase:
               rawInteractionTree.sourcePos
             )
             TVar("<error>")
-      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Ident(mod)))
+      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Ident(modVar)))
         if methodName.toString == "modifies" =>
         // Interaction modifies is different from the other methods as it doesn't take an arrow function as input
         var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)
         innerTerm match
           case interactionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
-            innerTerm = interactionTerm.copy(modifies = modifiesList.prepended(mod.toString))
+            logRhsInfo(indentLevel, operandSide, s"call to the modifies method", "")
+            innerTerm = interactionTerm.copy(modifies = modifiesList.prepended(modVar.toString))
           case _ =>
             report.error(
               s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction modifies call:\n${"\t".repeat(indentLevel)}$tree",
@@ -248,47 +250,40 @@ class LoRePhase extends PluginPhase:
             )
             TVar("<error>")
         innerTerm
-      case interactionTree @ Apply(Apply(TypeApply(Select(innerNode, methodName), _), List(methodContent)), _) =>
-        // Interaction definitions with method calls on the RHS, e.g. Interaction[Int, String].requires(...) etc
-        val methodParamTerm = buildLoreRhsTerm(methodContent, indentLevel + 1, operandSide) // Build
-        var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide) // B
-        interactionTerm match
-          case prevInteractionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
-            methodName.toString match
-              // modifies is handled specifically in above case due to different structure
-              case "requires" =>
-                interactionTerm = prevInteractionTerm.copy(requires = requiresList.prepended(methodParamTerm))
-              case "ensures" =>
-                interactionTerm = prevInteractionTerm.copy(ensures = ensuresList.prepended(methodParamTerm))
-              case "executes" =>
-                // executes can only have one value due to being an Option, so simply replace the value with this one
-                interactionTerm = prevInteractionTerm.copy(executes = Some(methodParamTerm))
-          case _ =>
-            report.error(
-              s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction:\n${"\t".repeat(indentLevel)}$tree",
-              interactionTree.sourcePos
-            )
-            TVar("<error>")
-        interactionTerm
-      case reactiveTree @ Apply(Apply(TypeApply(Select(_, _), _), params: List[?]), _) =>
-        // Type instantiations for Source/Var and Derived/Signal reactives (inlined, thus additional Apply layers)
-        // Interaction reactives are in different case above as they are not inlined when not called with methods
+      case reactiveTree @ Apply(Apply(TypeApply(Select(innerNode, methodName), _), params: List[?]), _) =>
+        // Reactive definitions not covered above
         val rhsType = buildLoreTypeNode(reactiveTree.tpe, reactiveTree.sourcePos)
         rhsType match
           case SimpleType(loreTypeName, typeArgs) =>
             loreTypeName match
               case "Var" =>
                 logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
-                TSource(buildLoreRhsTerm(params.head, indentLevel + 1))
+                TSource(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
               case "Signal" =>
                 logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
-                TDerived(buildLoreRhsTerm(params.head, indentLevel + 1))
-              case _ => // Unsupported reactive
-                report.error(
-                  s"${"\t".repeat(indentLevel)}Unsupported reactive used in RHS:\n${"\t".repeat(indentLevel)}$tree",
-                  reactiveTree.sourcePos
-                )
-                TVar("<error>")
+                TDerived(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
+              case _ => // Interactions
+                logRhsInfo(indentLevel, operandSide, s"call to the $methodName method", "")
+                var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide) // Build Interaction term
+                val methodParamTerm = buildLoreRhsTerm(params.head, indentLevel + 1, operandSide) // Build method term
+                interactionTerm match
+                  case prevInteractionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
+                    methodName.toString match
+                    // modifies is handled specifically in above case due to different structure
+                      case "requires" =>
+                        interactionTerm = prevInteractionTerm.copy(requires = requiresList.prepended(methodParamTerm))
+                      case "ensures" =>
+                        interactionTerm = prevInteractionTerm.copy(ensures = ensuresList.prepended(methodParamTerm))
+                      case "executes" =>
+                        // executes can only have one value due to being an Option, so simply replace the value with this one
+                        interactionTerm = prevInteractionTerm.copy(executes = Some(methodParamTerm))
+                  case _ =>
+                    report.error(
+                      s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction:\n${"\t".repeat(indentLevel)}$tree",
+                      reactiveTree.sourcePos
+                    )
+                    TVar("<error>")
+                interactionTerm
           case TupleType(_) => // TODO tuple types?
             println("surprise tuple type")
             report.error("LoRe Tuple Types are not currently supported", reactiveTree.sourcePos)
@@ -296,6 +291,7 @@ class LoRePhase extends PluginPhase:
       case arrowTree @ Block(List(fun), Closure(_, Ident(name), _)) if name.toString == "$anonfun" => // Arrow functions
         fun match // Arrow function def is a DefDef, arrowLhs is a list of ValDefs
           case DefDef(_, List(arrowLhs), _, arrowRhs) =>
+            logRhsInfo(indentLevel, operandSide, s"arrow function with ${arrowLhs.length} arguments", "")
             TArrow(                 // (foo: Int) => foo + 1
               TTuple(arrowLhs.map { // (foo: Int)
                 case ValDef(paramName, paramType, tpd.EmptyTree) =>
@@ -310,7 +306,7 @@ class LoRePhase extends PluginPhase:
                   )
                   TVar("<error>")
               }),
-              buildLoreRhsTerm(arrowRhs) // foo + 1
+              buildLoreRhsTerm(arrowRhs, indentLevel + 1, operandSide) // foo + 1
             )
           case _ =>
             report.error(
@@ -351,7 +347,7 @@ class LoRePhase extends PluginPhase:
               case SimpleType(typeName, typeArgs) =>
                 println(s"Detected $typeName definition with name \"$name\"")
                 rhs match
-                  case tpd.EmptyTree => () // Ignore func args (ArgT) for now
+                  case tpd.EmptyTree => () // Ignore func args (ArgT) outside of arrow functions for now
                   case Apply(Apply(_, List(properRhs)), _)
                       if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
                     newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
@@ -366,16 +362,6 @@ class LoRePhase extends PluginPhase:
                       loreTypeNode,                            // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
-//                  case Apply(Apply(TypeApply(Select(_, _), _), List(_)), _) =>
-//                    // Interactions, e.g. "foo = Interaction[Int, String].requires(a => a > 5).executes(a => a + 1)"
-//                    // "Raw Interactions", i.e. those without method calls, are handled in the case below instead
-//                    // TODO: Apart from raw Interactions, their types only show up as "T" or "E"
-//                    //  in the type tree for some reason, and not e.g. "InteractionWithExecutes"
-//                    newLoreTerm = Some(TAbs(
-//                      name.toString, // foo
-//                      loreTypeNode, // Automatically inferred type for the Interaction
-//                      buildLoreRhsTerm(rhs, 1) // Interaction[Int, String].requires(a => a > 5).executes(a => a + 1)"
-//                    ))
                   case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
                     // TODO: Apart from raw Interactions, their types only show up as "T" or "E"
                     //  in the type tree for some reason, and not e.g. "InteractionWithExecutes"
