@@ -12,8 +12,10 @@ this_filepath = pathlib.Path(__file__).parent.resolve()
 
 dgs_filepath = this_filepath / "data" / "dgs" / "exp1.dgs"
 
-
-wait_time_per_step_seconds = 1.0
+cutoff_after_x_steps = 100
+wait_time_per_step_seconds = 5.0
+janitor_interval_seconds = 2.0
+discovery_interval_seconds = 0.5
 
 # WARNING
 # this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
@@ -110,7 +112,8 @@ class Dtnd_Configfile_Helper:
     file_contents = self.configs[node_id]
 
     file_contents = re.sub(r'strategy = "epidemic"', 'strategy = "external"', file_contents, 1)
-    file_contents = re.sub(r'interval = "2s"', 'interval = "1s"', file_contents, 1)
+    file_contents = re.sub(r'interval = "2s"', f'interval = "{discovery_interval_seconds}s"', file_contents, 1)
+    file_contents = re.sub(r'janitor = "10s"', f'janitor = "{janitor_interval_seconds}s"', file_contents, 1)
 
     discovery_string = "[discovery_destinations]\n"
     for idx, address in enumerate(self.discovery_addresses[node_id]):
@@ -245,10 +248,17 @@ print("setup complete")
 input("press enter to start the simulation")
 core.set_session_state(session_id, SessionState.INSTANTIATION)
 
+num_steps_ran = -1
 last_step = 0
 link_name_map = {}
 
 while True:
+  num_steps_ran += 1
+
+  if num_steps_ran >= cutoff_after_x_steps:
+    print(f"ran {num_steps_ran} steps. reached cutoff max. break here.")
+    break
+
   action, step, *others = line.split(" ")
   step = int(step)
 
@@ -257,8 +267,10 @@ while True:
   
   #print(f"waiting {step-last_step} steps, resulting wait-time seconds: {(step - last_step)*wait_time_per_step_seconds}")
   #time.sleep((step - last_step)*wait_time_per_step_seconds)
+  print(f"waiting predefined seconds: {wait_time_per_step_seconds}")
+  time.sleep(wait_time_per_step_seconds)
   last_step = step
-  input(f"press enter to run step {step}")
+  #input(f"press enter to run step {step}")
 
   line = dgs_lines.pop(0)
 
