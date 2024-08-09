@@ -17,7 +17,7 @@
       <services>
         <service name="DefaultMulticastRoute"/>
         <service name="dtnd"/>
-        <service name="rdtclientonce"/>
+        <service name="addwinsclientactive"/>
         <service name="rdtrouter"/>
       </services>
     </device>
@@ -27,7 +27,7 @@
         <service name="DefaultMulticastRoute"/>
         <service name="dtnd"/>
         <service name="rdtrouter"/>
-        <service name="rdtclient"/>
+        <service name="addwinsclientlisten"/>
       </services>
     </device>
     <device id="5" name="n5" icon="" canvas="0" type="DTN" class="" image="">
@@ -52,7 +52,7 @@
         <service name="dtnd"/>
         <service name="DefaultMulticastRoute"/>
         <service name="rdtrouter"/>
-        <service name="rdtclient"/>
+        <service name="addwinsclientlisten"/>
       </services>
     </device>
   </devices>

@@ -15,7 +15,7 @@
     <device id="2" name="n2" icon="" canvas="0" type="DTN" class="" image="">
       <position x="538.0" y="237.0" lat="47.57773022643052" lon="-122.1274912825214" alt="2.0"/>
       <services>
-        <service name="rdtclient"/>
+        <service name="addwinsclientactive"/>
         <service name="rdtrouter"/>
         <service name="DefaultMulticastRoute"/>
         <service name="dtnd"/>
@@ -48,7 +48,7 @@
     <device id="7" name="n7" icon="" canvas="0" type="DTN" class="" image="">
       <position x="662.0" y="257.0" lat="47.57760902750371" lon="-122.1263773715691" alt="2.0"/>
       <services>
-        <service name="rdtclient"/>
+        <service name="addwinsclientlisten"/>
         <service name="rdtrouter"/>
         <service name="DefaultMulticastRoute"/>
         <service name="dtnd"/>
