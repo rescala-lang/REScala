@@ -11,11 +11,10 @@ import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.report
 import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
-import dotty.tools.dotc.core.Symbols.{ClassSymbol, Symbol}
+import dotty.tools.dotc.core.Symbols.Symbol
 import dotty.tools.dotc.core.Types.{AppliedType, CachedTypeRef, TypeRef}
 import lore.ast.Type as LoReType
 import lore.ast.*
-import cats.data.NonEmptyList
 
 import scala.annotation.nowarn
 
@@ -235,28 +234,42 @@ class LoRePhase extends PluginPhase:
               rawInteractionTree.sourcePos
             )
             TVar("<error>")
-      case interactionTree @ Apply(Apply(TypeApply(Select(innerNode, methodName), _), List(methodContent)), _) =>
-        // Interaction definitions with method calls on the RHS, e.g. Interaction[Int, String].requires(...) etc
-        val outerTerm = buildLoreRhsTerm(methodContent, 1)
-        var innerTerm = buildLoreRhsTerm(innerNode, 1)
+      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Ident(mod)))
+        if methodName.toString == "modifies" =>
+        // Interaction modifies is different from the other methods as it doesn't take an arrow function as input
+        var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)
         innerTerm match
           case interactionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
+            innerTerm = interactionTerm.copy(modifies = modifiesList.prepended(mod.toString))
+          case _ =>
+            report.error(
+              s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction modifies call:\n${"\t".repeat(indentLevel)}$tree",
+              modifiesTree.sourcePos
+            )
+            TVar("<error>")
+        innerTerm
+      case interactionTree @ Apply(Apply(TypeApply(Select(innerNode, methodName), _), List(methodContent)), _) =>
+        // Interaction definitions with method calls on the RHS, e.g. Interaction[Int, String].requires(...) etc
+        val methodParamTerm = buildLoreRhsTerm(methodContent, indentLevel + 1, operandSide) // Build
+        var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide) // B
+        interactionTerm match
+          case prevInteractionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
             methodName.toString match
-              case "modifies" => // TODO: Fix "modifies" case to append proper ID(s)
-                innerTerm = interactionTerm.copy(modifies = modifiesList.prepended("outerTerm"))
+              // modifies is handled specifically in above case due to different structure
               case "requires" =>
-                innerTerm = interactionTerm.copy(requires = requiresList.prepended(outerTerm))
+                interactionTerm = prevInteractionTerm.copy(requires = requiresList.prepended(methodParamTerm))
               case "ensures" =>
-                innerTerm = interactionTerm.copy(ensures = ensuresList.prepended(outerTerm))
+                interactionTerm = prevInteractionTerm.copy(ensures = ensuresList.prepended(methodParamTerm))
               case "executes" =>
-                innerTerm = interactionTerm.copy(executes = Some(outerTerm))
+                // executes can only have one value due to being an Option, so simply replace the value with this one
+                interactionTerm = prevInteractionTerm.copy(executes = Some(methodParamTerm))
           case _ =>
             report.error(
               s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction:\n${"\t".repeat(indentLevel)}$tree",
               interactionTree.sourcePos
             )
             TVar("<error>")
-        innerTerm
+        interactionTerm
       case reactiveTree @ Apply(Apply(TypeApply(Select(_, _), _), params: List[?]), _) =>
         // Type instantiations for Source/Var and Derived/Signal reactives (inlined, thus additional Apply layers)
         // Interaction reactives are in different case above as they are not inlined when not called with methods
