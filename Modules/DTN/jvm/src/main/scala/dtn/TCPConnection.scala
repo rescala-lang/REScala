@@ -30,6 +30,8 @@ class TCPConnection(socket: Socket) {
 
       inputStream.readFully(bytes, 0, size)
 
+      println(bytes)
+
       bytes
     } catch {
       case e: IOException  => println(s"read attempted on closed socket: $e"); throw e
