@@ -236,7 +236,7 @@ class LoRePhase extends PluginPhase:
             )
             TVar("<error>")
       case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Ident(modVar)))
-        if methodName.toString == "modifies" =>
+          if methodName.toString == "modifies" =>
         // Interaction modifies is different from the other methods as it doesn't take an arrow function as input
         var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)
         innerTerm match
@@ -264,16 +264,16 @@ class LoRePhase extends PluginPhase:
                 TDerived(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
               case _ => // Interactions
                 logRhsInfo(indentLevel, operandSide, s"call to the $methodName method", "")
-                var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide) // Build Interaction term
+                var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)   // Build Interaction
                 val methodParamTerm = buildLoreRhsTerm(params.head, indentLevel + 1, operandSide) // Build method term
                 interactionTerm match
-                  case prevInteractionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
+                  case prevInteractionTerm @ TInteraction(_, _, modList, reqList, ensList, execOption, _) =>
                     methodName.toString match
-                    // modifies is handled specifically in above case due to different structure
+                      // modifies is handled specifically in above case due to different structure
                       case "requires" =>
-                        interactionTerm = prevInteractionTerm.copy(requires = requiresList.prepended(methodParamTerm))
+                        interactionTerm = prevInteractionTerm.copy(requires = reqList.prepended(methodParamTerm))
                       case "ensures" =>
-                        interactionTerm = prevInteractionTerm.copy(ensures = ensuresList.prepended(methodParamTerm))
+                        interactionTerm = prevInteractionTerm.copy(ensures = ensList.prepended(methodParamTerm))
                       case "executes" =>
                         // executes can only have one value due to being an Option, so simply replace the value with this one
                         interactionTerm = prevInteractionTerm.copy(executes = Some(methodParamTerm))

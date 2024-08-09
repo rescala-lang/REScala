@@ -29,21 +29,21 @@ object interactionExamplesObject:
       .requires((a: Int, b: Int) => a > b)
 
     val integerInteraction3 = Interaction[Int, Int]
-      .requires ((a: Int, b: Int) => a > b)
-      .executes ((a: Int, b: Int) => a )
+      .requires((a: Int, b: Int) => a > b)
+      .executes((a: Int, b: Int) => a)
 
     val integerInteraction4 = Interaction[Int, Int]
-      .requires ( (a: Int, b: Int) => a > b )
-      .executes ( (a: Int, b: Int) => a )
-      .ensures ( (a: Int, b: Int) => a > b )
+      .requires((a: Int, b: Int) => a > b)
+      .executes((a: Int, b: Int) => a)
+      .ensures((a: Int, b: Int) => a > b)
 
     val integerSource: Source[Int]   = Source(1)
     val integerDerived: Derived[Int] = Derived { integerSource.value + integerSource.value }
 
     val integerInteraction5 = Interaction[Int, Int]
-      .requires ( (curr: Int, _) => curr < 3 )
-      .modifies ( integerSource )
-      .executes ( (curr: Int, _) => curr + 1 )
-      .ensures ( (curr: Int, _) => curr < 3 )
+      .requires((curr: Int, _) => curr < 3)
+      .modifies(integerSource)
+      .executes((curr: Int, _) => curr + 1)
+      .ensures((curr: Int, _) => curr < 3)
   end interactionExamplesFunction
 end interactionExamplesObject
