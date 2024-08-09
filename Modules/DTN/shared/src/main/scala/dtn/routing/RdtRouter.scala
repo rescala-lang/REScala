@@ -301,8 +301,9 @@ class LikelihoodState {
     returns all known neighbours for a destination in a set, sorted by delivery-likelihood, with the best neighbour (highest score) first
    */
   def get_sorted_neighbours(destination_node: Endpoint): Set[Endpoint] = {
+    println(map.asScala.keys.toList)
     map
-      .get(destination_node)
+      .getOrDefault(destination_node, Map())
       .toList
       .sortBy(-_._2)
       .map(_._1)

@@ -60,7 +60,7 @@ commandline options:
       case "print.forwarded" =>
         MonitoringBundlesForwardedPrinter().run()
       case "print.statedev" =>
-        MonitoringStateDevelopmentPrinter().run(creationClientId = creation_client_id)
+        MonitoringStateDevelopmentPrinter(creationClientId = creation_client_id).run()
       case s => throw Exception(s"could not partse commandline. unknown method: $s")
   }
 }
@@ -69,7 +69,10 @@ commandline options:
 
 @main def start_printing_received(): Unit  = MonitoringBundlesReceivedPrinter().run()
 @main def start_printing_forwarded(): Unit = MonitoringBundlesForwardedPrinter().run()
-@main def start_printing_state_n2(): Unit  = MonitoringStateDevelopmentPrinter().run("n2")
+@main def start_printing_state_n2(): Unit = MonitoringStateDevelopmentPrinter(
+  creationClientId = "dtn://n2/rdt/app1",
+  paths = MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
+).run()
 
 @main def start_monitoring_server_default(): Unit = start_monitoring_server("0.0.0.0", 5000)
 

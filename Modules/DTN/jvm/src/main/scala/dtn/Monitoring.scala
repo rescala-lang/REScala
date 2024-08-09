@@ -14,19 +14,22 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import scala.util.Using
 
-val MONITORING_DIR                = Paths.get("/shared/monitoring")
-val RECEIVED_DATA_FP              = MONITORING_DIR.resolve("received.data")
-val FORWARDED_DATA_FP             = MONITORING_DIR.resolve("forwarded.data")
-val CREATED_AND_DELIVERED_DATA_FP = MONITORING_DIR.resolve("created_and_delivered.data")
+class MonitoringPaths(base_dir: String = "/shared/monitoring") {
+  val monitoring_dir                = Paths.get(base_dir)
+  val received_data_fp              = monitoring_dir.resolve("received.data")
+  val forwarded_data_fp             = monitoring_dir.resolve("forwarded.data")
+  val created_and_delivered_data_fp = monitoring_dir.resolve("created_and_delivered.data")
+}
 
-class MonitoringServer(server: TCPReadonlyServer) {
+class MonitoringServer(server: TCPReadonlyServer, paths: MonitoringPaths = MonitoringPaths()) {
   def run(): Unit = {
     val dir = Paths.get("/shared/monitoring")
 
     Using.Manager { use =>
-      val streamReceived            = use(BufferedOutputStream(Files.newOutputStream(RECEIVED_DATA_FP)))
-      val streamForwarded           = use(BufferedOutputStream(Files.newOutputStream(FORWARDED_DATA_FP)))
-      val streamCreatedAndDelivered = use(BufferedOutputStream(Files.newOutputStream(CREATED_AND_DELIVERED_DATA_FP)))
+      val streamReceived  = use(BufferedOutputStream(Files.newOutputStream(paths.received_data_fp)))
+      val streamForwarded = use(BufferedOutputStream(Files.newOutputStream(paths.forwarded_data_fp)))
+      val streamCreatedAndDelivered =
+        use(BufferedOutputStream(Files.newOutputStream(paths.created_and_delivered_data_fp)))
 
       try {
         while true do {
@@ -82,9 +85,9 @@ object MonitoringClient {
   }
 }
 
-class MonitoringBundlesReceivedPrinter {
+class MonitoringBundlesReceivedPrinter(paths: MonitoringPaths = MonitoringPaths()) {
   def run(): Unit = {
-    Using(Files.newBufferedReader(RECEIVED_DATA_FP, StandardCharsets.UTF_8)) { in =>
+    Using(Files.newBufferedReader(paths.received_data_fp, StandardCharsets.UTF_8)) { in =>
       var oldTime: Option[ZonedDateTime] = None
       var messageCount: Long             = 0
 
@@ -118,9 +121,9 @@ class MonitoringBundlesReceivedPrinter {
   }
 }
 
-class MonitoringBundlesForwardedPrinter {
+class MonitoringBundlesForwardedPrinter(paths: MonitoringPaths = MonitoringPaths()) {
   def run(): Unit = {
-    Using(Files.newBufferedReader(FORWARDED_DATA_FP, StandardCharsets.UTF_8)) { in =>
+    Using(Files.newBufferedReader(paths.forwarded_data_fp, StandardCharsets.UTF_8)) { in =>
       var oldTime: Option[ZonedDateTime] = None
       var messageCount: Long             = 0
 
@@ -154,9 +157,9 @@ class MonitoringBundlesForwardedPrinter {
   }
 }
 
-class MonitoringStateDevelopmentPrinter {
-  def run(creationClientId: String): Unit = {
-    Using(Files.newBufferedReader(CREATED_AND_DELIVERED_DATA_FP, StandardCharsets.UTF_8)) { in =>
+class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: MonitoringPaths = MonitoringPaths()) {
+  def run(): Unit = {
+    Using(Files.newBufferedReader(paths.created_and_delivered_data_fp, StandardCharsets.UTF_8)) { in =>
       var creationState: Dots                = Dots.empty
       var deliveredStates: Map[String, Dots] = Map()
 
