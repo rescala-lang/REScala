@@ -198,7 +198,7 @@ class LoRePhase extends PluginPhase:
           )
         )
       case Apply(TypeApply(Select(Ident(typeName: Name), _), _), List(Typed(SeqLiteral(params: List[?], _), _))) =>
-        // Type instantiations like Lists etc
+        // Type instantiations like Lists etc, i.e. specifically "List(...)" and so forth
         logRhsInfo(indentLevel, operandSide, s"type call to ${typeName.toString} with ${params.length} params", "")
         TFunC(
           typeName.toString,
@@ -211,8 +211,55 @@ class LoRePhase extends PluginPhase:
           typeName.toString,
           params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
         )
-      case reactiveTree @ Apply(Apply(TypeApply(Select(Ident(_), _), _), params: List[?]), _) =>
-        // Type instantiations for Source/Var and Derived/Signal reactives (that hopefully does not match other types)
+      case rawInteractionTree @ TypeApply(Select(Ident(tpName), _), _) if tpName.toString == "Interaction" =>
+        // Raw Interaction definitions (without method calls) on the RHS, e.g. Interaction[Int, String]
+        // This probably breaks if you alias/import Interaction as a different name, not sure how to handle that
+        // When not checking for type name, this would match all types you apply as "TypeName[TypeParam, ...]"
+        val rhsType = buildLoreTypeNode(rawInteractionTree.tpe, rawInteractionTree.sourcePos)
+        rhsType match
+          case SimpleType(loreTypeName, List(reactiveType, argumentType)) =>
+            // TODO: reactiveType and argumentType are based on the type tree here, not the types written in the RHS
+            // Because Interactions use Tuple1 for the first parameters in the type annotation, but the RHS does not,
+            // this may cause issues and require fixing.
+            TInteraction(
+              reactiveType,
+              argumentType
+            )
+          case TupleType(_) => // TODO tuple types?
+            println("surprise tuple type")
+            report.error("LoRe Tuple Types are not currently supported", rawInteractionTree.sourcePos)
+            TVar("<error>")
+          case _ =>
+            report.error(
+              s"${"\t".repeat(indentLevel)}Error building RHS interaction term:\n${"\t".repeat(indentLevel)}$tree",
+              rawInteractionTree.sourcePos
+            )
+            TVar("<error>")
+      case interactionTree @ Apply(Apply(TypeApply(Select(innerNode, methodName), _), List(methodContent)), _) =>
+        // Interaction definitions with method calls on the RHS, e.g. Interaction[Int, String].requires(...) etc
+        val outerTerm = buildLoreRhsTerm(methodContent, 1)
+        var innerTerm = buildLoreRhsTerm(innerNode, 1)
+        innerTerm match
+          case interactionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
+            methodName.toString match
+              case "modifies" => // TODO: Fix "modifies" case to append proper ID(s)
+                innerTerm = interactionTerm.copy(modifies = modifiesList.prepended("outerTerm"))
+              case "requires" =>
+                innerTerm = interactionTerm.copy(requires = requiresList.prepended(outerTerm))
+              case "ensures" =>
+                innerTerm = interactionTerm.copy(ensures = ensuresList.prepended(outerTerm))
+              case "executes" =>
+                innerTerm = interactionTerm.copy(executes = Some(outerTerm))
+          case _ =>
+            report.error(
+              s"${"\t".repeat(indentLevel)}Error building RHS term for Interaction:\n${"\t".repeat(indentLevel)}$tree",
+              interactionTree.sourcePos
+            )
+            TVar("<error>")
+        innerTerm
+      case reactiveTree @ Apply(Apply(TypeApply(Select(_, _), _), params: List[?]), _) =>
+        // Type instantiations for Source/Var and Derived/Signal reactives (inlined, thus additional Apply layers)
+        // Interaction reactives are in different case above as they are not inlined when not called with methods
         val rhsType = buildLoreTypeNode(reactiveTree.tpe, reactiveTree.sourcePos)
         rhsType match
           case SimpleType(loreTypeName, typeArgs) =>
@@ -306,18 +353,19 @@ class LoRePhase extends PluginPhase:
                       loreTypeNode,                            // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
-                  case TypeApply(Select(Ident(tp), _), List(reactiveType, argumentType))
-                      if typeName == "UnboundInteraction" => // E.g. "foo = Interaction[Int, String]"
-                    newLoreTerm = Some(TAbs(
-                      name.toString, // foo
-                      loreTypeNode,  // Interaction type (mostly inferred, so no example here)
-                      TInteraction(
-                        buildLoreTypeNode(reactiveType.tpe, reactiveType.sourcePos), // Int
-                        buildLoreTypeNode(argumentType.tpe, argumentType.sourcePos)  // String
-                      )
-                    ))
-                  // TODO: Interactions with requires/ensures/modifies
-                  case _ => // Any non-reactive values (Int, String, Bool, ...)
+//                  case Apply(Apply(TypeApply(Select(_, _), _), List(_)), _) =>
+//                    // Interactions, e.g. "foo = Interaction[Int, String].requires(a => a > 5).executes(a => a + 1)"
+//                    // "Raw Interactions", i.e. those without method calls, are handled in the case below instead
+//                    // TODO: Apart from raw Interactions, their types only show up as "T" or "E"
+//                    //  in the type tree for some reason, and not e.g. "InteractionWithExecutes"
+//                    newLoreTerm = Some(TAbs(
+//                      name.toString, // foo
+//                      loreTypeNode, // Automatically inferred type for the Interaction
+//                      buildLoreRhsTerm(rhs, 1) // Interaction[Int, String].requires(a => a > 5).executes(a => a + 1)"
+//                    ))
+                  case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
+                    // TODO: Apart from raw Interactions, their types only show up as "T" or "E"
+                    //  in the type tree for some reason, and not e.g. "InteractionWithExecutes"
                     newLoreTerm = Some(TAbs(   // foo: Bar = baz
                       name.toString,           // foo (any valid Scala identifier)
                       loreTypeNode,            // Bar
