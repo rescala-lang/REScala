@@ -56,7 +56,7 @@ class Client(ws: WSEndpointClient, appName: String, monitoringClient: Monitoring
         flush_receive()
       })
     }
-    flush_receive().recover(throwable => println(throwable))
+    flush_receive().recover(_.printStackTrace())
     ()
   }
 

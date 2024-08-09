@@ -58,7 +58,7 @@ class MonitoringServer(server: TCPReadonlyServer) {
       } finally {
         server.stop()
       }
-    }.recover(throwable => println(throwable))
+    }.recover(_.printStackTrace())
     ()
   }
 }
@@ -113,7 +113,7 @@ class MonitoringBundlesReceivedPrinter {
             }
         }
       }
-    }.recover(throwable => println(throwable))
+    }.recover(_.printStackTrace())
     ()
   }
 }
@@ -149,7 +149,7 @@ class MonitoringBundlesForwardedPrinter {
             }
         }
       }
-    }.recover(throwable => println(throwable))
+    }.recover(_.printStackTrace())
     ()
   }
 }
@@ -206,7 +206,7 @@ class MonitoringStateDevelopmentPrinter {
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")
         }
       }
-    }.recover(throwable => println(throwable))
+    }.recover(_.printStackTrace())
     ()
   }
 }

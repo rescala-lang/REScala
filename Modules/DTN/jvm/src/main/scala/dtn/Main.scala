@@ -96,7 +96,7 @@ def start_monitoring_server(interface_address: String, port: Int): Unit = {
 def _route_forever(router: Future[BaseRouter]): Unit = {
   router.flatMap(router => {
     router.start_receiving()
-  }).recover(throwable => println(throwable))
+  }).recover(_.printStackTrace())
 
   while true do {
     Thread.sleep(200)
@@ -112,7 +112,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
         flush_receive()
       })
     }
-    flush_receive().recover(throwable => println(throwable))
+    flush_receive().recover(_.printStackTrace())
 
     val bundle: Bundle = BundleCreation.createBundleUTF8(
       utf8_payload = "Ping",
@@ -121,7 +121,7 @@ def send_ping_to_node4000(host: String, port: Int): Unit = {
     )
 
     client.sendBundle(bundle)
-  }).recover(throwable => println(throwable))
+  }).recover(_.printStackTrace())
 
   while true do {
     Thread.sleep(200)
@@ -140,7 +140,7 @@ def send_one_rdt_package(host: String, port: Int, monitoringHost: String, monito
     Thread.sleep(5000)
     println(s"sending dots: $dots")
     client.send(message_type = RdtMessageType.Payload, payload = Array(), dots = dots)
-  }).recover(throwable => println(throwable))
+  }).recover(_.printStackTrace())
 
   while true do {
     Thread.sleep(200)
@@ -152,7 +152,7 @@ def receiving_client(host: String, port: Int, monitoringHost: String, monitoring
     client.registerOnReceive((message_type: RdtMessageType, payload: Array[Byte], dots: Dots) => {
       println(s"received dots: $dots")
     })
-  }).recover(throwable => println(throwable))
+  }).recover(_.printStackTrace())
 
   while true do {
     Thread.sleep(200)
