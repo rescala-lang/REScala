@@ -7,7 +7,6 @@ import scala.concurrent.Future
 
 import routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2}
 import rdt.Client
-import io.bullet.borer.derivation.key
 
 /*
   this file contains all jvm main methods

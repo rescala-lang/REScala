@@ -3,6 +3,7 @@ package dtn
 import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, EOFException, IOException}
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
 import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
+import java.nio.charset.StandardCharsets
 
 class TCPConnection(socket: Socket) {
   val inputStream  = new DataInputStream(new BufferedInputStream(socket.getInputStream))
@@ -30,7 +31,7 @@ class TCPConnection(socket: Socket) {
 
       inputStream.readFully(bytes, 0, size)
 
-      println(bytes)
+      println(String(bytes, StandardCharsets.UTF_8))
 
       bytes
     } catch {
