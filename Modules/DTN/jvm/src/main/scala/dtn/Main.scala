@@ -5,7 +5,7 @@ import rdts.time.Dots
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter}
+import routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2}
 import rdt.Client
 
 /*
@@ -16,7 +16,7 @@ import rdt.Client
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, client, client.once, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
+  -m   => method (mandatory) | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, routing.rdt2, client, client.once, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
   -a   => host address       | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
   -p   => host port          | default: 5000 (for monitoring), 3000 (for everything else)
   -ma  => monitoring address | default: 127.0.0.1
@@ -47,6 +47,8 @@ commandline options:
         _route_forever(EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
       case "routing.rdt" =>
         _route_forever(RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
+      case "routing.rdt2" =>
+        _route_forever(RdtRouter2(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
       case "client" =>
         receiving_client(host_address, host_port, monitoring_address, monitoring_port)
       case "client.once" =>

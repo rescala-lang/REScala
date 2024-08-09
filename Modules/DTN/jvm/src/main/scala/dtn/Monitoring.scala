@@ -198,7 +198,7 @@ class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: Monitor
           val creationStateNum: Double = creationState.size.toDouble
 
           print("\u001b[2J") // clear console screen
-          println(s"${newestTime}\n")
+          println(s"Latest State Time: ${newestTime.getOrElse(ZonedDateTime.now())}\n")
           println(s"States Ratio of num-dots (num dots created: ${creationStateNum})")
           for (clientId: String, dots: Dots) <- deliveredStates do {
             val deliveredStateNum: Double = dots.size.toDouble

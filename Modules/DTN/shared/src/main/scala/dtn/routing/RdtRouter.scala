@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.math.{addExact, max}
 import scala.util.{Random, Try}
+import java.time.ZonedDateTime
 
 // Variables, chosen number, for this routing
 val MIN_DELIVERED    = 10
@@ -176,6 +177,8 @@ class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfac
     })
     println(s"selected clas: $selected_clas")
 
+    println(s"time: ${ZonedDateTime.now()}")
+
     return Option(Packet.ResponseSenderForBundle(
       bp = packet.bp,
       clas = selected_clas,
@@ -301,7 +304,6 @@ class LikelihoodState {
     returns all known neighbours for a destination in a set, sorted by delivery-likelihood, with the best neighbour (highest score) first
    */
   def get_sorted_neighbours(destination_node: Endpoint): Set[Endpoint] = {
-    println(map.asScala.keys.toList)
     map
       .getOrDefault(destination_node, Map())
       .toList

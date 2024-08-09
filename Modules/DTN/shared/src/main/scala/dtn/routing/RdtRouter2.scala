@@ -9,6 +9,7 @@ import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import scala.math.{addExact, max}
 import scala.util.{Random, Try}
+import java.time.ZonedDateTime
 
 /*
   This alternative RdtRouter does a simple limited flooding approach.
@@ -91,6 +92,8 @@ class RdtRouter2(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfa
         )
     })
     println(s"selected clas: ${selected_clas.toList}")
+
+    println(s"time: ${ZonedDateTime.now()}")
 
     return Option(Packet.ResponseSenderForBundle(
       bp = packet.bp,
