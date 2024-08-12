@@ -30,8 +30,6 @@ class TCPConnection(socket: Socket) {
 
     inputStream.readFully(bytes, 0, size)
 
-    println(s"I read this array of size ${size} with contents: ${bytes.toList}")
-
     bytes
   }
 }
@@ -43,7 +41,7 @@ object TCPConnection {
 
 class TCPReadonlyServer(socket: ServerSocket) {
   // this queue must be read externally in regular intervals to not block the senders
-  val queue: LinkedBlockingQueue[Tuple2[TCPConnection, Array[Byte]]] = new LinkedBlockingQueue(2000)
+  val queue: LinkedBlockingQueue[Tuple2[TCPConnection, Array[Byte]]] = new LinkedBlockingQueue(50)
 
   val runnables: ConcurrentHashMap[TCPConnection, ReceiverRunnable] = ConcurrentHashMap()
   var listenerRunnable: Option[ListenerRunnable]                    = None
