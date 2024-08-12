@@ -37,7 +37,7 @@ class MonitoringServer(server: TCPReadonlyServer, paths: MonitoringPaths = Monit
 
           val now: ZonedDateTime = ZonedDateTime.now(ZoneId.of("UTC"))
 
-          println(s"trying to decode data: ${String(data, StandardCharsets.UTF_8)}")
+          // println(s"trying to decode data: ${String(data, StandardCharsets.UTF_8)}")
 
           Json.decode(data).to[MonitoringMessage].value match
             case m: MonitoringMessage.BundleReceivedAtRouter =>

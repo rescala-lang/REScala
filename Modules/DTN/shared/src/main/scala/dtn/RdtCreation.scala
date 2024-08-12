@@ -14,7 +14,7 @@ trait CaseStudyRdt {
   def caseStudyActive(): Unit
 }
 
-class AddWinsSetRDT(number_of_additions: Int, sleep_time_seconds: Double) extends CaseStudyRdt {
+class AddWinsSetRDT(number_of_additions: Int, sleep_time_milliseconds: Long) extends CaseStudyRdt {
   type RdtType = Set[String]
 
   given JsonValueCodec[RdtType] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
@@ -42,8 +42,6 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_seconds: Double) extend
   }
 
   def caseStudyActive(): Unit = {
-    val sleep_time_milliseconds: Long = (sleep_time_seconds * 1000).toLong
-
     println("started active add-wins rdt.")
     println(s"\nnumber of additions: ${number_of_additions}\nsleep-time milliseconds: ${sleep_time_milliseconds}")
 

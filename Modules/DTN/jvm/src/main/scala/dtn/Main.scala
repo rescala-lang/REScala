@@ -16,14 +16,14 @@ import rdt.Client
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory)               | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, routing.rdt2, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
-  -a   => host address                     | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
-  -p   => host port                        | default: 5000 (for monitoring), 3000 (for everything else)
-  -ma  => monitoring address               | default: 127.0.0.1
-  -mp  => monitoring port                  | default: 5000
-  -mid => monitoring creation client id    | default: dtn://n2/rdt/testapp
-  -awa => add-wins rdt number of additions | default: 1000
-  -awt => add-wins rdt sleep time seconds  | default: 0.5
+  -m   => method (mandatory)                   | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, routing.rdt2, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
+  -a   => host address                         | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
+  -p   => host port                            | default: 5000 (for monitoring), 3000 (for everything else)
+  -ma  => monitoring address                   | default: 127.0.0.1
+  -mp  => monitoring port                      | default: 5000
+  -mid => monitoring creation client id        | default: dtn://n2/rdt/testapp
+  -awa => add-wins rdt number of additions     | default: 1000
+  -awt => add-wins rdt sleep time milliseconds | default: 500
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -37,11 +37,11 @@ commandline options:
     val host_address: String =
       keyword_args.getOrElse("-a", if method.equals("monitoring") then "0.0.0.0" else "127.0.0.1")
     val host_port: Int = keyword_args.getOrElse("-p", if method.equals("monitoring") then "5000" else "3000").toInt
-    val monitoring_address: String              = keyword_args.getOrElse("-ma", "127.0.0.1")
-    val monitoring_port: Int                    = keyword_args.getOrElse("-mp", "5000").toInt
-    val creation_client_id: String              = keyword_args.getOrElse("-mid", "dtn://n2/rdt/testapp")
-    val add_wins_rdt_number_of_additions: Int   = keyword_args.getOrElse("-awa", "1000").toInt
-    val add_wins_rdt_sleep_time_seconds: Double = keyword_args.getOrElse("-awt", "0.5").toDouble
+    val monitoring_address: String                 = keyword_args.getOrElse("-ma", "127.0.0.1")
+    val monitoring_port: Int                       = keyword_args.getOrElse("-mp", "5000").toInt
+    val creation_client_id: String                 = keyword_args.getOrElse("-mid", "dtn://n2/rdt/testapp")
+    val add_wins_rdt_number_of_additions: Int      = keyword_args.getOrElse("-awa", "1000").toInt
+    val add_wins_rdt_sleep_time_milliseconds: Long = keyword_args.getOrElse("-awt", "500").toLong
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
@@ -58,14 +58,14 @@ commandline options:
           host_address,
           host_port,
           MonitoringClient(monitoring_address, monitoring_port),
-          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_seconds)
+          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
         )
       case "client.addwins.active" =>
         addwins_case_study_active(
           host_address,
           host_port,
           MonitoringClient(monitoring_address, monitoring_port),
-          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_seconds)
+          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
         )
       case "print.received" =>
         MonitoringBundlesReceivedPrinter().run()
