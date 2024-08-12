@@ -42,7 +42,7 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_seconds: Double) extend
   }
 
   def caseStudyActive(): Unit = {
-    val sleep_time_milliseconds: Long = (sleep_time_seconds / 1000).toLong
+    val sleep_time_milliseconds: Long = (sleep_time_seconds * 1000).toLong
 
     println("started active add-wins rdt.")
     println(s"\nnumber of additions: ${number_of_additions}\nsleep-time milliseconds: ${sleep_time_milliseconds}")
@@ -52,6 +52,10 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_seconds: Double) extend
     for i <- 0 to number_of_additions do {
       Thread.sleep(sleep_time_milliseconds)
       dataManager.applyUnrelatedDelta(Set(s"hello world ${i} from ${dataManager.replicaId}"))
+    }
+
+    while true do {
+      Thread.sleep(1000)
     }
   }
 }
