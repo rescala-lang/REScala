@@ -13,6 +13,9 @@ class TCPConnection(socket: Socket) {
 
   val remoteHostName: String = socket.getInetAddress.getHostName
 
+  override def toString(): String =
+    s"TCPConnection(local=${socket.getInetAddress()},remote=${socket.getRemoteSocketAddress()},remoteHost=${remoteHostName})"
+
   def send(data: Array[Byte]): Unit = {
     lock.synchronized {
       try {
@@ -20,7 +23,7 @@ class TCPConnection(socket: Socket) {
         outputStream.write(data)
         outputStream.flush()
       } catch {
-        case e: IOException => println(s"could not send data (socket: ${socket.getInetAddress()}): $e"); throw e
+        case e: IOException => println(s"could not send data (conn: ${this}): $e"); throw e
       }
     }
   }
@@ -113,11 +116,11 @@ class TCPReadonlyServer(socket: ServerSocket) {
         }
       } catch {
         case e: IOException => {
-          println(s"read attempted on closed socket (${socket.getInetAddress()}):")
+          println(s"read attempted on closed socket (conn: ${connection}):")
           e.printStackTrace()
         }
         case e: EOFException => {
-          println(s"socket closed down while reading (${socket.getInetAddress()}):")
+          println(s"socket closed down while reading (conn: ${connection}):")
           e.printStackTrace()
         }
       }
