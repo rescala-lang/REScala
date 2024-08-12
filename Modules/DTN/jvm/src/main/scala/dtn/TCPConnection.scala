@@ -20,7 +20,7 @@ class TCPConnection(socket: Socket) {
         outputStream.write(data)
         outputStream.flush()
       } catch {
-        case e: IOException => println(s"could not send data: $e"); throw e
+        case e: IOException => println(s"could not send data (socket: ${socket.getInetAddress()}): $e"); throw e
       }
     }
   }
@@ -95,7 +95,10 @@ class TCPReadonlyServer(socket: ServerSocket) {
           println(s"added new connection: ${connection.remoteHostName}")
         }
       } catch {
-        case e: SocketException => println(s"server socket accept failed: $e")
+        case e: SocketException => {
+          println("server socket accept failed:")
+          e.printStackTrace()
+        }
       }
     }
   }
@@ -109,8 +112,14 @@ class TCPReadonlyServer(socket: ServerSocket) {
           queue.put((connection, connection.receive))
         }
       } catch {
-        case e: IOException  => println(s"read attempted on closed socket: $e")
-        case e: EOFException => println(s"socket closed down while reading: $e")
+        case e: IOException => {
+          println(s"read attempted on closed socket (${socket.getInetAddress()}):")
+          e.printStackTrace()
+        }
+        case e: EOFException => {
+          println(s"socket closed down while reading (${socket.getInetAddress()}):")
+          e.printStackTrace()
+        }
       }
       println("closing socket")
       connection.close()
