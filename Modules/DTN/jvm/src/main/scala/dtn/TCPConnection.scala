@@ -24,18 +24,13 @@ class TCPConnection(socket: Socket) {
   def close(): Unit = socket.close()
 
   def receive: Array[Byte] = {
-    try {
-      val size = inputStream.readInt()
+    val size = inputStream.readInt()
 
-      val bytes = new Array[Byte](size)
+    val bytes = new Array[Byte](size)
 
-      inputStream.readFully(bytes, 0, size)
+    inputStream.readFully(bytes, 0, size)
 
-      bytes
-    } catch {
-      case e: IOException  => println(s"read attempted on closed socket: $e"); throw e
-      case e: EOFException => println(s"socket closed down while reading: $e"); throw e
-    }
+    bytes
   }
 }
 object TCPConnection {
@@ -99,9 +94,16 @@ class TCPReadonlyServer(socket: ServerSocket) {
     var keepRunning: Boolean = true
 
     override def run(): Unit = {
-      while keepRunning do {
-        queue.put((connection, connection.receive))
+      try {
+        while keepRunning do {
+          queue.put((connection, connection.receive))
+        }
+      } catch {
+        case e: IOException  => println(s"read attempted on closed socket: $e")
+        case e: EOFException => println(s"socket closed down while reading: $e")
       }
+      println("closing socket")
+      connection.close()
     }
   }
 }
