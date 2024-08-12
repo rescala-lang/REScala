@@ -6,31 +6,41 @@ import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue}
 import java.nio.charset.StandardCharsets
 
 class TCPConnection(socket: Socket) {
+  private val lock: AnyRef = new {}
+
   val inputStream  = new DataInputStream(new BufferedInputStream(socket.getInputStream))
   val outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream))
 
   val remoteHostName: String = socket.getInetAddress.getHostName
 
   def send(data: Array[Byte]): Unit = {
-    try {
-      outputStream.writeInt(data.length)
-      outputStream.write(data)
-      outputStream.flush()
-    } catch {
-      case e: IOException => println(s"could not send data: $e"); throw e
+    lock.synchronized {
+      try {
+        outputStream.writeInt(data.length)
+        outputStream.write(data)
+        outputStream.flush()
+      } catch {
+        case e: IOException => println(s"could not send data: $e"); throw e
+      }
     }
   }
 
-  def close(): Unit = socket.close()
+  def close(): Unit = {
+    lock.synchronized {
+      socket.close()
+    }
+  }
 
   def receive: Array[Byte] = {
-    val size = inputStream.readInt()
+    lock.synchronized {
+      val size = inputStream.readInt()
 
-    val bytes = new Array[Byte](size)
+      val bytes = new Array[Byte](size)
 
-    inputStream.readFully(bytes, 0, size)
+      inputStream.readFully(bytes, 0, size)
 
-    bytes
+      bytes
+    }
   }
 }
 object TCPConnection {
