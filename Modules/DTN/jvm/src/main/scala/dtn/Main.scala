@@ -80,14 +80,18 @@ commandline options:
 // a bunch of main methods for testing
 
 @main def start_printing_received(): Unit =
-  MonitoringBundlesReceivedPrinter(MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")).run()
-@main def start_printing_forwarded(): Unit = MonitoringBundlesForwardedPrinter(
-  MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
-).run()
-@main def start_printing_state_n2(): Unit = MonitoringStateDevelopmentPrinter(
-  creationClientId = "dtn://n2/rdt/app1",
-  paths = MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
-).run()
+  MonitoringBundlesReceivedPrinter(
+    MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
+  ).run()
+@main def start_printing_forwarded(): Unit =
+  MonitoringBundlesForwardedPrinter(
+    MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
+  ).run()
+@main def start_printing_state_n2(): Unit =
+  MonitoringStateDevelopmentPrinter(
+    creationClientId = "dtn://n2/rdt/app1",
+    paths = MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
+  ).run()
 
 @main def start_monitoring_server_default(): Unit = start_monitoring_server("0.0.0.0", 5000)
 

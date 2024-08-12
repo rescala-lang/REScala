@@ -30,6 +30,8 @@ class TCPConnection(socket: Socket) {
 
     inputStream.readFully(bytes, 0, size)
 
+    println(s"I read this array of size ${size} with contents: ${bytes.toList}")
+
     bytes
   }
 }
