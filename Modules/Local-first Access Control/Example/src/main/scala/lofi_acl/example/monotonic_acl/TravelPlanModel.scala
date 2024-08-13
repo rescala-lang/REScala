@@ -133,11 +133,14 @@ class TravelPlanModel(
           id -> (StringProperty(""), StringProperty("0.00 €"), StringProperty(""))
         )
       )
-      expenseEntriesInDelta.foreach { (id, expense) =>
+      expenseEntriesInDelta.foreach { (id, _) =>
         val (description, amount, comment) = props(id)
-        expense.value.description.value.foreach { description.value = _ }
-        expense.value.amount.value.foreach { amount.value = _ }
-        expense.value.comment.value.foreach { comment.value = _ }
+        // TODO: Would fail on removal of entries
+        val curValue                       = newTravelPlan.expenses.data.get(id).get.value
+        description.value = curValue.description.read.getOrElse("")
+        amount.value = curValue.amount.read.getOrElse("0.00 €")
+        comment.value = curValue.comment.read.getOrElse("")
+
       }
       expenseIdList.addAll(newIds)
       expenseIdSet = expenseIdSet ++ newIds
