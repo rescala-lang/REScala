@@ -437,9 +437,9 @@ class FilteringAntiEntropy[RDT](
     override def run(): Unit =
       while !stopped do {
         try {
-          // Execute every 5 to 15 seconds, avoiding synchronization of these requests among replicas.
+          // Execute every 1 to 3 seconds, avoiding synchronization of these requests among replicas.
           // See: https://dl.acm.org/doi/10.1145/167954.166241
-          val sleepAmount = 5000 + rand.nextInt(10_000)
+          val sleepAmount = 1_000 + rand.nextInt(2_000)
           Thread.sleep(sleepAmount)
         } catch {
           case _: InterruptedException => if stopped then return // Otherwise request missing deltas immediately
