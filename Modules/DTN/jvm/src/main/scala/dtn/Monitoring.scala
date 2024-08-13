@@ -14,11 +14,15 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import scala.util.Using
 
+import io.bullet.borer.Codec
+import io.bullet.borer.derivation.MapBasedCodecs.*
+
 class MonitoringPaths(base_dir: String = "/shared/monitoring") {
   val monitoring_dir                = Paths.get(base_dir)
   val received_data_fp              = monitoring_dir.resolve("received.data")
   val forwarded_data_fp             = monitoring_dir.resolve("forwarded.data")
   val created_and_delivered_data_fp = monitoring_dir.resolve("created_and_delivered.data")
+  val ratios_fp                     = monitoring_dir.resolve("ratios.data")
 }
 
 class MonitoringServer(server: TCPReadonlyServer, paths: MonitoringPaths = MonitoringPaths()) {
@@ -211,6 +215,77 @@ class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: Monitor
           println(s"\nNum bundles created at other nodes: ${bundlesCreatedAtOtherNodesCounter}")
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")
         }
+      }
+    }.recover(_.printStackTrace())
+    ()
+  }
+}
+
+case class RatioMessage(clientId: String, timestamps: List[ZonedDateTime], ratios: List[Double]) derives Codec
+
+class MonitoringStateDevelopmentToRatioConverter(creationClientId: String, paths: MonitoringPaths = MonitoringPaths()) {
+  def run(): Unit = {
+    var data: Map[String, Tuple2[List[ZonedDateTime], List[Double]]] = Map()
+
+    Using(Files.newBufferedReader(paths.created_and_delivered_data_fp, StandardCharsets.UTF_8)) { in =>
+      var creationState: Dots                = Dots.empty
+      var deliveredStates: Map[String, Dots] = Map()
+
+      // these count anomalies that should not happen!?
+      var bundlesCreatedAtOtherNodesCounter: Long = 0
+      var bundlesDeliveredAtCreationCounter: Long = 0
+
+      var line = in.readLine()
+      while line != null do {
+        Json.decode(line.getBytes()).to[MonitoringMessage].value match
+          case MonitoringMessage.BundleReceivedAtRouter(nodeId, bundleId, time)  => ()
+          case MonitoringMessage.BundleForwardedAtRouter(nodeId, bundleId, time) => ()
+          case MonitoringMessage.BundleDeliveredAtClient(clientId, bundleId, dots, time) => {
+            if clientId == creationClientId then {
+              bundlesDeliveredAtCreationCounter += 1
+            } else {
+              deliveredStates = deliveredStates.merge(Map(clientId -> dots))
+
+              val ratio = deliveredStates(clientId).size.toDouble / creationState.size.toDouble
+
+              data = data.updatedWith(clientId)(option => {
+                option match
+                  case None        => Option((List(time.get), List(ratio)))
+                  case Some(tuple) => Option((tuple._1 :+ time.get, tuple._2 :+ ratio))
+              })
+            }
+          }
+          case MonitoringMessage.BundleCreatedAtClient(clientId, bundleId, dots, time) => {
+            if clientId != creationClientId then {
+              bundlesCreatedAtOtherNodesCounter += 1
+            } else {
+              creationState = creationState.merge(dots)
+
+              deliveredStates.foreach((cId, d) => {
+                val ratio = d.size.toDouble / creationState.size.toDouble
+
+                data = data.updatedWith(cId)(option => {
+                  option match
+                    case None        => Option((List(time.get), List(ratio)))
+                    case Some(tuple) => Option((tuple._1 :+ time.get, tuple._2 :+ ratio))
+                })
+              })
+            }
+          }
+
+        line = in.readLine()
+      }
+    }.recover(_.printStackTrace())
+
+    Using(BufferedOutputStream(Files.newOutputStream(paths.ratios_fp))) { out =>
+      {
+        data.foreach((clientId, tuple) => {
+          val message = RatioMessage(clientId, tuple._1, tuple._2)
+
+          out.write(Json.encode[RatioMessage](message).toByteArray)
+          out.write("\n".getBytes())
+          out.flush()
+        })
       }
     }.recover(_.printStackTrace())
     ()

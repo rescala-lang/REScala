@@ -92,6 +92,11 @@ commandline options:
     creationClientId = "dtn://n2/rdt/app1",
     paths = MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
   ).run()
+@main def run_ratio_converter(): Unit =
+  MonitoringStateDevelopmentToRatioConverter(
+    creationClientId = "dtn://n2/rdt/app1",
+    paths = MonitoringPaths("/home/kali/REScala/Modules/DTN/simulation/shared/monitoring")
+  ).run()
 
 @main def start_monitoring_server_default(): Unit = start_monitoring_server("0.0.0.0", 5000)
 
