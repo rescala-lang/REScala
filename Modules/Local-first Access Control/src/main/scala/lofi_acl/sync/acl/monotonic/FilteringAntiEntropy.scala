@@ -10,8 +10,8 @@ import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.PartialDelta
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.sync.{ConnectionManager, MessageReceiver}
-import rdts.base.{Bottom, Lattice}
-import rdts.time.{ArrayRanges, Dot, Dots}
+import rdts.base.{Bottom, Lattice, Uid}
+import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -105,7 +105,7 @@ class FilteringAntiEntropy[RDT](
   // Executed in thread from ConnectionManager
   override def connectionShutdown(remote: PublicIdentity): Unit = {
     println(s"Disconnected from $remote")
-    // We never lock an outboundMessageLock inside of a sendersWritePermissionsLock
+    // We never lock an outboundMessageLock inside a sendersWritePermissionsLock
     outboundMessageLock.synchronized {
       sendersWritePermissionsLock.synchronized {
         localSendPermissions = localSendPermissions.removed(remote)
@@ -329,7 +329,7 @@ class FilteringAntiEntropy[RDT](
 
       if !updateValidAndNew then return
 
-      // Update effective writing permissions of affected remote
+      // Update *effective* write permissions of other principal. Effect is only local.
       sendersWritePermissionsLock.synchronized {
         sendersEffectiveWritePermissions = sendersEffectiveWritePermissions + {
           val intendedPermission = sendersIntendedWritePermissions.getOrElse(principal, PermissionTree.empty)
@@ -348,19 +348,45 @@ class FilteringAntiEntropy[RDT](
         if operation == WRITE then updateLocalSendPermissions()
         else
           val oldReadPerms = oldAcl.read.getOrElse(localPublicId, PermissionTree.empty)
-          val oldDeltas    = rdtDeltas // TODO: Does that really make sense to keep the prefix?
+          val newReadPerms = acl.read.getOrElse(localPublicId, PermissionTree.empty)
+          if oldReadPerms == newReadPerms then return
+
+          val visibilityChangeMap = acl.write.flatMap((id, writePerm) =>
+            val writePerm     = acl.write(id)
+            val oldVisibility = writePerm.intersect(oldReadPerms)
+            val newVisibility = writePerm.intersect(newReadPerms)
+
+            if oldVisibility <= newVisibility && id != localPublicId
+            then Some(id.id -> (oldVisibility, newVisibility))
+            else None
+          )
+
+          val (partialDeltas, completeDeltas) = rdtDeltas.deltas.partition((dot, _) =>
+            visibilityChangeMap.contains(dot.place.delegate)
+          )
+          partialDeltaStore = partialDeltaStore ++ partialDeltas.map { (dot, delta) =>
+            val (oldVisibility, newVisibility) = visibilityChangeMap(dot.place.delegate)
+            dot -> PartialDelta(delta, oldVisibility, newVisibility)
+          }
+
           rdtDeltas = DeltaMapWithPrefix(
             Dots.empty,
             Bottom[RDT].empty,
             rdtDeltas.deltaDots.copy(internal =
-              Map(localPublicId.toUid -> rdtDeltas.deltaDots.internal.getOrElse(localPublicId.toUid, ArrayRanges.empty))
+              rdtDeltas.deltaDots.internal.removedAll(visibilityChangeMap.keySet.map(Uid(_)))
             ),
-            rdtDeltas.deltas.filter(_._1.place.delegate == localPublicId.id)
+            completeDeltas
           )
-          val newReadPerms = acl.read.getOrElse(localPublicId, PermissionTree.empty)
-          partialDeltaStore = partialDeltaStore ++ oldDeltas.deltas.map {
-            (dot, delta) => dot -> PartialDelta(delta, oldReadPerms, newReadPerms)
-          }
+      else // Update write permissions
+        val (aclDots, acl)        = aclReference.get()
+        val localWritePermissions = acl.write.getOrElse(localPublicId, PermissionTree.empty)
+        outboundMessageLock.synchronized {
+          val oldSendPermissions = localSendPermissions.getOrElse(principal, PermissionTree.empty)
+          val newSendPermissions = localWritePermissions.intersect(acl.read(principal))
+          if oldSendPermissions != newSendPermissions then
+            localSendPermissions = localSendPermissions + (principal -> newSendPermissions)
+            val _ = connectionManager.send(principal, PermissionsInUse(aclDots, newSendPermissions))
+        }
     }
 
   private def updateLocalSendPermissions(): Unit = {
@@ -383,9 +409,9 @@ class FilteringAntiEntropy[RDT](
   }
 
   private def disseminateFiltered(receiver: PublicIdentity, deltas: Delta[RDT]*): Unit = {
-    // Locking is required despite per-remote locking in ConnectionManager, since we need to ensure that we have the same
-    // order of messages on the receiver as have locally.
-    // This is because the PermissionsInUse message indicates that all messages afterwards are written with the specified
+    // Locking is required despite per-remote locking in ConnectionManager, since we need to ensure that we have the
+    // same order of messages on the receiver as have locally.
+    // This is because the PermissionsInUse message indicates that all following messages are written with the specified
     // permission.
     outboundMessageLock.synchronized {
       localSendPermissions.get(receiver) match
@@ -433,6 +459,13 @@ class FilteringAntiEntropy[RDT](
             )
           else
             val partialDeltas = partialDeltaStore
+            val requiredPerms =
+              if partialDeltas.size < 100
+              then // Only need to reconstruct what is missing
+                partialDeltas.values.map(_.requiredPermissions).reduce(Lattice[PermissionTree].merge)
+              else // Request everything that is readable
+                aclReference.get()._2.read.getOrElse(localPublicId, PermissionTree.empty)
+
             // TODO: Could be optimized to reduce number of replicas to contact and deltas to request at the cost of complexity
             // - If a replica won't provide progress, don't request specific dot
             //    - progress can be used for this: !(goal ⋂ writer_permission <= progress)
@@ -440,7 +473,7 @@ class FilteringAntiEntropy[RDT](
             // - Provide union of requiredPermissions of partial deltas instead of local read permission
             val (replicasToRequestFrom, _) = PartialReplicationPeerSubsetSolver.randomSubsetThatAllowsReconstruction(
               sendersEffectiveWritePermissions,
-              aclReference.get()._2.read.getOrElse(localPublicId, PermissionTree.empty)
+              requiredPerms
             )
             val msg = RequestMissing[RDT](rdtDeltas.allDots, receivedAclDots)
             replicasToRequestFrom.foreach { remote =>
