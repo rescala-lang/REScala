@@ -1,11 +1,12 @@
 package lofi_acl.example.monotonic_acl
 
+import javafx.stage.Stage
 import scalafx.application.Platform
 import scalafx.beans.property.BooleanProperty
 import scalafx.geometry.Pos
 import scalafx.scene.Scene
 import scalafx.scene.control.{Button, TextField}
-import scalafx.scene.layout.{BorderPane, HBox, VBox}
+import scalafx.scene.layout.{BorderPane, HBox, Priority, VBox}
 
 import scala.concurrent.ExecutionContext.global
 
@@ -45,24 +46,28 @@ class MainScene extends Scene {
     documentIsOpen.value = true
     // TODO: Check if running this directly on the GUI Thread has better UX (glitches). Same on join.
     global.execute { () =>
-      val travelPlanModel = TravelPlanModel.createNewDocument
-      Platform.runLater {
-        val travelPlanViewModel = TravelPlanViewModel(travelPlanModel)
-        content = TravelPlanView(travelPlanViewModel)
-        window.get().sizeToScene()
-      }
+      init(TravelPlanModel.createNewDocument)
     }
   }
 
   def joinDocumentButtonPressed(): Unit = {
     documentIsOpen.value = true
+    val inviteString = invitationTextField.getText
     global.execute { () =>
-      val travelPlanModel = TravelPlanModel.joinDocument(invitationTextField.getText)
-      Platform.runLater {
-        val travelPlanViewModel = TravelPlanViewModel(travelPlanModel)
-        content = TravelPlanView(travelPlanViewModel)
-        window.get().sizeToScene()
+      init(TravelPlanModel.joinDocument(inviteString))
+    }
+  }
+
+  private def init(travelPlanModel: TravelPlanModel): Unit = {
+    Platform.runLater {
+      val travelPlanViewModel = TravelPlanViewModel(travelPlanModel)
+      content = new HBox {
+        children = TravelPlanView(travelPlanViewModel)
+        hgrow = Priority.Always
       }
+      val stage = window.get().asInstanceOf[Stage]
+      stage.sizeToScene()
+      stage.setTitle(s"TravelPlanner - replica ${travelPlanModel.publicId.id.take(10)}")
     }
   }
 }

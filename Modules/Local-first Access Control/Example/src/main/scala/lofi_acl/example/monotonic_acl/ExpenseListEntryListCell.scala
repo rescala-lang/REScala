@@ -6,6 +6,7 @@ import lofi_acl.example.monotonic_acl.ExpenseListEntryListCell.amountTextFilter
 import scalafx.beans.property.StringProperty
 import scalafx.event.subscriptions.Subscription
 import scalafx.scene.control.{TextField, TextFormatter}
+import scalafx.scene.layout.Priority
 
 import scala.collection.mutable
 
@@ -31,10 +32,12 @@ class ExpenseListEntryListCell(model: TravelPlanModel) extends ListCell[String] 
     val amountTextField = TextField()
     amountTextField.text = amountInModel.get()
     amountTextField.textFormatter = TextFormatter(amountTextFilter)
-    amountTextField.prefWidth = 70
+    amountTextField.prefWidth = 66
     val commentTextField = TextField()
     commentTextField.text = commentInModel.get()
     commentTextField.promptText = "Comment"
+    commentTextField.prefWidth = 130
+    commentTextField.hgrow = Priority.Always
 
     bindBidirectionalWithFocusFilter(
       descriptionTextField,

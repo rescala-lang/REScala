@@ -1,21 +1,23 @@
 package lofi_acl.example.monotonic_acl
 
-import javafx.geometry.Pos
 import scalafx.application.Platform
+import scalafx.geometry.Pos
 import scalafx.scene.control.{Button, ListView, TextField, TextFormatter}
-import scalafx.scene.layout.{GridPane, HBox, Priority}
+import scalafx.scene.layout.*
 import scalafx.scene.text.Text
 
 class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
+  delegate.setMaxSize(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE)
+
   private val shareButton = Button()
   shareButton.text = "Share"
   shareButton.onAction = ev => viewModel.createInviteButtonPressed()
-  // jfxsl.GridPane.setFillWidth(shareButton, true)
 
   private val bucketListView: ListView[String] = ListView[String]()
   bucketListView.cellFactory = viewModel.bucketListCellFactory
   bucketListView.items = viewModel.bucketListIds
   bucketListView.prefHeight = 200
+  bucketListView.maxHeight = Double.PositiveInfinity
   private val addBucketListEntryTextField = TextField()
   addBucketListEntryTextField.promptText = "Bucket List Entry"
   private val addBucketListEntryButton = Button("Add Entry")
@@ -30,6 +32,7 @@ class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
   expenseView.cellFactory = viewModel.expenseViewCellFactory
   expenseView.items = viewModel.expenseIds
   expenseView.prefHeight = 200
+  expenseView.maxHeight = Double.PositiveInfinity
   private val addExpenseEntryTextField = TextField()
   addExpenseEntryTextField.promptText = "Expense"
   private val addExpenseAmountTextField = TextField()
@@ -50,7 +53,7 @@ class TravelPlanView(viewModel: TravelPlanViewModel) extends GridPane {
     var rowIdx = 0
     add(viewModel.titleTextField, 0, rowIdx, 2, 1)
     viewModel.titleTextField.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;")
-    viewModel.titleTextField.setAlignment(Pos.CENTER)
+    viewModel.titleTextField.alignment = Pos.Center
     shareButton.prefWidth = 100
     shareButton.vgrow = Priority.Always
     shareButton.maxHeight = 50
