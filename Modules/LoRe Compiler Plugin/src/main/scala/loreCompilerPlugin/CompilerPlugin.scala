@@ -242,7 +242,7 @@ class LoRePhase extends PluginPhase:
               rawInteractionTree.sourcePos
             )
             TVar("<error>")
-      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Ident(modVar)))
+      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Block(_, Ident(modVar))))
           if methodName.toString == "modifies" =>
         // Interaction modifies is different from the other methods as it doesn't take an arrow function as input
         var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)
@@ -321,6 +321,10 @@ class LoRePhase extends PluginPhase:
               arrowTree.sourcePos
             )
             TVar("<error>")
+      case arrowBodyTree @ Block(_, arrowBody) => // Arrow functions part 2
+        // When the body of the arrow function is in the second parameter as opposed to the first, for some reason
+        // This happens for example when you call requires/ensures/executes/modifies on Interactions, "{ (..) => (..) }"
+        buildLoreRhsTerm(arrowBody, indentLevel, operandSide)
       case _ => // Unsupported RHS forms
         // No access to sourcePos here due to LazyTree
         report.error(
