@@ -57,8 +57,15 @@ class LoRePhase extends PluginPhase:
       case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
         SimpleType(typeTree.asInstanceOf[CachedTypeRef].name.toString, List())
       case AppliedType(outerType: CachedTypeRef, args: List[?]) => // Parameterized types like List, Map, etc
+        // For some reason, probably due to the type definitions in UnboundInteraction, Interactions with requires show
+        // up as type "T" and those with executes as type "E", so manually do some digging here to get the proper name
+        // Also keep UnboundInteraction consistent as "Interaction", just so it's not as much of a mess with the above
+        val typeString = if outerType.name.toString == "UnboundInteraction" then "Interaction"
+        else if outerType.prefix.typeConstructor.show.contains("Interaction") then "Interaction"
+        else outerType.name.toString
+
         SimpleType(
-          outerType.name.toString,
+          typeString,
           args.map {
             case tp @ TypeRef(_, _)     => SimpleType(tp.asInstanceOf[CachedTypeRef].name.toString, List())
             case tp @ AppliedType(_, _) => buildLoreTypeNode(tp, sourcePos)
