@@ -152,20 +152,20 @@ class PermissionTreePane(
     if !(expenses <= readPerm)
     then
       expensesParentCheckBoxes.read.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.description") <= readPerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.description") <= readPerm)
       then expensesParentCheckBoxes.descriptionRead.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.amount") <= readPerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.amount") <= readPerm)
       then expensesParentCheckBoxes.amountRead.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.comment") <= readPerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.comment") <= readPerm)
       then expensesParentCheckBoxes.commentRead.disable = true
     if !(expenses <= writePerm)
     then
       expensesParentCheckBoxes.write.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.description") <= writePerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.description") <= writePerm)
       then expensesParentCheckBoxes.descriptionWrite.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.amount") <= writePerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.amount") <= writePerm)
       then expensesParentCheckBoxes.amountWrite.disable = true
-      if !(PermissionTree.fromPath("expenses.data.*.comment") <= writePerm)
+      if !(PermissionTree.fromPath("expenses.data.*.value.comment") <= writePerm)
       then expensesParentCheckBoxes.commentWrite.disable = true
 
     if !(PermissionTree.fromPath("expenses.data") <= writePerm)
@@ -234,18 +234,24 @@ class PermissionTreePane(
         ))
       case _ =>
 
+    inline def expenseWildcardSubPermissionTree(field: String): IArray[String] = {
+      IArray(s"expenses.data.*.value.$field", "expenses.data.*.dots", "expenses.observed")
+    }
+
+    // Expenses wildcard
     read = read
       .allowIfSelected(expensesParentCheckBoxes.read, "expenses")
-      .allowIfSelected(expensesParentCheckBoxes.descriptionRead, "expenses.data.*.description", "expenses.observed")
-      .allowIfSelected(expensesParentCheckBoxes.amountRead, "expenses.data.*.amount", "expenses.observed")
-      .allowIfSelected(expensesParentCheckBoxes.commentRead, "expenses.data.*.comment", "expenses.observed")
+      .allowIfSelected(expensesParentCheckBoxes.descriptionRead, expenseWildcardSubPermissionTree("description")*)
+      .allowIfSelected(expensesParentCheckBoxes.amountRead, expenseWildcardSubPermissionTree("amount")*)
+      .allowIfSelected(expensesParentCheckBoxes.commentRead, expenseWildcardSubPermissionTree("comment")*)
 
     write = write
       .allowIfSelected(expensesParentCheckBoxes.write, "expenses")
-      .allowIfSelected(expensesParentCheckBoxes.descriptionWrite, "expenses.data.*.description", "expenses.observed")
-      .allowIfSelected(expensesParentCheckBoxes.amountWrite, "expenses.data.*.amount", "expenses.observed")
-      .allowIfSelected(expensesParentCheckBoxes.commentWrite, "expenses.data.*.comment", "expenses.observed")
+      .allowIfSelected(expensesParentCheckBoxes.descriptionWrite, expenseWildcardSubPermissionTree("description")*)
+      .allowIfSelected(expensesParentCheckBoxes.amountWrite, expenseWildcardSubPermissionTree("amount")*)
+      .allowIfSelected(expensesParentCheckBoxes.commentWrite, expenseWildcardSubPermissionTree("comment")*)
 
+    // Specific expense entries
     val expenseEntryReadPerms = expenseEntryCheckBoxes.map { case (id, boxes) =>
       id -> PermissionTree.empty
         .allowIfSelected(boxes.descriptionRead, "value.description", "dots")
@@ -319,33 +325,13 @@ object PermissionTreePane {
         entryReadPerm: PermissionTree,
         entryWritePerm: PermissionTree
     ): Unit = {
-      entryReadPerm match
-        case PermissionTree(ALLOW, _) =>
-        case PermissionTree(PARTIAL, children) =>
-          read.disable = true
-          children.get("description") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => descriptionRead.disable = true
-          children.get("amount") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => amountRead.disable = true
-          children.get("comment") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => commentRead.disable = true
+      if !(PermissionTree.fromPath("value.description") <= entryReadPerm) then descriptionRead.disable = true
+      if !(PermissionTree.fromPath("value.amount") <= entryReadPerm) then amountRead.disable = true
+      if !(PermissionTree.fromPath("value.comment") <= entryReadPerm) then commentRead.disable = true
 
-      entryWritePerm match
-        case PermissionTree(ALLOW, _) =>
-        case PermissionTree(PARTIAL, children) =>
-          write.disable = true
-          children.get("description") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => descriptionWrite.disable = true
-          children.get("amount") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => amountWrite.disable = true
-          children.get("comment") match
-            case Some(PermissionTree(ALLOW, _)) =>
-            case _                              => commentWrite.disable = true
+      if !(PermissionTree.fromPath("value.description") <= entryWritePerm) then descriptionWrite.disable = true
+      if !(PermissionTree.fromPath("value.amount") <= entryWritePerm) then amountWrite.disable = true
+      if !(PermissionTree.fromPath("value.comment") <= entryWritePerm) then commentWrite.disable = true
     }
   }
 

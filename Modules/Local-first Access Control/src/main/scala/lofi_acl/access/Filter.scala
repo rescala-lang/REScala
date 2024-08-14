@@ -54,21 +54,21 @@ object Filter:
       * @param permissionTree The tree to check
       */
     override def validatePermissionTree(permissionTree: PermissionTree): Unit = {
-      permissionTree.children.foreach { case (factorLabel, factorPermissionTree) =>
+      permissionTree.children.foreach { case (factorLabel, childPermissionTree) =>
         elementLabels.get(factorLabel) match
-          case None =>
-            try {
-              if factorLabel == "*" then elementFilters.foreach(_.validatePermissionTree(factorPermissionTree))
-            } catch {
-              case InvalidPathException(labels) => throw InvalidPathException("*" :: labels)
-            }
-            throw InvalidPathException(List(factorLabel))
           case Some(factorIdx) =>
             try {
-              elementFilters(factorIdx).validatePermissionTree(factorPermissionTree)
+              elementFilters(factorIdx).validatePermissionTree(childPermissionTree)
             } catch {
               case InvalidPathException(path) => throw InvalidPathException(factorLabel :: path)
             }
+          case None if factorLabel == "*" =>
+            try {
+              elementFilters.foreach(_.validatePermissionTree(childPermissionTree))
+            } catch {
+              case InvalidPathException(labels) => throw InvalidPathException("*" :: labels)
+            }
+          case None => throw InvalidPathException(List(factorLabel))
       }
     }
 
