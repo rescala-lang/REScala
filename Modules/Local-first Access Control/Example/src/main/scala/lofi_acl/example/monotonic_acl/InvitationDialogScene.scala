@@ -11,6 +11,8 @@ import scalafx.scene.input.{Clipboard, ClipboardContent}
 import scalafx.scene.layout.{BorderPane, HBox}
 import scalafx.util.StringConverter
 
+import scala.concurrent.ExecutionContext
+
 class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanModel) extends Scene {
   private val rootPane = BorderPane()
 
@@ -31,17 +33,20 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
   createInviteButton.onAction = _ => {
     val clipboard = Clipboard.systemClipboard
     val content   = new ClipboardContent()
-    val _         = clipboard.setContent(content)
+    content.putString(inviteText.getText)
+    val _ = clipboard.setContent(content)
     rootPane.bottom = inviteText
     permissionTreePane.disable = true
     Platform.runLater { () =>
       try {
         val perms = permissionTreePane.selectionToPermissions
-        travelPlanModel.grantPermission(
-          PublicIdentity.fromPublicKey(invitation.identityKey.getPublic),
-          perms._1,
-          perms._2
-        )
+        ExecutionContext.global.execute { () =>
+          travelPlanModel.grantPermission(
+            PublicIdentity.fromPublicKey(invitation.identityKey.getPublic),
+            perms._1,
+            perms._2
+          )
+        }
       } catch
         case e: Exception =>
           e.printStackTrace()
