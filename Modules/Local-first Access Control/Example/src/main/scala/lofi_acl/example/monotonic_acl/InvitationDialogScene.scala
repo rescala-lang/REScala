@@ -8,7 +8,8 @@ import scalafx.application.Platform
 import scalafx.scene.Scene
 import scalafx.scene.control.*
 import scalafx.scene.input.{Clipboard, ClipboardContent}
-import scalafx.scene.layout.BorderPane
+import scalafx.scene.layout.{BorderPane, HBox}
+import scalafx.util.StringConverter
 
 class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanModel) extends Scene {
   private val rootPane = BorderPane()
@@ -48,7 +49,39 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
     }
   }
 
+  private val delegatePermissionsButton = Button("Delegate permissions")
+  delegatePermissionsButton.onAction = _ => {
+    val permissionReceiverComboBox = {
+      val otherReplicas = travelPlanModel.currentAcl.read.keySet.filterNot(_ == travelPlanModel.publicId).toSeq
+      val comboBox      = ComboBox(otherReplicas)
+      comboBox.converter = StringConverter[PublicIdentity](
+        fromStringFunction = str => if str == null || str.isEmpty then null else PublicIdentity(str),
+        toStringFunction = pubId => if pubId == null then "" else pubId.id
+      )
+      comboBox
+    }
+    val confirmationButton = Button("Delegate")
+    confirmationButton.disable <== permissionReceiverComboBox.selectionModel.value.selectedItemProperty().isNull
+    rootPane.bottom = HBox(permissionReceiverComboBox, confirmationButton)
+
+    confirmationButton.onAction = _ => {
+      val receivingReplica = permissionReceiverComboBox.getValue
+      Platform.runLater { () =>
+        try {
+          val perms = permissionTreePane.selectionToPermissions
+          ExecutionContext.global.execute { () =>
+            travelPlanModel.grantPermission(receivingReplica, perms._1, perms._2)
+          }
+          permissionReceiverComboBox.value = null
+        } catch
+          case e: Exception =>
+            e.printStackTrace()
+            Alert(Alert.AlertType.Error, e.toString).show()
+      }
+    }
+  }
+
   rootPane.center = permissionTreePane
-  rootPane.bottom = createInviteButton
+  rootPane.bottom = HBox(createInviteButton, delegatePermissionsButton)
   content = rootPane
 }

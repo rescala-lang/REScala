@@ -45,7 +45,7 @@ class TravelPlanViewModel(model: TravelPlanModel) extends GridPane {
       Platform.runLater(() => {
         val scene = InvitationDialogScene(invitation, model)
         val stage = new Stage()
-        stage.setTitle("New Invite")
+        stage.setTitle("Create Invite or Delegate Permissions")
         stage.scene = scene
         stage.show()
       })

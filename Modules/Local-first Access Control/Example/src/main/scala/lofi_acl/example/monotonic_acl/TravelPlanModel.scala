@@ -23,7 +23,8 @@ class TravelPlanModel(
     rootOfTrust: PublicIdentity,
     initialAclDeltas: List[AclDelta[TravelPlan]] = List.empty
 ) {
-  private given localUid: LocalUid = LocalUid(localIdentity.getPublic.toUid)
+  val publicId: PublicIdentity     = localIdentity.getPublic
+  private given localUid: LocalUid = LocalUid(publicId.toUid)
 
   def state: TravelPlan                    = sync.state
   def currentAcl: MonotonicAcl[TravelPlan] = sync.currentAcl
@@ -39,7 +40,7 @@ class TravelPlanModel(
   Runtime.getRuntime.addShutdownHook(new Thread(() => sync.stop()))
 
   def createInvitation: Invitation =
-    Invitation(rootOfTrust, Ed25519Util.generateNewKeyPair, localIdentity.getPublic, sync.connectionString)
+    Invitation(rootOfTrust, Ed25519Util.generateNewKeyPair, publicId, sync.connectionString)
 
   def grantPermission(
       affectedUser: PublicIdentity,
@@ -47,7 +48,8 @@ class TravelPlanModel(
       writePermissions: PermissionTree
   ): Unit = {
     sync.grantPermissions(affectedUser, readPermissions, READ)
-    sync.grantPermissions(affectedUser, writePermissions, WRITE)
+    if !writePermissions.isEmpty
+    then sync.grantPermissions(affectedUser, writePermissions, WRITE)
   }
 
   def addConnection(remoteUser: PublicIdentity, address: String): Unit = {
