@@ -374,8 +374,6 @@ class LoRePhase extends PluginPhase:
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
                   case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
-                    // TODO: Apart from raw Interactions, their types only show up as "T" or "E"
-                    //  in the type tree for some reason, and not e.g. "InteractionWithExecutes"
                     newLoreTerm = Some(TAbs(   // foo: Bar = baz
                       name.toString,           // foo (any valid Scala identifier)
                       loreTypeNode,            // Bar
