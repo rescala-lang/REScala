@@ -47,6 +47,7 @@ class LoRePhase extends PluginPhase:
 
   /** Builds a LoRe Type node based on a scala type tree
     * @param typeTree The scala type tree
+    * @param sourcePos A SourcePosition for the type tree
     * @return The LoRe Type node
     */
   private def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
@@ -248,7 +249,7 @@ class LoRePhase extends PluginPhase:
         var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)
         innerTerm match
           case interactionTerm @ TInteraction(_, _, modifiesList, requiresList, ensuresList, executesOption, _) =>
-            logRhsInfo(indentLevel, operandSide, s"call to the modifies method", "")
+            logRhsInfo(indentLevel, operandSide, s"call to the modifies method with the identifier:", modVar.toString)
             innerTerm = interactionTerm.copy(modifies = modifiesList.prepended(modVar.toString))
           case _ =>
             report.error(
@@ -269,7 +270,7 @@ class LoRePhase extends PluginPhase:
               case "Signal" =>
                 logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
                 TDerived(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
-              case _ => // Interactions
+              case "Interaction" =>
                 logRhsInfo(indentLevel, operandSide, s"call to the $methodName method", "")
                 var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)   // Build Interaction
                 val methodParamTerm = buildLoreRhsTerm(params.head, indentLevel + 1, operandSide) // Build method term
