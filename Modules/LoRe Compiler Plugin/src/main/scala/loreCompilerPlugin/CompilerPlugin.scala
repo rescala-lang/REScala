@@ -117,7 +117,9 @@ class LoRePhase extends PluginPhase:
                 )
                 TVar("<error>")
           case field => // Field access, like "operand.value" and so forth (no parameter lists)
-            // TODO: Unary operators that aren't explicitly supported will also land here, not sure what to do about that
+            // Unary operators that aren't explicitly supported will also land here and be turned
+            // into property/method access AST nodes instead, which makes sense given the Scala base
+            // as operators are basically just methods on the data types themselves in the first place.
             logRhsInfo(indentLevel, operandSide, "field access to field", opOrField.show)
             TFCall(                                                // foo.bar
               buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
