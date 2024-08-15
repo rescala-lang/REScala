@@ -227,7 +227,7 @@ class LoRePhase extends PluginPhase:
             // TODO: reactiveType and argumentType are based on the type tree here, not the types written in the RHS
             // Because Interactions use Tuple1 for the first parameters in the type annotation, but the RHS does not,
             // this may cause issues and require fixing.
-            logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
+            logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
             TInteraction(
               reactiveType,
               argumentType
@@ -264,10 +264,10 @@ class LoRePhase extends PluginPhase:
           case SimpleType(loreTypeName, typeArgs) =>
             loreTypeName match
               case "Var" =>
-                logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
+                logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
                 TSource(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
               case "Signal" =>
-                logRhsInfo(indentLevel, operandSide, s"definition of a ${loreTypeName} reactive", "")
+                logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
                 TDerived(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
               case _ => // Interactions
                 logRhsInfo(indentLevel, operandSide, s"call to the $methodName method", "")
