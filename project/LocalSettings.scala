@@ -6,12 +6,14 @@ import scala.scalanative.build.{LTO, NativeConfig}
 
 object LocalSettings {
 
-  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.14.0"
+  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.14.1"
 
   def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
 
+  def slf4jSimpleTest = libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.16" % Test
+
   def jetty = {
-    val jettyVersion = "12.0.11"
+    val jettyVersion = "12.0.12"
     Seq(
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,

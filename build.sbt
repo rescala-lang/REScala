@@ -84,7 +84,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   .jvmSettings(
     Test / fork := true,
     libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
-    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13" % Test,
+    LocalSettings.slf4jSimpleTest,
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -108,7 +108,7 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(C
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     libraryDependencies ++= List(
-      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M16",
+      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M17",
       "io.bullet"                     %%% "borer-core"       % "1.14.1",
       "io.bullet"                     %%% "borer-derivation" % "1.14.1"
     )
@@ -166,7 +166,7 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
     libraryDependencies ++=
       List(
         // Note, the below means JDK 1.4
-        "org.slf4j" % "slf4j-jdk14" % "2.0.13",
+        "org.slf4j" % "slf4j-jdk14" % "2.0.16",
         // Note, the below means JDK 1.8, aka Java 8
         "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
         "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
@@ -195,7 +195,7 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).
     libraryDependencies += "com.monovore"  %%% "decline"      % "2.4.1",
     libraryDependencies += "org.typelevel" %%% "cats-parse"   % "1.0.0",
     libraryDependencies += "com.lihaoyi"   %%% "fansi"        % "0.5.0",
-    libraryDependencies += "dev.optics"    %%% "monocle-core" % "3.2.0",
+    libraryDependencies += "dev.optics"    %%% "monocle-core" % "3.3.0",
     Dependencies.munit,
     Compile / mainClass := Some("lore.Compiler")
   )
@@ -302,7 +302,7 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
   .jvmSettings(
     Dependencies.slips.script,
     Dependencies.sqliteJdbc,
-    libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.13",
+    LocalSettings.slf4jSimpleTest,
     libraryDependencies ++= LocalSettings.jetty,
   )
   .jsSettings(
