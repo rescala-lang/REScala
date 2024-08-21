@@ -98,7 +98,9 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
-        lock.unlock()
+
+        if s.startsWith("200 Sent payload") then lock.unlock()
+
         if !s.startsWith("200") then
           println(
             s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s"
