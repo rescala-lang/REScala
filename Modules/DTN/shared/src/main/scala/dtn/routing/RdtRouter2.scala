@@ -188,7 +188,7 @@ object RdtRouter2 {
       host: String,
       port: Int,
       monitoringClient: MonitoringClientInterface = NoMonitoringClient
-  ): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws, monitoringClient))
+  ): Future[RdtRouter2] = WSEroutingClient(host, port).map(ws => new RdtRouter2(ws, monitoringClient))
 }
 
 class DotState2 {

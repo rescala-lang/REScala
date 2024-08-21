@@ -11,10 +11,6 @@ import scala.math.{addExact, max}
 import scala.util.{Random, Try}
 import java.time.ZonedDateTime
 
-// Variables, chosen number, for this routing
-val MIN_DELIVERED    = 10
-val N_TOP_NEIGHBOURS = 3
-
 /*
   This router only routes rdt-bundles. Other bundles are currently ignored.
 
@@ -65,8 +61,12 @@ val N_TOP_NEIGHBOURS = 3
           on a forward request, the sorted list with the highest score first is returned. the first n neighbours are picked.
  */
 
-class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface)
-    extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
+class RdtRouter(
+    ws: WSEroutingClient,
+    monitoringClient: MonitoringClientInterface,
+    nTotalNodes: Int,
+    topNNeighbours: Int
+) extends BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterface) {
   // epidemic routing is for rdt-request-bundles. they do not contain any payload that contributes to our state (in contrast to rdt-payload-bundles)
   val epidemicStrategy: EpidemicStrategy = EpidemicStrategy()
 
@@ -106,7 +106,7 @@ class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfac
       }
 
     // if we already successfully forwarded this package to enough clas we can 'safely' delete it.
-    if delivered.getOrDefault(packet.bp.id, 0) >= MIN_DELIVERED then {
+    if delivered.getOrDefault(packet.bp.id, 0) >= nTotalNodes then {
       println("bundle was forwarded to enough unique neighbours. deleting.")
       tempRdtMetaInfoStore.remove(packet.bp.id)
       tempPreviousNodeStore.remove(packet.bp.id)
@@ -164,7 +164,7 @@ class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfac
 
       println(s"filtered random peers available: ${List.from(random_peers).map(peer => peer.eid)}")
 
-      targets = targets ++ Random.shuffle(random_peers).take(N_TOP_NEIGHBOURS - targets.size)
+      targets = targets ++ Random.shuffle(random_peers).take(topNNeighbours - targets.size)
     }
 
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
@@ -272,11 +272,17 @@ class RdtRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInterfac
   }
 }
 object RdtRouter {
+  val N_TOTAL_NODES    = 10
+  val TOP_N_NEIGHBOURS = 3
+
   def apply(
       host: String,
       port: Int,
-      monitoringClient: MonitoringClientInterface = NoMonitoringClient
-  ): Future[RdtRouter] = WSEroutingClient(host, port).map(ws => new RdtRouter(ws, monitoringClient))
+      monitoringClient: MonitoringClientInterface = NoMonitoringClient,
+      nTotalNodes: Int = N_TOTAL_NODES,
+      topNNeighbours: Int = TOP_N_NEIGHBOURS,
+  ): Future[RdtRouter] =
+    WSEroutingClient(host, port).map(ws => new RdtRouter(ws, monitoringClient, nTotalNodes, topNNeighbours))
 }
 
 class LikelihoodState {

@@ -16,17 +16,19 @@ import rdt.{Client, ClientOperationMode}
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory)                   | available options: monitoring, routing, client, print.received, print.forwarded, print.statedev
-  -a   => host address                         | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
-  -p   => host port                            | default: 5000 (for monitoring), 3000 (for everything else)
-  -rs  => routing strategy                     | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, binary)
-  -cr  => client rdt selection                 | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
-  -cm  => client rdt operation mode            | default: pushall (options: pushall, requestlater)
-  -ma  => monitoring address                   | default: 127.0.0.1
-  -mp  => monitoring port                      | default: 5000
-  -mid => monitoring creation client id        | default: dtn://n2/rdt/testapp
-  -awa => add-wins rdt number of additions     | default: 1000
-  -awt => add-wins rdt sleep time milliseconds | default: 500
+  -m   => method (mandatory)                     | available options: monitoring, routing, client, print.received, print.forwarded, print.statedev
+  -a   => host address                           | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
+  -p   => host port                              | default: 5000 (for monitoring), 3000 (for everything else)
+  -rs  => routing strategy                       | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, binary)
+  -cr  => client rdt selection                   | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
+  -cm  => client rdt operation mode              | default: pushall (options: pushall, requestlater)
+  -ma  => monitoring address                     | default: 127.0.0.1
+  -mp  => monitoring port                        | default: 5000
+  -mid => monitoring creation client id          | default: dtn://n2/rdt/testapp
+  -awa => add-wins rdt number of additions       | default: 1000
+  -awt => add-wins rdt sleep time milliseconds   | default: 500
+  -rrn => rdt-router n total nodes to deliver to | default: 10
+  -rrt => rdt-router top n nodes to forward to   | default: 3
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -48,6 +50,8 @@ commandline options:
     val routing_strategy: String                   = keyword_args.getOrElse("-rs", "epidemic")
     val client_rdt: String                         = keyword_args.getOrElse("-cr", "addwins.listen")
     val client_operation_mode                      = keyword_args.getOrElse("-cm", "pushall")
+    val rdt_router_n_total_nodes                   = keyword_args.getOrElse("-rrn", "10").toInt
+    val rdt_router_top_n_neighbours                = keyword_args.getOrElse("-rrt", "3").toInt
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
@@ -61,7 +65,13 @@ commandline options:
             case "epidemic" =>
               EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
             case "rdt" =>
-              RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+              RdtRouter(
+                host_address,
+                host_port,
+                MonitoringClient(monitoring_address, monitoring_port),
+                rdt_router_n_total_nodes,
+                rdt_router_top_n_neighbours
+              )
             case "rdt2" =>
               RdtRouter2(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
             case "spray" =>
