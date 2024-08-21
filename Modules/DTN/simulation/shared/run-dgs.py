@@ -25,7 +25,9 @@ clients = {
 
 router_variant = "flooding"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
 
-# special config
+rdt_client_operation_mode = "pushall"  # options: "pushall", "requestlater"
+
+# special rdt configs
 addwins_rdt_number_of_additions = 1000
 addwins_rdt_sleep_time_milliseconds = 500
 
@@ -224,7 +226,7 @@ while not line.startswith("st"):
     if rdt_variant == "addwins":
       additional_config = f"-awa {addwins_rdt_number_of_additions} -awt {addwins_rdt_sleep_time_milliseconds} "
     
-    config_str = f"bash -c '/root/.coregui/scripts/rdt_tool -m client -cr {rdt_variant}.{node_map[node_name]} {additional_config}-ma 172.16.0.1 &> client.log'"
+    config_str = f"bash -c '/root/.coregui/scripts/rdt_tool -m client -cr {rdt_variant}.{node_map[node_name]} -cm {rdt_client_operation_mode} {additional_config}-ma 172.16.0.1 &> client.log'"
 
     print(f"adding rdt client to node {node_name}, config: {config_str}")
     core.set_node_service(session_id, node_map[node_name], "rdtclient", startup=(config_str,))
