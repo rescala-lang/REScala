@@ -42,7 +42,7 @@ class DtndService(CoreService):
     dirs: Tuple[str, ...] = ()
     configs: Tuple[str, ...] = ('dtnd.toml', 'start-dtnd.sh')
     startup: Tuple[str, ...] = (
-        "bash -c 'dtnd -c dtnd.toml 1> dtnd.log 2> dtnd.err'", )
+        "bash -c 'dtnd -d -c dtnd.toml &> dtnd.log'", )
     validate: Tuple[str, ...] = ()
     validation_mode: ServiceMode = ServiceMode.NON_BLOCKING
     validation_timer: int = 5
