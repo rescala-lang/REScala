@@ -13,14 +13,25 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 import replication.ProtocolMessage
 
-class ClientContext[T: JsonValueCodec](connection: Client, executionContext: ExecutionContext)
-    extends Connection[ProtocolMessage[T]] {
+enum ClientOperationMode {
+  case PushAll
+  case RequestLater
+}
+
+class ClientContext[T: JsonValueCodec](
+    connection: Client,
+    executionContext: ExecutionContext,
+    operationMode: ClientOperationMode
+) extends Connection[ProtocolMessage[T]] {
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
       case ProtocolMessage.Request(sender, dots) =>
         // we could send requests into the network. the routing handles them correctly. but they are unnecessary with the cb.succeed() down below.
         // todo: actually there should be no requests being sent anymore then. is that the case?
-        // connection.send(RdtMessageType.Request, Array(), dots).toAsync(using executionContext)
+        operationMode match
+          case ClientOperationMode.PushAll => Sync { () }
+          case ClientOperationMode.RequestLater =>
+            connection.send(RdtMessageType.Request, Array(), dots).toAsync(using executionContext)
         Sync { () }
       case ProtocolMessage.Payload(sender, dots, data) =>
         connection.send(RdtMessageType.Payload, writeToArray[T](data), dots).toAsync(using executionContext)
@@ -36,7 +47,8 @@ class Channel[T: JsonValueCodec](
     port: Int,
     appName: String,
     ec: ExecutionContext,
-    monitoringClient: MonitoringClientInterface = NoMonitoringClient
+    monitoringClient: MonitoringClientInterface = NoMonitoringClient,
+    operationMode: ClientOperationMode = ClientOperationMode.PushAll
 ) extends LatentConnection[ProtocolMessage[T]] {
 
   // We use a local dtnid instead of a remote replica ID to signify that the local DTNd is the one providing information.
@@ -46,7 +58,7 @@ class Channel[T: JsonValueCodec](
   override def prepare(incomingHandler: Handler[ProtocolMessage[T]]): Async[Abort, Connection[ProtocolMessage[T]]] =
     Async {
       val client: Client = Client(host, port, appName, monitoringClient).toAsync(using ec).bind
-      val conn           = ClientContext[T](client, ec)
+      val conn           = ClientContext[T](client, ec, operationMode)
       val cb             = incomingHandler.getCallbackFor(conn)
 
       client.registerOnReceive { (message_type: RdtMessageType, payload: Array[Byte], dots: Dots) =>
@@ -57,7 +69,9 @@ class Channel[T: JsonValueCodec](
 
       // This tells the rdt to send everything it has and new following stuff into the network.
       // It makes any requests unnecessary.
-      cb.succeed(ProtocolMessage.Request(dtnid, Dots.empty))
+      operationMode match
+        case ClientOperationMode.PushAll      => cb.succeed(ProtocolMessage.Request(dtnid, Dots.empty))
+        case ClientOperationMode.RequestLater => {}
 
       conn
     }

@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 import routing.{BaseRouter, FloodingRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2, SprayAndWaitRouter}
-import rdt.Client
+import rdt.{Client, ClientOperationMode}
 
 /*
   this file contains all jvm main methods
@@ -21,6 +21,7 @@ commandline options:
   -p   => host port                            | default: 5000 (for monitoring), 3000 (for everything else)
   -rs  => routing strategy                     | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, binary)
   -cr  => client rdt selection                 | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
+  -cm  => client rdt operation mode            | default: pushall (options: pushall, requestlater)
   -ma  => monitoring address                   | default: 127.0.0.1
   -mp  => monitoring port                      | default: 5000
   -mid => monitoring creation client id        | default: dtn://n2/rdt/testapp
@@ -46,6 +47,7 @@ commandline options:
     val add_wins_rdt_sleep_time_milliseconds: Long = keyword_args.getOrElse("-awt", "500").toLong
     val routing_strategy: String                   = keyword_args.getOrElse("-rs", "epidemic")
     val client_rdt: String                         = keyword_args.getOrElse("-cr", "addwins.listen")
+    val client_operation_mode                      = keyword_args.getOrElse("-cm", "pushall")
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
@@ -71,12 +73,18 @@ commandline options:
         )
       }
       case "client" => {
+        val mode: ClientOperationMode = client_operation_mode match
+          case "pushall"      => ClientOperationMode.PushAll
+          case "requestlater" => ClientOperationMode.RequestLater
+          case s              => throw Exception(s"unknown rdt client operation mode: $s")
+
         client_rdt match
           case "addwins.listen" =>
             case_study_listen(
               host_address,
               host_port,
               MonitoringClient(monitoring_address, monitoring_port),
+              mode,
               AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
             )
           case "addwins.active" =>
@@ -84,6 +92,7 @@ commandline options:
               host_address,
               host_port,
               MonitoringClient(monitoring_address, monitoring_port),
+              mode,
               AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
             )
           case "observeremove.listen"  => throw Exception("observeremove.listen not implemented yet")
@@ -154,9 +163,10 @@ def case_study_listen(
     host: String,
     port: Int,
     monitoringClient: MonitoringClientInterface,
-    rdt: CaseStudyRdt
+    operationMode: ClientOperationMode,
+    rdt: CaseStudyRdt,
 ): Unit = {
-  rdt.connect(host, port, monitoringClient)
+  rdt.connect(host, port, monitoringClient, operationMode)
   rdt.caseStudyListen()
 }
 
@@ -164,9 +174,10 @@ def case_study_active(
     host: String,
     port: Int,
     monitoringClient: MonitoringClientInterface,
+    operationMode: ClientOperationMode,
     rdt: CaseStudyRdt
 ): Unit = {
-  rdt.connect(host, port, monitoringClient)
+  rdt.connect(host, port, monitoringClient, operationMode)
   rdt.caseStudyActive()
 }
 
