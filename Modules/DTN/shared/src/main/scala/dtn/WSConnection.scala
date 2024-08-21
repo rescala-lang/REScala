@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import java.time.ZonedDateTime
+import java.util.concurrent.locks.ReentrantLock
 
 class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
@@ -80,6 +81,8 @@ object WSConnection {
 class WSEndpointClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   protected var registeredServices: List[String] = List()
 
+  private val lock: ReentrantLock = new ReentrantLock()
+
   def receiveBundle(): Future[Bundle] = {
     /*
     We have a problem:
@@ -95,6 +98,7 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
         // examples: 200 tx mode: JSON, 200 subscribed, 200 Sent bundle dtn://global/~crdt/app1-764256828302-0 with 11 bytes
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
+        lock.unlock()
         if !s.startsWith("200") then
           println(
             s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s"
@@ -109,6 +113,7 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
     println(s"starting to send bundle at time: ${ZonedDateTime.now()}")
+    lock.lock()
     connection.sendBinary(Cbor.encode(bundle).toByteArray).map(u => {
       println(s"sent bundle at time: ${ZonedDateTime.now()}")
       u
