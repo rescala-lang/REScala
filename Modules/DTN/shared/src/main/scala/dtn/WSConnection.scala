@@ -134,7 +134,7 @@ object WSEndpointClient {
 
     CompatCode.uget(uri"http://${host}:${port}/status/nodeid")
       .flatMap(nId => {
-        println(s"connected to DTN node: $nId");
+        println(s"connected to DTN node: $nId"); // like: "dtn://node3000/"
         nodeId = Option(nId)
         if nId.startsWith("ipn") then {
           println("DTN mode IPN is unsupported by this client. throwing");

@@ -17,14 +17,17 @@ wait_time_per_step_seconds = 5.0
 janitor_interval_milliseconds = 1500
 discovery_interval_milliseconds = 300
 
-monitoring_creation_client_id = "dtn://n2/rdt/app1"
-
-addwins_rdt_number_of_additions = 1000
-addwins_rdt_sleep_time_milliseconds = 500
-addwins_clients = {
+rdt_variant = "addwins"  # options: "addwins", "observeremove", "lastwriterwins"
+clients = {
   "n2": "active",
   "n3": "listen"
 }
+
+router_variant = "flooding"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
+
+# special config
+addwins_rdt_number_of_additions = 1000
+addwins_rdt_sleep_time_milliseconds = 500
 
 # WARNING
 # this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
@@ -180,7 +183,7 @@ print("added control network 172.16.0.0/24")
 
 monitoring_node_id = global_node_counter.next()
 core.add_node(session_id, Node(id=monitoring_node_id, name="control", type=NodeType.DEFAULT, model="MONITORING", position=Position(x=50, y=50)))
-core.set_node_service(session_id, monitoring_node_id, "rdtmonitoring", startup=(f"bash -c '/root/.coregui/scripts/rdt_tool -m monitoring -mid {monitoring_creation_client_id} &> monitoring.log'",))
+core.set_node_service(session_id, monitoring_node_id, "rdtmonitoring", startup=(f"bash -c '/root/.coregui/scripts/rdt_tool -m monitoring &> monitoring.log'",))
 print ("added control node")
 
 print("running setup")
@@ -203,13 +206,9 @@ while not line.startswith("st"):
   node_map[node_name] = global_node_counter.next()
   position = Position(x=100+(grid_node_id%10)*50, y=100+int(grid_node_id/10)*50)
 
-  if node_name in addwins_clients:
-    if addwins_clients[node_name] == "active":
-      service_defaults["DTN"].append("addwinsclientactive")
-      core.set_service_defaults(session_id, service_defaults)
-    else:
-      service_defaults["DTN"].append("addwinsclientlisten")
-      core.set_service_defaults(session_id, service_defaults)
+  if node_name in clients:
+    service_defaults["DTN"].append("rdtclient")
+    core.set_service_defaults(session_id, service_defaults)
 
   core.add_node(session_id, Node(
     id=node_map[node_name], 
@@ -219,18 +218,21 @@ while not line.startswith("st"):
     position=position
   ))
 
-  if node_name in addwins_clients:
-    if addwins_clients[node_name] == "active":
-      service_defaults["DTN"].remove("addwinsclientactive")
-      core.set_service_defaults(session_id, service_defaults)
-      print(f"adding active client to node {node_name} (id: {node_map[node_name]})")
-      core.set_node_service(session_id, node_map[node_name], "addwinsclientactive", startup=(f"bash -c '/root/.coregui/scripts/rdt_tool -m client.addwins.active -ma 172.16.0.1 -awa {addwins_rdt_number_of_additions} -awt {addwins_rdt_sleep_time_milliseconds} &> client.log'",))
-    else:
-      service_defaults["DTN"].remove("addwinsclientlisten")
-      core.set_service_defaults(session_id, service_defaults)
-      print(f"adding listen client to node {node_name} (id: {node_map[node_name]})")
-      core.set_node_service(session_id, node_map[node_name], "addwinsclientlisten", startup=(f"bash -c '/root/.coregui/scripts/rdt_tool -m client.addwins.listen -ma 172.16.0.1 &> client.log'",))
+  if node_name in clients:
+    additional_config = " "
+
+    if rdt_variant == "addwins":
+      additional_config = f"-awa {addwins_rdt_number_of_additions} -awt {addwins_rdt_sleep_time_milliseconds} "
     
+    config_str = f"bash -c '/root/.coregui/scripts/rdt_tool -m client -cr {rdt_variant}.{node_map[node_name]} {additional_config}-ma 172.16.0.1 &> client.log'"
+
+    print(f"adding rdt client to node {node_name}, config: {config_str}")
+    core.set_node_service(session_id, node_map[node_name], "rdtclient", startup=(config_str,))
+    
+    service_defaults["DTN"].remove("rdtclient")
+    core.set_service_defaults(session_id, service_defaults)
+  
+  core.set_node_services(session_id, node_map[node_name], "rdtrouter", f"bash -c '/root/.coregui/scripts/rdt_tool -m routing -rs {router_variant} -ma 172.16.0.1 &> routing.log'")
 
   dtnd_toml_contents = core.get_node_service_file(session_id, node_map[node_name], "dtnd", "dtnd.toml").data
   dtnd_configfile_helper.add_node(node_map[node_name], dtnd_toml_contents)

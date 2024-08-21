@@ -7,7 +7,7 @@ from core.nodes.base import CoreNode
 from core.services.coreservices import CoreService, ServiceMode
 
 
-class RdtRouterService(CoreService):
+class RdtClientService(CoreService):
     """
     Example Custom CORE Service
 
@@ -35,14 +35,14 @@ class RdtRouterService(CoreService):
     :cvar shutdown: shutdown commands to stop this service
     """
 
-    name: str = "rdtrouter2"
+    name: str = "rdtclient"
     group: str = "Dtn7"
     executables: Tuple[str, ...] = ()
     dependencies: Tuple[str, ...] = ('dtnd', )
     dirs: Tuple[str, ...] = ()
     configs: Tuple[str, ...] = ()
     startup: Tuple[str, ...] = (
-        "bash -c '/root/.coregui/scripts/rdt_tool -m routing.rdt2 -ma 172.16.0.1 &> routing.log'", )
+        "bash -c '/root/.coregui/scripts/rdt_tool -m client -ma 172.16.0.1 &> client.log'", )
     validate: Tuple[str, ...] = ()
     validation_mode: ServiceMode = ServiceMode.NON_BLOCKING
     validation_timer: int = 5

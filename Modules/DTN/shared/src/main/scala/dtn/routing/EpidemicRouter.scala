@@ -79,6 +79,7 @@ class EpidemicStrategy {
       .flatten
       .toList
 
+    println(s"epdimic strategy selected clas: ${selected_clas}")
     Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = selected_clas, delete_afterwards = false))
   }
 

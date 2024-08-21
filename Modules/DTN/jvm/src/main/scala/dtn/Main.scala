@@ -5,7 +5,7 @@ import rdts.time.Dots
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-import routing.{BaseRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2}
+import routing.{BaseRouter, FloodingRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2, SprayAndWaitRouter}
 import rdt.Client
 
 /*
@@ -16,9 +16,11 @@ import rdt.Client
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory)                   | available options: monitoring, routing.direct, routing.epidemic, routing.rdt, routing.rdt2, client.addwins.listen, client.addwins.active, print.received, print.forwarded, print.statedev
+  -m   => method (mandatory)                   | available options: monitoring, routing, client, print.received, print.forwarded, print.statedev
   -a   => host address                         | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
   -p   => host port                            | default: 5000 (for monitoring), 3000 (for everything else)
+  -rs  => routing strategy                     | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, binary)
+  -cr  => client rdt selection                 | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
   -ma  => monitoring address                   | default: 127.0.0.1
   -mp  => monitoring port                      | default: 5000
   -mid => monitoring creation client id        | default: dtn://n2/rdt/testapp
@@ -42,31 +44,54 @@ commandline options:
     val creation_client_id: String                 = keyword_args.getOrElse("-mid", "dtn://n2/rdt/testapp")
     val add_wins_rdt_number_of_additions: Int      = keyword_args.getOrElse("-awa", "1000").toInt
     val add_wins_rdt_sleep_time_milliseconds: Long = keyword_args.getOrElse("-awt", "500").toLong
+    val routing_strategy: String                   = keyword_args.getOrElse("-rs", "epidemic")
+    val client_rdt: String                         = keyword_args.getOrElse("-cr", "addwins.listen")
 
     method match
       case "monitoring" => start_monitoring_server(host_address, host_port)
-      case "routing.direct" =>
-        _route_forever(DirectRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
-      case "routing.epidemic" =>
-        _route_forever(EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
-      case "routing.rdt" =>
-        _route_forever(RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
-      case "routing.rdt2" =>
-        _route_forever(RdtRouter2(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port)))
-      case "client.addwins.listen" =>
-        addwins_case_study_listen(
-          host_address,
-          host_port,
-          MonitoringClient(monitoring_address, monitoring_port),
-          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
+      case "routing" => {
+        _route_forever(
+          routing_strategy match
+            case "direct" =>
+              DirectRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "flooding" =>
+              FloodingRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "epidemic" =>
+              EpidemicRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "rdt" =>
+              RdtRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "rdt2" =>
+              RdtRouter2(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "spray" =>
+              SprayAndWaitRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
+            case "binary" =>
+              throw Exception("binary spray and wait not implemented yet")
+            case s =>
+              throw Exception(s"unknown routing strategy (-rs): ${s}")
         )
-      case "client.addwins.active" =>
-        addwins_case_study_active(
-          host_address,
-          host_port,
-          MonitoringClient(monitoring_address, monitoring_port),
-          AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
-        )
+      }
+      case "client" => {
+        client_rdt match
+          case "addwins.listen" =>
+            case_study_listen(
+              host_address,
+              host_port,
+              MonitoringClient(monitoring_address, monitoring_port),
+              AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
+            )
+          case "addwins.active" =>
+            case_study_active(
+              host_address,
+              host_port,
+              MonitoringClient(monitoring_address, monitoring_port),
+              AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
+            )
+          case "observeremove.listen"  => throw Exception("observeremove.listen not implemented yet")
+          case "observeremove.active"  => throw Exception("observeremove.active not implemented yet")
+          case "lastwriterwins.listen" => throw Exception("lastwriterwins.listen not implemented yet")
+          case "lastwriterwins.active" => throw Exception("lastwriterwins.active not implemented yet")
+          case s                       => throw Exception(s"unknown client rdt: $s")
+      }
       case "print.received" =>
         MonitoringBundlesReceivedPrinter().run()
       case "print.forwarded" =>
@@ -121,11 +146,11 @@ def _route_forever(router: Future[BaseRouter]): Unit = {
   }).recover(_.printStackTrace())
 
   while true do {
-    Thread.sleep(200)
+    Thread.sleep(1000)
   }
 }
 
-def addwins_case_study_listen(
+def case_study_listen(
     host: String,
     port: Int,
     monitoringClient: MonitoringClientInterface,
@@ -135,7 +160,7 @@ def addwins_case_study_listen(
   rdt.caseStudyListen()
 }
 
-def addwins_case_study_active(
+def case_study_active(
     host: String,
     port: Int,
     monitoringClient: MonitoringClientInterface,
@@ -143,4 +168,14 @@ def addwins_case_study_active(
 ): Unit = {
   rdt.connect(host, port, monitoringClient)
   rdt.caseStudyActive()
+}
+
+@main def test(): Unit = {
+  WSEndpointClient("127.0.0.1", 3000).map(client => {
+    println(client.nodeId)
+  })
+
+  while true do {
+    Thread.sleep(1000)
+  }
 }
