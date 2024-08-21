@@ -148,8 +148,8 @@ class RdtRouter(
       .toList
     println(s"multicast targets: $targets")
 
-    if targets.size < 3 then {
-      println("multicast targets are less than 3, trying to add random peers from fallback strategy")
+    if targets.size < topNNeighbours then {
+      println(s"multicast targets are less than ${topNNeighbours}, trying to add random peers from fallback strategy")
 
       var random_peers: Iterable[DtnPeer] = peers.values().asScala
 

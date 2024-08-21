@@ -12,7 +12,7 @@ this_filepath = pathlib.Path(__file__).parent.resolve()
 
 dgs_filepath = this_filepath / "data" / "dgs" / "exp1.dgs"
 
-cutoff_after_x_steps = 100
+cutoff_after_x_steps = 120
 wait_time_per_step_seconds = 5.0
 janitor_interval_milliseconds = 1500
 discovery_interval_milliseconds = 300
@@ -23,7 +23,7 @@ clients = {
   "n3": "listen"
 }
 
-router_variant = "rdt2"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
+router_variant = "rdt"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
 
 rdt_client_operation_mode = "pushall"  # options: "pushall", "requestlater"
 
@@ -335,7 +335,7 @@ while True:
 
       link_name_map[link_name] = (node_min_id, node_max_id)
     
-      print(f"activated link {link_name}")
+      print(f"activated link {link_name} between {node1_name} and {node2_name}")
     elif action == "de":
       node_min_id, node_max_id = link_name_map[link_name]
 
@@ -350,7 +350,7 @@ while True:
         options=LinkOptions(loss=100)
       )
 
-      print(f"deactivated link {link_name}")
+      print(f"deactivated link {link_name} between {node1_name} and {node2_name}")
     else:
       raise Exception(f"unknown action '{line}'")
 
