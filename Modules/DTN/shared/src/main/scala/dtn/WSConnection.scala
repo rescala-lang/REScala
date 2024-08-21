@@ -11,6 +11,7 @@ import sttp.ws.WebSocketFrame.{Binary, Ping, Pong, Text}
 import java.nio.charset.StandardCharsets
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import java.time.ZonedDateTime
 
 class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
@@ -107,7 +108,11 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
   }
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
-    connection.sendBinary(Cbor.encode(bundle).toByteArray)
+    println(s"starting to send bundle at time: ${ZonedDateTime.now()}")
+    connection.sendBinary(Cbor.encode(bundle).toByteArray).map(u => {
+      println(s"sent bundle at time: ${ZonedDateTime.now()}")
+      u
+    })
   }
 
   def registerEndpointAndSubscribe(service: String): Future[WSEndpointClient] = {
