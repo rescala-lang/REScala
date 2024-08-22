@@ -66,9 +66,9 @@ class WSConnection(ws: WebSocket[Future]) {
     }
   }
 
-  def sendBinary(payload: Array[Byte]): Future[Unit] = ws.sendBinary(payload)
+  def sendBinary(payload: Array[Byte]): Future[Unit] = ws.sendBinary(payload).recover(_.printStackTrace())
 
-  def sendText(payload: String): Future[Unit] = ws.sendText(payload)
+  def sendText(payload: String): Future[Unit] = ws.sendText(payload).recover(_.printStackTrace())
 
   def close(): Future[Unit] = ws.close()
 }
@@ -80,8 +80,6 @@ object WSConnection {
 
 class WSEndpointClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   protected var registeredServices: List[String] = List()
-
-  private val lock: AtomicBoolean = new AtomicBoolean(false)
 
   def receiveBundle(): Future[Bundle] = {
     /*
@@ -99,8 +97,6 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
 
-        if s.startsWith("200 Sent payload") then lock.set(false)
-
         if !s.startsWith("200") then
           println(
             s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s"
@@ -115,7 +111,6 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
     println(s"starting to send bundle at time: ${ZonedDateTime.now()}")
-    while !lock.compareAndSet(false, true) do {}
     connection.sendBinary(Cbor.encode(bundle).toByteArray).map(u => {
       println(s"sent bundle at time: ${ZonedDateTime.now()}")
       u
