@@ -14,24 +14,32 @@ dgs_filepath = this_filepath / "data" / "dgs" / "exp1.dgs"
 
 cutoff_after_x_steps = 120
 wait_time_per_step_seconds = 5.0
-janitor_interval_milliseconds = 1500
-discovery_interval_milliseconds = 300
+janitor_interval_milliseconds = 2500
+discovery_interval_milliseconds = 500
 
 rdt_variant = "addwins"  # options: "addwins", "observeremove", "lastwriterwins"
 clients = {
+  "n1": "listen",
   "n2": "active",
-  "n3": "listen"
+  "n3": "listen",
+  "n4": "listen",
+  "n5": "listen",
+  "n6": "listen",
+  "n7": "listen",
+  "n8": "listen"
 }
 
 router_variant = "rdt"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
 
 rdt_client_operation_mode = "pushall"  # options: "pushall", "requestlater"
 
+dtnd_cla = "udp"
+
 # special configs
-addwins_rdt_number_of_additions = 1000
-addwins_rdt_sleep_time_milliseconds = 500
-router_rdt_n_total_nodes = 10
-router_rdt_top_n_neighbours = 3
+addwins_rdt_number_of_additions = 2000
+addwins_rdt_sleep_time_milliseconds = 250
+router_rdt_n_total_nodes = 5
+router_rdt_top_n_neighbours = 2
 
 # WARNING
 # this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
@@ -127,6 +135,8 @@ class Dtnd_Configfile_Helper:
   def _substitute_config_file(self, node_id):
     file_contents = self.configs[node_id]
 
+    #file_contents = re.sub(r'debug = false', 'debug = true', file_contents, 1)
+    file_contents = re.sub(r'cla.0.id = "mtcp"', f'cla.0.id = "{dtnd_cla}"', file_contents, 1)
     file_contents = re.sub(r'strategy = "epidemic"', 'strategy = "external"', file_contents, 1)
     file_contents = re.sub(r'interval = "2s"', f'interval = "{discovery_interval_milliseconds}ms"', file_contents, 1)
     file_contents = re.sub(r'janitor = "10s"', f'janitor = "{janitor_interval_milliseconds}ms"', file_contents, 1)
@@ -335,7 +345,7 @@ while True:
 
       link_name_map[link_name] = (node_min_id, node_max_id)
     
-      print(f"activated link {link_name} between {node1_name} and {node2_name}")
+      print(f"activated link {link_name} between {node_min_id} and {node_max_id}")
     elif action == "de":
       node_min_id, node_max_id = link_name_map[link_name]
 
@@ -350,7 +360,7 @@ while True:
         options=LinkOptions(loss=100)
       )
 
-      print(f"deactivated link {link_name} between {node1_name} and {node2_name}")
+      print(f"deactivated link {link_name} between {node_min_id} and {node_max_id}")
     else:
       raise Exception(f"unknown action '{line}'")
 
@@ -361,3 +371,7 @@ while True:
 
   if len(dgs_lines) <= 0:
     break
+
+print("reached end of simulation, shutting down")
+core.set_session_state(session_id, SessionState.SHUTDOWN)
+print("done")

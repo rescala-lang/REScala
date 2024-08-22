@@ -210,7 +210,7 @@ class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: Monitor
           for (clientId: String, dots: Dots) <- deliveredStates do {
             val deliveredStateNum: Double = dots.size.toDouble
             val ratio                     = deliveredStateNum / creationStateNum
-            println(s"${clientId} |  ration: ${ratio}, num dots delivered: ${deliveredStateNum}")
+            println(s"${clientId} |  ratio: ${ratio}, num dots delivered: ${deliveredStateNum}")
           }
           println(s"\nNum bundles created at other nodes: ${bundlesCreatedAtOtherNodesCounter}")
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")

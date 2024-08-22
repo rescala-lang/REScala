@@ -8,6 +8,14 @@ import scala.concurrent.Future
 import routing.{BaseRouter, FloodingRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2, SprayAndWaitRouter}
 import rdt.{Client, ClientOperationMode}
 
+import _root_.replication.DataManager
+import rdts.base.LocalUid
+import dtn.rdt.Channel
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import com.github.plokhotnyuk.jsoniter_scala.macros.CodecMakerConfig
+import dtn.routing.RandomSprayRouter
+
 /*
   this file contains all jvm main methods
  */
@@ -16,19 +24,19 @@ import rdt.{Client, ClientOperationMode}
   if args.isEmpty || Set("-?", "-h", "--h", "help", "--help").contains(args(0)) || args.length % 2 != 0 then {
     println("""
 commandline options:
-  -m   => method (mandatory)                     | available options: monitoring, routing, client, print.received, print.forwarded, print.statedev
-  -a   => host address                           | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
-  -p   => host port                              | default: 5000 (for monitoring), 3000 (for everything else)
-  -rs  => routing strategy                       | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, binary)
-  -cr  => client rdt selection                   | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
-  -cm  => client rdt operation mode              | default: pushall (options: pushall, requestlater)
-  -ma  => monitoring address                     | default: 127.0.0.1
-  -mp  => monitoring port                        | default: 5000
-  -mid => monitoring creation client id          | default: dtn://n2/rdt/testapp
-  -awa => add-wins rdt number of additions       | default: 1000
-  -awt => add-wins rdt sleep time milliseconds   | default: 500
-  -rrn => rdt-router n total nodes to deliver to | default: 10
-  -rrt => rdt-router top n nodes to forward to   | default: 3
+  -m   => method (mandatory)                                         | available options: monitoring, routing, client, print.received, print.forwarded, print.statedev
+  -a   => host address                                               | default: 0.0.0.0 (for monitoring), 127.0.0.1 (everything else)
+  -p   => host port                                                  | default: 5000 (for monitoring), 3000 (for everything else)
+  -rs  => routing strategy                                           | default: epidemic (options: direct, flooding, epidemic, rdt, rdt2, spray, random)
+  -cr  => client rdt selection                                       | default: addwins.listen (options: addwins.listen, addwins.active, observeremove.listen, observeremove.active, lastwriterwins.listen, lastwriterwins.active)
+  -cm  => client rdt operation mode                                  | default: pushall (options: pushall, requestlater)
+  -ma  => monitoring address                                         | default: 127.0.0.1
+  -mp  => monitoring port                                            | default: 5000
+  -mid => monitoring creation client id                              | default: dtn://n2/rdt/testapp
+  -awa => add-wins rdt number of additions                           | default: 1000
+  -awt => add-wins rdt sleep time milliseconds                       | default: 500
+  -rrn => rdt-router (and random-router) n total nodes to deliver to | default: 10
+  -rrt => rdt-router (and random-router) top n nodes to forward to   | default: 3
     """)
   } else {
     var keyword_args: Map[String, String] = Map()
@@ -76,8 +84,14 @@ commandline options:
               RdtRouter2(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
             case "spray" =>
               SprayAndWaitRouter(host_address, host_port, MonitoringClient(monitoring_address, monitoring_port))
-            case "binary" =>
-              throw Exception("binary spray and wait not implemented yet")
+            case "random" =>
+              RandomSprayRouter(
+                host_address,
+                host_port,
+                MonitoringClient(monitoring_address, monitoring_port),
+                rdt_router_n_total_nodes,
+                rdt_router_top_n_neighbours
+              )
             case s =>
               throw Exception(s"unknown routing strategy (-rs): ${s}")
         )
@@ -192,11 +206,25 @@ def case_study_active(
 }
 
 @main def test(): Unit = {
-  WSEndpointClient("127.0.0.1", 3000).map(client => {
-    println(client.nodeId)
-  })
+  type RdtType = Set[String]
 
-  while true do {
+  given JsonValueCodec[RdtType] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+  val dataManager: DataManager[RdtType] = DataManager[RdtType](
+    LocalUid.gen(),
+    state => println("replica received new state information"),
+    _ => ()
+  )
+
+  dataManager.addLatentConnection(Channel[RdtType](
+    "127.0.0.1",
+    3000,
+    "app1",
+    scala.concurrent.ExecutionContext.global
+  ))
+
+  for i <- 0 to 10 do {
     Thread.sleep(1000)
+    dataManager.applyUnrelatedDelta(Set(s"hello world ${i} from ${dataManager.replicaId}"))
   }
 }
