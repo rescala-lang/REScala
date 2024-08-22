@@ -22,6 +22,10 @@ class WSConnection(ws: WebSocket[Future]) {
   }
 
   def receiveWholeMessage(): Future[String | Array[Byte]] = {
+    _receiveWholeMessage().recover(e => { e.printStackTrace(); "" })
+  }
+
+  private def _receiveWholeMessage(): Future[String | Array[Byte]] = {
     def combineFragments(f1: String | Array[Byte], f2: String | Array[Byte]): String | Array[Byte] = {
       f1 match {
         case s: String => f2 match {
@@ -40,28 +44,28 @@ class WSConnection(ws: WebSocket[Future]) {
         if finalFragment then {
           Future(payload)
         } else {
-          receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
+          _receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
         }
       }
       case Text(payload: String, finalFragment: Boolean, rsv: Option[Int]) => {
         if finalFragment then {
           Future(payload)
         } else {
-          receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
+          _receiveWholeMessage().map(payload2 => combineFragments(payload, payload2))
         }
       }
       case Ping(payload: Array[Byte]) => {
         // js FetchBackend and jvm HttpClientFutureBackend seem to answer these automatically
         // HttpClientFutureBackend forwards these messages to us, FetchBackend does not
         // in either case, no actions are required
-        receiveWholeMessage()
+        _receiveWholeMessage()
       }
       case Pong(payload: Array[Byte]) => {
-        receiveWholeMessage()
+        _receiveWholeMessage()
       }
       case _ => {
         println("unknown received data type. ignoring.")
-        receiveWholeMessage()
+        _receiveWholeMessage()
       }
     }
   }
