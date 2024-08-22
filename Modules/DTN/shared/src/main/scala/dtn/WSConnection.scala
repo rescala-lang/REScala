@@ -85,6 +85,8 @@ object WSConnection {
 class WSEndpointClient(host: String, port: Int, connection: WSConnection, val nodeId: String) {
   protected var registeredServices: List[String] = List()
 
+  private var lock: AtomicBoolean = AtomicBoolean()
+
   def receiveBundle(): Future[Bundle] = {
     /*
     We have a problem:
@@ -101,6 +103,8 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
         // we throw an Exception if this is not the case
         println(s"received command response: $s")
 
+        if s.startsWith("200 Sent payload") then lock.set(false)
+
         if !s.startsWith("200") then
           println(
             s"dtn ws command response indicated 'not successfull', further interaction with the ws will likely fail: $s"
@@ -114,6 +118,8 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
   }
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
+    println(s"waiting to start sending bundle at time ${ZonedDateTime.now()}")
+    while !lock.compareAndSet(false, true) do {}
     println(s"starting to send bundle at time: ${ZonedDateTime.now()}")
     connection.sendBinary(Cbor.encode(bundle).toByteArray).map(u => {
       println(s"sent bundle at time: ${ZonedDateTime.now()}")
