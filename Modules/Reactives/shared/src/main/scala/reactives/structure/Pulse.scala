@@ -4,7 +4,6 @@ import reactives.core.ReInfo
 import reactives.structure.Pulse.{Exceptional, NoChange, Value}
 import reactives.structure.RExceptions.{EmptySignalControlThrowable, ObservedException}
 
-import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 /** Pulse that stores a current value and can also indicate a potentially change to an updated value.
