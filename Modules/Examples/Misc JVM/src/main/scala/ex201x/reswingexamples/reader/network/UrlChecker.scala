@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.reader.network
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.Observable
+import reactives.default.*
 
 import java.io.FileNotFoundException
 import java.net.{MalformedURLException, URI, URL, UnknownHostException}

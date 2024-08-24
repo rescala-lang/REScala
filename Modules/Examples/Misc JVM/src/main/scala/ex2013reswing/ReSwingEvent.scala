@@ -10,7 +10,7 @@ sealed abstract class ReSwingEvent[T] {
 }
 
 final class ReSwingEventOut[T] private[ex2013reswing] (initLazily: ReSwingEventOut[T] => Unit) extends ReSwingEvent[T] {
-  private val event: Lazy[Evt[T]]      = Lazy { Evt[T]() }
+  private val event: Lazy[Evt[T]]            = Lazy { Evt[T]() }
   private[ex2013reswing] def toEvent         = { if !event.isDefined then initLazily(this); event() }
   private[ex2013reswing] def apply(value: T) = if event.isDefined then event().fire(value)
 }

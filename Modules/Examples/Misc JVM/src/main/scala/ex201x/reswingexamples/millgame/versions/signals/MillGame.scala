@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.millgame.versions.signals
 
-import reactives.default.*
 import ex201x.reswingexamples.millgame.types.*
+import reactives.default.*
 
 sealed abstract class Gamestate {
   def getPlayer: Slot

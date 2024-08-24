@@ -1,8 +1,7 @@
 package ex201x.reswingexamples.reshapes.ui.panels
 
-import ex2013reswing.{ReSlider, ReSwingValue}
+import ex2013reswing.{ReButton, ReSlider, ReSwingValue}
 import reactives.default.*
-import ex2013reswing.ReButton
 
 import java.awt.Color
 import javax.swing.JColorChooser

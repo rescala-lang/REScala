@@ -1,11 +1,11 @@
 package ex201x.reswingexamples.reshapes.ui.panels
 
-import reactives.default.*
 import ex2013reswing.{ReBoxPanel, ReButton}
 import ex201x.reswingexamples.reshapes.ReShapes
 import ex201x.reswingexamples.reshapes.drawing.{DeleteShape, DrawingSpaceState}
 import ex201x.reswingexamples.reshapes.figures.Shape
 import ex201x.reswingexamples.reshapes.util.ReactiveUtil.UnionEvent
+import reactives.default.*
 
 import scala.swing.{BoxPanel, Color, Component, Label, Orientation, ScrollPane}
 

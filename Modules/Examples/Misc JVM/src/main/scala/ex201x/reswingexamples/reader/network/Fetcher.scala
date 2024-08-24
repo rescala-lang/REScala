@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.reader.network
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.Observable
+import reactives.default.*
 
 import java.net.{SocketException, SocketTimeoutException, URL, UnknownHostException}
 import scala.xml.{NodeSeq, XML}

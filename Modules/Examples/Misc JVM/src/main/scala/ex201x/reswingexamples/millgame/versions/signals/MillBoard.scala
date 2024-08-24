@@ -1,8 +1,8 @@
 package ex201x.reswingexamples.millgame.versions.signals
 
-import reactives.default.*
 import ex201x.reswingexamples.millgame.*
 import ex201x.reswingexamples.millgame.types.*
+import reactives.default.*
 
 class MillBoard {
   /* wrap stones Var, to have the same interface as other versions */

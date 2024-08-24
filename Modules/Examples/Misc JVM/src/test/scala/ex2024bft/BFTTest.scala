@@ -1,6 +1,5 @@
 package ex2024bft
 
-import ex2024bft.{BFT, Byteable}
 import rdts.base.*
 import rdts.datatypes.*
 

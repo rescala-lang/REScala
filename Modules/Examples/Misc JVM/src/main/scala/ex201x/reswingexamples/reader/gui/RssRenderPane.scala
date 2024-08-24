@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.reader.gui
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.data.RSSItem
+import reactives.default.*
 
 import java.awt.Desktop
 import java.io.IOException

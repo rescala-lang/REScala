@@ -1,9 +1,9 @@
 package todo
 
+import dtn.rdt.Channel
 import org.scalajs.dom.{document, window}
 import rdts.base.{Lattice, LocalUid}
 import reactives.extra.Tags.reattach
-import dtn.rdt.Channel
 import replication.WebRTCConnectionView
 import scalatags.JsDom.all
 import scalatags.JsDom.all.given

@@ -1,8 +1,8 @@
 package ex201x.reswingexamples.reader.gui
 
-import reactives.default.*
-import ex201x.reswingexamples.reader.data.{FeedStore, RSSChannel, RSSItem}
 import ex2013reswing.{ReButton, ReCheckBox, ReLabel, ReSwingValue}
+import ex201x.reswingexamples.reader.data.{FeedStore, RSSChannel, RSSItem}
+import reactives.default.*
 
 import java.awt.{Dimension, Point, Toolkit}
 import javax.swing.ImageIcon

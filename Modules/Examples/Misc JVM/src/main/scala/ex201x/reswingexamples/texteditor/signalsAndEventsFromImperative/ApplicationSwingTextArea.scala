@@ -1,8 +1,7 @@
 package ex201x.reswingexamples.texteditor.signalsAndEventsFromImperative
 
-import ex2013reswing.{ReLabel, ReTextArea}
+import ex2013reswing.{ReButton, ReLabel, ReTextArea}
 import reactives.default.*
-import ex2013reswing.ReButton
 
 import scala.math.min
 import scala.swing.BorderPanel.Position

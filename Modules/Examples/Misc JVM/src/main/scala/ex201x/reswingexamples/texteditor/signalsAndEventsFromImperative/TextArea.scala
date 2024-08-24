@@ -1,8 +1,8 @@
 package ex201x.reswingexamples.texteditor.signalsAndEventsFromImperative
 
 import ex2013reswing.{ReComponent, ReSwingValue}
-import reactives.default.*
 import ex201x.reswingexamples.texteditor.{JScrollableComponent, LineIterator, LineOffset, Position}
+import reactives.default.*
 
 import java.awt.datatransfer.{DataFlavor, StringSelection}
 import java.awt.{Dimension, Graphics2D, Point, Rectangle, SystemColor, Toolkit}

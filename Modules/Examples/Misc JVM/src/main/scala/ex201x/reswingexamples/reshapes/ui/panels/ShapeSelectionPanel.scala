@@ -1,9 +1,9 @@
 package ex201x.reswingexamples.reshapes.ui.panels
 
-import reactives.default.*
 import ex2013reswing.ReButton
 import ex201x.reswingexamples.reshapes.ReShapes
 import ex201x.reswingexamples.reshapes.figures.{Freedraw, Line, Oval, Rectangle, Shape, Triangle}
+import reactives.default.*
 
 import scala.swing.{BoxPanel, Orientation}
 

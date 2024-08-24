@@ -1,10 +1,10 @@
 package ex201x.reswingexamples.reader
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.connectors.{CentralizedEvents, SimpleReporter}
 import ex201x.reswingexamples.reader.data.{FeedStore, RSSItem, XmlParser}
 import ex201x.reswingexamples.reader.gui.GUI
 import ex201x.reswingexamples.reader.network.{Fetcher, UrlChecker}
+import reactives.default.*
 
 import java.net.URL
 import scala.io.Source

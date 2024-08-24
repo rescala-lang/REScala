@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.reshapes.drawing
 
-import reactives.default.*
 import ex201x.reswingexamples.reshapes.figures.{Line, Shape}
+import reactives.default.*
 
 import java.awt.Color
 import java.io.{OutputStreamWriter, PrintWriter}

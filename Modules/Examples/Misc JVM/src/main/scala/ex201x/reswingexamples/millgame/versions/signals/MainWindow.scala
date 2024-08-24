@@ -1,9 +1,9 @@
 package ex201x.reswingexamples.millgame.versions.signals
 
-import reactives.default.*
+import ex2013reswing.{ReComponent, ReLabel, ReSwingValue}
 import ex201x.reswingexamples.millgame.*
 import ex201x.reswingexamples.millgame.types.*
-import ex2013reswing.{ReComponent, ReLabel, ReSwingValue}
+import reactives.default.*
 
 import java.awt.{BasicStroke, Color, Dimension, Font, RenderingHints}
 import scala.swing.*

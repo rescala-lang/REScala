@@ -1,8 +1,8 @@
 package ex201x.reswingexamples.reader.connectors
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.data.{FeedStore, XmlParser}
 import ex201x.reswingexamples.reader.network.{Fetcher, UrlChecker}
+import reactives.default.*
 
 trait EventMediator {
   def mediate(fetcher: Fetcher, parser: XmlParser, store: FeedStore, checker: UrlChecker): Unit

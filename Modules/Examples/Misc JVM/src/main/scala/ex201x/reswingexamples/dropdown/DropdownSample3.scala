@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.dropdown
 
-import reactives.default.*
 import ex2013reswing.ReTextField
+import reactives.default.*
 
 import scala.swing.*
 

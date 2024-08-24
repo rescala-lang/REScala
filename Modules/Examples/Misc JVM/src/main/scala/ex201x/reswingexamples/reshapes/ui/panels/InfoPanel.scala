@@ -1,8 +1,8 @@
 package ex201x.reswingexamples.reshapes.ui.panels
 
-import reactives.default.*
 import ex2013reswing.ReLabel
 import ex201x.reswingexamples.reshapes.ReShapes
+import reactives.default.*
 
 import scala.swing.FlowPanel
 

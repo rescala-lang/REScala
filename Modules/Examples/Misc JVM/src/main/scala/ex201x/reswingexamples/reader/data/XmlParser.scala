@@ -1,7 +1,7 @@
 package ex201x.reswingexamples.reader.data
 
-import reactives.default.*
 import ex201x.reswingexamples.reader.Observable
+import reactives.default.*
 
 import java.net.{MalformedURLException, URI, URL}
 import java.text.{ParseException, SimpleDateFormat}

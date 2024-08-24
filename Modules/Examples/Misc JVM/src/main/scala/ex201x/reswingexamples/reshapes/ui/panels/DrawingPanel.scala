@@ -1,9 +1,9 @@
 package ex201x.reswingexamples.reshapes.ui.panels
 
-import reactives.default.*
 import ex201x.reswingexamples.reshapes.drawing.{Command, CreateShape, DrawingSpaceState, EditShape}
 import ex201x.reswingexamples.reshapes.figures.{Movable, Resizable, Shape}
 import ex201x.reswingexamples.reshapes.util.MathUtil
+import reactives.default.*
 
 import java.awt.BasicStroke
 import scala.collection.mutable.ListBuffer

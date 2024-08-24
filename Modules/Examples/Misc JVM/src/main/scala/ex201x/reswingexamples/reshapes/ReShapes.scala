@@ -1,14 +1,14 @@
 package ex201x.reswingexamples.reshapes
 
-import ex2013reswing.{ReMenu, ReMenuItem, ReSwingValue}
-import reactives.default.*
 import ex2013reswing.ReMenuItem.toMenuItem
+import ex2013reswing.{ReMenu, ReMenuItem, ReSwingValue}
 import ex201x.reswingexamples.reshapes.actions.{LoadAction, SaveAction}
 import ex201x.reswingexamples.reshapes.drawing.{Command, DrawingSpaceState, MergeDrawingSpaces, NetworkSpaceState}
 import ex201x.reswingexamples.reshapes.figures.Shape
 import ex201x.reswingexamples.reshapes.ui.dialogs.{NewTabDialog, ServerDialog}
 import ex201x.reswingexamples.reshapes.ui.panels.{CommandPanel, DrawingPanel, InfoPanel, ShapePanel, ShapeSelectionPanel, ShowCoordinateSystem, ShowIntersection, ShowNameLabels, StrokeInputPanel}
 import ex201x.reswingexamples.reshapes.util.ReactiveUtil.{UnionEvent, bilateralValues}
+import reactives.default.*
 
 import java.net.{BindException, ConnectException}
 import javax.swing.JOptionPane
