@@ -14,19 +14,32 @@ case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
   def toDotted: Dotted[A] = Dotted(data, observed `union` deletions)
 }
 
+/** Decorates an existing lattice to filter the values before merging them.
+  * Warning: Decoration breaks when the decorated lattice has overridden methods except merge and decompose, or uses merge from within merge/decompose.
+  */
+trait FilteredLattice[A](decorated: Lattice[A]) extends Lattice[A] {
+  def filter(base: A, other: A): A
+
+  def merge(left: A, right: A): A =
+    val filteredLeft  = filter(left, right)
+    val filteredRight = filter(right, left)
+    decorated.merge(filteredLeft, filteredRight)
+
+  override def decompose(a: A): Iterable[A] = decorated.decompose(a)
+}
+
 object Obrem {
 
   def apply[A: HasDots](data: A): Obrem[A] = Obrem(data, data.dots, Dots.empty)
 
   def empty[A: Bottom]: Obrem[A] = Obrem(Bottom.empty[A], Dots.empty, Dots.empty)
 
-  given lattice[A: HasDots: Bottom: Lattice]: Lattice[Obrem[A]] with {
-    def merge(left: Obrem[A], right: Obrem[A]): Obrem[A] =
-      val l =
-        if right.deletions.isEmpty then left.data else left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
-      val r =
-        if left.deletions.isEmpty then right.data else right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
-      Obrem(l `merge` r, left.observed `union` right.observed, left.deletions `union` right.deletions)
+  given lattice[A: HasDots: Bottom: Lattice]: FilteredLattice[Obrem[A]](Lattice.derived) with {
+    override def filter(base: Obrem[A], other: Obrem[A]): Obrem[A] =
+      if other.deletions.isEmpty
+      then base
+      else
+        base.copy(data = base.data.removeDots(other.deletions).getOrElse(Bottom.empty))
   }
 }
 
@@ -64,11 +77,14 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  given lattice[A: HasDots: Bottom: Lattice]: Lattice[Dotted[A]] with {
-    def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
-      val l = left.data.removeDots(right.deletions).getOrElse(Bottom.empty)
-      val r = right.data.removeDots(left.deletions).getOrElse(Bottom.empty)
-      Dotted(l `merge` r, left.context `union` right.context)
+  given lattice[A: HasDots: Bottom: Lattice]: FilteredLattice[Dotted[A]](Lattice.derived) with {
+
+    override def filter(base: Dotted[A], other: Dotted[A]): Dotted[A] =
+      val deletions = other.deletions
+      if deletions.isEmpty
+      then base
+      else
+        base.copy(data = base.data.removeDots(other.deletions).getOrElse(Bottom.empty))
 
     /** Dotted decompose guarantees decomposes its inner value, but recomposes any values with overlapping dots, such that each dot is present in exactly one of the returned deltas. */
     override def decompose(a: Dotted[A]): Iterable[Dotted[A]] =
