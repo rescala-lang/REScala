@@ -130,13 +130,14 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
   .settings(
     scala3defaults,
     fork := true,
+    Dependencies.jsoniterScala,
+    Dependencies.munitCheck,
+    LocalSettings.tink,
     libraryDependencies += LocalSettings.scalafx,
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
       "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
     ),
-    Dependencies.jsoniterScala,
-    LocalSettings.tink,
     libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
     Settings.implicitConversions(), // reswing uses this in a million places for no reason
   )

@@ -1,6 +1,5 @@
-package test.rdts
+package ex2024
 
-import munit.ScalaCheckSuite
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.commands.Commands
@@ -10,7 +9,7 @@ import rdts.datatypes.experiments.protocols.{LogHack, Membership, Paxos}
 
 import scala.collection.mutable.ArrayBuffer
 
-class MembershipSuite extends ScalaCheckSuite {
+class MembershipSuite extends munit.ScalaCheckSuite {
   //  override def scalaCheckInitialSeed = "GTwNko29FJXYc0o7ixZt5-Jv7PJfM_EXBOp3ukz3BtN="
 
   override def scalaCheckTestParameters =

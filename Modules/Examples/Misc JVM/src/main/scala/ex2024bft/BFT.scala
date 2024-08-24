@@ -1,4 +1,4 @@
-package rdts.datatypes
+package ex2024bft
 
 import rdts.base.Lattice.mapLattice
 import rdts.base.{Bottom, Lattice}
@@ -42,7 +42,7 @@ object BFTDelta {
 
 }
 
-case class BFT[V] private[rdts](deltas: Set[BFTDelta[V]]) {
+case class BFT[V] (deltas: Set[BFTDelta[V]]) {
 
   def value(using b: Bottom[V], lat: Lattice[V]): V = {
     val graph = reverseGraph()
@@ -108,7 +108,7 @@ object BFT {
     }
   }
 
-  def hash[V](value: V, heads: Set[Hash])(using ch: Byteable[V]): Hash = 
+  def hash[V](value: V, heads: Set[Hash])(using ch: Byteable[V]): Hash =
     Hash(BFT.digest.digest(Array.concat(ch.toBytes(value) :: heads.toList.map(_.content) *)))
 
 }

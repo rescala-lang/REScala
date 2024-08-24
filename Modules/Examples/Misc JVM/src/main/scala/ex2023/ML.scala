@@ -1,4 +1,4 @@
-package extra2023
+package ex2023
 
 import reactives.default.*
 import reactives.structure.Diff

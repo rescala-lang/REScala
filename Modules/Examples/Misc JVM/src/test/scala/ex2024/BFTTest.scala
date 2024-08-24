@@ -1,12 +1,12 @@
-package test.rdts.bft
+package ex2024
 
+import ex2024bft.{BFT, Byteable}
 import rdts.base.*
 import rdts.datatypes.*
 
 class BFTTest extends munit.ScalaCheckSuite {
 
-
-  given Byteable[GrowOnlyCounter] = (obj: GrowOnlyCounter) => obj.inner.toString.getBytes
+  given Byteable[GrowOnlyCounter]     = (obj: GrowOnlyCounter) => obj.inner.toString.getBytes
   given Lattice[BFT[GrowOnlyCounter]] = BFT.lattice
 
   test("basic update") {
