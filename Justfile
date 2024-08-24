@@ -10,8 +10,8 @@ test sbtOpts="":
 	sbt {{sbtOpts}} test
 
 publishLocal sbtOpts="":
-	sbt {{sbtOpts}} 'rdtsAggregate / publishLocal'
-	sbt {{sbtOpts}} 'reactivesAggregate / publishLocal'
+	sbt {{sbtOpts}} 'rdtsAggregate / publishM2'
+	sbt {{sbtOpts}} 'reactivesAggregate / publishM2'
 
 
 # most useful for teh jitpack export, though not sure if that even works …

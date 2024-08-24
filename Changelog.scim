@@ -1,6 +1,6 @@
 = Changelog
 
-== v.next
+== v0.36.0
 
 # Api changes
 
@@ -10,16 +10,35 @@
 
 • refactor API to no longer require bundle traits
 	• this removes the capability to select schedulers at runtime and instead moves the selection to compile time
+	• this release uses the levelled scheduler
 
 • rename event.act to event.branch for a more consistent API
 
 • remove infix on most methods
 
+• reactive tags integration no longer depends on scalatags, works on dom elements directly
+
+• rdts still have quickly changing API
+	• no more extensions based wrapped APIs
+	• more systematic Ids
+
+# Extra modules
+
+• reactive lenses experiments
+• lore is now part of the repo (not included in releases)
+	• there is also an experimental lore compiler plugin
+• add channels module as an experiment to have rdt specific communication infrastructure
+	• with initial DTN support
+• local first access control experiments
+• vendor in quicklens and adapt to allow to produce deltas
+• remove the graph compiler module (historical now)
+• add webview experiments
+
 # Internal improvements
 
-• add channels module as an experiment to have rdt specific communication infrastructure
 • migrate all tests to munit
 • compile with safe init and explicit nulls (most modules)
+• make a special propagation phase for followup transactions (this is still not a well-designed area …)
 
 
 == v0.35.1
