@@ -36,7 +36,7 @@ jobs:
 
     - uses: sbt/setup-sbt@v1
       with:
-        sbt-runner-version: 1.10.0
+        sbt-runner-version: 1.10.1
 
     - uses: actions/setup-node@v4
       with:
