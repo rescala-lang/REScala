@@ -177,6 +177,7 @@ class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: Monitor
       var newestTime: Option[ZonedDateTime] = None
 
       while true do {
+        // not optimal as an EOF can crash the application although the line was just not written in one go
         val line = in.readLine()
 
         if line == null then {

@@ -83,10 +83,9 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   """
 
   ### converting structure ###
+  iterable = ((node_id, sum(bundles_per_step)) for node_id, bundles_per_step in plot_data.items())
 
-  plot_data_plot_1 = plot_data.copy()
-
-  plot_data = {node_id: sum(bundles_per_step) for node_id, bundles_per_step in plot_data_plot_1.items()}
+  x, y = zip(*sorted(iterable, key=lambda x: x[1], reverse=True))
 
 
   ### plot data ###
@@ -94,7 +93,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   plt.title('bundles forwarded total per node')
   plt.ylabel('number of bundles')
   plt.xlabel('node-id')
-  plt.bar(plot_data.keys(), plot_data.values())
+  plt.bar(x, y)
   plt.show()
 
 
@@ -165,10 +164,9 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   """
 
   ### converting structure ###
+  iterable = ((node_id, sum(bundles_per_step)) for node_id, bundles_per_step in plot_data.items())
 
-  plot_data_plot_3 = plot_data.copy()
-
-  plot_data = {node_id: sum(bundles_per_step) for node_id, bundles_per_step in plot_data_plot_3.items()}
+  x, y = zip(*sorted(iterable, key=lambda x: x[1], reverse=True))
 
 
   ### plot data ###
@@ -176,7 +174,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   plt.title('bundles received total per node')
   plt.ylabel('number of bundles')
   plt.xlabel('node-id')
-  plt.bar(plot_data.keys(), plot_data.values())
+  plt.bar(x, y)
   plt.show()
 
 
@@ -228,15 +226,18 @@ def get_filepaths(monitoring_path):
 
 script_path = Path(__file__).parent.resolve()
 
-#monitoring_path = script_path / 'monitoring'
+monitoring_path = script_path / 'monitoring'
 
-# monitoring_path = (Path(__file__).parent / 'archive' / 'node-constellation-arguing' / '2024-08-24-1955-flooding-n26-addwins-2000').resolve()
+print(monitoring_path)
+plot(*get_filepaths(monitoring_path))
+
+monitoring_path = Path("/home/kali/REScala/Modules/DTN/simulation/shared/archive/rdt-router-selection-arguing/rdt-n2-addwins-2000-5n-5t").resolve()
 
 #print(monitoring_path)
 #plot(*get_filepaths(monitoring_path))
 
-
+"""
 for monitoring_path in (script_path / 'archive' / 'rdt-router-selection-arguing').glob('*'):
   print(monitoring_path)
   plot(*get_filepaths(monitoring_path))
-
+"""
