@@ -99,7 +99,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     ),
   )
 
-lazy val dtn = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Full)
+lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
   .in(file("Modules/DTN"))
   .dependsOn(reactives, rdts, replication)
   .settings(
