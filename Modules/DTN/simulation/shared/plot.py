@@ -3,17 +3,9 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
-
-
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-
-monitoring_path = (Path(__file__).parent / 'monitoring').resolve()
-forwarded_fp = monitoring_path / 'forwarded.data'
-received_fp = monitoring_path / 'received.data'
-created_and_delivered_fp = monitoring_path / 'created_and_delivered.data'
-ratios_fp = monitoring_path / 'ratios.data'
 
 
 def util_get_time_from_stamp(timestamp):
@@ -24,156 +16,227 @@ def util_get_time_from_stamp(timestamp):
 
 
 
+def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
+  """
+  first plot - bundles forwarded per node over time
+  """
 
-"""
-first plot - bundles forwarded per node over time
-"""
+  ### accumulating number of bundles per second ###
 
-### accumulating number of bundles per second ###
+  begin_time = None
 
-begin_time = None
+  data = {}  # structure: {node-id: {second: num-bundles}}
 
-data = {}  # structure: {node-id: {second: num-bundles}}
+  with open(forwarded_fp, 'r', encoding='utf8') as f:
+    for line in f.readlines():
+      message = json.loads(line)
 
-with open(forwarded_fp, 'r', encoding='utf8') as f:
-  for line in f.readlines():
-    message = json.loads(line)
+      message_time = util_get_time_from_stamp(message['time'])
 
-    message_time = util_get_time_from_stamp(message['time'])
+      if begin_time == None:
+        begin_time = message_time
+      
+      node_name = message['nodeId'].split('/')[-2]
 
-    if begin_time == None:
-      begin_time = message_time
-    
-    node_name = message['nodeId'].split('/')[-2]
+      total_second = int((message_time - begin_time).total_seconds())
 
-    total_second = int((message_time - begin_time).total_seconds())
-
-    if node_name not in data:
-      data[node_name] = {}
-    
-    if total_second not in data[node_name]:
-      data[node_name][total_second] = 1
-    else:
-      data[node_name][total_second] += 1
-
-
-### converting structure ####
-
-plot_data = {}
-
-for node_id, d in data.items():
-  plot_data[node_id] = []
-
-  for second, number_of_bundles in sorted(d.items(), key=lambda item: item[0]):
-    while len(plot_data[node_id]) < second:
-      plot_data[node_id].append(0)
-    
-    plot_data[node_id].append(number_of_bundles)
+      if node_name not in data:
+        data[node_name] = {}
+      
+      if total_second not in data[node_name]:
+        data[node_name][total_second] = 1
+      else:
+        data[node_name][total_second] += 1
 
 
-### plot data ###
+  ### converting structure ####
 
-for node_id, l in plot_data.items():
-  plt.plot(l, label=node_id)
+  plot_data = {}  # structure: {node-id: [num-bundles-per-step]}
 
-plt.title('bundles forwarded per second')
-plt.ylabel('number of bundles')
-plt.xlabel('second')
-plt.legend()
-plt.show()
+  for node_id, d in data.items():
+    plot_data[node_id] = []
 
-
-
-"""
-second plot - bundles received per node over time:
-"""
-
-### accumulating number of bundles per second ###
-
-begin_time = None
-
-data = {}  # structure: {node-id: {second: num-bundles}}
-
-with open(received_fp, 'r', encoding='utf8') as f:
-  for line in f.readlines():
-    message = json.loads(line)
-
-    message_time = util_get_time_from_stamp(message['time'])
-
-    if begin_time == None:
-      begin_time = message_time
-    
-    node_name = message['nodeId'].split('/')[-2]
-
-    total_second = int((message_time - begin_time).total_seconds())
-
-    if node_name not in data:
-      data[node_name] = {}
-    
-    if total_second not in data[node_name]:
-      data[node_name][total_second] = 1
-    else:
-      data[node_name][total_second] += 1
+    for second, number_of_bundles in sorted(d.items(), key=lambda item: item[0]):
+      while len(plot_data[node_id]) < second:
+        plot_data[node_id].append(0)
+      
+      plot_data[node_id].append(number_of_bundles)
 
 
-### converting structure ####
+  ### plot data ###
+  '''
+  for node_id, l in plot_data.items():
+    plt.plot(l, label=node_id)
 
-plot_data = {}
-
-for node_id, d in data.items():
-  plot_data[node_id] = []
-
-  for second, number_of_bundles in sorted(d.items(), key=lambda item: item[0]):
-    while len(plot_data[node_id]) < second:
-      plot_data[node_id].append(0)
-    
-    plot_data[node_id].append(number_of_bundles)
+  plt.title('bundles forwarded per second')
+  plt.ylabel('number of bundles')
+  plt.xlabel('second')
+  plt.legend()
+  plt.show()
+'''
 
 
-### plot data ###
+  """
+  second plot - number of messages forwarded total per client
 
-for node_id, l in plot_data.items():
-  plt.plot(l, label=node_id)
+  --> reuses the data from the first plot
+  """
 
-plt.title('bundles received per second')
-plt.ylabel('number of bundles')
-plt.xlabel('second')
-plt.legend()
-plt.show()
+  ### converting structure ###
+
+  plot_data_plot_1 = plot_data.copy()
+
+  plot_data = {node_id: sum(bundles_per_step) for node_id, bundles_per_step in plot_data_plot_1.items()}
+
+
+  ### plot data ###
+
+  plt.title('bundles forwarded total per node')
+  plt.ylabel('number of bundles')
+  plt.xlabel('node-id')
+  plt.bar(plot_data.keys(), plot_data.values())
+  plt.show()
 
 
 
-"""
-third plot - state convergence of clients over time
-"""
+  """
+  third plot - bundles received per node over time:
+  """
 
-### import ratio converted data ###
+  ### accumulating number of bundles per second ###
 
-plot_data = {}
+  begin_time = None
 
-with open(ratios_fp, 'r', encoding='utf8') as f:
-  for line in f.readlines():
-    message = json.loads(line)
+  data = {}  # structure: {node-id: {second: num-bundles}}
 
-    converted_timestamps = [util_get_time_from_stamp(timestamp) for timestamp in message['timestamps']]
+  with open(received_fp, 'r', encoding='utf8') as f:
+    for line in f.readlines():
+      message = json.loads(line)
 
-    plot_data[message['clientId']] = (converted_timestamps, message['ratios'])
+      message_time = util_get_time_from_stamp(message['time'])
 
-### plot data ###
+      if begin_time == None:
+        begin_time = message_time
+      
+      node_name = message['nodeId'].split('/')[-2]
 
-locator = mdates.AutoDateLocator()
-formatter = mdates.ConciseDateFormatter(locator)
-ax = plt.gca()
-ax.xaxis.set_major_locator(locator)
-ax.xaxis.set_major_formatter(formatter)
+      total_second = int((message_time - begin_time).total_seconds())
 
-for node_id, (l1, l2) in plot_data.items():
-  plt.plot(l1, l2, label=node_id)
+      if node_name not in data:
+        data[node_name] = {}
+      
+      if total_second not in data[node_name]:
+        data[node_name][total_second] = 1
+      else:
+        data[node_name][total_second] += 1
 
-plt.title('state convergence over time')
-plt.ylabel('convergence ratio')
-plt.xlabel('time')
-plt.legend()
-plt.show()
 
+  ### converting structure ####
+
+  plot_data = {}  # structure: {node-id: [num-bundles-per-step]}
+
+  for node_id, d in data.items():
+    plot_data[node_id] = []
+
+    for second, number_of_bundles in sorted(d.items(), key=lambda item: item[0]):
+      while len(plot_data[node_id]) < second:
+        plot_data[node_id].append(0)
+      
+      plot_data[node_id].append(number_of_bundles)
+
+
+  ### plot data ###
+  '''
+  for node_id, l in plot_data.items():
+    plt.plot(l, label=node_id)
+
+  plt.title('bundles received per second')
+  plt.ylabel('number of bundles')
+  plt.xlabel('second')
+  plt.legend()
+  plt.show()
+'''
+
+
+  """
+  fourth plot - number of messages received total per client
+
+  --> reuses the data from the third plot
+  """
+
+  ### converting structure ###
+
+  plot_data_plot_3 = plot_data.copy()
+
+  plot_data = {node_id: sum(bundles_per_step) for node_id, bundles_per_step in plot_data_plot_3.items()}
+
+
+  ### plot data ###
+
+  plt.title('bundles received total per node')
+  plt.ylabel('number of bundles')
+  plt.xlabel('node-id')
+  plt.bar(plot_data.keys(), plot_data.values())
+  plt.show()
+
+
+
+  """
+  third plot - state convergence of clients over time
+  """
+
+  ### import ratio converted data ###
+
+  plot_data = {}
+
+  with open(ratios_fp, 'r', encoding='utf8') as f:
+    for line in f.readlines():
+      message = json.loads(line)
+
+      converted_timestamps = [util_get_time_from_stamp(timestamp) for timestamp in message['timestamps']]
+
+      plot_data[message['clientId']] = (converted_timestamps, message['ratios'])
+
+  ### plot data ###
+
+  locator = mdates.AutoDateLocator()
+  formatter = mdates.ConciseDateFormatter(locator)
+  ax = plt.gca()
+  ax.xaxis.set_major_locator(locator)
+  ax.xaxis.set_major_formatter(formatter)
+
+  for node_id, (l1, l2) in plot_data.items():
+    plt.plot(l1, l2, label=node_id)
+
+  plt.title('state convergence over time')
+  plt.ylabel('convergence ratio')
+  plt.xlabel('time')
+  plt.legend()
+  plt.show()
+
+
+def get_filepaths(monitoring_path):
+  forwarded_fp = monitoring_path / 'forwarded.data'
+  received_fp = monitoring_path / 'received.data'
+  created_and_delivered_fp = monitoring_path / 'created_and_delivered.data'
+  ratios_fp = monitoring_path / 'ratios.data'
+
+  return forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp
+
+
+
+
+script_path = Path(__file__).parent.resolve()
+
+#monitoring_path = script_path / 'monitoring'
+
+# monitoring_path = (Path(__file__).parent / 'archive' / 'node-constellation-arguing' / '2024-08-24-1955-flooding-n26-addwins-2000').resolve()
+
+#print(monitoring_path)
+#plot(*get_filepaths(monitoring_path))
+
+
+for monitoring_path in (script_path / 'archive' / 'rdt-router-selection-arguing').glob('*'):
+  print(monitoring_path)
+  plot(*get_filepaths(monitoring_path))
 

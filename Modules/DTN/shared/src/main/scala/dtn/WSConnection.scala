@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 class WSConnection(ws: WebSocket[Future]) {
   val backend: GenericBackend[Future, WebSockets] = CompatCode.backend
 
-  def command(text: String): Unit = {
-    ws.sendText(text).printError()
+  def command(text: String): Future[Unit] = {
+    ws.sendText(text).recoverAndLog()
   }
 
   def receiveWholeMessage(): Future[String | Array[Byte]] = {
@@ -70,9 +70,9 @@ class WSConnection(ws: WebSocket[Future]) {
     }
   }
 
-  def sendBinary(payload: Array[Byte]): Future[Unit] = ws.sendBinary(payload).recover(_.printStackTrace())
+  def sendBinary(payload: Array[Byte]): Future[Unit] = ws.sendBinary(payload).recoverAndLog()
 
-  def sendText(payload: String): Future[Unit] = ws.sendText(payload).recover(_.printStackTrace())
+  def sendText(payload: String): Future[Unit] = ws.sendText(payload).recoverAndLog()
 
   def close(): Future[Unit] = ws.close()
 }
@@ -129,11 +129,10 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
 
   def registerEndpointAndSubscribe(service: String): Future[WSEndpointClient] = {
     // register the endpoint on the DTN daemon
-    CompatCode.uget(uri"http://${host}:${port}/register?${service}").map(_ => {
+    CompatCode.uget(uri"http://${host}:${port}/register?${service}").flatMap(_ => {
       registeredServices = service :: registeredServices
       // subscribe to the registered endpoint with our websocket
-      connection.command(s"/subscribe $service")
-      this
+      connection.command(s"/subscribe $service").map(_ => this)
     })
   }
 
@@ -159,9 +158,10 @@ object WSEndpointClient {
         }
         WSConnection(uri"ws://${host}:${port}/ws")
       })
-      .map(connection => {
-        connection.command("/bundle")
-        new WSEndpointClient(host, port, connection, nodeId.get)
+      .flatMap(connection => {
+        connection.command("/bundle").map(_ =>
+          new WSEndpointClient(host, port, connection, nodeId.get)
+        )
       })
   }
 }

@@ -26,8 +26,17 @@ clients = {
   "n5": "listen",
   "n6": "listen",
   "n7": "listen",
-  "n8": "listen"
-}
+  "n8": "listen",
+  "n9": "listen",
+  "n10": "listen",
+  "n11": "listen",
+  "n12": "listen",
+  "n13": "listen",
+  "n17": "listen",
+  "n18": "listen",
+  "n19": "listen",
+  "n26": "listen"
+} # 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 26
 
 router_variant = "rdt"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
 
@@ -37,9 +46,10 @@ dtnd_cla = "udp"
 
 # special configs
 addwins_rdt_number_of_additions = 2000
-addwins_rdt_sleep_time_milliseconds = 250
-router_rdt_n_total_nodes = 5
-router_rdt_top_n_neighbours = 2
+addwins_rdt_sleep_time_milliseconds = int((500 * 1000) / addwins_rdt_number_of_additions)  # we want to simulate about 500 seconds of changes
+
+router_rdt_n_total_nodes = 6
+router_rdt_top_n_neighbours = 3
 
 # WARNING
 # this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
@@ -200,7 +210,31 @@ core.add_node(session_id, Node(id=monitoring_node_id, name="control", type=NodeT
 core.set_node_service(session_id, monitoring_node_id, "rdtmonitoring", startup=(f"bash -c '/root/.coregui/scripts/rdt_tool -m monitoring &> monitoring.log'",))
 print ("added control node")
 
+
 print("running setup")
+
+# gathering all nodes that participate in the simulation, e.g. all nodes that to something up until step "cutoff_after_x_steps"
+def get_all_participating_nodes():
+  participating_nodes_until_cutoff = set()
+  step = -1
+
+  for line in dgs_lines:
+    action, *others = line.split(" ")
+
+    if action == "st":
+      step += 1
+    
+    if step > 0 and action == "ae":
+      participating_nodes_until_cutoff.add(others[1])
+      participating_nodes_until_cutoff.add(others[2])
+
+    if step >= cutoff_after_x_steps + 1:
+      break
+  
+  return participating_nodes_until_cutoff
+
+participating_nodes_until_cutoff = get_all_participating_nodes()
+
 
 line = dgs_lines.pop(0)
 if line != "st 0":
@@ -212,9 +246,13 @@ node_map = {}
 line = dgs_lines.pop(0)
 while not line.startswith("st"):
   action, node_name, *others = line.split(" ")
+  line = dgs_lines.pop(0)
 
   if not action == "an":
     raise Exception(f"unexpected line in setup step 0, expected 'an ..' got '{line}'")
+  
+  if node_name not in participating_nodes_until_cutoff:
+    continue
   
   grid_node_id = grid_node_counter.next()
   node_map[node_name] = global_node_counter.next()
@@ -255,36 +293,48 @@ while not line.startswith("st"):
   dtnd_configfile_helper.add_node(node_map[node_name], dtnd_toml_contents)
   print(f"added node '{node_name}'")
 
-  line = dgs_lines.pop(0)
-
 # adding all links (with 100% loss, links are reused)
-link_iface_map = {}
+def add_all_links():
+  link_iface_map = {}
+  step = -1
 
-for lline in dgs_lines:
-  if lline.startswith("ae"):
-    action, link_name, node1_name, node2_name, *other = lline.split(" ")
-
-    node_min_id = min(node_map[node1_name], node_map[node2_name])
-    node_max_id = max(node_map[node1_name], node_map[node2_name])
-
-    if (node_min_id, node_max_id) not in link_iface_map:
-      node1_iface, node2_iface = interface_creator.get_interfaces(node_min_id, node_max_id)
-
-      core.add_link(
-        session_id=session_id, 
-        node1_id=node_min_id, 
-        node2_id=node_max_id, 
-        iface1=node1_iface, 
-        iface2=node2_iface,
-        options=LinkOptions(loss=100)
-      )
-
-      link_iface_map[(node_min_id, node_max_id)] = (node1_iface.id, node2_iface.id)
-      dtnd_configfile_helper.add_discovery_address(node_min_id, node2_iface.ip4)
-      dtnd_configfile_helper.add_discovery_address(node_max_id, node1_iface.ip4)
-      print(f"added link betweeen '{node1_name}' and '{node2_name}'")
+  for line in dgs_lines:
+    if line.startswith("st"):
+      step += 1
     
-      #todo: edit config file
+    if step >= cutoff_after_x_steps + 1:
+      break
+
+    if line.startswith("ae"):
+      action, link_name, node1_name, node2_name, *other = line.split(" ")
+
+      if node1_name not in participating_nodes_until_cutoff or node2_name not in participating_nodes_until_cutoff:
+        break
+
+      node_min_id = min(node_map[node1_name], node_map[node2_name])
+      node_max_id = max(node_map[node1_name], node_map[node2_name])
+
+      if (node_min_id, node_max_id) not in link_iface_map:
+        node1_iface, node2_iface = interface_creator.get_interfaces(node_min_id, node_max_id)
+
+        core.add_link(
+          session_id=session_id, 
+          node1_id=node_min_id, 
+          node2_id=node_max_id, 
+          iface1=node1_iface, 
+          iface2=node2_iface,
+          options=LinkOptions(loss=100)
+        )
+
+        link_iface_map[(node_min_id, node_max_id)] = (node1_iface.id, node2_iface.id)
+        dtnd_configfile_helper.add_discovery_address(node_min_id, node2_iface.ip4)
+        dtnd_configfile_helper.add_discovery_address(node_max_id, node1_iface.ip4)
+        print(f"added link betweeen '{node1_name}' and '{node2_name}'")
+  
+  return link_iface_map
+
+link_iface_map = add_all_links()
+
 
 # editing dtnd.toml
 for node_id, file_contents in dtnd_configfile_helper.get_substituted_config_files().items():

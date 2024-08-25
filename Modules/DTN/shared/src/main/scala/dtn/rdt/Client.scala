@@ -11,6 +11,7 @@ import dtn.RdtMessageType
 import dtn.RdtMetaBlock
 import dtn.RdtMetaInfo
 import dtn.WSEndpointClient
+import dtn.recoverAndLog
 import rdts.time.Dots
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -56,7 +57,7 @@ class Client(ws: WSEndpointClient, appName: String, monitoringClient: Monitoring
         flush_receive()
       })
     }
-    flush_receive().recover(_.printStackTrace())
+    flush_receive().recoverAndLog()
     ()
   }
 

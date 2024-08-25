@@ -1,12 +1,13 @@
 package dtn.routing
 
-import dtn.{MonitoringMessage, DtnPeer, Packet, WSEroutingClient, printError}
+import dtn.{MonitoringMessage, DtnPeer, Packet, WSEroutingClient}
 
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
 import dtn.MonitoringClientInterface
+import dtn.recoverAndLog
 
 trait Routing {
   def peers: ConcurrentHashMap[String, DtnPeer]
@@ -34,7 +35,7 @@ abstract class BaseRouter(ws: WSEroutingClient, monitoringClient: MonitoringClie
       on_packet_received(packet).flatMap(_ => {
         start_receiving()
       })
-    }).recover(_.printStackTrace())
+    }).recoverAndLog()
   }
 
   def on_packet_received(packet: Packet): Future[Unit] = {

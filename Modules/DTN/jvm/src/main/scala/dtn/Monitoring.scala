@@ -68,7 +68,7 @@ class MonitoringServer(server: TCPReadonlyServer, paths: MonitoringPaths = Monit
       } finally {
         server.stop()
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
     ()
   }
 }
@@ -123,7 +123,7 @@ class MonitoringBundlesReceivedPrinter(paths: MonitoringPaths = MonitoringPaths(
             }
         }
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
     ()
   }
 }
@@ -159,7 +159,7 @@ class MonitoringBundlesForwardedPrinter(paths: MonitoringPaths = MonitoringPaths
             }
         }
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
     ()
   }
 }
@@ -216,7 +216,7 @@ class MonitoringStateDevelopmentPrinter(creationClientId: String, paths: Monitor
           println(s"Num bundles delivered at creation node: ${bundlesDeliveredAtCreationCounter}")
         }
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
     ()
   }
 }
@@ -275,7 +275,7 @@ class MonitoringStateDevelopmentToRatioConverter(creationClientId: String, paths
 
         line = in.readLine()
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
 
     Using(BufferedOutputStream(Files.newOutputStream(paths.ratios_fp))) { out =>
       {
@@ -287,7 +287,7 @@ class MonitoringStateDevelopmentToRatioConverter(creationClientId: String, paths
           out.flush()
         })
       }
-    }.recover(_.printStackTrace())
+    }.recoverAndLog()
     ()
   }
 }
