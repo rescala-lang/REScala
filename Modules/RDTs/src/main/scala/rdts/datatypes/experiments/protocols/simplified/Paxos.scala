@@ -1,9 +1,11 @@
 package rdts.datatypes.experiments.protocols.simplified
 
+import rdts.base.Lattice.mapLattice
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.datatypes.GrowOnlySet
 import rdts.datatypes.experiments.protocols.Consensus
+import rdts.datatypes.experiments.protocols.simplified.Paxos.given
+import rdts.datatypes.{GrowOnlySet, LastWriterWins}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -18,18 +20,12 @@ case class Accept[A](proposal: ProposalNum, value: A)
 
 case class Accepted[A](proposal: ProposalNum, acceptor: Uid)
 
-given Ordering[ProposalNum] with
-  override def compare(x: ProposalNum, y: ProposalNum): Int =
-    if x.number > y.number then 1
-    else if x.number == y.number then Ordering[Uid].compare(x.proposer, y.proposer)
-    else -1
-
 case class Paxos[A](
     prepares: GrowOnlySet[Prepare],
     promises: GrowOnlySet[Promise[A]],
     accepts: GrowOnlySet[Accept[A]],
     accepted: GrowOnlySet[Accepted[A]],
-    members: Set[Uid] // constant
+    members: Map[Uid, Option[LastWriterWins[A]]] // constant
 ) {
 
   private def quorum: Int = members.size / 2 + 1
@@ -39,7 +35,6 @@ case class Paxos[A](
 
   def chooseProposalNumber(using LocalUid): ProposalNum =
     val highestNum = prepares
-      .filter(_.proposal.proposer == replicaId)
       .map(_.proposal.number)
       .maxOption.getOrElse(-1)
     ProposalNum(highestNum + 1, replicaId)
@@ -89,9 +84,19 @@ case class Paxos[A](
         .flatMap(_.highestAccepted)
         .maxByOption((p, v) => p)
         .map((p, v) => v)
-      copy(accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)))
+      copy(
+        accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)),
+        members = members.updated(replicaId, Some(LastWriterWins.now(v)))
+      )
     else
       this // quorum not reached, do nothing
+
+  def propose(v: A)(using LocalUid): Paxos[A] =
+    // find my newest proposalNum
+    val proposalNum = prepares.filter(_.proposal.proposer == replicaId).maxByOption(_.proposal)
+    proposalNum match
+      case Some(Prepare(prop)) => propose(prop, v)
+      case None                => this
 
   // phase 2b
   def accept(proposal: ProposalNum)(using LocalUid): Paxos[A] =
@@ -107,36 +112,43 @@ case class Paxos[A](
 }
 
 object Paxos:
-
   def unchanged[A]: Paxos[A] =
     Paxos[A](
       GrowOnlySet.empty[Prepare],
       GrowOnlySet.empty[Promise[A]],
       GrowOnlySet.empty[Accept[A]],
       GrowOnlySet.empty[Accepted[A]],
-      Set.empty
+      Map.empty
     )
 
   def init[A](members: Set[Uid]): Paxos[A] =
     require(members.nonEmpty, "Cannot initialize Paxos with empty set of members.")
-    unchanged[A].copy(members = members)
+    unchanged[A].copy(members = members.map((_, None)).toMap)
+
+  given Ordering[ProposalNum] with
+    override def compare(x: ProposalNum, y: ProposalNum): Int =
+      if x.number > y.number then 1
+      else if x.number == y.number then Ordering[Uid].compare(x.proposer, y.proposer)
+      else -1
 
   given [A]: Lattice[Paxos[A]] = Lattice.derived
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
       override def write(value: A)(using LocalUid): Paxos[A] =
+        def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
+
         val myNewestProposal = c.prepares.filter(_.proposal.proposer == replicaId).map(_.proposal).maxOption
         myNewestProposal match
           case Some(proposal) =>
-            // check if proposing does anything
+            // check if proposing does anything (i.e. I am the leader)
             val proposed = c.propose(proposal, value)
             if Lattice[Paxos[A]].lteq(proposed, c) then
               // proposing did not work, try to become leader
-              c.prepare()
+              becomeLeader
             else
               proposed
-          case None => c.prepare() // no proposals yet, try to become leader
+          case None => becomeLeader // no proposals yet, try to become leader
     extension [A](c: Paxos[A])
       override def read: Option[A] =
         val acceptancePerProposal: Map[ProposalNum, Set[Accepted[A]]] = c.accepted.groupBy(_.proposal)
@@ -146,20 +158,28 @@ object Paxos:
           if votes.size >= c.quorum
         yield acceptedProposal.value
     extension [A](c: Paxos[A])
-      override def members: Set[Uid] = c.members
+      override def members: Set[Uid] = c.members.keySet
     extension [A](c: Paxos[A])
       override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.init(members = newMembers)
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A] =
         // check if the newest accept is newer than the newest prepare message
         (c.accepts.maxByOption(_.proposal), c.prepares.maxByOption(_.proposal)) match
-          case (Some(accept), Some(prepare)) if accept.proposal >= prepare.proposal =>
+          case (Some(Accept(a, _)), Some(Prepare(p))) if a >= p =>
             // we are in phase 2
-            c.accept(accept.proposal)
-          case (_, Some(prepare)) =>
+            c.accept(a)
+          case (_, Some(Prepare(proposal))) =>
             // we are in phase 1
-            c.promise(prepare.proposal)
+            val d = c.promise(proposal)
+
+            // check if we have become the leader and can start phase 2 by proposing a value
+            if proposal.proposer == replicaId &&                      // we proposed the leading proposal
+              d.promises.count(_.proposal == proposal) >= d.quorum && // it has reached a quorum
+              d.members(proposal.proposer).nonEmpty                   // we know what value to propose
+            then
+              d.propose(proposal, d.members(proposal.proposer).get.value)
+            else d
+
           case _ =>
             // there are no prepare messages, do nothing
             Paxos.unchanged
-
