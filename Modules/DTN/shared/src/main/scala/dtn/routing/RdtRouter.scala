@@ -111,7 +111,11 @@ class RdtRouter(
       tempRdtMetaInfoStore.remove(packet.bp.id)
       tempPreviousNodeStore.remove(packet.bp.id)
       tempRdtIdStore.remove(packet.bp.id)
-      return Option(Packet.ResponseSenderForBundle(bp = packet.bp, clas = List(), delete_afterwards = true))
+      return Option(Packet.ResponseSenderForBundle(
+        bp = packet.bp,
+        clas = List(),
+        delete_afterwards = false
+      )) // test: false means we keep it in case somebody sends it to us again, which means the routing wont be bothered again.
     }
 
     // SHORT-CUT: on no known peers return an empty forwarding request
