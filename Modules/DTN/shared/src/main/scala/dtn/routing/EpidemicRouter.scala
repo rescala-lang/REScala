@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.jdk.CollectionConverters.*
+import dtn.PreviousNodeBlock
 
 /*
   Includes the standalone EpidemicRouter and the extracted EpidemicStrategy for use in other routers.
@@ -43,6 +44,7 @@ class EpidemicRouter(ws: WSEroutingClient, monitoringClient: MonitoringClientInt
   }
 
   override def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
+    epidemicStrategy.onIncomingBundle(packet)
     println("received incoming bundle. information not used for routing. ignoring.")
   }
 
@@ -91,6 +93,24 @@ class EpidemicStrategy {
       case x: Set[String] =>
         delivered.put(packet.bid, (x + packet.cla_sender))
         ()
+    }
+  }
+
+  def onIncomingBundle(packet: Packet.IncomingBundle): Unit = {
+    packet.bndl.other_blocks.collectFirst {
+      case x: PreviousNodeBlock => x
+    } match {
+      case None => println("received incoming bundle without previous node block. ignoring")
+      case Some(previous_node_block) => {
+        delivered.get(packet.bndl.id) match {
+          case null =>
+            delivered.put(packet.bndl.id, Set(previous_node_block.previous_node_id.extract_node_name()))
+            ()
+          case x: Set[String] =>
+            delivered.put(packet.bndl.id, (x + previous_node_block.previous_node_id.extract_node_name()))
+            ()
+        }
+      }
     }
   }
 }

@@ -130,7 +130,8 @@ class RdtRouter(
     println(s"destination nodes: $destination_nodes")
 
     // for these destination nodes select the best neighbours to forward this bundle to
-    var best_neighbours = destination_nodes.flatMap(node => likelihoodState.get_sorted_neighbours(node).take(5))
+    var best_neighbours =
+      destination_nodes.flatMap(node => likelihoodState.get_sorted_neighbours(node).take(topNNeighbours))
     println(s"best neighbours: $best_neighbours")
 
     // remove previous node and source node from ideal neighbours if available
