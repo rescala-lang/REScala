@@ -76,7 +76,6 @@ class RdtRouter(
 
   // maybe grows indefinitely, but only if we receive a bundle which will not be forwarded (hop count depleted?, local unicast endpoint?)
   val tempRdtMetaInfoStore: ConcurrentHashMap[String, RdtMetaInfo] = ConcurrentHashMap()
-  val tempPreviousNodeStore: ConcurrentHashMap[String, Endpoint]   = ConcurrentHashMap()
   val tempRdtIdStore: ConcurrentHashMap[String, String]            = ConcurrentHashMap()
 
   val delivered: ConcurrentHashMap[String, Int] =
@@ -109,7 +108,6 @@ class RdtRouter(
     if delivered.getOrDefault(packet.bp.id, 0) >= nTotalNodes then {
       println("bundle was forwarded to enough unique neighbours. deleting.")
       tempRdtMetaInfoStore.remove(packet.bp.id)
-      tempPreviousNodeStore.remove(packet.bp.id)
       tempRdtIdStore.remove(packet.bp.id)
       return Option(Packet.ResponseSenderForBundle(
         bp = packet.bp,
@@ -134,14 +132,6 @@ class RdtRouter(
       destination_nodes.flatMap(node => likelihoodState.get_sorted_neighbours(node).take(topNNeighbours))
     println(s"best neighbours: $best_neighbours")
 
-    // remove previous node and source node from ideal neighbours if available
-    // todo: check if this is really necessary or not already covered by the next step
-//    best_neighbours -= source_node
-//    best_neighbours = tempPreviousNodeStore.get(packet.bp.id) match
-//      case null                    => best_neighbours
-//      case previous_node: Endpoint => best_neighbours - previous_node
-//    println(s"best neighbours without previous and source node: $best_neighbours")
-
     // remove neighbours which already know the state
     best_neighbours = dotState.filterNeighbourNodes(best_neighbours, rdt_id, rdt_meta_info.dots)
     println(s"best neighbours without neighbours that already know the state: $best_neighbours")
@@ -158,14 +148,11 @@ class RdtRouter(
 
       var random_peers: Iterable[DtnPeer] = peers.values().asScala
 
+      // remove peers which already know the state
+      random_peers = dotState.filterPeers(random_peers, rdt_id, rdt_meta_info.dots)
+
       // remove peers that are already in the multicast selection
       random_peers = random_peers.filter(p => !targets.contains(p))
-
-      // remove previous node and source node from peers if available
-      random_peers = tempPreviousNodeStore.get(packet.bp.id) match
-        case null => random_peers.filter(p => !p.eid.equals(source_node))
-        case previous_node: Endpoint =>
-          random_peers.filter(p => !p.eid.equals(previous_node) && !p.eid.equals(source_node))
 
       println(s"filtered random peers available: ${List.from(random_peers).map(peer => peer.eid)}")
 
@@ -263,7 +250,6 @@ class RdtRouter(
           dotState.mergeDots(previous_node.get, rdt_id, rdt_meta_info.get.dots)
         }
 
-      tempPreviousNodeStore.put(packet.bndl.id, previous_node.get)
       tempRdtMetaInfoStore.put(packet.bndl.id, rdt_meta_info.get)
       tempRdtIdStore.put(packet.bndl.id, rdt_id)
       ()
@@ -358,6 +344,19 @@ class DotState {
       val d = map.get(rdt_id) match
         case null                                        => Dots.empty
         case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(endpoint, Dots.empty)
+
+      !(dots <= d) || dots.isEmpty
+    })
+  }
+
+  /*
+    return all peers for which the provided dots are not already known to them
+   */
+  def filterPeers(peers: Iterable[DtnPeer], rdt_id: String, dots: Dots): Iterable[DtnPeer] = {
+    peers.filter(peer => {
+      val d = map.get(rdt_id) match
+        case null                                        => Dots.empty
+        case node_map: ConcurrentHashMap[Endpoint, Dots] => node_map.getOrDefault(peer.eid, Dots.empty)
 
       !(dots <= d) || dots.isEmpty
     })
