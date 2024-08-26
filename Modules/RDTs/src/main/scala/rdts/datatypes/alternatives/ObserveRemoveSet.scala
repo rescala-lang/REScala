@@ -1,6 +1,7 @@
 package rdts.datatypes.alternatives
 
 import rdts.base.{Lattice, Uid}
+import rdts.dotted.FilteredLattice
 
 /** Implementation of an Observed-Remove Set similar to the one described by Shapiro et al. (2011) */
 case class ObserveRemoveSet[A](entries: Map[Uid, A], tombstones: Set[Uid]) {
@@ -21,8 +22,11 @@ case class ObserveRemoveSet[A](entries: Map[Uid, A], tombstones: Set[Uid]) {
 object ObserveRemoveSet {
   def empty[A]: ObserveRemoveSet[A]                 = ObserveRemoveSet(Map.empty, Set.empty)
   def apply[A](values: Set[A]): ObserveRemoveSet[A] = ObserveRemoveSet(values.map(Uid.gen() -> _).toMap, Set())
-  given lattice[A]: Lattice[ObserveRemoveSet[A]] = (left, right) =>
-    val lefte  = left.entries -- right.tombstones
-    val righte = right.entries -- left.tombstones
-    ObserveRemoveSet(lefte ++ righte, left.tombstones ++ right.tombstones)
+  given lattice[A]: FilteredLattice[ObserveRemoveSet[A]]({
+    given Lattice[A] = Lattice.assertEquals
+    Lattice.derived
+  }) with {
+    override def filter(base: ObserveRemoveSet[A], other: ObserveRemoveSet[A]): ObserveRemoveSet[A] =
+      ObserveRemoveSet(base.entries -- other.tombstones, base.tombstones)
+  }
 }
