@@ -119,7 +119,7 @@ class WSEndpointClient(host: String, port: Int, connection: WSConnection, val no
 
   def sendBundle(bundle: Bundle): Future[Unit] = {
     println(s"waiting to start sending bundle at time ${ZonedDateTime.now()}")
-    while !lock.compareAndSet(false, true) do { Thread.sleep(500); print("l") }
+    while !lock.compareAndSet(false, true) do { /*Thread.sleep(500); print("l")*/ }
     println(s"starting to send bundle at time: ${ZonedDateTime.now()}")
     connection.sendBinary(Cbor.encode(bundle).toByteArray).map(u => {
       println(s"sent bundle at time: ${ZonedDateTime.now()}")
