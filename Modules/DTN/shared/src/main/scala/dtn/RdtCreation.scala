@@ -150,7 +150,7 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
         }
       }
 
-      dataManager.applyLocalDelta(ProtocolDots(state, state.context))
+      dataManager.applyLocalDelta(ProtocolDots(delta, delta.context))
     }
 
     println("finshed adding changes")
