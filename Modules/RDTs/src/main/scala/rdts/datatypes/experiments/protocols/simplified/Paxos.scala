@@ -10,14 +10,10 @@ import rdts.datatypes.{GrowOnlySet, LastWriterWins}
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 // message types
-case class ProposalNum(number: Int, proposer: Uid)
-
+case class ProposalNum(number: Int, proposer: Uid) // ballot numbers (rounds) are replica bound
 case class Prepare(proposal: ProposalNum)
-
 case class Promise[A](proposal: ProposalNum, highestAccepted: Option[(ProposalNum, A)], acceptor: Uid)
-
 case class Accept[A](proposal: ProposalNum, value: A)
-
 case class Accepted[A](proposal: ProposalNum, acceptor: Uid)
 
 case class Paxos[A](
@@ -38,13 +34,6 @@ case class Paxos[A](
       .map(_.proposal.number)
       .maxOption.getOrElse(-1)
     ProposalNum(highestNum + 1, replicaId)
-
-  def canPropose(using LocalUid): Boolean =
-    val myPromises     = promises.filter(_.proposal.proposer == replicaId).groupBy(_.proposal)
-    val newestPromises = myPromises.maxByOption(_._1)
-    newestPromises match
-      case Some((proposal, promises)) if promises.size >= quorum => true
-      case _                                                     => false
 
   // phase 1a
   def prepare()(using LocalUid): Paxos[A] =
@@ -76,7 +65,7 @@ case class Paxos[A](
 
   // phase 2a
   def propose(proposal: ProposalNum, v: A)(using LocalUid): Paxos[A] =
-    // check if i have receive enough promises
+    // check if i have received enough promises
     val myPromises = promises.filter(_.proposal == proposal)
     if myPromises.size >= quorum then
       // check for the newest value contained in a promise
