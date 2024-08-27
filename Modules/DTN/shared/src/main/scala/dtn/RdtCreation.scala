@@ -149,7 +149,7 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
       var delta = addStringGetDelta(s"hello world ${i} from ${dataManager.replicaId}")
       state = state.merge(delta)
 
-      if i > 0 && i % 10 == 0 then {
+      if i > 0 && i % 100 == 0 then {
         if Random().nextBoolean() then {
           delta = delta.merge(clearGetDelta())
           state = state.merge(delta)
