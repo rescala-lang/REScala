@@ -66,6 +66,8 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_milliseconds: Long) ext
       dataManager.applyUnrelatedDelta(Set(s"hello world ${i} from ${dataManager.replicaId}"))
     }
 
+    println("finshed adding changes")
+
     while true do {
       Thread.sleep(1000)
     }
@@ -129,6 +131,8 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
 
       dataManager.applyUnrelatedDelta(delta)
     }
+
+    println("finshed adding changes")
 
     while true do {
       Thread.sleep(1000)
