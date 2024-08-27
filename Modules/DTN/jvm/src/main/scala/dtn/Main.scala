@@ -120,8 +120,22 @@ commandline options:
                 mode,
                 AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
               )
-            case "observeremove.listen"  => throw Exception("observeremove.listen not implemented yet")
-            case "observeremove.active"  => throw Exception("observeremove.active not implemented yet")
+            case "observeremove.listen"  => 
+              case_study_listen(
+                host_address,
+                host_port,
+                MonitoringClient(monitoring_address, monitoring_port),
+                mode,
+                ObserveRemoveSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
+              )
+            case "observeremove.active"  => 
+              case_study_active(
+                host_address,
+                host_port,
+                MonitoringClient(monitoring_address, monitoring_port),
+                mode,
+                ObserveRemoveSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
+              )
             case "lastwriterwins.listen" => throw Exception("lastwriterwins.listen not implemented yet")
             case "lastwriterwins.active" => throw Exception("lastwriterwins.active not implemented yet")
             case s                       => throw Exception(s"unknown client rdt: $s")
