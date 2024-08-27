@@ -84,7 +84,7 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
     _ => ()
   )
 
-  val data: RdtType = ObserveRemoveSet.empty[String]
+  var state: RdtType = ObserveRemoveSet.empty[String]
 
   def connect(
       host: String,
@@ -117,13 +117,17 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
     for i <- 0 to number_of_changes do {
       Thread.sleep(sleep_time_milliseconds)
 
-      dataManager.applyUnrelatedDelta(data.add(s"hello world ${i} from ${dataManager.replicaId}"))
+      var delta = state.add(s"hello world ${i} from ${dataManager.replicaId}")
+      state = state.merge(delta)
 
       if i > 0 && i % 10 == 0 then {
         for j <- i - 10 to Random().between(i - 10, i) do {
-          dataManager.applyUnrelatedDelta(data.remove(s"hello world ${j} from ${dataManager.replicaId}"))
+          delta = delta.merge(state.remove(s"hello world ${j} from ${dataManager.replicaId}"))
         }
+        state = state.merge(delta)
       }
+
+      dataManager.applyUnrelatedDelta(delta)
     }
 
     while true do {
