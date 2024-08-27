@@ -109,6 +109,12 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
     }
   }
 
+  private def clearGetDelta(): RdtType = {
+    state.mod { ctx ?=> current =>
+      current.clear()
+    }
+  }
+
   def connect(
       host: String,
       port: Int,
@@ -144,10 +150,17 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
       state = state.merge(delta)
 
       if i > 0 && i % 10 == 0 then {
+        if Random().nextBoolean() then {
+          delta = delta.merge(clearGetDelta())
+          state = state.merge(delta)
+        }
+
+        /*
         for j <- i - 10 to Random().between(i - 10, i) do {
           delta = delta.merge(removeStringGetDelta(s"hello world ${j} from ${dataManager.replicaId}"))
           state = state.merge(delta)
         }
+         */
       }
 
       dataManager.applyLocalDelta(ProtocolDots(delta, delta.context))
