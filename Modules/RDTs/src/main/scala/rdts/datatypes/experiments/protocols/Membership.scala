@@ -2,6 +2,7 @@ package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.Consensus.syntax
 import rdts.time.Time
 
 class LogHack(on: Boolean) {

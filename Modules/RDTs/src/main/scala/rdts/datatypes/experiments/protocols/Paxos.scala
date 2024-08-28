@@ -197,9 +197,8 @@ object Paxos {
     extension [A](c: Paxos[A])
       override def members: GrowOnlySet[Uid] = c.members
     extension [A](c: Paxos[A])
-      override def reset(newMembers: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = newMembers)
-    extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A] = c.upkeep()
+    override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
 
   given bottom[A]: Bottom[Paxos[A]] with
     override def empty: Paxos[A] = unchanged[A]

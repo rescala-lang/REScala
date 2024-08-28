@@ -149,8 +149,6 @@ object Paxos:
     extension [A](c: Paxos[A])
       override def members: Set[Uid] = c.members.keySet
     extension [A](c: Paxos[A])
-      override def reset(newMembers: Set[Uid]): Paxos[A] = Paxos.init(members = newMembers)
-    extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A] =
         // check if the newest accept is newer than the newest prepare message
         (c.accepts.maxByOption(_.proposal), c.prepares.maxByOption(_.proposal)) match
@@ -172,3 +170,5 @@ object Paxos:
           case _ =>
             // there are no prepare messages, do nothing
             Paxos.unchanged
+
+    override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
