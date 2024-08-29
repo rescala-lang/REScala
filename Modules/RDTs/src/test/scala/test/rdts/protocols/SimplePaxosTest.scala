@@ -1,7 +1,6 @@
 package test.rdts.protocols.simplified
 
 import rdts.base.{Bottom, LocalUid, Uid}
-import rdts.datatypes.GrowOnlyMap
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.datatypes.experiments.protocols.simplified.Paxos.{*, given}
 import rdts.time.Dots
@@ -51,6 +50,22 @@ class SimplePaxosTest extends munit.FunSuite {
     val secondProposalNumber = testPaxosObject.chooseProposalNumber(using id1)
 
     assert(firstProposalNumber < secondProposalNumber)
+  }
+
+  test("prepare does not change members") {
+    var testPaxosObject = emptyPaxosObject
+
+    assert(testPaxosObject.members.nonEmpty)
+    assertEquals(testPaxosObject.members, testPaxosObject.prepare()(using id1).members)
+  }
+
+  test("write does not change members") {
+    var testPaxosObject = emptyPaxosObject
+
+    assert(testPaxosObject.members.nonEmpty)
+
+    val afterwrite = testPaxosObject.write(5)(using id1)
+    assertEquals(afterwrite.members.keySet, testPaxosObject.members.keySet)
   }
 
   test("No changes for older proposals") {

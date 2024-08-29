@@ -2,7 +2,7 @@ package rdts.datatypes.experiments.protocols.simplified
 
 import rdts.base.Lattice.mapLattice
 import rdts.base.LocalUid.replicaId
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus
 import rdts.datatypes.experiments.protocols.simplified.Paxos.given
 import rdts.datatypes.{GrowOnlySet, LastWriterWins}
@@ -65,9 +65,10 @@ case class Paxos[A](
 
   // phase 2a
   def propose(proposal: ProposalNum, v: A)(using LocalUid): Paxos[A] =
-    // check if i have received enough promises
+    // check if I have received enough promises and have not proposed yet
     val myPromises = promises.filter(_.proposal == proposal)
-    if myPromises.size >= quorum then
+    val hasProposed = accepts.exists(_.proposal == proposal)
+    if myPromises.size >= quorum && !hasProposed then
       // check for the newest value contained in a promise
       val acceptedValue = myPromises
         .flatMap(_.highestAccepted)
@@ -172,3 +173,6 @@ object Paxos:
             Paxos.unchanged
 
     override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
+
+  given bottom[A]: Bottom[Paxos[A]] with
+    override def empty: Paxos[A] = unchanged[A]
