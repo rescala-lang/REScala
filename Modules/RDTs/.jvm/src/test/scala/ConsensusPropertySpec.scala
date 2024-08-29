@@ -1,10 +1,9 @@
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
-import org.scalacheck.{Arbitrary, Gen, Prop}
-import rdts.datatypes.experiments.protocols.{Consensus, simplified}
 import org.scalacheck.commands.Commands
-import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.{Consensus, LogHack, Membership, Paxos, simplified}
+import org.scalacheck.{Arbitrary, Gen, Prop}
+import rdts.base.{Lattice, LocalUid}
+import rdts.datatypes.experiments.protocols.{Consensus, simplified}
 
 import scala.collection.mutable
 import scala.util.Try
@@ -19,7 +18,7 @@ class PaxosSimplifiedSuite extends munit.ScalaCheckSuite {
 //      .withMinSize(30)
 //      .withMaxSize(200)
 
-  property("Paxos simplified")(SimplePaxosSuite[Int](
+  property("Paxos simplified")(SimplePaxosSpec[Int](
     logging = false,
     minDevices = 3,
     maxDevices = 3,
@@ -29,14 +28,14 @@ class PaxosSimplifiedSuite extends munit.ScalaCheckSuite {
   ).property())
 }
 
-class SimplePaxosSuite[A: Arbitrary](
+class SimplePaxosSpec[A: Arbitrary](
     logging: Boolean = false,
     minDevices: Int,
     maxDevices: Int,
     writeFreq: Int,
     upkeepFreq: Int,
     mergeFreq: Int
-) extends ConsensusPropertySuite[A, simplified.Paxos](
+) extends ConsensusPropertySpec[A, simplified.Paxos](
       logging,
       minDevices,
       maxDevices,
@@ -62,7 +61,7 @@ class SimplePaxosSuite[A: Arbitrary](
   }
 }
 
-class ConsensusPropertySuite[A: Arbitrary, C[_]: Consensus](
+class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
     logging: Boolean = false,
     minDevices: Int,
     maxDevices: Int,
