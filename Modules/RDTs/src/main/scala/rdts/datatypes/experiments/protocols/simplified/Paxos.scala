@@ -6,7 +6,6 @@ import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus
 import rdts.datatypes.experiments.protocols.simplified.Paxos.given
 import rdts.datatypes.{GrowOnlySet, LastWriterWins}
-
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 // message types
@@ -23,6 +22,7 @@ case class Paxos[A](
     accepted: GrowOnlySet[Accepted[A]],
     members: Map[Uid, Option[LastWriterWins[A]]] // constant
 ) {
+//  override def toString: String = pprint.apply(this).render
 
   private def quorum: Int = members.size / 2 + 1
 
@@ -38,7 +38,7 @@ case class Paxos[A](
   // phase 1a
   def prepare()(using LocalUid): Paxos[A] =
     val proposalNumber = chooseProposalNumber
-    copy(prepares = prepares + Prepare(proposalNumber))
+    Paxos.unchanged.copy(prepares = prepares + Prepare(proposalNumber))
 
   // phase 1b
   def promise(proposal: ProposalNum)(using LocalUid): Paxos[A] =
@@ -59,7 +59,7 @@ case class Paxos[A](
             .find(_.proposal == p)
             .map(a => (p, a.value))
         )
-      copy(
+      Paxos.unchanged.copy(
         promises = promises + Promise(proposal, valueForProposal, replicaId)
       )
 
@@ -74,7 +74,7 @@ case class Paxos[A](
         .flatMap(_.highestAccepted)
         .maxByOption((p, v) => p)
         .map((p, v) => v)
-      copy(
+      Paxos.unchanged.copy(
         accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)),
         members = members.updated(replicaId, Some(LastWriterWins.now(v)))
       )
@@ -95,7 +95,7 @@ case class Paxos[A](
     then
       this // already promised for newer proposal, do nothing
     else
-      copy(
+      Paxos.unchanged.copy(
         accepted = accepted + Accepted(proposal, replicaId)
       )
 
@@ -158,16 +158,23 @@ object Paxos:
             c.accept(a)
           case (_, Some(Prepare(proposal))) =>
             // we are in phase 1
-            val d = c.promise(proposal)
+            // start by promising
+            val promise  = c.promise(proposal)
+            val newState = Lattice[Paxos[A]].merge(c, c.promise(proposal))
 
             // check if we have become the leader and can start phase 2 by proposing a value
-            if proposal.proposer == replicaId &&                      // we proposed the leading proposal
-              d.promises.count(_.proposal == proposal) >= d.quorum && // it has reached a quorum
-              d.members(proposal.proposer).nonEmpty                   // we know what value to propose
+            if proposal.proposer == replicaId &&                                    // we proposed the leading proposal
+              newState.promises.count(_.proposal == proposal) >= newState.quorum && // it has reached a quorum
+              newState.members(proposal.proposer).nonEmpty                          // we know what value to propose
             then
-              d.propose(proposal, d.members(proposal.proposer).get.value)
-            else d
-
+              // combine deltas for promise and propose
+              Lattice[Paxos[A]].merge(
+                promise,
+                newState.propose(proposal, newState.members(proposal.proposer).get.value)
+              )
+            else
+              // we are not the leader, promise
+              promise
           case _ =>
             // there are no prepare messages, do nothing
             Paxos.unchanged
