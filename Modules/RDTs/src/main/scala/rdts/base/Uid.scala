@@ -1,7 +1,5 @@
 package rdts.base
 
-import java.nio.ByteBuffer
-import java.util.Base64
 import scala.CanEqual
 import scala.annotation.implicitNotFound
 
@@ -24,18 +22,18 @@ object Uid:
     override def apply(x: Uid): LocalUid = LocalUid(x)
   }
 
-  private var idCounter: Long   = scala.util.Random.nextLong()
-  private val bytes: ByteBuffer = ByteBuffer.wrap(new Array[Byte](8))
+  val jvmID: String = Base64.encode(scala.util.Random.nextLong(1L << 48))
+
+  private var idCounter: Long = 0
 
   /** Generate a new unique ID.
-    * Note, currently collisions are possible as we only ues 6 bytes of random values.
-    * Why 6? Because multiples of 3 nicely base64 encode
+    * Uses 48 bit of a process local random value + up to 64 of a counter.
+    * Encoded as a string using 9 bytes + 1 byte per 6 bits of the counter value.
     */
   def gen(): Uid = synchronized {
-    idCounter = (idCounter + 1) % (1L << 48)
-    bytes.rewind()
-    val idBytes2 = bytes.putLong(idCounter).array().drop(2)
-    Uid(Base64.getEncoder.encodeToString(idBytes2))
+    idCounter = (idCounter + 1)
+
+    Uid(s"${Base64.encode(idCounter)}.$jvmID")
   }
 
 @implicitNotFound(
@@ -49,7 +47,7 @@ case class LocalUid(uid: Uid) {
   override def toString: String = show
   def show: String              = uid.show
 }
-object LocalUid:
+object LocalUid {
   given ordering: Ordering[LocalUid] = Uid.ordering.on(_.uid)
 
   extension (s: String) def asId: LocalUid = predefined(s)
@@ -58,3 +56,24 @@ object LocalUid:
   def unwrap(id: LocalUid): Uid           = id.uid
   def gen(): LocalUid                     = Uid.gen().convert
   def replicaId(using rid: LocalUid): Uid = rid.uid
+}
+
+object Base64 {
+  private val alphabet: Array[Char] = Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+    'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+    'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_')
+
+  private val sb = StringBuilder(12)
+
+  /** Encodes the 6 least significant bits to the start of the string.
+    * It is thus very unlikely to match any other base64 encodings of longs.
+    */
+  def encode(long: Long): String = synchronized {
+    sb.clear()
+    var remaining = long
+    while remaining != 0 do
+      sb.append(alphabet((remaining & 63).toInt))
+      remaining = remaining >>> 6
+    sb.result()
+  }
+}
