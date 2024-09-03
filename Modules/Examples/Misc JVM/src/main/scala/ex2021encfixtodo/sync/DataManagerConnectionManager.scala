@@ -3,7 +3,7 @@ package ex2021encfixtodo.sync
 import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle}
+import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import replication.{DataManager, ProtocolDots}
@@ -38,7 +38,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
     CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(Files.newInputStream(keysetFilePath)))
   private val aead: Aead = keyset.getPrimitive(classOf[Aead])
 
-  println(keyset.getKeysetInfo)
+  println(LegacyKeysetSerialization.getKeysetInfo(keyset))
 
   val dataManager: DataManager[State] =
     DataManager[State](

@@ -6,7 +6,7 @@ import scala.scalanative.build.{LTO, NativeConfig}
 
 object LocalSettings {
 
-  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.14.1"
+  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.15.0"
 
   def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
 
