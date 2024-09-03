@@ -7,7 +7,10 @@ import scala.annotation.implicitNotFound
 /** Uid’s are serializable abstract unique Ids. Currently implemented as Strings, but subject to change. */
 case class Uid(delegate: String) derives CanEqual {
   override def toString: String = show
-  def show: String              = s"🪪$delegate"
+  def show: String              =
+    val offset = delegate.indexOf('.')
+    val shortened = if offset > 0 then delegate.substring(0, offset + 4) else delegate
+    s"🪪$shortened"
 }
 
 object Uid:
