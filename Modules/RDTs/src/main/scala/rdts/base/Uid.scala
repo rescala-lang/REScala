@@ -7,8 +7,8 @@ import scala.annotation.implicitNotFound
 /** Uid’s are serializable abstract unique Ids. Currently implemented as Strings, but subject to change. */
 case class Uid(delegate: String) derives CanEqual {
   override def toString: String = show
-  def show: String              =
-    val offset = delegate.indexOf('.')
+  def show: String =
+    val offset    = delegate.indexOf('.')
     val shortened = if offset > 0 then delegate.substring(0, offset + 4) else delegate
     s"🪪$shortened"
 }
@@ -27,7 +27,7 @@ object Uid:
 
   val jvmID: String = Base64.encode(scala.util.Random.nextLong(1L << 48))
 
-  private var idCounter: Long = 0
+  private var idCounter: Long = -1
 
   /** Generate a new unique ID.
     * Uses 48 bit of a process local random value + up to 64 of a counter.
@@ -36,7 +36,8 @@ object Uid:
   def gen(): Uid = synchronized {
     idCounter = (idCounter + 1)
 
-    Uid(s"${Base64.encode(idCounter)}.$jvmID")
+    if idCounter != 0 then Uid(s"${Base64.encode(idCounter)}.$jvmID")
+    else Uid(s"$jvmID")
   }
 
 @implicitNotFound(
@@ -62,7 +63,8 @@ object LocalUid {
 }
 
 object Base64 {
-  private val alphabet: Array[Char] = Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+  private val alphabet: Array[Char] = Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S',
     'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
     'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_')
 
