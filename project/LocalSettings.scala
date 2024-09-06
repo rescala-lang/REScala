@@ -13,7 +13,7 @@ object LocalSettings {
   def slf4jSimpleTest = libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.16" % Test
 
   def jetty = {
-    val jettyVersion = "12.0.12"
+    val jettyVersion = "12.0.13"
     Seq(
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
