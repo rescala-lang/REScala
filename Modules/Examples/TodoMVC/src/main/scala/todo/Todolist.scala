@@ -7,7 +7,7 @@ import reactives.extra.Tags.reattach
 import replication.WebRTCConnectionView
 import scalatags.JsDom.all
 import scalatags.JsDom.all.given
-import todo.TodoDataManager.TodoRepState
+import todo.TodoDataManager.{TodoRepState, dataManager}
 
 import java.util.Timer
 import scala.scalajs.js
@@ -30,7 +30,7 @@ object Todolist {
     val todoApp  = new TodoAppUI(storagePrefix)
     val contents = todoApp.getContents()
 
-    TodoDataManager.dataManager.addLatentConnection(WebviewAdapterChannel.listen())
+    // TodoDataManager.dataManager.addLatentConnection(WebviewAdapterChannel.listen())
 
     val webrtc = WebRTCConnectionView(TodoDataManager.dataManager).example()
 
