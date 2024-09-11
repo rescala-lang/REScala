@@ -76,7 +76,8 @@ case class Membership[A, C[_], D[_]](
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        logger.info(s"Inner consensus reached on value $value, log: ${log :+ value}")
+        if log.length > 1 then
+          logger.info(s"Inner consensus reached on value $value, log: ${log :+ value}")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(currentMembers),

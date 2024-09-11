@@ -46,7 +46,7 @@ case class Paxos[A](
     if myHighestPromise.nonEmpty && myHighestPromise.get.proposal >= proposal
     then
       // already promised for equally high id, do nothing
-      this
+      Paxos.unchanged
     else
       // proposal is newer
       // check if we already accepted a specific value
@@ -79,21 +79,21 @@ case class Paxos[A](
         members = members.updated(replicaId, Some(LastWriterWins.now(v)))
       )
     else
-      this // quorum not reached, do nothing
+      Paxos.unchanged // quorum not reached, do nothing
 
   def propose(v: A)(using LocalUid): Paxos[A] =
     // find my newest proposalNum
     val proposalNum = prepares.filter(_.proposal.proposer == replicaId).maxByOption(_.proposal)
     proposalNum match
       case Some(Prepare(prop)) => propose(prop, v)
-      case None                => this
+      case None                => Paxos.unchanged
 
   // phase 2b
   def accept(proposal: ProposalNum)(using LocalUid): Paxos[A] =
     // check if I have already promised a newer proposal
     if myHighestPromise.nonEmpty && myHighestPromise.get.proposal > proposal
     then
-      this // already promised for newer proposal, do nothing
+      Paxos.unchanged // already promised for newer proposal, do nothing
     else
       Paxos.unchanged.copy(
         accepted = accepted + Accepted(proposal, replicaId)
@@ -126,19 +126,21 @@ object Paxos:
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
       override def write(value: A)(using LocalUid): Paxos[A] =
-        def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
+        if c.members.contains(replicaId) then
+          def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
 
-        val myNewestProposal = c.prepares.filter(_.proposal.proposer == replicaId).map(_.proposal).maxOption
-        myNewestProposal match
-          case Some(proposal) =>
-            // check if proposing does anything (i.e. I am the leader)
-            val proposed = c.propose(proposal, value)
-            if Lattice[Paxos[A]].lteq(proposed, c) then
-              // proposing did not work, try to become leader
-              becomeLeader
-            else
-              proposed
-          case None => becomeLeader // no proposals yet, try to become leader
+          val myNewestProposal = c.prepares.filter(_.proposal.proposer == replicaId).map(_.proposal).maxOption
+          myNewestProposal match // check if I already have a proposal
+            case Some(proposal) =>
+              // check if proposing does anything (i.e. I am the leader)
+              val proposed = c.propose(proposal, value)
+              if Lattice[Paxos[A]].lteq(proposed, c) then
+                // proposing did not work, try to become leader
+                becomeLeader
+              else
+                proposed
+            case None => becomeLeader // no proposals yet, try to become leader
+        else Paxos.unchanged
     extension [A](c: Paxos[A])
       override def read: Option[A] =
         val acceptancePerProposal: Map[ProposalNum, Set[Accepted[A]]] = c.accepted.groupBy(_.proposal)
