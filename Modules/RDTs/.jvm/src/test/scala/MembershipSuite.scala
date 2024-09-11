@@ -18,7 +18,7 @@ class MembershipSuite extends munit.ScalaCheckSuite {
       .withMaxSize(500)
 
   property("Membership with simplepaxos")(MembershipSpec[Int, simplified.Paxos, simplified.Paxos](
-    logging = true,
+    logging = false,
     minDevices = 3,
     maxDevices = 6,
     mergeFreq = 80,
