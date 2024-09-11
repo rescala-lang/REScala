@@ -76,7 +76,7 @@ case class Paxos[A](
         .map((p, v) => v)
       Paxos.unchanged.copy(
         accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)),
-        members = members.updated(replicaId, Some(LastWriterWins.now(v)))
+        members = members.updated(replicaId, Some(LastWriterWins.now(v))) // remember proposed value
       )
     else
       Paxos.unchanged // quorum not reached, do nothing
@@ -153,6 +153,13 @@ object Paxos:
       override def members: Set[Uid] = c.members.keySet
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A] =
+        // sanity checks
+        def allIds: Set[Uid] = c.prepares.map(_.proposal.proposer)
+          .union(c.promises.map(_.acceptor))
+          .union(c.accepts.map(_.proposal.proposer))
+          .union(c.accepted.map(_.acceptor))
+        assert(allIds.subsetOf(c.members.keySet)) // we only have votes from members
+
         // check if the newest accept is newer than the newest prepare message
         (c.accepts.maxByOption(_.proposal), c.prepares.maxByOption(_.proposal)) match
           case (Some(Accept(a, _)), Some(Prepare(p))) if a >= p =>
