@@ -8,7 +8,7 @@ import sbt.Keys.libraryDependencies
 object Dependencies {
 
   def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.18.1"
-  def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.1"  % Test
+  def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.0.2"  % Test
   def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.0.0"  % Test
   def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.9.0"
   def quicklens     = libraryDependencies += "com.softwaremill.quicklens" %%% "quicklens"        % "1.9.0"
