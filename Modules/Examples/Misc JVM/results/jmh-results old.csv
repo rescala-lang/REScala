@@ -1,0 +1,21 @@
+"Benchmark","Mode","Threads","Samples","Score","Score Error (99.9%)","Unit","size","datatype","benchtype"
+"ex2024bft.BFTBenchmark.baselineGOC","avgt",1,3,0.075973,0.005616,"us/op",1,goc,baseline
+"ex2024bft.BFTBenchmark.baselineGOC","avgt",1,3,0.205242,0.005022,"us/op",5,goc,baseline
+"ex2024bft.BFTBenchmark.baselineGOC","avgt",1,3,0.367906,0.062371,"us/op",10,goc,baseline
+"ex2024bft.BFTBenchmark.baselineGOC","avgt",1,3,1.709012,0.013901,"us/op",50,goc,baseline
+"ex2024bft.BFTBenchmark.baselineGOC","avgt",1,3,6.044408,0.071543,"us/op",100,goc,baseline
+"ex2024bft.BFTBenchmark.baselineRepList","avgt",1,3,1.324912,0.056274,"us/op",1,replist,baseline
+"ex2024bft.BFTBenchmark.baselineRepList","avgt",1,3,9.914194,0.625292,"us/op",5,replist,baseline
+"ex2024bft.BFTBenchmark.baselineRepList","avgt",1,3,25.176950,0.852293,"us/op",10,replist,baseline
+"ex2024bft.BFTBenchmark.baselineRepList","avgt",1,3,303.716814,23.025273,"us/op",50,replist,baseline
+"ex2024bft.BFTBenchmark.baselineRepList","avgt",1,3,1409.155184,91.041516,"us/op",100,replist,baseline
+"ex2024bft.BFTBenchmark.bftGOC","avgt",1,3,2.125024,0.048874,"us/op",1,goc,bft
+"ex2024bft.BFTBenchmark.bftGOC","avgt",1,3,10.249630,0.606607,"us/op",5,goc,bft
+"ex2024bft.BFTBenchmark.bftGOC","avgt",1,3,28.298989,1.496834,"us/op",10,goc,bft
+"ex2024bft.BFTBenchmark.bftGOC","avgt",1,3,431.569540,18.609854,"us/op",50,goc,bft
+"ex2024bft.BFTBenchmark.bftGOC","avgt",1,3,1643.202811,69.935121,"us/op",100,goc,bft
+"ex2024bft.BFTBenchmark.bftRepList","avgt",1,3,15.139472,0.249055,"us/op",1,replist,bft
+"ex2024bft.BFTBenchmark.bftRepList","avgt",1,3,82.638447,8.417250,"us/op",5,replist,bft
+"ex2024bft.BFTBenchmark.bftRepList","avgt",1,3,245.214588,28.155046,"us/op",10,replist,bft
+"ex2024bft.BFTBenchmark.bftRepList","avgt",1,3,4562.227866,21.650085,"us/op",50,replist,bft
+"ex2024bft.BFTBenchmark.bftRepList","avgt",1,3,18486.582445,1981.931917,"us/op",100,replist,bft

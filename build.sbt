@@ -126,6 +126,7 @@ lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
   )
 
 lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
+  .enablePlugins(JmhPlugin)
   .dependsOn(reactives.jvm, replication.jvm)
   .settings(
     scala3defaults,
