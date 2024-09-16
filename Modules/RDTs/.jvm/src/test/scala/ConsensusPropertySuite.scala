@@ -36,7 +36,14 @@ class SimplePaxosSuite[A: Arbitrary](
     writeFreq: Int,
     upkeepFreq: Int,
     mergeFreq: Int
-) extends ConsensusPropertySuite[A, simplified.Paxos](logging, minDevices, maxDevices, writeFreq, upkeepFreq, mergeFreq) {
+) extends ConsensusPropertySuite[A, simplified.Paxos](
+      logging,
+      minDevices,
+      maxDevices,
+      writeFreq,
+      upkeepFreq,
+      mergeFreq
+    ) {
 
   override def genUpkeep(state: Map[LocalUid, simplified.Paxos[A]]): Gen[Upkeep] =
     for

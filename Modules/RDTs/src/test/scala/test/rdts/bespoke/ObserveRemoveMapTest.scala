@@ -14,15 +14,14 @@ class ObserveRemoveMapTest extends munit.FunSuite {
 
     given replicaId: LocalUid = LocalUid.gen()
 
-    val added = obremmap.mod{ ctx ?=> current =>
+    val added = obremmap.mod { ctx ?=> current =>
       val nextDot = ctx.nextDot(replicaId.uid)
       current.update("Hi!", nextDot)
     }
 
     assert(added.data.contains("Hi!"))
 
-
-    val remove = added.mod{ ctx ?=> current =>
+    val remove = added.mod { ctx ?=> current =>
       current.remove("Hi!")
     }
 

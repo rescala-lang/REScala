@@ -22,7 +22,7 @@ class X25519Test extends FunSuite {
     // Don't skip extraction step!
     val encryptionKey = {
       val hkdfParameters = HKDFParameters(bobSharedSecret, null, "CAPABILITY".getBytes())
-      val hkdf = HKDFBytesGenerator(DigestFactory.createSHA256())
+      val hkdf           = HKDFBytesGenerator(DigestFactory.createSHA256())
       hkdf.init(hkdfParameters)
       val rawKey = Array.ofDim[Byte](32)
       hkdf.generateBytes(rawKey, 0, 32)
@@ -33,7 +33,7 @@ class X25519Test extends FunSuite {
 
     val shouldBeTheSameEncryptionKey = {
       val hkdfParameters = HKDFParameters(aliceSharedSecret, null, "CAPABILITY".getBytes())
-      val hkdf = HKDFBytesGenerator(DigestFactory.createSHA256())
+      val hkdf           = HKDFBytesGenerator(DigestFactory.createSHA256())
       hkdf.init(hkdfParameters)
       val rawKey = Array.ofDim[Byte](32)
       hkdf.generateBytes(rawKey, 0, 32)

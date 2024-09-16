@@ -47,9 +47,6 @@ object ACL {
       Dotted(OpGraph(Map(next -> op)), Dots.single(next))
     }
 
-
   }
-
-
 
 }

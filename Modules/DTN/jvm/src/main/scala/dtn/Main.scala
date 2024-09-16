@@ -120,7 +120,7 @@ commandline options:
                 mode,
                 AddWinsSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
               )
-            case "observeremove.listen"  => 
+            case "observeremove.listen" =>
               case_study_listen(
                 host_address,
                 host_port,
@@ -128,7 +128,7 @@ commandline options:
                 mode,
                 ObserveRemoveSetRDT(add_wins_rdt_number_of_additions, add_wins_rdt_sleep_time_milliseconds)
               )
-            case "observeremove.active"  => 
+            case "observeremove.active" =>
               case_study_active(
                 host_address,
                 host_port,

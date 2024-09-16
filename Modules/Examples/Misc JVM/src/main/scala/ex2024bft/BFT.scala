@@ -51,14 +51,16 @@ case class BFT[V](deltas: Set[BFTDelta[V]]) {
 
     val worklist = mutable.Queue[BFTDelta[V]](graph(None).toList*)
 
-    val connected = mutable.Set.empty[BFTDelta[V]]
+    val connected       = mutable.Set.empty[BFTDelta[V]]
     val connectedHashes = mutable.Set.empty[Hash]
 
     while worklist.nonEmpty do {
       val elem = worklist.dequeue()
       connected.add(elem)
       connectedHashes.add(elem.hash)
-      worklist.enqueueAll(graph.getOrElse(Some(elem.hash), Set.empty[BFTDelta[V]]).filter(delta => delta.predecessors.subsetOf(connectedHashes)))
+      worklist.enqueueAll(graph.getOrElse(Some(elem.hash), Set.empty[BFTDelta[V]]).filter(delta =>
+        delta.predecessors.subsetOf(connectedHashes)
+      ))
     }
 
     connected.map(_.value).foldLeft(b.empty)((l, r) => l.merge(r))

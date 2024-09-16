@@ -243,7 +243,10 @@ class LoRePhase extends PluginPhase:
               rawInteractionTree.sourcePos
             )
             TVar("<error>")
-      case modifiesTree @ Apply(Apply(TypeApply(Select(_, methodName), _), List(innerNode)), List(Block(_, Ident(modVar))))
+      case modifiesTree @ Apply(
+            Apply(TypeApply(Select(_, methodName), _), List(innerNode)),
+            List(Block(_, Ident(modVar)))
+          )
           if methodName.toString == "modifies" =>
         // Interaction modifies is different from the other methods as it doesn't take an arrow function as input
         var innerTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)

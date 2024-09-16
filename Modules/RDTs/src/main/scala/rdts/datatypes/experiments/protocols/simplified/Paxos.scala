@@ -66,7 +66,7 @@ case class Paxos[A](
   // phase 2a
   def propose(proposal: ProposalNum, v: A)(using LocalUid): Paxos[A] =
     // check if I have received enough promises and have not proposed yet
-    val myPromises = promises.filter(_.proposal == proposal)
+    val myPromises  = promises.filter(_.proposal == proposal)
     val hasProposed = accepts.exists(_.proposal == proposal)
     if myPromises.size >= quorum && !hasProposed then
       // check for the newest value contained in a promise

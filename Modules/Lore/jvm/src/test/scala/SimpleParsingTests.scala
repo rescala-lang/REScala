@@ -326,9 +326,9 @@ class SimpleParsing extends ParserSuite {
 				)""",
       TTuple(
         List(
-          TFunC("add", List(TVar("districts_temp"), TVar("districtUpdated"))), 
+          TFunC("add", List(TVar("districts_temp"), TVar("districtUpdated"))),
           TFunC(
-            "addOrderLines", 
+            "addOrderLines",
             List(TVar("orderLines"), TVar("newOrderLines"))
           )
         )

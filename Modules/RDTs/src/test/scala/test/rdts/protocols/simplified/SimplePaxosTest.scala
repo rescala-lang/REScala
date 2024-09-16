@@ -169,14 +169,14 @@ class SimplePaxosTest extends munit.FunSuite {
       testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
     // deliver prepares
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-      id2)).merge(testPaxosObject.upkeep()(using id3))
+    id2)).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, None)
     // deliver proposal
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-      id2)).merge(testPaxosObject.upkeep()(using id3))
+    id2)).merge(testPaxosObject.upkeep()(using id3))
     // deliver accepted
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-      id2)).merge(testPaxosObject.upkeep()(using id3))
+    id2)).merge(testPaxosObject.upkeep()(using id3))
     assert(clue(testPaxosObject.read) == Some(2) || clue(testPaxosObject.read) == Some(1))
   }
 }

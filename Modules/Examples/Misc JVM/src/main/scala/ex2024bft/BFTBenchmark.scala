@@ -1,6 +1,5 @@
 package ex2024bft
 
-
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Measurement
 import org.openjdk.jmh.annotations.BenchmarkMode
@@ -26,16 +25,16 @@ class BenchmarkState {
   @Param(Array("1", "2", "5", "10", "25", "50", "100", "250", "500", "1000", "2500", "5000", "10000"))
   var size = 0
 
-  var gocList: List[GrowOnlyCounter] = null
+  var gocList: List[GrowOnlyCounter]       = null
   var gocLattice: Lattice[GrowOnlyCounter] = null
 
-  var bftGOCList: List[BFT[GrowOnlyCounter]] = null
+  var bftGOCList: List[BFT[GrowOnlyCounter]]       = null
   var bftGOCLattice: Lattice[BFT[GrowOnlyCounter]] = null
 
-  var repLL: List[Dotted[ReplicatedList[Int]]] = null
+  var repLL: List[Dotted[ReplicatedList[Int]]]           = null
   var repLLLattice: Lattice[Dotted[ReplicatedList[Int]]] = null
 
-  var bftRepLL: List[BFT[Dotted[ReplicatedList[Int]]]] = null
+  var bftRepLL: List[BFT[Dotted[ReplicatedList[Int]]]]           = null
   var bftRepLLLattice: Lattice[BFT[Dotted[ReplicatedList[Int]]]] = null
 
   @Setup(Level.Trial)
@@ -94,7 +93,7 @@ object BFTBenchmark {
 
     list +:= goc
 
-    for (_ <- 0 to size) {
+    for _ <- 0 to size do {
       goc = goc.inc()(using id1)
       list +:= goc
     }
@@ -102,7 +101,7 @@ object BFTBenchmark {
     list
   }
 
-  def gocBottom: Bottom[GrowOnlyCounter] = summon[Bottom[GrowOnlyCounter]]
+  def gocBottom: Bottom[GrowOnlyCounter]   = summon[Bottom[GrowOnlyCounter]]
   def gocLattice: Lattice[GrowOnlyCounter] = summon[Lattice[GrowOnlyCounter]]
 
   def generateGOCBFTList(size: Int): List[BFT[GrowOnlyCounter]] = {
@@ -114,7 +113,7 @@ object BFTBenchmark {
 
     list +:= bft
 
-    for (_ <- 0 to size) {
+    for _ <- 0 to size do {
       bft = bft.update(_.inc()(using id1))(using byteableGOC, gocLattice, gocBottom)
       list +:= bft
     }
@@ -122,7 +121,7 @@ object BFTBenchmark {
     list
   }
 
-  def byteableGOC: Byteable[GrowOnlyCounter] = it => it.inner.toString.getBytes
+  def byteableGOC: Byteable[GrowOnlyCounter]       = it => it.inner.toString.getBytes
   def bftGOCLattice: Lattice[BFT[GrowOnlyCounter]] = BFT.lattice(using gocLattice)(using byteableGOC)
 
   def generateListDeltaList(size: Int): List[Dotted[ReplicatedList[Int]]] = {
@@ -134,7 +133,7 @@ object BFTBenchmark {
 
     list +:= repList
 
-    for (i <- 0 to size) {
+    for i <- 0 to size do {
       repList = repList.mod(_.insert(using id1)(0, i))
       list +:= repList
     }
@@ -153,16 +152,21 @@ object BFTBenchmark {
 
     list +:= bft
 
-    for (i <- 0 to size) {
-      bft = bft.update(_.mod(_.insert(using id1)(0, i)))(using byteableListDeltaList, dottedRepListIntLattice, bottomListDeltaList)
+    for i <- 0 to size do {
+      bft = bft.update(_.mod(_.insert(using id1)(0, i)))(using
+        byteableListDeltaList,
+        dottedRepListIntLattice,
+        bottomListDeltaList
+      )
       list +:= bft
     }
 
     list
   }
 
-  def bottomListDeltaList: Bottom[Dotted[ReplicatedList[Int]]] = summon
+  def bottomListDeltaList: Bottom[Dotted[ReplicatedList[Int]]]     = summon
   def byteableListDeltaList: Byteable[Dotted[ReplicatedList[Int]]] = Byteable.toStringBased
-  def latticeBFTListDeltaList: Lattice[BFT[Dotted[ReplicatedList[Int]]]] = BFT.lattice(using dottedRepListIntLattice)(using byteableListDeltaList)
+  def latticeBFTListDeltaList: Lattice[BFT[Dotted[ReplicatedList[Int]]]] =
+    BFT.lattice(using dottedRepListIntLattice)(using byteableListDeltaList)
 
 }

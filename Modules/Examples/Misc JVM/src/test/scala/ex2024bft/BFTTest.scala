@@ -7,7 +7,7 @@ import rdts.dotted.Dotted
 
 class BFTTest extends munit.ScalaCheckSuite {
 
-  given Byteable[GrowOnlyCounter]     = (obj: GrowOnlyCounter) => obj.inner.toString.getBytes
+  given Byteable[GrowOnlyCounter]          = (obj: GrowOnlyCounter) => obj.inner.toString.getBytes
   given lat: Lattice[BFT[GrowOnlyCounter]] = BFT.lattice
 
   test("basic update") {
@@ -36,7 +36,7 @@ class BFTTest extends munit.ScalaCheckSuite {
 
     val bottom = BFT(summon[Bottom[GrowOnlyCounter]].empty)
 
-    val u1 = bottom.update(_.inc()(using id1))
+    val u1          = bottom.update(_.inc()(using id1))
     val incorrectU1 = BFT(u1.deltas.map(_.copy(value = GrowOnlyCounter(Map(id2.uid -> 1)))))
 
     val res = bottom.merge(incorrectU1)
