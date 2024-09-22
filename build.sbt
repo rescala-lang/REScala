@@ -172,8 +172,8 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
         // Note, the below means JDK 1.8, aka Java 8
         "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
         "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
-        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.6",
-        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.6",
+        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.7",
+        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.7",
       ),
     Test / fork := true,
   )
