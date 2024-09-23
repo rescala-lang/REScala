@@ -181,7 +181,7 @@ RUN git clone https://github.com/rescala-lang/REScala.git
 # compile native
 WORKDIR /root/temp/REScala
 RUN sbt 'print dtnJVM/packageJars'
-RUN /root/temp/graalvm-jdk-22+36.1/bin/native-image --class-path /root/temp/REScala/Modules/DTN/jvm/target/scala-3.4.2/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
+RUN /root/temp/graalvm-jdk-22+36.1/bin/native-image --class-path /root/temp/REScala/Modules/DTN/jvm/target/scala-3.5.0/jars/"*" dtn.rdt_tool -o /root/.coregui/scripts/rdt_tool --no-fallback --gc=G1 -Ob
 
 
 WORKDIR /root

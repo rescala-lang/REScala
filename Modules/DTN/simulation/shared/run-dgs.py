@@ -38,7 +38,7 @@ clients = {
   "n26": "listen"
 } # 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 17, 18, 19, 26
 
-router_variant = "rdt"  # options: "flooding", "epidemic", "spray", "binary", "rdt", "rdt2"
+router_variant = "rdt"  # options: "flooding", "epidemic", "spray", "rdt", "rdt2", "random"
 
 rdt_client_operation_mode = "pushall"  # options: "pushall", "requestlater"
 
@@ -48,8 +48,8 @@ dtnd_cla = "udp"
 addwins_rdt_number_of_additions = 2000
 addwins_rdt_sleep_time_milliseconds = int((500 * 1000) / addwins_rdt_number_of_additions)  # we want to simulate about 500 seconds of changes
 
-router_rdt_n_total_nodes = 6
-router_rdt_top_n_neighbours = 3
+router_rdt_n_total_nodes = 10
+router_rdt_top_n_neighbours = 5
 
 # WARNING
 # this script is custom tailored for my simulation use case and other simulations might use parts of this script because it works, 
@@ -273,7 +273,7 @@ while not line.startswith("st"):
   if node_name in clients:
     additional_config = " "
 
-    if rdt_variant == "addwins":
+    if rdt_variant == "addwins" or rdt_variant == "observeremove":
       additional_config = f"-awa {addwins_rdt_number_of_additions} -awt {addwins_rdt_sleep_time_milliseconds} "
     
     config_str = f"bash -c '/root/.coregui/scripts/rdt_tool -m client -cr {rdt_variant}.{clients[node_name]} -cm {rdt_client_operation_mode} {additional_config}-ma 172.16.0.1 &> client.log'"

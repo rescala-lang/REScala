@@ -14,6 +14,8 @@ import rdts.dotted.Obrem
 import rdts.datatypes.contextual.ObserveRemoveMap
 import rdts.time.Dot
 import rdts.base.Lattice
+import rdts.datatypes.LastWriterWins
+import rdts.time.Dots
 
 trait CaseStudyRdt {
   def connect(
@@ -174,17 +176,28 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
   }
 }
 
-/*
 class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) extends CaseStudyRdt {
-  type RdtType = Set[String] // this is not right
+  type RdtType = LastWriterWins[Set[String]]
 
   given JsonValueCodec[RdtType] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+  given replicaId: LocalUid = LocalUid.gen()
+
   val dataManager: DataManager[RdtType] = DataManager[RdtType](
-    LocalUid.gen(),
+    replicaId,
     state => println("replica received new state information"),
     _ => ()
   )
+
+  var state = LastWriterWins.empty[Set[String]]
+  var dots  = Dots.empty
+
+  private def writeStringGetDeltaInfo(s: String): Tuple2[RdtType, Dots] = {
+    state = state.write(Set(s))         // advances a total ordering internally
+    dots = dots.advanced(replicaId.uid) // advances a total ordering externally for the metadata
+
+    (state, dots)
+  }
 
   def connect(
       host: String,
@@ -216,7 +229,10 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
 
     for i <- 0 to number_of_changes do {
       Thread.sleep(sleep_time_milliseconds)
-      dataManager.applyUnrelatedDelta(s"hello world ${i} from ${dataManager.replicaId}")
+
+      val (state, dots) = writeStringGetDeltaInfo(s"hello world ${i} from ${dataManager.replicaId}")
+
+      dataManager.applyLocalDelta(ProtocolDots(state, dots))
     }
 
     while true do {
@@ -224,4 +240,3 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
     }
   }
 }
- */

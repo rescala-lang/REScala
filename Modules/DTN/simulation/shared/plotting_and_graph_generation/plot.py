@@ -16,7 +16,7 @@ def util_get_time_from_stamp(timestamp):
 
 
 
-def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
+def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp, average_ratios_fp):
   """
   first plot - bundles forwarded per node over time
   """
@@ -25,7 +25,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
 
   begin_time = None
 
-  data = {}  # structure: {node-id: {second: num-bundles}}
+  data = {}  # structure: {node-name: {second: num-bundles}}
 
   with open(forwarded_fp, 'r', encoding='utf8') as f:
     for line in f.readlines():
@@ -51,7 +51,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
 
   ### converting structure ####
 
-  plot_data = {}  # structure: {node-id: [num-bundles-per-step]}
+  plot_data = {}  # structure: {node-name: [num-bundles-per-step]}
 
   for node_id, d in data.items():
     plot_data[node_id] = []
@@ -64,7 +64,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
 
 
   ### plot data ###
-  '''
+  
   for node_id, l in plot_data.items():
     plt.plot(l, label=node_id)
 
@@ -73,7 +73,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   plt.xlabel('second')
   plt.legend()
   plt.show()
-'''
+
 
 
   """
@@ -145,7 +145,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
 
 
   ### plot data ###
-  '''
+  
   for node_id, l in plot_data.items():
     plt.plot(l, label=node_id)
 
@@ -154,7 +154,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   plt.xlabel('second')
   plt.legend()
   plt.show()
-'''
+
 
 
   """
@@ -180,7 +180,7 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
 
 
   """
-  third plot - state convergence of clients over time
+  fifth plot - state convergence of clients over time
   """
 
   ### import ratio converted data ###
@@ -213,13 +213,15 @@ def plot(forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp):
   plt.show()
 
 
+
 def get_filepaths(monitoring_path):
   forwarded_fp = monitoring_path / 'forwarded.data'
   received_fp = monitoring_path / 'received.data'
   created_and_delivered_fp = monitoring_path / 'created_and_delivered.data'
   ratios_fp = monitoring_path / 'ratios.data'
+  average_ratios_fp = monitoring_path / 'average_ratios.data'
 
-  return forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp
+  return forwarded_fp, received_fp, created_and_delivered_fp, ratios_fp, average_ratios_fp
 
 
 
@@ -228,13 +230,13 @@ script_path = Path(__file__).parent.resolve()
 
 monitoring_path = script_path / 'monitoring'
 
-print(monitoring_path)
-plot(*get_filepaths(monitoring_path))
-
-monitoring_path = Path("/home/kali/REScala/Modules/DTN/simulation/shared/archive/rdt-router-selection-arguing/rdt-n2-addwins-2000-5n-5t").resolve()
-
 #print(monitoring_path)
 #plot(*get_filepaths(monitoring_path))
+
+monitoring_path = Path("/home/kali/REScala/Modules/DTN/simulation/shared/archive/node-constellation-arguing/2024-08-24-1939-flooding-n19-addwins-2000").resolve()
+
+print(monitoring_path)
+plot(*get_filepaths(monitoring_path))
 
 """
 for monitoring_path in (script_path / 'archive' / 'rdt-router-selection-arguing').glob('*'):
