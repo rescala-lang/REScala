@@ -35,12 +35,6 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
     writeFreq: Int,
     addMemberFreq: Int,
     removeMemberFreq: Int
-)(using
-    Bottom[C[Set[Uid]]],
-    Bottom[D[A]],
-    Lattice[C[Set[Uid]]],
-    Lattice[D[A]],
-    Lattice[Membership[A, C, D]]
 ) extends CommandsARDTs[Membership[A, C, D]] {
   // given logger: Logger = Logger(level = Level.Info)
 

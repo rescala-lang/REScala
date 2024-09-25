@@ -1,8 +1,8 @@
 package test.rdts.protocols
 
 import rdts.base.LocalUid
-import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.datatypes.experiments.protocols.simplified.{MultiRoundVoting, Paxos, SimpleVoting}
+import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 
 class MembershipTest extends munit.FunSuite {
 

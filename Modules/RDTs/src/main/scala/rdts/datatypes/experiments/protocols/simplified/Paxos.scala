@@ -6,6 +6,7 @@ import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus
 import rdts.datatypes.experiments.protocols.simplified.Paxos.given
 import rdts.datatypes.{GrowOnlySet, LastWriterWins}
+
 import scala.math.Ordering.Implicits.infixOrderingOps
 
 // message types
@@ -76,7 +77,7 @@ case class Paxos[A](
         .map((p, v) => v)
       Paxos.unchanged.copy(
         accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)),
-        accepted = accepted + Accepted(proposal, replicaId), // I can safely accept my own proposal
+        accepted = accepted + Accepted(proposal, replicaId),              // I can safely accept my own proposal
         members = members.updated(replicaId, Some(LastWriterWins.now(v))) // remember proposed value
       )
     else
@@ -122,7 +123,7 @@ object Paxos:
       else if x.number == y.number then Ordering[Uid].compare(x.proposer, y.proposer)
       else -1
 
-  given [A]: Lattice[Paxos[A]] = Lattice.derived
+  given lattice[A]: Lattice[Paxos[A]] = Lattice.derived
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
@@ -191,5 +192,9 @@ object Paxos:
 
     override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
 
-  given bottom[A]: Bottom[Paxos[A]] with
-    override def empty: Paxos[A] = unchanged[A]
+    override def empty[A]: Paxos[A] = Paxos.unchanged
+
+    override def lattice[A]: Lattice[Paxos[A]] = Paxos.lattice
+
+  given bottom: Bottom[Paxos[?]] with
+    override def empty: Paxos[?] = unchanged

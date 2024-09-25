@@ -1,8 +1,8 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.Consensus.syntax
+import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.Consensus.{syntax, given}
 import rdts.time.Time
 
 class LogHack(on: Boolean) {
@@ -16,14 +16,15 @@ case class Membership[A, C[_], D[_]](
     log: List[A],
     membershipChanging: Boolean = false
 )(using
-    Bottom[C[Set[Uid]]],
-    Bottom[D[A]],
     Consensus[C],
-    Consensus[D],
-    Lattice[C[Set[Uid]]],
-    Lattice[D[A]]
+    Consensus[D]
 ) {
-  private def unchanged = Membership.empty[A, C, D].copy(counter = counter)
+  private def unchanged: Membership[A, C, D] = Membership(
+    counter = counter,
+    membersConsensus = Consensus[C].empty,
+    innerConsensus = Consensus[D].empty,
+    log = List()
+  )
 
   override def toString: String =
     s"Membership(counter: $counter, members: $currentMembers,log: $log, membershipChanging: $membershipChanging)".stripMargin
@@ -95,42 +96,20 @@ case class Membership[A, C[_], D[_]](
 object Membership {
 
   def init[A, C[_], D[_]](initialMembers: Set[Uid])(using
-      Bottom[C[Set[Uid]]],
-      Bottom[D[A]],
       Consensus[C],
-      Consensus[D],
-      Lattice[C[Set[Uid]]],
-      Lattice[D[A]],
+      Consensus[D]
   ): Membership[A, C, D] =
     require(initialMembers.nonEmpty, "initial members can't be empty")
-    val unchanged = Membership.empty[A, C, D]
-    unchanged.copy(
-      membersConsensus = unchanged.membersConsensus.reset(initialMembers),
-      innerConsensus = unchanged.innerConsensus.reset(initialMembers)
-    )
-
-  def empty[A, C[_], D[_]](using
-      Bottom[C[Set[Uid]]],
-      Bottom[D[A]],
-      Consensus[C],
-      Consensus[D],
-      Lattice[C[Set[Uid]]],
-      Lattice[D[A]],
-  ): Membership[A, C, D] =
     Membership(
       0,
-      Bottom[C[Set[Uid]]].empty,
-      Bottom[D[A]].empty,
+      Consensus[C].init[Set[Uid]](initialMembers),
+      Consensus[D].init[A](initialMembers),
       List()
     )
 
   given lattice[A, C[_], D[_]](using
-      Bottom[C[Set[Uid]]],
-      Bottom[D[A]],
       Consensus[C],
-      Consensus[D],
-      Lattice[C[Set[Uid]]],
-      Lattice[D[A]],
+      Consensus[D]
   ): Lattice[Membership[A, C, D]] with
     override def merge(left: Membership[A, C, D], right: Membership[A, C, D]): Membership[A, C, D] =
       if left.counter > right.counter then left

@@ -1,10 +1,10 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.Lattice.setLattice
+import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.GrowOnlySet
 import rdts.datatypes.GrowOnlySet.*
-import LocalUid.replicaId
 
 import scala.compiletime.{constValue, summonFrom}
 
@@ -199,6 +199,10 @@ object Paxos {
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid): Paxos[A]         = c.upkeep()
     override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
+
+    override def empty[A]: Paxos[A] = Paxos.unchanged
+
+    override def lattice[A]: Lattice[Paxos[A]] = Paxos.lattice
 
   given bottom[A]: Bottom[Paxos[A]] with
     override def empty: Paxos[A] = unchanged[A]
