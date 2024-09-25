@@ -20,7 +20,7 @@ case class Paxos[A](
     promises: GrowOnlySet[Promise[A]],
     accepts: GrowOnlySet[Accept[A]],
     accepted: GrowOnlySet[Accepted[A]],
-    members: Map[Uid, Option[LastWriterWins[A]]] // constant
+    members: Map[Uid, Option[LastWriterWins[A]]] // keep track of what value each member wants to propose
 ) {
 //  override def toString: String = pprint.apply(this).render
 

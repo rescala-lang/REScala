@@ -53,18 +53,19 @@ class SimplePaxosTest extends munit.FunSuite {
   }
 
   test("prepare does not change members") {
-    var testPaxosObject = emptyPaxosObject
+    val testPaxosObject = emptyPaxosObject
 
     assert(testPaxosObject.members.nonEmpty)
-    assertEquals(testPaxosObject.members, testPaxosObject.prepare()(using id1).members)
+    val afterPrepare = testPaxosObject.merge(testPaxosObject.prepare()(using id1))
+    assertEquals(afterPrepare.members, testPaxosObject.members)
   }
 
   test("write does not change members") {
-    var testPaxosObject = emptyPaxosObject
+    val testPaxosObject = emptyPaxosObject
 
     assert(testPaxosObject.members.nonEmpty)
 
-    val afterwrite = testPaxosObject.write(5)(using id1)
+    val afterwrite = testPaxosObject.merge(testPaxosObject.write(5)(using id1))
     assertEquals(afterwrite.members.keySet, testPaxosObject.members.keySet)
   }
 
