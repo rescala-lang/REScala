@@ -1,8 +1,10 @@
-package rdts.datatypes.experiments.protocols
+package rdts.datatypes.experiments.protocols.simplified
 
+import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.{Epoch, GrowOnlySet}
-import LocalUid.replicaId
+
+case class Vote(leader: Uid, voter: Uid)
 
 val numParticipants = 4
 
