@@ -76,6 +76,7 @@ case class Paxos[A](
         .map((p, v) => v)
       Paxos.unchanged.copy(
         accepts = accepts + Accept(proposal, acceptedValue.getOrElse(v)),
+        accepted = accepted + Accepted(proposal, replicaId), // I can safely accept my own proposal
         members = members.updated(replicaId, Some(LastWriterWins.now(v))) // remember proposed value
       )
     else
