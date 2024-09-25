@@ -4,7 +4,7 @@ import rdts.base.LocalUid
 import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.datatypes.experiments.protocols.simplified.{MultiRoundVoting, Paxos, SimpleVoting}
 
-class SimpleMembershipTests extends munit.FunSuite {
+class MembershipTest extends munit.FunSuite {
 
   val id1 = LocalUid.gen()
   val id2 = LocalUid.gen()

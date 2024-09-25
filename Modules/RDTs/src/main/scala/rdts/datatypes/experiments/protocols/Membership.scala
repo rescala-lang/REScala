@@ -23,9 +23,10 @@ case class Membership[A, C[_], D[_]](
     Lattice[C[Set[Uid]]],
     Lattice[D[A]]
 ) {
+  private def unchanged = Membership.empty[A, C, D].copy(counter = counter)
 
   override def toString: String =
-    s"Membership(counter: $counter, members: ${currentMembers},log: $log, membershipChanging: $membershipChanging)".stripMargin
+    s"Membership(counter: $counter, members: $currentMembers,log: $log, membershipChanging: $membershipChanging)".stripMargin
 
   def currentMembers: Set[Uid] =
     assert(membersConsensus.members == innerConsensus.members, "Membership of both consensus protocols is the same")
@@ -33,37 +34,35 @@ case class Membership[A, C[_], D[_]](
 
   def addMember(id: Uid)(using LocalUid): Membership[A, C, D] =
     if isMember then
-      copy(
+      unchanged.copy(
         membershipChanging = true,
-        membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers + id))
+        membersConsensus = membersConsensus.write(currentMembers + id)
       )
-    else this
+    else unchanged
 
   def removeMember(id: Uid)(using LocalUid): Membership[A, C, D] =
     if currentMembers.size > 1 && isMember then // cannot remove last member
-      copy(
+      unchanged.copy(
         membershipChanging = true,
-        membersConsensus = membersConsensus.merge(membersConsensus.write(currentMembers - id))
+        membersConsensus = membersConsensus.write(currentMembers - id)
       )
-    else this
+    else unchanged
 
   def read: List[A] = log
 
   def write(value: A)(using LocalUid): Membership[A, C, D] =
     if !membershipChanging && isMember then
-      copy(
-        innerConsensus = innerConsensus.merge(innerConsensus.write(value))
+      unchanged.copy(
+        innerConsensus = innerConsensus.write(value)
       )
-    else this
+    else unchanged
 
-  def isMember(using LocalUid) = currentMembers.contains(replicaId)
+  def isMember(using LocalUid): Boolean = currentMembers.contains(replicaId)
 
   def upkeep()(using rid: LocalUid, logger: LogHack): Membership[A, C, D] =
-    if !isMember then return this // do nothing if we are not a member anymore
-    val memberUpkeep = membersConsensus.upkeep()
-    val innerUpkeep  = innerConsensus.upkeep()
-    val newMembers   = membersConsensus.merge(membersConsensus.upkeep())
-    val newInner     = innerConsensus.merge(innerConsensus.upkeep())
+    if !isMember then return unchanged // do nothing if we are not a member anymore
+    val newMembers = membersConsensus.merge(membersConsensus.upkeep())
+    val newInner   = innerConsensus.merge(innerConsensus.upkeep())
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
@@ -76,17 +75,18 @@ case class Membership[A, C[_], D[_]](
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        if log.length > 1 then
-          logger.info(s"Inner consensus reached on value $value, log: ${log :+ value}")
+        val newLog = log :+ value
+        if newLog.length > 1 then
+          logger.info(s"Inner consensus reached on value $value, log: $newLog")
         copy(
           counter = counter + 1,
           membersConsensus = membersConsensus.reset(currentMembers),
           innerConsensus = innerConsensus.reset(currentMembers),
-          log = log :+ value
+          log = newLog
         )
       // nothing has changed
       case _ =>
-        copy(
+        unchanged.copy(
           membersConsensus = newMembers,
           innerConsensus = newInner
         )
@@ -136,10 +136,6 @@ object Membership {
       if left.counter > right.counter then left
       else if right.counter > left.counter then right
       else
-        require(
-          left.currentMembers == right.currentMembers,
-          s"left and right members need to be the same. Got: $left, $right"
-        )
         Membership(
           left.counter,
           Lattice[C[Set[Uid]]].merge(left.membersConsensus, right.membersConsensus),

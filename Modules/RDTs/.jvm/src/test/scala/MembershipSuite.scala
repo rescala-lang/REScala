@@ -1,12 +1,9 @@
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
-import org.scalacheck.commands.Commands
 import org.scalacheck.{Arbitrary, Gen, Prop}
-import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.{Consensus, LogHack, Membership, Paxos, simplified}
+import rdts.datatypes.experiments.protocols.{Consensus, LogHack, Membership, simplified}
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 class MembershipSuite extends munit.ScalaCheckSuite {
 //  override def scalaCheckInitialSeed = "6Y9lv63LraBdJTHwHFLm3ItFEF7sm6Ok2D3S22VQcTO="
@@ -107,6 +104,7 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
         (index1, index2) =>
           (res(index1), res(index2)) match
             case (membership1, membership2) =>
+              (membership1.currentMembers.nonEmpty && membership2.currentMembers.nonEmpty) :| "set of members can never be empty" &&
               (membership1.membersConsensus.members == membership1.innerConsensus.members) :| "members of both protocols never go out of sync" &&
               ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices" &&
               (membership1.read.containsSlice(membership2.read) || membership2.read.containsSlice(
