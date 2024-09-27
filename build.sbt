@@ -56,7 +56,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     Dependencies.munitCheck,
   )
   .jvmSettings(
-    LocalSettings.tink
+    DependenciesLocal.tink
   )
   .jsSettings(
     Compile / npmDependencies ++= Seq(
@@ -79,12 +79,12 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   .jsSettings(
     Settings.jsEnvDom,
     Dependencies.scalajsDom,
-    Dependencies.scalatags,
+    Dependencies.scalatags(),
   )
   .jvmSettings(
     Test / fork := true,
-    libraryDependencies ++= LocalSettings.jetty.map(_ % Provided),
-    LocalSettings.slf4jSimpleTest,
+    libraryDependencies ++= DependenciesLocal.jetty.map(_ % Provided),
+    DependenciesLocal.slf4jSimple,
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -94,9 +94,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.munit,
-    libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
-      "org.scalatest" %%% s"scalatest-$m" % "3.2.19" % Test
-    ),
+    DependenciesLocal.scalatest,
   )
 
 lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
@@ -107,11 +105,8 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
-    libraryDependencies ++= List(
-      "com.softwaremill.sttp.client4" %%% "core"             % "4.0.0-M17",
-      "io.bullet"                     %%% "borer-core"       % "1.14.1",
-      "io.bullet"                     %%% "borer-derivation" % "1.14.1"
-    )
+    DependenciesLocal.sttpCore,
+    DependenciesLocal.borer
   )
 
 lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
@@ -121,8 +116,8 @@ lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
     scala3defaults,
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
-    Dependencies.scalatags,
-    LocalSettings.deployTask,
+    Dependencies.scalatags(),
+    SettingsLocal.deployTask,
   )
 
 lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
@@ -133,13 +128,11 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
     fork := true,
     Dependencies.jsoniterScala,
     Dependencies.munitCheck,
-    LocalSettings.tink,
-    libraryDependencies += LocalSettings.scalafx,
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
-      "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
-    ),
-    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
+    DependenciesLocal.tink,
+    libraryDependencies += DependenciesLocal.scalafx,
+    DependenciesLocal.scalaXml,
+    DependenciesLocal.scalaSwing,
+    DependenciesLocal.conscript,
     Settings.implicitConversions(), // reswing uses this in a million places for no reason
   )
 
@@ -149,9 +142,9 @@ lazy val loCal = project.in(file("Modules/Examples/Lore Calendar"))
   .settings(
     scala3defaults,
     Settings.resolverJitpack,
-    Dependencies.scalatags,
+    Dependencies.scalatags(),
     Dependencies.jsoniterScala,
-    LocalSettings.deployTask
+    SettingsLocal.deployTask
   )
 
 lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
@@ -164,17 +157,9 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
     Dependencies.munit,
     Dependencies.munitCheck,
     Dependencies.jsoniterScala,
-    LocalSettings.tink,
-    libraryDependencies ++=
-      List(
-        // Note, the below means JDK 1.4
-        "org.slf4j" % "slf4j-jdk14" % "2.0.16",
-        // Note, the below means JDK 1.8, aka Java 8
-        "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
-        "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
-        "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.7",
-        "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.7",
-      ),
+    DependenciesLocal.tink,
+    DependenciesLocal.slf4j,
+    DependenciesLocal.bouncyCastle,
     Test / fork := true,
   )
 
@@ -182,7 +167,7 @@ lazy val lofiAclExample = project.in(file("Modules/Local-first Access Control/Ex
   .dependsOn(lofiAcl)
   .settings(
     scala3defaults,
-    libraryDependencies += LocalSettings.scalafx,
+    libraryDependencies += DependenciesLocal.scalafx,
     Dependencies.jsoniterScala,
     Dependencies.munit,
     publish / skip := true,
@@ -194,10 +179,10 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    libraryDependencies += "com.monovore"  %%% "decline"      % "2.4.1",
-    libraryDependencies += "org.typelevel" %%% "cats-parse"   % "1.0.0",
-    libraryDependencies += "com.lihaoyi"   %%% "fansi"        % "0.5.0",
-    libraryDependencies += "dev.optics"    %%% "monocle-core" % "3.3.0",
+    DependenciesLocal.decline,
+    DependenciesLocal.catsParse,
+    DependenciesLocal.fansi,
+    DependenciesLocal.monocleCore,
     Dependencies.munit,
     Compile / mainClass := Some("lore.Compiler")
   )
@@ -231,8 +216,8 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     Settings.jolSettings,
-    LocalSettings.tink,
-    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
+    DependenciesLocal.tink,
+    DependenciesLocal.conscript,
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
@@ -242,7 +227,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
     Settings.javaOutputVersion(8),
     Settings.safeInit(Compile / compile),
     Settings.explicitNulls(Compile / compile),
-    LocalSettings.publishSonatype,
+    SettingsLocal.publishSonatype,
     Dependencies.munit,
     Dependencies.munitCheck,
   )
@@ -259,16 +244,16 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     // scaladoc
     autoAPIMappings := true,
     Compile / doc / scalacOptions += "-groups",
-    LocalSettings.publishSonatype,
+    SettingsLocal.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
   )
   .jvmSettings(
-    libraryDependencies += LocalSettings.scalafx % Provided,
+    libraryDependencies += DependenciesLocal.scalafx % Provided,
   )
   .jsSettings(
     Dependencies.scalajsDom,
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1" % Test,
+    Dependencies.scalatags(Test),
     Settings.jsEnvDom,
     Settings.sourcemapFromEnv(),
   )
@@ -304,12 +289,12 @@ lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(C
   .jvmSettings(
     Dependencies.slips.script,
     Dependencies.sqliteJdbc,
-    LocalSettings.slf4jSimpleTest,
-    libraryDependencies ++= LocalSettings.jetty,
+    DependenciesLocal.slf4jSimple,
+    libraryDependencies ++= DependenciesLocal.jetty,
   )
   .jsSettings(
-    Dependencies.scalatags,
-    LocalSettings.deployTask,
+    Dependencies.scalatags(),
+    SettingsLocal.deployTask,
   )
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
@@ -320,9 +305,9 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Settings.resolverJitpack,
-    Dependencies.scalatags,
+    Dependencies.scalatags(),
     Dependencies.jsoniterScala,
-    LocalSettings.deployTask,
+    SettingsLocal.deployTask,
     Dependencies.pprint,
   )
 
@@ -348,6 +333,6 @@ lazy val webview = project.in(file("Modules/Webview"))
         .withIncrementalCompilation(true)
       // The below disables LTO for macos as that seems to cause problems.
       // Windows not implemented, macos has known issues.
-      LocalSettings.osSpecificWebviewConfig(d)
+      SettingsLocal.osSpecificWebviewConfig(d)
     }
   )

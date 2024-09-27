@@ -4,22 +4,7 @@ import sbt.Keys.*
 
 import scala.scalanative.build.{LTO, NativeConfig}
 
-object LocalSettings {
-
-  def tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.15.0"
-
-  def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
-
-  def slf4jSimpleTest = libraryDependencies += "org.slf4j" % "slf4j-simple" % "2.0.16" % Test
-
-  def jetty = {
-    val jettyVersion = "12.0.13"
-    Seq(
-      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
-      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
-      "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-api"    % jettyVersion,
-    )
-  }
+object SettingsLocal {
 
   val deployTask = TaskKey[File]("deploy", "generates a correct index.template.html") := {
     val fastlink   = (Compile / fastLinkJS).value
