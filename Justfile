@@ -14,7 +14,7 @@ publishLocal sbtOpts="":
 	sbt {{sbtOpts}} 'reactivesAggregate / publishM2'
 
 
-# most useful for teh jitpack export, though not sure if that even works …
+# most useful for the jitpack export, though not sure if that even works …
 export CUSTOM_SCALAJS_SOURCE_MAP_PREFIX:="https://raw.githubusercontent.com/rescala-lang/REScala/"
 
 # supposed to be used to publish when running on jitpack
