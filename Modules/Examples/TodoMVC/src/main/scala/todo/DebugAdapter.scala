@@ -9,7 +9,6 @@ import reactives.structure.Pulse
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
 
-@JSExportTopLevel("DebugAdapter")
 object DebugAdapter {
 
   given infoCodec: JsonValueCodec[ReInfo] = JsonCodecMaker.make
@@ -48,7 +47,7 @@ object DebugAdapter {
 
   given dataCodec: JsonValueCodec[Tracing.Data] = JsonCodecMaker.make
 
-  @JSExport
+  @JSExportTopLevel("DebugAdapterSetListener")
   def setListener(obs: scalajs.js.Function1[Any, Unit]): Unit = {
     println(s"setting listener")
     Tracing.observer = {

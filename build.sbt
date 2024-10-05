@@ -309,6 +309,11 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
     Dependencies.jsoniterScala,
     SettingsLocal.deployTask,
     Dependencies.pprint,
+    scalaJSLinkerConfig := {
+      scalaJSLinkerConfig.value
+        .withExperimentalUseWebAssembly(true) // use the Wasm backend
+        .withModuleKind(ModuleKind.ESModule)  // required by the Wasm backend
+    },
   )
 
 lazy val webview = project.in(file("Modules/Webview"))

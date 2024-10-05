@@ -19,13 +19,19 @@
 			<p>Similar to <a href="https://todomvc.com">TodoMVC</a></p>
 		</footer>
 
-		<script type="text/javascript" src="JSPATH"></script>
+		<script type="text/javascript" src=""></script>
 		<script type="text/javascript">
+
+		</script>
+
+		<script type="module">
+			import { Todolist, DebugAdapterSetListener } from 'JSPATH';
+
 			window.reScalaEvents = [];
 			window.reScalaId = Math.random();
 			window.domAssocations = new Map();
 
-			DebugAdapter.setListener(data => {
+			DebugAdapterSetListener(data => {
 				if (data.type === 'DomAssociation') {
 					window.domAssocations.set(JSON.parse(data.reSource).idCounter, data.node);
 				} else if (typeof data === 'string') {

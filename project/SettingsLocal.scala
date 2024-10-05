@@ -14,7 +14,7 @@ object SettingsLocal {
     val template   = IO.read(bp.resolve("index.template.html").toFile)
     val targetpath = tp.resolve("index.html")
     val jsrel      = targetpath.getParent.relativize(jspath.toPath)
-    IO.write(targetpath.toFile, template.replace("JSPATH", s"${jsrel}/main.js"))
+    IO.write(targetpath.toFile, template.replace("JSPATH", s"./${jsrel}/main.js"))
     IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
     targetpath.toFile
   }
