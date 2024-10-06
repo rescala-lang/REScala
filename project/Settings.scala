@@ -57,8 +57,7 @@ object Settings {
   // however, this has some kinda false positives when subclasses pass parameters to superclasses.
   def privateShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:private-shadow", conf*)
 
-  // seems to produce compiler crashes in some cases
-  // this is -Ysafe-init for scala 3.4 and below
+  // this is -Ysafe-init for scala 3.4 and below, but we don’t use that because seems to produce compiler crashes in those versions
   def safeInit(conf: TaskKey[?]*) =
     if (scala3VersionString.startsWith("3.5"))
       taskSpecificScalacOption("-Wsafe-init", conf*)
