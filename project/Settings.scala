@@ -37,31 +37,31 @@ object Settings {
 
   // defines the output classfile version, and disables use of newer methods from the JDK classpath
   def javaOutputVersion(n: Int, conf: TaskKey[?]*) = Def.settings(
-    taskSpecificScalacOption("-java-output-version", conf: _*),
-    taskSpecificScalacOption(n.toString, conf: _*)
+    taskSpecificScalacOption("-java-output-version", conf*),
+    taskSpecificScalacOption(n.toString, conf*)
   )
 
   // these are scoped to compile&test only to ensure that doc tasks and such do not randomly fail for no reason
-  def warningsAreErrors(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf: _*)
+  def warningsAreErrors(conf: TaskKey[?]*) = taskSpecificScalacOption("-Werror", conf*)
 
   // seems generally unobtrusive (just add some explicit ()) and otherwise helpful
-  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf: _*)
+  def valueDiscard(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wvalue-discard", conf*)
 
   // can be annoying with methods that have optional results, can also help with methods that have non optional results …
-  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf: _*)
+  def nonunitStatement(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wnonunit-statement", conf*)
 
   // type parameter shadowing often is accidental, and especially for short type names keeping them separate seems good
-  def typeParameterShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:type-parameter-shadow", conf: _*)
+  def typeParameterShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:type-parameter-shadow", conf*)
 
   // shadowing fields causes names inside and outside of the class to resolve to different things, and is quite weird.
   // however, this has some kinda false positives when subclasses pass parameters to superclasses.
-  def privateShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:private-shadow", conf: _*)
+  def privateShadow(conf: TaskKey[?]*) = taskSpecificScalacOption("-Wshadow:private-shadow", conf*)
 
   // seems to produce compiler crashes in some cases
   // this is -Ysafe-init for scala 3.4 and below
   def safeInit(conf: TaskKey[?]*) =
     if (scala3VersionString.startsWith("3.5"))
-      taskSpecificScalacOption("-Wsafe-init", conf: _*)
+      taskSpecificScalacOption("-Wsafe-init", conf*)
     else Seq()
 
   // makes Null no longer be a sub type of all subtypes of AnyRef
@@ -71,7 +71,7 @@ object Settings {
   def explicitNulls(conf: TaskKey[?]*) =
     if (scala3VersionString.startsWith("3.5"))
       Def.settings(
-        taskSpecificScalacOption("-Yexplicit-nulls", conf: _*),
+        taskSpecificScalacOption("-Yexplicit-nulls", conf*),
         // taskSpecificScalacOption("-Yno-flexible-types", conf: _*),
       )
     else Seq()
@@ -82,14 +82,14 @@ object Settings {
   // combine with -new-syntax, -indent, or -source some-migration to rewrite changed behavior
   def rewrite = scalacOptions += "-rewrite"
 
-  // Allow definition and application of implicit conversions
-  def implicitConversions(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:implicitConversions", conf: _*)
+  // allow definition and application of implicit conversions
+  def implicitConversions(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:implicitConversions", conf*)
 
   // require an instance of Eql[A, B] to allow == checks. This is rather invasive, but would be a great idea if more widely supported …
-  def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf: _*)
+  def strictEquality(conf: TaskKey[?]*) = taskSpecificScalacOption("-language:strictEquality", conf*)
 
-  // this unused warnings definition is meant to enabled only sometimes when looking for unused elements
-  // t does not play well with -Werror and makes developing quite annoying
+  // this unused warnings definition is meant to be enabled only sometimes when looking for unused elements.
+  // It does not play well with -Werror and makes developing quite annoying.
   def unusedWarnings(conf: TaskKey[?]*) = {
     val c2 = if (conf.isEmpty) List(Compile / compile, Test / compile) else conf
     c2.map { c =>
