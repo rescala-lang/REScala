@@ -22,7 +22,7 @@ object SettingsLocal {
   def osSpecificWebviewConfig(nativeConfig: NativeConfig): NativeConfig = {
 
     def fromCommand(args: String*): List[String] = {
-      val process = new ProcessBuilder(args: _*).start()
+      val process = new ProcessBuilder(args*).start()
       process.waitFor()
       val res = new String(process.getInputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)
       res.split(raw"\s+").toList
