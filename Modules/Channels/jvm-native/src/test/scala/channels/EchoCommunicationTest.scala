@@ -2,6 +2,7 @@ package channels
 
 import de.rmgk.delay.{Async, Callback}
 
+import java.io.IOException
 import java.net.{InetAddress, InetSocketAddress, ServerSocket, SocketException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.{Executors, Semaphore}
@@ -29,8 +30,9 @@ class EchoServerTestTCP extends EchoCommunicationTest(
 def printErrors[T](cb: T => Unit): Callback[T] =
   case Success(mb) => cb(mb)
   case Failure(ex) => ex match
-      case ex: ClosedChannelException =>
-      case ex                         => ex.printStackTrace()
+      case ex: IOException if ex.getCause.isInstanceOf[InterruptedException] =>
+      case ex: ClosedChannelException                                        =>
+      case ex                                                                => ex.printStackTrace()
 
 trait EchoCommunicationTest[Info](
     serverConn: ExecutionContext => (Info, LatentConnection[MessageBuffer]),
