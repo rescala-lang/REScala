@@ -20,7 +20,7 @@ jobs:
       matrix:
         # macOS 13/14 uses different CPU architectures, older ubuntu because 24.04 is well tested outside of CI
         os: [macOS-13, macOS-14, ubuntu-22.04, windows-2022]
-        java-version: [17, 22]
+        java-version: [17, 21, 23]
 
     env:
       JAVA_OPTS: -Xmx4g
@@ -36,7 +36,7 @@ jobs:
 
     - uses: sbt/setup-sbt@v1
       with:
-        sbt-runner-version: 1.10.1
+        sbt-runner-version: 1.10.2
 
     - uses: actions/setup-node@v4
       with:
