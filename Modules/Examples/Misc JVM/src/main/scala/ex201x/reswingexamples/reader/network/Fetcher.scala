@@ -12,7 +12,7 @@ import scala.xml.{NodeSeq, XML}
 class Fetcher(val urls: Signal[Set[URL]]) {
   lazy val rssFetched: Event[(NodeSeq, URL)] = fetch.after map { (_: (URL, NodeSeq)).swap } // #EVT //#EF
   lazy val state: Signal[String] = // #SIG
-    ((fetch.before map { (_: Any) => "Started fetching" }) ||          // #EF //#EF
+    ((fetch.before map { (_: Any) => "Started fetching" }) || // #EF //#EF
       (fetch.after map { (_: Any) => "Finished fetching" })) `hold` "" // #EF //#IF
 
   val firstFetchInitiated = collection.mutable.Set.empty[URL]

@@ -6,7 +6,7 @@ import rdts.dotted.{Dotted, HasDots, Obrem}
 import rdts.time.Dots
 
 case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
-  export inner.{get}
+  export inner.get
 
   import ObserveRemoveMap.make
 

@@ -24,7 +24,8 @@ class WholeProgramParsing extends FunSuite {
   // }
 
   test("simple prog") {
-    val prog = """
+    val prog =
+      """
       |type Calendar = AWSet[Appointment]
       |val work: Source[Calendar] = Source(AWSet())
       |5 + 24 * 10 > 0 ==> true

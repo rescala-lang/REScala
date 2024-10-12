@@ -425,10 +425,8 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn](init: T, val valuePe
       if NonblockingSkipListVersionHistory.DEBUG then
         println(s"[${Thread.currentThread().getName}] enqueueFollowFraming found target $next.")
       next
-    } else if
-      next == null || next.txn.isTransitivePredecessor(
-        txn
-      ) /* assuming we are still Framing, always go as far back as possible */
+    } else if next == null || next.txn.isTransitivePredecessor(txn)
+    /* assuming we are still Framing, always go as far back as possible */
     then {
       if
         txn.isTransitivePredecessor(current.txn) || (current.txn.phase match {

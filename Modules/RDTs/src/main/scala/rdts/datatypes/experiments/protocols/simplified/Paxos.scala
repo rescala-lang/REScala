@@ -174,10 +174,11 @@ object Paxos:
             val newState = Lattice[Paxos[A]].merge(c, c.promise(proposal))
 
             // check if we have become the leader and can start phase 2 by proposing a value
-            if proposal.proposer == replicaId &&                                    // we proposed the leading proposal
+            if {
+              proposal.proposer == replicaId &&                                     // we proposed the leading proposal
               newState.promises.count(_.proposal == proposal) >= newState.quorum && // it has reached a quorum
               newState.members(proposal.proposer).nonEmpty                          // we know what value to propose
-            then
+            } then
               // combine deltas for promise and propose
               Lattice[Paxos[A]].merge(
                 promise,

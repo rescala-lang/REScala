@@ -92,7 +92,7 @@ class ArrayRanges(
       if res < 0 then -res - 1 else res
     if index >= used then false
     else if index % 2 == 0
-      // found a start
+    // found a start
     then inner(index) == x
     // found an end
     else x < inner(index)

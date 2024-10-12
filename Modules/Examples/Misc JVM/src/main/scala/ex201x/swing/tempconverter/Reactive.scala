@@ -30,7 +30,7 @@ trait ReactiveText extends Reactor {
 class ReactiveTextfield extends TextField with ReactiveText {
   listenTo(this)
 }
-class ReactiveLabel  extends Label with ReactiveText
+class ReactiveLabel extends Label with ReactiveText
 class ReactiveButton extends Button with ReactiveText {
   // wrap the event to escala
   val clicked = Evt[ButtonClicked]()

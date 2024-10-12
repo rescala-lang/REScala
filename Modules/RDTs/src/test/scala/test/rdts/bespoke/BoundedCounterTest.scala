@@ -12,8 +12,13 @@ class BoundedCounterTest extends munit.FunSuite {
     val r3 = TestReplica("r3", r1.anon)
 
     inline def assertInvariant() =
-      assert(r1.anon.available(using r1.replicaId) + r2.anon.available(using r2.replicaId) + r3.anon.available(using
-      r3.replicaId) <= 100)
+      assert(
+        (
+          r1.anon.available(using r1.replicaId) +
+          r2.anon.available(using r2.replicaId) +
+          r3.anon.available(using r3.replicaId)
+        ) <= 100
+      )
       r1.anon.invariantOk
       r2.anon.invariantOk
       r3.anon.invariantOk

@@ -115,12 +115,14 @@ class PaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id1))
     // 1, 2 and 3 receive prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     // 1 sends accept
     testPaxosObject = testPaxosObject.merge(testPaxosObject.accept(1)(using id1))
     // 1,2 and 3 receive accept
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     // replica 2 sends prepare
     testPaxosObject = testPaxosObject.merge(testPaxosObject.prepare()(using id2))
     // 1 and 2 receives 2's prepare
@@ -138,12 +140,14 @@ class PaxosTest extends munit.FunSuite {
     // replica 1 tries to write
     testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, None)
     // replica 1 tries to write again
     testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, Some(writeValue))
   }
 
@@ -153,14 +157,16 @@ class PaxosTest extends munit.FunSuite {
     testPaxosObject =
       testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     assertEquals(testPaxosObject.read, None)
     // println(testPaxosObject.promises)
     // replica 1 and 2 try to write again
     testPaxosObject =
       testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
-    id2)).merge(testPaxosObject.upkeep()(using id3))
+      id2
+    )).merge(testPaxosObject.upkeep()(using id3))
     assert(clue(testPaxosObject.read) == Some(2) || clue(testPaxosObject.read) == Some(1))
   }
 }

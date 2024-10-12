@@ -234,7 +234,6 @@ class MutuallyTrustingSync[RDT](
             userToSendTimeTo.get,
             Time(rdtDeltaStore.retrievableDots, permissionDeltaStore.retrievableDots)
           )
-      }
-  )
+      })
 
 }

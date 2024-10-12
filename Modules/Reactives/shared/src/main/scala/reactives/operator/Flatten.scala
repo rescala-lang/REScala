@@ -17,7 +17,9 @@ trait Flatten[-A, R] {
 object Flatten {
 
   /** Flatten a Signal[Signal[B]\] into a Signal[B] that changes whenever the outer or inner signal changes. */
-  given flattenImplicitForsignal[B](using CreationTicket[State]): Flatten[
+  given flattenImplicitForsignal[B](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[Signal[B]],
     Signal[B]
   ] = sig => Signal.dynamic(sig.value.value)
@@ -31,19 +33,25 @@ object Flatten {
   ] = sig => Signal.dynamic { sig.value.map(_.value) }
 
   /** Flatten a Signal[Option[Signal[B]\]\] into a Signal[Option[B]\] where the new Signal updates whenever any of the inner or the outer signal updates */
-  given flattenImplicitForOptionSignal[B, Sig[U] <: Signal[U]](using CreationTicket[State]): Flatten[
+  given flattenImplicitForOptionSignal[B, Sig[U] <: Signal[U]](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[Option[Sig[B]]],
     Signal[Option[B]]
   ] = sig => Signal.dynamic { sig.value.map { _.value } }
 
   /** Flatten a Signal[Event[B]]\] into a Event[B] where the new Event fires whenever the current inner event fires */
-  given flattenImplicitForevent[A, B, Evnt[A1] <: Event[A1]](using CreationTicket[State]): Flatten[
+  given flattenImplicitForevent[A, B, Evnt[A1] <: Event[A1]](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[Evnt[B]],
     Event[B]
   ] = sig => Event.dynamic(sig.value.value)
 
   /** Flatten a Event[Option[B]\] into a Event[B] that fires whenever the inner option is defined. */
-  given flattenImplicitForoption[A, B](using CreationTicket[State]): Flatten[
+  given flattenImplicitForoption[A, B](using
+      CreationTicket[State]
+  ): Flatten[
     Event[Option[B]],
     Event[B]
   ] = event => Event.static { event.value.flatten }
@@ -53,7 +61,9 @@ object Flatten {
       B,
       Iter[U] <: IterableOps[U, Iter, Iter[U]],
       Sig[A1] <: Signal[A1]
-  ](using CreationTicket[State]): Flatten[
+  ](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[Iter[Sig[B]]],
     Signal[Iter[B]]
   ] = sig => Signal.dynamic { sig.value.map { (r: Signal[B]) => r.value } }
@@ -65,7 +75,9 @@ object Flatten {
       B,
       T[U] <: IterableOps[U, T, T[U]],
       Evnt[A1] <: Event[A1]
-  ](using CreationTicket[State]): Flatten[
+  ](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[T[Evnt[B]]],
     Event[B]
   ] = sig =>
@@ -79,7 +91,9 @@ object Flatten {
       B,
       T[U] <: IterableOps[U, T, T[U]],
       Evnt[A1] <: Event[A1]
-  ](using CreationTicket[State]): Flatten[
+  ](using
+      CreationTicket[State]
+  ): Flatten[
     Signal[T[Evnt[B]]],
     Event[T[Option[B]]]
   ] = sig =>

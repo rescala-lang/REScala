@@ -18,7 +18,8 @@ object MillBoardRenamed {
   def isConnected(from: SlotIndex, to: SlotIndex) = {
     val i = from.index
     val j = to.index
-    (math.abs(i - j) == 1 && math.max(i, j) % 8 != 0) ||
+    // TODO: scalafmt seems to have a weird bug for the next lines …
+    (math.abs(i - j) == 1 && math.max(i, j)              % 8 != 0) ||
     (math.abs(i - j) == 8 && i              % 2 != 0) ||
     (math.abs(i - j) == 7 && math.min(i, j) % 8 == 0)
   }

@@ -97,7 +97,8 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
       Lattice[C[A]].merge(states(writer), states(writer).write(value)(using writer))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]) =
-      (state(writer).members == result.get(writer).members) :| s"Members do not change during writes.\nBefore: ${state(writer)}\nAfter:${result.get(writer)}"
+      (state(writer).members == result.get(writer).members)
+      :| s"Members do not change during writes.\nBefore: ${state(writer)}\nAfter:${result.get(writer)}"
 
   class Upkeep(id: LocalUid) extends ACommand(id):
     def nextLocalState(states: Map[LocalUid, C[A]]) =

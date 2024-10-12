@@ -78,7 +78,8 @@ class ConnectionManager[MSG](
             if peerIdentity == localPublicId
             then // We don't want to connect to ourselves.
               try { socket.close() }
-              catch case e: IOException => {}
+              catch
+                case e: IOException => {}
             else connectionEstablished(socket, peerIdentity, establishedByRemote = true)
 
             acceptConnection()
@@ -116,7 +117,8 @@ class ConnectionManager[MSG](
         if peerId == localPublicId
         then // We don't want to connect to ourselves.
           try { socket.close() }
-          catch case e: IOException => {}
+          catch
+            case e: IOException => {}
         else connectionEstablished(socket, peerId, establishedByRemote = false)
     }
   }

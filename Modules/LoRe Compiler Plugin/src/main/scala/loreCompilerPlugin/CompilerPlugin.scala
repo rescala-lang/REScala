@@ -133,19 +133,23 @@ class LoRePhase extends PluginPhase:
             logRhsInfo(indentLevel, operandSide, "operator application of operator", opOrMethod.show)
             val rightArg = params.head
             opOrMethod match
-              case nme.ADD => TAdd( // left + right
+              case nme.ADD =>
+                TAdd( // left + right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.SUB => TSub( // left - right
+              case nme.SUB =>
+                TSub( // left - right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.MUL => TMul( // left * right
+              case nme.MUL =>
+                TMul( // left * right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.DIV => TDiv( // left / right
+              case nme.DIV =>
+                TDiv( // left / right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
@@ -157,27 +161,33 @@ class LoRePhase extends PluginPhase:
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.LT => TLt( // left < right
+              case nme.LT =>
+                TLt( // left < right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.GT => TGt( // left > right
+              case nme.GT =>
+                TGt( // left > right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.LE => TLeq( // left <= right
+              case nme.LE =>
+                TLeq( // left <= right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.GE => TGeq( // left >= right
+              case nme.GE =>
+                TGeq( // left >= right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.EQ => TEq( // left == right
+              case nme.EQ =>
+                TEq( // left == right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
-              case nme.NE => TIneq( // left != right
+              case nme.NE =>
+                TIneq( // left != right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
                   buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
                 )
@@ -365,22 +375,22 @@ class LoRePhase extends PluginPhase:
                   case tpd.EmptyTree => () // Ignore func args (ArgT) outside of arrow functions for now
                   case Apply(Apply(_, List(properRhs)), _)
                       if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
-                    newLoreTerm = Some(TAbs(                  // foo: Source[Bar] = Source(baz)
-                      name.toString,                          // foo
-                      loreTypeNode,                           // Source[Bar]
+                    newLoreTerm = Some(TAbs( // foo: Source[Bar] = Source(baz)
+                      name.toString, // foo
+                      loreTypeNode, // Source[Bar]
                       TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
                     ))
                   case Apply(Apply(_, List(Block(_, properRhs))), _)
                       if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
-                    newLoreTerm = Some(TAbs(                   // foo: Derived[Bar] = Derived { baz }
-                      name.toString,                           // foo
-                      loreTypeNode,                            // Derived[Bar]
+                    newLoreTerm = Some(TAbs( // foo: Derived[Bar] = Derived { baz }
+                      name.toString, // foo
+                      loreTypeNode, // Derived[Bar]
                       TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
                     ))
                   case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
-                    newLoreTerm = Some(TAbs(   // foo: Bar = baz
-                      name.toString,           // foo (any valid Scala identifier)
-                      loreTypeNode,            // Bar
+                    newLoreTerm = Some(TAbs( // foo: Bar = baz
+                      name.toString, // foo (any valid Scala identifier)
+                      loreTypeNode, // Bar
                       buildLoreRhsTerm(rhs, 1) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
                     ))
               case TupleType(_) => // TODO tuple types?

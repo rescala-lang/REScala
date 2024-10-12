@@ -43,15 +43,14 @@ class RandomSprayRouter(
     println(s"filtered random peers available: ${List.from(random_peers).map((peer_name, peer) => peer.eid)}")
 
     // use peer-info and available clas' to build a list of cla-connections to forward the bundle over
-    val selected_clas: List[Sender] = Random.shuffle(random_peers).take(topNNeighbours).flatMap(
-      (target_name, target) => {
+    val selected_clas: List[Sender] =
+      Random.shuffle(random_peers).take(topNNeighbours).flatMap((target_name, target) => {
         target.cla_list
           .filter((agent, port_option) => packet.clas.contains(agent))
           .map((agent, port_option) =>
             Sender(remote = target.addr, port = port_option, agent = agent, next_hop = target.eid)
           )
-      }
-    ).toList
+      }).toList
     println(s"selected clas: $selected_clas")
 
     println(s"time: ${ZonedDateTime.now()}")

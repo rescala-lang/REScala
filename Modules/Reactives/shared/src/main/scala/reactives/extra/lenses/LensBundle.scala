@@ -32,7 +32,7 @@ class LVar[M] private[reactives] (state: Signal[M], events: Evt[Event[M]]) {
 
   export events.fire
 
-  export state.{now}
+  export state.now
 
   final def observe(onValue: M => Unit, onError: (Throwable => Unit) | Null = null, fireImmediately: Boolean = true)(
       using ticket: CreationTicket[State]
