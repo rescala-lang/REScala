@@ -120,4 +120,3 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
             case _ => Prop(true)
       }
 }
-
