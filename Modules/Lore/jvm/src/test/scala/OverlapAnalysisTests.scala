@@ -22,7 +22,7 @@ class OverlapAnalysisTests extends FunSuite {
          |  .modifies(a)
          |val j: Unit = Interaction[Int][Int]
          |  .executes{0}
-         |  .modifies(b)""".stripMargin()
+         |  .modifies(b)""".stripMargin
     val ast: NonEmptyList[Term] = Parser.parse(prog) match {
       case Left(e)      => throw Exception(e.show)
       case Right(value) => value
