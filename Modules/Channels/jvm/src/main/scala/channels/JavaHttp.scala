@@ -17,7 +17,7 @@ object JavaHttp {
 
   class SSEServerConnection(out: JioOutputStreamAdapter) extends Connection[MessageBuffer] {
     override def send(message: MessageBuffer): Async[Any, Unit] = Async { out.send(message) }
-    override def close(): Unit                                  = ()
+    override def close(): Unit                                  = out.outputStream.close()
   }
 
   val replicaIdHeader = "x-replica-id"
@@ -48,6 +48,9 @@ object JavaHttp {
 
           exchange.sendResponseHeaders(200, 0)
           val outstream = exchange.getResponseBody
+
+          // force sending of response headers
+          outstream.flush()
 
           val conn = SSEServerConnection(JioOutputStreamAdapter(outstream))
 
