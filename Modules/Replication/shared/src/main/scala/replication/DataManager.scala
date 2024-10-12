@@ -89,7 +89,9 @@ class DataManager[State](
         lock.synchronized {
           connections = conn :: connections
         }
-      case Failure(ex) => ex.printStackTrace()
+      case Failure(ex) =>
+        println(s"exception during connection activation")
+        ex.printStackTrace()
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
