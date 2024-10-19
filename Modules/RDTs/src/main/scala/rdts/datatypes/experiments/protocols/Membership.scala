@@ -15,11 +15,8 @@ case class Membership[A, C[_], D[_]](
     innerConsensus: D[A],
     log: List[A],
     membershipChanging: Boolean = false
-)(using
-    Consensus[C],
-    Consensus[D]
 ) {
-  private def unchanged: Membership[A, C, D] = Membership(
+  private def unchanged(using Consensus[C], Consensus[D]): Membership[A, C, D] = Membership(
     counter = counter,
     membersConsensus = Consensus[C].empty,
     innerConsensus = Consensus[D].empty,
@@ -27,13 +24,13 @@ case class Membership[A, C[_], D[_]](
   )
 
   override def toString: String =
-    s"Membership(counter: $counter, members: $currentMembers,log: $log, membershipChanging: $membershipChanging)".stripMargin
+    s"Membership(counter: $counter, members: $membersConsensus,log: $log, membershipChanging: $membershipChanging)".stripMargin
 
-  def currentMembers: Set[Uid] =
+  def currentMembers(using Consensus[C], Consensus[D]): Set[Uid] =
     assert(membersConsensus.members == innerConsensus.members, "Membership of both consensus protocols is the same")
     membersConsensus.members
 
-  def addMember(id: Uid)(using LocalUid): Membership[A, C, D] =
+  def addMember(id: Uid)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if isMember then
       unchanged.copy(
         membershipChanging = true,
@@ -41,7 +38,7 @@ case class Membership[A, C[_], D[_]](
       )
     else unchanged
 
-  def removeMember(id: Uid)(using LocalUid): Membership[A, C, D] =
+  def removeMember(id: Uid)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if currentMembers.size > 1 && isMember then // cannot remove last member
       unchanged.copy(
         membershipChanging = true,
@@ -51,16 +48,16 @@ case class Membership[A, C[_], D[_]](
 
   def read: List[A] = log
 
-  def write(value: A)(using LocalUid): Membership[A, C, D] =
+  def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
       unchanged.copy(
         innerConsensus = innerConsensus.write(value)
       )
     else unchanged
 
-  def isMember(using LocalUid): Boolean = currentMembers.contains(replicaId)
+  def isMember(using LocalUid, Consensus[C], Consensus[D]): Boolean = currentMembers.contains(replicaId)
 
-  def upkeep()(using rid: LocalUid, logger: LogHack): Membership[A, C, D] =
+  def upkeep()(using rid: LocalUid, logger: LogHack, cc: Consensus[C], cd: Consensus[D]): Membership[A, C, D] =
     if !isMember then return unchanged // do nothing if we are not a member anymore
     val newMembers = membersConsensus.merge(membersConsensus.upkeep())
     val newInner   = innerConsensus.merge(innerConsensus.upkeep())

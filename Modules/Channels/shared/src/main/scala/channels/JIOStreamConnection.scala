@@ -2,7 +2,7 @@ package channels
 
 import de.rmgk.delay.{Async, Callback}
 
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, IOException, InputStream, OutputStream}
+import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, EOFException, IOException, InputStream, OutputStream}
 
 class SendingClosedException extends IOException
 
@@ -16,7 +16,6 @@ class JioInputStreamAdapter(in: InputStream) {
     inputStream.readFully(bytes, 0, size)
 
     ArrayMessageBuffer(bytes)
-
   }
 
   def loopReceive(handler: Callback[MessageBuffer]): Unit = {
@@ -36,7 +35,7 @@ class JioOutputStreamAdapter(out: OutputStream) {
 
   def send(data: MessageBuffer): Unit = {
     val outArray = data.asArray
-    outputStream.writeInt(outArray.size)
+    outputStream.writeInt(outArray.length)
     outputStream.write(outArray)
     outputStream.flush()
   }
@@ -53,7 +52,7 @@ class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Uni
   // connection interface
 
   def send(data: MessageBuffer): Async[Any, Unit] = Async {
-    println(s"sending data on jio stream")
+    // println(s"sending data on jio stream")
     outputStream.send(data)
   }
 
@@ -61,7 +60,7 @@ class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Uni
 
   // frame parsing
 
-  def loopHandler(handler: Handler[MessageBuffer]) =
+  def loopHandler(handler: Handler[MessageBuffer]): Unit =
     inputStream.loopReceive(handler.getCallbackFor(this))
 
 }

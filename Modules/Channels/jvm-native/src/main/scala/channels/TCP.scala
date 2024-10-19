@@ -24,7 +24,7 @@ object TCP {
     println(s"handling new connection")
     val conn = new JIOStreamConnection(socket.getInputStream, socket.getOutputStream, () => socket.close())
     executionContext.execute: () =>
-      println(s"exeecuting task")
+      println(s"executing task")
       conn.loopHandler(incoming)
     conn
   }

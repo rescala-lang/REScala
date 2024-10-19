@@ -20,6 +20,7 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   lore.jvm,
   loreCompilerPlugin,
   microbenchmarks,
+  proBench,
   rdts.js,
   rdts.jvm,
   rdts.native,
@@ -218,6 +219,19 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
     Settings.jolSettings,
     DependenciesLocal.tink,
     DependenciesLocal.conscript,
+  )
+
+lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
+  .dependsOn(reactives.jvm, rdts.jvm, channels.jvm, rdts.jvm % "compile->compile;test->test", replication.jvm)
+  .settings(
+    scala3defaults,
+    Settings.javaOutputVersion(11), // java webserver
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
+    Dependencies.jsoniterScala,
+    Dependencies.munitCheck,
+    Dependencies.munit,
+    Dependencies.slips.options,
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)

@@ -53,7 +53,7 @@ class DataManager[State](
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
     crypto: Option[Aead] = None
-)(using lattice: Lattice[State], bottom: Bottom[State]) {
+) {
 
   given LocalUid = replicaId
 
@@ -71,7 +71,7 @@ class DataManager[State](
     case Success(value)     => ()
     case Failure(exception) => exception.printStackTrace()
 
-  def requestData() = {
+  def requestData(): Unit = {
     connections.foreach: con =>
       con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
   }
@@ -102,7 +102,7 @@ class DataManager[State](
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
-  def selfContext = contexts.getOrElse(replicaId.uid, Dots.empty)
+  def selfContext: Dots = contexts.getOrElse(replicaId.uid, Dots.empty)
 
   def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
     localBuffer = dotted :: localBuffer
@@ -120,7 +120,7 @@ class DataManager[State](
     List(localBuffer, remoteDeltas, localDeltas).flatten
   }
 
-  def updateContext(rr: Uid, dots: Dots) = lock.synchronized {
+  def updateContext(rr: Uid, dots: Dots): Unit = lock.synchronized {
     contexts = contexts.updatedWith(rr)(curr => curr `merge` Some(dots))
   }
 
@@ -128,7 +128,7 @@ class DataManager[State](
     case Success(msg)   => handleMessage(msg, outChan)
     case Failure(error) => error.printStackTrace()
 
-  def handleMessage(msg: ProtocolMessage[State], biChan: ConnectionContext) = {
+  def handleMessage(msg: ProtocolMessage[State], biChan: ConnectionContext): Unit = {
     msg match
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
@@ -147,7 +147,7 @@ class DataManager[State](
 
   }
 
-  def disseminateLocalBuffer() = {
+  def disseminateLocalBuffer(): Unit = {
     val deltas = lock.synchronized {
       val deltas = localBuffer
       localBuffer = Nil
