@@ -34,6 +34,6 @@ class MembershipTest extends munit.FunSuite {
       .merge(membership.upkeep()(using id2))
       .merge(membership.upkeep()(using id3))
     assertEquals(membership.currentMembers, Set(id1, id2, id3).map(_.uid))
-    assertEquals(membership.log, List(1))
+    assertEquals(membership.read, List(1))
   }
 }

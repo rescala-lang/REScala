@@ -2,7 +2,7 @@ package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.Consensus.{syntax, given}
+import rdts.datatypes.experiments.protocols.Consensus.given
 import rdts.time.Time
 
 class LogHack(on: Boolean) {
@@ -67,8 +67,8 @@ case class Membership[A, C[_], D[_]](
         logger.info(s"Member consensus reached on members $members")
         copy(
           counter = counter + 1,
-          membersConsensus = membersConsensus.reset(members),
-          innerConsensus = innerConsensus.reset(members),
+          membersConsensus = Consensus.init(members),
+          innerConsensus = Consensus.init(members),
           membershipChanging = false
         )
       // inner consensus is reached
@@ -78,8 +78,8 @@ case class Membership[A, C[_], D[_]](
           logger.info(s"Inner consensus reached on value $value, log: $newLog")
         copy(
           counter = counter + 1,
-          membersConsensus = membersConsensus.reset(currentMembers),
-          innerConsensus = innerConsensus.reset(currentMembers),
+          membersConsensus = Consensus.init(currentMembers),
+          innerConsensus = Consensus.init(currentMembers),
           log = newLog
         )
       // nothing has changed
