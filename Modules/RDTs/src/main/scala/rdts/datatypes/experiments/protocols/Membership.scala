@@ -119,4 +119,8 @@ object Membership {
           left.log,
           left.membershipChanging || right.membershipChanging
         )
+
+    override def lteq(left: Membership[A, C, D], right: Membership[A, C, D]): Boolean =
+      if left.counter < right.counter then true
+      else Lattice[D[A]].lteq(left.innerConsensus, right.innerConsensus) && Lattice[C[Set[Uid]]].lteq(left.membersConsensus, right.membersConsensus)
 }
