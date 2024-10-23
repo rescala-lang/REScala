@@ -2,62 +2,70 @@ package rdts.datatypes.experiments.protocols.simplified
 
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.simplified.Participants.participants
 import rdts.datatypes.{Epoch, GrowOnlySet}
 
-case class Vote(leader: Uid, voter: Uid)
+case class Vote[A](value: A, voter: Uid)
 
 val numParticipants = 4
 
-case class SimpleVoting(votes: Set[Vote]) {
-  def threshold: Int = numParticipants / 2 + 1
+case class SimpleVoting[A](votes: Set[Vote[A]]) {
+  def threshold(using Participants): Int = participants.size / 2 + 1
 
-  def isLeader(using LocalUid): Boolean =
-    val (id, count) = leadingCount
-    id == replicaId && count >= threshold
+  def result(using Participants): Option[A] =
+    leadingCount match
+      case Some((v, count)) if count >= threshold => Some(v)
+      case _                                      => None
 
-  def voteFor(uid: Uid)(using LocalUid): SimpleVoting =
-    if votes.exists { case Vote(_, voter) => voter == replicaId }
-    then SimpleVoting(Set.empty) // already voted!
+  def voteFor(v: A)(using LocalUid, Participants): SimpleVoting[A] =
+    if !participants.contains(replicaId) || votes.exists { case Vote(_, voter) => voter == replicaId }
+    then SimpleVoting.unchanged // already voted!
     else
-      SimpleVoting(Set(Vote(uid, replicaId)))
+      SimpleVoting(Set(Vote(v, replicaId)))
 
-  def leadingCount(using id: LocalUid): (Uid, Int) =
-    val grouped: Map[Uid, Int] = votes.groupBy(_.leader).map((o, elems) => (o, elems.size))
-    if grouped.isEmpty
-    then (replicaId, 0)
-    else grouped.maxBy((o, size) => size)
+  def leadingCount: Option[(A, Int)] =
+    val grouped: Map[A, Int] = votes.groupBy(_.value).map((value, vts) => (value, vts.size))
+    grouped.maxByOption((_, size) => size)
 }
 
-case class MultiRoundVoting(rounds: Epoch[SimpleVoting]):
-  def release: MultiRoundVoting =
-    MultiRoundVoting(Epoch(rounds.counter + 1, SimpleVoting(Set.empty)))
+type LeaderElection = SimpleVoting[Uid]
 
-  def upkeep(using LocalUid): MultiRoundVoting =
-    val (id, count) = rounds.value.leadingCount
-    if checkIfMajorityPossible
-    then voteFor(id)
-    else release
+case class Participants(members: Set[Uid])
 
-  def checkIfMajorityPossible(using localUid: LocalUid): Boolean =
-    val (id, count)    = rounds.value.leadingCount
+object Participants:
+  def participants(using p: Participants): Set[Uid] =
+    p.members
+
+case class MultiRoundVoting[A](rounds: Epoch[SimpleVoting[A]]):
+  def release(using Participants): MultiRoundVoting[A] =
+    MultiRoundVoting(Epoch(rounds.counter + 1, SimpleVoting.unchanged))
+
+  def upkeep(using LocalUid, Participants): MultiRoundVoting[A] =
+    rounds.value.leadingCount match
+      case Some(value, count) if checkIfMajorityPossible => voteFor(value)
+      case Some(_) => release                    // we have a leading proposal but majority is not possible anymore
+      case None    => MultiRoundVoting.unchanged // no change yet
+
+  def checkIfMajorityPossible(using Participants): Boolean =
     val totalVotes     = rounds.value.votes.size
-    val remainingVotes = numParticipants - totalVotes
-    (count + remainingVotes) > rounds.value.threshold
+    val remainingVotes = participants.size - totalVotes
+    val possible       = rounds.value.leadingCount.map((_, count) => (count + remainingVotes) >= rounds.value.threshold)
+    possible.getOrElse(true) // if there is no leading vote, majority is always possible
 
   // api
-  def voteFor(uid: Uid)(using LocalUid): MultiRoundVoting =
-    MultiRoundVoting(Epoch(rounds.counter, rounds.value.voteFor(uid)))
+  def voteFor(c: A)(using LocalUid, Participants): MultiRoundVoting[A] =
+    MultiRoundVoting(Epoch(rounds.counter, rounds.value.voteFor(c)))
 
-  def isLeader(using LocalUid): Boolean =
-    rounds.value.isLeader
+  def result(using Participants): Option[A] =
+    rounds.value.result
 
 object SimpleVoting {
-  given Lattice[SimpleVoting] = Lattice.derived
-  given Bottom[SimpleVoting] with
-    override def empty: SimpleVoting = unchanged
-  def unchanged: SimpleVoting = SimpleVoting(GrowOnlySet.empty)
+  given lattice[A]: Lattice[SimpleVoting[A]] = Lattice.derived
+  given bottom[A](using Participants): Bottom[SimpleVoting[A]] with
+    override def empty: SimpleVoting[A] = unchanged
+  def unchanged[A](using Participants): SimpleVoting[A] = SimpleVoting(Set.empty)
 }
 object MultiRoundVoting {
-  def unchanged: MultiRoundVoting = MultiRoundVoting(Epoch.empty[SimpleVoting])
-  given Lattice[MultiRoundVoting] = Lattice.derived
+  def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[SimpleVoting[A]])
+  given lattice[A]: Lattice[MultiRoundVoting[A]]            = Lattice.derived
 }
