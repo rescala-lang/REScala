@@ -99,7 +99,6 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
           (res(index1), res(index2)) match
             case (membership1, membership2) =>
               (membership1.currentMembers.nonEmpty && membership2.currentMembers.nonEmpty) :| "set of members can never be empty" &&
-              (membership1.membersConsensus.members == membership1.innerConsensus.members) :| "members of both protocols never go out of sync" &&
               ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices" &&
               (membership1.read.containsSlice(membership2.read) || membership2.read.containsSlice(
                 membership1.read

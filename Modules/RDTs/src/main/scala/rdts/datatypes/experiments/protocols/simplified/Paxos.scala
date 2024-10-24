@@ -3,8 +3,9 @@ package rdts.datatypes.experiments.protocols.simplified
 import rdts.base.Lattice.mapLattice
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.Consensus
+import rdts.datatypes.experiments.protocols.Participants.participants
 import rdts.datatypes.experiments.protocols.simplified.Paxos.given
+import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 import rdts.datatypes.{GrowOnlySet, LastWriterWins}
 
 import scala.math.Ordering.Implicits.infixOrderingOps
@@ -127,7 +128,7 @@ object Paxos:
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
-      override def write(value: A)(using LocalUid): Paxos[A] =
+      override def write(value: A)(using LocalUid, Participants): Paxos[A] =
         if c.members.contains(replicaId) then
           def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
 
@@ -144,7 +145,7 @@ object Paxos:
             case None => becomeLeader // no proposals yet, try to become leader
         else Paxos.unchanged
     extension [A](c: Paxos[A])
-      override def read: Option[A] =
+      override def read(using Participants): Option[A] =
         val acceptancePerProposal: Map[ProposalNum, Set[Accepted[A]]] = c.accepted.groupBy(_.proposal)
         for
           (proposal, votes) <- acceptancePerProposal.maxByOption((_, a) => a.size)
@@ -152,15 +153,13 @@ object Paxos:
           if votes.size >= c.quorum
         yield acceptedProposal.value
     extension [A](c: Paxos[A])
-      override def members: Set[Uid] = c.members.keySet
-    extension [A](c: Paxos[A])
-      override def upkeep()(using LocalUid): Paxos[A] =
+      override def upkeep()(using LocalUid, Participants): Paxos[A] =
         // sanity checks
         def allIds: Set[Uid] = c.prepares.map(_.proposal.proposer)
           .union(c.promises.map(_.acceptor))
           .union(c.accepts.map(_.proposal.proposer))
           .union(c.accepted.map(_.acceptor))
-        assert(allIds.subsetOf(c.members.keySet)) // we only have votes from members
+        assert(allIds.subsetOf(participants)) // we only have votes from members
 
         // check if the newest accept is newer than the newest prepare message
         (c.accepts.maxByOption(_.proposal), c.prepares.maxByOption(_.proposal)) match

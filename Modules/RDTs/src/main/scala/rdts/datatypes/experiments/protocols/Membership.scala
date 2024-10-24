@@ -14,21 +14,24 @@ case class Membership[A, C[_], D[_]](
     membersConsensus: C[Set[Uid]],
     innerConsensus: D[A],
     log: List[A],
-    membershipChanging: Boolean = false
+    membershipChanging: Boolean = false,
+    members: Set[Uid]
 ) {
   private def unchanged(using Consensus[C], Consensus[D]): Membership[A, C, D] = Membership(
     counter = counter,
     membersConsensus = Consensus[C].empty,
     innerConsensus = Consensus[D].empty,
-    log = List()
+    log = List(),
+    members = Set.empty
   )
+
+  given Participants = Participants(members)
 
   override def toString: String =
     s"Membership(counter: $counter, members: $membersConsensus,log: $log, membershipChanging: $membershipChanging)".stripMargin
 
   def currentMembers(using Consensus[C], Consensus[D]): Set[Uid] =
-    assert(membersConsensus.members == innerConsensus.members, "Membership of both consensus protocols is the same")
-    membersConsensus.members
+    members
 
   def addMember(id: Uid)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if isMember then
@@ -98,10 +101,11 @@ object Membership {
   ): Membership[A, C, D] =
     require(initialMembers.nonEmpty, "initial members can't be empty")
     Membership(
-      0,
-      Consensus[C].init[Set[Uid]](initialMembers),
-      Consensus[D].init[A](initialMembers),
-      List()
+      counter = 0,
+      membersConsensus = Consensus[C].init[Set[Uid]](initialMembers),
+      innerConsensus = Consensus[D].init[A](initialMembers),
+      log = List(),
+      members = initialMembers
     )
 
   given lattice[A, C[_], D[_]](using
@@ -117,10 +121,15 @@ object Membership {
           Lattice[C[Set[Uid]]].merge(left.membersConsensus, right.membersConsensus),
           Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
           left.log,
-          left.membershipChanging || right.membershipChanging
+          left.membershipChanging || right.membershipChanging,
+          left.members
         )
 
     override def lteq(left: Membership[A, C, D], right: Membership[A, C, D]): Boolean =
       if left.counter < right.counter then true
-      else Lattice[D[A]].lteq(left.innerConsensus, right.innerConsensus) && Lattice[C[Set[Uid]]].lteq(left.membersConsensus, right.membersConsensus)
+      else
+        Lattice[D[A]].lteq(
+          left.innerConsensus,
+          right.innerConsensus
+        ) && Lattice[C[Set[Uid]]].lteq(left.membersConsensus, right.membersConsensus)
 }

@@ -2,7 +2,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import rdts.base.{Lattice, LocalUid}
-import rdts.datatypes.experiments.protocols.{Consensus, simplified}
+import rdts.datatypes.experiments.protocols.{Consensus, Participants, simplified}
 
 import scala.util.Try
 
@@ -94,19 +94,24 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
   // commands that change state
   class Write(writer: LocalUid, value: A) extends ACommand(writer):
     def nextLocalState(states: Map[LocalUid, C[A]]) =
+
+      given Participants = Participants(states.keySet.map(_.uid))
       Lattice[C[A]].merge(states(writer), states(writer).write(value)(using writer))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]) =
+      given Participants = Participants(state.keySet.map(_.uid))
       (state(writer).members == result.get(writer).members)
       :| s"Members do not change during writes.\nBefore: ${state(writer)}\nAfter:${result.get(writer)}"
 
   class Upkeep(id: LocalUid) extends ACommand(id):
     def nextLocalState(states: Map[LocalUid, C[A]]) =
+      given Participants = Participants(states.keySet.map(_.uid))
       Lattice[C[A]].merge(states(id), states(id).upkeep()(using id))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]): Prop =
-      val res      = result.get
-      val resValue = res(id).read
+      given Participants = Participants(state.keySet.map(_.uid))
+      val res            = result.get
+      val resValue       = res(id).read
 
       if logging && resValue.nonEmpty then println(s"accepted value: ${resValue.get}")
 

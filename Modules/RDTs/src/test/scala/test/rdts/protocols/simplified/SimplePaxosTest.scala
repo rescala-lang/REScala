@@ -1,6 +1,8 @@
 package test.rdts.protocols.simplified
 
 import rdts.base.{Bottom, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.Participants
+import rdts.datatypes.experiments.protocols.Participants.participants
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.datatypes.experiments.protocols.simplified.Paxos.{*, given}
 import rdts.time.Dots
@@ -16,9 +18,9 @@ class SimplePaxosTest extends munit.FunSuite {
   val id2          = LocalUid.gen()
   val id3          = LocalUid.gen()
 
-  given members: Set[Uid] = Set(id1, id2, id3).map(_.uid)
+  given Participants = Participants(Set(id1, id2, id3).map(_.uid))
 
-  var emptyPaxosObject: Paxos[Int] = Paxos.init(members)
+  var emptyPaxosObject: Paxos[Int] = Paxos.init(participants)
 
 //  test("Merge fails with different members") {
 //    val p1: Paxos[Int] = Paxos.unchanged.copy(members = Set(id1).map(_.uid))
