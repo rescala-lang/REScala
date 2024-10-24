@@ -2,14 +2,13 @@ package rdts.datatypes.experiments.protocols.simplified
 
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.simplified.Participants.participants
-import rdts.datatypes.{Epoch, GrowOnlySet}
+import rdts.datatypes.experiments.protocols.Participants
+import rdts.datatypes.experiments.protocols.Participants.participants
+import rdts.datatypes.{Epoch, GrowOnlyMap, GrowOnlySet}
 
 case class Vote[A](value: A, voter: Uid)
 
-val numParticipants = 4
-
-case class SimpleVoting[A](votes: Set[Vote[A]]) {
+case class SimpleVoting[A](votes: Set[Vote[A]] = Set.empty[Vote[A]]) {
   def threshold(using Participants): Int = participants.size / 2 + 1
 
   def result(using Participants): Option[A] =
@@ -28,13 +27,16 @@ case class SimpleVoting[A](votes: Set[Vote[A]]) {
     grouped.maxByOption((_, size) => size)
 }
 
+object SimpleVoting {
+  given lattice[A]: Lattice[SimpleVoting[A]] = Lattice.derived
+
+  given bottom[A](using Participants): Bottom[SimpleVoting[A]] with
+    override def empty: SimpleVoting[A] = unchanged
+
+  def unchanged[A](using Participants): SimpleVoting[A] = SimpleVoting(Set.empty)
+}
+
 type LeaderElection = SimpleVoting[Uid]
-
-case class Participants(members: Set[Uid])
-
-object Participants:
-  def participants(using p: Participants): Set[Uid] =
-    p.members
 
 case class MultiRoundVoting[A](rounds: Epoch[SimpleVoting[A]]):
   def release(using Participants): MultiRoundVoting[A] =
@@ -59,12 +61,6 @@ case class MultiRoundVoting[A](rounds: Epoch[SimpleVoting[A]]):
   def result(using Participants): Option[A] =
     rounds.value.result
 
-object SimpleVoting {
-  given lattice[A]: Lattice[SimpleVoting[A]] = Lattice.derived
-  given bottom[A](using Participants): Bottom[SimpleVoting[A]] with
-    override def empty: SimpleVoting[A] = unchanged
-  def unchanged[A](using Participants): SimpleVoting[A] = SimpleVoting(Set.empty)
-}
 object MultiRoundVoting {
   def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[SimpleVoting[A]])
   given lattice[A]: Lattice[MultiRoundVoting[A]]            = Lattice.derived
