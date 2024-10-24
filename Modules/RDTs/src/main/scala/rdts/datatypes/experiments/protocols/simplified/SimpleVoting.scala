@@ -65,3 +65,75 @@ object MultiRoundVoting {
   def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[SimpleVoting[A]])
   given lattice[A]: Lattice[MultiRoundVoting[A]]            = Lattice.derived
 }
+
+case class BallotNum(uid: Uid, counter: Long)
+
+given Ordering[BallotNum] with
+  override def compare(x: BallotNum, y: BallotNum): Int =
+    if x.counter > y.counter then 1
+    else if x.counter < y.counter then -1
+    else Ordering[Uid].compare(x.uid, y.uid)
+
+case class GeneralizedPaxos[A](rounds: Map[BallotNum, (LeaderElection, SimpleVoting[A])] =
+  Map.empty[BallotNum, (LeaderElection, SimpleVoting[A])]):
+
+  def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
+    (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]().voteFor(value))
+
+  def voteFor(leader: Uid)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
+    (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]())
+
+  def phase1a(using LocalUid, Participants): GeneralizedPaxos[A] =
+    val nextBallotNum: BallotNum = ???
+    GeneralizedPaxos(Map(nextBallotNum -> voteFor(replicaId)))
+
+  def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
+    // return greatest decided value
+    val r          = rounds.filter { case (b, (l, v)) => v.result != None }
+    val decidedVal = r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
+
+    // vote for newest leader election
+    val highestBallotNum = highestBallot.map(_._1)
+    val leaderCandidate  = highestBallot.map(_._1.uid)
+
+    (highestBallotNum, leaderCandidate, decidedVal) match
+      case (Some(ballotNum), Some(candidate), None) => // no value decided, just vote for candidate
+        GeneralizedPaxos(Map(ballotNum -> voteFor(candidate)))
+      case (Some(ballotNum), Some(candidate), Some(decidedValue)) => // vote for candidate and decided value
+        GeneralizedPaxos(Map(ballotNum -> voteFor(candidate, decidedValue)))
+      case _ => GeneralizedPaxos() // do nothing
+
+  def phase2a(using LocalUid, Participants): GeneralizedPaxos[A] =
+    // check if leader
+    myHighestBallot match
+      case Some((ballotNum, (leaderElection, voting))) if leaderElection.result == Some(replicaId) =>
+        val value =
+          if voting.votes.nonEmpty then
+            voting.votes.head.value
+          else ??? // TODO: get value from context?
+        GeneralizedPaxos(Map(ballotNum -> voteFor(replicaId, value)))
+      case None => GeneralizedPaxos()
+
+  def phase2b(using LocalUid, Participants): GeneralizedPaxos[A] =
+    // get highest ballot with leader
+    val roundsWithLeaders = rounds.filter { case (ballotNum, (leaderElection, voting)) =>
+      leaderElection.result.nonEmpty
+    }
+    val highestBallot = roundsWithLeaders.maxByOption { case (ballotNum, (leaderElection, voting)) => ballotNum }
+    val newestLeader: Option[Uid] = highestBallot
+      .flatMap { case (ballotNum, (leaderElection, voting)) => leaderElection.result }
+    val proposedValue: Option[A] = highestBallot
+      .flatMap { case (ballotNum, (leaderElection, voting)) => voting.votes.headOption.map(_.value) }
+
+    (highestBallot.map(_._1), newestLeader, proposedValue) match
+      // if leader and value are known, vote for it, otherwise do nothing
+      case (Some(ballotNum), Some(leader), Some(value)) =>
+        GeneralizedPaxos(Map(ballotNum -> voteFor(leader, value)))
+      case _ => GeneralizedPaxos()
+
+  // helpers
+  def highestBallot: Option[(BallotNum, (LeaderElection, SimpleVoting[A]))] = rounds.maxByOption { case (b, (l, v)) =>
+    b
+  }
+  def myHighestBallot(using LocalUid): Option[(BallotNum, (LeaderElection, SimpleVoting[A]))] =
+    rounds.filter { case (b, (l, v)) => b.uid == replicaId }.maxByOption { case (b, (l, v)) => b }
