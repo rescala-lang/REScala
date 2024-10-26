@@ -67,13 +67,17 @@ class DataManager[State](
 
   var connections: List[ConnectionContext] = Nil
 
-  val debugCallback: Callback[Any] =
-    case Success(value)     => ()
-    case Failure(exception) => exception.printStackTrace()
+  def debugCallbackAndRemoveCon(con: ConnectionContext): Callback[Any] =
+    case Success(value) => ()
+    case Failure(exception) =>
+      lock.synchronized {
+        connections = connections.filter(cc => cc != con)
+      }
+      exception.printStackTrace()
 
   def requestData(): Unit = {
     connections.foreach: con =>
-      con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallback)
+      con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(con))
   }
 
   def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
@@ -133,7 +137,7 @@ class DataManager[State](
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
         relevant.foreach: msg =>
-          biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallback)
+          biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallbackAndRemoveCon(biChan))
         updateContext(uid, selfContext `merge` knows)
       case Payload(uid, context, data) =>
         val interalized = ProtocolDots[State](data, context)
@@ -156,7 +160,7 @@ class DataManager[State](
     }
     connections.foreach: con =>
       deltas.foreach: delta =>
-        con.send(Payload(replicaId.uid, delta.context, delta.data)).run(using ())(debugCallback)
+        con.send(Payload(replicaId.uid, delta.context, delta.data)).run(using ())(debugCallbackAndRemoveCon(con))
   }
 
 }
