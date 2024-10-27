@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus.given
 import rdts.time.Time
 
@@ -70,9 +70,10 @@ case class Membership[A, C[_], D[_]](
         logger.info(s"Member consensus reached on members $members")
         copy(
           counter = counter + 1,
-          membersConsensus = Consensus.init(members),
-          innerConsensus = Consensus.init(members),
-          membershipChanging = false
+          membersConsensus = Consensus[C].empty,
+          innerConsensus = Consensus[D].empty,
+          membershipChanging = false,
+          members = members
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
@@ -81,8 +82,8 @@ case class Membership[A, C[_], D[_]](
           logger.info(s"Inner consensus reached on value $value, log: $newLog")
         copy(
           counter = counter + 1,
-          membersConsensus = Consensus.init(currentMembers),
-          innerConsensus = Consensus.init(currentMembers),
+          membersConsensus = Consensus[C].empty,
+          innerConsensus = Consensus[D].empty,
           log = newLog
         )
       // nothing has changed
@@ -102,8 +103,8 @@ object Membership {
     require(initialMembers.nonEmpty, "initial members can't be empty")
     Membership(
       counter = 0,
-      membersConsensus = Consensus[C].init[Set[Uid]](initialMembers),
-      innerConsensus = Consensus[D].init[A](initialMembers),
+      membersConsensus = Consensus[C].empty,
+      innerConsensus = Consensus[D].empty,
       log = List(),
       members = initialMembers
     )

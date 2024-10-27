@@ -26,7 +26,7 @@ case class Paxos[A](
 ) {
 //  override def toString: String = pprint.apply(this).render
 
-  private def quorum: Int = members.size / 2 + 1
+  private def quorum(using Participants): Int = participants.size / 2 + 1
 
   def myHighestPromise(using LocalUid): Option[Promise[A]] =
     promises.filter(_.acceptor == replicaId).maxByOption(_.proposal)
@@ -66,7 +66,7 @@ case class Paxos[A](
       )
 
   // phase 2a
-  def propose(proposal: ProposalNum, v: A)(using LocalUid): Paxos[A] =
+  def propose(proposal: ProposalNum, v: A)(using LocalUid, Participants): Paxos[A] =
     // check if I have received enough promises and have not proposed yet
     val myPromises  = promises.filter(_.proposal == proposal)
     val hasProposed = accepts.exists(_.proposal == proposal)
@@ -84,7 +84,7 @@ case class Paxos[A](
     else
       Paxos.unchanged // quorum not reached, do nothing
 
-  def propose(v: A)(using LocalUid): Paxos[A] =
+  def propose(v: A)(using LocalUid, Participants): Paxos[A] =
     // find my newest proposalNum
     val proposalNum = prepares.filter(_.proposal.proposer == replicaId).maxByOption(_.proposal)
     proposalNum match
@@ -129,7 +129,7 @@ object Paxos:
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
       override def write(value: A)(using LocalUid, Participants): Paxos[A] =
-        if c.members.contains(replicaId) then
+        if participants.contains(replicaId) then
           def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
 
           val myNewestProposal = c.prepares.filter(_.proposal.proposer == replicaId).map(_.proposal).maxOption
@@ -189,8 +189,6 @@ object Paxos:
           case _ =>
             // there are no prepare messages, do nothing
             Paxos.unchanged
-
-    override def init[A](members: GrowOnlySet[Uid]): Paxos[A] = Paxos.init(members = members)
 
     override def empty[A]: Paxos[A] = Paxos.unchanged
 

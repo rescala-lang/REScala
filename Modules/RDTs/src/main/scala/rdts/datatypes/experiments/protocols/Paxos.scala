@@ -196,7 +196,6 @@ object Paxos {
       override def read(using Participants): Option[A] = c.read
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid, Participants): Paxos[A] = c.upkeep()
-    override def init[A](members: GrowOnlySet[Uid]): Paxos[A]       = Paxos.init(members = members)
 
     override def empty[A]: Paxos[A] = Paxos.unchanged
 

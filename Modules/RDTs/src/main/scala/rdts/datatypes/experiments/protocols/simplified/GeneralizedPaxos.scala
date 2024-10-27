@@ -5,8 +5,11 @@ import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 
-case class GeneralizedPaxos[A](rounds: Map[BallotNum, (LeaderElection, SimpleVoting[A])] =
-  Map.empty[BallotNum, (LeaderElection, SimpleVoting[A])], myValue: Option[LastWriterWins[A]] = None):
+case class GeneralizedPaxos[A](
+    rounds: Map[BallotNum, (LeaderElection, SimpleVoting[A])] =
+      Map.empty[BallotNum, (LeaderElection, SimpleVoting[A])],
+    myValue: Option[LastWriterWins[A]] = None
+):
 
   def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
     (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]().voteFor(value))
@@ -20,7 +23,7 @@ case class GeneralizedPaxos[A](rounds: Map[BallotNum, (LeaderElection, SimpleVot
 
   def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
     // return greatest decided value
-    val r          = rounds.filter { case (b, (l, v)) => v.result != None }
+    val r          = rounds.filter { case (b, (l, v)) => v.result.isDefined }
     val decidedVal = r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
 
     // vote for newest leader election
@@ -37,7 +40,7 @@ case class GeneralizedPaxos[A](rounds: Map[BallotNum, (LeaderElection, SimpleVot
   def phase2a(using LocalUid, Participants): GeneralizedPaxos[A] =
     // check if leader
     myHighestBallot match
-      case Some((ballotNum, (leaderElection, voting))) if leaderElection.result == Some(replicaId) =>
+      case Some((ballotNum, (leaderElection, voting))) if leaderElection.result.contains(replicaId) =>
         val value =
           if voting.votes.nonEmpty then
             voting.votes.head.value
@@ -70,7 +73,7 @@ case class GeneralizedPaxos[A](rounds: Map[BallotNum, (LeaderElection, SimpleVot
     rounds.filter { case (b, (l, v)) => b.uid == replicaId }.maxByOption { case (b, (l, v)) => b }
 
   def newestDecidedVal(using Participants): Option[A] =
-    val r = rounds.filter { case (b, (l, v)) => v.result != None }
+    val r = rounds.filter { case (b, (l, v)) => v.result.isDefined }
     r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
 
 object GeneralizedPaxos:
@@ -89,15 +92,18 @@ object GeneralizedPaxos:
     extension [A](c: GeneralizedPaxos[A])(using Participants)
       override def read: Option[A] = c.newestDecidedVal
     extension [A](c: GeneralizedPaxos[A])
-      override def upkeep()(using LocalUid): GeneralizedPaxos[A] =
+      override def upkeep()(using LocalUid, Participants): GeneralizedPaxos[A] =
         // check which phase we are in
-
-        ???
-
-
-
-    override def init[A](members: Set[Uid]): GeneralizedPaxos[A] = GeneralizedPaxos()
+        c.highestBallot match
+          // we have a leader -> phase 2
+          case Some((ballotNum, (leaderElection, voting))) if leaderElection.result.nonEmpty =>
+            c.phase2b
+          // we are in the process of electing a new leader
+          case None =>
+            c.phase1b
 
     override def empty[A]: GeneralizedPaxos[A] = GeneralizedPaxos()
 
     override def lattice[A]: Lattice[GeneralizedPaxos[A]] = lattice
+
+    // TODO: define lteq

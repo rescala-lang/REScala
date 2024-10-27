@@ -72,7 +72,7 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
     for
       numDevices <- Gen.choose(minDevices, maxDevices)
       ids = Range(0, numDevices).map(_ => LocalUid.gen()).toList
-    yield ids.map(id => (id, Consensus.init(ids.map(_.uid).toSet))).toMap
+    yield ids.map(id => (id, Consensus[C].empty)).toMap
 
   // generators
   override def genCommand(state: State): Gen[Command] =

@@ -10,7 +10,6 @@ trait Consensus[C[_]] {
   extension [A](c: C[A]) def members(using Participants): Set[Uid] = participants
   extension [A](c: C[A]) def upkeep()(using LocalUid, Participants): C[A]
 
-  def init[A](members: Set[Uid]): C[A]
   def empty[A]: C[A]
   def lattice[A]: Lattice[C[A]]
 }
@@ -21,7 +20,4 @@ object Consensus {
     override def empty: C[A] = Consensus[C].empty
 
   def apply[C[_]](using ev: Consensus[C]): Consensus[C] = ev
-  def init[A, C[_]](newMembers: Set[Uid])(using Consensus[C]): C[A] =
-    val a: Consensus[C] = apply[C]
-    a.init(newMembers)
 }
