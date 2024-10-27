@@ -70,8 +70,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   .dependsOn(rdts)
   .settings(
     Settings.scala3defaults,
-    // jetty 12 requires java 17
-    Settings.javaOutputVersion(17, Test / compile),
+    Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.slips.delay,
@@ -152,7 +151,6 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
   .dependsOn(deltalens, rdts.jvm % "compile->compile;test->test")
   .settings(
     scala3defaults,
-    // SunEC crypto provider does not support Ed25519 in jdk 11
     Settings.javaOutputVersion(17),
     Settings.safeInit(Compile / compile, Test / compile),
     Dependencies.munit,
@@ -225,7 +223,7 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
   .dependsOn(reactives.jvm, rdts.jvm, channels.jvm, rdts.jvm % "compile->compile;test->test", replication.jvm)
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(11), // java webserver
+    Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
@@ -238,7 +236,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
   .in(file("Modules/RDTs"))
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(8),
+    Settings.javaOutputVersion(17),
     Settings.safeInit(Compile / compile),
     Settings.explicitNulls(Compile / compile),
     SettingsLocal.publishSonatype,
@@ -252,7 +250,7 @@ lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(
 lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("Modules/Reactives"))
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(9), // for java.util.Flow
+    Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     // scaladoc
@@ -276,7 +274,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
   .dependsOn(reactives, rdts, channels, rdts % "compile->compile;test->test")
   .settings(
     scala3defaults,
-    Settings.javaOutputVersion(11), // java webserver
+    Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.munitCheck,
