@@ -2,6 +2,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.simplified.GeneralizedPaxos
 import rdts.datatypes.experiments.protocols.{Consensus, LogHack, Membership, simplified}
 
 import scala.util.Try
@@ -15,6 +16,28 @@ class MembershipSuite extends munit.ScalaCheckSuite {
       .withMaxSize(500)
 
   property("Membership with simplepaxos")(MembershipSpec[Int, simplified.Paxos, simplified.Paxos](
+    logging = false,
+    minDevices = 3,
+    maxDevices = 6,
+    mergeFreq = 80,
+    upkeepFreq = 70,
+    writeFreq = 20,
+    addMemberFreq = 1,
+    removeMemberFreq = 1
+  ).property())
+
+  property("Membership with generalized paxos")(MembershipSpec[Int, GeneralizedPaxos, GeneralizedPaxos](
+    logging = false,
+    minDevices = 3,
+    maxDevices = 6,
+    mergeFreq = 80,
+    upkeepFreq = 70,
+    writeFreq = 20,
+    addMemberFreq = 1,
+    removeMemberFreq = 1
+  ).property())
+
+  property("Membership with two different algos")(MembershipSpec[Int, simplified.Paxos, GeneralizedPaxos](
     logging = false,
     minDevices = 3,
     maxDevices = 6,
@@ -59,7 +82,7 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
       value <- arbitrary[A]
     yield Write(id, value)
 
-  def genUpkeep(state: State): Gen[Upkeep] = genId(state).map(Upkeep(_))
+  def genUpkeep(state: State): Gen[Upkeep] = genId(state).map(Upkeep)
 
   def genAddMember(state: State): Gen[AddMember] =
     for
