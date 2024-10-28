@@ -46,7 +46,8 @@ case class GeneralizedPaxos[A](
             voting.votes.head.value
           else myValue.get.value // get my value from context
         GeneralizedPaxos(Map(ballotNum -> voteFor(replicaId, value)))
-      case None => GeneralizedPaxos()
+      // not leader -> do nothing
+      case _ => GeneralizedPaxos()
 
   def phase2b(using LocalUid, Participants): GeneralizedPaxos[A] =
     // get highest ballot with leader
@@ -77,7 +78,7 @@ case class GeneralizedPaxos[A](
     r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
 
 object GeneralizedPaxos:
-  given lattice[A]: Lattice[GeneralizedPaxos[A]] = Lattice.derived
+  given l[A]: Lattice[GeneralizedPaxos[A]] = Lattice.derived
   given consensus: Consensus[GeneralizedPaxos] with
     extension [A](c: GeneralizedPaxos[A])
       override def write(value: A)(using LocalUid, Participants): GeneralizedPaxos[A] =
@@ -99,11 +100,11 @@ object GeneralizedPaxos:
           case Some((ballotNum, (leaderElection, voting))) if leaderElection.result.nonEmpty =>
             c.phase2b
           // we are in the process of electing a new leader
-          case None =>
+          case _ =>
             c.phase1b
 
     override def empty[A]: GeneralizedPaxos[A] = GeneralizedPaxos()
 
-    override def lattice[A]: Lattice[GeneralizedPaxos[A]] = lattice
+    override def lattice[A]: Lattice[GeneralizedPaxos[A]] = l
 
     // TODO: define lteq
