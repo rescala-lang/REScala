@@ -18,7 +18,13 @@ case class GeneralizedPaxos[A](
     (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]())
 
   def phase1a(using LocalUid, Participants): GeneralizedPaxos[A] =
-    val nextBallotNum: BallotNum = ???
+    val nextBallotNum: BallotNum =
+      val maxCounter: Long = rounds
+        .filter((b, _) => b.uid == replicaId)
+        .map((b, _) => b.counter)
+        .maxOption
+        .getOrElse(-1)
+      BallotNum(replicaId, maxCounter + 1)
     GeneralizedPaxos(Map(nextBallotNum -> voteFor(replicaId)))
 
   def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
