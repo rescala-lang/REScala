@@ -82,7 +82,7 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
       value <- arbitrary[A]
     yield Write(id, value)
 
-  def genUpkeep(state: State): Gen[Upkeep] = genId(state).map(Upkeep)
+  def genUpkeep(state: State): Gen[Upkeep] = genId(state).map(Upkeep(_))
 
   def genAddMember(state: State): Gen[AddMember] =
     for
