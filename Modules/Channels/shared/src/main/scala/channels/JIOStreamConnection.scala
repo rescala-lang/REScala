@@ -2,7 +2,7 @@ package channels
 
 import de.rmgk.delay.{Async, Callback}
 
-import java.io.{BufferedInputStream, BufferedOutputStream, DataInputStream, DataOutputStream, EOFException, IOException, InputStream, OutputStream}
+import java.io.*
 
 class SendingClosedException extends IOException
 

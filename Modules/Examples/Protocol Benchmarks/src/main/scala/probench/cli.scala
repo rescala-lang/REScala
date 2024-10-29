@@ -19,11 +19,11 @@ object cli {
   private val ec: ExecutionContext      = ExecutionContext.fromExecutor(executor)
 
   def main(args: Array[String]): Unit = {
-    val name       = named[String]("--name", "")
+
     val clientPort = named[Int]("--listen-client-port", "")
     val peerPort   = named[Int]("--listen-peer-port", "")
 
-    val ipAndPort = """(.+):(\d*)""".r
+    val ipAndPort = """(.+):(\d+)""".r
 
     given ipAndPortParser: ArgumentValueParser[(String, Int)] with
       override def apply(args: List[String]): (Option[(String, Int)], List[String]) =
@@ -32,7 +32,7 @@ object cli {
           case _                           => (None, args)
         }
 
-      override def valueDescription: String = "[<ip:port>]"
+      override def valueDescription: String = "<ip:port>"
     end ipAndPortParser
 
     given uidParser: ArgumentValueParser[Uid] with
@@ -42,18 +42,19 @@ object cli {
           case _              => (None, args)
         }
 
-      override def valueDescription: String = "[uid]"
+      override def valueDescription: String = "<uid>"
     end uidParser
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
     given JsonValueCodec[Membership[Request, Paxos, Paxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     val argparse = argumentParser {
-      inline def cluster           = named[List[(String, Int)]]("--cluster", "[<ip:port>]")
-      inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "[name]")
-
-      inline def clientNode = named[(String, Int)]("--node", "<ip:port>")
+      inline def cluster           = named[List[(String, Int)]]("--cluster", "")
+      inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
+      inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
+      inline def name              = named[Uid]("--name", "", Uid.gen())
 
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
@@ -67,7 +68,7 @@ object cli {
       }.value
 
       subcommand("client", "starts a client to interact with a node") {
-        val client = Client()
+        val client = Client(name.value)
 
         val (ip, port) = clientNode.value
 

@@ -1,6 +1,6 @@
 package rdts.time
 
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 
 import scala.annotation.tailrec
 import scala.math.PartialOrdering
@@ -29,6 +29,10 @@ object VectorClock {
   given lattice: Lattice[VectorClock] =
     given Lattice[Time] = _ max _
     Lattice.derived
+
+  given bottom: Bottom[VectorClock] with {
+    def empty: VectorClock = zero
+  }
 
   val vectorClockTotalOrdering: Ordering[VectorClock] = new Ordering[VectorClock] {
     override def compare(x: VectorClock, y: VectorClock): Int =

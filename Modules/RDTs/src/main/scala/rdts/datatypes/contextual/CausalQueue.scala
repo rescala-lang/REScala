@@ -7,16 +7,16 @@ import rdts.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
 
-case class CausalQueue[T](values: Queue[QueueElement[T]]) {
+case class CausalQueue[T](values: Queue[QueueElement[T]], clock: VectorClock) {
 
   type Delta = Dotted[CausalQueue[T]]
 
   def enqueue(using LocalUid)(e: T)(using context: Dots): Delta =
-    val time = context.clock.inc(LocalUid.replicaId)
+    val time = clock.merge(clock.inc(LocalUid.replicaId))
     val dot  = time.dotOf(LocalUid.replicaId)
-    Dotted(CausalQueue(Queue(QueueElement(e, dot, time))), Dots.single(dot))
+    Dotted(CausalQueue(Queue(QueueElement(e, dot, time)), time), Dots.single(dot))
 
-  def head =
+  def head: T =
     val QueueElement(e, _, _) = values.head
     e
 
@@ -41,22 +41,21 @@ object CausalQueue:
       if left.order < right.order then right else left
   }
 
-  def empty[T]: CausalQueue[T] = CausalQueue(Queue())
+  def empty[T]: CausalQueue[T] = CausalQueue(Queue(), VectorClock.zero)
 
   given hasDots[A]: HasDots[CausalQueue[A]] with {
     extension (value: CausalQueue[A])
       override def dots: Dots = Dots.from(value.values.view.map(_.dot))
 
       override def removeDots(dots: Dots): Option[CausalQueue[A]] =
-        Some(CausalQueue(value.values.filter(qe => !dots.contains(qe.dot))))
+        Some(CausalQueue(value.values.filter(qe => !dots.contains(qe.dot)), value.clock))
   }
 
   given bottomInstance[T]: Bottom[CausalQueue[T]] = Bottom.derived
 
   given lattice[A]: Lattice[CausalQueue[A]] with {
     override def merge(left: CausalQueue[A], right: CausalQueue[A]): CausalQueue[A] =
-      CausalQueue:
-        (left.values concat right.values)
-          .sortBy { qe => qe.order }(using VectorClock.vectorClockTotalOrdering).distinct
+      CausalQueue((left.values concat right.values)
+        .sortBy { qe => qe.order }(using Ordering.fromLessThan(VectorClock.vectorClockOrdering.lt)).distinct, left.clock.merge(right.clock))
 
   }

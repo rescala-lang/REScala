@@ -13,7 +13,7 @@ import rdts.dotted.*
 import rdts.dotted.HasDots.mapInstance
 import rdts.time.*
 
-import scala.annotation.nowarn
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.immutable.Queue
 
 object DataGenerator {
@@ -38,7 +38,7 @@ object DataGenerator {
       value: List[Long] <- Gen.listOfN(ids.size, Gen.oneOf(0L to 100L))
     yield VectorClock.fromMap(ids.zip(value).toMap)
 
-  val smallNum = Gen.chooseNum(-10, 10)
+  val smallNum: Gen[Int] = Gen.chooseNum(-10, 10)
 
   given arbCausalTime: Arbitrary[CausalTime] = Arbitrary:
     for
@@ -84,12 +84,16 @@ object DataGenerator {
     Arbitrary(map)
 
   given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
-    Arbitrary:
-      Gen.listOf(Gen.zip(uniqueDot, Arbitrary.arbitrary[A])).map: list =>
-        CausalQueue:
-          Queue.from:
-            list.map: (dot, value) =>
-              QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
+    Arbitrary {
+      Gen.listOf(
+        Gen.zip(uniqueDot, Arbitrary.arbitrary[A])
+      ).map { list =>
+        val queue = Queue.from(list.map((dot, value) => {
+          QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
+        }))
+        CausalQueue(queue, VectorClock(queue.map(it => it.dot.place -> it.dot.time).toMap))
+      }
+    }
 
   val genDot: Gen[Dot] =
     for
@@ -123,6 +127,7 @@ object DataGenerator {
 
   given arbDotFun[A](using g: Arbitrary[A]): Arbitrary[Map[Dot, A]] = Arbitrary(genDotFun)
 
+  @tailrec
   def makeUnique(rem: List[Dots], acc: List[Dots], state: Dots): List[Dots] =
     rem match
       case Nil    => acc
@@ -132,7 +137,7 @@ object DataGenerator {
 
   given Arbitrary[SmallTimeSet] = Arbitrary(for
     contents <- Gen.listOf(Gen.chooseNum(0L, 100L))
-  yield (SmallTimeSet(contents.toSet)))
+  yield SmallTimeSet(contents.toSet))
 
   given arbGrowOnlyList[E](using arb: Arbitrary[E]): Arbitrary[GrowOnlyList[E]] = Arbitrary:
     Gen.listOf(arb.arbitrary).map: list =>
@@ -142,7 +147,7 @@ object DataGenerator {
     Gen.listOf(arbLww(using arb).arbitrary).map: list =>
       val elems: List[Node.Elem[LastWriterWins[E]]] = list.map(GrowOnlyList.Node.Elem.apply)
       val pairs = elems.distinct.sortBy(_.value.timestamp).sliding(2).flatMap:
-        case Seq(l, r) => Some((l) -> (r))
+        case Seq(l, r) => Some(l -> r)
         case _         => None // filters out uneven numbers of elements
       val all =
         elems.headOption.map(GrowOnlyList.Node.Head -> _) concat pairs

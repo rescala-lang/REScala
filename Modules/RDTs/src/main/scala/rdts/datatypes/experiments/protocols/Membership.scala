@@ -6,7 +6,7 @@ import rdts.datatypes.experiments.protocols.Consensus.given
 import rdts.time.Time
 
 class LogHack(on: Boolean) {
-  inline def info(arg: String): Unit = if on then println(arg) else ()
+  inline def info(arg: => String): Unit = if on then println(arg) else ()
 }
 
 case class Membership[A, C[_], D[_]](
@@ -28,7 +28,7 @@ case class Membership[A, C[_], D[_]](
   given Participants = Participants(members)
 
   override def toString: String =
-    s"Membership(counter: $counter, members: $membersConsensus,log: $log, membershipChanging: $membershipChanging)".stripMargin
+    s"$Membership(counter: $counter, members: $membersConsensus,log: $log, membershipChanging: $membershipChanging)".stripMargin
 
   def currentMembers(using Consensus[C], Consensus[D]): Set[Uid] =
     members
@@ -67,7 +67,7 @@ case class Membership[A, C[_], D[_]](
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
-        logger.info(s"Member consensus reached on members $members")
+        logger.info { s"Member consensus reached on members $members" }
         copy(
           counter = counter + 1,
           membersConsensus = Consensus[C].empty,
@@ -78,8 +78,7 @@ case class Membership[A, C[_], D[_]](
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
         val newLog = log :+ value
-        if newLog.length > 1 then
-          logger.info(s"Inner consensus reached on value $value, log: $newLog")
+        logger.info { s"$rid: Inner consensus reached on value $value, log: $newLog" }
         copy(
           counter = counter + 1,
           membersConsensus = Consensus[C].empty,

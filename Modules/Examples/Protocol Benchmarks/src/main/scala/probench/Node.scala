@@ -8,49 +8,76 @@ import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
-class Node(val name: String, val initialClusterIds: Set[Uid]) {
+class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
 
   private type ClusterState = Membership[Request, Paxos, Paxos]
 
-  given localUid: LocalUid = LocalUid.predefined(name)
+  given localUid: LocalUid = LocalUid(name)
+  given LogHack            = new LogHack(false)
+
   private val clientDataManager =
     DataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onClientStateChange)
   private val clusterDataManager =
     DataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
-    if newState.requests.data.values.nonEmpty then {
-      clusterDataManager.transform(_.mod(_.write(newState.requests.data.values.last.value)))
+    /*
+      val diff = newState.requests.data.values.size - oldState.requests.data.values.size
+      if diff > 0 then {
+        println(s"Requests: ${newState.requests.data.values.toList.map(_.value)}")
+        println(s"Sorted  : ${newState.requests.data.values.toList.sortBy(_.order)(using VectorClock.vectorClockTotalOrdering).map(it => it.order -> it.value)}")
+        println(s"Dots    : ${newState.requests.data.dots}")
+        println(s"Time    : ${newState.requests.data.clock}")
+      }
+     */
+
+    if newState.requests.data.values.size == 1 then {
+      clusterDataManager.transform(_.mod(_.write(newState.requests.data.head)))
     }
   }
 
-  given LogHack = new LogHack(true)
-
   private def onClusterStateChange(oldState: ClusterState, newState: ClusterState): Unit = {
-    val upkept: ClusterState = newState.merge(newState.upkeep())
+    val delta                = newState.upkeep()
+    val upkept: ClusterState = newState.merge(delta)
 
-    if !(upkept <= newState) then {
-      clusterDataManager.transform(_.mod(_ => upkept))
+    if !(upkept <= newState) || upkept.log.size > newState.log.size then {
+      clusterDataManager.transform(_.mod(_ => delta))
     }
 
-    if newState.log.size > oldState.log.size then {
-      val op = newState.log.last
+    if upkept.log.size > oldState.log.size then {
+      val diff = upkept.log.size - oldState.log.size
+      // println(s"DIFF $diff")
 
-      val res: String = op match {
-        case Request(KVOperation.Read(key), _) =>
-          newState.log.reverseIterator.collectFirst {
-            case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => value
-          }.getOrElse(s"Key $key has not been written to!")
-        case Request(KVOperation.Write(_, _), _) => "OK"
+      for op <- upkept.log.reverseIterator.take(diff).toList.reverseIterator do {
+
+        val res: String = op match {
+          case Request(KVOperation.Read(key), _) =>
+            upkept.log.reverseIterator.collectFirst {
+              case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => s"$key=$value"
+            }.getOrElse(s"Key '$key' has not been written to!")
+          case Request(KVOperation.Write(key, value), _) => s"$key=$value; OK"
+        }
+
+        clientDataManager.transform { it =>
+          if it.state.requests.data.values.exists { e => e.value == op } then {
+            it.mod { state =>
+              // println(s"Writing Response: $op -> $res")
+              val newState = state.copy(
+                requests = state.requests.mod(_.removeBy(_ == op)),
+                responses = state.responses.mod(_.enqueue(Response(op, res))),
+              )
+              //println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
+              newState
+            }
+          } else it
+        }
+
+        val clientState = clientDataManager.mergedState.data
+
+        if clientState.requests.data.values.nonEmpty then {
+          clusterDataManager.transform(_.mod(_.write(clientState.requests.data.head)))
+        }
       }
-
-      clientDataManager.transform(_.mod(state =>
-        state.copy(
-          requests = state.requests.mod(_.removeBy(_ == op)),
-          responses = state.responses.mod(_.enqueue(Response(op, res))),
-        )
-      ))
-
     }
   }
 
