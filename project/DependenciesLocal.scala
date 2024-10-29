@@ -39,7 +39,7 @@ object DependenciesLocal {
     )
   }
 
-  def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "22.0.0-R33"
+  def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "23.0.1-R34"
 
   val scalatest = libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
     "org.scalatest" %%% s"scalatest-$m" % "3.2.19" % Test
