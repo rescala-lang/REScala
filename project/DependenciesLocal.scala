@@ -19,8 +19,8 @@ object DependenciesLocal {
   val bouncyCastle = libraryDependencies ++=
     List(
       // Note, jdk18 means JDK 1.8
-      "org.bouncycastle"  % "bcprov-jdk18on"               % "1.78.1",
-      "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.78.1",
+      "org.bouncycastle"  % "bcprov-jdk18on"               % "1.79",
+      "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.79",
       "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.7",
       "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.7",
     )
