@@ -7,7 +7,9 @@ import org.eclipse.jetty.server.ServerConnector
 import rdts.base.LocalUid
 
 import java.net.http.HttpClient
-import java.net.{DatagramSocket, InetSocketAddress, URI}
+import java.net.{DatagramSocket, InetAddress, InetSocketAddress, ProtocolFamily, ServerSocket, SocketException, StandardProtocolFamily, URI, UnixDomainSocketAddress}
+import java.nio.channels.{ServerSocketChannel, SocketChannel}
+import java.nio.file.{FileStore, Files, Path}
 
 class EchoServerTestJetty extends EchoCommunicationTest(
       { ec =>
@@ -52,5 +54,45 @@ class EchoServerTestSunJavaHTTP extends EchoCommunicationTest(
         port => {
           val client = HttpClient.newHttpClient()
           JavaHttp.SSEClient(client, new URI(s"http://localhost:$port/path"), LocalUid.gen(), ec)
+        }
+    )
+
+def domainSocketHelperNonensese(name: String) = {
+  val tmpPath    = Files.createTempDirectory("channels-test")
+  val socketPath = tmpPath.resolve(name)
+  socketPath.toFile.deleteOnExit()
+  tmpPath.toFile.deleteOnExit()
+  UnixDomainSocketAddress.of(socketPath)
+}
+
+class EchoServerTestNioTCP extends EchoCommunicationTest(
+      { ec =>
+        val socket = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+
+        socket.configureBlocking(false)
+
+        // socket.bind(new InetSocketAddress("localhost", 0))
+
+        val socketPath = domainSocketHelperNonensese("some-name")
+
+        socket.bind(socketPath)
+
+        // val port = socket.socket().getLocalPort
+
+        println(s"server listening at")
+
+        (socketPath, NioTCP.listen(() => socket, ec))
+      },
+      ec =>
+        sp => {
+
+          def socketChannel: SocketChannel = {
+            val channel = SocketChannel.open(StandardProtocolFamily.UNIX)
+            channel.connect(sp)
+            channel.configureBlocking(false)
+            channel
+          }
+
+          NioTCP.connect(() => socketChannel, ec, Abort())
         }
     )

@@ -1,6 +1,6 @@
 package probench
 
-import channels.TCP
+import channels.{Abort, NioTCP, TCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
@@ -9,7 +9,8 @@ import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 
-import java.net.Socket
+import java.net.{DatagramSocket, InetSocketAddress, Socket, UnixDomainSocketAddress}
+import java.nio.file.{Files, Path}
 import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
@@ -51,22 +52,48 @@ object cli {
     given JsonValueCodec[Membership[Request, Paxos, Paxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+    def socketPath(name: String) = {
+      UnixDomainSocketAddress.of(name)
+    }
+
     val argparse = argumentParser {
       inline def cluster           = named[List[(String, Int)]]("--cluster", "")
       inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
       inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
       inline def name              = named[Uid]("--name", "", Uid.gen())
+      
 
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
 
-        node.addClientConnection(TCP.listen(TCP.defaultSocket("localhost", clientPort.value), ec))
-        node.addClusterConnection(TCP.listen(TCP.defaultSocket("localhost", peerPort.value), ec))
+        node.addClientConnection(NioTCP.listen(
+          NioTCP.defaultSocket(
+            socketPath(clientPort.value.toString)
+          ),
+          ec
+        ))
+        node.addClusterConnection(NioTCP.listen(NioTCP.defaultSocket(
+          socketPath(peerPort.value.toString)),
+          ec
+        ))
 
         Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
         cluster.value.foreach { (ip, port) =>
-          node.addClusterConnection(TCP.connect(() => Socket(ip, port), ec))
+          node.addClusterConnection(NioTCP.connect(socketPath(port.toString), ec, Abort()))
+        }
+      }.value
+
+      subcommand("udpnode", "starts a cluster node") {
+        val node = Node(name.value, initialClusterIds.value.toSet)
+
+        node.addClientConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
+        node.addClusterConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
+
+        Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
+
+        cluster.value.foreach { (ip, port) =>
+          node.addClusterConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
         }
       }.value
 
@@ -75,7 +102,18 @@ object cli {
 
         val (ip, port) = clientNode.value
 
-        client.addLatentConnection(TCP.connect(() => Socket(ip, port), ec))
+        client.addLatentConnection(NioTCP.connect(
+          socketPath(s"$port"), ec, Abort()))
+
+        client.startCLI()
+      }.value
+
+      subcommand("updclient", "starts a client to interact with a node") {
+        val client = Client(name.value)
+
+        val (ip, port) = clientNode.value
+
+        client.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
 
         client.startCLI()
       }.value
