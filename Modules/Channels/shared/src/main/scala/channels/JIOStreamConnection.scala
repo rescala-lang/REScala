@@ -33,7 +33,7 @@ class JioOutputStreamAdapter(out: OutputStream) {
 
   val outputStream = new DataOutputStream(new BufferedOutputStream(out))
 
-  def send(data: MessageBuffer): Unit = {
+  def send(data: MessageBuffer): Unit = synchronized {
     val outArray = data.asArray
     outputStream.writeInt(outArray.length)
     outputStream.write(outArray)
