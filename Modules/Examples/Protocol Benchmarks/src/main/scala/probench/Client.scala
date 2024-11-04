@@ -96,6 +96,7 @@ class Client(val name: Uid) {
         case Some(multiput(key, value, times)) => multiput(key, value, times.toInt)
         case Some(waitForRes(flag))            => waitForOp = flag.toBoolean
         case Some("wait")                      => lock.synchronized { lock.wait() }
+        case Some("ping") => dataManager.pingAll()
         case Some("exit")                      => running = false
         case None                              => running = false
         case other =>

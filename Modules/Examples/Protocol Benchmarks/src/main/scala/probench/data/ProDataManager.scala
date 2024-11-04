@@ -37,6 +37,6 @@ class ProDataManager[State: Lattice](
     }
   }
 
-  export dataManager.addLatentConnection
+  export dataManager.{addLatentConnection, pingAll}
 
 }

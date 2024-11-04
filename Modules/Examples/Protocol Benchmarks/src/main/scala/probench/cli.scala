@@ -10,6 +10,7 @@ import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 
 import java.net.Socket
+import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
 
@@ -61,6 +62,8 @@ object cli {
 
         node.addClientConnection(TCP.listen(TCP.defaultSocket("localhost", clientPort.value), ec))
         node.addClusterConnection(TCP.listen(TCP.defaultSocket("localhost", peerPort.value), ec))
+
+        Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
         cluster.value.foreach { (ip, port) =>
           node.addClusterConnection(TCP.connect(() => Socket(ip, port), ec))

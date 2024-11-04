@@ -1,17 +1,18 @@
 package dtn.rdt
 
-import dtn.{MonitoringClientInterface, NoMonitoringClient, RdtMessageType}
-import channels.{Abort, Connection, Handler, LatentConnection, MessageBuffer}
+import channels.{Abort, Connection, Handler, LatentConnection}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
 import de.rmgk.delay.syntax.toAsync
 import de.rmgk.delay.{Async, Callback, Sync}
+import dtn.{MonitoringClientInterface, NoMonitoringClient, RdtMessageType}
 import rdts.base.Uid
 import rdts.time.Dots
+import replication.ProtocolMessage
+import replication.ProtocolMessage.{Payload, Ping, Pong, Request}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-import replication.ProtocolMessage
 
 enum ClientOperationMode {
   case PushAll
@@ -25,7 +26,7 @@ class ClientContext[T: JsonValueCodec](
 ) extends Connection[ProtocolMessage[T]] {
   override def send(message: ProtocolMessage[T]): Async[Any, Unit] =
     message match
-      case ProtocolMessage.Request(sender, dots) =>
+      case Request(sender, dots) =>
         // we could send requests into the network. the routing handles them correctly. but they are unnecessary with the cb.succeed() down below.
         // todo: actually there should be no requests being sent anymore then. is that the case?
         operationMode match
@@ -33,8 +34,9 @@ class ClientContext[T: JsonValueCodec](
           case ClientOperationMode.RequestLater =>
             connection.send(RdtMessageType.Request, Array(), dots).toAsync(using executionContext)
         Sync { () }
-      case ProtocolMessage.Payload(sender, dots, data) =>
+      case Payload(sender, dots, data) =>
         connection.send(RdtMessageType.Payload, writeToArray[T](data), dots).toAsync(using executionContext)
+      case Ping(_) | Pong(_) => Async {}
 
   override def close(): Unit = connection.close().onComplete {
     case Failure(f)     => f.printStackTrace()

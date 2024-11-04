@@ -8,7 +8,7 @@ import rdts.base.Lattice.optionLattice
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.time.Dots
 import replication.JsoniterCodecs.given
-import replication.ProtocolMessage.{Payload, Request}
+import replication.ProtocolMessage.*
 
 import scala.util.{Failure, Success, Try}
 
@@ -24,6 +24,9 @@ object ProtocolMessage {
     * then a.data <= b.data according to the lattice of T
     */
   case class Payload[T](sender: Uid, dots: Dots, data: T) extends ProtocolMessage[T]
+
+  case class Ping(time: Long) extends ProtocolMessage[Nothing]
+  case class Pong(time: Long) extends ProtocolMessage[Nothing]
 }
 
 case class ProtocolDots[State](data: State, context: Dots) derives Lattice, Bottom
@@ -86,17 +89,25 @@ class DataManager[State](
     addLatentConnection(DataManager.jsoniterMessages(latentConnection))
   }
 
+  def pingAll(): Unit = {
+    connections.foreach { conn =>
+      conn.send(Ping(System.nanoTime())).run(debugCallbackAndRemoveCon(conn))
+    }
+  }
+
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
     println(s"activating latent connection in data manager")
-    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort):
+    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort) {
       case Success(conn) =>
         lock.synchronized {
           connections = conn :: connections
         }
+        conn.send(Ping(System.nanoTime())).run(debugCallbackAndRemoveCon(conn))
         conn.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(conn))
       case Failure(ex) =>
         println(s"exception during connection activation")
         ex.printStackTrace()
+    }
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
@@ -135,6 +146,10 @@ class DataManager[State](
 
   def handleMessage(msg: ProtocolMessage[State], biChan: ConnectionContext): Unit = {
     msg match
+      case Ping(time) =>
+        biChan.send(Pong(time)).run(debugCallbackAndRemoveCon(biChan))
+      case Pong(time) =>
+        println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
         val relevant = allDeltas.filterNot { dt => dt.context <= knows }
         relevant.foreach: msg =>
