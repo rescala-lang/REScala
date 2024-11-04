@@ -1,3 +1,4 @@
+import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import rdts.base.LocalUid
@@ -20,7 +21,6 @@ class SimplePaxosSuite extends munit.ScalaCheckSuite {
     minDevices = 3,
     maxDevices = 3,
     writeFreq = 20,
-    upkeepFreq = 70,
     mergeFreq = 70
   ).property())
 }
@@ -30,23 +30,21 @@ class SimplePaxosSpec[A: Arbitrary](
     minDevices: Int,
     maxDevices: Int,
     writeFreq: Int,
-    upkeepFreq: Int,
     mergeFreq: Int
 ) extends ConsensusPropertySpec[A, simplified.Paxos](
       logging,
       minDevices,
       maxDevices,
       writeFreq,
-      upkeepFreq,
       mergeFreq
     ) {
-
-  override def genUpkeep(state: Map[LocalUid, simplified.Paxos[A]]): Gen[Upkeep] =
+  override def genWrite(state: State): Gen[Write] =
     for
-      id <- genId(state)
-    yield PUpkeep(id)
+      id    <- genId(state)
+      value <- arbitrary[A]
+    yield PWrite(id, value)
 
-  class PUpkeep(id: LocalUid) extends Upkeep(id) {
+  class PWrite(id: LocalUid, value: A) extends Write(id, value) {
     override def postCondition(
         state: Map[LocalUid, simplified.Paxos[A]],
         result: Try[Map[LocalUid, simplified.Paxos[A]]]

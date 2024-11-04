@@ -31,11 +31,6 @@ trait CommandsARDTs[LocalState: Lattice] extends Commands:
       rightIndex = (leftIndex + offset) % ids.length
     yield (ids(leftIndex), ids(rightIndex))
 
-  def genMerge(state: State): Gen[Merge] =
-    for
-      (left, right) <- genId2(state)
-    yield Merge(left, right)
-
   trait ACommand(id: LocalUid) extends Command:
     override type Result = State
     def nextLocalState(states: State): LocalState
@@ -50,7 +45,3 @@ trait CommandsARDTs[LocalState: Lattice] extends Commands:
     override def preCondition(state: Map[LocalUid, LocalState]) = true
 
     override def postCondition(state: Map[LocalUid, LocalState], result: Try[Result]): Prop = result.isSuccess
-
-  class Merge(left: LocalUid, right: LocalUid) extends ACommand(left):
-    def nextLocalState(states: Map[LocalUid, LocalState]) =
-      Lattice[LocalState].merge(states(left), states(right))

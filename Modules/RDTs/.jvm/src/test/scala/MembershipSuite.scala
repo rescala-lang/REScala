@@ -82,6 +82,11 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
       value <- arbitrary[A]
     yield Write(id, value)
 
+  def genMerge(state: State): Gen[Merge] =
+    for
+      (left, right) <- genId2(state)
+    yield Merge(left, right)
+
   def genUpkeep(state: State): Gen[Upkeep] = genId(state).map(Upkeep(_))
 
   def genAddMember(state: State): Gen[AddMember] =
@@ -95,6 +100,10 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
     yield RemoveMember(id1, id2)
 
   // commands: (merge), upkeep, write, addMember, removeMember
+  case class Merge(left: LocalUid, right: LocalUid) extends ACommand(left):
+    override def nextLocalState(states: Map[LocalUid, Membership[A, C, D]]): Membership[A, C, D] =
+      states(left).merge(states(right))
+
   case class Write(writer: LocalUid, value: A) extends ACommand(writer):
     override def nextLocalState(states: Map[LocalUid, Membership[A, C, D]]): Membership[A, C, D] =
       val delta = states(writer).write(value)(using writer)

@@ -15,7 +15,6 @@ class GeneralizedPaxosSuite extends munit.ScalaCheckSuite {
     minDevices = 3,
     maxDevices = 7,
     writeFreq = 20,
-    upkeepFreq = 70,
     mergeFreq = 70
   ).property())
 }

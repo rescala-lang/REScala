@@ -11,7 +11,6 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
     minDevices: Int,
     maxDevices: Int,
     writeFreq: Int,
-    upkeepFreq: Int,
     mergeFreq: Int
 )(using Lattice[C[A]]) extends CommandsARDTs[C[A]] {
 
@@ -25,7 +24,6 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
   override def genCommand(state: State): Gen[Command] =
     Gen.frequency(
       (writeFreq, genWrite(state)),
-      (upkeepFreq, genUpkeep(state)),
       (mergeFreq, genMerge(state))
     )
 
@@ -35,30 +33,38 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
       value <- arbitrary[A]
     yield Write(id, value)
 
-  def genUpkeep(state: State) =
-    genId(state).map(Upkeep(_))
+  def genMerge(state: State): Gen[Merge] =
+    for
+      (left, right) <- genId2(state)
+    yield Merge(left, right)
 
   // commands that change state
   class Write(writer: LocalUid, value: A) extends ACommand(writer):
-    def nextLocalState(states: Map[LocalUid, C[A]]) =
+    override def toString: String = s"Write($writer, $value)"
 
+    def nextLocalState(states: Map[LocalUid, C[A]]) =
       given Participants = Participants(states.keySet.map(_.uid))
-      Lattice[C[A]].merge(states(writer), states(writer).write(value)(using writer))
+      val written        = Lattice[C[A]].merge(states(writer), states(writer).write(value)(using writer))
+      Lattice[C[A]].merge(written, written.upkeep()(using writer))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]) =
       given Participants = Participants(state.keySet.map(_.uid))
       (state(writer).members == result.get(writer).members)
       :| s"Members do not change during writes.\nBefore: ${state(writer)}\nAfter:${result.get(writer)}"
 
-  class Upkeep(id: LocalUid) extends ACommand(id):
+  class Merge(left: LocalUid, right: LocalUid) extends ACommand(left):
+    override def toString: String = s"Merge($right, $left)"
+
     def nextLocalState(states: Map[LocalUid, C[A]]) =
       given Participants = Participants(states.keySet.map(_.uid))
-      Lattice[C[A]].merge(states(id), states(id).upkeep()(using id))
+      val merged: C[A]   = Lattice[C[A]].merge(states(left), states(right))
+      Lattice[C[A]].merge(merged, merged.upkeep()(using left))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]): Prop =
       given Participants = Participants(state.keySet.map(_.uid))
-      val res            = result.get
-      val resValue       = res(id).read
+
+      val res      = result.get
+      val resValue = res(left).read
 
       if logging && resValue.nonEmpty then println(s"accepted value: ${resValue.get}")
 

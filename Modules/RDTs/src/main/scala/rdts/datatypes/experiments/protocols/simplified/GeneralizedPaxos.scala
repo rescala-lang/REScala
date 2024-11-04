@@ -28,29 +28,37 @@ case class GeneralizedPaxos[A](
     GeneralizedPaxos(Map(nextBallotNum -> voteFor(replicaId)))
 
   def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
-    // return greatest decided value
-    val r          = rounds.filter { case (b, (l, v)) => v.result.isDefined }
-    val decidedVal = r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
+    // return latest accepted value
+    val r                 = rounds.filter { case (b, (l, v)) => v.votes.nonEmpty }
+    val roundWithAccepted = r.maxByOption { case (b, (l, v)) => b }
 
     // vote for newest leader election
     val highestBallotNum = highestBallot.map(_._1)
     val leaderCandidate  = highestBallot.map(_._1.uid)
 
-    (highestBallotNum, leaderCandidate, decidedVal) match
+    (highestBallotNum, leaderCandidate, roundWithAccepted) match
       case (Some(ballotNum), Some(candidate), None) => // no value decided, just vote for candidate
         GeneralizedPaxos(Map(ballotNum -> voteFor(candidate)))
-      case (Some(ballotNum), Some(candidate), Some(decidedValue)) => // vote for candidate and decided value
-        GeneralizedPaxos(Map(ballotNum -> voteFor(candidate, decidedValue)))
+      case (Some(ballotNum), Some(candidate), Some(acceptedRound)) => // vote for candidate and decided value
+        GeneralizedPaxos(Map(
+          ballotNum -> voteFor(candidate),
+          acceptedRound
+        ))
       case _ => GeneralizedPaxos() // do nothing
 
   def phase2a(using LocalUid, Participants): GeneralizedPaxos[A] =
     // check if leader
     myHighestBallot match
       case Some((ballotNum, (leaderElection, voting))) if leaderElection.result.contains(replicaId) =>
-        val value =
-          if voting.votes.nonEmpty then
-            voting.votes.head.value
-          else myValue.get.value // get my value from context
+        // find latest value that was voted on
+        val latestVal: Option[A] = rounds.filter {
+          case (ballotNum, (leaderElection, voting)) => voting.votes.nonEmpty
+        }.maxByOption {
+          case (ballotNum, (leaderElection, voting)) => ballotNum
+        }.map {
+          case (ballotNum, (leaderElection, voting)) => voting.votes.head.value
+        }
+        val value = latestVal.getOrElse(myValue.get.value)
         GeneralizedPaxos(Map(ballotNum -> voteFor(replicaId, value)))
       // not leader -> do nothing
       case _ => GeneralizedPaxos()
