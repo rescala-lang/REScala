@@ -27,9 +27,9 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
   given LogHack            = new LogHack(false)
 
   private val clientDataManager =
-    DataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onClientStateChange)
+    ProDataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onClientStateChange)
   private val clusterDataManager =
-    DataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
+    ProDataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     /*

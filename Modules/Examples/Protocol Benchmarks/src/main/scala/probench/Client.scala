@@ -13,7 +13,7 @@ import scala.util.matching.Regex
 class Client(val name: Uid) {
 
   given localUid: LocalUid = LocalUid(name)
-  private val dataManager  = DataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onStateChange)
+  private val dataManager  = ProDataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onStateChange)
 
   private val lock                       = new Object()
   private var currentOp: Option[Request] = None

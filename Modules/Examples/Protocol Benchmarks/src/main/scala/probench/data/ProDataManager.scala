@@ -4,15 +4,15 @@ import channels.LatentConnection
 import rdts.base.{Lattice, LocalUid}
 import rdts.syntax.DeltaBuffer
 import rdts.time.Dots
-import replication.{ProtocolDots, ProtocolMessage, DataManager as RepDataManager}
+import replication.{ProtocolDots, ProtocolMessage, DataManager}
 
-class DataManager[State: Lattice](
+class ProDataManager[State: Lattice](
     val localReplicaId: LocalUid,
     val initialState: State,
     val onChange: (State, State) => Unit,
 ) {
   given Lattice[ProtocolDots[State]] = Lattice.derived
-  private val dataManager            = RepDataManager[State](localReplicaId, _ => (), receivedChanges)
+  private val dataManager            = DataManager[State](localReplicaId, _ => (), receivedChanges)
 
   var mergedState: ProtocolDots[State] =
     dataManager.allDeltas.foldLeft(ProtocolDots(initialState, Dots.empty))(Lattice[ProtocolDots[State]].merge)
