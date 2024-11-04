@@ -84,9 +84,10 @@ class Client(val name: Uid) {
   }
 
   def startCLI(): Unit = {
-    while true do {
+    var running = true
+    while running do {
       print("client> ")
-      val line = Option(readLine())
+      val line = Option(readLine()).map(_.strip())
       line match {
         case Some(commented())                 => // ignore
         case Some(get(key))                    => read(key)
@@ -95,10 +96,14 @@ class Client(val name: Uid) {
         case Some(multiput(key, value, times)) => multiput(key, value, times.toInt)
         case Some(waitForRes(flag))            => waitForOp = flag.toBoolean
         case Some("wait")                      => lock.synchronized { lock.wait() }
-        case Some("exit")                      => System.exit(0)
-        case None | Some(_)                    => println(s"Error parsing: $line")
+        case Some("exit")                      => running = false
+        case None                              => running = false
+        case other =>
+          println("assuming put")
+          write("key", "value")
       }
     }
+    println(s"ended")
   }
 
   export dataManager.addLatentConnection

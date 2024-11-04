@@ -8,6 +8,17 @@ import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
+import scala.util.chaining.scalaUtilChainingOps
+
+object Time {
+  var current = System.nanoTime()
+  def report(name: String = "") = synchronized {
+    val last = current
+    current = System.nanoTime()
+    println(s"$name took ${(current - last).doubleValue / 1000_000}ms")
+  }
+}
+
 class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
 
   private type ClusterState = Membership[Request, Paxos, Paxos]
@@ -32,20 +43,43 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
      */
 
     if newState.requests.data.values.size == 1 then {
+      Time.report("got request")
       clusterDataManager.transform(_.mod(_.write(newState.requests.data.head)))
+      Time.report("transform done")
     }
   }
 
+  var counter = 0
+
   private def onClusterStateChange(oldState: ClusterState, newState: ClusterState): Unit = {
+
+    val start = System.nanoTime()
+    var last = start
+    val tid =
+      synchronized {
+        counter = counter + 1
+        counter
+      }
+
+    Time.report(s"[${tid}] cluster changed")
+
+    def timeStep(msg: String) =
+      val current = last
+      last = System.nanoTime()
+      println(s"[$tid] $msg after ${(last - current).doubleValue / 1000_000}ms")
+
     val delta                = newState.upkeep()
     val upkept: ClusterState = newState.merge(delta)
+    val end                  = System.nanoTime()
+    timeStep("upkeep + merge")
 
     if !(upkept <= newState) || upkept.log.size > newState.log.size then {
       clusterDataManager.transform(_.mod(_ => delta))
+      timeStep("some state changes maybe logs???")
     }
 
     if upkept.log.size > oldState.log.size then {
-      val diff = upkept.log.size - oldState.log.size
+      val diff: Int = upkept.log.size - oldState.log.size
       // println(s"DIFF $diff")
 
       for op <- upkept.log.reverseIterator.take(diff).toList.reverseIterator do {
@@ -66,9 +100,11 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
                 requests = state.requests.mod(_.removeBy(_ == op)),
                 responses = state.responses.mod(_.enqueue(Response(op, res))),
               )
-              //println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
+              // println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
               newState
-            }
+            }.tap(_ =>
+              timeStep("answering request")
+            )
           } else it
         }
 
@@ -79,6 +115,9 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
         }
       }
     }
+
+    timeStep("done")
+    println(s"[${tid}] total ${(System.nanoTime() - start).doubleValue / 1000_000}ms")
   }
 
   export clientDataManager.addLatentConnection as addClientConnection
