@@ -25,6 +25,7 @@ class Client(val name: Uid) {
   private val put: Regex        = """put ([\w%]+) ([\w%]+)""".r
   private val multiget: Regex   = """multiget ([\w%]+) (\d+)""".r
   private val multiput: Regex   = """multiput ([\w%]+) ([\w%]+) (\d+)""".r
+  private val mp: Regex         = """mp (\d+)""".r
 
   private def onStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     /* val diff = newState.responses.data.values.size - oldState.responses.data.values.size
@@ -98,7 +99,7 @@ class Client(val name: Uid) {
         case Some("wait")                      => lock.synchronized { lock.wait() }
         case Some("ping")                      => dataManager.pingAll()
         case Some("exit")                      => running = false
-        case Some("mp")                        => multiput("key%n", "value%n", 1000)
+        case Some(mp(times))                   => multiput("key%n", "value%n", times.toInt)
         case None                              => running = false
         case other =>
           println("assuming put")

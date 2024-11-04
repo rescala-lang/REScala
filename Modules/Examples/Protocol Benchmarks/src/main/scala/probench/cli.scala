@@ -53,7 +53,10 @@ object cli {
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(name: String) = {
-      UnixDomainSocketAddress.of(name)
+      val p = Path.of(s"target/sockets/$name")
+      Files.createDirectories(p.getParent)
+      p.toFile.deleteOnExit()
+      UnixDomainSocketAddress.of(p)
     }
 
     val argparse = argumentParser {
@@ -61,7 +64,7 @@ object cli {
       inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
       inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
       inline def name              = named[Uid]("--name", "", Uid.gen())
-      
+
 
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)

@@ -1,14 +1,12 @@
 package channels
 
-import channels.Abort
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
 import java.io.IOException
-import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException, StandardProtocolFamily, UnixDomainSocketAddress}
+import java.net.{SocketAddress, SocketException, StandardProtocolFamily, UnixDomainSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.{SelectionKey, Selector, ServerSocketChannel, SocketChannel}
-import java.nio.file.Files
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
@@ -27,9 +25,11 @@ object NioTCP {
       buffer.put(bytes)
       buffer.flip()
 
-      while buffer.hasRemaining() do {
-        val res = clientChannel.write(buffer)
-        ()
+      NioTCP.synchronized {
+        while buffer.hasRemaining() do {
+          val res = clientChannel.write(buffer)
+          ()
+        }
       }
       ()
 
@@ -112,7 +112,7 @@ object NioTCP {
     def socketChannel: SocketChannel = {
       val pf = socketAddress match
         case _: UnixDomainSocketAddress => StandardProtocolFamily.UNIX
-        case other => StandardProtocolFamily.INET
+        case other                      => StandardProtocolFamily.INET
       val channel = SocketChannel.open(pf)
       channel.connect(socketAddress)
       channel.configureBlocking(false)
@@ -136,13 +136,12 @@ object NioTCP {
   def defaultSocket(socketAddress: SocketAddress): () => ServerSocketChannel = () => {
     val pf = socketAddress match
       case _: UnixDomainSocketAddress => StandardProtocolFamily.UNIX
-      case other => StandardProtocolFamily.INET
+      case other                      => StandardProtocolFamily.INET
     val socket = ServerSocketChannel.open(pf)
     socket.configureBlocking(false)
     socket.bind(socketAddress)
     socket
   }
-
 
   def listen(
       bindsocket: () => ServerSocketChannel,
