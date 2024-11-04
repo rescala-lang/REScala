@@ -4,7 +4,7 @@ import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
 import java.io.IOException
-import java.net.{SocketAddress, SocketException, StandardProtocolFamily, UnixDomainSocketAddress}
+import java.net.{SocketAddress, SocketException, StandardProtocolFamily, StandardSocketOptions, UnixDomainSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.{SelectionKey, Selector, ServerSocketChannel, SocketChannel}
 import scala.concurrent.ExecutionContext
@@ -139,6 +139,7 @@ object NioTCP {
       case other                      => StandardProtocolFamily.INET
     val socket = ServerSocketChannel.open(pf)
     socket.configureBlocking(false)
+
     socket.bind(socketAddress)
     socket
   }

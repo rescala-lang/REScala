@@ -1,6 +1,6 @@
 package probench
 
-import channels.{Abort, NioTCP, TCP, UDP}
+import channels.{Abort, NioTCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
@@ -9,8 +9,7 @@ import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 
-import java.net.{DatagramSocket, InetSocketAddress, Socket, UnixDomainSocketAddress}
-import java.nio.file.{Files, Path}
+import java.net.{DatagramSocket, InetSocketAddress}
 import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
@@ -52,11 +51,14 @@ object cli {
     given JsonValueCodec[Membership[Request, Paxos, Paxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    def socketPath(name: String) = {
-      val p = Path.of(s"target/sockets/$name")
-      Files.createDirectories(p.getParent)
-      p.toFile.deleteOnExit()
-      UnixDomainSocketAddress.of(p)
+    def socketPath(host: String, port: Int) = {
+//      val p = Path.of(s"target/sockets/$name")
+//      Files.createDirectories(p.getParent)
+//      p.toFile.deleteOnExit()
+//      UnixDomainSocketAddress.of(p)
+
+      InetSocketAddress(host, port)
+
     }
 
     val argparse = argumentParser {
@@ -65,25 +67,30 @@ object cli {
       inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
       inline def name              = named[Uid]("--name", "", Uid.gen())
 
-
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
 
         node.addClientConnection(NioTCP.listen(
           NioTCP.defaultSocket(
-            socketPath(clientPort.value.toString)
+            socketPath("localhost", clientPort.value)
           ),
           ec
         ))
-        node.addClusterConnection(NioTCP.listen(NioTCP.defaultSocket(
-          socketPath(peerPort.value.toString)),
+        node.addClusterConnection(NioTCP.listen(
+          NioTCP.defaultSocket(
+            socketPath("localhost", peerPort.value)
+          ),
           ec
         ))
 
         Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
         cluster.value.foreach { (ip, port) =>
-          node.addClusterConnection(NioTCP.connect(socketPath(port.toString), ec, Abort()))
+          node.addClusterConnection(NioTCP.connect(
+            socketPath(ip, port),
+            ec,
+            Abort()
+          ))
         }
       }.value
 
@@ -106,7 +113,10 @@ object cli {
         val (ip, port) = clientNode.value
 
         client.addLatentConnection(NioTCP.connect(
-          socketPath(s"$port"), ec, Abort()))
+          socketPath(ip, port),
+          ec,
+          Abort()
+        ))
 
         client.startCLI()
       }.value
