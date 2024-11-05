@@ -111,7 +111,7 @@ object cli {
 
         val (ip, port) = clientNode.value
 
-        client.addLatentConnection(NioTCP.connect(socketPath(ip, port), ec, Abort()))
+        client.addLatentConnection(TCP.connect(socketPath(ip, port), ec))
 
         client.startCLI()
       }.value
