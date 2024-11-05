@@ -77,11 +77,15 @@ class Client(val name: Uid) {
   }
 
   private def multiget(key: String, times: Int): Unit = {
+    val start = System.nanoTime()
     for i <- 1 to times do read(key.replace("%n", i.toString))
+    println(s"Did $times get queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }
 
   private def multiput(key: String, value: String, times: Int): Unit = {
+    val start = System.nanoTime()
     for i <- 1 to times do write(key.replace("%n", i.toString), value.replace("%n", i.toString))
+    println(s"Did $times put queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }
 
   def startCLI(): Unit = {

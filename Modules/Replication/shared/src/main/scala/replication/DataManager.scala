@@ -102,7 +102,6 @@ class DataManager[State](
         lock.synchronized {
           connections = conn :: connections
         }
-        conn.send(Ping(System.nanoTime())).run(debugCallbackAndRemoveCon(conn))
         conn.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(conn))
       case Failure(ex) =>
         println(s"exception during connection activation")
