@@ -1,6 +1,5 @@
 package channels
 
-import channels.Abort
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
@@ -54,7 +53,7 @@ object TCP {
 
     try {
       socket.setReuseAddress(true)
-      socket.setPerformancePreferences(1, 0, 2)
+      socket.setPerformancePreferences(0, 2, 1)
     } catch {
       case _: SocketException =>
       // some implementations may not allow SO_REUSEADDR to be set
