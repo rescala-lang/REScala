@@ -84,40 +84,35 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
       timeStep("some state changes maybe logs???")
     }
 
-    if upkept.counter > oldState.counter then {
-      for index <- (oldState.counter) to (upkept.counter - 1) do {
+    for op <- upkept.readDecisionsSince(oldState.counter) do {
+      val res: String = op match {
+        case Request(KVOperation.Read(key), _) =>
+          upkept.read.reverseIterator.collectFirst {
+            case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => s"$key=$value"
+          }.getOrElse(s"Key '$key' has not been written to!")
+        case Request(KVOperation.Write(key, value), _) => s"$key=$value; OK"
+      }
 
-        val op = upkept.log(index)
-
-        val res: String = op match {
-          case Request(KVOperation.Read(key), _) =>
-            upkept.read.reverseIterator.collectFirst {
-              case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => s"$key=$value"
-            }.getOrElse(s"Key '$key' has not been written to!")
-          case Request(KVOperation.Write(key, value), _) => s"$key=$value; OK"
-        }
-
-        clientDataManager.transform { it =>
-          if it.state.requests.data.values.exists { e => e.value == op } then {
-            it.mod { state =>
-              // println(s"Writing Response: $op -> $res")
-              val newState = state.copy(
-                requests = state.requests.mod(_.removeBy(_ == op)),
-                responses = state.responses.mod(_.enqueue(Response(op, res))),
-              )
-              // println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
-              newState
-            }.tap(_ =>
-              timeStep("answering request")
+      clientDataManager.transform { it =>
+        if it.state.requests.data.values.exists { e => e.value == op } then {
+          it.mod { state =>
+            // println(s"Writing Response: $op -> $res")
+            val newState = state.copy(
+              requests = state.requests.mod(_.removeBy(_ == op)),
+              responses = state.responses.mod(_.enqueue(Response(op, res))),
             )
-          } else it
-        }
+            // println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
+            newState
+          }.tap(_ =>
+            timeStep("answering request")
+          )
+        } else it
+      }
 
-        val clientState = clientDataManager.mergedState.data
+      val clientState = clientDataManager.mergedState.data
 
-        if clientState.requests.data.values.nonEmpty then {
-          clusterDataManager.transform(_.mod(_.write(clientState.requests.data.head)))
-        }
+      if clientState.requests.data.values.nonEmpty then {
+        clusterDataManager.transform(_.mod(_.write(clientState.requests.data.head)))
       }
     }
 

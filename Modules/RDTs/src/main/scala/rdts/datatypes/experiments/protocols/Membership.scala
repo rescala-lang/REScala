@@ -5,6 +5,8 @@ import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus.given
 import rdts.time.Time
 
+import scala.collection.immutable.NumericRange
+
 class LogHack(on: Boolean) {
   inline def info(arg: => String): Unit = if on then println(arg) else ()
 }
@@ -50,6 +52,9 @@ case class Membership[A, C[_], D[_]](
     else unchanged
 
   def read: List[A] = log.toList.sortBy(_._1).map(_._2)
+
+  def readDecisionsSince(time: Time): Iterable[A] =
+    NumericRange(time, counter, 1L).view.flatMap(log.get)
 
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
