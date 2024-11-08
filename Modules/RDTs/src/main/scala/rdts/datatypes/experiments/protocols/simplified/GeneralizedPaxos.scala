@@ -28,18 +28,18 @@ case class GeneralizedPaxos[A](
     GeneralizedPaxos(Map(nextBallotNum -> voteFor(replicaId)))
 
   def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
-    // return latest accepted value
+    // return latest proposed value
     val r                 = rounds.filter { case (b, (l, v)) => v.votes.nonEmpty }
-    val roundWithAccepted = r.maxByOption { case (b, (l, v)) => b }
+    val latestProposal = r.maxByOption { case (b, (l, v)) => b }
 
     // vote for newest leader election
     val highestBallotNum = highestBallot.map(_._1)
     val leaderCandidate  = highestBallot.map(_._1.uid)
 
-    (highestBallotNum, leaderCandidate, roundWithAccepted) match
-      case (Some(ballotNum), Some(candidate), None) => // no value decided, just vote for candidate
+    (highestBallotNum, leaderCandidate, latestProposal) match
+      case (Some(ballotNum), Some(candidate), None) => // no value voted for, just vote for candidate
         GeneralizedPaxos(Map(ballotNum -> voteFor(candidate)))
-      case (Some(ballotNum), Some(candidate), Some(acceptedRound)) => // vote for candidate and decided value
+      case (Some(ballotNum), Some(candidate), Some(acceptedRound)) => // vote for candidate and proposed value
         GeneralizedPaxos(Map(
           ballotNum -> voteFor(candidate),
           acceptedRound
