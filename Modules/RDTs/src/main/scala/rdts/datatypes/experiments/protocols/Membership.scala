@@ -120,7 +120,7 @@ object Membership {
           left.counter,
           Lattice[C[Set[Uid]]].merge(left.membersConsensus, right.membersConsensus),
           Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
-          left.log,
+          Lattice.mapLattice(using Lattice.assertEquals).merge(left.log, right.log),
           left.membershipChanging || right.membershipChanging,
           left.members
         )
