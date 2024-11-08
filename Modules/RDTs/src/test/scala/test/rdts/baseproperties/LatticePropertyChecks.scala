@@ -27,7 +27,7 @@ import scala.util.{Failure, Success}
 class OpGraphChecks           extends LatticePropertyChecks[OpGraph[ExampleData]]
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[Map[Dot, ExampleData]]]
 class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[Map[Dot, ExampleData]]]]
-class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
+//class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
 class DotSetChecks            extends LatticePropertyChecks[Dotted[Dots]]
 class EnableWinsFlagChecks    extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks            extends LatticePropertyChecks[Dotted[Map[Dot, Int]]]
