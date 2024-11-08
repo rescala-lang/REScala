@@ -46,7 +46,7 @@ object NioTCP {
     println(s"handling new connection")
 
     val selector = Selector.open()
-    clientChannel.configureBlocking(false)
+    configureChannel(clientChannel)
     clientChannel.register(selector, SelectionKey.OP_READ)
 
     val conn = NioTCPConnection(clientChannel)
@@ -105,22 +105,6 @@ object NioTCP {
   }
 
   def connect(
-      socketAddress: SocketAddress,
-      executionContext: ExecutionContext,
-      abort: Abort
-  ): LatentConnection[MessageBuffer] =
-    def socketChannel: SocketChannel = {
-      val pf = socketAddress match
-        case _: UnixDomainSocketAddress => StandardProtocolFamily.UNIX
-        case other                      => StandardProtocolFamily.INET
-      val channel = SocketChannel.open(pf)
-      channel.connect(socketAddress)
-      channel.configureBlocking(false)
-      channel
-    }
-    connect(() => socketChannel, executionContext, abort)
-
-  def connect(
       bindsocket: () => SocketChannel,
       executionContext: ExecutionContext,
       abort: Abort
@@ -133,7 +117,26 @@ object NioTCP {
         }
     }
 
-  def defaultSocket(socketAddress: SocketAddress): () => ServerSocketChannel = () => {
+  def defaultSocketChannel(socketAddress: SocketAddress): () => SocketChannel = () => {
+    val pf = socketAddress match
+      case _: UnixDomainSocketAddress => StandardProtocolFamily.UNIX
+      case other                      => StandardProtocolFamily.INET
+    val channel = SocketChannel.open(pf)
+    channel.connect(socketAddress)
+    configureChannel(channel)
+    channel
+  }
+
+  private def configureChannel(channel: SocketChannel) = {
+    channel.configureBlocking(false)
+    channel.setOption(StandardSocketOptions.TCP_NODELAY, true)
+    // channel.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+    //channel.setOption(StandardSocketOptions.SO_RCVBUF, tcpBufferSizes)
+    //channel.setOption(StandardSocketOptions.SO_SNDBUF, tcpBufferSizes)
+  }
+
+
+  def defaultServerSocketChannel(socketAddress: SocketAddress): () => ServerSocketChannel = () => {
     val pf = socketAddress match
       case _: UnixDomainSocketAddress => StandardProtocolFamily.UNIX
       case other                      => StandardProtocolFamily.INET

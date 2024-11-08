@@ -128,7 +128,7 @@ class Client(val name: Uid) {
         case Some(saveBenchmark(path)) =>
           println(path)
           val benchmarkPath = Path.of(path)
-          val runId = Uid.gen().delegate
+          val runId         = Uid.gen().delegate
           val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
           benchmarkData.foreach { row =>
             writer.writeRow(
