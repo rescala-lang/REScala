@@ -8,6 +8,7 @@ import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
 import java.nio.file.Path
+import java.util.concurrent.Semaphore
 import scala.collection.mutable
 import scala.io.StdIn
 import scala.io.StdIn.readLine
@@ -34,6 +35,8 @@ class Client(val name: Uid) {
   private val benchmark: Regex     = """benchmark""".r
   private val saveBenchmark: Regex = """save-benchmark ([\w\\/.\-]+)""".r
 
+  val requestSemaphore = new Semaphore(0)
+
   private def onStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     for {
       op                                                     <- currentOp
@@ -45,9 +48,7 @@ class Client(val name: Uid) {
 
       dataManager.transform(_.mod(state => state.copy(responses = state.responses.mod(_.removeBy(_ == res)))))
 
-      lock.synchronized {
-        lock.notifyAll()
-      }
+      requestSemaphore.release(1)
     }
   }
 
@@ -57,14 +58,17 @@ class Client(val name: Uid) {
 
     val start = if doBenchmark then System.nanoTime() else 0
 
+    // TODO: still not sure that the semaphore use is correct …
+    // its quite likely possible that some other request is answered after drainging, causing the code below to return immediately
+    // though overall currentOp is not protected at all, so it is triple unclear what is going on
+    requestSemaphore.drainPermits()
+
     dataManager.transform { current =>
       current.mod(it => it.copy(requests = it.requests.mod(_.enqueue(req))))
     }
 
     if waitForOp then {
-      lock.synchronized {
-        lock.wait()
-      }
+      requestSemaphore.acquire(1)
 
       if doBenchmark then {
         val end = System.nanoTime()

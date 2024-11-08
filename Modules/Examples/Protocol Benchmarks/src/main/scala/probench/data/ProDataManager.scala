@@ -26,7 +26,7 @@ class ProDataManager[State: Lattice](
     onChange(o.data, n.data)
   }
 
-  def transform(fun: DeltaBuffer[State] => DeltaBuffer[State]): Unit = {
+  def transform(fun: DeltaBuffer[State] => DeltaBuffer[State]): Unit = synchronized {
     val current: DeltaBuffer[State] = DeltaBuffer(mergedState.data)
     val next: DeltaBuffer[State]    = fun(current)
 
