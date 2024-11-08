@@ -49,7 +49,7 @@ case class Membership[A, C[_], D[_]](
       )
     else unchanged
 
-  def read: List[A] = log.toList.sortBy(_._1).map(_._2)
+  def read: List[A] = log.toList.sortBy(- _._1).map(_._2)
 
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
@@ -108,19 +108,21 @@ object Membership {
       members = initialMembers
     )
 
+  def logLattice[A]: Lattice[Map[Long, A]] = Lattice.mapLattice(using Lattice.assertEquals)
+
   given lattice[A, C[_], D[_]](using
       Consensus[C],
       Consensus[D]
   ): Lattice[Membership[A, C, D]] with
     override def merge(left: Membership[A, C, D], right: Membership[A, C, D]): Membership[A, C, D] =
-      if left.counter > right.counter then left
-      else if right.counter > left.counter then right
+      if left.counter > right.counter then left.copy(log = logLattice.merge(left.log, right.log))
+      else if right.counter > left.counter then right.copy(log = logLattice.merge(right.log, left.log))
       else
         Membership(
           left.counter,
           Lattice[C[Set[Uid]]].merge(left.membersConsensus, right.membersConsensus),
           Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
-          Lattice.mapLattice(using Lattice.assertEquals).merge(left.log, right.log),
+          logLattice.merge(left.log, right.log),
           left.membershipChanging || right.membershipChanging,
           left.members
         )
