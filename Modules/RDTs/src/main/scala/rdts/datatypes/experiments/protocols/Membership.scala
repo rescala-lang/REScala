@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Consensus.given
 import rdts.time.Time
 
@@ -13,7 +13,7 @@ case class Membership[A, C[_], D[_]](
     counter: Time,
     membersConsensus: C[Set[Uid]],
     innerConsensus: D[A],
-    log: List[A],
+    log: Map[Long, A],
     membershipChanging: Boolean = false,
     members: Set[Uid]
 ) {
@@ -21,7 +21,7 @@ case class Membership[A, C[_], D[_]](
     counter = counter,
     membersConsensus = Consensus[C].empty,
     innerConsensus = Consensus[D].empty,
-    log = List(),
+    log = Map.empty,
     members = Set.empty
   )
 
@@ -49,7 +49,7 @@ case class Membership[A, C[_], D[_]](
       )
     else unchanged
 
-  def read: List[A] = log
+  def read: List[A] = log.toList.sortBy(_._1).map(_._2)
 
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
@@ -77,7 +77,7 @@ case class Membership[A, C[_], D[_]](
         )
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
-        val newLog = log :+ value
+        val newLog = Map(counter -> value)
         logger.info { s"$rid: Inner consensus reached on value $value, log: $newLog" }
         copy(
           counter = counter + 1,
@@ -104,7 +104,7 @@ object Membership {
       counter = 0,
       membersConsensus = Consensus[C].empty,
       innerConsensus = Consensus[D].empty,
-      log = List(),
+      log = Map.empty,
       members = initialMembers
     )
 
@@ -127,7 +127,6 @@ object Membership {
 
     override def lteq(left: Membership[A, C, D], right: Membership[A, C, D]): Boolean =
       if left.counter < right.counter then true
-      else if left.log.length < right.log.length then true
       else
         Lattice[D[A]].lteq(
           left.innerConsensus,
