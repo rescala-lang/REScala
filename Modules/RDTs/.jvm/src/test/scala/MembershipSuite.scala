@@ -134,7 +134,7 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
               ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices" &&
               (membership1.read.containsSlice(membership2.read) || membership2.read.containsSlice(
                 membership1.read
-              )) :| "every log is a prefix of another log or vice versa"
+              )) :| s"every log is a prefix of another log or vice versa, but we had:\n${membership1.counter}${membership1.read}\n${membership2.counter}${membership2.read}"
 
       }
 
