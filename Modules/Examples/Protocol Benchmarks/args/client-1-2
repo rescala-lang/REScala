@@ -1,5 +1,5 @@
 # wait-for-res false
-multiput key%n valueY%n 200
-multiget key%n 200
+multiput key%n valueY%n 1000
+multiget key%n 1000
 # wait
 exit

@@ -1,0 +1,6 @@
+multiput key value 100
+benchmark
+multiput keyX%n valueX%n 10000
+# multiget keyX%n 1000
+save-benchmark bench-results/
+exit

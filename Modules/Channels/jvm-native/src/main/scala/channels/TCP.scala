@@ -23,7 +23,7 @@ object TCP {
   ): JIOStreamConnection = {
     println(s"handling new connection")
     socket.setTcpNoDelay(true)
-    socket.setPerformancePreferences(1, 2, 0)
+    socket.setPerformancePreferences(1, 0, 2)
     val conn = new JIOStreamConnection(socket.getInputStream, socket.getOutputStream, () => socket.close())
     executionContext.execute: () =>
       println(s"executing task")
@@ -54,7 +54,7 @@ object TCP {
 
     try {
       socket.setReuseAddress(true)
-      socket.setPerformancePreferences(1, 2, 0)
+      socket.setPerformancePreferences(1, 0, 2)
     } catch {
       case _: SocketException =>
       // some implementations may not allow SO_REUSEADDR to be set

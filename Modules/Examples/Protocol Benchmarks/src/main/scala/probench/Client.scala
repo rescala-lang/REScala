@@ -1,11 +1,14 @@
 package probench
 
+import probench.benchmark.{BenchmarkData, CSVWriter}
 import probench.data.*
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.contextual.CausalQueue
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
+import java.nio.file.Path
+import scala.collection.mutable
 import scala.io.StdIn
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
@@ -15,24 +18,23 @@ class Client(val name: Uid) {
   given localUid: LocalUid = LocalUid(name)
   private val dataManager  = ProDataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onStateChange)
 
-  private val lock                       = new Object()
-  private var currentOp: Option[Request] = None
-  private var waitForOp: Boolean         = true
+  private val lock                                             = new Object()
+  private var currentOp: Option[Request]                       = None
+  private var waitForOp: Boolean                               = true
+  private var doBenchmark: Boolean                             = false
+  private val benchmarkData: mutable.ListBuffer[BenchmarkData] = mutable.ListBuffer.empty
 
-  private val commented: Regex  = """#.*""".r
-  private val waitForRes: Regex = """wait-for-res (true|false)""".r
-  private val get: Regex        = """get ([\w%]+)""".r
-  private val put: Regex        = """put ([\w%]+) ([\w%]+)""".r
-  private val multiget: Regex   = """multiget ([\w%]+) (\d+)""".r
-  private val multiput: Regex   = """multiput ([\w%]+) ([\w%]+) (\d+)""".r
-  private val mp: Regex         = """mp (\d+)""".r
+  private val commented: Regex     = """#.*""".r
+  private val waitForRes: Regex    = """wait-for-res (true|false)""".r
+  private val get: Regex           = """get ([\w%]+)""".r
+  private val put: Regex           = """put ([\w%]+) ([\w%]+)""".r
+  private val multiget: Regex      = """multiget ([\w%]+) ([\d_]+)""".r
+  private val multiput: Regex      = """multiput ([\w%]+) ([\w%]+) ([\d_]+)""".r
+  private val mp: Regex            = """mp ([\d_]+)""".r
+  private val benchmark: Regex     = """benchmark""".r
+  private val saveBenchmark: Regex = """save-benchmark ([\w\\/.\-]+)""".r
 
   private def onStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
-    /* val diff = newState.responses.data.values.size - oldState.responses.data.values.size
-    if diff > 0 then {
-      println(s"Got $diff result(s): ${newState.responses.data.values.toList.reverseIterator.take(diff).toList.reverse.map(_.value)}")
-    } */
-
     for {
       op                                                     <- currentOp
       CausalQueue.QueueElement(res @ Response(req, _), _, _) <- newState.responses.data.values if req == op
@@ -53,17 +55,34 @@ class Client(val name: Uid) {
     val req = Request(op)
     currentOp = Some(req)
 
-    // println(s"Put $req")
+    val start = if doBenchmark then System.nanoTime() else 0
 
     dataManager.transform { current =>
       current.mod(it => it.copy(requests = it.requests.mod(_.enqueue(req))))
     }
 
-    // println(s"New Requests ${dataManager.mergedState.data.requests.data.values.toList.map(_.value)}")
-
     if waitForOp then {
       lock.synchronized {
         lock.wait()
+      }
+
+      if doBenchmark then {
+        val end = System.nanoTime()
+        val opString = op match
+          case KVOperation.Read(_)     => "get"
+          case KVOperation.Write(_, _) => "put"
+        val args = op match
+          case KVOperation.Read(key)         => key
+          case KVOperation.Write(key, value) => s"$key $value"
+        benchmarkData.append(BenchmarkData(
+          name.delegate,
+          opString,
+          args,
+          start / 1000,
+          end / 1000,
+          (end - start).toDouble / 1000,
+          "µs"
+        ))
       }
     }
   }
@@ -97,20 +116,42 @@ class Client(val name: Uid) {
         case Some(commented())                 => // ignore
         case Some(get(key))                    => read(key)
         case Some(put(key, value))             => write(key, value)
-        case Some(multiget(key, times))        => multiget(key, times.toInt)
-        case Some(multiput(key, value, times)) => multiput(key, value, times.toInt)
-        case Some(waitForRes(flag))            => waitForOp = flag.toBoolean
-        case Some("wait")                      => lock.synchronized { lock.wait() }
-        case Some("ping")                      => dataManager.pingAll()
-        case Some("exit")                      => running = false
-        case Some(mp(times))                   => multiput("key%n", "value%n", times.toInt)
-        case None                              => running = false
-        case other =>
+        case Some(multiget(key, times))        => multiget(key, times.replace("_", "").toInt)
+        case Some(multiput(key, value, times)) => multiput(key, value, times.replace("_", "").toInt)
+        case Some(mp(times))                   => multiput("key%n", "value%n", times.replace("_", "").toInt)
+        case Some(waitForRes(flag)) =>
+          if doBenchmark then println("Can't change waiting mode while benchmarking!")
+          else waitForOp = flag.toBoolean
+        case Some(benchmark()) =>
+          doBenchmark = true
+          waitForOp = true
+        case Some(saveBenchmark(path)) =>
+          println(path)
+          val benchmarkPath = Path.of(path)
+          val runId = Uid.gen().delegate
+          val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
+          benchmarkData.foreach { row =>
+            writer.writeRow(
+              s"${row.name}-$runId",
+              row.op,
+              row.args,
+              row.sendTime.toString,
+              row.receiveTime.toString,
+              row.latency.toString,
+              row.unit
+            )
+          }
+          writer.close()
+        case Some("ping")        => dataManager.pingAll()
+        case Some("wait")        => lock.synchronized { lock.wait() }
+        case None | Some("exit") => running = false
+        case _ =>
           println("assuming put")
           write("key", "value")
       }
     }
     println(s"ended")
+    System.exit(1)
   }
 
   export dataManager.addLatentConnection

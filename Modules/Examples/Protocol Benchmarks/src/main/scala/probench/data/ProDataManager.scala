@@ -18,14 +18,15 @@ class ProDataManager[State: Lattice](
     dataManager.allDeltas.foldLeft(ProtocolDots(initialState, Dots.empty))(Lattice[ProtocolDots[State]].merge)
 
   private def receivedChanges(changes: ProtocolDots[State]): Unit = {
-    val oldState = mergedState
-    dataManager.lock.synchronized {
-      mergedState = mergedState.merge(changes)
+    val (o, n) = synchronized {
+      val oldState = mergedState
+      mergedState = oldState.merge(changes)
+      (oldState, mergedState)
     }
-    onChange(oldState.data, mergedState.data)
+    onChange(o.data, n.data)
   }
 
-  def transform(fun: DeltaBuffer[State] => DeltaBuffer[State]): Unit = dataManager.lock.synchronized {
+  def transform(fun: DeltaBuffer[State] => DeltaBuffer[State]): Unit = {
     val current: DeltaBuffer[State] = DeltaBuffer(mergedState.data)
     val next: DeltaBuffer[State]    = fun(current)
 
