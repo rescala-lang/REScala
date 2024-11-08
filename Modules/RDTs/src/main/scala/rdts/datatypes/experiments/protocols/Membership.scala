@@ -49,7 +49,7 @@ case class Membership[A, C[_], D[_]](
       )
     else unchanged
 
-  def read: List[A] = log.toList.sortBy(- _._1).map(_._2)
+  def read: List[A] = log.toList.sortBy(_._1).map(_._2)
 
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
