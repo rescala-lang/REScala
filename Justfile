@@ -51,14 +51,16 @@ selectScheduler scheduler="levelled":
 runProtoBench:
 	#!/usr/bin/env fish
 
-	set -l jarspath (sbt --error "print proBench/packageJars" | ansifilter --no-trailing-nl | tail -n 1)
+	set -l jarspath (sbt --error "print proBench/packageJars")
 
-	java --class-path "$jarspath/*" probench.cli node --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3
-	java --class-path "$jarspath/*" probench.cli node --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3
-	java --class-path "$jarspath/*" probench.cli node --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3
+	kitty java --class-path "$jarspath/*" probench.cli node --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty java --class-path "$jarspath/*" probench.cli node --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty java --class-path "$jarspath/*" probench.cli node --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
 
-	java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name NODE1
-	java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name NODE2
-	java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name NODE3
+	java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name Client1
+	# java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name Client2
+	# java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name Client3
 
 
