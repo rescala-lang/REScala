@@ -20,23 +20,35 @@ class MembershipTest extends munit.FunSuite {
     assert(membership.isMember(using id1))
     assert(membership.isMember(using id2))
     assert(membership.isMember(using id3))
-    // all upkeep --> promise and enter phase 2
-    membership = membership
-      .merge(membership.upkeep()(using id1))
-      .merge(membership.upkeep()(using id2))
-      .merge(membership.upkeep()(using id3))
-    // all upkeep again -> propose value
-    membership = membership
-      .merge(membership.upkeep()(using id1))
-      .merge(membership.upkeep()(using id2))
-      .merge(membership.upkeep()(using id3))
-    // all upkeep again -> accept value
-    membership = membership
-      .merge(membership.upkeep()(using id1))
-      .merge(membership.upkeep()(using id2))
-      .merge(membership.upkeep()(using id3))
+
+    def doUpkeeps() = {
+      // all upkeep --> promise and enter phase 2
+      membership = membership
+        .merge(membership.upkeep()(using id1))
+        .merge(membership.upkeep()(using id2))
+        .merge(membership.upkeep()(using id3))
+      // all upkeep again -> propose value
+      membership = membership
+        .merge(membership.upkeep()(using id1))
+        .merge(membership.upkeep()(using id2))
+        .merge(membership.upkeep()(using id3))
+      // all upkeep again -> accept value
+      membership = membership
+        .merge(membership.upkeep()(using id1))
+        .merge(membership.upkeep()(using id2))
+        .merge(membership.upkeep()(using id3))
+    }
+
+    doUpkeeps()
+
     assertEquals(membership.currentMembers, Set(id1, id2, id3).map(_.uid))
     assertEquals(membership.read, List(1))
+
+    membership = membership.merge(membership.write(2)(using id2))
+
+    doUpkeeps()
+
+    assertEquals(membership.read, List(1, 2))
   }
 
   test("Membership with member change") {
