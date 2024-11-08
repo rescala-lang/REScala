@@ -84,15 +84,16 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
       timeStep("some state changes maybe logs???")
     }
 
+    // TODO: log was changed to be a delta thing … this might not work anymore
     if upkept.log.size > oldState.log.size then {
       val diff: Int = upkept.log.size - oldState.log.size
       // println(s"DIFF $diff")
 
-      for op <- upkept.log.reverseIterator.take(diff).toList.reverseIterator do {
+      for op <- upkept.read.reverseIterator.take(diff).toList.reverseIterator do {
 
         val res: String = op match {
           case Request(KVOperation.Read(key), _) =>
-            upkept.log.reverseIterator.collectFirst {
+            upkept.read.reverseIterator.collectFirst {
               case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => s"$key=$value"
             }.getOrElse(s"Key '$key' has not been written to!")
           case Request(KVOperation.Write(key, value), _) => s"$key=$value; OK"
