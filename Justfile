@@ -47,6 +47,24 @@ webviewExample sbtOpts="": (buildTodoMVC sbtOpts)
 selectScheduler scheduler="levelled":
 	scala-cli --jvm=system --server=false scripts/select-scheduler.scala -- {{scheduler}}
 
+protoBenchNativeImage:
+	#!/usr/bin/env fish
+
+	set -l jarspath (sbt --error "print proBench/packageJars")
+
+	native-image --class-path "$jarspath/*" probench.cli probench
+
+protoBenchRunNativeImage node="node" client="client" args="bench-1-1":
+	#!/usr/bin/env fish
+
+	kitty ./probench {{node}} --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty ./probench {{node}} --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty ./probench {{node}} --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
+
+	sleep 1;
+	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | ./probench {{client}} --node localhost:8010 --name Client1
 
 runProtoBench node="node" client="client" args="bench-1-1":
 	#!/usr/bin/env fish
