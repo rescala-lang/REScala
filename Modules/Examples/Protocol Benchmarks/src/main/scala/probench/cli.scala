@@ -126,7 +126,7 @@ object cli {
         client.startCLI()
       }.value
 
-      subcommand("updclient", "starts a client to interact with a node") {
+      subcommand("udp-client", "starts a client to interact with a node") {
         val client = Client(name.value)
 
         val (ip, port) = clientNode.value
