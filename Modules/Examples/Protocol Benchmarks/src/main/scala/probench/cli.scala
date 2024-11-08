@@ -83,13 +83,22 @@ object cli {
       subcommand("nio-node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
 
-        node.addClientConnection(NioTCP.listen(NioTCP.defaultServerSocketChannel(socketPath("localhost", clientPort.value)), ec))
-        node.addClusterConnection(NioTCP.listen(NioTCP.defaultServerSocketChannel(socketPath("localhost", peerPort.value)), ec))
+        val nioTCP = NioTCP()
+        ec.execute(() => nioTCP.loopSelection(Abort()))
+
+        node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          "localhost",
+          clientPort.value
+        ))))
+        node.addClusterConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          "localhost",
+          peerPort.value
+        ))))
 
         Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
         cluster.value.foreach { (ip, port) =>
-          node.addClusterConnection(NioTCP.connect(NioTCP.defaultSocketChannel(socketPath(ip, port)), ec, Abort()))
+          node.addClusterConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
         }
       }.value
 
@@ -121,7 +130,12 @@ object cli {
 
         val (ip, port) = clientNode.value
 
-        client.addLatentConnection(NioTCP.connect(NioTCP.defaultSocketChannel(socketPath(ip, port)), ec, Abort()))
+        val nioTCP = NioTCP()
+        ec.execute(() => nioTCP.loopSelection(Abort()))
+
+
+        client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+
 
         client.startCLI()
       }.value

@@ -7,11 +7,73 @@ import java.io.IOException
 import java.net.{SocketAddress, SocketException, StandardProtocolFamily, StandardSocketOptions, UnixDomainSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.{SelectionKey, Selector, ServerSocketChannel, SocketChannel}
-import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-object NioTCP {
+case class AcceptAttachment(
+    callback: Callback[Connection[MessageBuffer]],
+    incoming: Handler[MessageBuffer],
+)
+
+case class ReceiveAttachment(
+    callback: Callback[MessageBuffer]
+)
+
+class NioTCP {
+
+  val lock     = new AnyRef {}
+  val selector = Selector.open()
+
+  def loopSelection(abort: Abort) = lock.synchronized {
+    while !abort.closeRequest do
+      selector.select()
+      runSelection()
+  }
+
+  def runSelection() = lock.synchronized {
+
+    selector.selectedKeys().forEach { key =>
+      key match {
+        case _ if key.isReadable =>
+
+          val clientChannel = key.channel().asInstanceOf[SocketChannel]
+          val attachment    = key.attachment().asInstanceOf[ReceiveAttachment]
+          try {
+
+            val len          = readN(4, clientChannel).getInt()
+            val bytes        = new Array[Byte](len)
+            val targetBuffer = readN(len, clientChannel).get(bytes)
+
+            attachment.callback.succeed(ArrayMessageBuffer(bytes))
+          } catch {
+            case ex: IOException =>
+              clientChannel.close()
+              key.cancel()
+              attachment.callback.fail(ex)
+          }
+
+        case _ if key.isAcceptable =>
+
+          val serverChannel = key.channel().asInstanceOf[ServerSocketChannel]
+
+          val attachment = key.attachment().asInstanceOf[AcceptAttachment]
+
+          val clientChannel = serverChannel.accept()
+          try {
+            attachment.callback.succeed {
+              handleConnection(clientChannel, attachment.incoming)
+            }
+          } catch {
+            case exception: SocketException =>
+              attachment.callback.fail(exception)
+          }
+
+      }
+
+    }
+
+    selector.selectedKeys().clear()
+  }
 
   class NioTCPConnection(clientChannel: SocketChannel) extends Connection[MessageBuffer] {
 
@@ -25,7 +87,7 @@ object NioTCP {
       buffer.put(bytes)
       buffer.flip()
 
-      NioTCP.synchronized {
+      synchronized {
         while buffer.hasRemaining() do {
           val res = clientChannel.write(buffer)
           ()
@@ -40,52 +102,15 @@ object NioTCP {
   def handleConnection(
       clientChannel: SocketChannel,
       incoming: Handler[MessageBuffer],
-      executionContext: ExecutionContext,
-      abort: Abort
   ): NioTCPConnection = {
-    println(s"handling new connection")
 
-    val selector = Selector.open()
     configureChannel(clientChannel)
-    clientChannel.register(selector, SelectionKey.OP_READ)
 
     val conn = NioTCPConnection(clientChannel)
 
     val callback = incoming.getCallbackFor(conn)
-
-    executionContext.execute { () =>
-      println(s"executing task")
-      try {
-        while !abort.closeRequest do {
-          selector.select()
-
-          selector.selectedKeys().forEach { key =>
-            if key.isReadable then {
-
-              try {
-
-                val len          = readN(4, clientChannel).getInt()
-                val bytes        = new Array[Byte](len)
-                val targetBuffer = readN(len, clientChannel).get(bytes)
-
-                callback.succeed(ArrayMessageBuffer(bytes))
-              } catch
-                case ex: IOException =>
-                  clientChannel.close()
-                  key.cancel()
-                  callback.fail(ex)
-            } else {
-              throw IllegalStateException("why am I here? again")
-            }
-
-          }
-
-          selector.selectedKeys().clear()
-        }
-      } catch
-        case exception: SocketException =>
-          callback.fail(exception)
-    }
+    clientChannel.register(selector, SelectionKey.OP_READ, ReceiveAttachment(callback))
+    selector.wakeup()
 
     conn
   }
@@ -106,14 +131,11 @@ object NioTCP {
 
   def connect(
       bindsocket: () => SocketChannel,
-      executionContext: ExecutionContext,
-      abort: Abort
   ): LatentConnection[MessageBuffer] =
     new LatentConnection {
       override def prepare(incoming: Handler[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
         TCP.syncAttempt {
-          println(s"tcp sync attempt")
-          handleConnection(bindsocket(), incoming, executionContext, abort)
+          handleConnection(bindsocket(), incoming)
         }
     }
 
@@ -129,12 +151,14 @@ object NioTCP {
 
   private def configureChannel(channel: SocketChannel) = {
     channel.configureBlocking(false)
-    channel.setOption(StandardSocketOptions.TCP_NODELAY, true)
+    try channel.setOption(StandardSocketOptions.TCP_NODELAY, true)
+    catch
+      case _: UnsupportedOperationException =>
+        println(s"TCP nodelay not supported on this socket")
     // channel.setOption(StandardSocketOptions.SO_REUSEADDR, true)
-    //channel.setOption(StandardSocketOptions.SO_RCVBUF, tcpBufferSizes)
-    //channel.setOption(StandardSocketOptions.SO_SNDBUF, tcpBufferSizes)
+    // channel.setOption(StandardSocketOptions.SO_RCVBUF, tcpBufferSizes)
+    // channel.setOption(StandardSocketOptions.SO_SNDBUF, tcpBufferSizes)
   }
-
 
   def defaultServerSocketChannel(socketAddress: SocketAddress): () => ServerSocketChannel = () => {
     val pf = socketAddress match
@@ -149,7 +173,6 @@ object NioTCP {
 
   def listen(
       bindsocket: () => ServerSocketChannel,
-      executionContext: ExecutionContext
   ): LatentConnection[MessageBuffer] =
     new LatentConnection {
       override def prepare(incoming: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
@@ -157,35 +180,10 @@ object NioTCP {
           try {
             val serverChannel: ServerSocketChannel = bindsocket()
 
-            val selector = Selector.open()
-            serverChannel.register(selector, SelectionKey.OP_ACCEPT)
-
-            executionContext.execute { () =>
-              try {
-                while !abort.closeRequest do {
-                  selector.select()
-
-                  selector.selectedKeys().forEach { key =>
-                    if key.isAcceptable then {
-
-                      val clientChannel = serverChannel.accept()
-
-                      Async.handler.succeed {
-                        handleConnection(clientChannel, incoming, executionContext, abort)
-                      }
-                    } else {
-                      throw IllegalStateException("why am I here?")
-                    }
-
-                  }
-
-                  selector.selectedKeys().clear()
-                }
-              } catch {
-                case exception: SocketException =>
-                  Async.handler.fail(exception)
-              }
-            }
+            val callback = Async.handler[Connection[MessageBuffer]]
+            serverChannel.register(selector, SelectionKey.OP_ACCEPT, AcceptAttachment(callback, incoming))
+            selector.wakeup()
+            ()
           } catch
             case NonFatal(ex) => Async.handler.fail(ex)
 

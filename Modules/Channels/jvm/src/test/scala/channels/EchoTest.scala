@@ -7,9 +7,9 @@ import org.eclipse.jetty.server.ServerConnector
 import rdts.base.LocalUid
 
 import java.net.http.HttpClient
-import java.net.{DatagramSocket, InetAddress, InetSocketAddress, ProtocolFamily, ServerSocket, SocketException, StandardProtocolFamily, URI, UnixDomainSocketAddress}
+import java.net.{DatagramSocket, InetSocketAddress, StandardProtocolFamily, URI, UnixDomainSocketAddress}
 import java.nio.channels.{ServerSocketChannel, SocketChannel}
-import java.nio.file.{FileStore, Files, Path}
+import java.nio.file.Files
 
 class EchoServerTestJetty extends EchoCommunicationTest(
       { ec =>
@@ -81,7 +81,11 @@ class EchoServerTestNioTCP extends EchoCommunicationTest(
 
         println(s"server listening at")
 
-        (socketPath, NioTCP.listen(() => socket, ec))
+        val nioTCP = new NioTCP
+
+        ec.execute(() => nioTCP.loopSelection(Abort()))
+
+        (socketPath, nioTCP.listen(() => socket))
       },
       ec =>
         sp => {
@@ -93,6 +97,10 @@ class EchoServerTestNioTCP extends EchoCommunicationTest(
             channel
           }
 
-          NioTCP.connect(() => socketChannel, ec, Abort())
+          val nioTCP = new NioTCP
+
+          ec.execute(() => nioTCP.loopSelection(Abort()))
+
+          nioTCP.connect(() => socketChannel)
         }
     )
