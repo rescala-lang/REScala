@@ -62,7 +62,7 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
     val start = System.nanoTime()
     var last  = start
     val tid = synchronized {
-      counter += + 1
+      counter += +1
       counter
     }
 
@@ -79,17 +79,15 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
     val end                  = System.nanoTime()
     timeStep("upkeep + merge")
 
-    if !(upkept <= newState) || upkept.log.size > newState.log.size then {
+    if !(upkept <= newState) || upkept.counter > newState.counter then {
       clusterDataManager.transform(_.mod(_ => delta))
       timeStep("some state changes maybe logs???")
     }
 
-    // TODO: log was changed to be a delta thing … this might not work anymore
-    if upkept.log.size > oldState.log.size then {
-      val diff: Int = upkept.log.size - oldState.log.size
-      // println(s"DIFF $diff")
+    if upkept.counter > oldState.counter then {
+      for index <- (oldState.counter) to (upkept.counter - 1) do {
 
-      for op <- upkept.read.reverseIterator.take(diff).toList.reverseIterator do {
+        val op = upkept.log(index)
 
         val res: String = op match {
           case Request(KVOperation.Read(key), _) =>
