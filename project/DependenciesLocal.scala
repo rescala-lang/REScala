@@ -31,7 +31,7 @@ object DependenciesLocal {
   )
 
   def jetty = {
-    val jettyVersion = "12.0.14"
+    val jettyVersion = "12.0.15"
     Seq(
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
