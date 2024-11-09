@@ -32,43 +32,40 @@ class NioTCP {
 
   def runSelection() = lock.synchronized {
 
-    selector.selectedKeys().forEach { key =>
-      key match {
-        case _ if key.isReadable =>
+    selector.selectedKeys().forEach {
+      case key if key.isReadable =>
 
-          val clientChannel = key.channel().asInstanceOf[SocketChannel]
-          val attachment    = key.attachment().asInstanceOf[ReceiveAttachment]
-          try {
+        val clientChannel = key.channel().asInstanceOf[SocketChannel]
+        val attachment    = key.attachment().asInstanceOf[ReceiveAttachment]
+        try {
 
-            val len          = readN(4, clientChannel).getInt()
-            val bytes        = new Array[Byte](len)
-            val targetBuffer = readN(len, clientChannel).get(bytes)
+          val len          = readN(4, clientChannel).getInt()
+          val bytes        = new Array[Byte](len)
+          val targetBuffer = readN(len, clientChannel).get(bytes)
 
-            attachment.callback.succeed(ArrayMessageBuffer(bytes))
-          } catch {
-            case ex: IOException =>
-              clientChannel.close()
-              key.cancel()
-              attachment.callback.fail(ex)
+          attachment.callback.succeed(ArrayMessageBuffer(bytes))
+        } catch {
+          case ex: IOException =>
+            clientChannel.close()
+            key.cancel()
+            attachment.callback.fail(ex)
+        }
+
+      case key if key.isAcceptable =>
+
+        val serverChannel = key.channel().asInstanceOf[ServerSocketChannel]
+
+        val attachment = key.attachment().asInstanceOf[AcceptAttachment]
+
+        val clientChannel = serverChannel.accept()
+        try {
+          attachment.callback.succeed {
+            handleConnection(clientChannel, attachment.incoming)
           }
-
-        case _ if key.isAcceptable =>
-
-          val serverChannel = key.channel().asInstanceOf[ServerSocketChannel]
-
-          val attachment = key.attachment().asInstanceOf[AcceptAttachment]
-
-          val clientChannel = serverChannel.accept()
-          try {
-            attachment.callback.succeed {
-              handleConnection(clientChannel, attachment.incoming)
-            }
-          } catch {
-            case exception: SocketException =>
-              attachment.callback.fail(exception)
-          }
-
-      }
+        } catch {
+          case exception: SocketException =>
+            attachment.callback.fail(exception)
+        }
 
     }
 
