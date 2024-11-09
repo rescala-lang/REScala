@@ -156,6 +156,7 @@ class DataManager[State](
           biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallbackAndRemoveCon(biChan))
         updateContext(uid, selfContext `merge` knows)
       case Payload(uid, context, data) =>
+        if context <= selfContext then return
         val internalized = ProtocolDots[State](data, context)
         lock.synchronized {
           updateContext(uid, context)
