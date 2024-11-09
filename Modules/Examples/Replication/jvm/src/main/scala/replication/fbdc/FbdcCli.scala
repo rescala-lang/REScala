@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import replication.JsoniterCodecs.given
 
-import java.net.Socket
+import java.net.{InetSocketAddress, Socket}
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
@@ -33,7 +33,7 @@ class FbdcCli(settings: CliConnections) {
     settings.`tcp-listen-port` match
       case None =>
       case Some(port) =>
-        exData.dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket("0", port), ec))
+        exData.dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket(InetSocketAddress("0", port)), ec))
     settings.`webserver-listen-port` match
       case None =>
       case Some(port) =>

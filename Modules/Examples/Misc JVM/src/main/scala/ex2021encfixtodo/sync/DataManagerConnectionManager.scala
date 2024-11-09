@@ -8,7 +8,7 @@ import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import replication.{DataManager, ProtocolDots}
 
-import java.net.{Socket, URI}
+import java.net.{InetSocketAddress, Socket, URI}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
@@ -55,7 +55,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
   )
   val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-  dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket("127.0.0.1", port), ec))
+  dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket(new InetSocketAddress("127.0.0.1", port)), ec))
 
   override val localReplicaId: String = replicaId.toString
 
