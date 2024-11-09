@@ -55,7 +55,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
   )
   val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-  dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket(new InetSocketAddress("127.0.0.1", port)), ec))
+  dataManager.addLatentConnection(TCP.listen(TCP.defaultServerSocket(new InetSocketAddress("127.0.0.1", port)), ec))
 
   override val localReplicaId: String = replicaId.toString
 

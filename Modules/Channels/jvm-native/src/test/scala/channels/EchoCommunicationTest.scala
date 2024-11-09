@@ -24,7 +24,7 @@ class EchoServerTestTCP extends EchoCommunicationTest(
         val port = socket.getLocalPort
         (port, TCP.listen(() => socket, ec))
       },
-      ec => port => TCP.connect("localhost", port, ec)
+      ec => port => TCP.connect(TCP.defaultSocket(new InetSocketAddress("localhost", port)), ec)
     )
 
 def printErrors[T](cb: T => Unit): Callback[T] =

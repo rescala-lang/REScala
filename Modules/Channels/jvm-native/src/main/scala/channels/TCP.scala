@@ -3,7 +3,7 @@ package channels
 import de.rmgk.delay
 import de.rmgk.delay.{Async, Callback}
 
-import java.net.{InetAddress, InetSocketAddress, ServerSocket, Socket, SocketException}
+import java.net.{InetSocketAddress, ServerSocket, Socket, SocketException}
 import scala.concurrent.ExecutionContext
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
@@ -29,11 +29,8 @@ object TCP {
     conn
   }
 
-  def connect(socketAddress: InetSocketAddress, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
-    connect(socketAddress.getHostName, socketAddress.getPort, executionContext: ExecutionContext)
-
-  def connect(host: String, port: Int, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
-    connect(() => new Socket(host, port), executionContext)
+  def defaultSocket(socketAddress: InetSocketAddress): () => Socket =
+    () => new Socket(socketAddress.getAddress, socketAddress.getPort)
 
   def connect(bindsocket: () => Socket, executionContext: ExecutionContext): LatentConnection[MessageBuffer] =
     new LatentConnection {
@@ -44,7 +41,7 @@ object TCP {
         }
     }
 
-  def defaultSocket(socketAddress: InetSocketAddress): () => ServerSocket = () => {
+  def defaultServerSocket(socketAddress: InetSocketAddress): () => ServerSocket = () => {
     val socket = new ServerSocket
 
     try {

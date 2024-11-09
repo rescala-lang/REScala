@@ -33,7 +33,7 @@ class FbdcCli(settings: CliConnections) {
     settings.`tcp-listen-port` match
       case None =>
       case Some(port) =>
-        exData.dataManager.addLatentConnection(TCP.listen(TCP.defaultSocket(InetSocketAddress("0", port)), ec))
+        exData.dataManager.addLatentConnection(TCP.listen(TCP.defaultServerSocket(InetSocketAddress("0", port)), ec))
     settings.`webserver-listen-port` match
       case None =>
       case Some(port) =>
