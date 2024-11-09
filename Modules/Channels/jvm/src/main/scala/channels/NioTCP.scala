@@ -77,19 +77,24 @@ class NioTCP {
 
   class NioTCPConnection(clientChannel: SocketChannel) extends Connection[MessageBuffer] {
 
+    val sizeBuffer = ByteBuffer.allocate(4)
+
     override def send(message: MessageBuffer): Async[Any, Unit] = Async {
 
       val bytes         = message.asArray
       val messageLength = bytes.length
 
-      val buffer = ByteBuffer.allocate(4 + bytes.length)
-      buffer.putInt(messageLength)
-      buffer.put(bytes)
-      buffer.flip()
+      val buffer = ByteBuffer.wrap(bytes)
 
       synchronized {
+
+        sizeBuffer.clear().putInt(messageLength)
+        sizeBuffer.flip()
+
+        val buffers = Array(sizeBuffer, buffer)
+
         while buffer.hasRemaining() do {
-          val res = clientChannel.write(buffer)
+          val res = clientChannel.write(buffers)
           ()
         }
       }
