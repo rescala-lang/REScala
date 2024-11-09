@@ -24,10 +24,10 @@ import scala.util.{Failure, Success}
 // Most notably, the Multi-Version-Register sometimes generates unique IDs associated with two different values, merging those is no longer commutative.
 // This currently happens rarely enough, that a fix is postponed until a better strategy in general is found (just not allowing ID reuse might work, but would also exclude possible correct states, reducing the chance to find bugs. Though, that does not seem to be very high anyway …)
 
+// class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
 class OpGraphChecks           extends LatticePropertyChecks[OpGraph[ExampleData]]
 class CausalStoreChecks       extends LatticePropertyChecks[CausalStore[Map[Dot, ExampleData]]]
 class DottedCausalStoreChecks extends LatticePropertyChecks[Dotted[CausalStore[Map[Dot, ExampleData]]]]
-//class CausalQueueChecks       extends LatticePropertyChecks[Dotted[CausalQueue[ExampleData]]]
 class DotSetChecks            extends LatticePropertyChecks[Dotted[Dots]]
 class EnableWinsFlagChecks    extends LatticePropertyChecks[Dotted[contextual.EnableWinsFlag]]
 class DotFunChecks            extends LatticePropertyChecks[Dotted[Map[Dot, Int]]]
@@ -50,6 +50,7 @@ class TupleChecks             extends LatticePropertyChecks[(Set[Int], GrowOnlyC
 class VectorClockChecks       extends LatticePropertyChecks[VectorClock]
 class GrowOnlyListChecks      extends LatticePropertyChecks[GrowOnlyList[Int]](expensive = true)
 class ReplicatedListChecks    extends LatticePropertyChecks[Dotted[ReplicatedList[ExampleData]]](expensive = true)
+class ListAsVectorChecks      extends LatticePropertyChecks[List[Int]]
 class LWWTupleChecks
     extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 

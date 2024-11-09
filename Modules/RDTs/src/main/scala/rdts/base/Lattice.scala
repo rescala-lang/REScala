@@ -1,6 +1,7 @@
 package rdts.base
 
 import scala.annotation.targetName
+import scala.collection.IterableOps
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
@@ -135,6 +136,14 @@ object Lattice {
         case (k, v) <- state
         d <- v.decomposed
       yield Map(k -> d)
+  }
+
+  given [A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
+    val li  = left.iterator
+    val ri  = right.iterator
+    val res = li.zip(ri).map(Lattice.merge) ++ li ++ ri
+
+    res.to(left.iterableFactory.iterableFactory)
   }
 
   given functionLattice[K, V: Lattice]: Lattice[K => V] = (left, right) => k => left(k) `merge` right(k)
