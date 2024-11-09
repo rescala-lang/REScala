@@ -138,9 +138,9 @@ object Lattice {
       yield Map(k -> d)
   }
 
-  given [A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
-    val li  = left.iterator
-    val ri  = right.iterator
+  given iterableLattice[A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
+    val li = left.iterator
+    val ri = right.iterator
     val res = li.zip(ri).map(Lattice.merge) ++ li ++ ri
 
     res.to(left.iterableFactory.iterableFactory)
