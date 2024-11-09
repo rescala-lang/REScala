@@ -33,7 +33,12 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
   given LogHack            = new LogHack(false)
 
   val clientDataManager: ProDataManager[ClientNodeState] =
-    ProDataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onClientStateChange)
+    ProDataManager[ClientNodeState](
+      localUid,
+      Bottom[ClientNodeState].empty,
+      onClientStateChange,
+      immediateForward = true
+    )
   val clusterDataManager: ProDataManager[ClusterState] =
     ProDataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
 

@@ -55,7 +55,8 @@ class DataManager[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
-    crypto: Option[Aead] = None
+    crypto: Option[Aead] = None,
+    immediateForward: Boolean = false,
 ) {
 
   given LocalUid = replicaId
@@ -155,25 +156,30 @@ class DataManager[State](
           biChan.send(Payload(replicaId.uid, msg.context, msg.data)).run(using ())(debugCallbackAndRemoveCon(biChan))
         updateContext(uid, selfContext `merge` knows)
       case Payload(uid, context, data) =>
-        val interalized = ProtocolDots[State](data, context)
+        val internalized = ProtocolDots[State](data, context)
         lock.synchronized {
           updateContext(uid, context)
           updateContext(replicaId.uid, context)
-          remoteDeltas = interalized :: remoteDeltas
+          remoteDeltas = internalized :: remoteDeltas
         }
         receiveCallback(data)
-        allChanges(interalized)
+        allChanges(internalized)
+        if immediateForward then disseminateDeltas(List(internalized), List(biChan))
 
   }
 
   def disseminateLocalBuffer(): Unit = {
-    val deltas = lock.synchronized {
+    val deltas: Seq[TransferState] = lock.synchronized {
       val deltas = localBuffer
       localBuffer = Nil
       localDeltas = deltas ::: localDeltas
       deltas
     }
-    connections.foreach: con =>
+    disseminateDeltas(deltas, Nil)
+  }
+
+  def disseminateDeltas(deltas: Seq[TransferState], except: Seq[ConnectionContext]): Unit = {
+    connections.filterNot(con => except.contains(con)).foreach: con =>
       deltas.foreach: delta =>
         con.send(Payload(replicaId.uid, delta.context, delta.data)).run(using ())(debugCallbackAndRemoveCon(con))
   }
