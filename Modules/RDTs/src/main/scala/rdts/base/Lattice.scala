@@ -2,6 +2,7 @@ package rdts.base
 
 import scala.annotation.targetName
 import scala.collection.IterableOps
+import scala.collection.immutable.MapOps
 import scala.compiletime.{erasedValue, summonAll, summonFrom, summonInline}
 import scala.deriving.Mirror
 
@@ -111,9 +112,9 @@ object Lattice {
     given Lattice[Some[A]]   = Lattice.derived
     Lattice.sumLattice
 
-  given mapLattice[K, V: Lattice]: Lattice[Map[K, V]] = new Lattice[Map[K, V]] {
-    override def merge(left: Map[K, V], right: Map[K, V]): Map[K, V] =
-      val (small, large) =
+  given mapLattice[K, V: Lattice, Mp[K1, +V1] <: MapOps[K1, V1, Mp, Mp[K1, V1]]]: Lattice[Mp[K, V]] = new Lattice[Mp[K, V]] {
+    override def merge(left: Mp[K, V], right: Mp[K, V]): Mp[K, V] =
+      val (small: Mp[K, V], large: Mp[K, V]) =
         // compare unsigned treats the “unknown” value -1 as larger than any known size
         if 0 <= Integer.compareUnsigned(left.knownSize, right.knownSize)
         then (right, left)
@@ -126,16 +127,16 @@ object Lattice {
           }
       }
 
-    override def lteq(left: Map[K, V], right: Map[K, V]): Boolean =
+    override def lteq(left: Mp[K, V], right: Mp[K, V]): Boolean =
       left.forall { (k, l) =>
         right.get(k).exists(r => l <= r)
       }
 
-    override def decompose(state: Map[K, V]): Iterable[Map[K, V]] =
+    override def decompose(state: Mp[K, V]): Iterable[Mp[K, V]] =
       for
         case (k, v) <- state
         d <- v.decomposed
-      yield Map(k -> d)
+      yield state.mapFactory(k -> d)
   }
 
   given iterableLattice[A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
