@@ -4,7 +4,7 @@ import channels.{Abort, NioTCP, TCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
-import probench.clients.{ClientCLI, ProBenchClient}
+import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientNodeState, KVOperation, Request}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
@@ -67,6 +67,7 @@ object cli {
       inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
       inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
       inline def name              = named[Uid]("--name", "", Uid.gen())
+      inline def endpoints = named[List[String]]("--endpoints", "")
 
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
@@ -148,7 +149,11 @@ object cli {
         ClientCLI(name.value, client).startCLI()
       }.value
 
-      subcommand("benchmark", "") {}.value
+      subcommand("etcd-client", "starts a client to interact with an etcd cluster") {
+        val client = EtcdClient(name.value, endpoints.value)
+
+        ClientCLI(name.value, client).startCLI()
+      }
     }
 
     argparse.parse(args.toList).printHelp()
