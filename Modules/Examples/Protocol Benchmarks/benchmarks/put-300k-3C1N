@@ -1,0 +1,3 @@
+Client1;localhost:8010;bench-put-300k
+Client2;localhost:8010;bench-put-300k
+Client3;localhost:8010;bench-put-300k

@@ -1,0 +1,5 @@
+multiput warmup warmup%n 1000
+benchmark
+multiput key%n value%n 1000000
+save-benchmark
+exit

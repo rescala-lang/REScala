@@ -33,7 +33,7 @@ class Client(val name: Uid) {
   private val multiput: Regex      = """multiput ([\w%]+) ([\w%]+) ([\d_]+)""".r
   private val mp: Regex            = """mp ([\d_]+)""".r
   private val benchmark: Regex     = """benchmark""".r
-  private val saveBenchmark: Regex = """save-benchmark ([\w\\/.\-]+)""".r
+  private val saveBenchmark: Regex = """save-benchmark""".r
 
   val requestSemaphore = new Semaphore(0)
 
@@ -59,7 +59,7 @@ class Client(val name: Uid) {
     val start = if doBenchmark then System.nanoTime() else 0
 
     // TODO: still not sure that the semaphore use is correct …
-    // its quite likely possible that some other request is answered after drainging, causing the code below to return immediately
+    // its quite likely possible that some other request is answered after draining, causing the code below to return immediately
     // though overall currentOp is not protected at all, so it is triple unclear what is going on
     requestSemaphore.drainPermits()
 
@@ -129,14 +129,15 @@ class Client(val name: Uid) {
         case Some(benchmark()) =>
           doBenchmark = true
           waitForOp = true
-        case Some(saveBenchmark(path)) =>
-          println(path)
-          val benchmarkPath = Path.of(path)
-          val runId         = Uid.gen().delegate
+        case Some(saveBenchmark()) =>
+          val env = System.getenv()
+
+          val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
+          val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(runId)
           val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
           benchmarkData.foreach { row =>
             writer.writeRow(
-              s"${row.name}-$runId",
+              s"${row.name}",
               row.op,
               row.args,
               row.sendTime.toString,

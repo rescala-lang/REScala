@@ -82,4 +82,39 @@ runProtoBench node="node" client="client" args="bench-1-1":
 	# java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name Client2
 	# java --class-path "$jarspath/*" probench.cli client --node localhost:8010 --name Client3
 
+	trap 'kill $(jobs -p)' EXIT
+
+runProtoBenchCluster node="node":
+	#!/usr/bin/env fish
+
+	set -l jarspath (sbt --error "print proBench/packageJars")
+
+	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	sleep 1;
+	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
+
+	trap 'kill $(jobs -p)' SIGINT
+	sleep $last_pid
+
+runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
+	#!/usr/bin/env fish
+
+	set -l jarspath (sbt --error "print proBench/packageJars")
+
+	cd "Modules/Examples/Protocol Benchmarks"
+
+	set -lx BENCH_RESULTS_DIR {{benchResultsDir}}
+	set -lx RUN_ID {{runId}}
+
+	for clientArgs in $(cat ./benchmarks/{{benchmark}})
+		set -l args (string split ';' $clientArgs)
+
+		cat args/$args[3] | java --class-path "$jarspath/*" probench.cli {{client}} --node $args[2] --name $args[1] &
+	end
+
+	trap 'kill $(jobs -p)' SIGINT
+	sleep $last_pid
+
 
