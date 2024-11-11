@@ -67,7 +67,7 @@ object cli {
       inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
       inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
       inline def name              = named[Uid]("--name", "", Uid.gen())
-      inline def endpoints = named[List[String]]("--endpoints", "")
+      inline def endpoints         = named[List[String]]("--endpoints", "")
 
       subcommand("node", "starts a cluster node") {
         val node = Node(name.value, initialClusterIds.value.toSet)
@@ -153,7 +153,7 @@ object cli {
         val client = EtcdClient(name.value, endpoints.value)
 
         ClientCLI(name.value, client).startCLI()
-      }
+      }.value
     }
 
     argparse.parse(args.toList).printHelp()
