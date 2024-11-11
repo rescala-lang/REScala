@@ -4,6 +4,7 @@ import channels.{Abort, NioTCP, TCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
+import probench.clients.{ClientCLI, ProBenchClient}
 import probench.data.{ClientNodeState, KVOperation, Request}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
@@ -116,17 +117,16 @@ object cli {
       }.value
 
       subcommand("client", "starts a client to interact with a node") {
-        val client = Client(name.value)
+        val client = ProBenchClient(name.value)
 
         val (ip, port) = clientNode.value
-
         client.addLatentConnection(TCP.connect(TCP.defaultSocket(socketPath(ip, port)), ec))
 
-        client.startCLI()
+        ClientCLI(name.value, client).startCLI()
       }.value
 
       subcommand("nio-client", "starts a client to interact with a node") {
-        val client = Client(name.value)
+        val client = ProBenchClient(name.value)
 
         val (ip, port) = clientNode.value
 
@@ -135,17 +135,17 @@ object cli {
 
         client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
 
-        client.startCLI()
+        ClientCLI(name.value, client).startCLI()
       }.value
 
       subcommand("udp-client", "starts a client to interact with a node") {
-        val client = Client(name.value)
+        val client = ProBenchClient(name.value)
 
         val (ip, port) = clientNode.value
 
         client.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
 
-        client.startCLI()
+        ClientCLI(name.value, client).startCLI()
       }.value
 
       subcommand("benchmark", "") {}.value
