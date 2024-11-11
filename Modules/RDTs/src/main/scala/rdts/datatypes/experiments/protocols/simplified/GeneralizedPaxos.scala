@@ -29,7 +29,7 @@ case class GeneralizedPaxos[A](
 
   def phase1b(using LocalUid, Participants): GeneralizedPaxos[A] =
     // return latest proposed value
-    val r                 = rounds.filter { case (b, (l, v)) => v.votes.nonEmpty }
+    val r              = rounds.filter { case (b, (l, v)) => v.votes.nonEmpty }
     val latestProposal = r.maxByOption { case (b, (l, v)) => b }
 
     // vote for newest leader election
@@ -88,8 +88,7 @@ case class GeneralizedPaxos[A](
     rounds.filter { case (b, (l, v)) => b.uid == replicaId }.maxByOption { case (b, (l, v)) => b }
 
   def newestDecidedVal(using Participants): Option[A] =
-    val r = rounds.filter { case (b, (l, v)) => v.result.isDefined }
-    r.maxByOption { case (b, (l, v)) => b }.flatMap(_._2._2.result)
+    rounds.collectFirst { case (ballotNum, (leaderElection, voting)) if voting.result.isDefined => voting.result.get }
 
 object GeneralizedPaxos:
   given l[A]: Lattice[GeneralizedPaxos[A]] = Lattice.derived
