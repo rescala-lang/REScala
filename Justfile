@@ -117,4 +117,44 @@ runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResult
 	trap 'kill $(jobs -p)' SIGINT
 	sleep $last_pid
 
+runProtoBenchEtcdCluster node="node":
+	#!/usr/bin/env fish
+	set -lx TOKEN token-01
+	set -lx CLUSTER_STATE new
+	set -lx NAME_1 machine-1
+	set -lx NAME_2 machine-2
+	set -lx NAME_3 machine-3
+	set -lx HOST_1 localhost
+	set -lx HOST_2 localhost
+	set -lx HOST_3 localhost
+	set -lx CLUSTER {$NAME_1}=http://{$HOST_1}:2381,{$NAME_2}=http://{$HOST_2}:2382,{$NAME_3}=http://{$HOST_3}:2383
 
+	rm -rf /tmp/data*.etcd
+
+	kitty etcd --data-dir=/tmp/data1.etcd --name {$NAME_1} --initial-advertise-peer-urls http://localhost:2381 --listen-peer-urls http://localhost:2381 --advertise-client-urls http://localhost:8010 --listen-client-urls http://localhost:8010 --initial-cluster {$CLUSTER} --initial-cluster-state {$CLUSTER_STATE} --initial-cluster-token token-01 &
+	sleep 1;
+	kitty etcd --data-dir=/tmp/data2.etcd --name {$NAME_2} --initial-advertise-peer-urls http://localhost:2382 --listen-peer-urls http://localhost:2382 --advertise-client-urls http://localhost:8020 --listen-client-urls http://localhost:8020 --initial-cluster {$CLUSTER} --initial-cluster-state {$CLUSTER_STATE} --initial-cluster-token token-01 &
+	sleep 1;
+	kitty etcd --data-dir=/tmp/data3.etcd --name {$NAME_3} --initial-advertise-peer-urls http://localhost:2383 --listen-peer-urls http://localhost:2383 --advertise-client-urls http://localhost:8030 --listen-client-urls http://localhost:8030 --initial-cluster {$CLUSTER} --initial-cluster-state {$CLUSTER_STATE} --initial-cluster-token token-01 &
+
+	trap 'kill $(jobs -p)' SIGINT
+	sleep $last_pid
+
+runProtoBenchClientEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
+	#!/usr/bin/env fish
+
+	set -l jarspath (sbt --error "print proBench/packageJars")
+
+	cd "Modules/Examples/Protocol Benchmarks"
+
+	set -lx BENCH_RESULTS_DIR {{benchResultsDir}}
+	set -lx RUN_ID {{runId}}
+
+	for clientArgs in $(cat ./benchmarks/{{benchmark}})
+		set -l args (string split ';' $clientArgs)
+
+		cat args/$args[3] | java --class-path "$jarspath/*" probench.cli etcd-client --name $args[1] --endpoints https://$args[2] &
+	end
+
+	trap 'kill $(jobs -p)' SIGINsT
+	sleep $last_pid
