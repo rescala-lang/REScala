@@ -8,6 +8,7 @@ import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
+import scala.collection.mutable
 import scala.util.chaining.scalaUtilChainingOps
 
 object Time {
@@ -39,8 +40,11 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
       onClientStateChange,
       immediateForward = true
     )
+
   val clusterDataManager: ProDataManager[ClusterState] =
     ProDataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
+
+  private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     /*
@@ -92,10 +96,14 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
     for op <- upkept.readDecisionsSince(oldState.counter) do {
       val res: String = op match {
         case Request(KVOperation.Read(key), _) =>
-          upkept.read.reverseIterator.collectFirst {
-            case Request(KVOperation.Write(writeKey, value), _) if writeKey == key => s"$key=$value"
-          }.getOrElse(s"Key '$key' has not been written to!")
-        case Request(KVOperation.Write(key, value), _) => s"$key=$value; OK"
+          kvCache.synchronized {
+            kvCache.getOrElse(key, s"Key '$key' has not been written to!")
+          }
+        case Request(KVOperation.Write(key, value), _) =>
+          kvCache.synchronized {
+            kvCache.put(key, value)
+          }
+          s"$key=$value; OK"
       }
 
       clientDataManager.transform { it =>

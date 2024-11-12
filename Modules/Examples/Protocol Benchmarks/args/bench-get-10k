@@ -1,0 +1,5 @@
+multiput key%n value%n 10000
+benchmark
+multiget key%n 10000
+save-benchmark
+exit
