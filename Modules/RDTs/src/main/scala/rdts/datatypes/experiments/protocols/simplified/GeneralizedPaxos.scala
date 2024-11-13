@@ -8,7 +8,7 @@ import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 case class GeneralizedPaxos[A](
     rounds: Map[BallotNum, (LeaderElection, SimpleVoting[A])] =
       Map.empty[BallotNum, (LeaderElection, SimpleVoting[A])],
-    myValue: Option[LastWriterWins[A]] = None
+    myValue: Map[Uid, LastWriterWins[A]] = Map.empty
 ):
 
   def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
@@ -39,10 +39,10 @@ case class GeneralizedPaxos[A](
     (highestBallotNum, leaderCandidate, latestProposal) match
       case (Some(ballotNum), Some(candidate), None) => // no value voted for, just vote for candidate
         GeneralizedPaxos(Map(ballotNum -> voteFor(candidate)))
-      case (Some(ballotNum), Some(candidate), Some(acceptedRound)) => // vote for candidate and proposed value
+      case (Some(ballotNum), Some(candidate), Some(proposal)) => // vote for candidate and proposed value
         GeneralizedPaxos(Map(
           ballotNum -> voteFor(candidate),
-          acceptedRound
+          proposal
         ))
       case _ => GeneralizedPaxos() // do nothing
 
@@ -58,7 +58,7 @@ case class GeneralizedPaxos[A](
         }.map {
           case (ballotNum, (leaderElection, voting)) => voting.votes.head.value
         }
-        val value = latestVal.getOrElse(myValue.get.value)
+        val value = latestVal.getOrElse(myValue(replicaId).value)
         GeneralizedPaxos(Map(ballotNum -> voteFor(replicaId, value)))
       // not leader -> do nothing
       case _ => GeneralizedPaxos()
@@ -95,12 +95,11 @@ object GeneralizedPaxos:
   given consensus: Consensus[GeneralizedPaxos] with
     extension [A](c: GeneralizedPaxos[A])
       override def write(value: A)(using LocalUid, Participants): GeneralizedPaxos[A] =
-        val withValue = c.copy(myValue = Some(LastWriterWins.now(value)))
         // check if I can propose a value
-        val afterProposal = withValue.phase2a
-        if Lattice[GeneralizedPaxos[A]].lteq(afterProposal, withValue) then
+        val afterProposal = c.phase2a
+        if Lattice[GeneralizedPaxos[A]].lteq(afterProposal, c) then
           // proposing did not work, try to become leader
-          withValue.phase1a
+          c.phase1a.copy(myValue = Map(replicaId -> LastWriterWins.now(value)))
         else
           afterProposal
     extension [A](c: GeneralizedPaxos[A])(using Participants)
@@ -111,7 +110,10 @@ object GeneralizedPaxos:
         c.highestBallot match
           // we have a leader -> phase 2
           case Some((ballotNum, (leaderElection, voting))) if leaderElection.result.nonEmpty =>
-            c.phase2b
+            if leaderElection.result.get == replicaId then
+              c.phase2a
+            else
+              c.phase2b
           // we are in the process of electing a new leader
           case _ =>
             c.phase1b
