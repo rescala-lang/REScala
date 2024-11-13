@@ -158,3 +158,7 @@ runProtoBenchClientEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-r
 
 	trap 'kill $(jobs -p)' SIGINsT
 	sleep $last_pid
+
+
+runProtoBenchClusterScript nodecount="15":
+	scala-cli --jvm=system scripts/run-benchmark-nodes.scala -- --jars "Modules/Examples/Protocol Benchmarks/target/scala-3.5.2/jars" --nodes {{nodecount}}
