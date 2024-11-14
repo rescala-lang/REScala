@@ -6,16 +6,16 @@ import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 
 case class GeneralizedPaxos[A](
-    rounds: Map[BallotNum, (LeaderElection, SimpleVoting[A])] =
-      Map.empty[BallotNum, (LeaderElection, SimpleVoting[A])],
-    myValue: Map[Uid, LastWriterWins[A]] = Map.empty
+                                rounds: Map[BallotNum, (LeaderElection, Voting[A])] =
+      Map.empty[BallotNum, (LeaderElection, Voting[A])],
+                                myValue: Map[Uid, LastWriterWins[A]] = Map.empty
 ):
 
-  def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
-    (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]().voteFor(value))
+  def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, Voting[A]) =
+    (Voting[Uid]().voteFor(leader), Voting[A]().voteFor(value))
 
-  def voteFor(leader: Uid)(using LocalUid, Participants): (LeaderElection, SimpleVoting[A]) =
-    (SimpleVoting[Uid]().voteFor(leader), SimpleVoting[A]())
+  def voteFor(leader: Uid)(using LocalUid, Participants): (LeaderElection, Voting[A]) =
+    (Voting[Uid]().voteFor(leader), Voting[A]())
 
   def phase1a(using LocalUid, Participants): GeneralizedPaxos[A] =
     val nextBallotNum: BallotNum =
@@ -81,10 +81,10 @@ case class GeneralizedPaxos[A](
       case _ => GeneralizedPaxos()
 
   // helpers
-  def highestBallot: Option[(BallotNum, (LeaderElection, SimpleVoting[A]))] = rounds.maxByOption { case (b, (l, v)) =>
+  def highestBallot: Option[(BallotNum, (LeaderElection, Voting[A]))] = rounds.maxByOption { case (b, (l, v)) =>
     b
   }
-  def myHighestBallot(using LocalUid): Option[(BallotNum, (LeaderElection, SimpleVoting[A]))] =
+  def myHighestBallot(using LocalUid): Option[(BallotNum, (LeaderElection, Voting[A]))] =
     rounds.filter { case (b, (l, v)) => b.uid == replicaId }.maxByOption { case (b, (l, v)) => b }
 
   def newestDecidedVal(using Participants): Option[A] =

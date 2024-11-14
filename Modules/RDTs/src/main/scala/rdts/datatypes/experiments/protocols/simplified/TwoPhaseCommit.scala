@@ -14,7 +14,7 @@ case class Acknowledge()
 
 case class TwoPhaseCommit[A](
     transaction: Option[A] = None,
-    voting: SimpleVoting[PrepareAbort] = SimpleVoting(),
+    voting: Voting[PrepareAbort] = Voting(),
     acknowledgement: Set[Uid] = Set.empty
 ):
 

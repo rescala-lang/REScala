@@ -3,7 +3,7 @@ package test.rdts.protocols
 import rdts.base.Lattice.syntax.merge
 import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Participants
-import rdts.datatypes.experiments.protocols.simplified.{LeaderElection, MultiRoundVoting, SimpleVoting}
+import rdts.datatypes.experiments.protocols.simplified.{LeaderElection, MultiRoundVoting, Voting}
 
 class SimpleVotingTests extends munit.FunSuite {
 
@@ -14,13 +14,13 @@ class SimpleVotingTests extends munit.FunSuite {
   given Participants(Set(id1, id2, id3, id4).map(_.uid))
 
   test("Voting for 4 participants") {
-    var voting: LeaderElection = SimpleVoting.unchanged
+    var voting: LeaderElection = Voting.unchanged
     voting = voting `merge` voting.voteFor(id1.uid)(using id1)
     assertEquals(voting.result, None)
     voting = voting `merge` voting.voteFor(id1.uid)(using id2) `merge` voting.voteFor(id1.uid)(using id3)
     assertEquals(voting.result, Some(id1.uid))
     // voting again does not change anything:
-    assertEquals(voting.voteFor(id1.uid)(using id1), SimpleVoting.unchanged)
+    assertEquals(voting.voteFor(id1.uid)(using id1), Voting.unchanged)
   }
 
   test("Multiroundvoting for 4 participants") {
@@ -47,6 +47,6 @@ class SimpleVotingTests extends munit.FunSuite {
     // check that upkeep cleans
     voting = voting `merge` voting.upkeep(using id1)
     assertEquals(voting.rounds.counter, Integer.toUnsignedLong(3))
-    assertEquals(voting.rounds.value, SimpleVoting(Set.empty))
+    assertEquals(voting.rounds.value, Voting(Set.empty))
   }
 }

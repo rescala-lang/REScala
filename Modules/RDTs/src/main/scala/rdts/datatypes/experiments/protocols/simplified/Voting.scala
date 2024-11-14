@@ -8,7 +8,7 @@ import rdts.datatypes.{Epoch, GrowOnlyMap, GrowOnlySet}
 
 case class Vote[A](value: A, voter: Uid)
 
-case class SimpleVoting[A](votes: Set[Vote[A]] = Set.empty[Vote[A]]) {
+case class Voting[A](votes: Set[Vote[A]] = Set.empty[Vote[A]]) {
   def threshold(using Participants): Int = participants.size / 2 + 1
 
   def result(using Participants): Option[A] =
@@ -16,31 +16,31 @@ case class SimpleVoting[A](votes: Set[Vote[A]] = Set.empty[Vote[A]]) {
       case Some((v, count)) if count >= threshold => Some(v)
       case _                                      => None
 
-  def voteFor(v: A)(using LocalUid, Participants): SimpleVoting[A] =
+  def voteFor(v: A)(using LocalUid, Participants): Voting[A] =
     if !participants.contains(replicaId) || votes.exists { case Vote(_, voter) => voter == replicaId }
-    then SimpleVoting.unchanged // already voted!
+    then Voting.unchanged // already voted!
     else
-      SimpleVoting(Set(Vote(v, replicaId)))
+      Voting(Set(Vote(v, replicaId)))
 
   def leadingCount: Option[(A, Int)] =
     val grouped: Map[A, Int] = votes.groupBy(_.value).map((value, vts) => (value, vts.size))
     grouped.maxByOption((_, size) => size)
 }
 
-object SimpleVoting {
-  given lattice[A]: Lattice[SimpleVoting[A]] = Lattice.derived
+object Voting {
+  given lattice[A]: Lattice[Voting[A]] = Lattice.derived
 
-  given bottom[A](using Participants): Bottom[SimpleVoting[A]] with
-    override def empty: SimpleVoting[A] = unchanged
+  given bottom[A](using Participants): Bottom[Voting[A]] with
+    override def empty: Voting[A] = unchanged
 
-  def unchanged[A](using Participants): SimpleVoting[A] = SimpleVoting(Set.empty)
+  def unchanged[A](using Participants): Voting[A] = Voting(Set.empty)
 }
 
-type LeaderElection = SimpleVoting[Uid]
+type LeaderElection = Voting[Uid]
 
-case class MultiRoundVoting[A](rounds: Epoch[SimpleVoting[A]]):
+case class MultiRoundVoting[A](rounds: Epoch[Voting[A]]):
   def release(using Participants): MultiRoundVoting[A] =
-    MultiRoundVoting(Epoch(rounds.counter + 1, SimpleVoting.unchanged))
+    MultiRoundVoting(Epoch(rounds.counter + 1, Voting.unchanged))
 
   def upkeep(using LocalUid, Participants): MultiRoundVoting[A] =
     rounds.value.leadingCount match
@@ -62,7 +62,7 @@ case class MultiRoundVoting[A](rounds: Epoch[SimpleVoting[A]]):
     rounds.value.result
 
 object MultiRoundVoting {
-  def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[SimpleVoting[A]])
+  def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[Voting[A]])
   given lattice[A]: Lattice[MultiRoundVoting[A]]            = Lattice.derived
 }
 
