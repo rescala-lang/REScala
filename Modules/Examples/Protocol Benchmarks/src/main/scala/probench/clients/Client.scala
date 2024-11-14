@@ -26,6 +26,18 @@ trait Client(name: Uid) {
     println(s"Did $times put queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }
 
+  def mixed(min: Int, max: Int, times: Int = 1): Unit = {
+    val start = System.nanoTime()
+    for i <- 1 to times do {
+      val num = Math.round(Math.random() * (max - min) + min).toInt
+      if Math.random() > 0.5 then
+        read(f"key$num")
+      else
+        write(f"key$num",f"value$num")
+    }
+    println(s"Did $times mixed queries in ${(System.nanoTime() - start) / 1_000_000}ms")
+  }
+
   def handleOp(op: KVOperation[String, String]): Unit = {
     val start = if doBenchmark then System.nanoTime() else 0
 

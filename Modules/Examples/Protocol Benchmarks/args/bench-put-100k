@@ -1,4 +1,4 @@
-multiput warmup warmup%n 1000
+multiput warmup warmup%n 10000
 benchmark
 multiput key%n value%n 100000
 save-benchmark

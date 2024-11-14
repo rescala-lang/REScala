@@ -1,5 +1,5 @@
 multiput key%n value%n 10000
 benchmark
-multiget key%n 10000
+mixed 1 10000 1_000_000
 save-benchmark
 exit

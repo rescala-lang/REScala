@@ -8,7 +8,7 @@ import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientNodeState, KVOperation, Request}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.simplified.Paxos
+import rdts.datatypes.experiments.protocols.simplified.{GeneralizedPaxos, Paxos}
 
 import java.net.{DatagramSocket, InetSocketAddress}
 import java.util.Timer
@@ -49,7 +49,10 @@ object cli {
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given JsonValueCodec[Membership[Request, Paxos, Paxos]] =
+    given paxosMembership: JsonValueCodec[Membership[Request, Paxos, Paxos]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
+    given genPaxosMembership: JsonValueCodec[Membership[Request, GeneralizedPaxos, GeneralizedPaxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(host: String, port: Int) = {

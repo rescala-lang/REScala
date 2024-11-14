@@ -1,5 +1,5 @@
 multiput warmup warmup%n 10000
 benchmark
-multiput key%n value%n 1000000
+multiput key%n value%n 500000
 save-benchmark
 exit

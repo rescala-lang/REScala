@@ -85,7 +85,6 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
 
     val delta                = newState.upkeep()
     val upkept: ClusterState = newState.merge(delta)
-    val end                  = System.nanoTime()
     timeStep("upkeep + merge")
 
     if !(upkept <= newState) || upkept.counter > newState.counter then {

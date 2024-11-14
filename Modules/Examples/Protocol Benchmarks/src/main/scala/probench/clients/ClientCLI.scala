@@ -14,9 +14,12 @@ class ClientCLI(name: Uid, client: Client) {
   private val put: Regex           = """put ([\w%]+) ([\w%]+)""".r
   private val multiget: Regex      = """multiget ([\w%]+) ([\d_]+)""".r
   private val multiput: Regex      = """multiput ([\w%]+) ([\w%]+) ([\d_]+)""".r
+  private val mixed: Regex         = """mixed ([\d_]+) ([\d_]+) ([\d_]+)""".r
   private val mp: Regex            = """mp ([\d_]+)""".r
   private val benchmark: Regex     = """benchmark""".r
   private val saveBenchmark: Regex = """save-benchmark""".r
+
+  private def parseInt(str: String): Int = str.replace("_", "").toInt
 
   def startCLI(): Unit = {
     var running = true
@@ -24,17 +27,17 @@ class ClientCLI(name: Uid, client: Client) {
       print("client> ")
       val line = Option(readLine()).map(_.strip())
       line match {
-        case Some(commented())                 => // ignore
-        case Some(get(key))                    => client.read(key)
-        case Some(put(key, value))             => client.write(key, value)
-        case Some(multiget(key, times))        => client.multiget(key, times.replace("_", "").toInt)
-        case Some(multiput(key, value, times)) => client.multiput(key, value, times.replace("_", "").toInt)
-        case Some(mp(times))                   => client.multiput("key%n", "value%n", times.replace("_", "").toInt)
+        case Some(commented())                    => // ignore
+        case Some(get(key))                       => client.read(key)
+        case Some(put(key, value))                => client.write(key, value)
+        case Some(multiget(key, times))           => client.multiget(key, parseInt(times))
+        case Some(multiput(key, value, times))    => client.multiput(key, value, parseInt(times))
+        case Some(mp(times))                      => client.multiput("key%n", "value%n", parseInt(times))
+        case Some(mixed(min, max, times)) => client.mixed(parseInt(min), parseInt(max), parseInt(times))
         case Some(benchmark()) =>
           client.doBenchmark = true
         case Some(saveBenchmark()) =>
-          val env = System.getenv()
-
+          val env           = System.getenv()
           val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
           val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(runId)
           val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
