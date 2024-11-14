@@ -25,9 +25,6 @@ case class Paxos[A](
       .getOrElse(-1)
     BallotNum(replicaId, maxCounter + 1)
 
-  def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, Voting[A]) =
-    (Voting[Uid]().voteFor(leader), Voting[A]().voteFor(value))
-
   def voteLeader(leader: Uid)(using LocalUid, Participants): PaxosRound[A] =
     PaxosRound(leaderElection = Voting().voteFor(leader))
 
@@ -46,18 +43,23 @@ case class Paxos[A](
   def myHighestBallot(using LocalUid): Option[(BallotNum, PaxosRound[A])] =
     rounds.filter { case (b, p) => b.uid == replicaId }.maxOption
 
-  def lastVotedVal: Option[(BallotNum, PaxosRound[A])] = rounds.filter(_._2.proposals.votes.nonEmpty).maxOption
-  def lastVotedValOrMyValue = lastVotedVal.map(_._2.proposals.votes.head).getOrElse(myValue).value
-  def myValue               = ???
+  def lastValueVote: Option[(BallotNum, PaxosRound[A])] = rounds.filter(_._2.proposals.votes.nonEmpty).maxOption
+  def newestReceivedVal(using LocalUid)                      = lastValueVote.map(_._2.proposals.votes.head.value)
+  def myValue(using LocalUid): A                        = rounds(BallotNum(replicaId, -1)).proposals.votes.head.value
+  def decidedVal(using Participants): Option[A] =
+    rounds.collectFirst { case (b, PaxosRound(_, voting)) if voting.result.isDefined => voting.result.get }
 
   // phases:
+  def phase1a(using LocalUid, Participants)(value: A): Paxos[A] =
+    // try to become leader and remember a value for later
+    Paxos(Map(nextBallotNum -> voteLeader(replicaId), BallotNum(replicaId, -1) -> voteValue(value)))
   def phase1a(using LocalUid, Participants): Paxos[A] =
     // try to become leader
     Paxos(Map(nextBallotNum -> voteLeader(replicaId)))
 
   def phase1b(using LocalUid, Participants): Paxos[A] =
     // vote in the current leader election
-    (currentBallot, leaderCandidate, lastVotedVal) match
+    (currentBallot, leaderCandidate, lastValueVote) match
       case (Some(ballotNum), Some(candidate), None) =>
         // no value voted for, just vote for candidate
         Paxos(Map(ballotNum -> voteLeader(candidate)))
@@ -74,8 +76,11 @@ case class Paxos[A](
     myHighestBallot match
       case Some((ballotNum, PaxosRound(leaderElection, _)))
           if leaderElection.result.contains(replicaId) =>
-        Paxos(Map(ballotNum -> voteValue(lastVotedValOrMyValue)))
-      case None => Paxos() // not leader -> do nothing
+        if newestReceivedVal.nonEmpty then
+          Paxos(Map(ballotNum -> voteValue(newestReceivedVal.get)))
+        else
+          Paxos(Map(ballotNum -> voteValue(myValue)))
+      case _ => Paxos() // not leader -> do nothing
 
   def phase2b(using LocalUid, Participants): Paxos[A] =
     // get highest ballot with leader and
@@ -87,8 +92,39 @@ case class Paxos[A](
       case _ => Paxos() // current leader or proposed value not known -> do nothing
 
 object Paxos:
-  given l[A]: Lattice[Paxos[A]] = Lattice.derived
+  given [A]: Lattice[PaxosRound[A]] = Lattice.derived
+  given l[A]: Lattice[Paxos[A]]      = Lattice.derived
 
   given [A]: Ordering[(BallotNum, PaxosRound[A])] with
     override def compare(x: (BallotNum, PaxosRound[A]), y: (BallotNum, PaxosRound[A])): Int = (x, y) match
       case ((x, _), (y, _)) => Ordering[BallotNum].compare(x, y)
+
+  given consensus: Consensus[Paxos] with
+    extension [A](c: Paxos[A])
+      override def write(value: A)(using LocalUid, Participants): Paxos[A] =
+        // check if I can propose a value
+        val afterProposal = c.phase2a
+        if Lattice[Paxos[A]].lteq(afterProposal, c) then
+          // proposing did not work, try to become leader
+          c.phase1a(value)
+        else
+          afterProposal
+    extension [A](c: Paxos[A])(using Participants)
+      override def read: Option[A] = c.decidedVal
+    extension [A](c: Paxos[A])
+      override def upkeep()(using LocalUid, Participants): Paxos[A] =
+        // check which phase we are in
+        c.currentRound match
+          // we have a leader -> phase 2
+          case Some((ballotNum, PaxosRound(leaderElection, _))) if leaderElection.result.nonEmpty =>
+            if leaderElection.result.get == replicaId then
+              c.phase2a
+            else
+              c.phase2b
+          // we are in the process of electing a new leader
+          case _ =>
+            c.phase1b
+
+    override def empty[A]: Paxos[A] = Paxos()
+
+    override def lattice[A]: Lattice[Paxos[A]] = l
