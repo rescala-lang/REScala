@@ -37,6 +37,17 @@ class MembershipSuite extends munit.ScalaCheckSuite {
     removeMemberFreq = 1
   ).property())
 
+  property("Membership with paper paxos")(MembershipSpec[Int, paper.Paxos, paper.Paxos](
+    logging = true,
+    minDevices = 3,
+    maxDevices = 6,
+    mergeFreq = 80,
+    upkeepFreq = 70,
+    writeFreq = 20,
+    addMemberFreq = 1,
+    removeMemberFreq = 1
+  ).property())
+
   property("Membership with two different algos")(MembershipSpec[Int, simplified.Paxos, GeneralizedPaxos](
     logging = false,
     minDevices = 3,
