@@ -9,7 +9,7 @@ import rdts.base.Uid
 class EtcdClient(val name: Uid, val endpoints: List[String]) extends Client(name) {
 
   private val etcdClient = jetcd.Client.builder().endpoints(endpoints*).build()
-  private val kvClient = etcdClient.getKVClient
+  private val kvClient   = etcdClient.getKVClient
 
   override def handleOpImpl(op: KVOperation[String, String]): Unit = {
     op match
@@ -18,7 +18,7 @@ class EtcdClient(val name: Uid, val endpoints: List[String]) extends Client(name
         val res = kvClient.get(key).get().getKvs.get(0)
         println(s"${res.getKey}=${res.getValue}")
       case data.KVOperation.Write(opKey, opValue) =>
-        val key = ByteSequence.from(opKey.getBytes)
+        val key   = ByteSequence.from(opKey.getBytes)
         val value = ByteSequence.from(opValue.getBytes)
         kvClient.put(key, value).get()
         println(s"$opKey=$opValue; OK")

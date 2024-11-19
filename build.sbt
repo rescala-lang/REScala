@@ -328,7 +328,7 @@ lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
         .withModuleKind(ModuleKind.ESModule)  // required by the Wasm backend
     },
     // todolist does not have tests, but still fails to execute them with Wasm backend
-    test := {},
+    test      := {},
     testQuick := {},
   )
 

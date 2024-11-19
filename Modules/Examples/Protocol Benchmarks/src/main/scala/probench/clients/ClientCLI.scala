@@ -27,13 +27,13 @@ class ClientCLI(name: Uid, client: Client) {
       print("client> ")
       val line = Option(readLine()).map(_.strip())
       line match {
-        case Some(commented())                    => // ignore
-        case Some(get(key))                       => client.read(key)
-        case Some(put(key, value))                => client.write(key, value)
-        case Some(multiget(key, times))           => client.multiget(key, parseInt(times))
-        case Some(multiput(key, value, times))    => client.multiput(key, value, parseInt(times))
-        case Some(mp(times))                      => client.multiput("key%n", "value%n", parseInt(times))
-        case Some(mixed(min, max, times)) => client.mixed(parseInt(min), parseInt(max), parseInt(times))
+        case Some(commented())                 => // ignore
+        case Some(get(key))                    => client.read(key)
+        case Some(put(key, value))             => client.write(key, value)
+        case Some(multiget(key, times))        => client.multiget(key, parseInt(times))
+        case Some(multiput(key, value, times)) => client.multiput(key, value, parseInt(times))
+        case Some(mp(times))                   => client.multiput("key%n", "value%n", parseInt(times))
+        case Some(mixed(min, max, times))      => client.mixed(parseInt(min), parseInt(max), parseInt(times))
         case Some(benchmark()) =>
           client.doBenchmark = true
         case Some(saveBenchmark()) =>

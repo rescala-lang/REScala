@@ -10,9 +10,9 @@ class CSVWriter(
     private val header: Seq[String]
 ) {
   path.toFile.mkdirs()
-  private val file = path.resolve(s"$fileName.csv").toFile
+  private val file   = path.resolve(s"$fileName.csv").toFile
   private val writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)))
-  
+
   writer.write(header.mkString(separator))
   writer.write("\n")
 
@@ -20,7 +20,7 @@ class CSVWriter(
     writer.write(data.mkString(separator))
     writer.write("\n")
   }
-  
+
   def close(): Unit = {
     writer.flush()
     println(s"Saving to ${path.toAbsolutePath}")

@@ -24,7 +24,6 @@ object JarExport extends sbt.AutoPlugin {
   // This defines settings the plugin makes.
   // It is essentially the same as if this was in a `.settings()` block in the build.sbt
   override lazy val projectSettings: Seq[Setting[?]] = Seq(
-
     packageJarsPath := crossTarget.value.toPath.resolve("jars").toString,
     // copy all jars required in the class path to a `jars` folder in the target directory
     packageJars := {
@@ -38,7 +37,6 @@ object JarExport extends sbt.AutoPlugin {
       // the return value is what `show stageJars` will display
       targetpath.toFile
     },
-
     writeClasspathPath := crossTarget.value.toPath.resolve("classpath.txt").toString,
     // write the classpath into a file that can be passed to java as a commandline argument file
     writeClasspath := {

@@ -33,7 +33,7 @@ trait Client(name: Uid) {
       if Math.random() > 0.5 then
         read(f"key$num")
       else
-        write(f"key$num",f"value$num")
+        write(f"key$num", f"value$num")
     }
     println(s"Did $times mixed queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }

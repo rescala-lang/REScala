@@ -55,7 +55,10 @@ object CausalQueue:
 
   given lattice[A]: Lattice[CausalQueue[A]] with {
     override def merge(left: CausalQueue[A], right: CausalQueue[A]): CausalQueue[A] =
-      CausalQueue((left.values concat right.values)
-        .sortBy { qe => qe.order }(using Ordering.fromLessThan(VectorClock.vectorClockOrdering.lt)).distinct, left.clock.merge(right.clock))
+      CausalQueue(
+        (left.values concat right.values)
+          .sortBy { qe => qe.order }(using Ordering.fromLessThan(VectorClock.vectorClockOrdering.lt)).distinct,
+        left.clock.merge(right.clock)
+      )
 
   }

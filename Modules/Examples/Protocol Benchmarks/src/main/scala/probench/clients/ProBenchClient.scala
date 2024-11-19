@@ -39,19 +39,19 @@ class ProBenchClient(val name: Uid) extends Client(name) {
   override def handleOpImpl(op: KVOperation[String, String]): Unit = {
     val req = Request(op)
     currentOp = Some(req)
-    
+
     // TODO: still not sure that the semaphore use is correct …
     // its quite likely possible that some other request is answered after draining, causing the code below to return immediately
     // though overall currentOp is not protected at all, so it is triple unclear what is going on
     requestSemaphore.drainPermits()
-    
+
     dataManager.transform { current =>
       current.mod(it => it.copy(requests = it.requests.mod(_.enqueue(req))))
     }
 
     requestSemaphore.acquire(1)
   }
-  
+
   export dataManager.addLatentConnection
 
 }

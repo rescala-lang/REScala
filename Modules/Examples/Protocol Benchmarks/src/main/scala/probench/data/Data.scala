@@ -20,4 +20,3 @@ case class ClientNodeState(
     requests: Dotted[CausalQueue[Request]],
     responses: Dotted[CausalQueue[Response]],
 ) derives Lattice, Bottom
-

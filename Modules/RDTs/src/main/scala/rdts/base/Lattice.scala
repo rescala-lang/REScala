@@ -112,36 +112,37 @@ object Lattice {
     given Lattice[Some[A]]   = Lattice.derived
     Lattice.sumLattice
 
-  given mapLattice[K, V: Lattice, Mp[K1, +V1] <: MapOps[K1, V1, Mp, Mp[K1, V1]]]: Lattice[Mp[K, V]] = new Lattice[Mp[K, V]] {
-    override def merge(left: Mp[K, V], right: Mp[K, V]): Mp[K, V] =
-      val (small: Mp[K, V], large: Mp[K, V]) =
-        // compare unsigned treats the “unknown” value -1 as larger than any known size
-        if 0 <= Integer.compareUnsigned(left.knownSize, right.knownSize)
-        then (right, left)
-        else (left, right)
-      small.foldLeft(large) {
-        case (current, (key, r)) =>
-          current.updatedWith(key) {
-            case Some(l) => Some(l `merge` r)
-            case None    => Some(r)
-          }
-      }
+  given mapLattice[K, V: Lattice, Mp[K1, +V1] <: MapOps[K1, V1, Mp, Mp[K1, V1]]]: Lattice[Mp[K, V]] =
+    new Lattice[Mp[K, V]] {
+      override def merge(left: Mp[K, V], right: Mp[K, V]): Mp[K, V] =
+        val (small: Mp[K, V], large: Mp[K, V]) =
+          // compare unsigned treats the “unknown” value -1 as larger than any known size
+          if 0 <= Integer.compareUnsigned(left.knownSize, right.knownSize)
+          then (right, left)
+          else (left, right)
+        small.foldLeft(large) {
+          case (current, (key, r)) =>
+            current.updatedWith(key) {
+              case Some(l) => Some(l `merge` r)
+              case None    => Some(r)
+            }
+        }
 
-    override def lteq(left: Mp[K, V], right: Mp[K, V]): Boolean =
-      left.forall { (k, l) =>
-        right.get(k).exists(r => l <= r)
-      }
+      override def lteq(left: Mp[K, V], right: Mp[K, V]): Boolean =
+        left.forall { (k, l) =>
+          right.get(k).exists(r => l <= r)
+        }
 
-    override def decompose(state: Mp[K, V]): Iterable[Mp[K, V]] =
-      for
-        case (k, v) <- state
-        d <- v.decomposed
-      yield state.mapFactory(k -> d)
-  }
+      override def decompose(state: Mp[K, V]): Iterable[Mp[K, V]] =
+        for
+          case (k, v) <- state
+          d <- v.decomposed
+        yield state.mapFactory(k -> d)
+    }
 
   given iterableLattice[A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
-    val li = left.iterator
-    val ri = right.iterator
+    val li  = left.iterator
+    val ri  = right.iterator
     val res = li.zip(ri).map(Lattice.merge) ++ li ++ ri
 
     res.to(left.iterableFactory.iterableFactory)
