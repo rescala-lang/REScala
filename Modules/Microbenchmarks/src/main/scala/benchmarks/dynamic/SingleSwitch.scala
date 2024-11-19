@@ -39,6 +39,5 @@ class SingleSwitch {
 
   @Benchmark
   def run(step: Step): Unit =
-    if isManual then synchronized { source.set(step.run()) }
-    else source.set(step.run())
+    if isManual then synchronized { source.set(step.run()) } else source.set(step.run())
 }

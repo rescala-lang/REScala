@@ -294,8 +294,11 @@ object Event {
     /** Creates change events */
     def change[T](signal: Signal[T])(using ticket: CreationTicket[State]): Event[Diff[T]] =
       ticket.scope.embedCreation { tx ?=>
-        val internal = tx.initializer.create[(Pulse[T], Pulse[Diff[T]]), ChangeEventImpl[T]
-        & Event[Diff[T]]](
+        val internal = tx.initializer.create[
+          (Pulse[T], Pulse[Diff[T]]),
+          ChangeEventImpl[T]
+          & Event[Diff[T]]
+        ](
           Set[ReSource.of[State]](signal),
           (Pulse.NoChange, Pulse.NoChange),
           needsReevaluation = true
