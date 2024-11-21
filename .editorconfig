@@ -8,9 +8,9 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 # tab is superior to space:
-# • it allows users to configure the indent size
-# • it semantically differentiates indent from alignment
-# however, a reasonable amount of tools can not deal with tabs 😥
+#  • it allows users to configure the indent size
+#  • it semantically differentiates indent from alignment
+# however, some tools cannot deal with tabs 😥
 indent_style = tab
 
 # scala is very fixed on this indent style
