@@ -42,7 +42,7 @@ object Todolist {
 
     document.body.appendChild:
       all.div.render.reattach(TodoDataManager.receivedCallback.map(_ =>
-        val state = TodoDataManager.dataManager.allDeltas.reduceOption(Lattice.merge)
+        val state = TodoDataManager.dataManager.allDeltas.map(_.data).reduceOption(Lattice.merge)
         all.pre(all.stringFrag(pprint.apply(state).plainText)).render
       ).hold(all.span.render))
 
