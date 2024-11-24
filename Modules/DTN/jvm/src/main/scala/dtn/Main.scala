@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import routing.{BaseRouter, FloodingRouter, DirectRouter, EpidemicRouter, RdtRouter, RdtRouter2, SprayAndWaitRouter}
 import rdt.{Client, ClientOperationMode}
 
-import _root_.replication.DataManager
+import _root_.replication.DeltaDissemination
 import rdts.base.LocalUid
 import dtn.rdt.Channel
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec

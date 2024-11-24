@@ -1,6 +1,6 @@
 package dtn
 
-import _root_.replication.{DataManager, ProtocolDots}
+import _root_.replication.{DeltaDissemination, ProtocolDots}
 import rdts.base.LocalUid
 import dtn.rdt.Channel
 import _root_.replication.JsoniterCodecs.given
@@ -33,7 +33,7 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_milliseconds: Long) ext
 
   given JsonValueCodec[RdtType] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-  val dataManager: DataManager[RdtType] = DataManager[RdtType](
+  val dataManager: DeltaDissemination[RdtType] = DeltaDissemination[RdtType](
     LocalUid.gen(),
     state => println("replica received new state information"),
     _ => ()
@@ -89,7 +89,7 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
 
   given replicaId: LocalUid = LocalUid.gen()
 
-  val dataManager: DataManager[RdtType] = DataManager[RdtType](
+  val dataManager: DeltaDissemination[RdtType] = DeltaDissemination[RdtType](
     replicaId,
     state =>
       println("replica received new state information"), // we ignore state updates as there will be only one active rdt
@@ -183,7 +183,7 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
 
   given replicaId: LocalUid = LocalUid.gen()
 
-  val dataManager: DataManager[RdtType] = DataManager[RdtType](
+  val dataManager: DeltaDissemination[RdtType] = DeltaDissemination[RdtType](
     replicaId,
     state => println("replica received new state information"),
     _ => ()

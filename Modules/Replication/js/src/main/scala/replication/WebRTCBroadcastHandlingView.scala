@@ -11,8 +11,8 @@ import org.scalajs.dom.*
 import org.scalajs.dom.html.{Div, Input, Table}
 import rdts.dotted.Dotted
 import reactives.operator.{Evt, Fold}
-import replication.DataManager
-import scalatags.JsDom.all.{s, *}
+import replication.DeltaDissemination
+import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import scalatags.generic.TypedTag
 
@@ -35,7 +35,7 @@ given converterWrite[T](using JsonValueCodec[T]): Conversion[T, MessageBuffer] =
 
 given JsonValueCodec[BroadcastCommunication] = JsonCodecMaker.make
 
-class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCodec[S]) {
+class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using JsonValueCodec[S]) {
 
   // label seems mostly for auto negotiation
   val channelLabel = "webrtc-channel"
@@ -136,7 +136,7 @@ class WebRTCConnectionView[S](val dataManager: DataManager[S])(using JsonValueCo
       }
     )
 
-    dataManager.addLatentConnection(DataManager.jsoniterMessages(WebRTCConnection.openLatent(channel)))
+    dataManager.addLatentConnection(DeltaDissemination.jsoniterMessages(WebRTCConnection.openLatent(channel)))
 
   }
 

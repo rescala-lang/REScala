@@ -9,14 +9,14 @@ import org.eclipse.jetty.server.handler.ResourceHandler
 import org.eclipse.jetty.util.Callback
 import org.eclipse.jetty.util.resource.ResourceFactory
 import org.eclipse.jetty.util.thread.QueuedThreadPool
-import replication.DataManager
+import replication.DeltaDissemination
 
 import java.nio.file.Path
 
 class JettyServer(
     staticPath: Option[Path],
     contextPath: String,
-    dataManager: DataManager[?],
+    dataManager: DeltaDissemination[?],
     interface: String,
 )(using jsonCodec: JsonValueCodec[dataManager.CodecState]) {
 

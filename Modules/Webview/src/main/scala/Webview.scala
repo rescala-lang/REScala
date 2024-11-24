@@ -3,7 +3,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromStrin
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Sync}
 import rdts.base.LocalUid
-import replication.DataManager
+import replication.DeltaDissemination
 import webview.WebView
 
 import java.nio.file.{Files, Path, StandardOpenOption}
@@ -37,7 +37,7 @@ object Webview {
       ()
     }
 
-    val dataManager = DataManager[TodoRepState](LocalUid.gen(), receiveCallback, _ => ())
+    val dataManager = DeltaDissemination[TodoRepState](LocalUid.gen(), receiveCallback, _ => ())
 
     val w = WebView()
     dataManager.addLatentConnection(WebviewNativeChannel.listen(w))

@@ -10,7 +10,7 @@ import rdts.syntax.DeltaBuffer
 import rdts.time.Dots
 import reactives.default.*
 import reactives.operator.Event.CBR
-import replication.DataManager
+import replication.DeltaDissemination
 import replication.JsoniterCodecs.given
 
 object TodoDataManager {
@@ -21,8 +21,8 @@ object TodoDataManager {
   given Lattice[TodoRepState]        = Lattice.derived
   given Bottom[TodoRepState]         = Bottom.derived
 
-  val CBR(receivedCallback, dataManager: DataManager[TodoRepState]) = Event.fromCallback {
-    DataManager[TodoRepState](Todolist.replicaId, Event.handle, _ => ())
+  val CBR(receivedCallback, dataManager: DeltaDissemination[TodoRepState]) = Event.fromCallback {
+    DeltaDissemination[TodoRepState](Todolist.replicaId, Event.handle, _ => ())
   }
 
   def hookup[A: Lattice](

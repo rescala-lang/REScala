@@ -10,7 +10,7 @@ import rdts.datatypes.contextual.{CausalQueue, ObserveRemoveMap, ReplicatedSet}
 import rdts.dotted.{Dotted, DottedLattice, HasDots, Obrem}
 import rdts.time.VectorClock
 import reactives.operator.{Event, Signal}
-import replication.DataManager
+import replication.DeltaDissemination
 import replication.JsoniterCodecs.given
 import replication.fbdc.State.modParticipants
 
@@ -61,7 +61,7 @@ class FbdcExampleData {
     given JsonValueCodec[State] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
     val dm =
       Event.fromCallback {
-        new DataManager[State](replicaId, _ => (), Event.handle)
+        new DeltaDissemination[State](replicaId, _ => (), Event.handle)
       }
     ExtraDataManager[State](dm.data, dm.event)
   }

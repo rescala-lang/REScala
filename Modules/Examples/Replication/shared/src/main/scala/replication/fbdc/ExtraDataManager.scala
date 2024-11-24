@@ -6,11 +6,11 @@ import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.Dots
 import reactives.operator.{Event, Signal, Var}
 import replication.JsoniterCodecs.given
-import replication.{DataManager, ProtocolDots}
+import replication.{DeltaDissemination, ProtocolDots}
 
 import scala.collection.mutable
 
-class ExtraDataManager[St](val dataManager: DataManager[St], changeEvt: Event[ProtocolDots[St]])(using
+class ExtraDataManager[St](val dataManager: DeltaDissemination[St], changeEvt: Event[ProtocolDots[St]])(using
     jsonCodec: JsonValueCodec[St],
     lattice: Lattice[St],
     bottom: Bottom[St]

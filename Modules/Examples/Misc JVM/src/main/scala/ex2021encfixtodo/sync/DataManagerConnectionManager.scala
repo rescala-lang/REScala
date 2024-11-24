@@ -6,7 +6,7 @@ import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
-import replication.{DataManager, ProtocolDots}
+import replication.{DeltaDissemination, ProtocolDots}
 
 import java.net.{InetSocketAddress, Socket, URI}
 import java.nio.file.{Files, Path}
@@ -40,8 +40,8 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
 
   println(LegacyKeysetSerialization.getKeysetInfo(keyset))
 
-  val dataManager: DataManager[State] =
-    DataManager[State](
+  val dataManager: DeltaDissemination[State] =
+    DeltaDissemination[State](
       replicaId: LocalUid,
       _ => (),
       pd => receiveCallback(Dotted(pd.data, pd.context).toObrem),

@@ -36,7 +36,7 @@ trait Aead {
   def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
 }
 
-object DataManager {
+object DeltaDissemination {
   def jsoniterMessages[T: JsonValueCodec](conn: LatentConnection[MessageBuffer])
       : LatentConnection[ProtocolMessage[T]] = {
 
@@ -51,7 +51,7 @@ object DataManager {
   }
 }
 
-class DataManager[State](
+class DeltaDissemination[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     allChanges: ProtocolDots[State] => Unit,
@@ -87,7 +87,7 @@ class DataManager[State](
   def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
       JsonValueCodec[CodecState]
   ): Unit = {
-    addLatentConnection(DataManager.jsoniterMessages(latentConnection))
+    addLatentConnection(DeltaDissemination.jsoniterMessages(latentConnection))
   }
 
   def pingAll(): Unit = {
