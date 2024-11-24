@@ -119,9 +119,4 @@ object Dotted {
       then compact(tother, compacted :: accother)
       else compact(compacted :: tother, accother)
 
-  def liftLattice[A: Lattice]: Lattice[Dotted[A]] = new {
-    def merge(left: Dotted[A], right: Dotted[A]): Dotted[A] =
-      Dotted(left.data `merge` right.data, left.context `union` right.context)
-  }
-
 }

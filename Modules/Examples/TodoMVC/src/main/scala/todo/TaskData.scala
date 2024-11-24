@@ -5,7 +5,7 @@ import org.scalajs.dom.Element
 import org.scalajs.dom.html.{Input, LI}
 import rdts.base.{Bottom, LocalUid}
 import rdts.datatypes.LastWriterWins
-import rdts.dotted.{Dotted, DottedLattice}
+import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import reactives.default.*
 import reactives.extra.Tags.*
@@ -25,8 +25,6 @@ case class TaskData(
   def toggle(): TaskData          = copy(done = !done)
   def edit(str: String): TaskData = copy(desc = str)
 }
-
-given [A]: DottedLattice[LastWriterWins[A]] = Dotted.liftLattice
 
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
