@@ -111,10 +111,10 @@ class DeltaDissemination[State](
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  private val lock: AnyRef                     = new {}
-  private var pastDeltas: List[Payload[State]] = Nil
+  val lock: AnyRef                               = new {}
+  private var pastPayloads: List[Payload[State]] = Nil
 
-  def allDeltas: List[Payload[State]] = pastDeltas
+  def allPayloads: List[Payload[State]] = pastPayloads
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
@@ -125,7 +125,7 @@ class DeltaDissemination[State](
       val nextDot = selfContext.nextDot(replicaId.uid)
       val payload = Payload(replicaId.uid, Dots.single(nextDot), delta)
       updateContext(replicaId.uid, payload.dots)
-      pastDeltas = payload :: pastDeltas
+      pastPayloads = payload :: pastPayloads
       payload
     }
     disseminate(payload)
@@ -145,7 +145,7 @@ class DeltaDissemination[State](
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
-        val relevant = pastDeltas.filterNot { dt => dt.dots <= knows }
+        val relevant = pastPayloads.filterNot { dt => dt.dots <= knows }
         relevant.foreach: msg =>
           biChan.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(biChan))
         updateContext(uid, selfContext `merge` knows)
@@ -156,10 +156,11 @@ class DeltaDissemination[State](
             updateContext(uid, context)
           }
           updateContext(replicaId.uid, context)
-          pastDeltas = payload :: pastDeltas
+          pastPayloads = payload :: pastPayloads
         }
         receiveCallback(data)
-        if immediateForward then disseminate(payload, Set(biChan))
+        if immediateForward then
+          disseminate(payload, Set(biChan))
 
   }
 

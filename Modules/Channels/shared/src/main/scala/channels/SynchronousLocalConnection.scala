@@ -3,44 +3,49 @@ package channels
 import de.rmgk.delay.{Async, Callback, Promise, Sync}
 
 /** Allows establishing a single direct synchronous connection. */
+// You like callback hell? Definitely callback hell.
 class SynchronousLocalConnection[T] {
-  object client extends LatentConnection[T] {
+  def client(id: String): LatentConnection[T] = new LatentConnection[T] {
 
-    object connection extends Connection[T] {
+    val toServerMessages: Promise[Callback[T]] = Promise()
+
+    object toServer extends Connection[T] {
       def send(msg: T): Async[Any, Unit] = Async {
-        val cb = server.incomingMessageCallback.async.bind
+        val cb = toServerMessages.async.bind
         cb.succeed(msg)
       }
       override def close(): Unit = ()
+
+      override def toString: String = s"From[$id]"
     }
 
     def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]] = Async {
-      val callback = incomingHandler.getCallbackFor(connection)
+      val callback = incomingHandler.getCallbackFor(toServer)
 
-      val serverConn = new Connection[T] {
+      val toClient = new Connection[T] {
         override def close(): Unit = ()
         override def send(message: T): Async[Any, Unit] = Sync {
           callback.succeed(message)
         }
+        override def toString: String = s"To[$id]"
       }
 
       val established = server.connectionEstablished.async.bind
-      established.succeed(serverConn)
-      connection
+      established.succeed(server.Establish(toClient, toServerMessages))
+      toServer
     }
   }
 
   object server extends LatentConnection[T] {
 
-    val incomingMessageCallback: Promise[Callback[T]] = Promise()
+    case class Establish(serverSendsOn: Connection[T], clientConnectionSendsTo: Promise[Callback[T]])
+    val connectionEstablished: Promise[Callback[Establish]] = Promise()
 
-    val connectionEstablished: Promise[Callback[Connection[T]]] = Promise()
-
-    def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]] = Async.fromCallback[Connection[T]] {
+    def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]] = Async.fromCallback[Establish] {
       connectionEstablished.succeed(Async.handler)
-    }.map { conn =>
-      incomingMessageCallback.succeed(incomingHandler.getCallbackFor(conn))
-      conn
+    }.map { connChan =>
+      connChan.clientConnectionSendsTo.succeed(incomingHandler.getCallbackFor(connChan.serverSendsOn))
+      connChan.serverSendsOn
     }
   }
 
