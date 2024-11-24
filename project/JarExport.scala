@@ -2,7 +2,8 @@
  * and may contain unused dependencies */
 
 import sbt.Keys.{crossTarget, fullClasspathAsJars}
-import sbt.{Compile, File, IO, Setting, TaskKey, SettingKey}
+import sbt.{Compile, File, IO, Setting, SettingKey, TaskKey}
+
 import java.nio.file.Path
 
 // Extending sbt.AutoPlugin causes this plugin to be automatically added to all sbt projects that match the triggers.
@@ -16,10 +17,6 @@ object JarExport extends sbt.AutoPlugin {
   val packageJars = TaskKey[File]("packageJars", "copies classpath jars to a file in the target dir")
 
   val packageJarsPath = SettingKey[String]("packageJarsPath", "The file to write the jars to.")
-
-  val writeClasspathPath = SettingKey[String]("writeClasspathPath", "The file to write the classpath to.")
-  // second additional command, same as the above
-  val writeClasspath = TaskKey[File]("writeClasspath", "writes the classpath to a file in the target dir")
 
   // This defines settings the plugin makes.
   // It is essentially the same as if this was in a `.settings()` block in the build.sbt
@@ -35,18 +32,6 @@ object JarExport extends sbt.AutoPlugin {
         IO.copyFile(at.data, targetpath.resolve(at.data.getName).toFile)
       }
       // the return value is what `show stageJars` will display
-      targetpath.toFile
-    },
-    writeClasspathPath := crossTarget.value.toPath.resolve("classpath.txt").toString,
-    // write the classpath into a file that can be passed to java as a commandline argument file
-    writeClasspath := {
-      val cp = (Compile / fullClasspathAsJars).value
-      val cpstring = cp.map { at =>
-        val pathstring = at.data.toString.replace("\\", "/")
-        s"""-cp "${pathstring}"\n"""
-      }.mkString("")
-      val targetpath = Path.of(writeClasspathPath.value)
-      IO.write(targetpath.toFile, cpstring)
       targetpath.toFile
     }
   )
