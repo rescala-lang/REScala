@@ -6,33 +6,31 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'checkout reference (sha/branch)'
+        description: "checkout reference (sha/branch)"
         required: false
         type: string
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         # macOS 13/14 uses different CPU architectures, older ubuntu because 24.04 is well tested outside of CI
-        os: [ macOS-13, macOS-14, ubuntu-22.04, windows-2022 ]
-        java-version: [ 17, 21, 23 ]
+        os: [macOS-13, macOS-14, ubuntu-22.04, windows-2022]
+        java-version: [17, 21, 23]
 
     env:
       JAVA_OPTS: -Xmx4g
 
     steps:
-
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java-version}}
-          distribution: 'zulu'
+          distribution: "zulu"
 
       - uses: sbt/setup-sbt@v1
         with:
@@ -40,7 +38,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: install jsdom
         run: npm install jsdom
