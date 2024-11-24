@@ -34,8 +34,12 @@ trait Connection[T] {
   def close(): Unit
 }
 
-/** Provides a specification how to handle messages, given a connection context */
+/** Provides a specification how to handle messages, given a connection context. */
 trait Handler[T] {
+
+  /** The provided connection is not guaranteed to be useable until the first message is received.
+    * If you want to initiate sending messages on this connection, use the value returned by the prepare call of the latent connection instead.
+    */
   def getCallbackFor(conn: Connection[T]): Callback[T]
 }
 
@@ -48,7 +52,7 @@ trait Handler[T] {
 trait LatentConnection[T] {
 
   /** The returned async, when run, should establish connections with the given callback atomically.
-    * That is, no messages should be lost.
+    * That is, no messages should be lost during setup.
     * Similarly, the provider of the callback (the result of `incoming`) of this method should make sure that the other end of the callback is ready to receive callbacks before running the async.
     */
   def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]

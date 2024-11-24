@@ -98,7 +98,6 @@ class DeltaDissemination[State](
   }
 
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
-    println(s"activating latent connection in data manager")
     latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort) {
       case Success(conn) =>
         lock.synchronized {
@@ -112,9 +111,10 @@ class DeltaDissemination[State](
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  val lock: AnyRef                               = new {}
-  private var localDeltas: List[Payload[State]]  = Nil
-  private var remoteDeltas: List[Payload[State]] = Nil
+  private val lock: AnyRef                     = new {}
+  private var pastDeltas: List[Payload[State]] = Nil
+
+  def allDeltas: List[Payload[State]] = pastDeltas
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
@@ -125,13 +125,10 @@ class DeltaDissemination[State](
       val nextDot = selfContext.nextDot(replicaId.uid)
       val payload = Payload(replicaId.uid, Dots.single(nextDot), delta)
       updateContext(replicaId.uid, payload.dots)
+      pastDeltas = payload :: pastDeltas
       payload
     }
     disseminate(payload)
-
-  def allDeltas: List[Payload[State]] = lock.synchronized {
-    List(remoteDeltas, localDeltas).flatten
-  }
 
   def updateContext(rr: Uid, dots: Dots): Unit = lock.synchronized {
     contexts = contexts.updatedWith(rr)(curr => curr `merge` Some(dots))
@@ -148,7 +145,7 @@ class DeltaDissemination[State](
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
-        val relevant = allDeltas.filterNot { dt => dt.dots <= knows }
+        val relevant = pastDeltas.filterNot { dt => dt.dots <= knows }
         relevant.foreach: msg =>
           biChan.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(biChan))
         updateContext(uid, selfContext `merge` knows)
@@ -159,7 +156,7 @@ class DeltaDissemination[State](
             updateContext(uid, context)
           }
           updateContext(replicaId.uid, context)
-          remoteDeltas = payload :: remoteDeltas
+          pastDeltas = payload :: pastDeltas
         }
         receiveCallback(data)
         if immediateForward then disseminate(payload, Set(biChan))
