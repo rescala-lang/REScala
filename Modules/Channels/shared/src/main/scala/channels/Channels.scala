@@ -1,5 +1,6 @@
 package channels
 
+import channels.LatentConnection.EncodingConnection
 import de.rmgk.delay.{Async, Callback}
 
 import java.nio.charset.StandardCharsets
@@ -54,14 +55,14 @@ trait LatentConnection[T] {
   def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]
 }
 
-class ConnectionMapper[A, B](f: B => A, acc: Connection[A]) extends Connection[B] {
-  override def send(message: B): Async[Any, Unit] =
-    acc.send(f(message))
+object LatentConnection {
 
-  override def close(): Unit = acc.close()
-}
+  class EncodingConnection[A, B](f: B => A, acc: Connection[A]) extends Connection[B] {
+    override def send(message: B): Async[Any, Unit] =
+      acc.send(f(message))
 
-object ConnectionMapper {
+    override def close(): Unit = acc.close()
+  }
 
   def adapt[A, B](f: A => B, g: B => A)(latentConnection: LatentConnection[A]): LatentConnection[B] = {
     new LatentConnection[B] {
@@ -69,14 +70,13 @@ object ConnectionMapper {
         Async[Abort] {
           val conn = Async.bind {
             latentConnection.prepare { conn =>
-              val mapped = ConnectionMapper(g, conn)
+              val mapped = EncodingConnection(g, conn)
               val cb     = incomingHandler.getCallbackFor(mapped)
               rs => cb.complete(rs.map(f))
             }
           }
-          ConnectionMapper(g, conn)
+          EncodingConnection(g, conn)
         }
     }
   }
-
 }

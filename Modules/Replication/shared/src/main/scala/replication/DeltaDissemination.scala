@@ -42,11 +42,9 @@ object DeltaDissemination {
 
     given JsonValueCodec[ProtocolMessage[T]] = JsonCodecMaker.make
 
-    ConnectionMapper.adapt(
-      {
-        (mb: MessageBuffer) => readFromArray[ProtocolMessage[T]](mb.asArray)
-      },
-      { (pm: ProtocolMessage[T]) => ArrayMessageBuffer(writeToArray(pm)) }
+    LatentConnection.adapt(
+      (mb: MessageBuffer) => readFromArray[ProtocolMessage[T]](mb.asArray),
+      (pm: ProtocolMessage[T]) => ArrayMessageBuffer(writeToArray(pm))
     )(conn)
   }
 }
@@ -84,16 +82,16 @@ class DeltaDissemination[State](
       con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(con))
   }
 
-  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
-      JsonValueCodec[CodecState]
-  ): Unit = {
-    addLatentConnection(DeltaDissemination.jsoniterMessages(latentConnection))
-  }
-
   def pingAll(): Unit = {
     connections.foreach { conn =>
       conn.send(Ping(System.nanoTime())).run(debugCallbackAndRemoveCon(conn))
     }
+  }
+
+  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
+      JsonValueCodec[CodecState]
+  ): Unit = {
+    addLatentConnection(DeltaDissemination.jsoniterMessages(latentConnection))
   }
 
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
