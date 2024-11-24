@@ -36,7 +36,7 @@ jobs:
 
     - uses: sbt/setup-sbt@v1
       with:
-        sbt-runner-version: 1.10.2
+        sbt-runner-version: 1.10.5
 
     - uses: actions/setup-node@v4
       with:
@@ -47,12 +47,10 @@ jobs:
 
 
     - name: compile
-      run: sbt "compile; Test/compile"
+      run: sbt --client compile
+
+    - name: compile tests
+      run: sbt --client Test/compile
 
     - name: test
-      # continue-on-error: true
-      run: sbt test
-
-    # - name: test again (quick)
-    #   run: sbt testQuick
-
+      run: sbt --client test
