@@ -54,6 +54,8 @@ trait LatentConnection[T] {
   /** The returned async, when run, should establish connections with the given callback atomically.
     * That is, no messages should be lost during setup.
     * Similarly, the provider of the callback (the result of `incoming`) of this method should make sure that the other end of the callback is ready to receive callbacks before running the async.
+    *
+    * It is not safe to call prepare multiple times.
     */
   def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]
 }
