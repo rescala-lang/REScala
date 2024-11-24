@@ -36,7 +36,6 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_milliseconds: Long) ext
   val dataManager: DeltaDissemination[RdtType] = DeltaDissemination[RdtType](
     LocalUid.gen(),
     state => println("replica received new state information"),
-    _ => ()
   )
 
   def connect(
@@ -69,7 +68,7 @@ class AddWinsSetRDT(number_of_additions: Int, sleep_time_milliseconds: Long) ext
 
     for i <- 0 to number_of_additions do {
       Thread.sleep(sleep_time_milliseconds)
-      dataManager.applyUnrelatedDelta(Set(s"hello world ${i} from ${dataManager.replicaId}"))
+      dataManager.applyDelta(Set(s"hello world ${i} from ${dataManager.replicaId}"))
     }
 
     println("finshed adding changes")
@@ -93,7 +92,6 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
     replicaId,
     state =>
       println("replica received new state information"), // we ignore state updates as there will be only one active rdt
-    _ => ()
   )
 
   var state: RdtType = Obrem(ObserveRemoveMap.empty[String, Dot])
@@ -165,7 +163,7 @@ class ObserveRemoveSetRDT(number_of_changes: Int, sleep_time_milliseconds: Long)
          */
       }
 
-      dataManager.applyLocalDelta(ProtocolDots(delta, delta.context))
+      dataManager.applyDelta(delta)
     }
 
     println("finshed adding changes")
@@ -186,17 +184,13 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
   val dataManager: DeltaDissemination[RdtType] = DeltaDissemination[RdtType](
     replicaId,
     state => println("replica received new state information"),
-    _ => ()
   )
 
   var state = LastWriterWins.empty[Set[String]]
-  var dots  = Dots.empty
 
-  private def writeStringGetDeltaInfo(s: String): Tuple2[RdtType, Dots] = {
-    state = state.write(Set(s))         // advances a total ordering internally
-    dots = dots.advanced(replicaId.uid) // advances a total ordering externally for the metadata
+  private def writeStringGetDeltaInfo(s: String): RdtType = {
+    state.write(Set(s))         // advances a total ordering internally
 
-    (state, dots)
   }
 
   def connect(
@@ -230,9 +224,9 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
     for i <- 0 to number_of_changes do {
       Thread.sleep(sleep_time_milliseconds)
 
-      val (state, dots) = writeStringGetDeltaInfo(s"hello world ${i} from ${dataManager.replicaId}")
+      val (state) = writeStringGetDeltaInfo(s"hello world ${i} from ${dataManager.replicaId}")
 
-      dataManager.applyLocalDelta(ProtocolDots(state, dots))
+      dataManager.applyDelta(state)
     }
 
     while true do {

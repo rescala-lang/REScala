@@ -22,7 +22,7 @@ object TodoDataManager {
   given Bottom[TodoRepState]         = Bottom.derived
 
   val CBR(receivedCallback, dataManager: DeltaDissemination[TodoRepState]) = Event.fromCallback {
-    DeltaDissemination[TodoRepState](Todolist.replicaId, Event.handle, _ => ())
+    DeltaDissemination[TodoRepState](Todolist.replicaId, Event.handle)
   }
 
   def hookup[A: Lattice](
@@ -31,7 +31,7 @@ object TodoDataManager {
       unwrap: TodoRepState => Option[A]
   )(create: (A, Fold.Branch[DeltaBuffer[A]]) => Signal[DeltaBuffer[A]]) = {
     dataManager.lock.synchronized {
-      dataManager.applyUnrelatedDelta(wrap(init))
+      dataManager.applyDelta(wrap(init))
       val fullInit = dataManager.allDeltas.flatMap(v => unwrap(v.data)).foldLeft(init)(Lattice.merge)
 
       val branch = Fold.branch[DeltaBuffer[A]] {
@@ -44,7 +44,7 @@ object TodoDataManager {
 
       sig.observe { buffer =>
         buffer.deltaBuffer.foreach { delta =>
-          dataManager.applyUnrelatedDelta(wrap(delta))
+          dataManager.applyDelta(wrap(delta))
         }
       }
 

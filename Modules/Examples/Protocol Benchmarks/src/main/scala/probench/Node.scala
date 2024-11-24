@@ -121,7 +121,7 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
         } else it
       }
 
-      val clientState = clientDataManager.mergedState.data
+      val clientState = clientDataManager.mergedState
 
       if clientState.requests.data.values.nonEmpty then {
         clusterDataManager.transform(_.mod(_.write(clientState.requests.data.head)))

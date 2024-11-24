@@ -2,6 +2,7 @@ package ex2021encfixtodo.sync
 
 import channels.TCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
 import rdts.base.{Bottom, Lattice, LocalUid}
@@ -15,6 +16,8 @@ import scala.concurrent.ExecutionContext
 import scala.util.chaining.scalaUtilChainingOps
 import scala.util.{Random, Try}
 
+import replication.JsoniterCodecs.given
+
 class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
   override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
 
@@ -26,6 +29,8 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
     replicaId: LocalUid,
     receiveCallback: Obrem[State] => Unit
 ) extends ConnectionManager[Obrem[State]] {
+
+  given JsonValueCodec[Obrem[State]] = JsonCodecMaker.make
 
   AeadConfig.register()
   private val keysetFilePath: Path = Path.of("demokey.json")
@@ -40,11 +45,10 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
 
   println(LegacyKeysetSerialization.getKeysetInfo(keyset))
 
-  val dataManager: DeltaDissemination[State] =
-    DeltaDissemination[State](
+  val dataManager: DeltaDissemination[Obrem[State]] =
+    DeltaDissemination[Obrem[State]](
       replicaId: LocalUid,
-      _ => (),
-      pd => receiveCallback(Dotted(pd.data, pd.context).toObrem),
+      receiveCallback,
       crypto = Some(AeadTranslation(aead))
     )
 
@@ -60,7 +64,7 @@ class DataManagerConnectionManager[State: JsonValueCodec: Lattice: Bottom: HasDo
   override val localReplicaId: String = replicaId.toString
 
   override def stateChanged(newState: Obrem[State]): Unit = {
-    dataManager.applyLocalDelta(ProtocolDots(newState.data, newState.context))
+    dataManager.applyDelta(newState)
   }
 
   override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {

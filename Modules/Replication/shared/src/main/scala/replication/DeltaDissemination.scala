@@ -52,7 +52,6 @@ object DeltaDissemination {
 class DeltaDissemination[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
-    allChanges: ProtocolDots[State] => Unit,
     crypto: Option[Aead] = None,
     immediateForward: Boolean = false,
 ) {
@@ -118,16 +117,12 @@ class DeltaDissemination[State](
 
   def selfContext: Dots = contexts.getOrElse(replicaId.uid, Dots.empty)
 
-  def applyLocalDelta(dotted: ProtocolDots[State]): Unit = lock.synchronized {
+  def applyDelta(delta: State): Unit = lock.synchronized {
+    val nextDot = selfContext.nextDot(replicaId.uid)
+    val dotted  = ProtocolDots(delta, Dots.single(nextDot))
     localBuffer = dotted :: localBuffer
     updateContext(replicaId.uid, dotted.context)
-    allChanges(dotted)
     disseminateLocalBuffer()
-  }
-
-  def applyUnrelatedDelta(delta: State): Unit = lock.synchronized {
-    val nextDot = selfContext.nextDot(replicaId.uid)
-    applyLocalDelta(ProtocolDots(delta, Dots.single(nextDot)))
   }
 
   def allDeltas: List[ProtocolDots[State]] = lock.synchronized {
@@ -162,7 +157,6 @@ class DeltaDissemination[State](
           remoteDeltas = internalized :: remoteDeltas
         }
         receiveCallback(data)
-        allChanges(internalized)
         if immediateForward then disseminateDeltas(List(internalized), List(biChan))
 
   }

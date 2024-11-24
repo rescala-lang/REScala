@@ -12,31 +12,28 @@ class ProDataManager[State: Lattice](
     onChange: (State, State) => Unit,
     immediateForward: Boolean = false
 ) {
-  given Lattice[ProtocolDots[State]] = Lattice.derived
   private val dataManager =
-    DeltaDissemination[State](localReplicaId, _ => (), receivedChanges, immediateForward = immediateForward)
+    DeltaDissemination[State](localReplicaId, receivedChanges, immediateForward = immediateForward)
 
-  var mergedState: ProtocolDots[State] =
-    dataManager.allDeltas.foldLeft(ProtocolDots(initialState, Dots.empty))(Lattice[ProtocolDots[State]].merge)
+  var mergedState: State = initialState
 
-  private def receivedChanges(changes: ProtocolDots[State]): Unit = {
+  private def receivedChanges(changes: State): Unit = {
     val (o, n) = synchronized {
       val oldState = mergedState
       mergedState = oldState.merge(changes)
       (oldState, mergedState)
     }
-    onChange(o.data, n.data)
+    onChange(o, n)
   }
 
   def transform(fun: DeltaBuffer[State] => DeltaBuffer[State]): Unit = synchronized {
-    val current: DeltaBuffer[State] = DeltaBuffer(mergedState.data)
+    val current: DeltaBuffer[State] = DeltaBuffer(mergedState)
     val next: DeltaBuffer[State]    = fun(current)
 
     next.deltaBuffer.foreach { delta =>
-      dataManager.applyLocalDelta(ProtocolDots(
+      dataManager.applyDelta(
         delta,
-        Dots.single(mergedState.context.nextDot(dataManager.replicaId.uid))
-      ))
+      )
     }
   }
 
