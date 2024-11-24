@@ -30,8 +30,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   replication.js,
   replication.jvm,
   replication.native,
-  replicationExamples.js,
-  replicationExamples.jvm,
   todolist
 )
 
@@ -281,33 +279,6 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,
-  )
-
-lazy val replicationExamples = crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full)
-  .in(file("Modules/Examples/Replication"))
-  .dependsOn(replication)
-  .settings(
-    scala3defaults,
-    run / fork         := true,
-    run / connectInput := true,
-    Settings.resolverJitpack,
-    Dependencies.munitCheck,
-    Dependencies.munit,
-    Dependencies.scalacheck,
-    Dependencies.slips.options,
-    Dependencies.slips.delay,
-    Dependencies.jsoniterScala,
-    Settings.strictEquality(Compile / compile, Test / test),
-  )
-  .jvmSettings(
-    Dependencies.slips.script,
-    Dependencies.sqliteJdbc,
-    DependenciesLocal.slf4jSimple,
-    libraryDependencies ++= DependenciesLocal.jetty,
-  )
-  .jsSettings(
-    Dependencies.scalatags(),
-    SettingsLocal.deployTask,
   )
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
