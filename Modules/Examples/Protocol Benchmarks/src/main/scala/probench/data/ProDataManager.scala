@@ -34,6 +34,7 @@ class ProDataManager[State: Lattice](
       dataManager.applyDelta(
         delta,
       )
+      receivedChanges(delta)
     }
   }
 
