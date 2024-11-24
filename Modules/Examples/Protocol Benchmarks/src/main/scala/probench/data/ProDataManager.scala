@@ -3,8 +3,7 @@ package probench.data
 import channels.LatentConnection
 import rdts.base.{Lattice, LocalUid}
 import rdts.syntax.DeltaBuffer
-import rdts.time.Dots
-import replication.{DeltaDissemination, ProtocolDots, ProtocolMessage}
+import replication.{DeltaDissemination, ProtocolMessage}
 
 class ProDataManager[State: Lattice](
     localReplicaId: LocalUid,

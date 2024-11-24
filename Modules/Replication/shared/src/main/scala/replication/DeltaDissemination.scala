@@ -66,8 +66,6 @@ class DeltaDissemination[State](
 
   given LocalUid = replicaId
 
-  type CodecState = State
-
   type ConnectionContext = Connection[ProtocolMessage[State]]
 
   val globalAbort = Abort()
@@ -94,7 +92,7 @@ class DeltaDissemination[State](
   }
 
   def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
-      JsonValueCodec[CodecState]
+      JsonValueCodec[State]
   ): Unit = {
     addLatentConnection(DeltaDissemination.jsoniterMessages(latentConnection))
   }

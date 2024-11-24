@@ -1,6 +1,5 @@
 package channels
 
-import channels.LatentConnection.EncodingConnection
 import de.rmgk.delay.{Async, Callback}
 
 import java.nio.charset.StandardCharsets
@@ -27,7 +26,7 @@ type Prod[A] = Async[Abort, A]
 
 case class ConnectionInfo(hostname: Option[String], port: Option[Int])
 
-/** Connections are bidirectional. Receiving is handled by the `AbstractLatentConnection.incomingHandler`. */
+/** Connections are bidirectional. Receiving is handled by the incoming handler of the latent connection. */
 trait Connection[T] {
   // TODO: currently not consistently implemented
   def info: ConnectionInfo = ConnectionInfo(None, None)
