@@ -101,7 +101,7 @@ object Paxos:
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
-      override def write(value: A)(using LocalUid, Participants): Paxos[A] =
+      override def propose(value: A)(using LocalUid, Participants): Paxos[A] =
         // check if I can propose a value
         val afterProposal = c.phase2a
         if Lattice[Paxos[A]].lteq(afterProposal, c) then
@@ -110,7 +110,7 @@ object Paxos:
         else
           afterProposal
     extension [A](c: Paxos[A])(using Participants)
-      override def read: Option[A] = c.decidedVal
+      override def decision: Option[A] = c.decidedVal
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid, Participants): Paxos[A] =
         // check which phase we are in

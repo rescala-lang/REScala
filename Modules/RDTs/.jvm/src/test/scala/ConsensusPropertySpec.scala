@@ -44,7 +44,7 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
 
     def nextLocalState(states: Map[LocalUid, C[A]]) =
       given Participants = Participants(states.keySet.map(_.uid))
-      val written        = Lattice[C[A]].merge(states(writer), states(writer).write(value)(using writer))
+      val written        = Lattice[C[A]].merge(states(writer), states(writer).propose(value)(using writer))
       Lattice[C[A]].merge(written, written.upkeep()(using writer))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]) =
@@ -64,14 +64,14 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
       given Participants = Participants(state.keySet.map(_.uid))
 
       val res      = result.get
-      val resValue = res(left).read
+      val resValue = res(left).decision
 
       if logging && resValue.nonEmpty then println(s"accepted value: ${resValue.get}")
 
       // if two devices read a value it has to be the same
       Prop.forAll(genId(res)) {
         index =>
-          (resValue, res(index).read) match
+          (resValue, res(index).decision) match
             case (Some(v1), Some(v2)) =>
               (v1 == v2) :| s"if two devices read a value, it has to be the same, got $v1, $v2" &&
               res(index).members.nonEmpty :| s"members are never empty" &&
