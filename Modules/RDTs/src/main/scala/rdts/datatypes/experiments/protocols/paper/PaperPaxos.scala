@@ -17,14 +17,6 @@ case class Paxos[A](
       Map.empty[BallotNum, PaxosRound[A]]
 ):
   // update functions
-  def nextBallotNum(using LocalUid): BallotNum =
-    val maxCounter: Long = rounds
-      .filter((b, _) => b.uid == replicaId)
-      .map((b, _) => b.counter)
-      .maxOption
-      .getOrElse(-1)
-    BallotNum(replicaId, maxCounter + 1)
-
   def voteLeader(leader: Uid)(using LocalUid, Participants): PaxosRound[A] =
     PaxosRound(leaderElection = Voting().voteFor(leader))
 
@@ -32,19 +24,23 @@ case class Paxos[A](
     PaxosRound(proposals = Voting().voteFor(value))
 
   // query functions
+  def nextBallotNum(using LocalUid): BallotNum =
+    val maxCounter: Long = rounds
+      .filter((b, _) => b.uid == replicaId)
+      .map((b, _) => b.counter)
+      .maxOption
+      .getOrElse(-1)
+    BallotNum(replicaId, maxCounter + 1)
   def currentRound: Option[(BallotNum, PaxosRound[A])] = rounds.maxOption
   def currentBallot: Option[BallotNum]                 = rounds.maxOption.map(_._1)
   def newestBallotWithLeader(using Participants): Option[(BallotNum, PaxosRound[A])] =
     rounds.filter(_._2.leaderElection.result.nonEmpty).maxOption
-
   def currentLeaderElection: Option[LeaderElection] = currentRound.map(_._2.leaderElection)
   def leaderCandidate: Option[Uid]                  = currentLeaderElection.map(_.votes.head.value)
-
   def myHighestBallot(using LocalUid): Option[(BallotNum, PaxosRound[A])] =
     rounds.filter { case (b, p) => b.uid == replicaId }.maxOption
-
   def lastValueVote: Option[(BallotNum, PaxosRound[A])] = rounds.filter(_._2.proposals.votes.nonEmpty).maxOption
-  def newestReceivedVal(using LocalUid)                      = lastValueVote.map(_._2.proposals.votes.head.value)
+  def newestReceivedVal(using LocalUid)                 = lastValueVote.map(_._2.proposals.votes.head.value)
   def myValue(using LocalUid): A                        = rounds(BallotNum(replicaId, -1)).proposals.votes.head.value
   def decidedVal(using Participants): Option[A] =
     rounds.collectFirst { case (b, PaxosRound(_, voting)) if voting.result.isDefined => voting.result.get }
@@ -93,7 +89,7 @@ case class Paxos[A](
 
 object Paxos:
   given [A]: Lattice[PaxosRound[A]] = Lattice.derived
-  given l[A]: Lattice[Paxos[A]]      = Lattice.derived
+  given l[A]: Lattice[Paxos[A]]     = Lattice.derived
 
   given [A]: Ordering[(BallotNum, PaxosRound[A])] with
     override def compare(x: (BallotNum, PaxosRound[A]), y: (BallotNum, PaxosRound[A])): Int = (x, y) match
@@ -112,11 +108,12 @@ object Paxos:
     extension [A](c: Paxos[A])(using Participants)
       override def decision: Option[A] = c.decidedVal
     extension [A](c: Paxos[A])
+      // upkeep can be used to perform the next protocol step automatically
       override def upkeep()(using LocalUid, Participants): Paxos[A] =
         // check which phase we are in
         c.currentRound match
-          // we have a leader -> phase 2
           case Some((ballotNum, PaxosRound(leaderElection, _))) if leaderElection.result.nonEmpty =>
+            // we have a leader -> phase 2
             if leaderElection.result.get == replicaId then
               c.phase2a
             else
