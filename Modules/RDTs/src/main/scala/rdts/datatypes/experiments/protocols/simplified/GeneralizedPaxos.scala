@@ -94,7 +94,7 @@ object GeneralizedPaxos:
   given l[A]: Lattice[GeneralizedPaxos[A]] = Lattice.derived
   given consensus: Consensus[GeneralizedPaxos] with
     extension [A](c: GeneralizedPaxos[A])
-      override def write(value: A)(using LocalUid, Participants): GeneralizedPaxos[A] =
+      override def propose(value: A)(using LocalUid, Participants): GeneralizedPaxos[A] =
         // check if I can propose a value
         val afterProposal = c.phase2a
         if Lattice[GeneralizedPaxos[A]].lteq(afterProposal, c) then
@@ -103,7 +103,7 @@ object GeneralizedPaxos:
         else
           afterProposal
     extension [A](c: GeneralizedPaxos[A])(using Participants)
-      override def read: Option[A] = c.newestDecidedVal
+      override def decision: Option[A] = c.newestDecidedVal
     extension [A](c: GeneralizedPaxos[A])
       override def upkeep()(using LocalUid, Participants): GeneralizedPaxos[A] =
         // check which phase we are in

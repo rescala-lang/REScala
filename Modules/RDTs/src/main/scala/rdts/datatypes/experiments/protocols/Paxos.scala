@@ -191,9 +191,9 @@ object Paxos {
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
-      override def write(value: A)(using LocalUid, Participants): Paxos[A] = c.write(value)
+      override def propose(value: A)(using LocalUid, Participants): Paxos[A] = c.write(value)
     extension [A](c: Paxos[A])
-      override def read(using Participants): Option[A] = c.read
+      override def decision(using Participants): Option[A] = c.read
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid, Participants): Paxos[A] = c.upkeep()
 

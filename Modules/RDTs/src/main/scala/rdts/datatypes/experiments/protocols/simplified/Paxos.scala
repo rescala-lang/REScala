@@ -128,7 +128,7 @@ object Paxos:
 
   given consensus: Consensus[Paxos] with
     extension [A](c: Paxos[A])
-      override def write(value: A)(using LocalUid, Participants): Paxos[A] =
+      override def propose(value: A)(using LocalUid, Participants): Paxos[A] =
         if participants.contains(replicaId) then
           def becomeLeader = c.prepare().copy(members = c.members.updated(replicaId, Some(LastWriterWins.now(value))))
 
@@ -145,7 +145,7 @@ object Paxos:
             case None => becomeLeader // no proposals yet, try to become leader
         else Paxos.unchanged
     extension [A](c: Paxos[A])
-      override def read(using Participants): Option[A] =
+      override def decision(using Participants): Option[A] =
         val acceptancePerProposal: Map[ProposalNum, Set[Accepted[A]]] = c.accepted.groupBy(_.proposal)
         for
           (proposal, votes) <- acceptancePerProposal.maxByOption((_, a) => a.size)
