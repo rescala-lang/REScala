@@ -50,10 +50,10 @@ object JSHttpPseudoChannel {
   }
 
   def connect(uri: String, rid: LocalUid): LatentConnection[MessageBuffer] = new LatentConnection[MessageBuffer] {
-    def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async {
+    def prepare(receiver: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async {
 
       val conn = new SSEPseudoConnection(uri, rid)
-      val cb   = incomingHandler.getCallbackFor(conn)
+      val cb   = receiver.messageHandler(conn)
 
       val requestInit = new RequestInit {}.tap: ri =>
         ri.method = HttpMethod.GET

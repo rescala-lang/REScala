@@ -98,7 +98,13 @@ class DeltaDissemination[State](
   }
 
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
-    latentConnection.prepare(conn => messageBufferCallback(conn)).run(using globalAbort) {
+    val preparedConnection = latentConnection.prepare { from =>
+      {
+        case Success(msg)   => handleMessage(msg, from)
+        case Failure(error) => error.printStackTrace()
+      }
+    }
+    preparedConnection.run(using globalAbort) {
       case Success(conn) =>
         lock.synchronized {
           connections = conn :: connections
@@ -134,20 +140,16 @@ class DeltaDissemination[State](
     contexts = contexts.updatedWith(rr)(curr => curr `merge` Some(dots))
   }
 
-  private def messageBufferCallback(outChan: ConnectionContext): Callback[ProtocolMessage[State]] =
-    case Success(msg)   => handleMessage(msg, outChan)
-    case Failure(error) => error.printStackTrace()
-
-  def handleMessage(msg: ProtocolMessage[State], biChan: ConnectionContext): Unit = {
+  def handleMessage(msg: ProtocolMessage[State], from: ConnectionContext): Unit = {
     msg match
       case Ping(time) =>
-        biChan.send(Pong(time)).run(debugCallbackAndRemoveCon(biChan))
+        from.send(Pong(time)).run(debugCallbackAndRemoveCon(from))
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
         val relevant = pastPayloads.filterNot { dt => dt.dots <= knows }
         relevant.foreach: msg =>
-          biChan.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(biChan))
+          from.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(from))
         updateContext(uid, selfContext `merge` knows)
       case payload @ Payload(uid, context, data) =>
         if context <= selfContext then return
@@ -160,7 +162,7 @@ class DeltaDissemination[State](
         }
         receiveCallback(data)
         if immediateForward then
-          disseminate(payload, Set(biChan))
+          disseminate(payload, Set(from))
 
   }
 

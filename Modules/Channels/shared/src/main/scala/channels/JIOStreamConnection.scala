@@ -60,7 +60,7 @@ class JIOStreamConnection(in: InputStream, out: OutputStream, doClose: () => Uni
 
   // frame parsing
 
-  def loopHandler(handler: Handler[MessageBuffer]): Unit =
-    inputStream.loopReceive(handler.getCallbackFor(this))
+  def loopHandler(handler: Receive[MessageBuffer]): Unit =
+    inputStream.loopReceive(handler.messageHandler(this))
 
 }

@@ -26,7 +26,7 @@ object JavaHttp {
 
     var connections: Map[Uid, Callback[MessageBuffer]] = Map.empty
 
-    def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
+    def prepare(receiver: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async.fromCallback {
 
       addHandler { (exchange: HttpExchange) =>
         val requestHeaders = exchange.getRequestHeaders
@@ -56,7 +56,7 @@ object JavaHttp {
 
           SSEServer.this.synchronized {
             println(s"made connection for $uid")
-            connections = connections.updated(uid, incomingHandler.getCallbackFor(conn))
+            connections = connections.updated(uid, receiver.messageHandler(conn))
           }
 
           Async.handler.succeed(conn)
@@ -97,7 +97,7 @@ object JavaHttp {
   class SSEClient(client: HttpClient, uri: URI, replicaId: LocalUid, ec: ExecutionContext)
       extends LatentConnection[MessageBuffer] {
 
-    def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async {
+    def prepare(receiver: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Async {
 
       val sseRequest = HttpRequest.newBuilder()
         .GET()
@@ -115,7 +115,7 @@ object JavaHttp {
 
       val conn = SSEClientConnection(client, uri, replicaId)
 
-      ec.execute(() => JioInputStreamAdapter(rec).loopReceive(incomingHandler.getCallbackFor(conn)))
+      ec.execute(() => JioInputStreamAdapter(rec).loopReceive(receiver.messageHandler(conn)))
 
       println(s"succeeding client")
 

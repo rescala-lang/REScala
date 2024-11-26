@@ -17,10 +17,10 @@ class SynchronousLocalConnection[T] {
     case class Establish(serverSendsOn: Connection[T], clientConnectionSendsTo: Promise[Callback[T]])
     val connectionEstablished: Promise[Callback[Establish]] = Promise()
 
-    def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]] = Async.fromCallback[Establish] {
+    def prepare(receiver: Receive[T]): Async[Abort, Connection[T]] = Async.fromCallback[Establish] {
       connectionEstablished.succeed(Async.handler)
     }.map { connChan =>
-      connChan.clientConnectionSendsTo.succeed(incomingHandler.getCallbackFor(connChan.serverSendsOn))
+      connChan.clientConnectionSendsTo.succeed(receiver.messageHandler(connChan.serverSendsOn))
       connChan.serverSendsOn
     }
   }
@@ -43,8 +43,8 @@ class SynchronousLocalConnection[T] {
       override def toString: String = s"From[$id]"
     }
 
-    def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]] = Async {
-      val callback = incomingHandler.getCallbackFor(toServer)
+    def prepare(receiver: Receive[T]): Async[Abort, Connection[T]] = Async {
+      val callback = receiver.messageHandler(toServer)
 
       /* This is the connection that is passed to the server, which just calls the callback defined by the handler. */
       val toClient = new Connection[T] {

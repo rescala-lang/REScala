@@ -13,7 +13,6 @@ object MessageBuffer {
   given Conversion[String, MessageBuffer] = str => ArrayMessageBuffer(str.getBytes(StandardCharsets.UTF_8))
   given Conversion[MessageBuffer, String] = buf => new String(buf.asArray, StandardCharsets.UTF_8)
 
-  type Handler = Connection[MessageBuffer] => Callback[MessageBuffer]
 }
 
 case class ArrayMessageBuffer(inner: Array[Byte]) extends MessageBuffer {
@@ -34,13 +33,15 @@ trait Connection[T] {
   def close(): Unit
 }
 
-/** Provides a specification how to handle messages, given a connection context. */
-trait Handler[T] {
+/** Provides a specification how to handle messages, given a connection context.
+  * Failure calls on the callback generally indicate connection errors on the receiver side.
+  */
+trait Receive[T] {
 
   /** The provided connection is not guaranteed to be useable until the first message is received.
     * If you want to initiate sending messages on this connection, use the value returned by the prepare call of the latent connection instead.
     */
-  def getCallbackFor(conn: Connection[T]): Callback[T]
+  def messageHandler(answers: Connection[T]): Callback[T]
 }
 
 /** Contains all the information required to try and establish a bidirectional connection.
@@ -60,7 +61,7 @@ trait LatentConnection[T] {
     *
     * The async may produce multiple connections and will run [[incomingHandler]] for each of them.
     */
-  def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]
+  def prepare(receiver: Receive[T]): Async[Abort, Connection[T]]
 }
 
 object LatentConnection {
@@ -74,12 +75,12 @@ object LatentConnection {
 
   def adapt[A, B](f: A => B, g: B => A)(latentConnection: LatentConnection[A]): LatentConnection[B] = {
     new LatentConnection[B] {
-      def prepare(incomingHandler: Handler[B]): Async[Abort, Connection[B]] =
+      def prepare(receiver: Receive[B]): Async[Abort, Connection[B]] =
         Async[Abort] {
           val conn = Async.bind {
             latentConnection.prepare { conn =>
               val mapped = EncodingConnection(g, conn)
-              val cb     = incomingHandler.getCallbackFor(mapped)
+              val cb     = receiver.messageHandler(mapped)
               rs => cb.complete(rs.map(f))
             }
           }

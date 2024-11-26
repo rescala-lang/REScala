@@ -1,4 +1,4 @@
-import channels.{Abort, ArrayMessageBuffer, Connection, Handler, LatentConnection, MessageBuffer}
+import channels.{Abort, ArrayMessageBuffer, Connection, Receive, LatentConnection, MessageBuffer}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromString, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Async, Sync}
@@ -85,9 +85,9 @@ object WebviewNativeChannel {
   }
 
   def listen(w: WebView): LatentConnection[MessageBuffer] = new LatentConnection {
-    def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Sync {
+    def prepare(incomingHandler: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] = Sync {
       val conn = WebviewConnectionContext(w)
-      val cb   = incomingHandler.getCallbackFor(conn)
+      val cb   = incomingHandler.messageHandler(conn)
       w.bind(
         "webview_channel_send",
         { msg =>

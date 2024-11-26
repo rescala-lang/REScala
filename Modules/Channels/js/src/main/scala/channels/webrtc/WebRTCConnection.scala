@@ -79,9 +79,9 @@ object WebRTCConnection {
 
   def openLatent(channel: dom.RTCDataChannel): LatentConnection[MessageBuffer] = new LatentConnection {
 
-    def succeedConnection(incoming: Handler[MessageBuffer]) = {
+    def succeedConnection(incoming: Receive[MessageBuffer]) = {
       val connector = new WebRTCConnection(channel)
-      val handler   = incoming.getCallbackFor(connector)
+      val handler   = incoming.messageHandler(connector)
 
       {
         channel.onmessage = { (event: dom.MessageEvent) =>
@@ -124,7 +124,7 @@ object WebRTCConnection {
       connector
     }
 
-    override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+    override def prepare(incomingHandler: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
       Async.fromCallback {
 
         channel.readyState match {

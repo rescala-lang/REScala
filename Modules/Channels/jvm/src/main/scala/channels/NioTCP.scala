@@ -12,7 +12,7 @@ import scala.util.{Failure, Success}
 
 case class AcceptAttachment(
     callback: Callback[Connection[MessageBuffer]],
-    incoming: Handler[MessageBuffer],
+    incoming: Receive[MessageBuffer],
 )
 
 case class ReceiveAttachment(
@@ -103,14 +103,14 @@ class NioTCP {
 
   def handleConnection(
       clientChannel: SocketChannel,
-      incoming: Handler[MessageBuffer],
+      incoming: Receive[MessageBuffer],
   ): NioTCPConnection = {
 
     configureChannel(clientChannel)
 
     val conn = NioTCPConnection(clientChannel)
 
-    val callback = incoming.getCallbackFor(conn)
+    val callback = incoming.messageHandler(conn)
     clientChannel.register(selector, SelectionKey.OP_READ, ReceiveAttachment(callback))
     selector.wakeup()
 
@@ -135,7 +135,7 @@ class NioTCP {
       bindsocket: () => SocketChannel,
   ): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Handler[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
+      override def prepare(incoming: Receive[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
         TCP.syncAttempt {
           handleConnection(bindsocket(), incoming)
         }
@@ -177,7 +177,7 @@ class NioTCP {
       bindsocket: () => ServerSocketChannel,
   ): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+      override def prepare(incoming: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
         Async.fromCallback { abort ?=>
           try {
             val serverChannel: ServerSocketChannel = bindsocket()

@@ -1,6 +1,6 @@
 package dtn.rdt
 
-import channels.{Abort, Connection, Handler, LatentConnection}
+import channels.{Abort, Connection, Receive, LatentConnection}
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
 import de.rmgk.delay
 import de.rmgk.delay.syntax.toAsync
@@ -57,11 +57,11 @@ class Channel[T: JsonValueCodec](
   // If the local dtnd could be stopped and restarted without loosing data, this id should remain the same for performance reasons, but it will be correct even if it changes.
   val dtnid = Uid.gen()
 
-  override def prepare(incomingHandler: Handler[ProtocolMessage[T]]): Async[Abort, Connection[ProtocolMessage[T]]] =
+  override def prepare(receiver: Receive[ProtocolMessage[T]]): Async[Abort, Connection[ProtocolMessage[T]]] =
     Async {
       val client: Client = Client(host, port, appName, monitoringClient).toAsync(using ec).bind
       val conn           = ClientContext[T](client, ec, operationMode)
-      val cb             = incomingHandler.getCallbackFor(conn)
+      val cb             = receiver.messageHandler(conn)
 
       client.registerOnReceive { (message_type: RdtMessageType, payload: Array[Byte], dots: Dots) =>
         message_type match

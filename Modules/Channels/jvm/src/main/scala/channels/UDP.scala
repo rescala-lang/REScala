@@ -26,7 +26,7 @@ class UDPPseudoConnection(
     executionContext: ExecutionContext,
     initializeOutbound: Async[Any, SocketAddress],
 ) extends LatentConnection[MessageBuffer] {
-  override def prepare(incomingHandler: Handler[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+  override def prepare(receiver: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
     Async.fromCallback[Connection[MessageBuffer]] {
 
       val datagramSocket = socketFactory()
@@ -41,7 +41,7 @@ class UDPPseudoConnection(
           sa, {
             val dw = UDPDatagramWrapper(sa, datagramSocket)
             connectionSuccess.succeed(dw)
-            val cb = incomingHandler.getCallbackFor(dw)
+            val cb = receiver.messageHandler(dw)
             (dw, cb)
           }
         )

@@ -1,6 +1,6 @@
 package channels.jettywebsockets
 
-import channels.{Abort, ArrayMessageBuffer, Connection, LatentConnection, MessageBuffer, Handler as ChannelHandler}
+import channels.{Abort, ArrayMessageBuffer, Connection, LatentConnection, MessageBuffer, Receive as ChannelHandler}
 import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
@@ -124,7 +124,7 @@ class JettyWsHandler(
   override def onWebSocketOpen(session: Session): Unit = {
     super.onWebSocketOpen(session)
     val sessionWrapper = new JettySessionWrapper(session)
-    internalCallback = incoming.getCallbackFor(sessionWrapper)
+    internalCallback = incoming.messageHandler(sessionWrapper)
     connectionEstablished.succeed(sessionWrapper)
     session.demand()
   }
