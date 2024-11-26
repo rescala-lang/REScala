@@ -38,10 +38,10 @@ class SimplePaxosTest extends munit.FunSuite {
     val proposal = a.chooseProposalNumber(using id1)
     a = a `merge` a.prepare()(using id1)
     a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
-    assertEquals(a.read, None)
+    assertEquals(a.decision, None)
     a = a `merge` a.propose(proposal, 1)(using id1)
     a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
-    assertEquals(a.read, Some(1))
+    assertEquals(a.decision, Some(1))
   }
 
   test("newer proposal numbers are bigger") {
@@ -67,7 +67,7 @@ class SimplePaxosTest extends munit.FunSuite {
 
     assert(testPaxosObject.members.nonEmpty)
 
-    val afterwrite = testPaxosObject.merge(testPaxosObject.write(5)(using id1))
+    val afterwrite = testPaxosObject.merge(testPaxosObject.propose(5)(using id1))
     assertEquals(afterwrite.members.keySet, testPaxosObject.members.keySet)
   }
 
@@ -156,29 +156,29 @@ class SimplePaxosTest extends munit.FunSuite {
     var testPaxosObject = emptyPaxosObject
     val writeValue      = 1
     // replica 1 tries to write
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.propose(writeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, None)
+    assertEquals(testPaxosObject.decision, None)
     // replica 1 tries to write again
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.propose(writeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, Some(writeValue))
+    assertEquals(testPaxosObject.decision, Some(writeValue))
   }
 
   test("concurrent writes") {
     var testPaxosObject = emptyPaxosObject
     // replica 1 and 2 try to write
     testPaxosObject =
-      testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
+      testPaxosObject.merge(testPaxosObject.propose(1)(using id1)).merge(testPaxosObject.propose(2)(using id2))
     // deliver prepares
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, None)
+    assertEquals(testPaxosObject.decision, None)
     // deliver proposal
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
@@ -187,6 +187,6 @@ class SimplePaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assert(clue(testPaxosObject.read) == Some(2) || clue(testPaxosObject.read) == Some(1))
+    assert(clue(testPaxosObject.decision) == Some(2) || clue(testPaxosObject.decision) == Some(1))
   }
 }
