@@ -38,7 +38,7 @@ class MembershipSuite extends munit.ScalaCheckSuite {
   ).property())
 
   property("Membership with paper paxos")(MembershipSpec[Int, paper.Paxos, paper.Paxos](
-    logging = true,
+    logging = false,
     minDevices = 3,
     maxDevices = 6,
     mergeFreq = 80,
