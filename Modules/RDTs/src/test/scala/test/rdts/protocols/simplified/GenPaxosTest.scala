@@ -14,33 +14,33 @@ class GenPaxosTest extends munit.FunSuite {
   given Participants = Participants(Set(id1, id2, id3).map(_.uid))
 
   val emptyPaxosObject: GeneralizedPaxos[Int] = GeneralizedPaxos()
-  test("write works as expected") {
+  test("propose works as expected") {
     var testPaxosObject = emptyPaxosObject
-    val writeValue      = 1
+    val proposeValue      = 1
     // replica 1 tries to write
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.propose(proposeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, None)
+    assertEquals(testPaxosObject.decision, None)
     // replica 1 tries to write again
-    testPaxosObject = testPaxosObject.merge(testPaxosObject.write(writeValue)(using id1))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.propose(proposeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, Some(writeValue))
+    assertEquals(testPaxosObject.decision, Some(proposeValue))
   }
 
-  test("concurrent writes") {
+  test("concurrent proposals") {
     var testPaxosObject = emptyPaxosObject
     // replica 1 and 2 try to write
     testPaxosObject =
-      testPaxosObject.merge(testPaxosObject.write(1)(using id1)).merge(testPaxosObject.write(2)(using id2))
+      testPaxosObject.merge(testPaxosObject.propose(1)(using id1)).merge(testPaxosObject.propose(2)(using id2))
     // deliver prepares
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assertEquals(testPaxosObject.read, None)
+    assertEquals(testPaxosObject.decision, None)
     // deliver proposal
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
@@ -49,6 +49,6 @@ class GenPaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using
       id2
     )).merge(testPaxosObject.upkeep()(using id3))
-    assert(clue(testPaxosObject.read) == Some(2) || clue(testPaxosObject.read) == Some(1))
+    assert(clue(testPaxosObject.decision) == Some(2) || clue(testPaxosObject.decision) == Some(1))
   }
 }
