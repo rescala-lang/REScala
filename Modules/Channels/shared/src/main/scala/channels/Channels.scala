@@ -55,7 +55,10 @@ trait LatentConnection[T] {
     * That is, no messages should be lost during setup.
     * Similarly, the provider of the callback (the result of `incoming`) of this method should make sure that the other end of the callback is ready to receive callbacks before running the async.
     *
-    * It is not safe to call prepare multiple times.
+    * It is generally not assumed to be safe to run prepare twice (neither running a single async twice, nor running two different returned asyncs).
+    * Notably, “server” like implementations may try to bind a specific port, and immediately fail if that is not available.
+    *
+    * The async may produce multiple connections and will run [[incomingHandler]] for each of them.
     */
   def prepare(incomingHandler: Handler[T]): Async[Abort, Connection[T]]
 }
