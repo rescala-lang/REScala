@@ -10,7 +10,7 @@ class PaperPaxosSuite extends munit.ScalaCheckSuite:
       .withMaxSize(200)
 
   property("Paper Paxos")(ConsensusPropertySpec[Int, Paxos](
-    logging = true,
+    logging = false,
     minDevices = 3,
     maxDevices = 7,
     writeFreq = 20,
