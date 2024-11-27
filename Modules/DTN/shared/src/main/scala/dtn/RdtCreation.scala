@@ -189,7 +189,7 @@ class LastWriterWinsRDT(number_of_changes: Int, sleep_time_milliseconds: Long) e
   var state = LastWriterWins.empty[Set[String]]
 
   private def writeStringGetDeltaInfo(s: String): RdtType = {
-    state.write(Set(s))         // advances a total ordering internally
+    state.write(Set(s)) // advances a total ordering internally
 
   }
 
