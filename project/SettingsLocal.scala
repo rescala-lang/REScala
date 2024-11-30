@@ -1,6 +1,8 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{fastLinkJS, scalaJSLinkerOutputDirectory}
 import sbt.*
 import sbt.Keys.*
+import xerial.sbt.Sonatype.autoImport.{sonatypeCredentialHost, sonatypeProfileName, sonatypePublishTo}
+import xerial.sbt.Sonatype.sonatypeLegacy
 
 import scala.scalanative.build.{LTO, NativeConfig}
 
@@ -49,6 +51,7 @@ object SettingsLocal {
 
   // use `publishSigned` to publish
   // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
+  // alternatively, use `sonatypeRelease` to release from sbt
   val publishSonatype = Def.settings(
     organization         := "de.tu-darmstadt.stg",
     organizationName     := "Software Technology Group",
@@ -73,14 +76,14 @@ object SettingsLocal {
     // no binary compatibility for 0.Y.z releases
     versionScheme := Some("semver-spec"),
 
+    // sonatype sbt plugin settings
+    sonatypeCredentialHost := sonatypeLegacy,
+    sonatypeProfileName    := "de.tu-darmstadt.stg",
+
     // Remove all additional repository other than Maven Central from POM
     pomIncludeRepository := { _ => false },
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value) Some("snapshots" at s"${nexus}content/repositories/snapshots")
-      else Some("releases" at s"${nexus}service/local/staging/deploy/maven2")
-    },
-    publishMavenStyle := true
+    publishTo            := sonatypePublishTo.value,
+    publishMavenStyle    := true
   )
 
 }
