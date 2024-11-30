@@ -35,13 +35,10 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
 
 // aggregate projects allow compiling all variants (js, jvm, native) at the same time
 
-lazy val rdtsAggregate =
-  project.in(file("target/PhonyBuilds/rdts")).settings(scala3defaults, publish / skip := true)
-    .aggregate(rdts.js, rdts.jvm, rdts.native)
+lazy val publishedProjects =
+  project.in(file("target/PhonyBuilds/publishedProjects")).settings(scala3defaults, publish / skip := true)
+    .aggregate(rdts.js, rdts.jvm, rdts.native, reactives.js, reactives.jvm, reactives.native, channels.jvm, channels.js, channels.native, replication.jvm, replication.js, replication.native)
 
-lazy val reactivesAggregate =
-  project.in(file("target/PhonyBuilds/reactives")).settings(scala3defaults, publish / skip := true)
-    .aggregate(reactives.js, reactives.jvm, reactives.native)
 
 // projects in alphabetical order
 
