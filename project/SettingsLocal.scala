@@ -1,7 +1,7 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{fastLinkJS, scalaJSLinkerOutputDirectory}
 import sbt.*
 import sbt.Keys.*
-import xerial.sbt.Sonatype.autoImport.{sonatypeCredentialHost, sonatypeProfileName, sonatypePublishTo}
+import xerial.sbt.Sonatype.autoImport.{sonatypeCredentialHost, sonatypeProfileName, sonatypePublishTo, sonatypePublishToBundle}
 import xerial.sbt.Sonatype.sonatypeLegacy
 
 import scala.scalanative.build.{LTO, NativeConfig}
@@ -82,7 +82,7 @@ object SettingsLocal {
 
     // Remove all additional repository other than Maven Central from POM
     pomIncludeRepository := { _ => false },
-    publishTo            := sonatypePublishTo.value,
+    publishTo            := sonatypePublishToBundle.value,
     publishMavenStyle    := true
   )
 
