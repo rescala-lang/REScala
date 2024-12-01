@@ -10,8 +10,10 @@ import probench.data.{ClientNodeState, KVOperation, Request}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.{GeneralizedPaxos, Paxos}
+import replication.{FileConnection, ProtocolMessage}
 
 import java.net.{DatagramSocket, InetSocketAddress}
+import java.nio.file.{Files, Path}
 import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
@@ -57,6 +59,9 @@ object cli {
     given genPaxosMembership: JsonValueCodec[Membership[Request, GeneralizedPaxos, GeneralizedPaxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
+    given JsonValueCodec[ProtocolMessage[Membership[Request, Paxos, Paxos]]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
     def socketPath(host: String, port: Int) = {
 //      val p = Path.of(s"target/sockets/$name")
 //      Files.createDirectories(p.getParent)
@@ -76,6 +81,33 @@ object cli {
     val argparse = composedParser {
 
       alternatives(
+        subcommand("easy-setup", "for lazy tests") {
+          val ids                              = Set("Node1", "Node2", "Node3").map(Uid.predefined)
+          val nodes @ (primary :: secondaries) = ids.map { id => Node(id, ids) }.toList: @unchecked
+          val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[Request, Paxos, Paxos]]]()
+          primary.addClusterConnection(connection.server)
+          secondaries.foreach { node => node.addClusterConnection(connection.client(node.name.toString)) }
+
+          val persistencePath = Path.of("target/clusterdb/")
+          Files.createDirectories(persistencePath)
+
+          nodes.foreach { node =>
+            node.addClusterConnection(
+              FileConnection[Membership[Request, Paxos, Paxos]](persistencePath.resolve(node.name.toString + ".jsonl"))
+            )
+          }
+
+          val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientNodeState]]()
+
+          primary.addClientConnection(clientConnection.server)
+
+          val clientUid = Uid.gen()
+          val client    = ProBenchClient(clientUid)
+          client.addLatentConnection(clientConnection.client(clientUid.toString))
+
+          ClientCLI(clientUid, client).startCLI()
+
+        },
         subcommand("node", "starts a cluster node") {
           val node = Node(name.value, initialClusterIds.value.toSet)
 
