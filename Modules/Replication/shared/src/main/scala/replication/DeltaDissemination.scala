@@ -123,7 +123,7 @@ class DeltaDissemination[State](
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
-        val relevant = pastPayloads.filterNot { dt => dt.dots <= knows }
+        val relevant = lock.synchronized(pastPayloads).filterNot { dt => dt.dots <= knows }
         relevant.foreach: msg =>
           from.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(from))
         updateContext(uid, selfContext `merge` knows)
