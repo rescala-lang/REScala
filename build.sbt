@@ -70,6 +70,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     Settings.safeInit(Compile / compile),
     Dependencies.slips.delay,
     Dependencies.munit,
+    SettingsLocal.publishSonatype
   )
   .jsSettings(
     Settings.jsEnvDom,
@@ -276,6 +277,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,
+    SettingsLocal.publishSonatype
   )
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
