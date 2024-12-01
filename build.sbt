@@ -37,8 +37,23 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
 
 lazy val publishedProjects =
   project.in(file("target/PhonyBuilds/publishedProjects")).settings(scala3defaults, publish / skip := true)
-    .aggregate(rdts.js, rdts.jvm, rdts.native, reactives.js, reactives.jvm, reactives.native, channels.jvm, channels.js, channels.native, replication.jvm, replication.js, replication.native)
-
+    .aggregate(
+      rdts.js,
+      rdts.jvm,
+      rdts.native,
+      reactives.js,
+      reactives.jvm,
+      reactives.native,
+      channels.jvm,
+      channels.js,
+      channels.native,
+      replication.jvm,
+      replication.js,
+      replication.native
+    )
+    // set publishing settings to have aggregate commands of bundle uploading work,
+    // but do not publish this project itselfs
+    .settings(SettingsLocal.publishSonatype, publish / skip := true)
 
 // projects in alphabetical order
 

@@ -52,6 +52,9 @@ object SettingsLocal {
   // use `publishSigned` to publish
   // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
   // alternatively, use `sonatypeRelease` to release from sbt
+  // if the bundle feature is enabled, then `publishSigned` only puts the files into a local folder,
+  // use `sonatypeBundleRelease` to release that local bundle, or try the individual steps to see intermediate results
+  // `sonatypePrepare; sonatypeBundleUpload; sonatypeRelease`
   val publishSonatype = Def.settings(
     organization         := "de.tu-darmstadt.stg",
     organizationName     := "Software Technology Group",
@@ -82,6 +85,7 @@ object SettingsLocal {
 
     // Remove all additional repository other than Maven Central from POM
     pomIncludeRepository := { _ => false },
+    // change to sonatypePublishTo to not use the bundle feature
     publishTo            := sonatypePublishToBundle.value,
     publishMavenStyle    := true
   )
