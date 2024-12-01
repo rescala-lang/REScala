@@ -1,5 +1,21 @@
 = Changelog
 
+== v.next
+
+• all modules now use at least java version 17
+	• This is now actually the oldest supported java version (except for commercial extended support we don’t have). This feels strange.
+• publish channel and replication module
+	• module boundaries are likely to change, but for now these help a lot with replicating rdt deltas
+	• channels now has a nio TCP module
+• add experimental DTN replication work
+• add consensus protocol datattypes
+• enhanced UID generation and printing for better debuggability (and unlikely collisions)
+
+
+• todolist uses experimental wasm backend
+• key-value store implementation case study
+
+
 == v0.36.0
 date = 2024-08-24
 
