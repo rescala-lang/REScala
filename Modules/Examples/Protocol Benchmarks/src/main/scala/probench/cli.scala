@@ -67,12 +67,13 @@ object cli {
 
     }
 
+    val cluster           = named[List[(String, Int)]]("--cluster", "")
+    val initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
+    val clientNode        = named[(String, Int)]("--node", "<ip:port>")
+    val name              = named[Uid]("--name", "", Uid.gen())
+    val endpoints         = named[List[String]]("--endpoints", "")
+
     val argparse = composedParser {
-      inline def cluster           = named[List[(String, Int)]]("--cluster", "")
-      inline def initialClusterIds = named[List[Uid]]("--initial-cluster-ids", "")
-      inline def clientNode        = named[(String, Int)]("--node", "<ip:port>")
-      inline def name              = named[Uid]("--name", "", Uid.gen())
-      inline def endpoints         = named[List[String]]("--endpoints", "")
 
       alternatives(
         subcommand("node", "starts a cluster node") {
