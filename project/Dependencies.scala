@@ -29,7 +29,7 @@ object Dependencies {
     def chain   = libraryDependencies += "de.rmgk.slips" %%% "chain"   % "0.9.0"
     def delay   = libraryDependencies += "de.rmgk.slips" %%% "delay"   % "0.9.0"
     def logging = libraryDependencies += "de.rmgk.slips" %%% "logging" % "0.9.0"
-    def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.9.0"
+    def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.11.0"
     def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.9.0"
     def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.9.0"
   }
