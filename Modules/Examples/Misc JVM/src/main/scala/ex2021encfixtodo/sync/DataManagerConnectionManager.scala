@@ -7,7 +7,7 @@ import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
-import replication.{DeltaDissemination, ProtocolDots}
+import replication.{DeltaDissemination}
 
 import java.net.{InetSocketAddress, Socket, URI}
 import java.nio.file.{Files, Path}

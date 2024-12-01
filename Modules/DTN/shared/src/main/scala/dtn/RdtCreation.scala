@@ -1,6 +1,5 @@
 package dtn
 
-import _root_.replication.{DeltaDissemination, ProtocolDots}
 import rdts.base.LocalUid
 import dtn.rdt.Channel
 import _root_.replication.JsoniterCodecs.given
@@ -9,6 +8,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.github.plokhotnyuk.jsoniter_scala.macros.CodecMakerConfig
 import dtn.rdt.ClientOperationMode
 import rdts.datatypes.alternatives.ObserveRemoveSet
+
 import scala.util.Random
 import rdts.dotted.Obrem
 import rdts.datatypes.contextual.ObserveRemoveMap
@@ -16,6 +16,7 @@ import rdts.time.Dot
 import rdts.base.Lattice
 import rdts.datatypes.LastWriterWins
 import rdts.time.Dots
+import replication.DeltaDissemination
 
 trait CaseStudyRdt {
   def connect(
