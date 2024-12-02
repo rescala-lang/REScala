@@ -7,6 +7,7 @@ import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
+import replication.DeltaDissemination
 
 import scala.collection.mutable
 import scala.util.chaining.scalaUtilChainingOps
@@ -25,11 +26,11 @@ object Time {
     }
 }
 
-class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
+class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   private type ClusterState = Membership[Request, Paxos, Paxos]
 
-  given localUid: LocalUid = LocalUid(name)
+  given localUid: LocalUid = LocalUid(uid)
 
   val clientDataManager: ProDataManager[ClientNodeState] =
     ProDataManager[ClientNodeState](
@@ -39,23 +40,46 @@ class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
       immediateForward = true
     )
 
-  val clusterDataManager: ProDataManager[ClusterState] =
-    ProDataManager[ClusterState](localUid, Membership.init(initialClusterIds), onClusterStateChange)
+  val currentStateLock: AnyRef   = new {}
+  var currentState: ClusterState = Membership.init(votingReplicas)
+
+  val clusterDataManager: DeltaDissemination[ClusterState] =
+    DeltaDissemination(localUid, handleIncoming)
+
+  def handleIncoming(change: ClusterState): Unit = {
+    val (old, changed) = currentStateLock.synchronized {
+      val old = currentState
+      currentState = currentState `merge` change
+      (old, currentState)
+    }
+    val upkept = changed.upkeep()
+    val merged = currentStateLock.synchronized {
+      currentState = currentState.merge(upkept)
+      currentState
+    }
+    clusterDataManager.applyDelta(upkept)
+    maybeAnswerClient(old, merged)
+  }
 
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
 
-    if newState.requests.data.values.size == 1 then {
-      Time.report("got request")
-      clusterDataManager.transform(_.mod(_.write(newState.requests.data.head)))
-      Time.report("transform done")
+    val newRequests = newState.requests.data.elements `diff` oldState.requests.data.elements
+    newRequests.foreach { request =>
+      clusterDataManager.applyDelta {
+        currentStateLock.synchronized {
+          val delta = currentState.write(request)
+          currentState = currentState.merge(delta)
+          delta
+        }
+      }
     }
   }
 
   var counter = 0
 
-  private def onClusterStateChange(oldState: ClusterState, newState: ClusterState): Unit = {
+  private def maybeAnswerClient(oldState: ClusterState, newState: ClusterState): Unit = {
 
     val start = System.nanoTime()
     var last  = start
@@ -73,17 +97,8 @@ class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
         s"[$tid] $msg after ${(last - current).doubleValue / 1000_000}ms"
       }
 
-    val delta                = newState.upkeep()
-    val upkept: ClusterState = newState.merge(delta)
-    timeStep("upkeep + merge")
-
-    if !(upkept <= newState) || upkept.counter > newState.counter then {
-      clusterDataManager.transform(_.mod(_ => delta))
-      timeStep("some state changes maybe logs???")
-    }
-
-    for op <- upkept.readDecisionsSince(oldState.counter) do {
-      val res: String = op match {
+    for decidedRequest <- newState.readDecisionsSince(oldState.counter) do {
+      val decision: String = decidedRequest match {
         case Request(KVOperation.Read(key), _) =>
           kvCache.synchronized {
             kvCache.getOrElse(key, s"Key '$key' has not been written to!")
@@ -96,12 +111,12 @@ class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
       }
 
       clientDataManager.transform { it =>
-        if it.state.requests.data.values.exists { e => e.value == op } then {
+        if it.state.requests.data.elements.contains(decidedRequest) then {
           it.mod { state =>
             // println(s"Writing Response: $op -> $res")
             val newState = state.copy(
-              requests = state.requests.mod(_.removeBy(_ == op)),
-              responses = state.responses.mod(_.enqueue(Response(op, res))),
+              requests = state.requests.mod(_.remove(decidedRequest).toObrem),
+              responses = state.responses.mod(_.add(Response(decidedRequest, decision)).toObrem),
             )
             // println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
             newState
@@ -113,8 +128,14 @@ class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
 
       val clientState = clientDataManager.mergedState
 
-      if clientState.requests.data.values.nonEmpty then {
-        clusterDataManager.transform(_.mod(_.write(clientState.requests.data.head)))
+      if clientState.requests.data.elements.nonEmpty then {
+        clusterDataManager.applyDelta {
+          currentStateLock.synchronized {
+            val delta = currentState.write(clientState.requests.data.elements.head)
+            currentState = currentState.merge(delta)
+            delta
+          }
+        }
       }
     }
 

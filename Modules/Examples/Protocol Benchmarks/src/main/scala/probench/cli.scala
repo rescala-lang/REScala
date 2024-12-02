@@ -86,14 +86,14 @@ object cli {
           val nodes @ (primary :: secondaries) = ids.map { id => KeyValueReplika(id, ids) }.toList: @unchecked
           val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[Request, Paxos, Paxos]]]()
           primary.addClusterConnection(connection.server)
-          secondaries.foreach { node => node.addClusterConnection(connection.client(node.name.toString)) }
+          secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
           val persistencePath = Path.of("target/clusterdb/")
           Files.createDirectories(persistencePath)
 
           nodes.foreach { node =>
             node.addClusterConnection(
-              FileConnection[Membership[Request, Paxos, Paxos]](persistencePath.resolve(node.name.toString + ".jsonl"))
+              FileConnection[Membership[Request, Paxos, Paxos]](persistencePath.resolve(node.uid.toString + ".jsonl"))
             )
           }
 
