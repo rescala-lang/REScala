@@ -1,10 +1,8 @@
 package probench.data
 
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.datatypes.contextual.CausalQueue
-import rdts.datatypes.{GrowOnlyList, GrowOnlyMap}
 import rdts.dotted.Dotted
-import rdts.time.VectorClock
 
 enum KVOperation[Key, Value] {
   def key: Key

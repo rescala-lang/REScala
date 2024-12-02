@@ -45,15 +45,6 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
-    /*
-      val diff = newState.requests.data.values.size - oldState.requests.data.values.size
-      if diff > 0 then {
-        println(s"Requests: ${newState.requests.data.values.toList.map(_.value)}")
-        println(s"Sorted  : ${newState.requests.data.values.toList.sortBy(_.order)(using VectorClock.vectorClockTotalOrdering).map(it => it.order -> it.value)}")
-        println(s"Dots    : ${newState.requests.data.dots}")
-        println(s"Time    : ${newState.requests.data.clock}")
-      }
-     */
 
     if newState.requests.data.values.size == 1 then {
       Time.report("got request")
