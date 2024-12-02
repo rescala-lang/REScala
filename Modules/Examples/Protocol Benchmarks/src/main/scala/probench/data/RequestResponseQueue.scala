@@ -119,7 +119,18 @@ object RequestResponseQueue {
         processed,
         left.clock.merge(right.clock)
       )
-
   }
 
+}
+
+extension [S, T](dotted: Dotted[RequestResponseQueue[S, T]]) {
+  def requests: Queue[RequestResponseQueue.Req[S]] = dotted.data.requests
+  def responses: Queue[Res[S, T]] = dotted.data.responses
+
+  def request(value: S)(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.request(value)
+  def respond(req: Req[S], value: T)(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.respond(req, value)
+  def complete(req: Req[S])(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.complete(req)
+  def firstUnansweredRequest: Option[Req[S]] = dotted.data.firstUnansweredRequests
+
+  def responsesTo(req: Req[S]): Seq[Res[S, T]] = dotted.data.responsesTo(req)
 }
