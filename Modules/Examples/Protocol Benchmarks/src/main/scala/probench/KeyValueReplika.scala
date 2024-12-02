@@ -25,7 +25,7 @@ object Time {
     }
 }
 
-class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
+class KeyValueReplika(val name: Uid, val initialClusterIds: Set[Uid]) {
 
   private type ClusterState = Membership[Request, Paxos, Paxos]
 

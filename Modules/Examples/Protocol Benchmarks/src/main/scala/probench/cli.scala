@@ -83,7 +83,7 @@ object cli {
       alternatives(
         subcommand("easy-setup", "for lazy tests") {
           val ids                              = Set("Node1", "Node2", "Node3").map(Uid.predefined)
-          val nodes @ (primary :: secondaries) = ids.map { id => Node(id, ids) }.toList: @unchecked
+          val nodes @ (primary :: secondaries) = ids.map { id => KeyValueReplika(id, ids) }.toList: @unchecked
           val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[Request, Paxos, Paxos]]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.name.toString)) }
@@ -109,7 +109,7 @@ object cli {
 
         },
         subcommand("node", "starts a cluster node") {
-          val node = Node(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
 
           node.addClientConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", clientPort.value)), ec))
           node.addClusterConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", peerPort.value)), ec))
@@ -121,7 +121,7 @@ object cli {
           }
         },
         subcommand("nio-node", "starts a cluster node") {
-          val node = Node(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
 
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
@@ -142,7 +142,7 @@ object cli {
           }
         },
         subcommand("udp-node", "starts a cluster node") {
-          val node = Node(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
 
           node.addClientConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
           node.addClusterConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
