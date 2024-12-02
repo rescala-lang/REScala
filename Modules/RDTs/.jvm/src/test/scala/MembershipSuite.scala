@@ -3,7 +3,7 @@ import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.simplified.GeneralizedPaxos
-import rdts.datatypes.experiments.protocols.{Consensus, LogHack, Membership, simplified}
+import rdts.datatypes.experiments.protocols.{Consensus, Membership, simplified}
 
 import scala.util.Try
 class MembershipSuite extends munit.ScalaCheckSuite {
@@ -121,7 +121,7 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
 
   case class Upkeep(id: LocalUid) extends ACommand(id):
     override def nextLocalState(states: Map[LocalUid, Membership[A, C, D]]): Membership[A, C, D] =
-      val delta = states(id).upkeep()(using id, LogHack(logging))
+      val delta = states(id).upkeep()(using id)
       Lattice.merge(states(id), delta)
 
     override def postCondition(state: State, result: Try[Result]): Prop =

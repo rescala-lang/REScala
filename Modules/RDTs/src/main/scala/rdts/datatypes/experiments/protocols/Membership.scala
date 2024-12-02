@@ -7,10 +7,6 @@ import rdts.time.Time
 
 import scala.collection.immutable.NumericRange
 
-class LogHack(on: Boolean) {
-  inline def info(arg: => String): Unit = if on then println(arg) else ()
-}
-
 case class Membership[A, C[_], D[_]](
     counter: Time,
     membersConsensus: C[Set[Uid]],
@@ -65,14 +61,13 @@ case class Membership[A, C[_], D[_]](
 
   def isMember(using LocalUid, Consensus[C], Consensus[D]): Boolean = currentMembers.contains(replicaId)
 
-  def upkeep()(using rid: LocalUid, logger: LogHack, cc: Consensus[C], cd: Consensus[D]): Membership[A, C, D] =
+  def upkeep()(using rid: LocalUid, cc: Consensus[C], cd: Consensus[D]): Membership[A, C, D] =
     if !isMember then return unchanged // do nothing if we are not a member anymore
     val newMembers = membersConsensus.merge(membersConsensus.upkeep())
     val newInner   = innerConsensus.merge(innerConsensus.upkeep())
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
-        logger.info { s"Member consensus reached on members $members" }
         copy(
           counter = counter + 1,
           membersConsensus = Consensus[C].empty,
@@ -83,7 +78,6 @@ case class Membership[A, C[_], D[_]](
       // inner consensus is reached
       case (None, Some(value)) if !membershipChanging =>
         val newLog = Map(counter -> value)
-        logger.info { s"$rid: Inner consensus reached on value $value, log: $newLog" }
         copy(
           counter = counter + 1,
           membersConsensus = Consensus[C].empty,

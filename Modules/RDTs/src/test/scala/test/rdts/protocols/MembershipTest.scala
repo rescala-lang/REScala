@@ -2,7 +2,7 @@ package test.rdts.protocols
 
 import rdts.base.LocalUid
 import rdts.datatypes.experiments.protocols.simplified.{MultiRoundVoting, Paxos, SimpleVoting}
-import rdts.datatypes.experiments.protocols.{LogHack, Membership}
+import rdts.datatypes.experiments.protocols.{Membership}
 
 class MembershipTest extends munit.FunSuite {
 
@@ -12,7 +12,6 @@ class MembershipTest extends munit.FunSuite {
   val id4 = LocalUid.gen()
 
   test("Membership happy path") {
-    given LogHack(false)
     var membership = Membership.init[Int, Paxos, Paxos](Set(id1, id2, id3).map(_.uid))
     // id1 writes -> prepare
     assert(membership.isMember(using id1))
@@ -52,7 +51,6 @@ class MembershipTest extends munit.FunSuite {
   }
 
   test("Membership with member change") {
-    given LogHack(false)
     var membership = Membership.init[Int, Paxos, Paxos](Set(id1, id2, id3).map(_.uid))
     // id1 writes -> prepare
     assert(membership.isMember(using id1))
@@ -98,7 +96,6 @@ class MembershipTest extends munit.FunSuite {
   }
 
   test("Fixed counterexample from suite") {
-    given LogHack(false)
     var membership1 = Membership.init[Int, Paxos, Paxos](Set(id1, id2, id3, id4).map(_.uid))
     var membership2 = Membership.init[Int, Paxos, Paxos](Set(id1, id2, id3, id4).map(_.uid))
     // id1 writes -> prepare

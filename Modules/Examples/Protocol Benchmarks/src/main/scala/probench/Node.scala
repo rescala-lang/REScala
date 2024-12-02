@@ -3,8 +3,8 @@ package probench
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
 import rdts.base.{Bottom, LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
-import rdts.datatypes.experiments.protocols.{LogHack, Membership}
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 
@@ -13,17 +13,16 @@ import scala.util.chaining.scalaUtilChainingOps
 
 object Time {
 
-  val logger = LogHack(false)
-
   var current: Long = System.nanoTime()
 
-  def report(name: => String = ""): Unit = logger.info {
-    synchronized {
-      val last = current
-      current = System.nanoTime()
-      s"$name took ${(current - last).doubleValue / 1000_000}ms"
+  def report(name: => String = ""): Unit = if false then
+    println {
+      synchronized {
+        val last = current
+        current = System.nanoTime()
+        s"$name took ${(current - last).doubleValue / 1000_000}ms"
+      }
     }
-  }
 }
 
 class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
@@ -31,7 +30,6 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
   private type ClusterState = Membership[Request, Paxos, Paxos]
 
   given localUid: LocalUid = LocalUid(name)
-  given LogHack            = new LogHack(false)
 
   val clientDataManager: ProDataManager[ClientNodeState] =
     ProDataManager[ClientNodeState](
@@ -77,11 +75,12 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
 
     Time.report(s"[$tid] cluster changed")
 
-    def timeStep(msg: => String): Unit = Time.logger.info {
-      val current = last
-      last = System.nanoTime()
-      s"[$tid] $msg after ${(last - current).doubleValue / 1000_000}ms"
-    }
+    def timeStep(msg: => String): Unit = if false then
+      println {
+        val current = last
+        last = System.nanoTime()
+        s"[$tid] $msg after ${(last - current).doubleValue / 1000_000}ms"
+      }
 
     val delta                = newState.upkeep()
     val upkept: ClusterState = newState.merge(delta)
@@ -129,7 +128,7 @@ class Node(val name: Uid, val initialClusterIds: Set[Uid]) {
     }
 
     timeStep("done")
-    Time.logger.info(s"[$tid] total ${(System.nanoTime() - start).doubleValue / 1000_000}ms")
+    if false then println(s"[$tid] total ${(System.nanoTime() - start).doubleValue / 1000_000}ms")
   }
 
   export clientDataManager.addLatentConnection as addClientConnection
