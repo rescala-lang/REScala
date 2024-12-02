@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
-import probench.data.{ClientNodeState, KVOperation, Request}
+import probench.data.{ClientNodeState, ClusterData, KVOperation}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.{GeneralizedPaxos, Paxos}
@@ -53,13 +53,13 @@ object cli {
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given paxosMembership: JsonValueCodec[Membership[Request, Paxos, Paxos]] =
+    given paxosMembership: JsonValueCodec[Membership[ClusterData, Paxos, Paxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given genPaxosMembership: JsonValueCodec[Membership[Request, GeneralizedPaxos, GeneralizedPaxos]] =
+    given genPaxosMembership: JsonValueCodec[Membership[ClusterData, GeneralizedPaxos, GeneralizedPaxos]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given JsonValueCodec[ProtocolMessage[Membership[Request, Paxos, Paxos]]] =
+    given JsonValueCodec[ProtocolMessage[Membership[ClusterData, Paxos, Paxos]]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(host: String, port: Int) = {
@@ -69,7 +69,6 @@ object cli {
 //      UnixDomainSocketAddress.of(p)
 
       InetSocketAddress(host, port)
-
     }
 
     val cluster           = named[List[(String, Int)]]("--cluster", "")
@@ -83,8 +82,8 @@ object cli {
       alternatives(
         subcommand("easy-setup", "for lazy tests") {
           val ids                              = Set("Node1", "Node2", "Node3").map(Uid.predefined)
-          val nodes @ (primary :: secondaries) = ids.map { id => KeyValueReplika(id, ids) }.toList: @unchecked
-          val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[Request, Paxos, Paxos]]]()
+          val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
+          val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[ClusterData, Paxos, Paxos]]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
@@ -93,7 +92,7 @@ object cli {
 
           nodes.foreach { node =>
             node.addClusterConnection(
-              FileConnection[Membership[Request, Paxos, Paxos]](persistencePath.resolve(node.uid.toString + ".jsonl"))
+              FileConnection[Membership[ClusterData, Paxos, Paxos]](persistencePath.resolve(node.uid.toString + ".jsonl"))
             )
           }
 
@@ -109,7 +108,7 @@ object cli {
 
         },
         subcommand("node", "starts a cluster node") {
-          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
           node.addClientConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", clientPort.value)), ec))
           node.addClusterConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", peerPort.value)), ec))
@@ -121,7 +120,7 @@ object cli {
           }
         },
         subcommand("nio-node", "starts a cluster node") {
-          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
@@ -142,7 +141,7 @@ object cli {
           }
         },
         subcommand("udp-node", "starts a cluster node") {
-          val node = KeyValueReplika(name.value, initialClusterIds.value.toSet)
+          val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
           node.addClientConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
           node.addClusterConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))

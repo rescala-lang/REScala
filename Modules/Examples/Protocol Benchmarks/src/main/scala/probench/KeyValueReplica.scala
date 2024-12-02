@@ -2,11 +2,13 @@ package probench
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
+import probench.data.RequestResponseQueue.{Req, Res}
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
+import rdts.time.Dot
 import replication.DeltaDissemination
 
 import scala.collection.mutable
@@ -26,9 +28,9 @@ object Time {
     }
 }
 
-class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
+class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
-  private type ClusterState = Membership[Request, Paxos, Paxos]
+  private type ClusterState = Membership[ClusterData, Paxos, Paxos]
 
   given localUid: LocalUid = LocalUid(uid)
 
@@ -64,12 +66,10 @@ class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
-
-    val newRequests = newState.requests.data.elements `diff` oldState.requests.data.elements
-    newRequests.foreach { request =>
+    newState.firstUnansweredRequest.foreach { req =>
       clusterDataManager.applyDelta {
         currentStateLock.synchronized {
-          val delta = currentState.write(request)
+          val delta = currentState.write(ClusterData(req.value, req.dot))
           currentState = currentState.merge(delta)
           delta
         }
@@ -99,11 +99,11 @@ class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
 
     for decidedRequest <- newState.readDecisionsSince(oldState.counter) do {
       val decision: String = decidedRequest match {
-        case Request(KVOperation.Read(key), _) =>
+        case ClusterData(KVOperation.Read(key), _) =>
           kvCache.synchronized {
             kvCache.getOrElse(key, s"Key '$key' has not been written to!")
           }
-        case Request(KVOperation.Write(key, value), _) =>
+        case ClusterData(KVOperation.Write(key, value), _) =>
           kvCache.synchronized {
             kvCache.put(key, value)
           }
@@ -111,21 +111,12 @@ class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
       }
 
       clientDataManager.transform { it =>
-        if it.state.requests.data.elements.contains(decidedRequest) then {
-          it.mod { state =>
-            // println(s"Writing Response: $op -> $res")
-            val newState = state.copy(
-              requests = state.requests.mod(_.remove(decidedRequest).toObrem),
-              responses = state.responses.mod(_.add(Response(decidedRequest, decision)).toObrem),
-            )
-            // println(s"Remaining Requests: ${newState.requests.data.values.toList.map(_.value)}")
-            newState
-          }.tap(_ =>
-            timeStep("answering request")
-          )
-        } else it
+        it.state.requests.collectFirst { case req if req.dot == decidedRequest.origin => req }.map { req =>
+          it.mod(_.respond(req, decision))
+        }.getOrElse(it)
       }
 
+      /*
       val clientState = clientDataManager.mergedState
 
       if clientState.requests.data.elements.nonEmpty then {
@@ -137,6 +128,7 @@ class KeyValueReplika(val uid: Uid, val votingReplicas: Set[Uid]) {
           }
         }
       }
+       */
     }
 
     timeStep("done")

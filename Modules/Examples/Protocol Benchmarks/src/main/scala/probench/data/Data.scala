@@ -12,10 +12,6 @@ enum KVOperation[Key, Value] {
   case Write(key: Key, value: Value)
 }
 
-case class Request(op: KVOperation[String, String], requestUid: Uid = Uid.gen())
-case class Response(request: Request, payload: String)
+type ClientNodeState = Dotted[RequestResponseQueue[KVOperation[String, String], String]]
 
-case class ClientNodeState(
-    requests: Obrem[ReplicatedSet[Request]],
-    responses: Obrem[ReplicatedSet[Response]],
-) derives Lattice, Bottom
+case class ClusterData(op: KVOperation[String, String], origin: Dot)
