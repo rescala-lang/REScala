@@ -38,7 +38,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     DeltaDissemination(
       localUid,
       handleIncoming,
-      immediateForward = false
+      immediateForward = true
     )
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
