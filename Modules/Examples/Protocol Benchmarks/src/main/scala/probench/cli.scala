@@ -52,14 +52,13 @@ object cli {
     end uidParser
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    
+    type MembershipType = Membership[ClusterData, Paxos, Paxos]
 
-    given paxosMembership: JsonValueCodec[Membership[ClusterData, Paxos, Paxos]] =
+    given paxosMembership: JsonValueCodec[MembershipType] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given genPaxosMembership: JsonValueCodec[Membership[ClusterData, GeneralizedPaxos, GeneralizedPaxos]] =
-      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-    given JsonValueCodec[ProtocolMessage[Membership[ClusterData, Paxos, Paxos]]] =
+    given JsonValueCodec[ProtocolMessage[MembershipType]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(host: String, port: Int) = {
@@ -83,7 +82,7 @@ object cli {
         subcommand("easy-setup", "for lazy tests") {
           val ids                              = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
-          val connection = channels.SynchronousLocalConnection[ProtocolMessage[Membership[ClusterData, Paxos, Paxos]]]()
+          val connection = channels.SynchronousLocalConnection[ProtocolMessage[MembershipType]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
@@ -92,7 +91,7 @@ object cli {
 
           nodes.foreach { node =>
             node.addClusterConnection(
-              FileConnection[Membership[ClusterData, Paxos, Paxos]](persistencePath.resolve(node.uid.toString + ".jsonl"))
+              FileConnection[MembershipType](persistencePath.resolve(node.uid.toString + ".jsonl"))
             )
           }
 
