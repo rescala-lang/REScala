@@ -1,6 +1,0 @@
-jdk:
-  - openjdk11
-install:
-  - make publishJitpack
-env:
-  SBT_OPTS: "-XX:MaxPermSize=2G"
