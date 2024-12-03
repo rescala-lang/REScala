@@ -43,7 +43,7 @@ case class RequestResponseQueue[S, T](
   def responsesTo(req: Req[S]): Seq[Res[S, T]] =
     responses.filter(res => res.request == req)
 
-  def firstUnansweredRequests: Option[Req[S]] =
+  def firstUnansweredRequest: Option[Req[S]] =
     requests.collectFirst { case r: Req[S] if responsesTo(r).isEmpty => r }
 
   def complete(req: Req[S])(using id: LocalUid): Delta = {
@@ -104,11 +104,5 @@ object RequestResponseQueue {
         left.clock.merge(right.clock)
       )
   }
-
-}
-
-extension [S, T](dotted: RequestResponseQueue[S, T]) {
-
-  def firstUnansweredRequest: Option[Req[S]]                                    = dotted.firstUnansweredRequests
 
 }
