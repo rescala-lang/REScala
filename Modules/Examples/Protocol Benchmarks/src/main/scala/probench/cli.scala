@@ -52,7 +52,7 @@ object cli {
     end uidParser
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    
+
     type MembershipType = Membership[ClusterData, Paxos, Paxos]
 
     given paxosMembership: JsonValueCodec[MembershipType] =
@@ -80,19 +80,23 @@ object cli {
 
       alternatives(
         subcommand("easy-setup", "for lazy tests") {
-          val ids                              = Set("Node1", "Node2", "Node3").map(Uid.predefined)
+          val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
-          val connection = channels.SynchronousLocalConnection[ProtocolMessage[MembershipType]]()
+          val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[MembershipType]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
-          val persistencePath = Path.of("target/clusterdb/")
-          Files.createDirectories(persistencePath)
+          val persist = flag("--persistence", "enable persistence").value
 
-          nodes.foreach { node =>
-            node.addClusterConnection(
-              FileConnection[MembershipType](persistencePath.resolve(node.uid.toString + ".jsonl"))
-            )
+          if persist then {
+            val persistencePath = Path.of("target/clusterdb/")
+            Files.createDirectories(persistencePath)
+
+            nodes.foreach { node =>
+              node.addClusterConnection(
+                FileConnection[MembershipType](persistencePath.resolve(node.uid.toString + ".jsonl"))
+              )
+            }
           }
 
           val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientNodeState]]()
