@@ -1,6 +1,6 @@
 package rdts.datatypes.alternatives
 
-import rdts.base.{Bottom, Lattice, Uid}
+import rdts.base.{Bottom, Decompose, Lattice, Uid}
 import rdts.time.VectorClock
 
 import scala.annotation.tailrec
@@ -21,15 +21,15 @@ case class MultiValueRegister[T](versions: Map[VectorClock, T]) {
 }
 
 object MultiValueRegister {
-  given lattice[T]: Lattice[MultiValueRegister[T]] = new Lattice[MultiValueRegister[T]] {
+  given lattice[T]: Lattice[MultiValueRegister[T]] with Decompose[MultiValueRegister[T]] with {
     override def merge(left: MultiValueRegister[T], right: MultiValueRegister[T]): MultiValueRegister[T] =
       val both   = left.versions ++ right.versions
       val toKeep = parallelVersionSubset(both.keySet.toList, List.empty)
       MultiValueRegister(both.filter { case (k, v) => toKeep.contains(k) })
 
-    override def decompose(a: MultiValueRegister[T]): Iterable[MultiValueRegister[T]] = {
-      a.versions.view.map(pair => MultiValueRegister(Map(pair)))
-    }
+    extension (a: MultiValueRegister[T])
+      override def decomposed: Iterable[MultiValueRegister[T]] =
+        a.versions.view.map(pair => MultiValueRegister(Map(pair)))
   }
 
   given bottom[T]: Bottom[MultiValueRegister[T]] = Bottom.derived

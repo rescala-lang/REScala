@@ -1,7 +1,7 @@
 package test.rdts.bespoke
 
 import rdts.base.LocalUid.asId
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.datatypes.GrowOnlySet.{elements, insert}
 import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
@@ -151,6 +151,8 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(delta_1, delta_2)
     assertEquals(merged.data.read, 2)
 
+    given Decompose[LastWriterWins[Int]] = Decompose.atomic
+
     val delta_1_diff_delta_2: Option[Dotted[LastWriterWins[Int]]] =
       Lattice[Dotted[LastWriterWins[Int]]].diff(delta_1, delta_2)
     assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")
@@ -241,6 +243,7 @@ class DiffManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.get(1).map(_.payload), Some("one"))
     assertEquals(merged.data.get(2).map(_.payload), Some("two"))
 
+    given Decompose[LastWriterWins[String]] = Decompose.atomic
     val delta_1_diff_delta_2: Option[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
       Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].diff(delta_1, delta_2)
     assertEquals(delta_1_diff_delta_2.isDefined, true, "delta_2 is not contained in delta_1")

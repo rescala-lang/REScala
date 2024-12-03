@@ -1,6 +1,6 @@
 package rdts.datatypes
 
-import rdts.base.{Bottom, Lattice, Orderings}
+import rdts.base.{Bottom, Decompose, Lattice, Orderings}
 import rdts.dotted.HasDots
 import rdts.time.CausalTime
 
@@ -50,10 +50,11 @@ object LastWriterWins {
     case _                        => GenericLastWriterWinsLattice(Lattice.assertEquals)
   }
 
-  class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] {
+  class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] with Decompose[LastWriterWins[A]] {
     override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp
 
-    override def decompose(state: LastWriterWins[A]): Iterable[LastWriterWins[A]] = List(state)
+    extension (a: LastWriterWins[A])
+      override def decomposed: Iterable[LastWriterWins[A]] = List(a)
 
     override def merge(left: LastWriterWins[A], right: LastWriterWins[A]): LastWriterWins[A] =
       CausalTime.ordering.compare(left.timestamp, right.timestamp) match

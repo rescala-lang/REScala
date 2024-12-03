@@ -1,7 +1,7 @@
 package test.rdts.corestructs
 
 import org.scalacheck.Prop.*
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Decompose, Lattice, Uid}
 import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots}
@@ -141,7 +141,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       val withContext = Dotted(df, cc)
 
-      val decomposed: Iterable[Dotted[Map[Dot, Int]]] = Lattice.decompose(withContext)
+      val decomposed: Iterable[Dotted[Map[Dot, Int]]] = Decompose.decompose(withContext)
 
       decomposed.foreach { dec =>
         assert(dec <= withContext)

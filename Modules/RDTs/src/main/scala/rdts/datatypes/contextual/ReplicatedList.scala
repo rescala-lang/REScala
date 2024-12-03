@@ -1,6 +1,6 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.datatypes.contextual.ReplicatedList.deltaState
 import rdts.datatypes.{Epoch, GrowOnlyList, LastWriterWins}
 import rdts.dotted.HasDots.mapInstance
@@ -181,6 +181,10 @@ object ReplicatedList {
   def empty[E]: ReplicatedList[E] = ReplicatedList(Epoch.empty, Map.empty)
 
   given lattice[E]: Lattice[ReplicatedList[E]] = Lattice.derived
+  given decompose[E]: Decompose[ReplicatedList[E]] =
+    given Decompose[LastWriterWins[E]] = Decompose.atomic
+    Decompose.derived
+
   given hasDots[E]: HasDots[ReplicatedList[E]] with {
     extension (dotted: ReplicatedList[E])
       def dots: Dots = dotted.meta.dots

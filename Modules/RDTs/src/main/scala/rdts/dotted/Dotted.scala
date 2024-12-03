@@ -1,6 +1,6 @@
 package rdts.dotted
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.time.{Dot, Dots}
 
 case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
@@ -17,6 +17,7 @@ case class Obrem[A](data: A, observed: Dots, deletions: Dots) {
 /** Decorates an existing lattice to filter the values before merging them.
   * Warning: Decoration breaks when the decorated lattice has overridden methods except merge and decompose, or uses merge from within merge/decompose.
   */
+@FunctionalInterface
 trait FilteredLattice[A](decorated: Lattice[A]) extends Lattice[A] {
   def filter(base: A, other: A): A
 
@@ -24,8 +25,6 @@ trait FilteredLattice[A](decorated: Lattice[A]) extends Lattice[A] {
     val filteredLeft  = filter(left, right)
     val filteredRight = filter(right, left)
     decorated.merge(filteredLeft, filteredRight)
-
-  override def decompose(a: A): Iterable[A] = decorated.decompose(a)
 }
 
 object Obrem {
@@ -77,6 +76,25 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
+  given decompose[A: Decompose: HasDots: Bottom: Lattice]: Decompose[Dotted[A]] = new Decompose[Dotted[A]] {
+
+    extension (a: Dotted[A])
+      override def decomposed: Iterable[Dotted[A]] = {
+        /** Dotted decompose guarantees decomposes its inner value, but recomposes any values with overlapping dots, such that each dot is present in exactly one of the returned deltas. */
+        val deltas = a.data.decomposed.flatMap: delta =>
+          val dots = delta.dots
+          Option.when(!dots.isEmpty || !delta.isEmpty):
+            Dotted(delta, delta.dots)
+
+        val compacted   = compact(deltas.toList, Nil)
+        val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ `union` _)
+        assert(a.context.contains(presentDots), "fantasized new dots, this likely means a bug elsewhere")
+        val removed = a.context `subtract` presentDots
+        val empty   = Bottom[A].empty
+        compacted concat removed.decomposed.flatMap(dots => Option.when(!dots.isEmpty)(Dotted(empty, dots)))
+      }
+  }
+
   given lattice[A: HasDots: Bottom: Lattice]: FilteredLattice[Dotted[A]](Lattice.derived) with {
 
     override def filter(base: Dotted[A], other: Dotted[A]): Dotted[A] =
@@ -85,20 +103,6 @@ object Dotted {
       then base
       else
         base.copy(data = base.data.removeDots(other.deletions).getOrElse(Bottom.empty))
-
-    /** Dotted decompose guarantees decomposes its inner value, but recomposes any values with overlapping dots, such that each dot is present in exactly one of the returned deltas. */
-    override def decompose(a: Dotted[A]): Iterable[Dotted[A]] =
-      val deltas = a.data.decomposed.flatMap: delta =>
-        val dots = delta.dots
-        Option.when(!dots.isEmpty || !delta.isEmpty):
-          Dotted(delta, delta.dots)
-
-      val compacted   = compact(deltas.toList, Nil)
-      val presentDots = compacted.iterator.map(_.context).foldLeft(Dots.empty)(_ `union` _)
-      assert(a.context.contains(presentDots), "fantasized new dots, this likely means a bug elsewhere")
-      val removed = a.context `subtract` presentDots
-      val empty   = Bottom[A].empty
-      compacted concat removed.decomposed.flatMap(dots => Option.when(!dots.isEmpty)(Dotted(empty, dots)))
 
   }
 

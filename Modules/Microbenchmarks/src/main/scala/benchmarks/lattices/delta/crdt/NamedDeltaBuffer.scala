@@ -1,6 +1,6 @@
 package benchmarks.lattices.delta.crdt
 
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Decompose, Lattice, LocalUid, Uid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import rdts.time.{Dot, Dots}
 
@@ -18,10 +18,10 @@ case class NamedDeltaBuffer[State](
     deltaBuffer: List[Named[State]] = Nil
 ) {
 
-  inline def map(f: LocalUid ?=> State => State)(using Lattice[State]): NamedDeltaBuffer[State] =
+  inline def map(f: LocalUid ?=> State => State)(using Lattice[State], Decompose[State]): NamedDeltaBuffer[State] =
     applyDelta(replicaID.uid, f(using replicaID)(state))
 
-  def applyDelta(source: Uid, delta: State)(using Lattice[State]): NamedDeltaBuffer[State] =
+  def applyDelta(source: Uid, delta: State)(using Lattice[State], Decompose[State]): NamedDeltaBuffer[State] =
     Lattice[State].diff(state, delta) match {
       case Some(stateDiff) =>
         val stateMerged = Lattice[State].merge(state, stateDiff)
@@ -31,19 +31,19 @@ case class NamedDeltaBuffer[State](
 
   def clearDeltas(): NamedDeltaBuffer[State] = copy(deltaBuffer = List())
 
-  def transform(f: State => State)(using Lattice[State]) = applyDelta(replicaID.uid, f(state))
+  def transform(f: State => State)(using Lattice[State], Decompose[State]) = applyDelta(replicaID.uid, f(state))
 }
 
 object NamedDeltaBuffer {
 
-  extension [A](curr: DeltaBufferDotted[A])(using Lattice[Dotted[A]])
+  extension [A](curr: DeltaBufferDotted[A])(using Lattice[Dotted[A]], Decompose[Dotted[A]])
     inline def mod(f: Dots ?=> A => Dotted[A]): DeltaBufferDotted[A] = {
       curr.applyDelta(curr.replicaID.uid, curr.state.mod(f(_)))
     }
   extension [A](curr: DeltaBufferDotted[A]) def data: A = curr.state.data
 
   implicit object workaround {
-    extension [A](curr: NamedDeltaBuffer[A])(using Lattice[A])
+    extension [A](curr: NamedDeltaBuffer[A])(using Lattice[A],  Decompose[A])
       inline def mod(f: A => A): NamedDeltaBuffer[A] = {
         curr.applyDelta(curr.replicaID.uid, f(curr.state))
       }
@@ -52,6 +52,7 @@ object NamedDeltaBuffer {
   implicit object workaround2 {
     extension [A](curr: NamedDeltaBuffer[Obrem[A]])(using Lattice[Obrem[A]])
       inline def mod(f: Dots ?=> A => Obrem[A]): NamedDeltaBuffer[Obrem[A]] = {
+        given Decompose[Obrem[A]] = Decompose.atomic
         curr.applyDelta(curr.replicaID.uid, curr.state.mod(f(_)))
       }
     extension [A](curr: NamedDeltaBuffer[Obrem[A]]) def data: A = curr.state.data

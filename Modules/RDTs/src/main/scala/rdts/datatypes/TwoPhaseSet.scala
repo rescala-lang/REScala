@@ -1,6 +1,6 @@
 package rdts.datatypes
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Decompose, Lattice}
 import rdts.dotted.HasDots
 
 /** A TwoPhaseSet (Two-Phase Set) is a Delta CRDT modeling a set.
@@ -33,6 +33,7 @@ object TwoPhaseSet {
   given bottom[E]: Bottom[TwoPhaseSet[E]] with { override def empty: TwoPhaseSet[E] = TwoPhaseSet.empty }
 
   given lattice[E]: Lattice[TwoPhaseSet[E]] = Lattice.derived
+  given decompose[E]: Decompose[TwoPhaseSet[E]] = Decompose.derived
   given hasDots[E]: HasDots[TwoPhaseSet[E]] = HasDots.noDots
 
 }

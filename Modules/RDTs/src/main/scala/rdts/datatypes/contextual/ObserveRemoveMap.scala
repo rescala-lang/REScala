@@ -1,11 +1,11 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.dotted.HasDots.mapInstance
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import rdts.time.Dots
 
-case class ObserveRemoveMap[K, V](inner: Map[K, V]) {
+case class ObserveRemoveMap[K, V](inner: Map[K, V]) derives Decompose {
   export inner.get
 
   import ObserveRemoveMap.make

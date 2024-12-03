@@ -1,6 +1,6 @@
 package rdts.datatypes.alternatives
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.datatypes.alternatives.ResettableCounter.deltaState
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots}
@@ -13,7 +13,7 @@ import rdts.time.{Dot, Dots}
   * This counter was originally proposed by Baquera et al.
   * in "The problem with embedded CRDT counters and a solution", see [[https://dl.acm.org/doi/abs/10.1145/2911151.2911159 here]]
   */
-case class ResettableCounter(inner: Map[Dot, (Int, Int)]) derives Bottom {
+case class ResettableCounter(inner: Map[Dot, (Int, Int)]) derives Bottom, Decompose {
 
   type Delta = Dotted[ResettableCounter]
 

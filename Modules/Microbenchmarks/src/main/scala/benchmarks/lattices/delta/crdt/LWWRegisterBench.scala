@@ -1,6 +1,7 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.Decompose
 import rdts.base.LocalUid.asId
 import rdts.datatypes.LastWriterWins
 
@@ -14,6 +15,8 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class LWWRegisterBench {
+  
+  given Decompose[LastWriterWins[Int]] = Decompose.atomic
 
   var full: NamedDeltaBuffer[LastWriterWins[Int]] = scala.compiletime.uninitialized
 

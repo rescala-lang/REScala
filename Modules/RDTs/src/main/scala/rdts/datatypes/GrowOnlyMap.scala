@@ -1,6 +1,6 @@
 package rdts.datatypes
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Decompose, Lattice}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.Dots
 
@@ -32,6 +32,8 @@ object GrowOnlyMap {
   given bottom[K, V]: Bottom[GrowOnlyMap[K, V]] = Bottom.provide(empty)
 
   given lattice[K, V: Lattice]: Lattice[GrowOnlyMap[K, V]] = Lattice.derived
+
+  given decompose[K, V: Decompose]: Decompose[GrowOnlyMap[K, V]] = Decompose.derived
 
   // inline to enable optional summoning of has dots instances for K and V
   inline given hasDots[K, V]: HasDots[GrowOnlyMap[K, V]] = HasDots.derived

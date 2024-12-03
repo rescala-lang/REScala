@@ -1,7 +1,7 @@
 package test.rdts.bespoke
 
 import rdts.base.LocalUid.asId
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.datatypes.GrowOnlySet.{elements, insert}
 import rdts.datatypes.contextual.{EnableWinsFlag, MultiVersionRegister}
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap, GrowOnlySet, LastWriterWins, PosNegCounter}
@@ -28,7 +28,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: GrowOnlyCounter = Lattice[GrowOnlyCounter].merge(delta_1, delta_2)
     assertEquals(merged.value, 2)
 
-    val decomposed: Seq[GrowOnlyCounter] = Lattice[GrowOnlyCounter].decompose(merged).toSeq
+    val decomposed: Seq[GrowOnlyCounter] = Decompose.decompose(merged).toSeq
     // GrowOnlyCounter decomposes into every increment
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).value, 1)
@@ -49,7 +49,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: PosNegCounter = Lattice[PosNegCounter].merge(delta_1, delta_2)
     assertEquals(merged.value, 0)
 
-    val decomposed: Seq[PosNegCounter] = Lattice[PosNegCounter].decompose(merged).toSeq.sortBy(_.value)
+    val decomposed: Seq[PosNegCounter] = Decompose.decompose(merged).toSeq.sortBy(_.value)
     // GrowOnlyCounter decomposes into every increment & decrement
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).value, -1)
@@ -77,7 +77,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.read, true)
 
     val decomposed: Seq[Dotted[EnableWinsFlag]] =
-      Lattice[Dotted[EnableWinsFlag]].decompose(merged).toSeq.sortBy(_.data.inner.internal.keys.headOption)
+      Decompose.decompose(merged).toSeq.sortBy(_.data.inner.internal.keys.headOption)
     // EnableWinsFlag does not decompose, only returns the value.
     // Dotted decomposes context and value. As context is completely covered by EnableWinsFlag, no additional entry for context.
     assertEquals(decomposed.size, 1)
@@ -122,7 +122,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(val_3.data.read, true)
 
     val decomposed: Seq[Dotted[EnableWinsFlag]] =
-      Lattice[Dotted[EnableWinsFlag]].decompose(val_3).toSeq.sortBy(_.data.inner.internal.keys.headOption)
+      Decompose.decompose(val_3).toSeq.sortBy(_.data.inner.internal.keys.headOption)
     // Dotted decomposes context and value - one entry for EnableWinsFlag with their Dot and one entry with remaining context
     assertEquals(decomposed.size, 2)
 
@@ -151,7 +151,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.read, Set(1, 2))
 
     val decomposed: Seq[Dotted[MultiVersionRegister[Int]]] =
-      Lattice[Dotted[MultiVersionRegister[Int]]].decompose(merged).toSeq.sortBy(_.data.read.headOption)
+      Decompose.decompose(merged).toSeq.sortBy(_.data.read.headOption)
     // MultiVersionRegister decomposes every version
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).data.read, Set(1))
@@ -176,7 +176,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(delta_1, delta_2)
     assertEquals(merged.read, 2)
 
-    val decomposed: Seq[Dotted[LastWriterWins[Int]]] = Lattice[Dotted[LastWriterWins[Int]]].decompose(merged).toSeq
+    val decomposed: Seq[Dotted[LastWriterWins[Int]]] =
+      Decompose.decompose(merged)(using Dotted.decompose(using Decompose.atomic)).toSeq
     // LastWriterWins does not decompose, only returns the value.
     // Dotted decomposes context and value, but as LWW is not contextual, context is empty and not decomposed.
     assertEquals(decomposed.size, 1)
@@ -200,7 +201,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.elements, Set(1, 2))
 
     val decomposed: Seq[GrowOnlySet[Int]] =
-      Lattice[GrowOnlySet[Int]].decompose(merged).toSeq.sortBy(_.elements.headOption)
+      Decompose.decompose(merged).toSeq.sortBy(_.elements.headOption)
     // GrowOnlySet decomposes every entry
     assertEquals(decomposed.size, 2)
     assertEquals(decomposed(0).elements, Set(1))
@@ -252,7 +253,8 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.get(2).map(_.payload), Some("two"))
 
     val decomposed: Seq[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]] =
-      Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+      given Decompose[LastWriterWins[String]] = Decompose.atomic
+      Decompose.decompose(merged).toSeq.sortBy(_.data.keys.headOption)
     // GrowOnlyMap decomposes every entry.
     // LastWriterWins does not decompose, only returns the value.
     // Dotted decomposes context and value, but as LWW is not contextual, the context is empty and there is no additional entry for it.
@@ -300,7 +302,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(merged.data.get(2).map(_.read), Some(true))
 
     val decomposed: Seq[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]] =
-      Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].decompose(merged).toSeq.sortBy(_.data.keys.headOption)
+      Decompose.decompose(merged).toSeq.sortBy(_.data.keys.headOption)
     // GrowOnlyMap decomposes every entry and the context.
     // EnableWinsFlag is contextual. Every entry has its own required context.
     // The complete context is covered by the entries.

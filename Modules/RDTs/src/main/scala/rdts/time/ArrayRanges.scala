@@ -1,6 +1,6 @@
 package rdts.time
 
-import rdts.base.Lattice
+import rdts.base.{Decompose, Lattice}
 
 import java.util
 
@@ -359,8 +359,9 @@ object ArrayRanges {
     new ArrayRanges(newInternal, newInternalNextIndex)
   }
 
-  given latticeInstance: Lattice[ArrayRanges] with {
-    override def decompose(a: ArrayRanges): Iterable[ArrayRanges]          = a.decomposed
+  given latticeInstance: Lattice[ArrayRanges] with Decompose[ArrayRanges] with {
+    extension (a: ArrayRanges)
+      override def decomposed: Iterable[ArrayRanges]                       = a.decomposed
     override def lteq(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
     override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left `union` right
   }

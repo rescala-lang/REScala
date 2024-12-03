@@ -1,6 +1,6 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.dotted.*
 import rdts.dotted.HasDots.mapInstance
 import rdts.time.{Dot, Dots}
@@ -9,7 +9,7 @@ import rdts.time.{Dot, Dots}
   * Each unique element tracks the dots of when it was inserted.
   * Removals do not override concurrent inserts.
   */
-case class ReplicatedSet[E](inner: Map[E, Dots]) {
+case class ReplicatedSet[E](inner: Map[E, Dots]) derives Lattice, Decompose {
 
   type Delta = Dotted[ReplicatedSet[E]]
 
@@ -87,6 +87,7 @@ object ReplicatedSet {
 
   given bottom[E]: Bottom[ReplicatedSet[E]]   = Bottom.provide(empty)
   given lattice[E]: Lattice[ReplicatedSet[E]] = Lattice.derived
+  given decompose[E]: Decompose[ReplicatedSet[E]] = Decompose.derived
   given hasDots[E]: HasDots[ReplicatedSet[E]] = HasDots.derived
 
 }

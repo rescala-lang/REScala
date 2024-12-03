@@ -2,7 +2,7 @@ package test.rdts.corestructs
 
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Gen}
-import rdts.base.Lattice
+import rdts.base.{Decompose, Lattice}
 import rdts.dotted.Dotted
 import rdts.dotted.HasDots.mapInstance
 import rdts.time.{ArrayRanges, Dot, Dots}
@@ -139,7 +139,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val cc = dm.dots `union` deleted
 
       val decomposed: Iterable[Dotted[TestedMap]] =
-        Lattice[Dotted[TestedMap]].decompose(Dotted(dm, (cc)))
+        Decompose.decompose(Dotted(dm, (cc)))
       val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(Map.empty[Int, Dots], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>

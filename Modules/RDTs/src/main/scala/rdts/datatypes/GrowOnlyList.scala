@@ -1,6 +1,6 @@
 package rdts.datatypes
 
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Decompose, Lattice}
 import rdts.datatypes.GrowOnlyList.Node
 import rdts.datatypes.GrowOnlyList.Node.*
 import rdts.dotted.HasDots
@@ -111,62 +111,61 @@ object GrowOnlyList {
   given bottomInstance[E]: Bottom[GrowOnlyList[E]]    = Bottom.derived
   given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] = HasDots.noDots
 
-  given Lattice[E]: Lattice[GrowOnlyList[E]] =
-    new Lattice[GrowOnlyList[E]] {
-      override def lteq(
-          left: GrowOnlyList[E],
-          right: GrowOnlyList[E]
-      ): Boolean =
-        left.inner.keys.forall { k =>
-          right.inner.get(k).contains(left.inner(k))
-        } || super.lteq(left, right)
+  given lattice[E]: Lattice[GrowOnlyList[E]] with Decompose[GrowOnlyList[E]] with {
+    override def lteq(
+        left: GrowOnlyList[E],
+        right: GrowOnlyList[E]
+    ): Boolean =
+      left.inner.keys.forall { k =>
+        right.inner.get(k).contains(left.inner(k))
+      } || super.lteq(left, right)
 
-      /** Decomposes a lattice state into its unique irredundant join decomposition of join-irreducible states */
-      override def decompose(state: GrowOnlyList[E]): Iterable[GrowOnlyList[E]] =
-        state.inner.toList.map(edge => GrowOnlyList(Map(edge)))
+    extension (a: GrowOnlyList[E])
+      override def decomposed: Iterable[GrowOnlyList[E]] =
+        a.inner.toList.map(edge => GrowOnlyList(Map(edge)))
 
-      @tailrec
-      private def insertEdge(
-          state: GrowOnlyList[E],
-          edge: (Node[LastWriterWins[E]], Elem[LastWriterWins[E]])
-      ): GrowOnlyList[E] =
-        edge match {
-          case (l, r @ Elem(e1)) =>
-            state.inner.get(l) match {
-              case None => GrowOnlyList(state.inner + edge)
-              case Some(next @ Elem(e2)) =>
-                if e1.timestamp > e2.timestamp
-                then GrowOnlyList(state.inner + edge + (r -> next))
-                else
-                  insertEdge(state, next -> r)
-            }
-        }
+    @tailrec
+    private def insertEdge(
+        state: GrowOnlyList[E],
+        edge: (Node[LastWriterWins[E]], Elem[LastWriterWins[E]])
+    ): GrowOnlyList[E] =
+      edge match {
+        case (l, r @ Elem(e1)) =>
+          state.inner.get(l) match {
+            case None => GrowOnlyList(state.inner + edge)
+            case Some(next @ Elem(e2)) =>
+              if e1.timestamp > e2.timestamp
+              then GrowOnlyList(state.inner + edge + (r -> next))
+              else
+                insertEdge(state, next -> r)
+          }
+      }
 
-      @tailrec
-      private def insertRec(
-          left: GrowOnlyList[E],
-          right: GrowOnlyList[E],
-          current: Node[LastWriterWins[E]]
-      ): GrowOnlyList[E] =
-        right.inner.get(current) match {
-          case None => left
-          case Some(next) =>
-            val leftMerged =
-              if left.inner.contains(current) && left.inner.exists { case (_, r) => r == next }
-              then left
-              else insertEdge(left, (current, next))
+    @tailrec
+    private def insertRec(
+        left: GrowOnlyList[E],
+        right: GrowOnlyList[E],
+        current: Node[LastWriterWins[E]]
+    ): GrowOnlyList[E] =
+      right.inner.get(current) match {
+        case None => left
+        case Some(next) =>
+          val leftMerged =
+            if left.inner.contains(current) && left.inner.exists { case (_, r) => r == next }
+            then left
+            else insertEdge(left, (current, next))
 
-            insertRec(leftMerged, right, next)
-        }
+          insertRec(leftMerged, right, next)
+      }
 
-      /** By assumption: associative, commutative, idempotent. */
-      override def merge(
-          left: GrowOnlyList[E],
-          right: GrowOnlyList[E]
-      ): GrowOnlyList[E] =
-        (right.inner.keySet -- right.inner.values).foldLeft(left) { (state, startNode) =>
-          insertRec(state, right, startNode)
-        }
-    }
+    /** By assumption: associative, commutative, idempotent. */
+    override def merge(
+        left: GrowOnlyList[E],
+        right: GrowOnlyList[E]
+    ): GrowOnlyList[E] =
+      (right.inner.keySet -- right.inner.values).foldLeft(left) { (state, startNode) =>
+        insertRec(state, right, startNode)
+      }
+  }
 
 }

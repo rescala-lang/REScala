@@ -1,6 +1,6 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots}
 
@@ -35,6 +35,10 @@ object MultiVersionRegister {
   def empty[A]: MultiVersionRegister[A] = MultiVersionRegister(Map.empty)
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
+
+  given decomposeInstance[A]: Decompose[MultiVersionRegister[A]] = 
+    given Decompose[A] = Decompose.atomic
+    Decompose.derived
 
   given dottedLattice[A]: Lattice[MultiVersionRegister[A]] =
     given Lattice[A] = Lattice.assertEquals

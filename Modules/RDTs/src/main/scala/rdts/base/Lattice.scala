@@ -23,18 +23,11 @@ trait Lattice[A] {
   /** Lattice order is derived from merge, but should be overridden for efficiency */
   def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
-  /** Decompose a state into potentially smaller parts.
-    * Guarantees for any two states a and b that `decompose(a).fold(b)(merge) == b `merge` a`, i.e., merging the decomposed values into b has the same result as merging the full a into b (assuming b is normalized).
-    *
-    * Note that the goal here is small individual storage size at reasonable computational cost. Minimalism of returned results is not guaranteed. It is also not guaranteed that the result does not overlap. The result may be the empty sequence.
-    */
-  def decompose(a: A): Iterable[A] = Iterable(a)
-
   /** Computes delta without state.
     * Overriding this is discouraged.
     */
-  def diff(state: A, delta: A): Option[A] = {
-    decompose(delta).filter(!lteq(_, state)).reduceOption(merge)
+  def diff(state: A, delta: A)(using dec: Decompose[A]): Option[A] = {
+    dec.decomposed(delta).filter(!lteq(_, state)).reduceOption(merge)
   }
 
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
@@ -49,7 +42,6 @@ trait Lattice[A] {
     final inline def <=(right: A): Boolean = Lattice.this.lteq(left, right)
     @targetName("mergeInfix")
     final inline def merge(right: A): A      = Lattice.this.merge(left, right)
-    final inline def decomposed: Iterable[A] = Lattice.this.decompose(left)
   }
 }
 
@@ -59,9 +51,9 @@ object Lattice {
   // forwarder for better syntax/type inference
   def merge[A: Lattice](left: A, right: A): A        = apply[A].merge(left, right)
   def lteq[A: Lattice](left: A, right: A): Boolean   = apply[A].lteq(left, right)
-  def diff[A: Lattice](left: A, right: A): Option[A] = apply[A].diff(left, right)
+  def diff[A: Lattice: Decompose](left: A, right: A): Option[A] = apply[A].diff(left, right)
   def normalize[A: Lattice](v: A): A                 = apply[A].normalize(v)
-  def decompose[A: Lattice](a: A): Iterable[A]       = a.decomposed
+
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
   // This could be just an extension method, but then would be ambiguous in cases where the extension on the interface is available.
@@ -105,7 +97,6 @@ object Lattice {
   given setLattice[A]: Lattice[Set[A]] with
     override def merge(left: Set[A], right: Set[A]): Set[A] = left `union` right
     override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
-    override def decompose(state: Set[A]): Iterable[Set[A]] = state.map(Set(_))
 
   given optionLattice[A: Lattice]: Lattice[Option[A]] =
     given Lattice[None.type] = Lattice.derived
@@ -133,11 +124,6 @@ object Lattice {
           right.get(k).exists(r => l <= r)
         }
 
-      override def decompose(state: Mp[K, V]): Iterable[Mp[K, V]] =
-        for
-          case (k, v) <- state
-          d <- v.decomposed
-        yield state.mapFactory(k -> d)
     }
 
   given iterableLattice[A, It[B] <: IterableOps[B, It, It[B]]](using Lattice[A]): Lattice[It[A]] = (left, right) => {
@@ -185,14 +171,6 @@ object Lattice {
         Integer.compare(lo, ro) match
           case 0     => lat(lo).lteq(left, right)
           case other => other < 0
-
-      override def decompose(a: T): Iterable[T] =
-        val ordinal = sm.ordinal(a)
-        val res     = lat(ordinal).decompose(a)
-        // When `a` decomposes into nothing, it is no longer possible to distinguish which alternative of the sum we are dealing with. That is fine when the ordinal is 0 because then we have reached the bottom case for the sum type, but in all other cases we must keep enough information around to figure out the ordinal.
-        if ordinal != 0 && res.isEmpty
-        then Iterable(a)
-        else res
     }
 
     inline def summonAllMaybe[T <: Tuple]: T =
@@ -231,21 +209,6 @@ object Lattice {
           def productArity: Int            = lattices.productArity
           def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
         })
-
-      override def decompose(a: T): Iterable[T] =
-        // Singleton types (product arity == 0) would return an empty iterable if not handled explicitly.
-        // That would be “fine” with regards to the guarantees of decompose, but is slightly less useful in cases where the singleton type does not have a bottom instance defined.
-        if lattices.productArity == 0 then Iterable(a)
-        else
-          Range(0, lattices.productArity).flatMap { j =>
-            lat(j).decompose(a.productElement(j)).iterator.filterNot(isEmpty(j)).map { elem =>
-              pm.fromProduct(new Product {
-                def canEqual(that: Any): Boolean = false
-                def productArity: Int            = lattices.productArity
-                def productElement(i: Int): Any  = if i == j then elem else bot(i, a.productElement(i))
-              })
-            }
-          }
 
       override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
         lat(i).lteq(left.productElement(i), right.productElement(i))

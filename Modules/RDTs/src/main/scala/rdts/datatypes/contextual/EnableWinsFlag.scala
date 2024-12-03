@@ -1,6 +1,6 @@
 package rdts.datatypes.contextual
 
-import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.Dots
 
@@ -8,7 +8,7 @@ import rdts.time.Dots
   *
   * When the flag is concurrently disabled and enabled then the enable operation wins, i.e. the resulting flag is enabled.
   */
-case class EnableWinsFlag(inner: Dots) derives Bottom {
+case class EnableWinsFlag(inner: Dots) derives Bottom, Decompose {
 
   type Delta = Dotted[EnableWinsFlag]
 

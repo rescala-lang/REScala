@@ -1,6 +1,6 @@
 package rdts.time
 
-import rdts.base.{Lattice, Uid}
+import rdts.base.{Decompose, Lattice, Uid}
 import rdts.dotted.{Dotted, HasDots}
 
 import scala.annotation.targetName
@@ -115,6 +115,8 @@ object Dots {
   def single(dot: Dot): Dots = empty.add(dot.place, dot.time)
 
   given contextLattice: Lattice[Dots] = Lattice.derived
+
+  given decomposable: Decompose[Dots] = Decompose.derived
 
   def from(dots: Iterable[Dot]): Dots = Dots(dots.groupBy(_.place).view.mapValues {
     times => ArrayRanges.from(times.view.map(_.time))

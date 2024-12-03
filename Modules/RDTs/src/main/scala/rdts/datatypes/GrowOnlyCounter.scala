@@ -1,7 +1,7 @@
 package rdts.datatypes
 
 import rdts.base.Lattice.*
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Decompose, Lattice, LocalUid, Uid}
 import rdts.dotted.HasDots
 
 case class GrowOnlyCounter(inner: Map[Uid, Int]) {
@@ -24,5 +24,9 @@ object GrowOnlyCounter {
   given lattice: Lattice[GrowOnlyCounter] =
     given Lattice[Int] = math.max
     Lattice.derived
+
+  given decompose: Decompose[GrowOnlyCounter] =
+    given Decompose[Int] = Iterable.apply(_)
+    Decompose.derived
 
 }

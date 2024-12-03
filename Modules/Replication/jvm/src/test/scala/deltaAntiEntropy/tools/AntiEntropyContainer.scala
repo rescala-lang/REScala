@@ -1,7 +1,7 @@
 package deltaAntiEntropy.tools
 
 import rdts.base.Uid.asId
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Decompose, Lattice, LocalUid, Uid}
 import rdts.dotted.Dotted
 import rdts.time.Dots
 
@@ -24,10 +24,10 @@ class AntiEntropyContainer[State](
   override def toString: String =
     s"AntiEntropy($replicaID, $state)"
 
-  inline def map(f: LocalUid ?=> State => State)(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+  inline def map(f: LocalUid ?=> State => State)(using Lattice[Dotted[State]], Decompose[Dotted[State]]): AntiEntropyContainer[State] =
     applyDelta(Named(replicaID.uid, Dotted(f(using replicaID)(state.data))))
 
-  def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]], Decompose[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
       case Named(origin, deltaCtx) =>
         Lattice[Dotted[State]].diff(state, deltaCtx) match {
@@ -39,7 +39,7 @@ class AntiEntropyContainer[State](
         this
     }
 
-  def processReceivedDeltas()(using u: Lattice[Dotted[State]]): AntiEntropyContainer[State] =
+  def processReceivedDeltas()(using u: Lattice[Dotted[State]], d: Decompose[Dotted[State]]): AntiEntropyContainer[State] =
     antiEntropy.getReceivedDeltas.foldLeft(this) {
       (crdt, delta) => crdt.applyDelta(delta)
     }
@@ -47,7 +47,7 @@ class AntiEntropyContainer[State](
 
 object AntiEntropyContainer {
 
-  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]]) {
+  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]], Decompose[Dotted[A]]) {
     inline def mod(f: Dots ?=> A => Dotted[A]): AntiEntropyContainer[A] = {
       curr.applyDelta(Named(curr.replicaID.uid, curr.state.mod(f(_))))
     }
@@ -57,7 +57,7 @@ object AntiEntropyContainer {
     def data: A = curr.state.data
   }
 
-  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]]) {
+  extension [A](curr: AntiEntropyContainer[A])(using Lattice[Dotted[A]], Decompose[Dotted[A]]) {
     @targetName("modNoDelta") inline def modn(f: A => A): AntiEntropyContainer[A] = {
       val next = Dots.single(curr.state.context.nextDot(curr.replicaID.uid))
       curr.applyDelta(Named(curr.replicaID.uid, Dotted(f(curr.state.data), next)))

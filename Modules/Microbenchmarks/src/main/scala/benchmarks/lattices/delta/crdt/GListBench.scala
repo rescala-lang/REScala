@@ -1,8 +1,10 @@
 package benchmarks.lattices.delta.crdt
 
 import org.openjdk.jmh.annotations.*
+import rdts.base.{Bottom, Decompose}
 import rdts.base.LocalUid.asId
 import rdts.datatypes.GrowOnlyList
+import rdts.dotted.{Dotted, HasDots}
 
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +25,8 @@ class GListBench {
   @Setup
   def setup(): Unit = {
     list = (0 until listSize).foldLeft(NamedDeltaBuffer("a".asId, GrowOnlyList.empty[Int])) {
-      case (c, i) => c.mod(_.insertGL(0, i))
+      case (c, i) =>
+        c.mod(_.insertGL(0, i))
     }
   }
 
