@@ -7,17 +7,35 @@ import munit.internal.FutureCompat.ExtensionFuture
 import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Shrink}
 import rdts.base.{Bottom, BottomOpt, Decompose, Lattice}
-import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
-import rdts.datatypes.contextual.{CausalQueue, ReplicatedList}
-import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
-import rdts.datatypes.experiments.CausalStore
+import rdts.datatypes.alternatives.MultiValueRegister
+import rdts.datatypes.contextual.ReplicatedList
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
 import rdts.dotted.{Dotted, HasDots}
-import rdts.time.{Dot, Dots, VectorClock}
+import rdts.time.{Dot, Dots}
 import test.rdts.DataGenerator.RGAGen.given
 import test.rdts.DataGenerator.{*, given}
 import test.rdts.isGithubCi
+
 import scala.util.{Failure, Success}
+
+class DotSetDecomposeChecks extends DecomposePropertyChecks[Dotted[Dots]]
+class EnableWinsFlagDecomposeChecks extends DecomposePropertyChecks[Dotted[contextual.EnableWinsFlag]]
+class DotFunDecomposeChecks extends DecomposePropertyChecks[Dotted[Map[Dot, Int]]]
+class ConMultiVersionDecomposeChecks extends DecomposePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
+class DotMapDecomposeChecks extends DecomposePropertyChecks[Dotted[Map[rdts.base.Uid, Dots]]](expensive = true)
+class GrowOnlyCounterDecomposeChecks extends DecomposePropertyChecks[GrowOnlyCounter]
+class GrowOnlyMapDecomposeChecks extends DecomposePropertyChecks[GrowOnlyMap[String, Int]]
+class TwoPhaseSetDecomposeChecks extends DecomposePropertyChecks[TwoPhaseSet[Int]]
+class IntDecomposeChecks extends DecomposePropertyChecks[Int]
+class SetDecomposeChecks extends DecomposePropertyChecks[Set[String]]
+class MapDecomposeChecks extends DecomposePropertyChecks[Map[String, Int]]
+class MultiValueDecomposeChecks extends DecomposePropertyChecks[MultiValueRegister[Int]](flaky = true)
+class PosNegDecomposeChecks extends DecomposePropertyChecks[PosNegCounter]
+class TupleDecomposeChecks extends DecomposePropertyChecks[(Set[Int], GrowOnlyCounter)]
+class GrowOnlyListDecomposeChecks extends DecomposePropertyChecks[GrowOnlyList[Int]](expensive = true)
+class ReplicatedListDecomposeChecks extends DecomposePropertyChecks[Dotted[ReplicatedList[ExampleData]]](expensive = true)
+class LWWTupleDecomposeChecks
+  extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
 abstract class DecomposePropertyChecks[A](
     expensive: Boolean = false,
