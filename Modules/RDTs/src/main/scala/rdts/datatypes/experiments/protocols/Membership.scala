@@ -15,7 +15,7 @@ case class Membership[A, C[_], D[_]](
     membershipChanging: Boolean = false,
     members: Set[Uid]
 ) {
-  private def unchanged(using Consensus[C], Consensus[D]): Membership[A, C, D] = Membership(
+  private def sameRound(using Consensus[C], Consensus[D]): Membership[A, C, D] = Membership(
     counter = counter,
     membersConsensus = Consensus[C].empty,
     innerConsensus = Consensus[D].empty,
@@ -25,27 +25,24 @@ case class Membership[A, C[_], D[_]](
 
   given Participants = Participants(members)
 
-  override def toString: String =
-    s"$Membership(counter: $counter, members: $membersConsensus,log: $log, membershipChanging: $membershipChanging)".stripMargin
-
   def currentMembers(using Consensus[C], Consensus[D]): Set[Uid] =
     members
 
   def addMember(id: Uid)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if isMember then
-      unchanged.copy(
+      sameRound.copy(
         membershipChanging = true,
         membersConsensus = membersConsensus.write(currentMembers + id)
       )
-    else unchanged
+    else sameRound
 
   def removeMember(id: Uid)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if currentMembers.size > 1 && isMember then // cannot remove last member
-      unchanged.copy(
+      sameRound.copy(
         membershipChanging = true,
         membersConsensus = membersConsensus.write(currentMembers - id)
       )
-    else unchanged
+    else sameRound
 
   def read: List[A] = log.toList.sortBy(_._1).map(_._2)
 
@@ -54,15 +51,15 @@ case class Membership[A, C[_], D[_]](
 
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] =
     if !membershipChanging && isMember then
-      unchanged.copy(
+      sameRound.copy(
         innerConsensus = innerConsensus.write(value)
       )
-    else unchanged
+    else sameRound
 
   def isMember(using LocalUid, Consensus[C], Consensus[D]): Boolean = currentMembers.contains(replicaId)
 
   def upkeep()(using rid: LocalUid, cc: Consensus[C], cd: Consensus[D]): Membership[A, C, D] =
-    if !isMember then return unchanged // do nothing if we are not a member anymore
+    if !isMember then return sameRound // do nothing if we are not a member anymore
     val newMembers = membersConsensus.merge(membersConsensus.upkeep())
     val newInner   = innerConsensus.merge(innerConsensus.upkeep())
     (newMembers.read, newInner.read) match
@@ -86,7 +83,7 @@ case class Membership[A, C[_], D[_]](
         )
       // nothing has changed
       case _ =>
-        unchanged.copy(
+        sameRound.copy(
           membersConsensus = newMembers,
           innerConsensus = newInner
         )
