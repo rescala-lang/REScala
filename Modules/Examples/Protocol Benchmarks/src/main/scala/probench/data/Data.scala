@@ -12,6 +12,6 @@ enum KVOperation[Key, Value] {
   case Write(key: Key, value: Value)
 }
 
-type ClientNodeState = Dotted[RequestResponseQueue[KVOperation[String, String], String]]
+type ClientNodeState = RequestResponseQueue[KVOperation[String, String], String]
 
 case class ClusterData(op: KVOperation[String, String], origin: Dot)

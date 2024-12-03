@@ -14,19 +14,17 @@ case class RequestResponseQueue[S, T](
     clock: VectorClock
 ) {
 
-  type Delta = Dotted[RequestResponseQueue[S, T]]
+  type Delta = RequestResponseQueue[S, T]
 
   def request(value: S)(using id: LocalUid): Delta = {
     val time = clock.merge(clock.inc(LocalUid.replicaId))
     val dot  = time.dotOf(LocalUid.replicaId)
 
-    Dotted(
-      RequestResponseQueue(
-        Queue(Req(value, id, dot, time)),
-        Queue.empty,
-        Map.empty,
-        time
-      )
+    RequestResponseQueue(
+      Queue(Req(value, id, dot, time)),
+      Queue.empty,
+      Map.empty,
+      time
     )
   }
 
@@ -34,13 +32,11 @@ case class RequestResponseQueue[S, T](
     val time = clock.merge(clock.inc(LocalUid.replicaId))
     val dot  = time.dotOf(LocalUid.replicaId)
 
-    Dotted(
-      RequestResponseQueue(
-        Queue.empty,
-        Queue(Res(request, value, id, dot, time)),
-        Map.empty,
-        time
-      )
+    RequestResponseQueue(
+      Queue.empty,
+      Queue(Res(request, value, id, dot, time)),
+      Map.empty,
+      time
     )
   }
 
@@ -53,13 +49,11 @@ case class RequestResponseQueue[S, T](
   def complete(req: Req[S])(using id: LocalUid): Delta = {
     val time = clock.merge(clock.inc(LocalUid.replicaId))
 
-    Dotted(
-      RequestResponseQueue(
-        Queue.empty,
-        Queue.empty,
-        Map(id -> req.order),
-        time
-      )
+    RequestResponseQueue(
+      Queue.empty,
+      Queue.empty,
+      Map(id -> req.order),
+      time
     )
   }
 
@@ -113,15 +107,8 @@ object RequestResponseQueue {
 
 }
 
-extension [S, T](dotted: Dotted[RequestResponseQueue[S, T]]) {
-  def requests: Queue[RequestResponseQueue.Req[S]] = dotted.data.requests
-  def responses: Queue[Res[S, T]]                  = dotted.data.responses
+extension [S, T](dotted: RequestResponseQueue[S, T]) {
 
-  def request(value: S)(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.request(value)
-  def respond(req: Req[S], value: T)(using LocalUid): Dotted[RequestResponseQueue[S, T]] =
-    dotted.data.respond(req, value)
-  def complete(req: Req[S])(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.complete(req)
-  def firstUnansweredRequest: Option[Req[S]]                                    = dotted.data.firstUnansweredRequests
+  def firstUnansweredRequest: Option[Req[S]]                                    = dotted.firstUnansweredRequests
 
-  def responsesTo(req: Req[S]): Seq[Res[S, T]] = dotted.data.responsesTo(req)
 }
