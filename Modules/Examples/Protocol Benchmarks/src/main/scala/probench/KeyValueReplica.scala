@@ -14,20 +14,6 @@ import java.util.concurrent.Executors
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-object Time {
-
-  var current: Long = System.nanoTime()
-
-  def report(name: => String = ""): Unit = if true then
-    println {
-      synchronized {
-        val last = current
-        current = System.nanoTime()
-        s"$name took ${(current - last).doubleValue / 1000_000}ms"
-      }
-    }
-}
-
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   val executionContext =
@@ -57,9 +43,11 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
     if !(delta <= currentState) then {
+      println(s"[$uid] publishing")
       currentState = currentState.merge(delta)
       executionContext.execute(() => clusterDataManager.applyDelta(delta))
-    }
+    } else
+      println(s"[$uid] skip")
     currentState
   }
 
@@ -67,44 +55,36 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     f(currentStateLock.synchronized(currentState))
   )
 
-  def handleIncoming(change: ClusterState): Unit = {
+  def handleIncoming(change: ClusterState): Unit = currentStateLock.synchronized {
+    println(s"[$uid] handling incoming")
     val (old, changed) = currentStateLock.synchronized {
       val old = currentState
       currentState = currentState `merge` change
       (old, currentState)
     }
     val upkept = changed.upkeep()
-    maybeAnswerClient(old, publish(upkept))
+    if upkept <= currentState
+    then println(s"[$uid] no changes")
+    else println(s"[$uid] upkeep")
+    assert(changed == currentState)
+    // else println(s"[$uid] upkept: ${pprint(upkept)}")
+    val newState = publish(upkept)
+    maybeAnswerClient(old, newState)
   }
 
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     newState.firstUnansweredRequest.foreach { req =>
-      println(s"applying client request $req on $uid")
-      transform(_.write(ClusterData(req.value, req.dot)))
+      println(s"[$uid] applying client request $req")
+      currentStateLock.synchronized { transform(_.write(ClusterData(req.value, req.dot))) }
     }
   }
 
-  var counter = 0
-
   private def maybeAnswerClient(oldState: ClusterState, newState: ClusterState): Unit = {
 
-    val start = System.nanoTime()
-    var last  = start
-    val tid = synchronized {
-      counter += +1
-      counter
-    }
-
-    Time.report(s"[$tid] cluster changed")
-
-    def timeStep(msg: => String): Unit = if false then
-      println {
-        val current = last
-        last = System.nanoTime()
-        s"[$tid] $msg after ${(last - current).doubleValue / 1000_000}ms"
-      }
+    println(s"[$uid] ${newState.log}")
+    // println(s"${pprint.tokenize(newState).mkString("")}")
 
     for decidedRequest <- newState.readDecisionsSince(oldState.counter) do {
       val decision: String = decidedRequest match {
@@ -140,8 +120,6 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
        */
     }
 
-    timeStep("done")
-    if false then println(s"[$tid] total ${(System.nanoTime() - start).doubleValue / 1000_000}ms")
   }
 
   export clientDataManager.addLatentConnection as addClientConnection

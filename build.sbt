@@ -242,6 +242,7 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
     Dependencies.munit,
     Dependencies.slips.options,
     Dependencies.jetcd,
+    Dependencies.pprint,
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
