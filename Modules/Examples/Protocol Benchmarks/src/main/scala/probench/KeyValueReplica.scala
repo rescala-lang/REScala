@@ -2,16 +2,16 @@ package probench
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
-import probench.data.RequestResponseQueue.{Req, Res}
+import probench.data.RequestResponseQueue.Req
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
-import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
 import replication.DeltaDissemination
 
+import java.util.concurrent.Executors
 import scala.collection.mutable
-import scala.util.chaining.scalaUtilChainingOps
+import scala.concurrent.ExecutionContext
 
 object Time {
 
@@ -29,6 +29,9 @@ object Time {
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
+  val executionContext =
+    ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor)
+
   private type ClusterState = Membership[ClusterData, Paxos, Paxos]
 
   given localUid: LocalUid = LocalUid(uid)
@@ -45,7 +48,12 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   var currentState: ClusterState = Membership.init(votingReplicas)
 
   val clusterDataManager: DeltaDissemination[ClusterState] =
-    DeltaDissemination(localUid, handleIncoming)
+    DeltaDissemination(
+      localUid,
+      { incoming =>
+        executionContext.execute(() => handleIncoming(incoming))
+      }
+    )
 
   def handleIncoming(change: ClusterState): Unit = {
     val (old, changed) = currentStateLock.synchronized {
