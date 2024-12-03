@@ -2,17 +2,15 @@ package probench
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
-import probench.data.RequestResponseQueue.{Req, Res}
+import probench.data.RequestResponseQueue.Req
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.dotted.Dotted
 import rdts.syntax.DeltaBuffer
-import rdts.time.Dot
 import replication.DeltaDissemination
 
 import scala.collection.mutable
-import scala.util.chaining.scalaUtilChainingOps
 
 object Time {
 

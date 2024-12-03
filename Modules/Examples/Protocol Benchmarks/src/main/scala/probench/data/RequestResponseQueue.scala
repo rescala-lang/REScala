@@ -1,19 +1,18 @@
 package probench.data
 
 import probench.data.RequestResponseQueue.{Req, Res}
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.GrowOnlyCounter
+import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots}
 import rdts.time.{Dot, Dots, VectorClock}
 
 import scala.collection.immutable.Queue
 
 case class RequestResponseQueue[S, T](
-                                       requests: Queue[Req[S]],
-                                       responses: Queue[Res[S, T]],
-                                       processed: Map[LocalUid, VectorClock],
-                                       clock: VectorClock
-                                     ) {
+    requests: Queue[Req[S]],
+    responses: Queue[Res[S, T]],
+    processed: Map[LocalUid, VectorClock],
+    clock: VectorClock
+) {
 
   type Delta = Dotted[RequestResponseQueue[S, T]]
 
@@ -70,17 +69,8 @@ object RequestResponseQueue {
   case class Req[+T](value: T, requester: LocalUid, dot: Dot, order: VectorClock)
   case class Res[+S, +T](request: Req[S], value: T, responder: LocalUid, dot: Dot, order: VectorClock)
 
-  given reqLattice[T]: Lattice[Req[T]] with {
-    override def merge(left: Req[T], right: Req[T]): Req[T] =
-      if left.order < right.order then right else left
-  }
-
-  given resLattice[S, T]: Lattice[Res[S, T]] with {
-    override def merge(left: Res[S, T], right: Res[S, T]): Res[S, T] =
-      if left.order < right.order then right else left
-  }
-
-  def empty[S, T]: RequestResponseQueue[S, T] = RequestResponseQueue(Queue.empty, Queue.empty, Map.empty, VectorClock.zero)
+  def empty[S, T]: RequestResponseQueue[S, T] =
+    RequestResponseQueue(Queue.empty, Queue.empty, Map.empty, VectorClock.zero)
 
   given hasDots[S, T]: HasDots[RequestResponseQueue[S, T]] with {
     extension (value: RequestResponseQueue[S, T])
@@ -102,9 +92,9 @@ object RequestResponseQueue {
 
   given lattice[S, T]: Lattice[RequestResponseQueue[S, T]] with {
     override def merge(
-                        left: RequestResponseQueue[S, T],
-                        right: RequestResponseQueue[S, T]
-                      ): RequestResponseQueue[S, T] =
+        left: RequestResponseQueue[S, T],
+        right: RequestResponseQueue[S, T]
+    ): RequestResponseQueue[S, T] =
       val processed = left.processed.merge(right.processed)
 
       RequestResponseQueue(
@@ -125,12 +115,13 @@ object RequestResponseQueue {
 
 extension [S, T](dotted: Dotted[RequestResponseQueue[S, T]]) {
   def requests: Queue[RequestResponseQueue.Req[S]] = dotted.data.requests
-  def responses: Queue[Res[S, T]] = dotted.data.responses
+  def responses: Queue[Res[S, T]]                  = dotted.data.responses
 
   def request(value: S)(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.request(value)
-  def respond(req: Req[S], value: T)(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.respond(req, value)
+  def respond(req: Req[S], value: T)(using LocalUid): Dotted[RequestResponseQueue[S, T]] =
+    dotted.data.respond(req, value)
   def complete(req: Req[S])(using LocalUid): Dotted[RequestResponseQueue[S, T]] = dotted.data.complete(req)
-  def firstUnansweredRequest: Option[Req[S]] = dotted.data.firstUnansweredRequests
+  def firstUnansweredRequest: Option[Req[S]]                                    = dotted.data.firstUnansweredRequests
 
   def responsesTo(req: Req[S]): Seq[Res[S, T]] = dotted.data.responsesTo(req)
 }
