@@ -3,7 +3,7 @@ package probench
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
-import probench.clients.{ClientCLI, ProBenchClient}
+import probench.clients.ProBenchClient
 import probench.data.{ClientNodeState, ClusterData, KVOperation}
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
@@ -33,7 +33,7 @@ class ClusterConsensus extends munit.FunSuite {
     primary.addClientConnection(clientConnection.server)
 
     val clientUid = Uid.gen()
-    val client    = ProBenchClient(clientUid, blocking = false)
+    val client    = ProBenchClient(clientUid, blocking = true)
     client.addLatentConnection(clientConnection.client(clientUid.toString))
 
     client.read("test")
@@ -77,6 +77,13 @@ class ClusterConsensus extends munit.FunSuite {
     }
 
     nodes.foreach(noUpkeep)
+
+    assertEquals(nodes(0).currentState, nodes(1).currentState)
+    assertEquals(nodes(1).currentState, nodes(2).currentState)
+    assertEquals(nodes(2).currentState, nodes(0).currentState)
+
+
+    println(s"================ at the end of the tests")
 
   }
 }

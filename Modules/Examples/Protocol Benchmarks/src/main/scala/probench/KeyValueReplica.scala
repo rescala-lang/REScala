@@ -16,6 +16,9 @@ import scala.concurrent.ExecutionContext
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
+  def log(msg: String) =
+    if false then println(s"[$uid] $msg")
+
   val executionContext =
     ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor)
 
@@ -43,11 +46,11 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
     if !(delta <= currentState) then {
-      println(s"[$uid] publishing")
+      log(s"publishing")
       currentState = currentState.merge(delta)
       executionContext.execute(() => clusterDataManager.applyDelta(delta))
     } else
-      println(s"[$uid] skip")
+      log(s"skip")
     currentState
   }
 
@@ -66,34 +69,36 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   )
 
   def handleIncoming(change: ClusterState): Unit = currentStateLock.synchronized {
-    println(s"[$uid] handling incoming")
+    log(s"handling incoming")
     val (old, changed) = currentStateLock.synchronized {
       val old = currentState
       currentState = currentState `merge` change
       (old, currentState)
     }
-    val upkept = changed.upkeep()
-    if upkept <= currentState
-    then println(s"[$uid] no changes")
-    else println(s"[$uid] upkeep")
-    assert(changed == currentState)
-    // else println(s"[$uid] upkept: ${pprint(upkept)}")
-    val newState = publish(upkept)
-    maybeAnswerClient(old, newState)
+    if old != changed then {
+      val upkept = changed.upkeep()
+      if upkept <= currentState
+      then log(s"no changes")
+      else log(s"upkeep")
+      assert(changed == currentState)
+      // else log(s"upkept: ${pprint(upkept)}")
+      val newState = publish(upkept)
+      maybeAnswerClient(old, newState)
+    }
   }
 
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     newState.firstUnansweredRequest.foreach { req =>
-      println(s"[$uid] applying client request $req")
+      log(s"applying client request $req")
       currentStateLock.synchronized { transform(_.write(ClusterData(req.value, req.dot))) }
     }
   }
 
   private def maybeAnswerClient(oldState: ClusterState, newState: ClusterState): Unit = {
 
-    println(s"[$uid] ${newState.log}")
+    log(s"${newState.log}")
     // println(s"${pprint.tokenize(newState).mkString("")}")
 
     for decidedRequest <- newState.readDecisionsSince(oldState.counter) do {
