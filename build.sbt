@@ -67,7 +67,7 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     Dependencies.munitCheck,
   )
   .jvmSettings(
-    DependenciesLocal.tink
+    Dependencies.tink
   )
   .jsSettings(
     Compile / npmDependencies ++= Seq(
@@ -94,8 +94,8 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
   )
   .jvmSettings(
     Test / fork := true,
-    libraryDependencies ++= DependenciesLocal.jetty.map(_ % Provided),
-    DependenciesLocal.slf4jSimple,
+    libraryDependencies ++= Dependencies.jetty.map(_ % Provided),
+    Dependencies.slf4jSimple,
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -105,7 +105,7 @@ lazy val deltalens = project.in(file("Modules/Deltalens"))
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.munit,
-    DependenciesLocal.scalatest,
+    Dependencies.scalatest,
   )
 
 lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
@@ -116,8 +116,8 @@ lazy val dtn = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full)
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
-    DependenciesLocal.sttpCore,
-    DependenciesLocal.borer
+    Dependencies.sttpCore,
+    Dependencies.borer
   )
 
 lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
@@ -139,11 +139,11 @@ lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
     fork := true,
     Dependencies.jsoniterScala,
     Dependencies.munitCheck,
-    DependenciesLocal.tink,
-    libraryDependencies += DependenciesLocal.scalafx,
-    DependenciesLocal.scalaXml,
-    DependenciesLocal.scalaSwing,
-    DependenciesLocal.conscript,
+    Dependencies.tink,
+    libraryDependencies += Dependencies.scalafx,
+    Dependencies.scalaXml,
+    Dependencies.scalaSwing,
+    Dependencies.conscript,
     Settings.implicitConversions(), // reswing uses this in a million places for no reason
   )
 
@@ -167,9 +167,9 @@ lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
     Dependencies.munit,
     Dependencies.munitCheck,
     Dependencies.jsoniterScala,
-    DependenciesLocal.tink,
-    DependenciesLocal.slf4j,
-    DependenciesLocal.bouncyCastle,
+    Dependencies.tink,
+    Dependencies.slf4j,
+    Dependencies.bouncyCastle,
     Test / fork := true,
   )
 
@@ -177,7 +177,7 @@ lazy val lofiAclExample = project.in(file("Modules/Local-first Access Control/Ex
   .dependsOn(lofiAcl)
   .settings(
     scala3defaults,
-    libraryDependencies += DependenciesLocal.scalafx,
+    libraryDependencies += Dependencies.scalafx,
     Dependencies.jsoniterScala,
     Dependencies.munit,
     publish / skip := true,
@@ -189,10 +189,10 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).
     scala3defaults,
     Settings.javaOutputVersion(17),
     Dependencies.jsoniterScala,
-    DependenciesLocal.decline,
-    DependenciesLocal.catsParse,
-    DependenciesLocal.fansi,
-    DependenciesLocal.monocleCore,
+    Dependencies.decline,
+    Dependencies.catsParse,
+    Dependencies.fansi,
+    Dependencies.monocleCore,
     Dependencies.munit,
     Compile / mainClass := Some("lore.Compiler")
   )
@@ -226,8 +226,8 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
     Settings.safeInit(Compile / compile),
     Dependencies.jsoniterScala,
     Settings.jolSettings,
-    DependenciesLocal.tink,
-    DependenciesLocal.conscript,
+    Dependencies.tink,
+    Dependencies.conscript,
   )
 
 lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
@@ -241,7 +241,7 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.slips.options,
-    DependenciesLocal.jetcd,
+    Dependencies.jetcd,
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
@@ -273,7 +273,7 @@ lazy val reactives = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(fi
     Dependencies.munit,
   )
   .jvmSettings(
-    libraryDependencies += DependenciesLocal.scalafx % Provided,
+    libraryDependencies += Dependencies.scalafx % Provided,
   )
   .jsSettings(
     Dependencies.scalajsDom,
