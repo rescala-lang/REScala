@@ -120,19 +120,6 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
         }.getOrElse(it)
       }
 
-      /*
-      val clientState = clientDataManager.mergedState
-
-      if clientState.requests.data.elements.nonEmpty then {
-        clusterDataManager.applyDelta {
-          currentStateLock.synchronized {
-            val delta = currentState.write(clientState.requests.data.elements.head)
-            currentState = currentState.merge(delta)
-            delta
-          }
-        }
-      }
-       */
     }
 
   }
