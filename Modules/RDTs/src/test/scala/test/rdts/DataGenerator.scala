@@ -6,7 +6,6 @@ import rdts.datatypes.*
 import rdts.datatypes.GrowOnlyList.Node
 import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
 import rdts.datatypes.contextual.*
-import rdts.datatypes.contextual.CausalQueue.QueueElement
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.{CausalDelta, CausalStore}
 import rdts.dotted.*
@@ -83,17 +82,7 @@ object DataGenerator {
     val map = Gen.listOf(pairgen).map(vs => MultiValueRegister(vs.toMap))
     Arbitrary(map)
 
-  given arbCausalQueue[A: Arbitrary]: Arbitrary[CausalQueue[A]] =
-    Arbitrary {
-      Gen.listOf(
-        Gen.zip(uniqueDot, Arbitrary.arbitrary[A])
-      ).map { list =>
-        val queue = Queue.from(list.map((dot, value) => {
-          QueueElement(value, dot, VectorClock(Map(dot.place -> dot.time)))
-        }))
-        CausalQueue(queue, VectorClock(queue.map(it => it.dot.place -> it.dot.time).toMap))
-      }
-    }
+
 
   val genDot: Gen[Dot] =
     for
