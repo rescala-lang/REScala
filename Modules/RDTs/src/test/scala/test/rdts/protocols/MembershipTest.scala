@@ -1,8 +1,9 @@
 package test.rdts.protocols
 
-import rdts.base.LocalUid
+import rdts.base.Lattice.syntax
+import rdts.base.{LocalUid, Uid}
+import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.{MultiRoundVoting, Paxos, SimpleVoting}
-import rdts.datatypes.experiments.protocols.{Membership}
 
 class MembershipTest extends munit.FunSuite {
 
@@ -111,5 +112,46 @@ class MembershipTest extends munit.FunSuite {
     membership2 = membership2.merge(membership1)
     // -> logs should diverge
     assertEquals(membership1.log, membership2.log)
+  }
+
+  test("kv membership use") {
+    val id1 = Uid.predefined("Node1")
+    val id2 = Uid.predefined("Node2")
+    val id3 = Uid.predefined("Node3")
+
+    class Replika(val uid: Uid, var mem: Membership[Int, Paxos, Paxos])
+
+    val r1 = Replika(id1, Membership.init(Set(id1, id2, id3)))
+    val r2 = Replika(id2, Membership.init(Set(id1, id2, id3)))
+    val r3 = Replika(id3, Membership.init(Set(id1, id2, id3)))
+
+    extension (m: Replika)
+      def trans(f: LocalUid ?=> Membership[Int, Paxos, Paxos] => Membership[Int, Paxos, Paxos]): Unit = {
+        given LocalUid = m.uid.convert
+        val delta      = f(m.mem)
+
+        r1.mem = r1.mem `merge` delta
+        r2.mem = r2.mem `merge` delta
+        r3.mem = r3.mem `merge` delta
+      }
+
+    r1.trans(_.write(10))
+
+    var iterations = 0
+    while {
+      val o1 = r1.mem
+      val o2 = r2.mem
+      val o3 = r3.mem
+      r3.trans(_.upkeep())
+      r2.trans(_.upkeep())
+      r1.trans(_.upkeep())
+      o1 != r1.mem && o2 != r2.mem && o3 != r3.mem
+    } do {
+      iterations += 1
+    }
+
+    assertEquals(iterations, 2)
+    assertEquals(r3.mem.log.get(0), Some(10))
+
   }
 }
