@@ -51,9 +51,8 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   val clusterDataManager: DeltaDissemination[ClusterState] =
     DeltaDissemination(
       localUid,
-      { incoming =>
-        executionContext.execute(() => handleIncoming(incoming))
-      }
+      handleIncoming,
+      immediateForward = false
     )
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
