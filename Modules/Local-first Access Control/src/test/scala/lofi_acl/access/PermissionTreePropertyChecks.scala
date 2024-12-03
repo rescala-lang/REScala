@@ -49,7 +49,7 @@ class PermissionTreePropertyChecks extends munit.ScalaCheckSuite {
 
   property("All non-empty normalized trees only have allow leafs and no allow in branching nodes") {
     forAll { (tree: PermissionTree) =>
-      val normalized = Lattice[PermissionTree].normalize(tree)
+      val normalized = Lattice.normalize(tree)
       if !normalized.isEmpty then
         checkOnlyLeafsAreAllow(normalized)
         checkAllLeafsAreAllow(normalized)
@@ -73,7 +73,7 @@ class PermissionTreePropertyChecks extends munit.ScalaCheckSuite {
 
   property("Non-wildcard siblings of wildcards are at least as permissive as wildcard sibling") {
     forAll { (tree: PermissionTree) =>
-      val normalized = Lattice[PermissionTree].normalize(tree)
+      val normalized = Lattice.normalize(tree)
       inNormalizedTreeAllSiblingsContainWildcardChildren(normalized)
     }
   }

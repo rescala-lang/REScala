@@ -21,12 +21,7 @@ trait Lattice[A] {
   def merge(left: A, right: A): A
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
-  def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
-
-  /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
-    * Overriding this is discouraged.
-    */
-  def normalize(v: A): A = v `merge` v
+  def lteq(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
 
   /** Convenience extensions for the above. */
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
@@ -44,7 +39,11 @@ object Lattice {
   // forwarder for better syntax/type inference
   def merge[A: Lattice](left: A, right: A): A      = apply[A].merge(left, right)
   def lteq[A: Lattice](left: A, right: A): Boolean = apply[A].lteq(left, right)
-  def normalize[A: Lattice](v: A): A               = apply[A].normalize(v)
+
+  /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
+    * Overriding this is discouraged.
+    */
+  def normalize[A: Lattice](v: A): A = v `merge` v
 
   def diff[A: Lattice: Decompose](state: A, delta: A): Option[A] = {
     delta.decomposed.filter(!lteq(_, state)).reduceOption(merge)

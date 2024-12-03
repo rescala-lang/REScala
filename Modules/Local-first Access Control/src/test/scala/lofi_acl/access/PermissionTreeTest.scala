@@ -171,7 +171,7 @@ class PermissionTreeTest extends FunSuite {
     )
 
     assertEquals(
-      PermissionTree.lattice.normalize(PermissionTree(
+      Lattice.normalize(PermissionTree(
         PARTIAL,
         Map("a" -> PermissionTree(PARTIAL, Map("b" -> PermissionTree(PARTIAL, Map()))))
       )),
@@ -179,7 +179,7 @@ class PermissionTreeTest extends FunSuite {
     )
 
     assertEquals(
-      PermissionTree.lattice.normalize(PermissionTree(
+      Lattice.normalize(PermissionTree(
         PARTIAL,
         Map("*" -> PermissionTree(PARTIAL, Map("*" -> PermissionTree(PARTIAL, Map()))))
       )),
@@ -187,7 +187,7 @@ class PermissionTreeTest extends FunSuite {
     )
 
     assertEquals(
-      Lattice[PermissionTree].normalize(
+      Lattice.normalize(
         PermissionTree(
           PARTIAL,
           Map(
