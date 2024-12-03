@@ -21,9 +21,7 @@ object Uid:
 
   extension (s: String) def asId: Uid = Uid(s)
 
-  inline given toLocal: Conversion[Uid, LocalUid] with {
-    override def apply(x: Uid): LocalUid = LocalUid(x)
-  }
+  given toLocal: Conversion[Uid, LocalUid] = x => LocalUid(x)
 
   val jvmID: String = Base64.encode(scala.util.Random.nextLong(1L << 48))
 
