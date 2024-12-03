@@ -3,6 +3,7 @@ package probench
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
 import probench.data.RequestResponseQueue.Req
+import rdts.base.Lattice.syntax
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
@@ -17,7 +18,7 @@ object Time {
 
   var current: Long = System.nanoTime()
 
-  def report(name: => String = ""): Unit = if false then
+  def report(name: => String = ""): Unit = if true then
     println {
       synchronized {
         val last = current
@@ -55,6 +56,18 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       }
     )
 
+  def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
+    if !(delta <= currentState) then {
+      currentState = currentState.merge(delta)
+      executionContext.execute(() => clusterDataManager.applyDelta(delta))
+    }
+    currentState
+  }
+
+  def transform(f: ClusterState => ClusterState) = publish(
+    f(currentStateLock.synchronized(currentState))
+  )
+
   def handleIncoming(change: ClusterState): Unit = {
     val (old, changed) = currentStateLock.synchronized {
       val old = currentState
@@ -62,25 +75,15 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       (old, currentState)
     }
     val upkept = changed.upkeep()
-    val merged = currentStateLock.synchronized {
-      currentState = currentState.merge(upkept)
-      currentState
-    }
-    clusterDataManager.applyDelta(upkept)
-    maybeAnswerClient(old, merged)
+    maybeAnswerClient(old, publish(upkept))
   }
 
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     newState.firstUnansweredRequest.foreach { req =>
-      clusterDataManager.applyDelta {
-        currentStateLock.synchronized {
-          val delta = currentState.write(ClusterData(req.value, req.dot))
-          currentState = currentState.merge(delta)
-          delta
-        }
-      }
+      println(s"applying client request $req on $uid")
+      transform(_.write(ClusterData(req.value, req.dot)))
     }
   }
 
