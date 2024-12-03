@@ -30,7 +30,7 @@ class AntiEntropyContainer[State](
   def applyDelta(delta: Named[Dotted[State]])(using Lattice[Dotted[State]], Decompose[Dotted[State]]): AntiEntropyContainer[State] =
     delta match {
       case Named(origin, deltaCtx) =>
-        Lattice[Dotted[State]].diff(state, deltaCtx) match {
+        Lattice.diff(state, deltaCtx) match {
           case Some(stateDiff) =>
             val stateMerged = Lattice[Dotted[State]].merge(state, stateDiff)
             antiEntropy.recordChange(Named(origin, stateDiff), stateMerged)

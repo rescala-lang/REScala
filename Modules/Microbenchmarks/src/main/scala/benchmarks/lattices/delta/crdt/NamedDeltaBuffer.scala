@@ -22,7 +22,7 @@ case class NamedDeltaBuffer[State](
     applyDelta(replicaID.uid, f(using replicaID)(state))
 
   def applyDelta(source: Uid, delta: State)(using Lattice[State], Decompose[State]): NamedDeltaBuffer[State] =
-    Lattice[State].diff(state, delta) match {
+    Lattice.diff(state, delta) match {
       case Some(stateDiff) =>
         val stateMerged = Lattice[State].merge(state, stateDiff)
         new NamedDeltaBuffer(replicaID, stateMerged, Named(source, stateDiff) :: deltaBuffer)

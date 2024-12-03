@@ -23,13 +23,6 @@ trait Lattice[A] {
   /** Lattice order is derived from merge, but should be overridden for efficiency */
   def lteq(left: A, right: A): Boolean = merge(left, right) == normalize(right)
 
-  /** Computes delta without state.
-    * Overriding this is discouraged.
-    */
-  def diff(state: A, delta: A)(using dec: Decompose[A]): Option[A] = {
-    dec.decomposed(delta).filter(!lteq(_, state)).reduceOption(merge)
-  }
-
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
     * Overriding this is discouraged.
     */
@@ -41,7 +34,7 @@ trait Lattice[A] {
   extension (left: A) {
     final inline def <=(right: A): Boolean = Lattice.this.lteq(left, right)
     @targetName("mergeInfix")
-    final inline def merge(right: A): A      = Lattice.this.merge(left, right)
+    final inline def merge(right: A): A = Lattice.this.merge(left, right)
   }
 }
 
@@ -49,11 +42,13 @@ object Lattice {
   def apply[A](using ev: Lattice[A]): Lattice[A] = ev
 
   // forwarder for better syntax/type inference
-  def merge[A: Lattice](left: A, right: A): A        = apply[A].merge(left, right)
-  def lteq[A: Lattice](left: A, right: A): Boolean   = apply[A].lteq(left, right)
-  def diff[A: Lattice: Decompose](left: A, right: A): Option[A] = apply[A].diff(left, right)
-  def normalize[A: Lattice](v: A): A                 = apply[A].normalize(v)
+  def merge[A: Lattice](left: A, right: A): A      = apply[A].merge(left, right)
+  def lteq[A: Lattice](left: A, right: A): Boolean = apply[A].lteq(left, right)
+  def normalize[A: Lattice](v: A): A               = apply[A].normalize(v)
 
+  def diff[A: Lattice: Decompose](state: A, delta: A): Option[A] = {
+    delta.decomposed.filter(!lteq(_, state)).reduceOption(merge)
+  }
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
   // This could be just an extension method, but then would be ambiguous in cases where the extension on the interface is available.

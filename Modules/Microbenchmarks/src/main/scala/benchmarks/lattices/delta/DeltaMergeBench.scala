@@ -49,12 +49,12 @@ class DeltaMergeBench {
 
   @Benchmark
   def fullDiff: Option[Dotted[ReplicatedList[Long]]] = {
-    DottedLattice[ReplicatedList[Long]].diff(fullState, plusOneState)
+    DottedLattice.diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: Dotted[ReplicatedList[Long]] = {
-    DottedLattice[ReplicatedList[Long]].diff(fullState, plusOneDeltaState) match {
+    DottedLattice.diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
         DottedLattice[ReplicatedList[Long]].merge(fullState, stateDiff)
       case None => fullState

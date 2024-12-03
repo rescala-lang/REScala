@@ -49,12 +49,12 @@ class AWSetDeltaMergeBench {
 
   @Benchmark
   def fullDiff: Option[Dotted[ReplicatedSet[Long]]] = {
-    DottedLattice[ReplicatedSet[Long]].diff(fullState, plusOneState)
+    DottedLattice.diff(fullState, plusOneState)
   }
 
   @Benchmark
   def deltaMerge: Dotted[ReplicatedSet[Long]] = {
-    DottedLattice[ReplicatedSet[Long]].diff(fullState, plusOneDeltaState) match {
+    DottedLattice.diff(fullState, plusOneDeltaState) match {
       case Some(stateDiff) =>
         DottedLattice[ReplicatedSet[Long]].merge(fullState, stateDiff)
       case None => fullState
