@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.*
 import probench.clients.{ClientCLI, ProBenchClient}
 import probench.data.{ClientNodeState, ClusterData, KVOperation}
-import rdts.base.Uid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
 import rdts.datatypes.experiments.protocols.simplified.Paxos
 import replication.ProtocolMessage
@@ -42,6 +42,30 @@ class ClusterConsensus extends munit.FunSuite {
     assertEquals(nodes(0).currentState, nodes(1).currentState)
     assertEquals(nodes(1).currentState, nodes(2).currentState)
     assertEquals(nodes(2).currentState, nodes(0).currentState)
+
+    def investigateUpkeep(state: MembershipType)(using LocalUid) = {
+      val delta  = state.upkeep()
+      val merged = (state `merge` delta)
+      assert(state != merged)
+      assert(!(delta <= state), delta)
+    }
+
+    while {
+
+      Thread.sleep(100)
+
+      nodes.filter(_.needsUpkeep()).exists { n =>
+        println(s"forcing upkeep on $n")
+        investigateUpkeep(n.currentState)(using n.localUid)
+        n.forceUpkeep()
+        true
+      }
+
+    } do ()
+
+    nodes.foreach(node => assert(!node.needsUpkeep(), node.uid))
+
+    Thread.sleep(200)
 
     def noUpkeep(keyValueReplica: KeyValueReplica): Unit = {
       val current = keyValueReplica.currentState

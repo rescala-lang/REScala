@@ -51,6 +51,16 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     currentState
   }
 
+  def forceUpkeep() = currentStateLock.synchronized {
+    publish(currentState.upkeep())
+  }
+
+  def needsUpkeep() = currentStateLock.synchronized {
+    val state = currentState
+    val delta = state.upkeep()
+    state != (state `merge` delta)
+  }
+
   def transform(f: ClusterState => ClusterState) = publish(
     f(currentStateLock.synchronized(currentState))
   )
