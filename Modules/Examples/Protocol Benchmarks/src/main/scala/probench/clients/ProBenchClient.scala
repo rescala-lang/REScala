@@ -7,7 +7,7 @@ import probench.data.RequestResponseQueue.*
 
 import java.util.concurrent.Semaphore
 
-class ProBenchClient(val name: Uid) extends Client(name) {
+class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(name) {
   given localUid: LocalUid = LocalUid(name)
   private val dataManager  = ProDataManager[ClientNodeState](localUid, Bottom[ClientNodeState].empty, onStateChange)
 
@@ -21,7 +21,7 @@ class ProBenchClient(val name: Uid) extends Client(name) {
 
       dataManager.transform(_.mod(_.complete(req)))
 
-      requestSemaphore.release(1)
+      if blocking then requestSemaphore.release(1)
     }
   }
 
@@ -29,13 +29,15 @@ class ProBenchClient(val name: Uid) extends Client(name) {
     // TODO: still not sure that the semaphore use is correct …
     // its quite likely possible that some other request is answered after draining, causing the code below to return immediately
     // though overall currentOp is not protected at all, so it is triple unclear what is going on
-    requestSemaphore.drainPermits()
+    if blocking then
+      requestSemaphore.drainPermits()
+      ()
 
     dataManager.transform { current =>
       current.mod(_.request(op))
     }
 
-    requestSemaphore.acquire(1)
+    if blocking then requestSemaphore.acquire(1)
   }
 
   export dataManager.addLatentConnection
