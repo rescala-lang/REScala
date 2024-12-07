@@ -4,7 +4,7 @@ import sbt.Keys.libraryDependencies
 
 object Dependencies {
 
-  val munit       = libraryDependencies += "org.scalameta"         %%% "munit"                  % "1.0.2"  % Test
+  val munit       = libraryDependencies += "org.scalameta"         %%% "munit"                  % "1.0.3"  % Test
   val munitCheck  = libraryDependencies += "org.scalameta"         %%% "munit-scalacheck"       % "1.0.0"  % Test
   val pprint      = libraryDependencies += "com.lihaoyi"           %%% "pprint"                 % "0.9.0"
   val scalajsDom  = libraryDependencies += "org.scala-js"          %%% "scalajs-dom"            % "2.8.0"
@@ -31,8 +31,8 @@ object Dependencies {
     )
 
   def borer = libraryDependencies ++= Seq(
-    "io.bullet" %%% "borer-core"       % "1.14.1",
-    "io.bullet" %%% "borer-derivation" % "1.14.1"
+    "io.bullet" %%% "borer-core"       % "1.15.0",
+    "io.bullet" %%% "borer-derivation" % "1.15.0"
   )
 
   def jetty = {
