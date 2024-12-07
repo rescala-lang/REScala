@@ -10,17 +10,12 @@ import rdts.datatypes.experiments.protocols.simplified.Paxos
 import rdts.syntax.DeltaBuffer
 import replication.DeltaDissemination
 
-import java.util.concurrent.Executors
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   def log(msg: String): Unit =
     if false then println(s"[$uid] $msg")
-
-  val executionContext: ExecutionContextExecutor =
-    ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor)
 
   private type ClusterState = Membership[ClusterData, Paxos, Paxos]
 
@@ -48,7 +43,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     if !(delta <= currentState) then {
       log(s"publishing")
       currentState = currentState.merge(delta)
-      executionContext.execute(() => clusterDataManager.applyDelta(delta))
+      clusterDataManager.applyDelta(delta)
     } else
       log(s"skip")
     currentState
