@@ -65,6 +65,7 @@ case class Membership[A, C[_], D[_]](
     (newMembers.read, newInner.read) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
+        assert(!members.isEmpty, "members consensus reached but no members found")
         copy(
           counter = counter + 1,
           membersConsensus = Consensus[C].empty,
@@ -120,7 +121,7 @@ object Membership {
           Lattice[D[A]].merge(left.innerConsensus, right.innerConsensus),
           logLattice.merge(left.log, right.log),
           left.membershipChanging || right.membershipChanging,
-          left.members
+          left.members `union` right.members
         )
 
 }
