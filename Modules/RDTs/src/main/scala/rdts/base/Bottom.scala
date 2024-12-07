@@ -66,7 +66,7 @@ object Bottom {
 
   inline def derived[T](using m: Mirror.Of[T]): Bottom[T] =
     inline m match
-      case pm: Mirror.ProductOf[T] => productBottom[T](using pm).asInstanceOf[Bottom[T]]
+      case pm: Mirror.ProductOf[T] => productBottom[T](using pm)
       case sm: Mirror.SumOf[T]     => sumBottom[T](using sm)
 
   inline def sumBottom[T](using sm: Mirror.SumOf[T]): Bottom[T] =
