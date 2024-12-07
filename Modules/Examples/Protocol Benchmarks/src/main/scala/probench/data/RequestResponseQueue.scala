@@ -84,6 +84,10 @@ object RequestResponseQueue {
   given procLattice: Lattice[Map[LocalUid, VectorClock]]         = Lattice.mapLattice
   given bottomInstance[S, T]: Bottom[RequestResponseQueue[S, T]] = Bottom.derived
 
+  // TODO: likely not a lattice, because the sort is nondeterministic
+  // that is probably fine for now, because this is used like a set (i.e., order does not matter),
+  // and only read/written by a single component
+  // but should not use lattice API if it relies on other assumptions
   given lattice[S, T]: Lattice[RequestResponseQueue[S, T]] with {
     override def merge(
         left: RequestResponseQueue[S, T],
