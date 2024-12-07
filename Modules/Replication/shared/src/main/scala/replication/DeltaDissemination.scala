@@ -95,7 +95,7 @@ class DeltaDissemination[State](
 
   def allPayloads: List[Payload[State]] = pastPayloads
   private def rememberPayload(payload: Payload[State]): Unit =
-    if false then pastPayloads = payload :: pastPayloads
+    pastPayloads = payload :: pastPayloads
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
