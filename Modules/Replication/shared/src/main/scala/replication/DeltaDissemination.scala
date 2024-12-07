@@ -12,9 +12,6 @@ import replication.ProtocolMessage.*
 
 import scala.util.{Failure, Success, Try}
 
-
-
-
 trait Aead {
   def encrypt(plain: Array[Byte], associated: Array[Byte]): Array[Byte]
   def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
@@ -97,6 +94,8 @@ class DeltaDissemination[State](
   private var pastPayloads: List[Payload[State]] = Nil
 
   def allPayloads: List[Payload[State]] = pastPayloads
+  private def rememberPayload(payload: Payload[State]): Unit =
+    if false then pastPayloads = payload :: pastPayloads
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
@@ -107,7 +106,7 @@ class DeltaDissemination[State](
       val nextDot = selfContext.nextDot(replicaId.uid)
       val payload = Payload(replicaId.uid, Dots.single(nextDot), delta)
       updateContext(replicaId.uid, payload.dots)
-      pastPayloads = payload :: pastPayloads
+      rememberPayload(payload)
       payload
     }
     disseminate(payload)
@@ -134,7 +133,7 @@ class DeltaDissemination[State](
             updateContext(uid, context)
           }
           updateContext(replicaId.uid, context)
-          pastPayloads = payload :: pastPayloads
+          rememberPayload(payload)
         }
         receiveCallback(data)
         if immediateForward then
