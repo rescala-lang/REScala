@@ -65,22 +65,7 @@ object RequestResponseQueue {
 
   def empty[S, T]: RequestResponseQueue[S, T] =
     RequestResponseQueue(Queue.empty, Queue.empty, Map.empty, VectorClock.zero)
-
-  given hasDots[S, T]: HasDots[RequestResponseQueue[S, T]] with {
-    extension (value: RequestResponseQueue[S, T])
-      override def dots: Dots = Dots.from(value.requests.view.map(_.dot) ++ value.responses.view.map(_.dot))
-
-      override def removeDots(dots: Dots): Option[RequestResponseQueue[S, T]] =
-        Some(
-          RequestResponseQueue(
-            value.requests.filter(req => !dots.contains(req.dot)),
-            value.responses.filter(res => !dots.contains(res.dot)),
-            value.processed,
-            value.clock
-          )
-        )
-  }
-
+  
   given procLattice: Lattice[Map[LocalUid, VectorClock]]         = Lattice.mapLattice
   given bottomInstance[S, T]: Bottom[RequestResponseQueue[S, T]] = Bottom.derived
 
