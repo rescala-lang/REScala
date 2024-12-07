@@ -1,9 +1,9 @@
 package probench.data
 
 import probench.data.RequestResponseQueue.{Req, Res}
+import rdts.base.Lattice.mapLattice
 import rdts.base.{Bottom, Lattice, LocalUid}
-import rdts.dotted.{Dotted, HasDots}
-import rdts.time.{Dot, Dots, VectorClock}
+import rdts.time.{Dot, VectorClock}
 
 import scala.collection.immutable.Queue
 
@@ -46,6 +46,7 @@ case class RequestResponseQueue[S, T](
   def firstUnansweredRequest: Option[Req[S]] =
     requests.collectFirst { case r: Req[S] if responsesTo(r).isEmpty => r }
 
+  // TODO: I think this causes ALL requests/repsonses that are older than req to be dropped
   def complete(req: Req[S])(using id: LocalUid): Delta = {
     val time = clock.merge(clock.inc(LocalUid.replicaId))
 
@@ -65,9 +66,8 @@ object RequestResponseQueue {
 
   def empty[S, T]: RequestResponseQueue[S, T] =
     RequestResponseQueue(Queue.empty, Queue.empty, Map.empty, VectorClock.zero)
-  
-  given procLattice: Lattice[Map[LocalUid, VectorClock]]         = Lattice.mapLattice
-  given bottomInstance[S, T]: Bottom[RequestResponseQueue[S, T]] = Bottom.derived
+
+  given bottomInstance[S, T]: Bottom[RequestResponseQueue[S, T]] = Bottom.provide(empty)
 
   // TODO: likely not a lattice, because the sort is nondeterministic
   // that is probably fine for now, because this is used like a set (i.e., order does not matter),
