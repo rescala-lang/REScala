@@ -14,7 +14,7 @@ import scala.collection.mutable
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
-  def log(msg: String): Unit =
+  inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
 
   private type ClusterState = Membership[ClusterData, Paxos, Paxos]
