@@ -61,6 +61,8 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
 ) extends CommandsARDTs[Membership[A, C, D]] {
   // given logger: Logger = Logger(level = Level.Info)
 
+  given Lattice[Membership[A, C, D]] = Membership.latticeFromConsensus
+
   override def genInitialState: Gen[State] =
     for
       numDevices <- Gen.choose(minDevices, maxDevices)
