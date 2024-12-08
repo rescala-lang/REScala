@@ -131,10 +131,10 @@ class MembershipSpec[A: Arbitrary, C[_]: Consensus, D[_]: Consensus](
           (res(index1), res(index2)) match
             case (membership1, membership2) =>
               (membership1.currentMembers.nonEmpty && membership2.currentMembers.nonEmpty) :| "set of members can never be empty" &&
-              ((membership1.counter != membership2.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices" &&
+              ((membership1.rounds.counter != membership2.rounds.counter) || membership1.currentMembers == membership2.currentMembers) :| "members for a given counter are the same for all indices" &&
               (membership1.read.containsSlice(membership2.read) || membership2.read.containsSlice(
                 membership1.read
-              )) :| s"every log is a prefix of another log or vice versa, but we had:\n${membership1.counter}${membership1.read}\n${membership2.counter}${membership2.read}"
+              )) :| s"every log is a prefix of another log or vice versa, but we had:\n${membership1.rounds.counter}${membership1.read}\n${membership2.rounds.counter}${membership2.read}"
 
       }
 

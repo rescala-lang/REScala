@@ -96,7 +96,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     log(s"${newState.log}")
     // println(s"${pprint.tokenize(newState).mkString("")}")
 
-    for decidedRequest <- newState.readDecisionsSince(oldState.counter) do {
+    for decidedRequest <- newState.readDecisionsSince(oldState.rounds.counter) do {
       val decision: String = decidedRequest match {
         case ClusterData(KVOperation.Read(key), _) =>
           kvCache.synchronized {

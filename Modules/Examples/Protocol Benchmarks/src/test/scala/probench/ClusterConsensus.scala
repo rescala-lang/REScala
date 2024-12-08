@@ -37,7 +37,6 @@ class ClusterConsensus extends munit.FunSuite {
     client.addLatentConnection(clientConnection.client(clientUid.toString))
 
     client.read("test")
-    Thread.sleep(200)
 
     assertEquals(nodes(0).currentState, nodes(1).currentState)
     assertEquals(nodes(1).currentState, nodes(2).currentState)

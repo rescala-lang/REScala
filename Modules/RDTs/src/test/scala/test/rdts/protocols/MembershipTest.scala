@@ -15,7 +15,7 @@ class MembershipTest extends munit.FunSuite {
   test("basic membership merge") {
     val membership = Membership.init[Int, Paxos, Paxos](Set(id1, id2, id3).map(_.uid))
     val delta      = membership.upkeep()(using id1)
-    println(delta.members)
+    println(delta.rounds.value.members)
     val res        = delta `merge` membership
     assertEquals(res, membership)
   }
