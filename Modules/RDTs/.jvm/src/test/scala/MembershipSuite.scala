@@ -1,9 +1,9 @@
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.base.{Lattice, LocalUid}
 import rdts.datatypes.experiments.protocols.simplified.GeneralizedPaxos
-import rdts.datatypes.experiments.protocols.{Consensus, Membership, simplified}
+import rdts.datatypes.experiments.protocols.{Consensus, Membership, paper, simplified}
 
 import scala.util.Try
 class MembershipSuite extends munit.ScalaCheckSuite {
