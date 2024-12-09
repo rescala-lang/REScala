@@ -58,7 +58,7 @@ case class Membership[A, C[_], D[_]](
     if isMember then
       bottomRound.copy(
         membershipChanging = true,
-        membersConsensus = rounds.value.membersConsensus.write(currentMembers + id)
+        membersConsensus = rounds.value.membersConsensus.propose(currentMembers + id)
       )
     else bottomRound
   }
@@ -67,7 +67,7 @@ case class Membership[A, C[_], D[_]](
     if currentMembers.size > 1 && isMember then // cannot remove last member
       bottomRound.copy(
         membershipChanging = true,
-        membersConsensus = rounds.value.membersConsensus.write(currentMembers - id)
+        membersConsensus = rounds.value.membersConsensus.propose(currentMembers - id)
       )
     else bottomRound
   }
@@ -80,7 +80,7 @@ case class Membership[A, C[_], D[_]](
   def write(value: A)(using LocalUid, Consensus[C], Consensus[D]): Membership[A, C, D] = writeRound {
     if !rounds.value.membershipChanging && isMember then
       bottomRound.copy(
-        innerConsensus = rounds.value.innerConsensus.write(value)
+        innerConsensus = rounds.value.innerConsensus.propose(value)
       )
     else bottomRound
   }
@@ -93,7 +93,7 @@ case class Membership[A, C[_], D[_]](
     val newMembers   = rounds.value.membersConsensus.merge(deltaMembers)
     val deltaInner   = rounds.value.innerConsensus.upkeep()
     val newInner     = rounds.value.innerConsensus.merge(deltaInner)
-    (newMembers.read, newInner.read) match
+    (newMembers.decision, newInner.decision) match
       // member consensus reached -> members have changed
       case (Some(members), _) =>
         assert(!members.isEmpty, "members consensus reached but no members found")
