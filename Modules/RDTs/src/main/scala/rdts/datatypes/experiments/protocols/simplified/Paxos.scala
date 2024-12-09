@@ -66,7 +66,7 @@ case class Paxos[A](
       )
 
   // phase 2a
-  def propose(proposal: ProposalNum, v: A)(using LocalUid, Participants): Paxos[A] =
+  def phase2a(proposal: ProposalNum, v: A)(using LocalUid, Participants): Paxos[A] =
     // check if I have received enough promises and have not proposed yet
     val myPromises  = promises.filter(_.proposal == proposal)
     val hasProposed = accepts.exists(_.proposal == proposal)
@@ -84,11 +84,11 @@ case class Paxos[A](
     else
       Paxos.unchanged // quorum not reached, do nothing
 
-  def propose(v: A)(using LocalUid, Participants): Paxos[A] =
+  def phase2a(v: A)(using LocalUid, Participants): Paxos[A] =
     // find my newest proposalNum
     val proposalNum = prepares.filter(_.proposal.proposer == replicaId).maxByOption(_.proposal)
     proposalNum match
-      case Some(Prepare(prop)) => propose(prop, v)
+      case Some(Prepare(prop)) => phase2a(prop, v)
       case None                => Paxos.unchanged
 
   // phase 2b
@@ -136,7 +136,7 @@ object Paxos:
           myNewestProposal match // check if I already have a proposal
             case Some(proposal) =>
               // check if proposing does anything (i.e. I am the leader)
-              val proposed = c.propose(proposal, value)
+              val proposed = c.phase2a(proposal, value)
               if Lattice[Paxos[A]].lteq(proposed, c) then
                 // proposing did not work, try to become leader
                 becomeLeader
@@ -181,7 +181,7 @@ object Paxos:
               // combine deltas for promise and propose
               Lattice[Paxos[A]].merge(
                 promise,
-                newState.propose(proposal, newState.members(proposal.proposer).get.value)
+                newState.phase2a(proposal, newState.members(proposal.proposer).get.value)
               )
             else
               // we are not the leader, promise

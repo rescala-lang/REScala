@@ -39,7 +39,7 @@ class SimplePaxosTest extends munit.FunSuite {
     a = a `merge` a.prepare()(using id1)
     a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
     assertEquals(a.decision, None)
-    a = a `merge` a.propose(proposal, 1)(using id1)
+    a = a `merge` a.phase2a(proposal, 1)(using id1)
     a = a `merge` a.upkeep()(using id1) `merge` a.upkeep()(using id2) `merge` a.upkeep()(using id3)
     assertEquals(a.decision, Some(1))
   }
