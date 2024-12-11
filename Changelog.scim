@@ -1,6 +1,9 @@
 = Changelog
 
-== v.next
+== v0.37.0
+date = 2024-12-12
+
+Scala 3.5 based release
 
 • all modules now use at least java version 17
 	• This is now actually the oldest supported java version (except for commercial extended support we don’t have). This feels strange.
