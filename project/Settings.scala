@@ -8,9 +8,12 @@ import sbt.Keys.*
 object Settings {
 
   // also consider updating the -source param below
-  val scala3VersionString = sys.env.getOrElse("SCALA_VERSION", "3.5.2")
+  val scala3VersionString = sys.env.getOrElse("SCALA_VERSION", "3.6.2")
 
-  val scala3VersionMinor = scala3VersionString.reverse.dropWhile(c => c != '.').drop(1).reverse
+  // needs either 3.7 or 3.5 minor version in 3.6, otherwise there is a unfixable warning about changed implicit order
+  // see https://github.com/scala/scala3/issues/22153
+  val scala3VersionMinor = "3.7"
+  // val scala3VersionMinor = scala3VersionString.reverse.dropWhile(c => c != '.').drop(1).reverse
 
   // see https://docs.scala-lang.org/overviews/compiler-options/
   // and https://docs.scala-lang.org/scala3/guides/migration/options-new.html
