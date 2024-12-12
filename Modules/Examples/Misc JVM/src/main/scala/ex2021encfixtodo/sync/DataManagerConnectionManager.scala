@@ -1,6 +1,6 @@
 package ex2021encfixtodo.sync
 
-import channels.TCP
+import channels.NioTCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.aead.AeadConfig
@@ -8,6 +8,7 @@ import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, Js
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import replication.DeltaDissemination
+import replication.JsoniterCodecs.given
 
 import java.net.{InetSocketAddress, Socket, URI}
 import java.nio.file.{Files, Path}
@@ -15,8 +16,6 @@ import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
 import scala.util.chaining.scalaUtilChainingOps
 import scala.util.{Random, Try}
-
-import replication.JsoniterCodecs.given
 
 class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aead {
   override def encrypt(data: Array[Byte], associated: Array[Byte]): Array[Byte] = aead.encrypt(data, associated)
@@ -59,7 +58,11 @@ class DataManagerConnectionManager[State: { JsonValueCodec, Lattice, Bottom, Has
   )
   val ec: ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-  dataManager.addLatentConnection(TCP.listen(TCP.defaultServerSocket(new InetSocketAddress("127.0.0.1", port)), ec))
+  val niotcp = new NioTCP {}
+
+  dataManager.addLatentConnection(niotcp.listen(
+    niotcp.defaultServerSocketChannel(new InetSocketAddress("127.0.0.1", port))
+  ))
 
   override val localReplicaId: String = replicaId.toString
 
@@ -68,7 +71,7 @@ class DataManagerConnectionManager[State: { JsonValueCodec, Lattice, Bottom, Has
   }
 
   override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
-    dataManager.addLatentConnection(TCP.connect(() => new Socket(uri.getHost, uri.getPort), ec))
+    dataManager.addLatentConnection(niotcp.connect(niotcp.defaultSocketChannel(new InetSocketAddress(uri.getHost, uri.getPort))))
   }
 
   override def stop(): Unit = {

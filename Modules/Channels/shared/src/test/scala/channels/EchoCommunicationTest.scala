@@ -9,24 +9,6 @@ import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-class EchoServerTestTCP extends EchoCommunicationTest(
-      { ec =>
-        val socket = new ServerSocket
-
-        try socket.setReuseAddress(true)
-        catch {
-          case _: SocketException =>
-          // some implementations may not allow SO_REUSEADDR to be set
-        }
-
-        socket.bind(new InetSocketAddress(InetAddress.getByName("localhost"), 0))
-
-        val port = socket.getLocalPort
-        (port, TCP.listen(() => socket, ec))
-      },
-      ec => port => TCP.connect(TCP.defaultSocket(new InetSocketAddress("localhost", port)), ec)
-    )
-
 def printErrors[T](cb: T => Unit): Callback[T] =
   case Success(mb) => cb(mb)
   case Failure(ex) => ex match

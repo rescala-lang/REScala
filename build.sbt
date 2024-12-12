@@ -271,6 +271,7 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
   ).jvmSettings(
     Dependencies.tink,
     Dependencies.bouncyCastle,
+    Test / fork := true,
   )
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))

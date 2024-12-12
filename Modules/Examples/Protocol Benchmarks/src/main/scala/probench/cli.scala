@@ -1,6 +1,6 @@
 package probench
 
-import channels.{Abort, NioTCP, TCP, UDP}
+import channels.{Abort, NioTCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
@@ -9,7 +9,7 @@ import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientNodeState, ClusterData, KVOperation}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.simplified.{GeneralizedPaxos, Paxos}
+import rdts.datatypes.experiments.protocols.simplified.Paxos
 import replication.{FileConnection, ProtocolMessage}
 
 import java.net.{DatagramSocket, InetSocketAddress}
@@ -113,18 +113,6 @@ object cli {
         subcommand("node", "starts a cluster node") {
           val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
-          node.addClientConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", clientPort.value)), ec))
-          node.addClusterConnection(TCP.listen(TCP.defaultServerSocket(socketPath("localhost", peerPort.value)), ec))
-
-          Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
-
-          cluster.value.foreach { (ip, port) =>
-            node.addClusterConnection(TCP.connect(TCP.defaultSocket(socketPath(ip, port)), ec))
-          }
-        },
-        subcommand("nio-node", "starts a cluster node") {
-          val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
-
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
@@ -156,14 +144,6 @@ object cli {
           }
         },
         subcommand("client", "starts a client to interact with a node") {
-          val client = ProBenchClient(name.value)
-
-          val (ip, port) = clientNode.value
-          client.addLatentConnection(TCP.connect(TCP.defaultSocket(socketPath(ip, port)), ec))
-
-          ClientCLI(name.value, client).startCLI()
-        },
-        subcommand("nio-client", "starts a client to interact with a node") {
           val client = ProBenchClient(name.value)
 
           val (ip, port) = clientNode.value

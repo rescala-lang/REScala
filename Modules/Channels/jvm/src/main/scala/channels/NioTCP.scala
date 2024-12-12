@@ -136,8 +136,12 @@ class NioTCP {
   ): LatentConnection[MessageBuffer] =
     new LatentConnection {
       override def prepare(incoming: Receive[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
-        TCP.syncAttempt {
-          handleConnection(bindsocket(), incoming)
+        Async.fromCallback {
+          try
+            Async.handler.succeed {
+              handleConnection(bindsocket(), incoming)
+            }
+          catch case NonFatal(exception) => Async.handler.fail(exception)
         }
     }
 
