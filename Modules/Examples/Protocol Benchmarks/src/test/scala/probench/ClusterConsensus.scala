@@ -46,7 +46,7 @@ class ClusterConsensus extends munit.FunSuite {
       val delta  = state.upkeep()
       val merged = (state `merge` delta)
       assert(state != merged)
-      assert(!(delta <= state), delta)
+      assert(delta `inflates` state, delta)
     }
 
     while {
@@ -80,7 +80,6 @@ class ClusterConsensus extends munit.FunSuite {
     assertEquals(nodes(0).currentState, nodes(1).currentState)
     assertEquals(nodes(1).currentState, nodes(2).currentState)
     assertEquals(nodes(2).currentState, nodes(0).currentState)
-
 
     println(s"================ at the end of the tests")
 

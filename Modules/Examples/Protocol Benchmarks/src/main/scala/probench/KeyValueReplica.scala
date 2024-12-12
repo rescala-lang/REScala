@@ -40,7 +40,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     )
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
-    if !(delta <= currentState) then {
+    if delta `inflates` currentState then {
       log(s"publishing")
       currentState = currentState.merge(delta)
       clusterDataManager.applyDelta(delta)
@@ -72,7 +72,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     }
     if old != changed then {
       val upkept = changed.upkeep()
-      if upkept <= currentState
+      if upkept `subsumedBy` currentState
       then log(s"no changes")
       else log(s"upkeep")
       assert(changed == currentState)

@@ -97,7 +97,7 @@ object GeneralizedPaxos:
       override def propose(value: A)(using LocalUid, Participants): GeneralizedPaxos[A] =
         // check if I can propose a value
         val afterProposal = c.phase2a
-        if Lattice[GeneralizedPaxos[A]].lteq(afterProposal, c) then
+        if Lattice[GeneralizedPaxos[A]].subsumption(afterProposal, c) then
           // proposing did not work, try to become leader
           c.phase1a.copy(myValue = Map(replicaId -> LastWriterWins.now(value)))
         else

@@ -137,7 +137,7 @@ object Paxos:
             case Some(proposal) =>
               // check if proposing does anything (i.e. I am the leader)
               val proposed = c.phase2a(proposal, value)
-              if Lattice[Paxos[A]].lteq(proposed, c) then
+              if Lattice[Paxos[A]].subsumption(proposed, c) then
                 // proposing did not work, try to become leader
                 becomeLeader
               else

@@ -21,13 +21,16 @@ trait Lattice[A] {
   def merge(left: A, right: A): A
 
   /** Lattice order is derived from merge, but should be overridden for efficiency */
-  def lteq(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
+  def subsumption(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
 
   /** Convenience extensions for the above. */
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
-    final inline def <=(right: A): Boolean = Lattice.this.lteq(left, right)
+    final inline def subsumedBy(right: A): Boolean = Lattice.this.subsumption(left, right)
+    final inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
+    final inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
+
     @targetName("mergeInfix")
     final inline def merge(right: A): A = Lattice.this.merge(left, right)
   }
@@ -38,7 +41,7 @@ object Lattice {
 
   // forwarder for better syntax/type inference
   def merge[A: Lattice](left: A, right: A): A      = apply[A].merge(left, right)
-  def lteq[A: Lattice](left: A, right: A): Boolean = apply[A].lteq(left, right)
+  def subsumption[A: Lattice](left: A, right: A): Boolean = apply[A].subsumption(left, right)
 
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
     * Overriding this is discouraged.
@@ -46,7 +49,7 @@ object Lattice {
   def normalize[A: Lattice](v: A): A = v `merge` v
 
   def diff[A: Lattice: Decompose](state: A, delta: A): Option[A] = {
-    delta.decomposed.filter(!lteq(_, state)).reduceOption(merge)
+    delta.decomposed.filter(!subsumption(_, state)).reduceOption(merge)
   }
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
@@ -62,7 +65,7 @@ object Lattice {
     }
 
   def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
-    override def lteq(x: A, y: A): Boolean = Lattice.lteq(x, y)
+    override def lteq(x: A, y: A): Boolean = Lattice.subsumption(x, y)
     override def tryCompare(x: A, y: A): Option[Int] =
       val lr = lteq(x, y)
       val rl = lteq(y, x)
@@ -78,8 +81,8 @@ object Lattice {
   }
 
   def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
-    override def merge(left: A, right: A): A      = if lteq(left, right) then right else left
-    override def lteq(left: A, right: A): Boolean = Ordering[A].lteq(left, right)
+    override def merge(left: A, right: A): A      = if subsumption(left, right) then right else left
+    override def subsumption(left: A, right: A): Boolean = Ordering[A].lteq(left, right)
   }
 
   def assertEquals[A]: Lattice[A] = (left: A, right: A) =>
@@ -94,7 +97,7 @@ object Lattice {
 
   given setLattice[A]: Lattice[Set[A]] with
     override def merge(left: Set[A], right: Set[A]): Set[A] = left `union` right
-    override def lteq(left: Set[A], right: Set[A]): Boolean = left subsetOf right
+    override def subsumption(left: Set[A], right: Set[A]): Boolean = left subsetOf right
 
   given optionLattice[A: Lattice]: Lattice[Option[A]] =
     given Lattice[None.type] = Lattice.derived
@@ -117,9 +120,9 @@ object Lattice {
             }
         }
 
-      override def lteq(left: Mp[K, V], right: Mp[K, V]): Boolean =
+      override def subsumption(left: Mp[K, V], right: Mp[K, V]): Boolean =
         left.forall { (k, l) =>
-          right.get(k).exists(r => l <= r)
+          right.get(k).exists(r => l `subsumedBy` r)
         }
 
     }
@@ -163,11 +166,11 @@ object Lattice {
           case x if x < 0 => right
           case x if x > 0 => left
 
-      override def lteq(left: T, right: T): Boolean =
+      override def subsumption(left: T, right: T): Boolean =
         val lo = sm.ordinal(left)
         val ro = sm.ordinal(right)
         Integer.compare(lo, ro) match
-          case 0     => lat(lo).lteq(left, right)
+          case 0     => lat(lo).subsumption(left, right)
           case other => other < 0
     }
 
@@ -208,8 +211,8 @@ object Lattice {
           def productElement(i: Int): Any  = lat(i).merge(left.productElement(i), right.productElement(i))
         })
 
-      override def lteq(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
-        lat(i).lteq(left.productElement(i), right.productElement(i))
+      override def subsumption(left: T, right: T): Boolean = Range(0, lattices.productArity).forall { i =>
+        lat(i).subsumption(left.productElement(i), right.productElement(i))
       }
     }
   }

@@ -115,9 +115,9 @@ abstract class LatticePropertyChecks[A](
 
       assertEquals(left `merge` merged, merged, "naive lteq")
       assertEquals(right `merge` merged, merged, "naive lteq")
-      assert(left <= merged, s"merged:\n  ${merged}\n ${left `merge` merged}")
-      assert(right <= merged, s"merged:\n  ${merged}\n ${right `merge` merged}")
-      assert(!(merged <= left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}")
-      assert(!(merged <= right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
+      assert(left `subsumedBy` merged, s"merged:\n  ${merged}\n ${left `merge` merged}")
+      assert(right `subsumedBy` merged, s"merged:\n  ${merged}\n ${right `merge` merged}")
+      assert(merged.inflates(left) || merged == Lattice.normalize(left), s"merged:\n  ${merged}")
+      assert(merged.inflates(right) || merged == Lattice.normalize(right), s"merged:\n  ${merged}")
 
 }

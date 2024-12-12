@@ -44,9 +44,9 @@ object AuctionInterface {
     given hasDots: HasDots[AuctionData] = HasDots.noDots
 
     given AuctionDataAsUIJDLattice: Lattice[AuctionData] with Decompose[AuctionData] with {
-      override def lteq(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
+      override def subsumption(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          Lattice[Set[Bid]].lteq(lb, rb) && Lattice[Status].lteq(ls, rs)
+          Lattice[Set[Bid]].subsumption(lb, rb) && Lattice[Status].subsumption(ls, rs)
       }
 
       extension (a: AuctionData)

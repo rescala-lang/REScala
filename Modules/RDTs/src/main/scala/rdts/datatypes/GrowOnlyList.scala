@@ -112,13 +112,13 @@ object GrowOnlyList {
   given hasDots[E: HasDots]: HasDots[GrowOnlyList[E]] = HasDots.noDots
 
   given lattice[E]: Lattice[GrowOnlyList[E]] with Decompose[GrowOnlyList[E]] with {
-    override def lteq(
+    override def subsumption(
         left: GrowOnlyList[E],
         right: GrowOnlyList[E]
     ): Boolean =
       left.inner.keys.forall { k =>
         right.inner.get(k).contains(left.inner(k))
-      } || super.lteq(left, right)
+      } || super.subsumption(left, right)
 
     extension (a: GrowOnlyList[E])
       override def decomposed: Iterable[GrowOnlyList[E]] =

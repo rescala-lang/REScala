@@ -35,9 +35,9 @@ object Epoch {
 
   given latticeInstance[E: Lattice]: Lattice[Epoch[E]] = new Lattice[Epoch[E]] {
 
-    override def lteq(left: Epoch[E], right: Epoch[E]): Boolean = (left, right) match {
+    override def subsumption(left: Epoch[E], right: Epoch[E]): Boolean = (left, right) match {
       case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
-        cLeft < cRight || (cLeft == cRight && Lattice[E].lteq(vLeft, vRight))
+        cLeft < cRight || (cLeft == cRight && Lattice[E].subsumption(vLeft, vRight))
     }
 
     /** By assumption: associative, commutative, idempotent. */

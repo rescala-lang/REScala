@@ -89,7 +89,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB = dfB.dots `union` deletedB
 
       assert(
-        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfA, ccA), Dotted(dfA, ccA)),
+        Dotted(dfA, ccA) `subsumedBy` Dotted(dfA, ccA),
         s"DotFun.leq should be reflexive, but returns false when applied to ($dfA, $ccA, $dfA, $ccA)"
       )
 
@@ -100,11 +100,11 @@ class DotFunTest extends munit.ScalaCheckSuite {
         )
 
       assert(
-        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfA, (ccA)), Dotted(dfMerged, ccMerged)),
+        Dotted(dfA, (ccA)) `subsumedBy` Dotted(dfMerged, ccMerged),
         s"The result of DotFun.merge should be larger than its lhs, but DotFun.leq returns false when applied to ($dfA, $ccA, $dfMerged, $ccMerged)"
       )
       assert(
-        Lattice[Dotted[Map[Dot, Int]]].lteq(Dotted(dfB, (ccB)), Dotted(dfMerged, ccMerged)),
+        Dotted(dfB, ccB) `subsumedBy` Dotted(dfMerged, ccMerged),
         s"The result of DotFun.merge should be larger than its rhs, but DotFun.leq returns false when applied to ($dfB, $ccB, $dfMerged, $ccMerged)"
       )
     }
@@ -117,7 +117,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
     val left    = Dotted(Map(someDot -> 10), Dots.single(someDot))
     val right   = Dotted(Map.empty[Dot, Int], Dots.single(someDot))
 
-    assert(left <= right)
+    assert(left `subsumedBy` right)
 
   }
 
@@ -144,7 +144,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val decomposed: Iterable[Dotted[Map[Dot, Int]]] = Decompose.decompose(withContext)
 
       decomposed.foreach { dec =>
-        assert(dec <= withContext)
+        assert(dec `subsumedBy` withContext)
       }
 
       val Dotted(dfMerged, ccMerged) =

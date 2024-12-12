@@ -51,7 +51,7 @@ object LastWriterWins {
   }
 
   class GenericLastWriterWinsLattice[A](conflict: Lattice[A]) extends Lattice[LastWriterWins[A]] with Decompose[LastWriterWins[A]] {
-    override def lteq(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp
+    override def subsumption(left: LastWriterWins[A], right: LastWriterWins[A]): Boolean = left.timestamp <= right.timestamp
 
     extension (a: LastWriterWins[A])
       override def decomposed: Iterable[LastWriterWins[A]] = List(a)
