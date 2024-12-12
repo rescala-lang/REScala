@@ -175,13 +175,13 @@ object DataGenerator {
   given arbEnableWinsFlag: Arbitrary[contextual.EnableWinsFlag] = Arbitrary:
     arbDots.arbitrary.map(EnableWinsFlag.apply)
 
-  given arbCausalDelta[A: Arbitrary: HasDots]: Arbitrary[CausalDelta[A]] = Arbitrary:
+  given arbCausalDelta[A: {Arbitrary, HasDots}]: Arbitrary[CausalDelta[A]] = Arbitrary:
     for
       predec <- arbDots.arbitrary
       value  <- Arbitrary.arbitrary[A]
     yield CausalDelta(value.dots, Dots.empty, value)
 
-  given arbCausalStore[A: Arbitrary: HasDots: Bottom: Lattice]: Arbitrary[CausalStore[A]] = Arbitrary:
+  given arbCausalStore[A: {Arbitrary, HasDots, Bottom, Lattice}]: Arbitrary[CausalStore[A]] = Arbitrary:
     for
       predec <- arbCausalDelta.arbitrary
       value  <- Arbitrary.arbitrary[A]

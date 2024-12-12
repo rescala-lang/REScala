@@ -48,7 +48,7 @@ object Lattice {
     */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
-  def diff[A: Lattice: Decompose](state: A, delta: A): Option[A] = {
+  def diff[A: {Lattice, Decompose}](state: A, delta: A): Option[A] = {
     delta.decomposed.filter(!subsumption(_, state)).reduceOption(merge)
   }
 

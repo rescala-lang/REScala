@@ -24,7 +24,7 @@ object Epoch {
   given bottom[E: Bottom]: Bottom[Epoch[E]] with
     override def empty: Epoch[E] = Epoch.empty
 
-  given hasDots[E: HasDots: Bottom]: HasDots[Epoch[E]] = new {
+  given hasDots[E: {HasDots, Bottom}]: HasDots[Epoch[E]] = new {
     extension (dotted: Epoch[E])
       def dots: Dots                               = dotted.value.dots
       def removeDots(dots: Dots): Option[Epoch[E]] = dotted.value.removeDots(dots).map(nv => dotted.copy(value = nv))
