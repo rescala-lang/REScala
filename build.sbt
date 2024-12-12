@@ -14,8 +14,6 @@ lazy val bismuth = project.in(file(".")).settings(scala3defaults).aggregate(
   exampleLenses,
   examplesMiscJVM,
   loCal,
-  lofiAcl,
-  lofiAclExample,
   lore.js,
   lore.jvm,
   loreCompilerPlugin,
@@ -133,7 +131,7 @@ lazy val exampleLenses = project.in(file("Modules/Examples/ReactiveLenses"))
 
 lazy val examplesMiscJVM = project.in(file("Modules/Examples/Misc JVM"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(reactives.jvm, replication.jvm)
+  .dependsOn(reactives.jvm, replication.jvm, deltalens)
   .settings(
     scala3defaults,
     fork := true,
@@ -158,30 +156,6 @@ lazy val loCal = project.in(file("Modules/Examples/Lore Calendar"))
     SettingsLocal.deployTask
   )
 
-lazy val lofiAcl = project.in(file("Modules/Local-first Access Control"))
-  .dependsOn(deltalens, rdts.jvm % "compile->compile;test->test")
-  .settings(
-    scala3defaults,
-    Settings.javaOutputVersion(17),
-    Settings.safeInit(Compile / compile, Test / compile),
-    Dependencies.munit,
-    Dependencies.munitCheck,
-    Dependencies.jsoniterScala,
-    Dependencies.tink,
-    Dependencies.slf4j,
-    Dependencies.bouncyCastle,
-    Test / fork := true,
-  )
-
-lazy val lofiAclExample = project.in(file("Modules/Local-first Access Control/Example"))
-  .dependsOn(lofiAcl)
-  .settings(
-    scala3defaults,
-    libraryDependencies += Dependencies.scalafx,
-    Dependencies.jsoniterScala,
-    Dependencies.munit,
-    publish / skip := true,
-  )
 
 lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).in(file("Modules/Lore"))
   .dependsOn(reactives)
@@ -219,7 +193,7 @@ lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plu
 
 lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
   .enablePlugins(JmhPlugin)
-  .dependsOn(reactives.jvm, rdts.jvm, replication.jvm, lofiAcl)
+  .dependsOn(reactives.jvm, rdts.jvm, replication.jvm)
   .settings(
     scala3defaults,
     Settings.explicitNulls(Compile / compile),
@@ -290,10 +264,13 @@ lazy val replication = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(
     Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
+    SettingsLocal.publishSonatype,
     Dependencies.munitCheck,
     Dependencies.munit,
     Dependencies.jsoniterScala,
-    SettingsLocal.publishSonatype
+  ).jvmSettings(
+    Dependencies.tink,
+    Dependencies.bouncyCastle,
   )
 
 lazy val todolist = project.in(file("Modules/Examples/TodoMVC"))
