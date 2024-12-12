@@ -28,8 +28,8 @@ trait Lattice[A] {
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
     final inline def subsumedBy(right: A): Boolean = Lattice.this.subsumption(left, right)
-    final inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
-    final inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
+    final inline def subsumes(right: A): Boolean   = Lattice.this.subsumption(right, left)
+    final inline def inflates(right: A): Boolean   = !Lattice.this.subsumption(left, right)
 
     @targetName("mergeInfix")
     final inline def merge(right: A): A = Lattice.this.merge(left, right)
@@ -40,7 +40,7 @@ object Lattice {
   def apply[A](using ev: Lattice[A]): Lattice[A] = ev
 
   // forwarder for better syntax/type inference
-  def merge[A: Lattice](left: A, right: A): A      = apply[A].merge(left, right)
+  def merge[A: Lattice](left: A, right: A): A             = apply[A].merge(left, right)
   def subsumption[A: Lattice](left: A, right: A): Boolean = apply[A].subsumption(left, right)
 
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
@@ -48,7 +48,7 @@ object Lattice {
     */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
-  def diff[A: {Lattice, Decompose}](state: A, delta: A): Option[A] = {
+  def diff[A: { Lattice, Decompose }](state: A, delta: A): Option[A] = {
     delta.decomposed.filter(!subsumption(_, state)).reduceOption(merge)
   }
 
@@ -81,7 +81,7 @@ object Lattice {
   }
 
   def fromOrdering[A: Ordering]: Lattice[A] = new Lattice[A] {
-    override def merge(left: A, right: A): A      = if subsumption(left, right) then right else left
+    override def merge(left: A, right: A): A             = if subsumption(left, right) then right else left
     override def subsumption(left: A, right: A): Boolean = Ordering[A].lteq(left, right)
   }
 
@@ -96,7 +96,7 @@ object Lattice {
   // /////////////// common instances below ///////////////
 
   given setLattice[A]: Lattice[Set[A]] with
-    override def merge(left: Set[A], right: Set[A]): Set[A] = left `union` right
+    override def merge(left: Set[A], right: Set[A]): Set[A]        = left `union` right
     override def subsumption(left: Set[A], right: Set[A]): Boolean = left subsetOf right
 
   given optionLattice[A: Lattice]: Lattice[Option[A]] =

@@ -16,7 +16,7 @@ class GenPaxosTest extends munit.FunSuite {
   val emptyPaxosObject: GeneralizedPaxos[Int] = GeneralizedPaxos()
   test("propose works as expected") {
     var testPaxosObject = emptyPaxosObject
-    val proposeValue      = 1
+    val proposeValue    = 1
     // replica 1 tries to write
     testPaxosObject = testPaxosObject.merge(testPaxosObject.propose(proposeValue)(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep()(using id1)).merge(testPaxosObject.upkeep()(using

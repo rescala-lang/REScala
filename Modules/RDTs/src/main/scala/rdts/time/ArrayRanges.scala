@@ -361,9 +361,9 @@ object ArrayRanges {
 
   given latticeInstance: Lattice[ArrayRanges] with Decompose[ArrayRanges] with {
     extension (a: ArrayRanges)
-      override def decomposed: Iterable[ArrayRanges]                       = a.decomposed
-    override def subsumption(left: ArrayRanges, right: ArrayRanges): Boolean      = left <= right
-    override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges = left `union` right
+      override def decomposed: Iterable[ArrayRanges]                         = a.decomposed
+    override def subsumption(left: ArrayRanges, right: ArrayRanges): Boolean = left <= right
+    override def merge(left: ArrayRanges, right: ArrayRanges): ArrayRanges   = left `union` right
   }
 
   def leftRightToOrder: (Boolean, Boolean) => Option[Int] =

@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 @Threads(1)
 @State(Scope.Thread)
 class LWWRegisterBench {
-  
+
   given Decompose[LastWriterWins[Int]] = Decompose.atomic
 
   var full: NamedDeltaBuffer[LastWriterWins[Int]] = scala.compiletime.uninitialized

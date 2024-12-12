@@ -19,7 +19,7 @@ object CausalDelta {
 case class CausalStore[A](pending: CausalDelta[A], state: A)
 
 object CausalStore {
-  given lattice[A: {Bottom, Lattice}]: Lattice[CausalStore[A]] with {
+  given lattice[A: { Bottom, Lattice }]: Lattice[CausalStore[A]] with {
     def merge(left: CausalStore[A], right: CausalStore[A]): CausalStore[A] =
       val pending: CausalDelta[A] = left.pending `merge` right.pending
       val state                   = left.state `merge` right.state
@@ -30,6 +30,6 @@ object CausalStore {
 
   given bottom[A: Bottom]: Bottom[CausalStore[A]] = Bottom.derived
 
-  given hasDots[A: {HasDots, Bottom}]: HasDots[CausalStore[A]] = HasDots.derived
+  given hasDots[A: { HasDots, Bottom }]: HasDots[CausalStore[A]] = HasDots.derived
 
 }

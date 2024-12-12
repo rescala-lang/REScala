@@ -43,7 +43,7 @@ object NamedDeltaBuffer {
   extension [A](curr: DeltaBufferDotted[A]) def data: A = curr.state.data
 
   implicit object workaround {
-    extension [A](curr: NamedDeltaBuffer[A])(using Lattice[A],  Decompose[A])
+    extension [A](curr: NamedDeltaBuffer[A])(using Lattice[A], Decompose[A])
       inline def mod(f: A => A): NamedDeltaBuffer[A] = {
         curr.applyDelta(curr.replicaID.uid, f(curr.state))
       }

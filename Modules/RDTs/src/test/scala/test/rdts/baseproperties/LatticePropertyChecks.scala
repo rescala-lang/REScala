@@ -6,7 +6,7 @@ import org.scalacheck.Prop.*
 import org.scalacheck.{Arbitrary, Shrink}
 import rdts.base.{Bottom, BottomOpt, Lattice, Decompose}
 import rdts.datatypes.alternatives.{MultiValueRegister, ObserveRemoveSet}
-import rdts.datatypes.contextual.{ReplicatedList}
+import rdts.datatypes.contextual.ReplicatedList
 import rdts.datatypes.experiments.AutomergyOpGraphLWW.OpGraph
 import rdts.datatypes.experiments.CausalStore
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyList, GrowOnlyMap, LastWriterWins, PosNegCounter, TwoPhaseSet, contextual}
@@ -107,7 +107,6 @@ abstract class LatticePropertyChecks[A](
       assertEquals(bc_ab, ab_c, "variation on idempotent & commutative to work around insufficient test generators")
     }
   }
-
 
   property("merge agrees with order"):
     forAll: (left: A, right: A) =>

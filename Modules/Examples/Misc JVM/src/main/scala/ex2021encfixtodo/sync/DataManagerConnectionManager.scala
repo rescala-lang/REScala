@@ -7,7 +7,7 @@ import com.google.crypto.tink.aead.AeadConfig
 import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
-import replication.{DeltaDissemination}
+import replication.DeltaDissemination
 
 import java.net.{InetSocketAddress, Socket, URI}
 import java.nio.file.{Files, Path}
@@ -25,7 +25,7 @@ class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aea
     Try(aead.decrypt(data, associated))
 }
 
-class DataManagerConnectionManager[State: {JsonValueCodec, Lattice, Bottom, HasDots}](
+class DataManagerConnectionManager[State: { JsonValueCodec, Lattice, Bottom, HasDots }](
     replicaId: LocalUid,
     receiveCallback: Obrem[State] => Unit
 ) extends ConnectionManager[Obrem[State]] {

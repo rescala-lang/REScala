@@ -35,7 +35,7 @@ case class Membership[A, C[_], D[_]](
     log: Map[Long, A] = Map.empty,
 ) {
 
-  //TODO: investigate further …
+  // TODO: investigate further …
   override def toString: String = "MEMBERSHIP TO STRING MAKES SPEC TESTS SLOW, WTF"
 
   private def bottomRound(using Consensus[C], Consensus[D]): MembershipRound[A, C, D] =

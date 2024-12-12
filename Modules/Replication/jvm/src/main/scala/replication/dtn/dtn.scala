@@ -52,7 +52,12 @@ given JsonValueCodec[WsSendData] = JsonCodecMaker.make
 import replication.JsoniterCodecs.given
 given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
-class Replica[S: {Lattice, JsonValueCodec}](val id: Uid, dtnNodeId: String, val service: String, @volatile var data: S) {
+class Replica[S: { Lattice, JsonValueCodec }](
+    val id: Uid,
+    dtnNodeId: String,
+    val service: String,
+    @volatile var data: S
+) {
 
   val connections: AtomicReference[List[WebSocket]] = {
     val ar = new AtomicReference[List[WebSocket]]
@@ -109,7 +114,7 @@ class Replica[S: {Lattice, JsonValueCodec}](val id: Uid, dtnNodeId: String, val 
     }
 }
 
-class ReplicaListener[S: {Lattice, JsonValueCodec}](replica: Replica[S]) extends Listener {
+class ReplicaListener[S: { Lattice, JsonValueCodec }](replica: Replica[S]) extends Listener {
 
   val modeSwitched: Promise[true] = Promise[true]
 

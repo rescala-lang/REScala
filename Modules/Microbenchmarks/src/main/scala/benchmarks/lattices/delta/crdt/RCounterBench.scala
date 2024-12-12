@@ -7,7 +7,6 @@ import rdts.datatypes.alternatives.ResettableCounter
 import rdts.dotted.Dotted
 import benchmarks.lattices.delta.crdt.NamedDeltaBuffer.mod
 
-
 import java.util.concurrent.TimeUnit
 
 @BenchmarkMode(Array(Mode.Throughput))

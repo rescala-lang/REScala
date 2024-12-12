@@ -6,9 +6,9 @@ import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 
 case class GeneralizedPaxos[A](
-                                rounds: Map[BallotNum, (LeaderElection, Voting[A])] =
+    rounds: Map[BallotNum, (LeaderElection, Voting[A])] =
       Map.empty[BallotNum, (LeaderElection, Voting[A])],
-                                myValue: Map[Uid, LastWriterWins[A]] = Map.empty
+    myValue: Map[Uid, LastWriterWins[A]] = Map.empty
 ):
 
   def voteFor(leader: Uid, value: A)(using LocalUid, Participants): (LeaderElection, Voting[A]) =

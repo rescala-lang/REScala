@@ -36,7 +36,7 @@ object MultiVersionRegister {
 
   given bottomInstance[A]: Bottom[MultiVersionRegister[A]] = Bottom.derived
 
-  given decomposeInstance[A]: Decompose[MultiVersionRegister[A]] = 
+  given decomposeInstance[A]: Decompose[MultiVersionRegister[A]] =
     given Decompose[A] = Decompose.atomic
     Decompose.derived
 

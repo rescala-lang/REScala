@@ -32,8 +32,8 @@ object TwoPhaseSet {
 
   given bottom[E]: Bottom[TwoPhaseSet[E]] with { override def empty: TwoPhaseSet[E] = TwoPhaseSet.empty }
 
-  given lattice[E]: Lattice[TwoPhaseSet[E]] = Lattice.derived
+  given lattice[E]: Lattice[TwoPhaseSet[E]]     = Lattice.derived
   given decompose[E]: Decompose[TwoPhaseSet[E]] = Decompose.derived
-  given hasDots[E]: HasDots[TwoPhaseSet[E]] = HasDots.noDots
+  given hasDots[E]: HasDots[TwoPhaseSet[E]]     = HasDots.noDots
 
 }

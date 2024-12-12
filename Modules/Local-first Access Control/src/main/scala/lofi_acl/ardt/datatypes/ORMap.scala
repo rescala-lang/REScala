@@ -52,5 +52,5 @@ object ORMap {
           )
         case None => minimized
 
-  given observeRemoveMapEntryFilter[A: {Filter, Bottom}]: Filter[Entry[A]] = Filter.derived
+  given observeRemoveMapEntryFilter[A: { Filter, Bottom }]: Filter[Entry[A]] = Filter.derived
 }

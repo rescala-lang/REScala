@@ -125,7 +125,7 @@ object ObserveRemoveMap {
 
   given hasDots[K, V: HasDots]: HasDots[ObserveRemoveMap[K, V]] = HasDots.derived
 
-  given lattice[K, V: {Lattice, HasDots}]: Lattice[ObserveRemoveMap[K, V]] =
+  given lattice[K, V: { Lattice, HasDots }]: Lattice[ObserveRemoveMap[K, V]] =
     Lattice.derived
 
   private def make[K, V](

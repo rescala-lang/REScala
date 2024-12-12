@@ -6,7 +6,6 @@ import rdts.datatypes.alternatives.rga.Sequence.{RGA, RGAOps}
 
 import java.util.concurrent.TimeUnit
 
-
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 1000, timeUnit = TimeUnit.MILLISECONDS)

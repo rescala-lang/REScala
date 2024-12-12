@@ -18,24 +18,25 @@ import test.rdts.isGithubCi
 
 import scala.util.{Failure, Success}
 
-class DotSetDecomposeChecks extends DecomposePropertyChecks[Dotted[Dots]]
-class EnableWinsFlagDecomposeChecks extends DecomposePropertyChecks[Dotted[contextual.EnableWinsFlag]]
-class DotFunDecomposeChecks extends DecomposePropertyChecks[Dotted[Map[Dot, Int]]]
+class DotSetDecomposeChecks          extends DecomposePropertyChecks[Dotted[Dots]]
+class EnableWinsFlagDecomposeChecks  extends DecomposePropertyChecks[Dotted[contextual.EnableWinsFlag]]
+class DotFunDecomposeChecks          extends DecomposePropertyChecks[Dotted[Map[Dot, Int]]]
 class ConMultiVersionDecomposeChecks extends DecomposePropertyChecks[Dotted[contextual.MultiVersionRegister[Int]]]
-class DotMapDecomposeChecks extends DecomposePropertyChecks[Dotted[Map[rdts.base.Uid, Dots]]](expensive = true)
+class DotMapDecomposeChecks          extends DecomposePropertyChecks[Dotted[Map[rdts.base.Uid, Dots]]](expensive = true)
 class GrowOnlyCounterDecomposeChecks extends DecomposePropertyChecks[GrowOnlyCounter]
-class GrowOnlyMapDecomposeChecks extends DecomposePropertyChecks[GrowOnlyMap[String, Int]]
-class TwoPhaseSetDecomposeChecks extends DecomposePropertyChecks[TwoPhaseSet[Int]]
-class IntDecomposeChecks extends DecomposePropertyChecks[Int]
-class SetDecomposeChecks extends DecomposePropertyChecks[Set[String]]
-class MapDecomposeChecks extends DecomposePropertyChecks[Map[String, Int]]
-class MultiValueDecomposeChecks extends DecomposePropertyChecks[MultiValueRegister[Int]](flaky = true)
-class PosNegDecomposeChecks extends DecomposePropertyChecks[PosNegCounter]
-class TupleDecomposeChecks extends DecomposePropertyChecks[(Set[Int], GrowOnlyCounter)]
-class GrowOnlyListDecomposeChecks extends DecomposePropertyChecks[GrowOnlyList[Int]](expensive = true)
-class ReplicatedListDecomposeChecks extends DecomposePropertyChecks[Dotted[ReplicatedList[ExampleData]]](expensive = true)
+class GrowOnlyMapDecomposeChecks     extends DecomposePropertyChecks[GrowOnlyMap[String, Int]]
+class TwoPhaseSetDecomposeChecks     extends DecomposePropertyChecks[TwoPhaseSet[Int]]
+class IntDecomposeChecks             extends DecomposePropertyChecks[Int]
+class SetDecomposeChecks             extends DecomposePropertyChecks[Set[String]]
+class MapDecomposeChecks             extends DecomposePropertyChecks[Map[String, Int]]
+class MultiValueDecomposeChecks      extends DecomposePropertyChecks[MultiValueRegister[Int]](flaky = true)
+class PosNegDecomposeChecks          extends DecomposePropertyChecks[PosNegCounter]
+class TupleDecomposeChecks           extends DecomposePropertyChecks[(Set[Int], GrowOnlyCounter)]
+class GrowOnlyListDecomposeChecks    extends DecomposePropertyChecks[GrowOnlyList[Int]](expensive = true)
+class ReplicatedListDecomposeChecks
+    extends DecomposePropertyChecks[Dotted[ReplicatedList[ExampleData]]](expensive = true)
 class LWWTupleDecomposeChecks
-  extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
+    extends LatticePropertyChecks[(Option[LastWriterWins[Int]], Option[LastWriterWins[Int]])]
 
 abstract class DecomposePropertyChecks[A](
     expensive: Boolean = false,
