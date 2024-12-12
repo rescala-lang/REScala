@@ -28,7 +28,13 @@ object Settings {
     valueDiscard(Compile / compile),
     typeParameterShadow(Compile / compile),
     privateShadow(Compile / compile),
+    experimentalOptions,
   )
+
+  // enabled to see what breaks and maybe play around with
+  // named tuples seems likely for 3.7, modularity is not SIP approved (though I also have not seen someone arguing against)
+  def experimentalOptions =
+    scalacOptions ++= List("-language:experimental.namedTuples", "-language:experimental.modularity")
 
   // Spell out feature and deprecation warnings instead of summarizing them into a single warning
   // always turn this on to make the compiler less ominous
