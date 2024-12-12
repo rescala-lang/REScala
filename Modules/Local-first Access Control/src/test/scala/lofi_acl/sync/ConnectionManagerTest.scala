@@ -20,10 +20,10 @@ class ConnectionManagerTest extends FunSuite {
   private val idC = IdentityFactory.createNewIdentity
   private val idD = IdentityFactory.createNewIdentity
 
-  println(s"idA = ${idA.getPublic.id}")
-  println(s"idB = ${idB.getPublic.id}")
-  println(s"idC = ${idC.getPublic.id}")
-  println(s"idD = ${idD.getPublic.id}")
+  if false then println(s"idA = ${idA.getPublic.id}")
+  if false then println(s"idB = ${idB.getPublic.id}")
+  if false then println(s"idC = ${idC.getPublic.id}")
+  if false then println(s"idD = ${idD.getPublic.id}")
 
   test("Only establish connection and don't send anything") {
     val receiverA = QueueAppendingMessageReceiver()
@@ -372,10 +372,10 @@ object ConnectionManagerTest {
     }
 
     override def connectionEstablished(publicIdentity: PublicIdentity): Unit =
-      println(s"${localId.map(_.id).getOrElse("Replica")} is now connected to ${publicIdentity.id}")
+      if false then println(s"${localId.map(_.id).getOrElse("Replica")} is now connected to ${publicIdentity.id}")
 
     override def connectionShutdown(publicIdentity: PublicIdentity): Unit =
-      println(s"${localId.map(_.id).getOrElse("Replica")} connectionShutdown to $publicIdentity")
+      if false then println(s"${localId.map(_.id).getOrElse("Replica")} connectionShutdown to $publicIdentity")
   }
 
   given JsonValueCodec[String]       = JsonCodecMaker.make

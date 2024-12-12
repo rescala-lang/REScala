@@ -64,7 +64,7 @@ class ConnectionManager[MSG](
   }
 
   def acceptIncomingConnections(): Unit = {
-    println(s"$localPublicId is accepting connections on port ${connector.listenPort}")
+    if false then println(s"$localPublicId is accepting connections on port ${connector.listenPort}")
 
     def acceptConnection(): Unit =
       if stopped then running = false
@@ -73,7 +73,7 @@ class ConnectionManager[MSG](
         connectionFuture.onComplete {
           case Failure(exception) =>
             running = false
-            Console.err.println("Stopping listener")
+            if false then  Console.err.println("Stopping listener")
           case Success((socket, peerIdentity)) =>
             if peerIdentity == localPublicId
             then // We don't want to connect to ourselves.
@@ -136,7 +136,7 @@ class ConnectionManager[MSG](
         if expectedUser == peerId
         then connectionEstablished(socket, peerId, establishedByRemote = false)
         else {
-          Console.err.println(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
+          if false then  Console.err.println(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
           try {
             socket.close()
           } catch
@@ -154,7 +154,7 @@ class ConnectionManager[MSG](
       peerIdentity: PublicIdentity,
       establishedByRemote: Boolean
   ): Unit = {
-    println(s"Established connection with $peerIdentity at ${socket.getRemoteSocketAddress}")
+    if false then println(s"Established connection with $peerIdentity at ${socket.getRemoteSocketAddress}")
 
     this.synchronized {
       connections.get(peerIdentity) match
