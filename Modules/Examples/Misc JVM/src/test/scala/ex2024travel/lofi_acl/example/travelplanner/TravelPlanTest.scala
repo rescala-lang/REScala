@@ -1,4 +1,4 @@
-package lofi_acl.example.travelplanner
+package ex2024travel.lofi_acl.example.travelplanner
 
 import munit.FunSuite
 

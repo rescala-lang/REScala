@@ -1,11 +1,11 @@
-package lofi_acl.example.monotonic_acl
+package ex2024travel.lofi_acl.example.monotonic_acl
 
 import lofi_acl.access.Operation.{READ, WRITE}
 import lofi_acl.access.PermissionTree
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{Ed25519Util, IdentityFactory, PrivateIdentity, PublicIdentity}
-import lofi_acl.example.travelplanner.TravelPlan
-import lofi_acl.example.travelplanner.TravelPlan.given
+import ex2024travel.lofi_acl.example.travelplanner.TravelPlan
+import ex2024travel.lofi_acl.example.travelplanner.TravelPlan.given
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.acl.monotonic.{MonotonicAcl, SyncWithMonotonicAcl}

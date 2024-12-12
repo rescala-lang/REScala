@@ -1,4 +1,4 @@
-package lofi_acl.example.travelplanner
+package ex2024travel.lofi_acl.example.travelplanner
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
@@ -6,7 +6,7 @@ import com.softwaremill.quicklens.*
 import lofi_acl.access.Filter
 import lofi_acl.ardt.datatypes.LWW
 import lofi_acl.ardt.datatypes.ORMap.{observeRemoveMapEntryFilter, stringKeyORMapFilter}
-import lofi_acl.example.travelplanner.TravelPlan.{*, given}
+import ex2024travel.lofi_acl.example.travelplanner.TravelPlan.{*, given}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.contextual.ObserveRemoveMap

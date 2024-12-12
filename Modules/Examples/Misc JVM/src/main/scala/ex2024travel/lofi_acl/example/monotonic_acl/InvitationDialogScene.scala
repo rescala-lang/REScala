@@ -1,8 +1,8 @@
-package lofi_acl.example.monotonic_acl
+package ex2024travel.lofi_acl.example.monotonic_acl
 
 import lofi_acl.access.PermissionTree
 import lofi_acl.crypto.PublicIdentity
-import lofi_acl.example.travelplanner.TravelPlan
+import ex2024travel.lofi_acl.example.travelplanner.TravelPlan
 import lofi_acl.sync.acl.monotonic.MonotonicAcl
 import scalafx.application.Platform
 import scalafx.scene.Scene

@@ -1,7 +1,7 @@
-package lofi_acl.example.monotonic_acl
+package ex2024travel.lofi_acl.example.monotonic_acl
 
 import lofi_acl.crypto.{Ed25519Util, PublicIdentity}
-import lofi_acl.example.monotonic_acl.Invitation.base64Encoder
+import ex2024travel.lofi_acl.example.monotonic_acl.Invitation.base64Encoder
 
 import java.security.KeyPair
 import java.util.Base64

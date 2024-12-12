@@ -1,4 +1,4 @@
-package lofi_acl.example.monotonic_acl
+package ex2024travel.lofi_acl.example.monotonic_acl
 
 import scalafx.application.Platform
 import scalafx.geometry.Pos

@@ -1,9 +1,9 @@
-package lofi_acl.example.monotonic_acl
+package ex2024travel.lofi_acl.example.monotonic_acl
 
 import lofi_acl.access.Permission.{ALLOW, PARTIAL}
 import lofi_acl.access.{Filter, Permission, PermissionTree}
-import lofi_acl.example.monotonic_acl.PermissionTreePane.{ExpensePermCheckBoxes, ExpensePermEntryCheckBoxes, wiredReadWriteCheckboxes}
-import lofi_acl.example.travelplanner.TravelPlan
+import ex2024travel.lofi_acl.example.monotonic_acl.PermissionTreePane.{ExpensePermCheckBoxes, ExpensePermEntryCheckBoxes, wiredReadWriteCheckboxes}
+import ex2024travel.lofi_acl.example.travelplanner.TravelPlan
 import scalafx.beans.property.BooleanProperty
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.control.{CheckBox, ContentDisplay, Label}
