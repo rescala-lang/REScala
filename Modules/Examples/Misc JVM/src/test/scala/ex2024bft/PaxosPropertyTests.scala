@@ -10,13 +10,12 @@ import rdts.datatypes.experiments.protocols.{Membership, Paxos}
 import scala.collection.mutable.ArrayBuffer
 
 class MembershipSuite extends munit.ScalaCheckSuite {
-  //  override def scalaCheckInitialSeed = "GTwNko29FJXYc0o7ixZt5-Jv7PJfM_EXBOp3ukz3BtN="
 
-  override def scalaCheckTestParameters =
-    super.scalaCheckTestParameters
-      .withMinSuccessfulTests(1000)
-      .withMinSize(100)
-      .withMaxSize(300)
+//  override def scalaCheckTestParameters =
+//    super.scalaCheckTestParameters
+//      .withMinSuccessfulTests(1000)
+//      .withMinSize(100)
+//      .withMaxSize(300)
 
   property("Membership specification")(MembershipSpec.property())
 }
