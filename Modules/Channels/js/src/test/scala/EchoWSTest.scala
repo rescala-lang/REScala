@@ -5,16 +5,12 @@ import de.rmgk.delay.{Async, Callback}
 
 import scala.util.{Failure, Success}
 
-def printErrors[T](cb: T => Unit): Callback[T] =
-  case Success(mb) => cb(mb)
-  case Failure(ex) => ex.printStackTrace()
-
 class EchoWSTest extends munit.FunSuite {
 
   test("echo") {
 
     val outgoing = WebsocketConnect.connect("wss://echo.websocket.org/.ws").prepare: conn =>
-      printErrors { msg =>
+      TestUtil.printErrors { msg =>
         println(s"received: ${new String(msg.asArray)}")
       }
 

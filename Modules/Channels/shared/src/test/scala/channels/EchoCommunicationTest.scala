@@ -9,12 +9,7 @@ import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-def printErrors[T](cb: T => Unit): Callback[T] =
-  case Success(mb) => cb(mb)
-  case Failure(ex) => ex match
-      case ex: IOException if ex.getCause.isInstanceOf[InterruptedException] =>
-      case ex: ClosedChannelException                                        =>
-      case ex                                                                => ex.printStackTrace()
+import TestUtil.printErrors
 
 trait EchoCommunicationTest[Info](
     serverConn: ExecutionContext => (Info, LatentConnection[MessageBuffer]),
