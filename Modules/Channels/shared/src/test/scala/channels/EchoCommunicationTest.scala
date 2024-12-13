@@ -1,15 +1,11 @@
 package channels
 
+import channels.TestUtil.printErrors
 import de.rmgk.delay.{Async, Callback}
 
-import java.io.IOException
-import java.net.{InetAddress, InetSocketAddress, ServerSocket, SocketException}
-import java.nio.channels.ClosedChannelException
 import java.util.concurrent.{Executors, Semaphore}
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
-
-import TestUtil.printErrors
 
 trait EchoCommunicationTest[Info](
     serverConn: ExecutionContext => (Info, LatentConnection[MessageBuffer]),
