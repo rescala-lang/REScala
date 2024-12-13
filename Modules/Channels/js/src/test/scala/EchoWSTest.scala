@@ -9,10 +9,13 @@ class EchoWSTest extends munit.FunSuite {
 
   test("echo") {
 
-    val outgoing = WebsocketConnect.connect("wss://echo.websocket.org/.ws").prepare: conn =>
-      TestUtil.printErrors { msg =>
-        println(s"received: ${new String(msg.asArray)}")
+    val outgoing = WebsocketConnect.connect("wss://echo.websocket.org/.ws").prepare { conn =>
+      {
+        case Success(msg) =>
+          println(s"received: ${new String(msg.asArray)}")
+        case Failure(ex) => ex.printStackTrace()
       }
+    }
 
     val fut = Async[Abort]:
       val wsc = outgoing.bind
