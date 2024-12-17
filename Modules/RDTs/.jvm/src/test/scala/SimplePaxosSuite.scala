@@ -2,7 +2,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import rdts.base.LocalUid
-import rdts.datatypes.experiments.protocols.simplified
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos
 
 import scala.util.Try
 
@@ -31,7 +31,7 @@ class SimplePaxosSpec[A: Arbitrary](
     maxDevices: Int,
     writeFreq: Int,
     mergeFreq: Int
-) extends ConsensusPropertySpec[A, simplified.Paxos](
+) extends ConsensusPropertySpec[A, Paxos](
       logging,
       minDevices,
       maxDevices,
@@ -46,8 +46,8 @@ class SimplePaxosSpec[A: Arbitrary](
 
   class PWrite(id: LocalUid, value: A) extends Write(id, value) {
     override def postCondition(
-        state: Map[LocalUid, simplified.Paxos[A]],
-        result: Try[Map[LocalUid, simplified.Paxos[A]]]
+                                state: Map[LocalUid, Paxos[A]],
+                                result: Try[Map[LocalUid, Paxos[A]]]
     ): Prop =
       val res            = result.get
       val doubleProposal = res(id).accepts.groupBy(_.proposal).find(_._2.size > 1)

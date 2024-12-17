@@ -1,10 +1,10 @@
-package rdts.datatypes.experiments.protocols.simplified
+package rdts.datatypes.experiments.protocols.old.simplified
 
 import rdts.base.Lattice.mapLattice
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Participants.participants
-import rdts.datatypes.experiments.protocols.simplified.Paxos.given
+import Paxos.given
 import rdts.datatypes.experiments.protocols.{Consensus, Participants}
 import rdts.datatypes.{GrowOnlySet, LastWriterWins}
 

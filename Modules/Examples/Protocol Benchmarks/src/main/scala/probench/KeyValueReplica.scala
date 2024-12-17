@@ -6,7 +6,7 @@ import probench.data.RequestResponseQueue.Req
 import rdts.base.Lattice.syntax
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.simplified.Paxos
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos
 import rdts.syntax.DeltaBuffer
 import replication.DeltaDissemination
 

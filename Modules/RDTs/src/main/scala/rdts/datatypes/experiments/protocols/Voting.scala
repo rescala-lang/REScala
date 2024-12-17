@@ -1,65 +1,73 @@
 package rdts.datatypes.experiments.protocols
 
+import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
-import rdts.datatypes.contextual.ReplicatedSet
-import rdts.datatypes.{Epoch, LastWriterWins}
-import rdts.dotted.Dotted
-import LocalUid.replicaId
-import rdts.time.Dots
+import rdts.datatypes.experiments.protocols.Participants.participants
+import rdts.datatypes.Epoch
 
-case class Vote(leader: Uid, voter: Uid)
+case class Vote[A](value: A, voter: Uid)
 
-case class Voting(rounds: Epoch[ReplicatedSet[Vote]], numParticipants: LastWriterWins[Int]) {
-  def threshold: Int = numParticipants.value / 2 + 1
+case class Voting[A](votes: Set[Vote[A]] = Set.empty[Vote[A]]) {
+  def threshold(using Participants): Int = participants.size / 2 + 1
 
-  def isOwner(using LocalUid): Boolean =
-    val (id, count) = leadingCount
-    id == replicaId && count >= threshold
+  def result(using Participants): Option[A] =
+    leadingCount match
+      case Some((v, count)) if count >= threshold => Some(v)
+      case _                                      => None
 
-  def request(using LocalUid, Dots): Dotted[Voting] =
-    if !rounds.value.isEmpty then Voting.unchanged
-    else voteFor(replicaId)
-
-  def release(using LocalUid): Voting =
-    if !isOwner
-    then Voting.unchanged.data
-    else Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty), numParticipants)
-
-  def upkeep(using LocalUid, Dots): Dotted[Voting] =
-    val (id, count) = leadingCount
-    if checkIfMajorityPossible(count)
-    then voteFor(id)
-    else Dotted(forceRelease)
-
-  def forceRelease(using LocalUid): Voting =
-    Voting(Epoch(rounds.counter + 1, ReplicatedSet.empty), numParticipants)
-
-  def voteFor(uid: Uid)(using LocalUid, Dots): Dotted[Voting] =
-    if rounds.value.elements.exists { case Vote(_, voter) => voter == replicaId }
+  def voteFor(v: A)(using LocalUid, Participants): Voting[A] =
+    if !participants.contains(replicaId) || votes.exists { case Vote(_, voter) => voter == replicaId }
     then Voting.unchanged // already voted!
     else
-      val newVote = rounds.value.add(Vote(uid, replicaId))
-      newVote.map(rs => Voting(rounds.write(rs), numParticipants))
+      Voting(Set(Vote(v, replicaId)))
 
-  def checkIfMajorityPossible(count: Int): Boolean =
-    val totalVotes     = rounds.value.elements.size
-    val remainingVotes = numParticipants.value - totalVotes
-    (count + remainingVotes) > threshold
-
-  def leadingCount(using id: LocalUid): (Uid, Int) =
-    val votes: Set[Vote]       = rounds.value.elements
-    val grouped: Map[Uid, Int] = votes.groupBy(_.leader).map((o, elems) => (o, elems.size))
-    if grouped.isEmpty
-    then (replicaId, 0)
-    else grouped.maxBy((o, size) => size)
-  // .maxBy((o, size) => size)
+  def leadingCount: Option[(A, Int)] =
+    val grouped: Map[A, Int] = votes.groupBy(_.value).map((value, vts) => (value, vts.size))
+    grouped.maxByOption((_, size) => size)
 }
 
 object Voting {
-  given Bottom[Int] with
-    def empty = 0
-  val unchanged: Dotted[Voting] = Dotted(Voting(Epoch.empty, LastWriterWins.empty[Int]))
+  given lattice[A]: Lattice[Voting[A]] = Lattice.derived
 
-  given Lattice[Voting] = Lattice.derived
+  given bottom[A](using Participants): Bottom[Voting[A]] with
+    override def empty: Voting[A] = unchanged
 
+  def unchanged[A](using Participants): Voting[A] = Voting(Set.empty)
 }
+
+case class MultiRoundVoting[A](rounds: Epoch[Voting[A]]):
+  def release(using Participants): MultiRoundVoting[A] =
+    MultiRoundVoting(Epoch(rounds.counter + 1, Voting.unchanged))
+
+  def upkeep(using LocalUid, Participants): MultiRoundVoting[A] =
+    rounds.value.leadingCount match
+      case Some(value, count) if checkIfMajorityPossible => voteFor(value)
+      case Some(_) => release                    // we have a leading proposal but majority is not possible anymore
+      case None    => MultiRoundVoting.unchanged // no change yet
+
+  def checkIfMajorityPossible(using Participants): Boolean =
+    val totalVotes     = rounds.value.votes.size
+    val remainingVotes = participants.size - totalVotes
+    val possible       = rounds.value.leadingCount.map((_, count) => (count + remainingVotes) >= rounds.value.threshold)
+    possible.getOrElse(true) // if there is no leading vote, majority is always possible
+
+  // api
+  def voteFor(c: A)(using LocalUid, Participants): MultiRoundVoting[A] =
+    MultiRoundVoting(Epoch(rounds.counter, rounds.value.voteFor(c)))
+
+  def result(using Participants): Option[A] =
+    rounds.value.result
+
+object MultiRoundVoting {
+  def unchanged[A](using Participants): MultiRoundVoting[A] = MultiRoundVoting(Epoch.empty[Voting[A]])
+  given lattice[A]: Lattice[MultiRoundVoting[A]]            = Lattice.derived
+}
+
+case class BallotNum(uid: Uid, counter: Long)
+
+object BallotNum:
+  given Ordering[BallotNum] with
+    override def compare(x: BallotNum, y: BallotNum): Int =
+      if x.counter > y.counter then 1
+      else if x.counter < y.counter then -1
+      else Ordering[Uid].compare(x.uid, y.uid)

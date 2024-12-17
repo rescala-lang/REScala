@@ -2,8 +2,8 @@ package test.rdts.protocols
 
 import rdts.base.Lattice.syntax
 import rdts.base.{LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.simplified.{MultiRoundVoting, Paxos, Voting}
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos
+import rdts.datatypes.experiments.protocols.{Membership, MultiRoundVoting, Voting}
 
 class MembershipTest extends munit.FunSuite {
 

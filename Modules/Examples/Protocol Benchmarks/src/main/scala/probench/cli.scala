@@ -9,7 +9,7 @@ import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientNodeState, ClusterData, KVOperation}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.simplified.Paxos
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos
 import replication.{FileConnection, ProtocolMessage}
 
 import java.net.{DatagramSocket, InetSocketAddress}

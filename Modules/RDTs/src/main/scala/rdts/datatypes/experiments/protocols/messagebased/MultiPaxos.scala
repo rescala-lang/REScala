@@ -1,8 +1,8 @@
 package rdts.datatypes.experiments.protocols.messagebased
 
 import rdts.base.LocalUid
-import rdts.datatypes.experiments.protocols.simplified.BallotNum
 import rdts.base.LocalUid.replicaId
+import rdts.datatypes.experiments.protocols.BallotNum
 import rdts.datatypes.experiments.protocols.messagebased.Message.{Prepare, Promise}
 
 enum Message:

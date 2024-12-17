@@ -1,10 +1,10 @@
-package rdts.datatypes.experiments.protocols.simplified
+package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Participants
 import rdts.datatypes.experiments.protocols.Participants.participants
-import rdts.datatypes.experiments.protocols.simplified.PrepareAbort.{Abort, Prepare}
+import PrepareAbort.{Abort, Prepare}
 
 enum PrepareAbort:
   case Prepare

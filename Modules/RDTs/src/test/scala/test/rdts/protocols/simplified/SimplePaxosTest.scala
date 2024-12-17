@@ -3,8 +3,8 @@ package test.rdts.protocols.simplified
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.Participants
 import rdts.datatypes.experiments.protocols.Participants.participants
-import rdts.datatypes.experiments.protocols.simplified.Paxos
-import rdts.datatypes.experiments.protocols.simplified.Paxos.{*, given}
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos
+import rdts.datatypes.experiments.protocols.old.simplified.Paxos.given
 import rdts.time.Dots
 
 import scala.math.Ordering.Implicits.infixOrderingOps

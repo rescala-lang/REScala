@@ -3,8 +3,8 @@ package test.rdts.protocols
 import rdts.base.Lattice.merge
 import rdts.base.{Bottom, LocalUid, Uid}
 import rdts.datatypes.GrowOnlyMap.*
-import rdts.datatypes.experiments.protocols.Paxos
-import rdts.datatypes.experiments.protocols.Paxos.*
+import rdts.datatypes.experiments.protocols.old.Paxos
+import rdts.datatypes.experiments.protocols.old.Paxos.*
 import rdts.datatypes.{GrowOnlyCounter, GrowOnlyMap}
 import rdts.dotted.{Dotted, DottedLattice}
 import rdts.time.Dots

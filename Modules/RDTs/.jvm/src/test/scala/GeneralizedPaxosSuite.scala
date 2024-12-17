@@ -1,4 +1,4 @@
-import rdts.datatypes.experiments.protocols.simplified.GeneralizedPaxos
+import rdts.datatypes.experiments.protocols.old.simplified.GeneralizedPaxos
 
 class GeneralizedPaxosSuite extends munit.ScalaCheckSuite {
 
