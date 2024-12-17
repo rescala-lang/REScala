@@ -18,7 +18,7 @@ object Dependencies {
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
   val slf4j       = libraryDependencies += "org.slf4j"               % "slf4j-jdk14"            % "2.0.16" // jdk 1.4
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.16" % Test
-  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M19"
+  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M20"
   val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.15.0"
 
   val bouncyCastle = libraryDependencies ++=
