@@ -29,6 +29,7 @@ trait Lattice[A] {
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
+
     /** Merging `right` into `left` has no effect */
     inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
 
@@ -44,14 +45,13 @@ object Lattice {
   def apply[A](using ev: Lattice[A]): Lattice[A] = ev
 
   // forwarder for better syntax/type inference
-  def merge[A: Lattice](left: A, right: A): A             = apply[A].merge(left, right)
-  def subsumption[A: Lattice](left: A, right: A): Boolean = apply[A].subsumption(left, right)
+  def merge[A: Lattice as A](left: A, right: A): A = A.merge(left, right)
 
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this. */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
   def diff[A: { Lattice, Decompose }](state: A, delta: A): Option[A] = {
-    delta.decomposed.filter(!subsumption(_, state)).reduceOption(merge)
+    delta.decomposed.filter(!A.subsumption(_, state)).reduceOption(merge)
   }
 
   // Sometimes the merge extension on the lattice trait is not found, and it is unclear what needs to be imported.
@@ -65,12 +65,12 @@ object Lattice {
       /** Convenience method to apply delta mutation to grow current value */
       def grow(f: A => A): A = Lattice[A].merge(left, f(left))
 
-      inline def inflates(right: A): Boolean = !Lattice.subsumption(left, right)
-      inline def subsumes(right: A): Boolean = Lattice.subsumption(right, left)
+      inline def inflates(right: A): Boolean = !A.subsumption(left, right)
+      inline def subsumes(right: A): Boolean = A.subsumption(right, left)
     }
 
   def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
-    override def lteq(x: A, y: A): Boolean = Lattice.subsumption(x, y)
+    override def lteq(x: A, y: A): Boolean = A.subsumption(x, y)
     override def tryCompare(x: A, y: A): Option[Int] =
       val lr = lteq(x, y)
       val rl = lteq(y, x)
@@ -127,7 +127,7 @@ object Lattice {
 
       override def subsumption(left: Mp[K, V], right: Mp[K, V]): Boolean =
         left.forall { (k, l) =>
-          right.get(k).exists(r => r `subsumes` l )
+          right.get(k).exists(r => r `subsumes` l)
         }
 
     }
