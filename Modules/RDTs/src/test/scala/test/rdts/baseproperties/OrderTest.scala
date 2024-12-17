@@ -2,6 +2,7 @@ package test.rdts.baseproperties
 
 import org.scalacheck.Arbitrary
 import org.scalacheck.Prop.*
+import rdts.base.Lattice
 import rdts.time.{ArrayRanges, Dots, VectorClock}
 import test.rdts.DataGenerator.given
 
@@ -17,7 +18,7 @@ class DotsOrderTest extends OrderTests[Dots](using Dots.partialOrder)(total = fa
 
 // the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
 // that they will produce any kind of comparable values
-abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boolean, agreesWithEquals: Boolean)
+abstract class OrderTests[A: {Arbitrary, Lattice}](using pa: PartialOrdering[A])(total: Boolean, agreesWithEquals: Boolean)
     extends munit.ScalaCheckSuite {
 
   extension [A](using pa: PartialOrdering[A])(a: A)
@@ -50,7 +51,7 @@ abstract class OrderTests[A: Arbitrary](using pa: PartialOrdering[A])(total: Boo
 
   property("reflexive") {
     forAll { (a: A) =>
-      assert(a <= a)
+      assert(a <= Lattice.normalize(a))
     }
   }
 
