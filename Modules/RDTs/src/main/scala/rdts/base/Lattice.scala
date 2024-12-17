@@ -20,7 +20,9 @@ trait Lattice[A] {
     */
   def merge(left: A, right: A): A
 
-  /** Lattice order is derived from merge, but should be overridden for efficiency */
+  /** Lattice order is derived from merge.
+    * Overriding implementations must make sure that they compute exactly the same results as the equation below.
+    */
   def subsumption(left: A, right: A): Boolean = merge(left, right) == Lattice.normalize(right)(using this)
 
   /** Convenience extensions for the above. */
@@ -28,8 +30,12 @@ trait Lattice[A] {
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
     final inline def subsumedBy(right: A): Boolean = Lattice.this.subsumption(left, right)
-    final inline def subsumes(right: A): Boolean   = Lattice.this.subsumption(right, left)
-    final inline def inflates(right: A): Boolean   = !Lattice.this.subsumption(left, right)
+
+    /** Merging `right` into `left` has no effect */
+    final inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
+
+    /** Merging `left` and `right` would be strictly larger than right */
+    final inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
 
     @targetName("mergeInfix")
     final inline def merge(right: A): A = Lattice.this.merge(left, right)
@@ -43,9 +49,7 @@ object Lattice {
   def merge[A: Lattice](left: A, right: A): A             = apply[A].merge(left, right)
   def subsumption[A: Lattice](left: A, right: A): Boolean = apply[A].subsumption(left, right)
 
-  /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this.
-    * Overriding this is discouraged.
-    */
+  /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this. */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
   def diff[A: { Lattice, Decompose }](state: A, delta: A): Option[A] = {
