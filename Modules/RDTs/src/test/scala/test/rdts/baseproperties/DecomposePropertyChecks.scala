@@ -1,7 +1,5 @@
 package test.rdts.baseproperties
 
-class DecompsoePropertyChecks
-
 import munit.TestValues
 import munit.internal.FutureCompat.ExtensionFuture
 import org.scalacheck.Prop.*
