@@ -30,13 +30,13 @@ trait Lattice[A] {
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
     /** Merging `right` into `left` has no effect */
-    final inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
+    inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
 
     /** Merging `left` and `right` would be strictly larger than right */
-    final inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
+    inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
 
     @targetName("mergeInfix")
-    final inline def merge(right: A): A = Lattice.this.merge(left, right)
+    inline def merge(right: A): A = Lattice.this.merge(left, right)
   }
 }
 
@@ -63,7 +63,10 @@ object Lattice {
       def merge(right: A): A = Lattice[A].merge(left, right)
 
       /** Convenience method to apply delta mutation to grow current value */
-      def grow(f: A => A): A = Lattice.this.merge(left, f(left))
+      def grow(f: A => A): A = Lattice[A].merge(left, f(left))
+
+      inline def inflates(right: A): Boolean = !Lattice.subsumption(left, right)
+      inline def subsumes(right: A): Boolean = Lattice.subsumption(right, left)
     }
 
   def latticeOrder[A: Lattice]: PartialOrdering[A] = new {

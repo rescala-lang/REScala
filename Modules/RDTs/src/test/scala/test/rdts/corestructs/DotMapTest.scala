@@ -7,6 +7,7 @@ import rdts.dotted.Dotted
 import rdts.dotted.HasDots.mapInstance
 import rdts.time.{ArrayRanges, Dot, Dots}
 import test.rdts.DataGenerator.{*, given}
+import Lattice.syntax
 
 import scala.annotation.tailrec
 
