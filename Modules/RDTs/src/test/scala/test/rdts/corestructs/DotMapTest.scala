@@ -99,7 +99,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val dottedB = Dotted(dmB, ccB)
 
         assert(
-          dottedA `subsumedBy` Dotted(dmA, (ccA)),
+          Dotted(dmA, (ccA)).subsumes(dottedA),
           s"DotMap.leq should be reflexive, but returns false when applied to ($dmA, $ccA)"
         )
 
@@ -110,11 +110,11 @@ class DotMapTest extends munit.ScalaCheckSuite {
           )
 
         assert(
-          dottedA `subsumedBy` merged,
+          merged.subsumes(dottedA),
           s"The result of DotMap.merge should be larger than its lhs, but DotMap.leq returns false when applied to:\n  $dottedA\n  $merged"
         )
         assert(
-          dottedB `subsumedBy` merged,
+          merged.subsumes(dottedB),
           s"The result of DotMap.merge should be larger than its rhs, but DotMap.leq returns false when applied to\n  $dottedB\n  $merged"
         )
     }

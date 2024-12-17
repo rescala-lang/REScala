@@ -72,7 +72,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     }
     if old != changed then {
       val upkept = changed.upkeep()
-      if upkept `subsumedBy` currentState
+      if currentState.subsumes(upkept)
       then log(s"no changes")
       else log(s"upkeep")
       assert(changed == currentState)

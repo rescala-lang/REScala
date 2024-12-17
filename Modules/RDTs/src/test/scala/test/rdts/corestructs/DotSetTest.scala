@@ -110,18 +110,18 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val dottedSetB = Dotted(dsB, ccB)
 
       assert(
-        dottedSetA `subsumedBy` dottedSetA,
+        dottedSetA.subsumes(dottedSetA),
         s"DotSet.leq should be reflexive, but returns false when applied to ($dsA, $ccA, $dsA, $ccA)"
       )
 
       val dottedMerged @ Dotted(dsMerged, ccMerged) = dottedSetA `merge` dottedSetB
 
       assert(
-        dottedSetA `subsumedBy` dottedMerged,
+        dottedMerged.subsumes(dottedSetA),
         s"The result of DotSet.merge should be larger than its lhs, but DotSet.leq returns false when applied to ($dsA, $ccA, $dsMerged, $ccMerged)"
       )
       assert(
-        dottedSetB `subsumedBy` dottedMerged,
+        dottedMerged.subsumes(dottedSetB),
         s"The result of DotSet.merge should be larger than its rhs, but DotSet.leq returns false when applied to ($dsB, $ccB, $dsMerged, $ccMerged)"
       )
     }

@@ -29,8 +29,6 @@ trait Lattice[A] {
   /* It would be conceivable to only have the extensions, but the two parameter lists of merge make it not work well with SAM.
    * IntelliJ also does not like to implement or override extension methods. */
   extension (left: A) {
-    final inline def subsumedBy(right: A): Boolean = Lattice.this.subsumption(left, right)
-
     /** Merging `right` into `left` has no effect */
     final inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
 
@@ -126,7 +124,7 @@ object Lattice {
 
       override def subsumption(left: Mp[K, V], right: Mp[K, V]): Boolean =
         left.forall { (k, l) =>
-          right.get(k).exists(r => l `subsumedBy` r)
+          right.get(k).exists(r => r `subsumes` l )
         }
 
     }
