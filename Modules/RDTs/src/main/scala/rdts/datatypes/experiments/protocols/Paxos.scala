@@ -39,7 +39,8 @@ case class Paxos[A](
     rounds.filter { case (b, p) => b.uid == replicaId }.maxOption
   def lastValueVote: Option[(BallotNum, PaxosRound[A])] = rounds.filter(_._2.proposals.votes.nonEmpty).maxOption
   def newestReceivedVal(using LocalUid)                 = lastValueVote.map(_._2.proposals.votes.head.value)
-  def myValue(using LocalUid): A                        = rounds(BallotNum(replicaId, -1)).proposals.votes.head.value
+  def myValue(using LocalUid): Option[A] =
+    rounds.get(BallotNum(replicaId, -1)).map(_.proposals.votes.head.value)
   def decidedVal(using Participants): Option[A] =
     rounds.collectFirst { case (b, PaxosRound(_, voting)) if voting.result.isDefined => voting.result.get }
   def decidedLeaderElection(using Participants): Option[(BallotNum, LeaderElection)] =
@@ -70,8 +71,10 @@ case class Paxos[A](
       case _ => Paxos() // do nothing
 
   def phase2a(using LocalUid, Participants): Paxos[A] =
-    // propose a value if I am the leader
-    phase2a(myValue)
+    // try to determine my process' value from previous ballot
+    myValue match
+      case Some(value) => phase2a(value)
+      case None        => Paxos()
 
   def phase2a(value: A)(using LocalUid, Participants): Paxos[A] =
     // propose a value if I am the leader
