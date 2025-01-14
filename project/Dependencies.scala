@@ -4,13 +4,13 @@ import sbt.Keys.libraryDependencies
 
 object Dependencies {
 
-  val munit       = libraryDependencies += "org.scalameta"         %%% "munit"                  % "1.0.3"  % Test
+  val munit       = libraryDependencies += "org.scalameta"         %%% "munit"                  % "1.0.4"  % Test
   val munitCheck  = libraryDependencies += "org.scalameta"         %%% "munit-scalacheck"       % "1.0.0"  % Test
   val pprint      = libraryDependencies += "com.lihaoyi"           %%% "pprint"                 % "0.9.0"
   val scalajsDom  = libraryDependencies += "org.scala-js"          %%% "scalajs-dom"            % "2.8.0"
   val catsParse   = libraryDependencies += "org.typelevel"         %%% "cats-parse"             % "1.1.0"
   val conscript   = libraryDependencies += "org.conscrypt"           % "conscrypt-openjdk-uber" % "2.5.2"
-  val decline     = libraryDependencies += "com.monovore"          %%% "decline"                % "2.4.1"
+  val decline     = libraryDependencies += "com.monovore"          %%% "decline"                % "2.5.0"
   val fansi       = libraryDependencies += "com.lihaoyi"           %%% "fansi"                  % "0.5.0"
   val jetcd       = libraryDependencies += "io.etcd"                 % "jetcd-core"             % "0.8.4"
   val monocleCore = libraryDependencies += "dev.optics"            %%% "monocle-core"           % "3.3.0"
@@ -18,7 +18,7 @@ object Dependencies {
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
   val slf4j       = libraryDependencies += "org.slf4j"               % "slf4j-jdk14"            % "2.0.16" // jdk 1.4
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.16" % Test
-  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M20"
+  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M24"
   val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.15.0"
 
   val bouncyCastle = libraryDependencies ++=
@@ -26,8 +26,8 @@ object Dependencies {
       // Note, jdk18 means JDK 1.8
       "org.bouncycastle"  % "bcprov-jdk18on"               % "1.79",
       "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.79",
-      "io.github.hakky54" % "sslcontext-kickstart"         % "8.3.7",
-      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "8.3.7",
+      "io.github.hakky54" % "sslcontext-kickstart"         % "9.0.0",
+      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.0.0",
     )
 
   def borer = libraryDependencies ++= Seq(
@@ -46,8 +46,8 @@ object Dependencies {
 
   def jsoniterScala =
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.32.0",
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.32.0" % Provided
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.33.0",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.33.0" % Provided
     )
 
   def scalafx: ModuleID = "org.scalafx" %% "scalafx" % "23.0.1-R34"
