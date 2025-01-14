@@ -73,7 +73,7 @@ class ConnectionManager[MSG](
         connectionFuture.onComplete {
           case Failure(exception) =>
             running = false
-            if false then  Console.err.println("Stopping listener")
+            if false then Console.err.println("Stopping listener")
           case Success((socket, peerIdentity)) =>
             if peerIdentity == localPublicId
             then // We don't want to connect to ourselves.
@@ -136,7 +136,8 @@ class ConnectionManager[MSG](
         if expectedUser == peerId
         then connectionEstablished(socket, peerId, establishedByRemote = false)
         else {
-          if false then  Console.err.println(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
+          if false then
+            Console.err.println(s"Expecting $expectedUser at $host:$port but connected to $peerId. Closing socket.")
           try {
             socket.close()
           } catch

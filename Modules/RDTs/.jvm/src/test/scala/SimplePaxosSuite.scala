@@ -46,8 +46,8 @@ class SimplePaxosSpec[A: Arbitrary](
 
   class PWrite(id: LocalUid, value: A) extends Write(id, value) {
     override def postCondition(
-                                state: Map[LocalUid, Paxos[A]],
-                                result: Try[Map[LocalUid, Paxos[A]]]
+        state: Map[LocalUid, Paxos[A]],
+        result: Try[Map[LocalUid, Paxos[A]]]
     ): Prop =
       val res            = result.get
       val doubleProposal = res(id).accepts.groupBy(_.proposal).find(_._2.size > 1)

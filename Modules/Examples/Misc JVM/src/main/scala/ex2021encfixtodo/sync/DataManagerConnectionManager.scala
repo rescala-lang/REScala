@@ -71,7 +71,10 @@ class DataManagerConnectionManager[State: { JsonValueCodec, Lattice, Bottom, Has
   }
 
   override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
-    dataManager.addLatentConnection(niotcp.connect(niotcp.defaultSocketChannel(new InetSocketAddress(uri.getHost, uri.getPort))))
+    dataManager.addLatentConnection(niotcp.connect(niotcp.defaultSocketChannel(new InetSocketAddress(
+      uri.getHost,
+      uri.getPort
+    ))))
   }
 
   override def stop(): Unit = {
