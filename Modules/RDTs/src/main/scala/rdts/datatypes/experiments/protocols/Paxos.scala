@@ -42,6 +42,10 @@ case class Paxos[A](
   def myValue(using LocalUid): A                        = rounds(BallotNum(replicaId, -1)).proposals.votes.head.value
   def decidedVal(using Participants): Option[A] =
     rounds.collectFirst { case (b, PaxosRound(_, voting)) if voting.result.isDefined => voting.result.get }
+  def decidedLeaderElection(using Participants): Option[(BallotNum, LeaderElection)] =
+    rounds.collectFirst {
+      case (b, PaxosRound(leaderElection, voting)) if voting.result.isDefined => (b, leaderElection)
+    }
 
   // phases:
   def phase1a(using LocalUid, Participants)(value: A): Paxos[A] =
@@ -67,13 +71,17 @@ case class Paxos[A](
 
   def phase2a(using LocalUid, Participants): Paxos[A] =
     // propose a value if I am the leader
+    phase2a(myValue)
+
+  def phase2a(value: A)(using LocalUid, Participants): Paxos[A] =
+    // propose a value if I am the leader
     myHighestBallot match
       case Some((ballotNum, PaxosRound(leaderElection, _)))
           if leaderElection.result.contains(replicaId) =>
         if newestReceivedVal.nonEmpty then
           Paxos(Map(ballotNum -> voteValue(newestReceivedVal.get)))
         else
-          Paxos(Map(ballotNum -> voteValue(myValue)))
+          Paxos(Map(ballotNum -> voteValue(value)))
       case _ => Paxos() // not leader -> do nothing
 
   def phase2b(using LocalUid, Participants): Paxos[A] =
