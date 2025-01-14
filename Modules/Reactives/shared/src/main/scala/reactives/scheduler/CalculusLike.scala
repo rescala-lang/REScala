@@ -92,7 +92,7 @@ object CalculusLike {
     override def forceNewTransaction[R](
         initialWrites: Set[ReSource.of[State]],
         admissionPhase: AdmissionTicket[State] => R
-    ): R =
+    ): R = {
       synchronized {
         // some broken user code may start a new transaction during an ongoing one
         // this is not supported by this propagation algorithm,
@@ -139,6 +139,7 @@ object CalculusLike {
           idle = true
         }
       }
+    }
     override private[reactives] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A =
       reactive.read(reactive.state.value)
   }

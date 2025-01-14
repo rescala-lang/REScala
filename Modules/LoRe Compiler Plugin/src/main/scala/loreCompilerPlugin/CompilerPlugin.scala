@@ -85,7 +85,7 @@ class LoRePhase extends PluginPhase:
     */
   private def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using
       Context
-  ): Term =
+  ): Term = {
     tree match
       case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
         logRhsInfo(indentLevel, operandSide, "literal integer value", num.toString)
@@ -345,9 +345,10 @@ class LoRePhase extends PluginPhase:
           s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n${"\t".repeat(indentLevel)}$tree"
         )
         TVar("<error>")
+  }
   end buildLoreRhsTerm
 
-  override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree =
+  override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree = {
     var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
 
     tree match
@@ -414,5 +415,6 @@ class LoRePhase extends PluginPhase:
             val newList: List[Term] = List(loreTerm)
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
         tree // Return the original tree to further compiler phases
+  }
   end transformValDef
 end LoRePhase

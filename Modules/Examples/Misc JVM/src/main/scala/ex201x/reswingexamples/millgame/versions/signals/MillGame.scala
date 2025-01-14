@@ -94,7 +94,7 @@ class MillGame {
     remainCount.transform(currentCount => currentCount.updated(player, currentCount(player) - 1))
   }
 
-  def playerInput(i: SlotIndex): Boolean =
+  def playerInput(i: SlotIndex): Boolean = {
     state match {
 
       case PlaceStone(player) =>
@@ -146,4 +146,5 @@ class MillGame {
 
       case _ => false
     }
+  }
 }

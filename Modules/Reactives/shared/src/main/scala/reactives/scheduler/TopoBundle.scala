@@ -101,12 +101,12 @@ trait TopoBundle {
 
     def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit = ()
 
-    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R =
+    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R = {
       synchronized {
         if !idle then throw new IllegalStateException("Scheduler is not reentrant")
         idle = false
         val afterCommitObservers: ListBuffer[Observation] = ListBuffer.empty
-        val res =
+        val res = {
           try {
             val creation    = new TopoInitializer(afterCommitObservers)
             val transaction = TopoTransaction(creation)
@@ -154,9 +154,11 @@ trait TopoBundle {
           } finally {
             idle = true
           }
+        }
         afterCommitObservers.foreach(_.execute())
         res
       }
+    }
 
     override private[reactives] def singleReadValueOnce[A](reactive: ReadAs.of[State, A]): A = {
       reactive.read(reactive.state.value)

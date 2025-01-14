@@ -434,7 +434,7 @@ class FilteringAntiEntropy[RDT](
 
   private val antiEntropyThread = new Thread {
     private val rand = Random()
-    override def run(): Unit =
+    override def run(): Unit = {
       while !stopped do {
         try {
           // Execute every 1 to 3 seconds, avoiding synchronization of these requests among replicas.
@@ -480,6 +480,7 @@ class FilteringAntiEntropy[RDT](
               val _ = connectionManager.send(remote, msg)
             }
       }
+    }
   }
   antiEntropyThread.start()
 }

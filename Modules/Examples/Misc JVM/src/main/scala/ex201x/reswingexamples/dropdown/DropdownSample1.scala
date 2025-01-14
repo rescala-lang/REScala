@@ -7,7 +7,7 @@ import scala.swing.{BoxPanel, FlowPanel, Label, MainFrame, Orientation, SimpleSw
 
 object DropdownSample1 extends SimpleSwingApplication {
 
-  def top =
+  def top = {
     new MainFrame {
 
       val col1 = new ReTextField(text = "Berlin", columns = 30)
@@ -78,4 +78,5 @@ object DropdownSample1 extends SimpleSwingApplication {
         }
       }
     }
+  }
 }

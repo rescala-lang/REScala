@@ -143,10 +143,10 @@ val Subtree: Traversal[Term, Term] =
       }
   }
 
-val children: Fold[Term, Term] =
+val children: Fold[Term, Term] = {
   new Fold[Term, Term] {
 
-    def foldMap[M: Monoid](f: Term => M)(t: Term): M =
+    def foldMap[M: Monoid](f: Term => M)(t: Term): M = {
       t match {
         case _: (TViperImport | TArgT | TVar | TTypeAl | TNum | TTrue | TFalse |
             TString) =>
@@ -192,7 +192,9 @@ val children: Fold[Term, Term] =
         case TFunC(name, args, sourcePos) =>
           Monoid[M].combineAll(args.toList.map(f))
       }
+    }
   }
+}
 
 //   new Traversal[Term, Term] {
 //     def modifyA[F[_]: Monad](f: Term => F[Term])(s: Term): F[Term] =

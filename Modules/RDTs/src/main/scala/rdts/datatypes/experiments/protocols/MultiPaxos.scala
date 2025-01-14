@@ -51,7 +51,7 @@ case class MultiPaxos[A](
         ))
       )
 
-  def upkeep(using LocalUid, Participants): MultiPaxos[A] =
+  def upkeep(using LocalUid, Participants): MultiPaxos[A] = {
     // perform upkeep in Paxos
     val deltaPaxos = currentPaxos.upkeep()
     val newPaxos   = currentPaxos.merge(deltaPaxos)
@@ -110,6 +110,7 @@ case class MultiPaxos[A](
       case MultipaxosPhase.Idle =>
         // nothing to do
         MultiPaxos()
+  }
 
 object MultiPaxos:
   given [A]: Bottom[MultiPaxosRound[A]]  = Bottom.provide(MultiPaxosRound())

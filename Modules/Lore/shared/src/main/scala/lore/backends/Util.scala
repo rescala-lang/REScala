@@ -116,7 +116,7 @@ def traverseFromNode[A <: Term](
 ): A = {
   // apply transformer to start node
   val transformed = transformer(node)
-  val result =
+  val result = {
     // if node has children, traverse
     transformed match {
       // basic terms
@@ -254,6 +254,7 @@ def traverseFromNode[A <: Term](
       //     TFalse | TString(_) | TViperImport(_) =>
       //   transformed
     }
+  }
   try result.asInstanceOf[A]
   catch {
     case c: ClassCastException =>
