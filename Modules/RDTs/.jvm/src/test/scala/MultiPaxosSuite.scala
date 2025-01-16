@@ -20,7 +20,7 @@ class MultiPaxosSuite extends munit.ScalaCheckSuite {
       .withMaxSize(500)
 
   property("Multipaxos")(MultiPaxosSpec[Int](
-    logging = true,
+    logging = false,
     minDevices = 3,
     maxDevices = 5,
     proposeFreq = 5,
