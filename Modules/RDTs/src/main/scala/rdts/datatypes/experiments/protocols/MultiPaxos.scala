@@ -24,17 +24,22 @@ case class MultiPaxos[A](
   private def currentPaxos = rounds.value.paxos
 
   // public API
-  def leader: Option[Uid]    = rounds.value.leader.value
+  def leader: Option[Uid] = rounds.value.leader.value
+  def paxosLeader(using Participants): Option[Uid] = currentPaxos.currentRound match
+    case Some((_, PaxosRound(leaderElection, _))) => leaderElection.result
+    case None                                     => None
+
   def phase: MultipaxosPhase = rounds.value.phase.value
+  def read: List[A]          = log.toList.sortBy(_._1).map(_._2)
 
   def startLeaderElection(using LocalUid, Participants): MultiPaxos[A] =
     MultiPaxos(
       rounds =
         // transition to new epoch
         rounds.epocheWrite(MultiPaxosRound(
-          leader = LastWriterWins.now(None), // set leader to none
-          paxos = Paxos().phase1a,           // start new Paxos round with self proposed as leader
-          phase = LastWriterWins.now(MultipaxosPhase.LeaderElection)
+          leader = rounds.value.leader.write(None), // set leader to none
+          paxos = Paxos().phase1a,                  // start new Paxos round with self proposed as leader
+          phase = rounds.value.phase.write(MultipaxosPhase.LeaderElection)
         ))
     )
 
@@ -47,7 +52,7 @@ case class MultiPaxos[A](
       MultiPaxos(
         rounds = rounds.write(MultiPaxosRound(
           paxos = afterProposal, // phase 2a already checks if I am the leader
-          phase = LastWriterWins.now(MultipaxosPhase.Voting)
+          phase = rounds.value.phase.write(MultipaxosPhase.Voting)
         ))
       )
 
@@ -59,15 +64,17 @@ case class MultiPaxos[A](
     rounds.value.phase.value match
       case MultipaxosPhase.LeaderElection =>
         // we are in a leader election
-        // check if there is a result
+        // check if this process was elected as a leader
         newPaxos.currentRound match
-          case Some((_, PaxosRound(leaderElection, proposals))) if leaderElection.result.nonEmpty =>
+          case Some((_, PaxosRound(leaderElection, _)))
+              if leaderElection.result.nonEmpty // if leaderElection.result == Some(replicaId)
+              =>
             // there is a result
             MultiPaxos(rounds =
               rounds.write(MultiPaxosRound(
-                leader = LastWriterWins.now(leaderElection.result),
+                leader = rounds.value.leader.write(leaderElection.result),
                 paxos = deltaPaxos,
-                phase = LastWriterWins.now(MultipaxosPhase.Idle)
+                phase = rounds.value.phase.write(MultipaxosPhase.Idle)
               ))
             )
           case _ =>
@@ -94,8 +101,8 @@ case class MultiPaxos[A](
             // return new Multipaxos with: appended log, set leader, phase as idle,
             MultiPaxos(
               rounds = rounds.epocheWrite(MultiPaxosRound(
-                leader = LastWriterWins.now(leader),
-                phase = LastWriterWins.now(MultipaxosPhase.Idle),
+                leader = rounds.value.leader.write(paxosLeader),
+                phase = rounds.value.phase.write(MultipaxosPhase.Idle),
                 paxos = newPaxos
               )),
               log = newLog
@@ -111,6 +118,10 @@ case class MultiPaxos[A](
         // nothing to do
         MultiPaxos()
   }
+
+  override def toString: String =
+    lazy val s = s"MultiPaxos(epoch: ${rounds.counter}, phase: $phase, log: $read)"
+    s
 
 object MultiPaxos:
   given [A]: Bottom[MultiPaxosRound[A]]  = Bottom.provide(MultiPaxosRound())

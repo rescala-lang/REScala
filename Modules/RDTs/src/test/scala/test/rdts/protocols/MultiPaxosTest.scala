@@ -1,8 +1,7 @@
 package test.rdts.protocols
 
 import rdts.base.LocalUid
-import rdts.datatypes.experiments.protocols.Paxos.given
-import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants, Paxos}
+import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 
 class MultiPaxosTest extends munit.FunSuite {
 
@@ -16,7 +15,7 @@ class MultiPaxosTest extends munit.FunSuite {
   test("happy path") {
     var testPaxosObject = emptyPaxosObject
 
-    assertEquals(testPaxosObject.leader, None)
+    assertEquals(testPaxosObject.paxosLeader, None)
     assertEquals(testPaxosObject.phase, MultipaxosPhase.LeaderElection, "multipaxos starts in leader election phase")
 
     val proposeValue = 1
@@ -26,8 +25,9 @@ class MultiPaxosTest extends munit.FunSuite {
     // testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id1))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id2))
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id3))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id1))
 
-    assertEquals(testPaxosObject.leader, Some(id1.uid), "id1 should be the leader")
+    assertEquals(testPaxosObject.paxosLeader, Some(id1.uid), "id1 should be the leader")
 
     // replica 2 tries to write
     val afterwrite = testPaxosObject.merge(testPaxosObject.proposeIfLeader(2)(using id2))
@@ -56,13 +56,14 @@ class MultiPaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.startLeaderElection(using id3))
     assertEquals(testPaxosObject.log.values.toList.sorted, List(1, 12), "log survives new leader election")
     assertEquals(testPaxosObject.phase, MultipaxosPhase.LeaderElection)
-    assertEquals(testPaxosObject.leader, None)
+    assertEquals(testPaxosObject.paxosLeader, None)
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id3))
     assertEquals(testPaxosObject.phase, MultipaxosPhase.LeaderElection)
-    assertEquals(testPaxosObject.leader, None)
+    assertEquals(testPaxosObject.paxosLeader, None)
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id2))
+    testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id3))
     assertEquals(testPaxosObject.phase, MultipaxosPhase.Idle)
-    assertEquals(testPaxosObject.leader, Some(id3.uid))
+    assertEquals(testPaxosObject.paxosLeader, Some(id3.uid))
   }
 
   test("conflicting proposals") {
@@ -89,5 +90,55 @@ class MultiPaxosTest extends munit.FunSuite {
     testPaxosObject = testPaxosObject.merge(testPaxosObject.upkeep(using id3))
 
     assert(testPaxosObject.log.values.head == 1 || testPaxosObject.log.values.head == 2)
+  }
+
+  test("counterexample?") {
+    var rep1 = emptyPaxosObject
+    var rep2 = emptyPaxosObject
+    var rep3 = emptyPaxosObject
+
+    // id1 leader election
+    rep1 = rep1.merge(rep1.startLeaderElection(using id1))
+    rep1 = rep1.merge(rep1.upkeep(using id1))
+
+    // 2. id2 <- id1
+    rep2 = rep2.merge(rep1)
+    rep2 = rep2.merge(rep2.upkeep(using id2))
+
+    // 3. i1 <- i2
+    rep1 = rep1.merge(rep2)
+    rep1 = rep1.merge(rep1.upkeep(using id1))
+
+    // 4. id3 <- id2
+    rep3 = rep3.merge(rep2)
+    rep3 = rep3.merge(rep3.upkeep(using id3))
+
+    // 5. leaderelect id3
+    rep3 = rep3.merge(rep3.startLeaderElection(using id3))
+    rep3 = rep3.merge(rep3.upkeep(using id3))
+
+    // 6. propose id1
+    rep1 = rep1.merge(rep1.proposeIfLeader(1)(using id1))
+    rep1 = rep1.merge(rep1.upkeep(using id1))
+
+    // 7. id2 <- id1
+    rep2 = rep2.merge(rep1)
+    rep2 = rep2.merge(rep2.upkeep(using id2))
+
+    // 8. id1 <- id3
+    rep1 = rep1.merge(rep3)
+    rep1 = rep1.merge(rep1.upkeep(using id1))
+
+    // 9. id3 <- id1
+    rep3 = rep3.merge(rep1)
+    rep3 = rep3.merge(rep3.upkeep(using id3))
+
+    rep3 = rep3.merge(rep2)
+    rep3 = rep3.merge(rep3.upkeep(using id3))
+
+    rep2 = rep2.merge(rep3)
+    rep2 = rep2.merge(rep2.upkeep(using id2))
+
+    assert(true)
   }
 }
