@@ -1,7 +1,7 @@
 package rdts.datatypes.experiments.protocols
 
 import rdts.base.LocalUid.replicaId
-import rdts.base.{Lattice, LocalUid, Uid}
+import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.Paxos.given
 import rdts.datatypes.experiments.protocols.{Consensus, Participants}
@@ -24,7 +24,7 @@ case class Paxos[A](
   // query functions
   def nextBallotNum(using LocalUid): BallotNum =
     val maxCounter: Long = rounds
-      .filter((b, _) => b.uid == replicaId)
+//      .filter((b, _) => b.uid == replicaId)
       .map((b, _) => b.counter)
       .maxOption
       .getOrElse(-1)
@@ -99,6 +99,8 @@ case class Paxos[A](
 object Paxos:
   given [A]: Lattice[PaxosRound[A]] = Lattice.derived
   given l[A]: Lattice[Paxos[A]]     = Lattice.derived
+
+  given [A]: Bottom[Paxos[A]] = Bottom.provide(Paxos())
 
   given [A]: Ordering[(BallotNum, PaxosRound[A])] with
     override def compare(x: (BallotNum, PaxosRound[A]), y: (BallotNum, PaxosRound[A])): Int = (x, y) match
