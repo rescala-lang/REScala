@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         # macOS 13/14 uses different CPU architectures, older ubuntu because 24.04 is well tested outside of CI
-        os: [macOS-13, macOS-14, ubuntu-22.04, windows-2022]
+        os: [macOS-13, macOS-14, ubuntu-22.04, windows-2022, ubuntu-24.04-arm]
         java-version: [17, 21, 23]
 
     env:
