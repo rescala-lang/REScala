@@ -8,8 +8,7 @@ import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientNodeState, ClusterData, KVOperation}
 import rdts.base.Uid
-import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.old.simplified.Paxos
+import rdts.datatypes.experiments.protocols.MultiPaxos
 import replication.{FileConnection, ProtocolMessage}
 
 import java.net.{DatagramSocket, InetSocketAddress}
@@ -53,12 +52,12 @@ object cli {
 
     given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    type MembershipType = Membership[ClusterData, Paxos, Paxos]
+    type ConsensusType = MultiPaxos[ClusterData]
 
-    given paxosMembership: JsonValueCodec[MembershipType] =
+    given paxosMembership: JsonValueCodec[ConsensusType] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    given JsonValueCodec[ProtocolMessage[MembershipType]] =
+    given JsonValueCodec[ProtocolMessage[ConsensusType]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(host: String, port: Int) = {
@@ -82,7 +81,7 @@ object cli {
         subcommand("easy-setup", "for lazy tests") {
           val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
-          val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[MembershipType]]()
+          val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
@@ -94,7 +93,7 @@ object cli {
 
             nodes.foreach { node =>
               node.addClusterConnection(
-                FileConnection[MembershipType](persistencePath.resolve(node.uid.toString + ".jsonl"))
+                FileConnection[ConsensusType](persistencePath.resolve(node.uid.toString + ".jsonl"))
               )
             }
           }

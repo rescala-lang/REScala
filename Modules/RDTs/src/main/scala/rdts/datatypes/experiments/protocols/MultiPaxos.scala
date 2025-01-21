@@ -3,6 +3,9 @@ package rdts.datatypes.experiments.protocols
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.Epoch
 import rdts.datatypes.experiments.protocols.Paxos.given
+import rdts.time.Time
+
+import scala.collection.immutable.NumericRange
 
 enum MultipaxosPhase:
   case LeaderElection
@@ -33,6 +36,8 @@ case class MultiPaxos[A](
       case _ => throw new Error("Inconsistent Paxos State")
 
   def read: List[A] = log.toList.sortBy(_._1).map(_._2)
+  def readDecisionsSince(time: Time): Iterable[A] =
+    NumericRange(time, rounds.counter, 1L).view.flatMap(log.get)
 
   def startLeaderElection(using LocalUid, Participants): MultiPaxos[A] =
     MultiPaxos(rounds.write(currentPaxos.phase1a)) // start new Paxos round with self proposed as leader

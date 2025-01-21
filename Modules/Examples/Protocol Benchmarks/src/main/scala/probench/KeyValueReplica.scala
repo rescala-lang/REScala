@@ -4,9 +4,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
 import probench.data.RequestResponseQueue.Req
 import rdts.base.Lattice.syntax
+import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, LocalUid, Uid}
-import rdts.datatypes.experiments.protocols.Membership
-import rdts.datatypes.experiments.protocols.old.simplified.Paxos
+import rdts.datatypes.experiments.protocols.{MultiPaxos, Participants}
 import rdts.syntax.DeltaBuffer
 import replication.DeltaDissemination
 
@@ -17,7 +17,8 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
 
-  private type ClusterState = Membership[ClusterData, Paxos, Paxos]
+  given Participants(votingReplicas)
+  private type ClusterState = MultiPaxos[ClusterData]
 
   given localUid: LocalUid = LocalUid(uid)
 
@@ -30,7 +31,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     )
 
   val currentStateLock: AnyRef   = new {}
-  var currentState: ClusterState = Membership.init(votingReplicas)
+  var currentState: ClusterState = MultiPaxos()
 
   val clusterDataManager: DeltaDissemination[ClusterState] =
     DeltaDissemination(
@@ -38,6 +39,11 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       handleIncoming,
       immediateForward = true
     )
+
+  // propose myself as leader if I have the lowest id
+  votingReplicas.minOption match
+    case Some(id) if id == uid => currentStateLock.synchronized { transform(_.startLeaderElection) }
+    case _                     => ()
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
     if delta `inflates` currentState then {
@@ -50,12 +56,12 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   }
 
   def forceUpkeep(): ClusterState = currentStateLock.synchronized {
-    publish(currentState.upkeep())
+    publish(currentState.upkeep)
   }
 
   def needsUpkeep(): Boolean = currentStateLock.synchronized {
     val state = currentState
-    val delta = state.upkeep()
+    val delta = state.upkeep
     state != (state `merge` delta)
   }
 
@@ -71,7 +77,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       (old, currentState)
     }
     if old != changed then {
-      val upkept = changed.upkeep()
+      val upkept = changed.upkeep
       if currentState.subsumes(upkept)
       then log(s"no changes")
       else log(s"upkeep")
@@ -85,10 +91,13 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   private val kvCache = mutable.HashMap[String, String]()
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
-    newState.firstUnansweredRequest.foreach { req =>
-      log(s"applying client request $req")
-      currentStateLock.synchronized { transform(_.write(ClusterData(req.value, req.dot))) }
-    }
+    if currentState.leader.contains(replicaId) then // only propose if this replica is the current leader
+      newState.firstUnansweredRequest.foreach { req =>
+        log(s"applying client request $req")
+        currentStateLock.synchronized { transform(_.proposeIfLeader(ClusterData(req.value, req.dot))) }
+      }
+    else
+      log("Not the leader. Ignoring request for now.")
   }
 
   private def maybeAnswerClient(oldState: ClusterState, newState: ClusterState): Unit = {
