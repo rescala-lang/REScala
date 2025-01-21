@@ -128,6 +128,7 @@ object cli {
 
           cluster.value.foreach { (ip, port) =>
             node.addClusterConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
           }
         },
         subcommand("udp-node", "starts a cluster node") {
