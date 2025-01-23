@@ -1,5 +1,6 @@
 package rdts.datatypes.experiments.protocols
 
+import rdts.base.Lattice.syntax
 import rdts.base.{Bottom, Lattice, LocalUid, Uid}
 import rdts.datatypes.Epoch
 import rdts.datatypes.experiments.protocols.Paxos.given
