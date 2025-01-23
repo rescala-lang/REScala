@@ -20,7 +20,7 @@ class ClusterConsensus extends munit.FunSuite {
     given JsonValueCodec[ProtocolMessage[ConsensusType]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
-    val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
+    val ids = Set("Node1", "Node2", "Node3").map(Uid.predefined)
     given Participants(ids)
     val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
     val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()

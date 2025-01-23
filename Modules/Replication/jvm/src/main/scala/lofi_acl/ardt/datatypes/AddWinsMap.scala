@@ -61,7 +61,7 @@ object AddWinsMap:
       * @return
       *   The delta that contains the removal (and nothing else)
       */
-    def remove[K, V: { Bottom, HasDots }](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Dotted(
+    def remove[K, V: {Bottom, HasDots}](key: K, map: AddWinsMap[K, V]): AddWinsMap[K, V] = Dotted(
       Bottom[Map[K, V]].empty,
       HasDots[V].dots(map.data.getOrElse(key, Bottom[V].empty))
     )

@@ -19,7 +19,7 @@ class ReplicatedListHDChecks extends HasDotsChecks[ReplicatedList[ExampleData]]
 
 // the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
 // that they will produce any kind of comparable values
-abstract class HasDotsChecks[A: { Arbitrary, HasDots }] extends munit.ScalaCheckSuite {
+abstract class HasDotsChecks[A: {Arbitrary, HasDots}] extends munit.ScalaCheckSuite {
   property("remove is precise") {
     forAll: (a: A) =>
       val dots = a.dots

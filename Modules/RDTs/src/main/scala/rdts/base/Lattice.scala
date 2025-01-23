@@ -50,7 +50,7 @@ object Lattice {
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this. */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
-  def diff[A: { Lattice, Decompose }](state: A, delta: A): Option[A] = {
+  def diff[A: {Lattice, Decompose}](state: A, delta: A): Option[A] = {
     delta.decomposed.filter(!A.subsumption(_, state)).reduceOption(merge)
   }
 

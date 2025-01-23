@@ -11,7 +11,7 @@ import rdts.time.CausalTime
 type LWW[V] = LastWriterWins[V]
 
 object LWW {
-  given recursiveFilter[V: { Filter, Bottom }]: Filter[LWW[V]] with
+  given recursiveFilter[V: {Filter, Bottom}]: Filter[LWW[V]] with
     override def filter(delta: LWW[V], permission: PermissionTree): LWW[V] = permission match
       case PermissionTree(ALLOW, _)   => delta
       case PermissionTree(PARTIAL, _) => delta.copy(payload = Filter[V].filter(delta.read, permission))
@@ -40,5 +40,5 @@ object LWW {
     given codec: JsonValueCodec[CausalTime] = JsonCodecMaker.make[CausalTime]
     DeltaSurgeon.ofTerminalValue
   }
-  given deltaSurgeon[V: { Bottom, DeltaSurgeon }]: DeltaSurgeon[LWW[V]] = DeltaSurgeon.derived
+  given deltaSurgeon[V: {Bottom, DeltaSurgeon}]: DeltaSurgeon[LWW[V]] = DeltaSurgeon.derived
 }

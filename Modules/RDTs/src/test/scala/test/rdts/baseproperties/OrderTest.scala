@@ -18,7 +18,7 @@ class DotsOrderTest extends OrderTests[Dots](using Dots.partialOrder)(total = fa
 
 // the specification of these tests is nice, but the generators are essentially useless, as it is extremely unlikely
 // that they will produce any kind of comparable values
-abstract class OrderTests[A: { Arbitrary, Lattice }](using pa: PartialOrdering[A])(
+abstract class OrderTests[A: {Arbitrary, Lattice}](using pa: PartialOrdering[A])(
     total: Boolean,
     agreesWithEquals: Boolean
 ) extends munit.ScalaCheckSuite {

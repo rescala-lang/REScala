@@ -214,6 +214,6 @@ object Filter:
 
   def ofTerminalValue[T: Bottom]: Filter[T] = TerminalFilter[T]()
 
-  given dottedFilter[A: { Filter, Bottom }]: Filter[Dotted[A]] = Filter.derived
+  given dottedFilter[A: {Filter, Bottom}]: Filter[Dotted[A]] = Filter.derived
 
-  given obremFilter[A: { Filter, Bottom }]: Filter[Obrem[A]] = Filter.derived
+  given obremFilter[A: {Filter, Bottom}]: Filter[Obrem[A]] = Filter.derived

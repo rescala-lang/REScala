@@ -52,7 +52,7 @@ given JsonValueCodec[WsSendData] = JsonCodecMaker.make
 import replication.JsoniterCodecs.given
 given JsonValueCodec[PosNegCounter] = JsonCodecMaker.make
 
-class Replica[S: { Lattice, JsonValueCodec }](
+class Replica[S: {Lattice, JsonValueCodec}](
     val id: Uid,
     dtnNodeId: String,
     val service: String,
@@ -114,7 +114,7 @@ class Replica[S: { Lattice, JsonValueCodec }](
     }
 }
 
-class ReplicaListener[S: { Lattice, JsonValueCodec }](replica: Replica[S]) extends Listener {
+class ReplicaListener[S: {Lattice, JsonValueCodec}](replica: Replica[S]) extends Listener {
 
   val modeSwitched: Promise[true] = Promise[true]
 

@@ -24,7 +24,7 @@ class AeadTranslation(aead: com.google.crypto.tink.Aead) extends replication.Aea
     Try(aead.decrypt(data, associated))
 }
 
-class DataManagerConnectionManager[State: { JsonValueCodec, Lattice, Bottom, HasDots }](
+class DataManagerConnectionManager[State: {JsonValueCodec, Lattice, Bottom, HasDots}](
     replicaId: LocalUid,
     receiveCallback: Obrem[State] => Unit
 ) extends ConnectionManager[Obrem[State]] {

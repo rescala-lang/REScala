@@ -101,7 +101,10 @@ trait TopoBundle {
 
     def beforeCleanupHook(all: Seq[ReSource], initialWrites: Set[ReSource]): Unit = ()
 
-    override def forceNewTransaction[R](initialWrites: Set[ReSource], admissionPhase: AdmissionTicket[State] => R): R = {
+    override def forceNewTransaction[R](
+        initialWrites: Set[ReSource],
+        admissionPhase: AdmissionTicket[State] => R
+    ): R = {
       synchronized {
         if !idle then throw new IllegalStateException("Scheduler is not reentrant")
         idle = false

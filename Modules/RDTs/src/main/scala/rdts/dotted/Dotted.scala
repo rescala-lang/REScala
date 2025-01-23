@@ -33,7 +33,7 @@ object Obrem {
 
   def empty[A: Bottom]: Obrem[A] = Obrem(Bottom.empty[A], Dots.empty, Dots.empty)
 
-  given lattice[A: { HasDots, Bottom, Lattice }]: FilteredLattice[Obrem[A]](Lattice.derived) with {
+  given lattice[A: {HasDots, Bottom, Lattice}]: FilteredLattice[Obrem[A]](Lattice.derived) with {
     override def filter(base: Obrem[A], other: Obrem[A]): Obrem[A] =
       if other.deletions.isEmpty
       then base
@@ -76,7 +76,7 @@ object Dotted {
   def empty[A: Bottom]: Dotted[A] = Dotted(Bottom.empty[A], Dots.empty)
   def apply[A](a: A): Dotted[A]   = Dotted(a, Dots.empty)
 
-  given decompose[A: { Decompose, HasDots, Bottom, Lattice }]: Decompose[Dotted[A]] = new Decompose[Dotted[A]] {
+  given decompose[A: {Decompose, HasDots, Bottom, Lattice}]: Decompose[Dotted[A]] = new Decompose[Dotted[A]] {
 
     extension (a: Dotted[A])
       override def decomposed: Iterable[Dotted[A]] = {
@@ -96,7 +96,7 @@ object Dotted {
       }
   }
 
-  given lattice[A: { HasDots, Bottom, Lattice }]: FilteredLattice[Dotted[A]](Lattice.derived) with {
+  given lattice[A: {HasDots, Bottom, Lattice}]: FilteredLattice[Dotted[A]](Lattice.derived) with {
 
     override def filter(base: Dotted[A], other: Dotted[A]): Dotted[A] =
       val deletions = other.deletions

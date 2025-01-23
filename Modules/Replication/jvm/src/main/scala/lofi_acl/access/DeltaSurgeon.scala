@@ -137,9 +137,9 @@ object DeltaSurgeon {
     }
 
   // Used for values that should not be further isolated
-  def ofTerminalValue[V: { Bottom, JsonValueCodec }]: DeltaSurgeon[V] = new TerminalValueDeltaSurgeon[V]
+  def ofTerminalValue[V: {Bottom, JsonValueCodec}]: DeltaSurgeon[V] = new TerminalValueDeltaSurgeon[V]
 
-  private class TerminalValueDeltaSurgeon[V: { Bottom, JsonValueCodec }] extends DeltaSurgeon[V] {
+  private class TerminalValueDeltaSurgeon[V: {Bottom, JsonValueCodec}] extends DeltaSurgeon[V] {
     override def isolate(delta: V): IsolatedDeltaParts =
       if Bottom[V].isEmpty(delta) then IsolatedDeltaParts(Map.empty)
       else IsolatedDeltaParts(writeToArray(delta))
@@ -153,10 +153,10 @@ object DeltaSurgeon {
 
   import lofi_acl.sync.JsoniterCodecs.dotsCodec
 
-  given dotsDeltaSurgeon: DeltaSurgeon[Dots]                                     = ofTerminalValue[Dots]
-  given dottedDeltaSurgeon[T: { DeltaSurgeon, Bottom }]: DeltaSurgeon[Dotted[T]] = DeltaSurgeon.derived
-  given obremDeltaSurgeon[T: { DeltaSurgeon, Bottom }]: DeltaSurgeon[Obrem[T]]   = DeltaSurgeon.derived
-  given optionSurgeon[T: { Bottom, DeltaSurgeon }]: DeltaSurgeon[Option[T]] = {
+  given dotsDeltaSurgeon: DeltaSurgeon[Dots]                                   = ofTerminalValue[Dots]
+  given dottedDeltaSurgeon[T: {DeltaSurgeon, Bottom}]: DeltaSurgeon[Dotted[T]] = DeltaSurgeon.derived
+  given obremDeltaSurgeon[T: {DeltaSurgeon, Bottom}]: DeltaSurgeon[Obrem[T]]   = DeltaSurgeon.derived
+  given optionSurgeon[T: {Bottom, DeltaSurgeon}]: DeltaSurgeon[Option[T]] = {
     given noneBottom: Bottom[None.type] = Bottom.provide(None) // TODO: Bottom for singletons should be derivable
     given noneDeltaSurgeon: DeltaSurgeon[None.type] = DeltaSurgeon.derived
     given someBottom: Bottom[Some[T]]               = Bottom.derived
