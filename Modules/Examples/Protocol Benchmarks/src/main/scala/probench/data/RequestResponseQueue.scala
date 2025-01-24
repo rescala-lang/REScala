@@ -1,97 +1,68 @@
 package probench.data
 
-import probench.data.RequestResponseQueue.{Req, Res}
+import probench.data.RequestResponseQueue.{Req, Res, Timestamp}
+import rdts.base.*
 import rdts.base.Lattice.mapLattice
-import rdts.base.{Bottom, Lattice, LocalUid}
-import rdts.time.{Dot, VectorClock}
-
-import scala.collection.immutable.Queue
+import rdts.base.LocalUid.replicaId
+import rdts.datatypes.alternatives.ObserveRemoveSet
+import rdts.dotted.FilteredLattice
+import rdts.time.{CausalTime, Dot, VectorClock}
 
 case class RequestResponseQueue[S, T](
-    requests: Queue[Req[S]],
-    responses: Queue[Res[S, T]],
-    processed: Map[LocalUid, VectorClock],
-    clock: VectorClock
+    requests: Map[Timestamp, Req[S]] = Map.empty[Timestamp, Req[S]],
+    responses: ObserveRemoveSet[Res[S, T]] = ObserveRemoveSet.empty[Res[S, T]]
 ) {
+  def request(value: S)(using LocalUid): RequestResponseQueue[S, T] =
+    // find the newest timestamp
+    val timestamp = requests.keys.maxOption match
+      case Some((time, uid)) => (time.advance, replicaId)
+      case None              => (CausalTime.now(), replicaId)
+    RequestResponseQueue(requests = Map(timestamp -> Req(value, replicaId)))
 
-  type Delta = RequestResponseQueue[S, T]
+  def respond(requestTimestamp: Timestamp, value: T)(using LocalUid): RequestResponseQueue[S, T] =
+    respond(requests(requestTimestamp), value)
 
-  def request(value: S)(using id: LocalUid): Delta = {
-    val time = clock.merge(clock.inc(LocalUid.replicaId))
-    val dot  = time.dotOf(LocalUid.replicaId)
+  def respond(request: Req[S], value: T)(using LocalUid): RequestResponseQueue[S, T] =
+    RequestResponseQueue(responses = ObserveRemoveSet(Set(Res(value = value, request = request))))
 
-    RequestResponseQueue(
-      Queue(Req(value, id, dot, time)),
-      Queue.empty,
-      Map.empty,
-      time
-    )
-  }
+  def responseTo(req: Req[S]): Option[Res[S, T]] =
+    responses.value.collectFirst {
+      case res @ Res(_, r) if r == req => res
+    }
 
-  def respond(request: Req[S], value: T)(using id: LocalUid): Delta = {
-    val time = clock.merge(clock.inc(LocalUid.replicaId))
-    val dot  = time.dotOf(LocalUid.replicaId)
+  def consumeResponse(res: Res[S, T]): RequestResponseQueue[S, T] =
+    RequestResponseQueue(responses = responses.remove(res))
 
-    RequestResponseQueue(
-      Queue.empty,
-      Queue(Res(request, value, id, dot, time)),
-      Map.empty,
-      time
-    )
-  }
-
-  def responsesTo(req: Req[S]): Seq[Res[S, T]] =
-    responses.filter(res => res.request == req)
-
-  def firstUnansweredRequest: Option[Req[S]] =
-    requests.collectFirst { case r: Req[S] if responsesTo(r).isEmpty => r }
-
-  // TODO: I think this causes ALL requests/repsonses that are older than req to be dropped
-  def complete(req: Req[S])(using id: LocalUid): Delta = {
-    val time = clock.merge(clock.inc(LocalUid.replicaId))
-
-    RequestResponseQueue(
-      Queue.empty,
-      Queue.empty,
-      Map(id -> req.order),
-      time
-    )
-  }
-
+  def firstUnansweredRequest: Option[(Timestamp, Req[S])] =
+    requests.collectFirst { case r @ (timestamp, req) if responseTo(req).isEmpty => r }
 }
 
 object RequestResponseQueue {
-  case class Req[+T](value: T, requester: LocalUid, dot: Dot, order: VectorClock)
-  case class Res[+S, +T](request: Req[S], value: T, responder: LocalUid, dot: Dot, order: VectorClock)
+  type Timestamp = (CausalTime, Uid)
+  case class Req[+T](value: T, requester: Uid)
+  case class Res[+S, +T](value: T, request: Req[S])
 
-  def empty[S, T]: RequestResponseQueue[S, T] =
-    RequestResponseQueue(Queue.empty, Queue.empty, Map.empty, VectorClock.zero)
+  def empty[S, T]: RequestResponseQueue[S, T] = RequestResponseQueue()
 
   given bottomInstance[S, T]: Bottom[RequestResponseQueue[S, T]] = Bottom.provide(empty)
 
-  // TODO: likely not a lattice, because the sort is nondeterministic
-  // that is probably fine for now, because this is used like a set (i.e., order does not matter),
-  // and only read/written by a single component
-  // but should not use lattice API if it relies on other assumptions
-  given lattice[S, T]: Lattice[RequestResponseQueue[S, T]] with {
-    override def merge(
-        left: RequestResponseQueue[S, T],
-        right: RequestResponseQueue[S, T]
+  given Ordering[Timestamp] = Orderings.lexicographic
+
+  // lattices
+  given [A]: Lattice[Map[Timestamp, Req[A]]] = // for the requestMap
+    given Lattice[Req[A]] = Lattice.assertEquals
+    Lattice.mapLattice
+  given [S, T]: FilteredLattice[RequestResponseQueue[S, T]](Lattice.derived) with
+    // remove answered requests from queue
+    override def filter(
+        base: RequestResponseQueue[S, T],
+        other: RequestResponseQueue[S, T]
     ): RequestResponseQueue[S, T] =
-      val processed = left.processed.merge(right.processed)
-
+      val newlyAnswered: Set[Req[S]] = other.responses.value.map(_.request)
       RequestResponseQueue(
-        (left.requests concat right.requests)
-          .filter { req => processed.get(req.requester).forall(time => !(req.order <= time)) }
-          .sortBy { req => req.order }(using Ordering.fromLessThan(VectorClock.vectorClockOrdering.lt))
-          .distinct,
-        (left.responses concat right.responses)
-          .filter { req => processed.get(req.request.requester).forall(time => !(req.request.order <= time)) }
-          .sortBy { req => req.order }(using Ordering.fromLessThan(VectorClock.vectorClockOrdering.lt))
-          .distinct,
-        processed,
-        left.clock.merge(right.clock)
+        requests = base.requests.filter {
+          case (timestamp, req) => newlyAnswered.contains(req)
+        },
+        responses = base.responses
       )
-  }
-
 }

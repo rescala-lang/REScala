@@ -92,9 +92,9 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     if currentState.leader.contains(replicaId) then // only propose if this replica is the current leader
-      newState.firstUnansweredRequest.foreach { req =>
+      newState.firstUnansweredRequest.foreach { (timestamp, req) =>
         log(s"applying client request $req")
-        currentStateLock.synchronized { transform(_.proposeIfLeader(ClusterData(req.value, req.dot))) }
+        currentStateLock.synchronized { transform(_.proposeIfLeader(ClusterData(req.value, timestamp))) }
       }
     else
       log("Not the leader. Ignoring request for now.")
@@ -119,7 +119,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       }
 
       clientDataManager.transform { it =>
-        it.state.requests.collectFirst { case req if req.dot == decidedRequest.origin => req }.map { req =>
+        it.state.requests.collectFirst { case (timestamp, req) if timestamp == decidedRequest.origin => req }.map { req =>
           it.mod(_.respond(req, decision))
         }.getOrElse(it)
       }
