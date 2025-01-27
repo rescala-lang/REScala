@@ -1,10 +1,10 @@
 package probench.clients
 
 import probench.data.*
-import rdts.base.{Bottom, LocalUid, Uid}
-import rdts.syntax.DeltaBuffer
 import probench.data.RequestResponseQueue.*
 import rdts.base.LocalUid.replicaId
+import rdts.base.{Bottom, LocalUid, Uid}
+import rdts.syntax.DeltaBuffer
 
 import java.util.concurrent.Semaphore
 
@@ -16,13 +16,17 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
 
   private def onStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     for {
-      res @ Res(value, Req(_, requester)) <- newState.responses.value if requester == replicaId
+      req @ Req(_, _, timestamp) <- newState.requests.get(replicaId).map(_.value).getOrElse(Set())
+      if newState.responses.contains(timestamp)
     } {
-      println(value)
-
-      dataManager.transform(_.mod(_.consumeResponse(res)))
+      newState.responses.get(timestamp) match
+        case Some(value) =>
+          println(value)
+          dataManager.transform(_.mod(_.complete(req)))
+        case None => ()
 
       if blocking then requestSemaphore.release(1)
+
     }
   }
 

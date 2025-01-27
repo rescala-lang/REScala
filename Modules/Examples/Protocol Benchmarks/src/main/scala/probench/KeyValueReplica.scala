@@ -2,7 +2,6 @@ package probench
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import probench.data.*
-import probench.data.RequestResponseQueue.Req
 import rdts.base.Lattice.syntax
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Bottom, LocalUid, Uid}
@@ -92,9 +91,9 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   private def onClientStateChange(oldState: ClientNodeState, newState: ClientNodeState): Unit = {
     if currentState.leader.contains(replicaId) then // only propose if this replica is the current leader
-      newState.firstUnansweredRequest.foreach { (timestamp, req) =>
+      newState.firstUnansweredRequest.foreach { req =>
         log(s"applying client request $req")
-        currentStateLock.synchronized { transform(_.proposeIfLeader(ClusterData(req.value, timestamp))) }
+        currentStateLock.synchronized { transform(_.proposeIfLeader(ClusterData(req))) }
       }
     else
       log("Not the leader. Ignoring request for now.")
@@ -106,12 +105,12 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     // println(s"${pprint.tokenize(newState).mkString("")}")
 
     for decidedRequest <- newState.readDecisionsSince(oldState.rounds.counter) do {
-      val decision: String = decidedRequest match {
-        case ClusterData(KVOperation.Read(key), _) =>
+      val decision: String = decidedRequest.op match {
+        case KVOperation.Read(key) =>
           kvCache.synchronized {
             kvCache.getOrElse(key, s"Key '$key' has not been written to!")
           }
-        case ClusterData(KVOperation.Write(key, value), _) =>
+        case KVOperation.Write(key, value) =>
           kvCache.synchronized {
             kvCache.put(key, value)
           }
@@ -119,9 +118,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       }
 
       clientDataManager.transform { it =>
-        it.state.requests.collectFirst { case (timestamp, req) if timestamp == decidedRequest.origin => req }.map { req =>
-          it.mod(_.respond(req, decision))
-        }.getOrElse(it)
+        it.mod(_.respond(decidedRequest.request, decision))
       }
 
     }

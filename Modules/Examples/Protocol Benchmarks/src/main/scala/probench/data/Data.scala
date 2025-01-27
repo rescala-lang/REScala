@@ -1,6 +1,6 @@
 package probench.data
 
-import probench.data.RequestResponseQueue.Timestamp
+import probench.data.RequestResponseQueue.{Req, Timestamp}
 import rdts.time.Dot
 
 enum KVOperation[Key, Value] {
@@ -12,4 +12,5 @@ enum KVOperation[Key, Value] {
 
 type ClientNodeState = RequestResponseQueue[KVOperation[String, String], String]
 
-case class ClusterData(op: KVOperation[String, String], origin: Timestamp)
+case class ClusterData(request: Req[KVOperation[String, String]]):
+  def op: KVOperation[String, String] = request.value
