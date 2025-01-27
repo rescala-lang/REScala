@@ -8,8 +8,6 @@ import rdts.datatypes.{Epoch, GrowOnlySet}
 import rdts.dotted.FilteredLattice
 import rdts.time.CausalTime
 
-import scala.collection.immutable
-
 // responses should be a remove wins set/map
 case class RemoveWinsMap[K, V](inner: Map[K, V] = Map.empty[K, V], tombstones: GrowOnlySet[K] = GrowOnlySet.empty[K]):
   def insert(key: K, value: V): RemoveWinsMap[K, V] =
@@ -41,7 +39,7 @@ object RemoveWinsMap:
 
 case class RequestResponseQueue[S, T](
     requests: Map[Uid, Epoch[Set[Req[S]]]] = Map.empty[Uid, Epoch[Set[Req[S]]]],
-    responses: Map[Timestamp, Res[S, T]] = Map.empty[Timestamp, Res[S, T]]
+    responses: Map[Timestamp, Res[T]] = Map.empty[Timestamp, Res[T]]
 ) {
   def request(value: S)(using LocalUid): RequestResponseQueue[S, T] =
     // find the newest timestamp
@@ -58,10 +56,10 @@ case class RequestResponseQueue[S, T](
 
   def respond(request: Req[S], value: T)(using LocalUid): RequestResponseQueue[S, T] =
     RequestResponseQueue(responses =
-      Map(request.timestamp -> Res(value = value, request = request))
+      Map(request.timestamp -> Res(value))
     )
 
-  def responseTo(req: Req[S]): Option[Res[S, T]] =
+  def responseTo(req: Req[S]): Option[Res[T]] =
     responses.get(req.timestamp)
 
   /** Completes a request by removing it from the set of requests.
@@ -91,7 +89,7 @@ case class RequestResponseQueue[S, T](
 object RequestResponseQueue {
   type Timestamp = (CausalTime, Uid)
   case class Req[+T](value: T, requester: Uid, timestamp: Timestamp)
-  case class Res[+S, +T](value: T, request: Req[S])
+  case class Res[+T](value: T)
 
   def empty[S, T]: RequestResponseQueue[S, T] = RequestResponseQueue()
 
@@ -103,8 +101,8 @@ object RequestResponseQueue {
 //  given l1[A]: Lattice[Map[Timestamp, Req[A]]] = // for the requestMap
 //    given Lattice[Req[A]] = Lattice.assertEquals
 //    Lattice.mapLattice
-  given l2[S, T]: Lattice[Map[Timestamp, Res[S, T]]] = // for the requestMap
-    given Lattice[Res[S, T]] = Lattice.assertEquals
+  given l2[S, T]: Lattice[Map[Timestamp, Res[T]]] = // for the requestMap
+    given Lattice[Res[T]] = Lattice.assertEquals
     Lattice.mapLattice
 
   given [S, T]: Lattice[RequestResponseQueue[S, T]] = Lattice.derived
