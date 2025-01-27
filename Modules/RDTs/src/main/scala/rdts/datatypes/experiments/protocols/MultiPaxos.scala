@@ -79,13 +79,17 @@ case class MultiPaxos[A](
   }
 
   override def toString: String =
-    lazy val s = s"MultiPaxos(epoch: ${rounds.counter}, log: $read)"
+    lazy val s = s"MultiPaxos(epoch: $rounds, log: $read)"
     s
 
 object MultiPaxos:
-  // for the log
-  given [A]: Lattice[Map[Long, A]] =
-    given Lattice[A] = Lattice.assertEquals
-    Lattice.mapLattice
+  def empty[A]: MultiPaxos[A] = MultiPaxos[A]()
 
-  given [A]: Lattice[MultiPaxos[A]] = Lattice.derived
+  given [A]: Lattice[MultiPaxos[A]] =
+    // for the log
+    given Lattice[Map[Long, A]] =
+      given Lattice[A] = Lattice.assertEquals
+      Lattice.mapLattice
+    Lattice.derived
+
+  given [A]: Bottom[MultiPaxos[A]] = Bottom.provide(empty)

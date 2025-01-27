@@ -71,14 +71,14 @@ runProtoBench node="node" client="client" args="bench-1-1":
 
 	sbt --client 'set proBench/JarExport.packageJarsPath := "target/probench/jars"; proBench/packageJars'
 
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
+	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE1 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
 	sleep 1;
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE2 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
 	sleep 1;
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name NODE3 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
 
 	sleep 1;
-	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | java --class-path "target/probench/jars/*" probench.cli {{client}} --node localhost:8010 --name Client1
+	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | java --class-path "target/probench/jars/*" probench.cli {{client}} --node localhost:8011 --name Client1
 	# java --class-path "target/probench/jars/*" probench.cli client --node localhost:8010 --name Client2
 	# java --class-path "target/probench/jars/*" probench.cli client --node localhost:8010 --name Client3
 

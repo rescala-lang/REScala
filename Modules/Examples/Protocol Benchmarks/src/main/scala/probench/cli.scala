@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
-import probench.data.{ClientNodeState, ClusterData, KVOperation}
+import probench.data.{KVOperation, KVState}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.MultiPaxos
 import replication.{FileConnection, ProtocolMessage}
@@ -50,11 +50,9 @@ object cli {
 
     end uidParser
 
-    given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    type ConsensusType = KVState
 
-    type ConsensusType = MultiPaxos[ClusterData]
-
-    given paxosMembership: JsonValueCodec[ConsensusType] =
+    given JsonValueCodec[ConsensusType] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     given JsonValueCodec[ProtocolMessage[ConsensusType]] =
@@ -98,7 +96,7 @@ object cli {
             }
           }
 
-          val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientNodeState]]()
+          val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[KVState]]()
 
           primary.addClientConnection(clientConnection.server)
 
@@ -115,10 +113,10 @@ object cli {
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
-          node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
-            "localhost",
-            clientPort.value
-          ))))
+//          node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+//            "localhost",
+//            clientPort.value
+//          ))))
           node.addClusterConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "localhost",
             peerPort.value
@@ -128,7 +126,7 @@ object cli {
 
           cluster.value.foreach { (ip, port) =>
             node.addClusterConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
-            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
+//            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
           }
         },
         subcommand("udp-node", "starts a cluster node") {

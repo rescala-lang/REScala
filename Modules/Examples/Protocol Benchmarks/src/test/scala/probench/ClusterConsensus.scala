@@ -3,18 +3,16 @@ package probench
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import probench.clients.ProBenchClient
-import probench.data.{ClientNodeState, ClusterData, KVOperation}
+import probench.data.{KVOperation, KVState}
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, Participants}
 import replication.ProtocolMessage
 
 class ClusterConsensus extends munit.FunSuite {
   test("simple consensus") {
-    given JsonValueCodec[ClientNodeState] = JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    type ConsensusType = KVState
 
-    type ConsensusType = MultiPaxos[ClusterData]
-
-    given paxosMembership: JsonValueCodec[ConsensusType] =
+    given JsonValueCodec[ConsensusType] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     given JsonValueCodec[ProtocolMessage[ConsensusType]] =
@@ -27,7 +25,7 @@ class ClusterConsensus extends munit.FunSuite {
     primary.addClusterConnection(connection.server)
     secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
-    val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientNodeState]]()
+    val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()
 
     primary.addClientConnection(clientConnection.server)
 
