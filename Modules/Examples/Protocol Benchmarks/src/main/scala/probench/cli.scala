@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
-import probench.data.{KVOperation, KVState}
+import probench.data.{ClientState, ClusterState, KVOperation, KVState}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.MultiPaxos
 import replication.{FileConnection, ProtocolMessage}
@@ -50,12 +50,14 @@ object cli {
 
     end uidParser
 
-    type ConsensusType = KVState
-
-    given JsonValueCodec[ConsensusType] =
+    // codecs
+    given JsonValueCodec[ClusterState] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-    given JsonValueCodec[ProtocolMessage[ConsensusType]] =
+    given clusterCodec: JsonValueCodec[ProtocolMessage[ClusterState]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    given JsonValueCodec[ClientState] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    given clientCodec: JsonValueCodec[ProtocolMessage[ClientState]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     def socketPath(host: String, port: Int) = {
@@ -79,7 +81,7 @@ object cli {
         subcommand("easy-setup", "for lazy tests") {
           val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
-          val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()
+          val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
           primary.addClusterConnection(connection.server)
           secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
@@ -91,12 +93,12 @@ object cli {
 
             nodes.foreach { node =>
               node.addClusterConnection(
-                FileConnection[ConsensusType](persistencePath.resolve(node.uid.toString + ".jsonl"))
+                FileConnection[ClusterState](persistencePath.resolve(node.uid.toString + ".jsonl"))
               )
             }
           }
 
-          val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[KVState]]()
+          val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
           primary.addClientConnection(clientConnection.server)
 
@@ -113,10 +115,10 @@ object cli {
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
-//          node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
-//            "localhost",
-//            clientPort.value
-//          ))))
+          node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+            "localhost",
+            clientPort.value
+          ))))
           node.addClusterConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "localhost",
             peerPort.value
@@ -126,7 +128,7 @@ object cli {
 
           cluster.value.foreach { (ip, port) =>
             node.addClusterConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
-//            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
+            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
           }
         },
         subcommand("udp-node", "starts a cluster node") {

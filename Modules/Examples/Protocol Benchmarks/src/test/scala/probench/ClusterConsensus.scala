@@ -3,29 +3,31 @@ package probench
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import probench.clients.ProBenchClient
-import probench.data.{KVOperation, KVState}
+import probench.data.{ClientState, ClusterState, KVOperation}
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, Participants}
 import replication.ProtocolMessage
 
 class ClusterConsensus extends munit.FunSuite {
   test("simple consensus") {
-    type ConsensusType = KVState
 
-    given JsonValueCodec[ConsensusType] =
+    given JsonValueCodec[ClusterState] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
-    given JsonValueCodec[ProtocolMessage[ConsensusType]] =
+    given clusterCodec: JsonValueCodec[ProtocolMessage[ClusterState]] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    given JsonValueCodec[ClientState] =
+      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+    given clientCodec: JsonValueCodec[ProtocolMessage[ClientState]] =
       JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
 
     val ids = Set("Node1", "Node2", "Node3").map(Uid.predefined)
     given Participants(ids)
     val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
-    val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()
+    val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
     primary.addClusterConnection(connection.server)
     secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
 
-    val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ConsensusType]]()
+    val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
     primary.addClientConnection(clientConnection.server)
 
@@ -35,11 +37,11 @@ class ClusterConsensus extends munit.FunSuite {
 
     client.read("test")
 
-    assertEquals(nodes(0).currentState, nodes(1).currentState)
-    assertEquals(nodes(1).currentState, nodes(2).currentState)
-    assertEquals(nodes(2).currentState, nodes(0).currentState)
+    assertEquals(nodes(0).clusterState, nodes(1).clusterState)
+    assertEquals(nodes(1).clusterState, nodes(2).clusterState)
+    assertEquals(nodes(2).clusterState, nodes(0).clusterState)
 
-    def investigateUpkeep(state: ConsensusType)(using LocalUid) = {
+    def investigateUpkeep(state: ClusterState)(using LocalUid) = {
       val delta  = state.upkeep
       val merged = (state `merge` delta)
       assert(state != merged)
@@ -52,7 +54,7 @@ class ClusterConsensus extends munit.FunSuite {
 
       nodes.filter(_.needsUpkeep()).exists { n =>
         println(s"forcing upkeep on $n")
-        investigateUpkeep(n.currentState)(using n.localUid)
+        investigateUpkeep(n.clusterState)(using n.localUid)
         n.forceUpkeep()
         true
       }
@@ -64,7 +66,7 @@ class ClusterConsensus extends munit.FunSuite {
     Thread.sleep(200)
 
     def noUpkeep(keyValueReplica: KeyValueReplica): Unit = {
-      val current = keyValueReplica.currentState
+      val current = keyValueReplica.clusterState
       assertEquals(
         current `merge` current.upkeep(using keyValueReplica.localUid),
         current,
@@ -74,9 +76,9 @@ class ClusterConsensus extends munit.FunSuite {
 
     nodes.foreach(noUpkeep)
 
-    assertEquals(nodes(0).currentState, nodes(1).currentState)
-    assertEquals(nodes(1).currentState, nodes(2).currentState)
-    assertEquals(nodes(2).currentState, nodes(0).currentState)
+    assertEquals(nodes(0).clusterState, nodes(1).clusterState)
+    assertEquals(nodes(1).clusterState, nodes(2).clusterState)
+    assertEquals(nodes(2).clusterState, nodes(0).clusterState)
 
     println(s"================ at the end of the tests")
 

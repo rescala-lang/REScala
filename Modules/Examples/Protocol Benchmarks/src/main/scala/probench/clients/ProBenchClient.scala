@@ -1,7 +1,7 @@
 package probench.clients
 
-import probench.data.*
-import probench.data.RequestResponseQueue.*
+import probench.data.RequestResponseQueue.Req
+import probench.data.{KVOperation, RequestResponseQueue}
 import rdts.base.LocalUid.replicaId
 import rdts.base.{LocalUid, Uid}
 import replication.DeltaDissemination
@@ -17,8 +17,8 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
 
   val requestSemaphore = new Semaphore(0)
 
-  type State = KVState
-  var currentState: State      = KVState.empty
+  type State = RequestResponseQueue[KVOperation[String, String], String]
+  var currentState: State      = RequestResponseQueue.empty
   val currentStateLock: AnyRef = new {}
 
   def publish(delta: State): State = currentStateLock.synchronized {
@@ -50,7 +50,7 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
   }
 
   private def maybeHandleResponses(newState: State): Unit =
-    val (requests, responses) = (newState.requests.requests, newState.requests.responses)
+    val (requests, responses) = (newState.requests, newState.responses)
     for {
       req @ Req(_, _, timestamp) <- requests.get(replicaId).map(_.value).getOrElse(Set())
       if responses.contains(timestamp)
@@ -58,7 +58,7 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
       responses.get(timestamp) match
         case Some(res) =>
           println(res.value)
-          transform(state => KVState(requests = state.requests.complete(req)))
+          transform(_.complete(req))
           if blocking then requestSemaphore.release(1)
         case None => ()
     }
@@ -71,7 +71,7 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
       requestSemaphore.drainPermits()
       ()
 
-    val _ = transform(state => KVState(requests = state.requests.request(op)))
+    val _ = transform(_.request(op))
 
     if blocking then requestSemaphore.acquire(1)
 

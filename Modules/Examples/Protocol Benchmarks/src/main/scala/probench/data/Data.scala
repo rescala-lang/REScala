@@ -11,6 +11,9 @@ enum KVOperation[Key, Value] {
   case Write(key: Key, value: Value)
 }
 
+type ClusterState = MultiPaxos[Req[KVOperation[String, String]]]
+type ClientState  = RequestResponseQueue[KVOperation[String, String], String]
+
 case class KVState(
     requests: RequestResponseQueue[KVOperation[String, String], String] = RequestResponseQueue.empty,
     clusterState: MultiPaxos[Req[KVOperation[String, String]]] = MultiPaxos.empty
