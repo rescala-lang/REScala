@@ -1,13 +1,14 @@
 package tests.rescala.static.signals
 
+import munit.FunSuite
 import reactives.core.infiltration.Infiltrator
 import reactives.default.*
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class SignalTestSuite extends FunSuiteInvertedAssert {
+class SignalTestSuite extends FunSuite {
   val ie = new Infiltrator()
+
   import ie.assertLevel
 
   test("handler Is Called When Change Occurs") {
@@ -19,16 +20,16 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
     val s1 = Signal.lift(v1, v2) { _ + _ }
     s1.changed observe { (_) => test += 1 }
 
-    assert(s1.readValueOnce == 3)
-    assert(test == 0)
+    assertEquals(s1.readValueOnce, 3)
+    assertEquals(test, 0)
 
     v2.set(3)
-    assert(s1.readValueOnce == 4)
-    assert(test == 1)
+    assertEquals(s1.readValueOnce, 4)
+    assertEquals(test, 1)
 
     v2.set(3)
-    assert(s1.readValueOnce == 4)
-    assert(test == 1)
+    assertEquals(s1.readValueOnce, 4)
+    assertEquals(test, 1)
 
   }
 
@@ -37,9 +38,9 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
     var i = 1
     val s = Signal { v.value + i }
     i = 2
-    assert(s.readValueOnce == 1)
+    assertEquals(s.readValueOnce, 1)
     v.set(2)
-    assert(s.readValueOnce == 4)
+    assertEquals(s.readValueOnce, 4)
   }
 
   test("the Expression Is Not Evaluated Every Time now Is Called") {
@@ -69,7 +70,8 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
     var changes = 0
     val v       = Var(1)
     val s = Signal {
-      changes += 1; v.value + 1
+      changes += 1;
+      v.value + 1
     }
     assertEquals(changes, 1)
     assertEquals(s.readValueOnce, 2)
@@ -90,13 +92,14 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
         v3.map(_ + "level 4 inner").value
       }
     }
-    assert(`dynamic signal changing from level 1 to level 5`.readValueOnce == "level 0")
+    assertEquals(`dynamic signal changing from level 1 to level 5`.readValueOnce, "level 0")
     // note: will start with level 5 because of static guess of current level done by the macro expansion
     assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
 
     v0.set("level0+")
-    assert(
-      `dynamic signal changing from level 1 to level 5`.readValueOnce == "level0+level 1level 2level 3level 4 inner"
+    assertEquals(
+      `dynamic signal changing from level 1 to level 5`.readValueOnce,
+      "level0+level 1level 2level 3level 4 inner"
     )
     assertLevel(`dynamic signal changing from level 1 to level 5`, 5)
   }
@@ -107,7 +110,7 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
     val s: Signal[Int] = v.map { _ => i }
     i = 2
     v.set(2)
-    assert(s.readValueOnce == 2)
+    assertEquals(s.readValueOnce, 2)
   }
 
   test("the Expression Is Note Evaluated Every Time Get Val Is Called") {
@@ -132,11 +135,11 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
       i % 10
     }
 
-    assert(a == 1)
+    assertEquals(a, 1)
     v.set(11)
-    assert(a == 2)
+    assertEquals(a, 2)
     v.set(21)
-    assert(a == 3)
+    assertEquals(a, 3)
     assertEquals(s1.readValueOnce, 1)
   }
 
@@ -159,10 +162,10 @@ class SignalTestSuite extends FunSuiteInvertedAssert {
       test.incrementAndGet(); ()
     }
 
-    assert(test.get == 0)
+    assertEquals(test.get, 0)
 
     v.set(3)
-    assert(test.get == 3)
+    assertEquals(test.get, 3)
   }
 
   test("level Is Correctly Computed with combinators") {

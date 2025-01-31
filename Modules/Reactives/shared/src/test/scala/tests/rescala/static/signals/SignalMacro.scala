@@ -1,10 +1,12 @@
 package tests.rescala.static.signals
 
-import reactives.SelectedScheduler.candidate.State as BundleState
+import munit.FunSuite
+import reactives.SelectedScheduler.candidate.State
+as BundleState
 import reactives.core.{CreationScope, CreationTicket}
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class SignalMacro extends FunSuiteInvertedAssert {
+class SignalMacro extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -119,20 +121,21 @@ class SignalMacro extends FunSuiteInvertedAssert {
 
       val sig = Signal {
         lazy val v = v1.value
-        if v2.value then v else 0
+        if v2.value then v
+        else 0
       }
 
-      assert(sig.readValueOnce == 0)
+      assertEquals(sig.readValueOnce, 0)
       v1 `set` 5
-      assert(sig.readValueOnce == 0)
+      assertEquals(sig.readValueOnce, 0)
       v2 `set` true
-      assert(sig.readValueOnce == 5)
+      assertEquals(sig.readValueOnce, 5)
       v1 `set` 2
-      assert(sig.readValueOnce == 2)
+      assertEquals(sig.readValueOnce, 2)
       v2 `set` false
-      assert(sig.readValueOnce == 0)
+      assertEquals(sig.readValueOnce, 0)
       v1 `set` 8
-      assert(sig.readValueOnce == 0)
+      assertEquals(sig.readValueOnce, 0)
     }
 
     test("pattern Matching And Wildcard") {
@@ -149,23 +152,24 @@ class SignalMacro extends FunSuiteInvertedAssert {
         }
       }
 
-      assert(sig.readValueOnce == 2)
+      assertEquals(sig.readValueOnce, 2)
       v2 `set` 50
-      assert(sig.readValueOnce == 2)
+      assertEquals(sig.readValueOnce, 2)
       v1 `set` List(7, 8, 9)
-      assert(sig.readValueOnce == 50)
+      assertEquals(sig.readValueOnce, 50)
       v2 `set` 4
-      assert(sig.readValueOnce == 4)
+      assertEquals(sig.readValueOnce, 4)
       v1 `set` List(10, 11)
-      assert(sig.readValueOnce == 11)
+      assertEquals(sig.readValueOnce, 11)
     }
 
     test("default Arguments") {
       val s = Signal {
         def a(v: Int, i: Int = 8, j: Int, k: Int = 8) = v + i + j + k
+
         a(6, j = 5)
       }
-      assert(s.readValueOnce == 27)
+      assertEquals(s.readValueOnce, 27)
     }
 
     // test("function As Getter For Signal") {

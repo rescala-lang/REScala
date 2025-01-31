@@ -1,8 +1,7 @@
 package tests.rescala.static.events
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+class map_EventTest extends munit.FunSuite {
 
-class map_EventTest extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 
@@ -14,7 +13,7 @@ class map_EventTest extends FunSuiteInvertedAssert {
 
       e1.fire(10)
       e1.fire(10)
-      assert(test == 2)
+      assertEquals(test, 2)
     }
 
     test("the Function Passed To map is Applied") {
@@ -25,7 +24,7 @@ class map_EventTest extends FunSuiteInvertedAssert {
 
       e1.fire(10)
       e1.fire(10)
-      assert(test == 20)
+      assertEquals(test, 20)
     }
 
   }

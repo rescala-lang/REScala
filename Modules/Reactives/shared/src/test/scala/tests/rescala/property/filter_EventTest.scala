@@ -2,7 +2,6 @@ package tests.rescala.property
 
 import org.scalacheck.Prop.*
 import reactives.default.*
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
 class filter_EventTest extends munit.ScalaCheckSuite {
 

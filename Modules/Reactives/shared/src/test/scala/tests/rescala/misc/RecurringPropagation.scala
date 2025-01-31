@@ -1,8 +1,7 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+class RecurringPropagation extends munit.FunSuite {
 
-class RecurringPropagation extends FunSuiteInvertedAssert {
   import reactives.default.*
   {
 
@@ -14,10 +13,10 @@ class RecurringPropagation extends FunSuiteInvertedAssert {
 
       m1.observe(v1.set)
 
-      assert(v1.readValueOnce == 2)
+      assertEquals(v1.readValueOnce, 2)
 
       e1.fire(100)
-      assert(v1.readValueOnce == 110)
+      assertEquals(v1.readValueOnce, 110)
 
     }
 
@@ -29,11 +28,11 @@ class RecurringPropagation extends FunSuiteInvertedAssert {
 
       m1.observe(v1.set)
 
-      assert(v1.readValueOnce == 2)
+      assertEquals(v1.readValueOnce, 2)
 
       v1.observe(current => if current > 100 then () else e1.fire(current))
 
-      assert(v1.readValueOnce == 102)
+      assertEquals(v1.readValueOnce, 102)
 
     }
 

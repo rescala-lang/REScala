@@ -1,10 +1,11 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
 import scala.concurrent.Future
 
-class FromFutureTests extends FunSuiteInvertedAssert {
+class FromFutureTests extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -14,7 +15,7 @@ class FromFutureTests extends FunSuiteInvertedAssert {
 
       val res = Signal.fromFuture(Future.successful("immediate"))
 
-      assert(res.readValueOnce == "immediate")
+      assertEquals(res.readValueOnce, "immediate")
 
     }
 

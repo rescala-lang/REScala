@@ -1,9 +1,8 @@
 package tests.rescala.reactor
 
-import _root_.tests.rescala.testtools.FunSuiteInvertedAssert
 import reactives.extra.reactor.*
 
-class ReactorWithoutAPITest extends FunSuiteInvertedAssert {
+class ReactorWithoutAPITest extends munit.FunSuite {
 
   import reactives.default.*
   {

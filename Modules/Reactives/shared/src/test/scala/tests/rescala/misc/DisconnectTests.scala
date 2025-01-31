@@ -1,8 +1,9 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class DisconnectTests extends FunSuiteInvertedAssert {
+class DisconnectTests extends FunSuite {
+
   import reactives.default.*
   {
 

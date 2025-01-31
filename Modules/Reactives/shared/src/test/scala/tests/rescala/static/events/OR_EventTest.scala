@@ -2,35 +2,35 @@ package tests.rescala.static.events
 
 import reactives.structure.Pulse
 import reactives.structure.RExceptions.ObservedException
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.util.concurrent.atomic.AtomicInteger
 
-class OR_EventTest extends FunSuiteInvertedAssert {
+class OR_EventTest extends munit.FunSuite {
+
   import reactives.default.*
   {
 
     test("handler Of OR Is Executed If Any Of The Events Fires") {
-      var test     = 0
-      val e1       = Evt[Int]()
-      val e2       = Evt[Int]()
+      var test = 0
+      val e1 = Evt[Int]()
+      val e2 = Evt[Int]()
       val e1_OR_e2 = e1 || e2
       e1_OR_e2 observe { _ => test += 1 }
 
-      assert(test == 0)
+      assertEquals(test, 0)
       e1.fire(10)
-      assert(test == 1)
+      assertEquals(test, 1)
       e2.fire(10)
-      assert(test == 2)
+      assertEquals(test, 2)
 
     }
 
     test("handler Of OR Is Executed Only Once") {
 
-      val test     = new AtomicInteger(0)
-      val e1       = Evt[Int]()
-      val e2       = e1 `map` (_ * 2)
-      val e3       = e1 `map` (_ * 2)
+      val test = new AtomicInteger(0)
+      val e1 = Evt[Int]()
+      val e2 = e1 `map` (_ * 2)
+      val e3 = e1 `map` (_ * 2)
       val e2_OR_e3 = e2 || e3
       e1 observe { _ =>
         test.incrementAndGet(); ()
@@ -46,7 +46,7 @@ class OR_EventTest extends FunSuiteInvertedAssert {
       }
 
       e1.fire(10)
-      assert(test.get == 4)
+      assertEquals(test.get, 4)
     }
 
     test("OR event select correct event") {

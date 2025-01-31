@@ -1,8 +1,6 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
-
-class ScheduledSetting extends FunSuiteInvertedAssert {
+class ScheduledSetting extends munit.FunSuite {
   import reactives.default.*
   {
 

@@ -1,8 +1,6 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
-
-class MacrosInteractingWithLanguageFeatures extends FunSuiteInvertedAssert {
+class MacrosInteractingWithLanguageFeatures extends munit.FunSuite {
   import reactives.default.*
   {
 

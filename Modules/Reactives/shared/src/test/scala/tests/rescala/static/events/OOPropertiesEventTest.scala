@@ -1,13 +1,10 @@
 package tests.rescala.static.events
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
-
 /** Demonstrates some of the features and of the limitations of the
   * current implementation w.r.t. OO design, like inheritance,
   * polymorphism, overriding, etc...
   */
-
-class OOPropertiesEventTest extends FunSuiteInvertedAssert {
+class OOPropertiesEventTest extends munit.FunSuite {
   import reactives.default.*
   {
 

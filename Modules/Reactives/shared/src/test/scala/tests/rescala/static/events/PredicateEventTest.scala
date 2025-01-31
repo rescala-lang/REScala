@@ -1,8 +1,9 @@
 package tests.rescala.static.events
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class PredicateEventTest extends FunSuiteInvertedAssert {
+class PredicateEventTest extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -16,11 +17,11 @@ class PredicateEventTest extends FunSuiteInvertedAssert {
       e1.fire(10)
       e1.fire(10)
       e1.fire(10)
-      assert(test == 0)
+      assertEquals(test, 0)
       cond = true
       e1.fire(10)
       e1.fire(10)
-      assert(test == 2)
+      assertEquals(test, 2)
     }
 
     test("collect filters values") {
@@ -35,11 +36,11 @@ class PredicateEventTest extends FunSuiteInvertedAssert {
       e1.fire(10)
       e1.fire(10)
       e1.fire(10)
-      assert(test == 0)
+      assertEquals(test, 0)
       cond = true
       e1.fire(10)
       e1.fire(10)
-      assert(test == 2)
+      assertEquals(test, 2)
     }
 
     test("collect maps and filters values") {
@@ -51,13 +52,13 @@ class PredicateEventTest extends FunSuiteInvertedAssert {
       val count  = e2.count()
       val result = e2.hold(false)
       assertEquals(count.readValueOnce, 0)
-      assert(!result.readValueOnce)
+      assertEquals(result.readValueOnce, false)
       e1.fire("reject")
       assertEquals(count.readValueOnce, 0)
-      assert(!result.readValueOnce)
+      assertEquals(result.readValueOnce, false)
       e1.fire("accept")
       assertEquals(count.readValueOnce, 1)
-      assert(result.readValueOnce)
+      assertEquals(result.readValueOnce, true)
 
     }
 

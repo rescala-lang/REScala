@@ -1,8 +1,6 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
-
-class ObserveTests extends FunSuiteInvertedAssert {
+class ObserveTests extends munit.FunSuite {
   import reactives.default.*
   {
 

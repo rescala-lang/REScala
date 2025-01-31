@@ -1,9 +1,9 @@
 package tests.rescala.static.lenses
 
 import reactives.extra.lenses.{AddLens, LVar, Lens, MulLens, SignalLens}
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class LensTest extends FunSuiteInvertedAssert {
+class LensTest extends munit.FunSuite {
+
   import reactives.default.*
   {
 
@@ -14,10 +14,10 @@ class LensTest extends FunSuiteInvertedAssert {
       val test = Var(0)
       a.fire(e1)
       e1.fire(5)
-      assert(a.now == 5)
-      assert(b.now == 8)
+      assertEquals(a.now, 5)
+      assertEquals(b.now, 8)
       b.observe(value => test.set(value))
-      assert(test.now == 8)
+      assertEquals(test.now, 8)
     }
 
     test("Bijective Lens Inversion") {
@@ -27,9 +27,9 @@ class LensTest extends FunSuiteInvertedAssert {
       val e1 = Evt[Int]()
       a.fire(e1)
       e1.fire(5)
-      assert(a.now == 5)
-      assert(b.now == 8)
-      assert(c.now == a.now)
+      assertEquals(a.now, 5)
+      assertEquals(b.now, 8)
+      assertEquals(c.now, a.now)
     }
 
     test("Bijective Lens Composition") {
@@ -38,8 +38,8 @@ class LensTest extends FunSuiteInvertedAssert {
       val e1 = Evt[Double]()
       a.fire(e1)
       e1.fire(5.0)
-      assert(a.now == 5.0)
-      assert(b.now == 24.0)
+      assertEquals(a.now, 5.0)
+      assertEquals(b.now, 24.0)
     }
 
     test("Bijective SignalLens Addition") {
@@ -49,11 +49,11 @@ class LensTest extends FunSuiteInvertedAssert {
       val e1   = Evt[Int]()
       a.fire(e1)
       e1.fire(5)
-      assert(a.now == 5)
-      assert(b.now == 8)
+      assertEquals(a.now, 5)
+      assertEquals(b.now, 8)
       lens.set(new AddLens[Int](5))
-      assert(a.now == 5)
-      assert(b.now == 10)
+      assertEquals(a.now, 5)
+      assertEquals(b.now, 10)
     }
 
     class testType(val intValue: Int, val stringValue: String)
@@ -76,9 +76,9 @@ class LensTest extends FunSuiteInvertedAssert {
       val test = Var(0)
       b.fire(e1)
       e1.fire(5)
-      assert(a.now.intValue == 2)
-      assert(a.now.stringValue == "THISDOESNOTCHANGE")
-      assert(b.now == 5)
+      assertEquals(a.now.intValue, 2)
+      assertEquals(a.now.stringValue, "THISDOESNOTCHANGE")
+      assertEquals(b.now, 5)
     }
   }
 }
