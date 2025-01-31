@@ -154,11 +154,16 @@ object cli {
           val (ip, port) = clientNode.value
 
           val nioTCP = NioTCP()
-          ec.execute(() => nioTCP.loopSelection(Abort()))
+          val abort = Abort()
+          ec.execute(() => nioTCP.loopSelection(abort))
 
           client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
 
           ClientCLI(name.value, client).startCLI()
+
+          abort.closeRequest = true
+          executor.shutdownNow()
+
         },
         subcommand("udp-client", "starts a client to interact with a node") {
           val client = ProBenchClient(name.value)
@@ -168,11 +173,13 @@ object cli {
           client.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
 
           ClientCLI(name.value, client).startCLI()
+          executor.shutdownNow()
         },
         subcommand("etcd-client", "starts a client to interact with an etcd cluster") {
           val client = EtcdClient(name.value, endpoints.value)
 
           ClientCLI(name.value, client).startCLI()
+          executor.shutdownNow()
         },
       )
     }

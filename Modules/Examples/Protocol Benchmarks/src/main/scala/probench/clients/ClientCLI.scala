@@ -60,7 +60,6 @@ class ClientCLI(name: Uid, client: Client) {
       }
     }
     println(s"ended")
-    System.exit(1)
   }
 
 }
