@@ -1,11 +1,11 @@
 package tests.rescala.static.conversions
 
+import munit.FunSuite
 import reactives.default.*
 import reactives.structure.Pulse
 import reactives.structure.RExceptions.EmptySignalControlThrowable
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class Change extends FunSuiteInvertedAssert {
+class Change extends FunSuite {
 
   /* changed */
   test("changed is Not Triggered On Creation") {
@@ -15,7 +15,7 @@ class Change extends FunSuiteInvertedAssert {
     val e: Event[Int] = s1.changed
     e `observe` ((_: Int) => { test += 1 })
 
-    assert(test == 0)
+    assertEquals(test, 0)
   }
 
   test("changed is Triggered When The Signal Changes") {
@@ -26,9 +26,9 @@ class Change extends FunSuiteInvertedAssert {
     e `observe` ((_: Int) => { test += 1 })
 
     v1 `set` 2
-    assert(test == 1)
+    assertEquals(test, 1)
     v1 `set` 3
-    assert(test == 2)
+    assertEquals(test, 2)
   }
 
   test("changed the Value Of The Event Reflects The Change In The Signal") {
@@ -39,9 +39,9 @@ class Change extends FunSuiteInvertedAssert {
     e `observe` ((x: Int) => { test = x })
 
     v1 `set` 2
-    assert(test == 3)
+    assertEquals(test, 3)
     v1 `set` 3
-    assert(test == 4)
+    assertEquals(test, 4)
   }
 
   /* changedTo */
@@ -52,7 +52,7 @@ class Change extends FunSuiteInvertedAssert {
     val e: Event[Any] = s1.changed.filter(_ == 1)
     e `observe` ((_: Any) => { test += 1 })
 
-    assert(test == 0)
+    assertEquals(test, 0)
   }
 
   test("changed To is Triggered When The Signal Has The Given Value") {
@@ -63,9 +63,9 @@ class Change extends FunSuiteInvertedAssert {
     e `observe` ((_) => { test += 1 })
 
     v1 `set` 2
-    assert(test == 1)
+    assertEquals(test, 1)
     v1 `set` 3
-    assert(test == 1)
+    assertEquals(test, 1)
   }
 
   /* change */
@@ -76,7 +76,7 @@ class Change extends FunSuiteInvertedAssert {
     val e    = s1.change
     e `observe` { _ => test += 1 }
 
-    assert(test == 0)
+    assertEquals(test, 0)
   }
 
   test("change is Triggered When The Signal Changes") {
