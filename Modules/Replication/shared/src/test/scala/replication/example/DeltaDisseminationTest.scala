@@ -8,7 +8,7 @@ class DeltaDisseminationTest extends munit.FunSuite {
   test("basics") {
 
     // I have no clue why this syntax is still not deprecated xD
-    val dd1, dd2, dd3 = DeltaDissemination[Set[String]](LocalUid.gen(), _ => (), None, true)
+    val dd1, dd2, dd3 = DeltaDissemination[Set[String]](LocalUid.gen(), _ => (), None, true)(using null)
 
     val sync = SynchronousLocalConnection[ProtocolMessage[Set[String]]]()
 

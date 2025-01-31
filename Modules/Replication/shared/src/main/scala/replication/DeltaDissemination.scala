@@ -1,15 +1,16 @@
 package replication
 
 import channels.*
-import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import de.rmgk.delay.{Callback, syntax}
 import rdts.base.Lattice.optionLattice
-import rdts.base.{Bottom, Lattice, LocalUid, Uid}
+import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.*
 
+import scala.annotation.targetName
 import scala.util.{Failure, Success, Try}
 
 trait Aead {
@@ -17,29 +18,29 @@ trait Aead {
   def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
 }
 
-object DeltaDissemination {
-  def jsoniterMessages[T: JsonValueCodec](conn: LatentConnection[MessageBuffer])
-      : LatentConnection[ProtocolMessage[T]] = {
-
-    given JsonValueCodec[ProtocolMessage[T]] = JsonCodecMaker.make
-
-    LatentConnection.adapt(
-      (mb: MessageBuffer) => readFromArray[ProtocolMessage[T]](mb.asArray),
-      (pm: ProtocolMessage[T]) => ArrayMessageBuffer(writeToArray(pm))
-    )(conn)
-  }
-}
-
 class DeltaDissemination[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     crypto: Option[Aead] = None,
     immediateForward: Boolean = false,
-) {
+)(using JsonValueCodec[State]) {
+
+  type Message = CachedMessage[ProtocolMessage[State]]
 
   given LocalUid = replicaId
 
-  type ConnectionContext = Connection[ProtocolMessage[State]]
+  given pmscodec: JsonValueCodec[ProtocolMessage[State]] = JsonCodecMaker.make
+
+  def cachedMessages(conn: LatentConnection[MessageBuffer])
+      : LatentConnection[CachedMessage[ProtocolMessage[State]]] = {
+
+    LatentConnection.adapt(
+      (mb: MessageBuffer) => ReceivedCachedMessage[ProtocolMessage[State]](mb)(using pmscodec),
+      (pm: CachedMessage[ProtocolMessage[State]]) => pm.messageBuffer
+    )(conn)
+  }
+
+  type ConnectionContext = Connection[Message]
 
   val globalAbort = Abort()
 
@@ -54,23 +55,33 @@ class DeltaDissemination[State](
       exception.printStackTrace()
 
   def requestData(): Unit = {
+    val msg = SentCachedMessage(Request(replicaId.uid, selfContext))(using pmscodec)
     connections.foreach: con =>
-      con.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(con))
+      con.send(msg).run(using ())(debugCallbackAndRemoveCon(con))
   }
 
   def pingAll(): Unit = {
+    val msg = SentCachedMessage(Ping(System.nanoTime()))(using pmscodec)
     connections.foreach { conn =>
-      conn.send(Ping(System.nanoTime())).run(debugCallbackAndRemoveCon(conn))
+      conn.send(msg).run(using ())(debugCallbackAndRemoveCon(conn))
     }
   }
 
-  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer])(using
-      JsonValueCodec[State]
-  ): Unit = {
-    addLatentConnection(DeltaDissemination.jsoniterMessages(latentConnection))
+  @targetName("addLatentConnectionCaching")
+  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer]): Unit = {
+    addLatentConnection(cachedMessages(latentConnection))
   }
 
+  @targetName("addLatentConnectionPlain")
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
+    addLatentConnection(LatentConnection.adapt[ProtocolMessage[State], Message](
+      pm => SentCachedMessage(pm),
+      cm => cm.payload
+    )(latentConnection))
+  }
+
+  @targetName("addLatentConnectionCached")
+  def addLatentConnection(latentConnection: LatentConnection[Message]): Unit = {
     val preparedConnection = latentConnection.prepare { from =>
       {
         case Success(msg)   => handleMessage(msg, from)
@@ -82,7 +93,7 @@ class DeltaDissemination[State](
         lock.synchronized {
           connections = conn :: connections
         }
-        conn.send(Request(replicaId.uid, selfContext)).run(using ())(debugCallbackAndRemoveCon(conn))
+        conn.send(SentCachedMessage(Request(replicaId.uid, selfContext))).run(using ())(debugCallbackAndRemoveCon(conn))
       case Failure(ex) =>
         println(s"exception during connection activation")
         ex.printStackTrace()
@@ -115,16 +126,16 @@ class DeltaDissemination[State](
     contexts = contexts.updatedWith(rr)(curr => curr `merge` Some(dots))
   }
 
-  def handleMessage(msg: ProtocolMessage[State], from: ConnectionContext): Unit = {
-    msg match
+  def handleMessage(msg: Message, from: ConnectionContext): Unit = {
+    msg.payload match
       case Ping(time) =>
-        from.send(Pong(time)).run(debugCallbackAndRemoveCon(from))
+        from.send(SentCachedMessage(Pong(time))).run(using ())(debugCallbackAndRemoveCon(from))
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
         val relevant = lock.synchronized(pastPayloads).filterNot { dt => dt.dots <= knows }
         relevant.foreach: msg =>
-          from.send(msg.addSender(replicaId.uid)).run(using ())(debugCallbackAndRemoveCon(from))
+          from.send(SentCachedMessage(msg.addSender(replicaId.uid))).run(using ())(debugCallbackAndRemoveCon(from))
         updateContext(uid, selfContext `merge` knows)
       case payload @ Payload(uid, context, data) =>
         if context <= selfContext then return
@@ -142,8 +153,9 @@ class DeltaDissemination[State](
   }
 
   def disseminate(payload: Payload[State], except: Set[ConnectionContext] = Set.empty): Unit = {
+    val msg = SentCachedMessage(payload)(using pmscodec)
     connections.filterNot(con => except.contains(con)).foreach: con =>
-      con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+      con.send(msg).run(using ())(debugCallbackAndRemoveCon(con))
   }
 
 }

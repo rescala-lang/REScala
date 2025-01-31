@@ -9,6 +9,9 @@ import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 import replication.DeltaDissemination
 
+import probench.Codecs.given
+
+
 import scala.collection.mutable
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
@@ -149,8 +152,4 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     }
 
   }
-
-  export clientDataManager.addLatentConnection as addClientConnection
-  export clusterDataManager.addLatentConnection as addClusterConnection
-
 }

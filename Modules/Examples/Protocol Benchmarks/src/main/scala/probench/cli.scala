@@ -17,6 +17,21 @@ import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
 
+object Codecs {
+  // codecs
+  given JsonValueCodec[ClusterState] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given clusterCodec: JsonValueCodec[ProtocolMessage[ClusterState]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given JsonValueCodec[ClientState] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given clientCodec: JsonValueCodec[ProtocolMessage[ClientState]] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+}
+
+import probench.Codecs.given
+
+
 object cli {
 
   private val executor: ExecutorService = Executors.newCachedThreadPool()
@@ -50,16 +65,6 @@ object cli {
 
     end uidParser
 
-    // codecs
-    given JsonValueCodec[ClusterState] =
-      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    given clusterCodec: JsonValueCodec[ProtocolMessage[ClusterState]] =
-      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    given JsonValueCodec[ClientState] =
-      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-    given clientCodec: JsonValueCodec[ProtocolMessage[ClientState]] =
-      JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
-
     def socketPath(host: String, port: Int) = {
 //      val p = Path.of(s"target/sockets/$name")
 //      Files.createDirectories(p.getParent)
@@ -82,8 +87,8 @@ object cli {
           val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
           val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
-          primary.addClusterConnection(connection.server)
-          secondaries.foreach { node => node.addClusterConnection(connection.client(node.uid.toString)) }
+          primary.clusterDataManager.addLatentConnection(connection.server)
+          secondaries.foreach { node => node.clusterDataManager.addLatentConnection(connection.client(node.uid.toString)) }
 
           val persist = flag("--persistence", "enable persistence").value
 
@@ -92,7 +97,7 @@ object cli {
             Files.createDirectories(persistencePath)
 
             nodes.foreach { node =>
-              node.addClusterConnection(
+              node.clusterDataManager.addLatentConnection(
                 FileConnection[ClusterState](persistencePath.resolve(node.uid.toString + ".jsonl"))
               )
             }
@@ -100,7 +105,7 @@ object cli {
 
           val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
-          primary.addClientConnection(clientConnection.server)
+          primary.clientDataManager.addLatentConnection(clientConnection.server)
 
           val clientUid = Uid.gen()
           val client    = ProBenchClient(clientUid)
@@ -115,11 +120,11 @@ object cli {
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
-          node.addClientConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.clientDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "localhost",
             clientPort.value
           ))))
-          node.addClusterConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.clusterDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "localhost",
             peerPort.value
           ))))
@@ -127,20 +132,20 @@ object cli {
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
-            node.addClusterConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
-            node.addClientConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
+            node.clusterDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+            node.clientDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
           }
         },
         subcommand("udp-node", "starts a cluster node") {
           val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
-          node.addClientConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
-          node.addClusterConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
+          node.clientDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
+          node.clusterDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
 
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
-            node.addClusterConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
+            node.clusterDataManager.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
           }
         },
         subcommand("client", "starts a client to interact with a node") {

@@ -8,8 +8,13 @@ import replication.DeltaDissemination
 
 import java.util.concurrent.Semaphore
 
+import probench.Codecs.given
+
 class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(name) {
+  type State = RequestResponseQueue[KVOperation[String, String], String]
+
   given localUid: LocalUid = LocalUid(name)
+
   private val dataManager  = DeltaDissemination[State](localUid, handleIncoming, immediateForward = true)
 
   inline def log(inline msg: String): Unit =
@@ -17,7 +22,6 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
 
   val requestSemaphore = new Semaphore(0)
 
-  type State = RequestResponseQueue[KVOperation[String, String], String]
   var currentState: State      = RequestResponseQueue.empty
   val currentStateLock: AnyRef = new {}
 
