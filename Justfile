@@ -66,6 +66,10 @@ protoBenchRunNativeImage node="node" client="client" args="bench-1-1":
 	sleep 1;
 	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | ./probench {{client}} --node localhost:8010 --name Client1
 
+runProtoBenchNoNet args="bench-1-1":
+	sbt --client 'set proBench/JarExport.packageJarsPath := "target/probench/jars"; proBench/packageJars'
+	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | java --class-path "target/probench/jars/*" probench.cli easy-setup
+
 runProtoBench node="node" client="client" args="bench-1-1":
 	#!/usr/bin/env fish
 
