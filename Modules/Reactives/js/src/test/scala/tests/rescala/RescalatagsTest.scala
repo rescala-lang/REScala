@@ -9,11 +9,11 @@ import reactives.extra.Tags.*
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
 import scalatags.generic.StylePair
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
 import scala.util.chaining.scalaUtilChainingOps
 
-class RescalatagsTest extends FunSuiteInvertedAssert {
+class RescalatagsTest extends FunSuite {
 
   test("put var into dom") {
 
@@ -69,7 +69,8 @@ class RescalatagsTest extends FunSuiteInvertedAssert {
 
   test("work with multiple childern") {
 
-    val v     = Var(Seq(span("hey"), span("ho")))
+    val v = Var(Seq(span("hey"), span("ho")))
+
     def vrend = v.map(_.map(_.render))
 
     val outerR                 = div().render.reattach(vrend)
@@ -77,24 +78,24 @@ class RescalatagsTest extends FunSuiteInvertedAssert {
 
     assertEquals(outerR.innerHTML, "<span>hey</span><span>ho</span>", "render fragments")
     assertEquals(
-      "<span>before</span><span>hey</span><span>ho</span><span>after</span>",
       outerWithOtherChildren.innerHTML,
+      "<span>before</span><span>hey</span><span>ho</span><span>after</span>",
       "render fragments2"
     )
 
     v.set(Seq(span("hallo welt")))
     assertEquals(outerR.innerHTML, "<span>hallo welt</span>", "setting to less elements works")
     assertEquals(
-      "<span>before</span><span>hallo welt</span><span>after</span>",
       outerWithOtherChildren.innerHTML,
+      "<span>before</span><span>hallo welt</span><span>after</span>",
       "setting to less elements works2"
     )
 
     v.set(Seq(span("hey2"), span("ho2")))
     assertEquals(outerR.innerHTML, "<span>hey2</span><span>ho2</span>", "increasing works")
     assertEquals(
-      "<span>before</span><span>hey2</span><span>ho2</span><span>after</span>",
       outerWithOtherChildren.innerHTML,
+      "<span>before</span><span>hey2</span><span>ho2</span><span>after</span>",
       "increasing works2"
     )
 

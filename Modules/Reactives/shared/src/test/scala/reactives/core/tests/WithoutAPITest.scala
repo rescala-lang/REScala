@@ -1,10 +1,11 @@
 package reactives.core.tests
 
+import munit.FunSuite
 import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, Derived, InitialChange, ReInfo, ReSource, ReadAs}
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class WithoutAPITest extends FunSuiteInvertedAssert {
+class WithoutAPITest extends FunSuite {
+
   import reactives.default.*
   {
 

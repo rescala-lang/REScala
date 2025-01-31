@@ -3,9 +3,11 @@ package reactives.core.reactor
 import reactives.SelectedScheduler.State
 import reactives.core.{CreationTicket, ReInfo, ReSource, ReadAs}
 import reactives.macros.MacroAccess
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class ReactorWithoutAPITest extends FunSuiteInvertedAssert {
+import scala.annotation.tailrec
+
+class ReactorWithoutAPITest extends FunSuite {
 
   import ReactorAction.*
   import reactives.default.*
@@ -35,8 +37,7 @@ class ReactorWithoutAPITest extends FunSuiteInvertedAssert {
 
       input.trackDependencies(Set())
 
-      // todo, this should be tailrec, but then does not compile on 2.11
-      // @tailrec
+      @tailrec
       def processActions[A](stage: ReactorStage[T]): ReactorStage[T] = {
         stage.stages.actions match {
           case Nil                  => stage

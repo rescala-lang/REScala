@@ -1,8 +1,7 @@
 package tests.rescala.static.signals
 
 import munit.FunSuite
-import reactives.SelectedScheduler.candidate.State
-as BundleState
+import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.{CreationScope, CreationTicket}
 
 class SignalMacro extends FunSuite {

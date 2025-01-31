@@ -3,11 +3,10 @@ package tests.rescala.jvm
 import reactives.default as engine
 import reactives.default.*
 import reactives.structure.Pulse
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import java.lang.ref.{PhantomReference, ReferenceQueue}
 
-class GarbageCollectionTest extends FunSuiteInvertedAssert {
+class GarbageCollectionTest extends munit.FunSuite {
 
   test("garbage collection for simple signal mappings") {
 
@@ -35,7 +34,7 @@ class GarbageCollectionTest extends FunSuiteInvertedAssert {
       }
       System.gc()
       val timeout = !(System.currentTimeMillis() < start + 100000)
-      assert(!timeout, "did not GC a signal before timeout")
+      assertEquals(timeout, false, "did not GC a signal before timeout")
       if !(q.poll() eq null) then done = true
     }
   }

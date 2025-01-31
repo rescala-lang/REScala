@@ -1,13 +1,14 @@
 package tests.rescala.errors
 
+import munit.FunSuite
 import reactives.scheduler
 import reactives.structure.RExceptions.ObservedException
 import reactives.structure.{Diff, Pulse}
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
 import scala.util.{Failure, Success, Try}
 
-class ExceptionPropagationTestSuite extends FunSuiteInvertedAssert {
+class ExceptionPropagationTestSuite extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -20,8 +21,8 @@ class ExceptionPropagationTestSuite extends FunSuiteInvertedAssert {
       val ds = Signal { div(v.value) }
       val ss = v.map(div)
 
-      assert(ds.readValueOnce == 100 / v.readValueOnce, "dynamic arithmetic error")
-      assert(ss.readValueOnce == 100 / v.readValueOnce, "static arithmetic error")
+      assertEquals(ds.readValueOnce, 100 / v.readValueOnce, "dynamic arithmetic error")
+      assertEquals(ss.readValueOnce, 100 / v.readValueOnce, "static arithmetic error")
 
       v.set(0)
 

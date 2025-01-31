@@ -1,14 +1,13 @@
 package tests.rescala.dynamic
 
-import reactives.SelectedScheduler
+import munit.FunSuite
 import reactives.SelectedScheduler.candidate.State as BundleState
 import reactives.core.infiltration.Infiltrator
 import reactives.core.{CreationTicket, DynamicTicket}
-import reactives.scheduler.Levelbased
-import tests.rescala.testtools.FunSuiteInvertedAssert
 
-class TrueDynamicSignals extends FunSuiteInvertedAssert {
+class TrueDynamicSignals extends FunSuite {
   val ie = new Infiltrator()
+
   import ie.api.*
   import ie.assertLevel
 
@@ -48,6 +47,7 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
 
     val testsig = Signal.dynamic {
       def sig = Signal { inside.value }
+
       sig.value
     }
 
@@ -67,6 +67,7 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     val testsig = Signal.dynamic {
       {
         def insideSig = Signal { inside.value }
+
         insideSig.value
       }
       sig().value
@@ -178,24 +179,24 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
       if dt.depend(condition) then dt.depend(ifTrue) else dt.depend(ifFalse)
     }
 
-    assert(reevaluations == 1)
-    assert(s.readValueOnce == 0)
+    assertEquals(reevaluations, 1)
+    assertEquals(s.readValueOnce, 0)
     ifTrue.set(1)
-    assert(reevaluations == 2)
-    assert(s.readValueOnce == 1)
+    assertEquals(reevaluations, 2)
+    assertEquals(s.readValueOnce, 1)
     ifFalse.set(11) // No effect
-    assert(reevaluations == 2)
-    assert(s.readValueOnce == 1)
+    assertEquals(reevaluations, 2)
+    assertEquals(s.readValueOnce, 1)
 
     condition.set(false)
-    assert(s.readValueOnce == 11)
-    assert(reevaluations == 3)
+    assertEquals(s.readValueOnce, 11)
+    assertEquals(reevaluations, 3)
     ifFalse.set(12)
-    assert(s.readValueOnce == 12)
-    assert(reevaluations == 4)
+    assertEquals(s.readValueOnce, 12)
+    assertEquals(reevaluations, 4)
     ifTrue.set(2) // No effect
-    assert(s.readValueOnce == 12)
-    assert(reevaluations == 4)
+    assertEquals(s.readValueOnce, 12)
+    assertEquals(reevaluations, 4)
   }
 
   test("basic Higher Order Signal can Be Accessed") {
@@ -203,10 +204,10 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     val s1: Signal[Int]         = v.map(identity)
     val s2: Signal[Signal[Int]] = Signal.dynamic() { _ => s1 }
 
-    assert(s2.readValueOnce.readValueOnce == 42)
+    assertEquals(s2.readValueOnce.readValueOnce, 42)
 
     v.set(0)
-    assert(s2.readValueOnce.readValueOnce == 0)
+    assertEquals(s2.readValueOnce.readValueOnce, 0)
   }
 
   test("creating Signals Inside Signals") {
@@ -232,11 +233,11 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     val `dynamic signal changing from level 1 to level 4` = Signal.dynamic(condition) { t =>
       if t.depend(condition) then t.depend(v3) else t.depend(v0)
     }
-    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
+    assertEquals(`dynamic signal changing from level 1 to level 4`.readValueOnce, "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
 
     condition.set(true)
-    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 3")
+    assertEquals(`dynamic signal changing from level 1 to level 4`.readValueOnce, "level 3")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 4)
   }
 
@@ -251,12 +252,13 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
         ticket.depend(Signal.dynamic(v3) { t => t.depend(v3) + "level 4 inner" })
       }
     }
-    assert(`dynamic signal changing from level 1 to level 4`.readValueOnce == "level 0")
+    assertEquals(`dynamic signal changing from level 1 to level 4`.readValueOnce, "level 0")
     assertLevel(`dynamic signal changing from level 1 to level 4`, 1)
 
     v0.set("level0+")
-    assert(
-      `dynamic signal changing from level 1 to level 4`.readValueOnce == "level0+level 1level 2level 3level 4 inner"
+    assertEquals(
+      `dynamic signal changing from level 1 to level 4`.readValueOnce,
+      "level0+level 1level 2level 3level 4 inner"
     )
     assertLevel(`dynamic signal changing from level 1 to level 4`, 5)
   }
@@ -274,21 +276,21 @@ class TrueDynamicSignals extends FunSuiteInvertedAssert {
     val parentA = Var(Map(root -> 2))
     val WeightA = mini(parentA)
 
-    assert(WeightA.readValueOnce == 2)
+    assertEquals(WeightA.readValueOnce, 2)
 
     val parentB = Var(Map(root -> 1))
     val WeightB = mini(parentB)
 
-    assert(WeightB.readValueOnce == 1)
+    assertEquals(WeightB.readValueOnce, 1)
 
     val parentC = Var(Map(WeightA -> 3, WeightB -> 10))
     val WeightC = mini(parentC)
 
-    assert(WeightC.readValueOnce == 5)
+    assertEquals(WeightC.readValueOnce, 5)
 
     parentC.transform(_ + (WeightB -> 1))
 
-    assert(WeightC.readValueOnce == 2)
+    assertEquals(WeightC.readValueOnce, 2)
 
   }
 

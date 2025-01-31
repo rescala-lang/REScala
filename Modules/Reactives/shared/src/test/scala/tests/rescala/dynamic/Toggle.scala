@@ -1,8 +1,9 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class Toggle extends FunSuiteInvertedAssert {
+class Toggle extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -15,8 +16,8 @@ class Toggle extends FunSuiteInvertedAssert {
       val s2 = v2.map { _ + 1 }
       val s  = e.toggle(s1, s2)
 
-      assert(s.readValueOnce == 2)
-      assert(s2.readValueOnce == 12)
+      assertEquals(s.readValueOnce, 2)
+      assertEquals(s2.readValueOnce, 12)
     }
 
     test("toggle the Event Switches The Signal") {
@@ -27,18 +28,18 @@ class Toggle extends FunSuiteInvertedAssert {
       val s2 = v2.map { _ + 1 }
       val s  = e.toggle(s1, s2)
 
-      assert(s.readValueOnce == 2)
+      assertEquals(s.readValueOnce, 2)
       e.fire(1)
-      assert(s.readValueOnce == 12)
+      assertEquals(s.readValueOnce, 12)
       v2.set(12)
-      assert(s.readValueOnce == 13)
+      assertEquals(s.readValueOnce, 13)
       v1.set(2)
-      assert(s.readValueOnce == 13)
+      assertEquals(s.readValueOnce, 13)
       e.fire(1)
       v1.set(3)
-      assert(s.readValueOnce == 4)
+      assertEquals(s.readValueOnce, 4)
       v2.set(13)
-      assert(s.readValueOnce == 4)
+      assertEquals(s.readValueOnce, 4)
 
     }
 

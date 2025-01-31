@@ -1,8 +1,9 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class TrueDynamicEvents extends FunSuiteInvertedAssert {
+class TrueDynamicEvents extends FunSuite {
+
   import reactives.default.*
   {
 

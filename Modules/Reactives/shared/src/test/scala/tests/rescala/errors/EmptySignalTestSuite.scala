@@ -1,8 +1,9 @@
 package tests.rescala.errors
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
-class EmptySignalTestSuite extends FunSuiteInvertedAssert {
+class EmptySignalTestSuite extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -16,7 +17,7 @@ class EmptySignalTestSuite extends FunSuiteInvertedAssert {
 
       v.observe(res = _)
 
-      assert(res == -100, "sanity")
+      assertEquals(res, -100, "sanity")
 
       val s = v.map(1.+)
 
@@ -24,9 +25,9 @@ class EmptySignalTestSuite extends FunSuiteInvertedAssert {
 
       v.set(100)
 
-      assert(res == 100, "observed?")
-      assert(v.readValueOnce == 100, "changed from empty to value")
-      assert(s.readValueOnce == 101, "changed from empty to value 2")
+      assertEquals(res, 100, "observed?")
+      assertEquals(v.readValueOnce, 100, "changed from empty to value")
+      assertEquals(s.readValueOnce, 101, "changed from empty to value 2")
 
     }
 
@@ -47,16 +48,16 @@ class EmptySignalTestSuite extends FunSuiteInvertedAssert {
 
       assert(s != null, "sanity")
 
-      assert(s.readValueOnce == 0, "mapped event")
+      assertEquals(s.readValueOnce, 0, "mapped event")
 
       val e3 = Evt[Unit]()
       v.set(e3)
 
-      assert(s.readValueOnce == 0, "mapped event after var set")
+      assertEquals(s.readValueOnce, 0, "mapped event after var set")
 
       e3.fire()
 
-      assert(s.readValueOnce == 1, "mapped event after event fire")
+      assertEquals(s.readValueOnce, 1, "mapped event after event fire")
     }
 
     test("unwrap Empty Signal") {

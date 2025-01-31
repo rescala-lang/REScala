@@ -1,7 +1,5 @@
 package tests.rescala.misc
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
-
 class ReactiveCreationInTurnsTest extends munit.FunSuite {
   import reactives.default.*
   {

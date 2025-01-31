@@ -1,10 +1,11 @@
 package tests.rescala.dynamic
 
-import tests.rescala.testtools.FunSuiteInvertedAssert
+import munit.FunSuite
 
 import scala.concurrent.Future
 
-class FlattenTest extends FunSuiteInvertedAssert {
+class FlattenTest extends FunSuite {
+
   import reactives.default.*
   {
 
@@ -21,7 +22,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
     test("flatten array") {
       val sv = Signal { Array(Var(10)) }.flatten
-      assert(sv.readValueOnce sameElements Array(10))
+      assertEquals(sv.readValueOnce.toSeq, Array(10).toSeq)
 
     }
 
@@ -83,15 +84,15 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
       val flat = v.flatten
 
-      assertEquals(Array(1, 2, 3).toSeq, flat.readValueOnce.toSeq, "flatten fails")
+      assertEquals(flat.readValueOnce.toSeq, Array(1, 2, 3).toSeq, "flatten fails")
 
       v2.set(100)
 
-      assertEquals(Array(1, 100, 3).toSeq, flat.readValueOnce.toSeq, "flatten fails 2")
+      assertEquals(flat.readValueOnce.toSeq, Array(1, 100, 3).toSeq, "flatten fails 2")
 
       v.set(Array(v3, v2))
 
-      assertEquals(Array(3, 100).toSeq, flat.readValueOnce.toSeq, "flatten fails 3")
+      assertEquals(flat.readValueOnce.toSeq, Array(3, 100).toSeq, "flatten fails 3")
     }
 
     test("flatten Signal Option") {
@@ -112,11 +113,14 @@ class FlattenTest extends FunSuiteInvertedAssert {
     }
 
     test("flatten Event") {
-      val e1            = Evt[Int]()
-      val condition     = e1.hold(-1)
-      val level1Event   = e1.map(_ => "level 1")
-      val level2Event   = level1Event.map(_ => "level 2")
-      val dynamicSignal = Signal { if condition.value == 1 then level1Event else level2Event }
+      val e1          = Evt[Int]()
+      val condition   = e1.hold(-1)
+      val level1Event = e1.map(_ => "level 1")
+      val level2Event = level1Event.map(_ => "level 2")
+      val dynamicSignal = Signal {
+        if condition.value == 1 then level1Event
+        else level2Event
+      }
 
       val unwrapped = dynamicSignal.flatten
 
@@ -124,9 +128,9 @@ class FlattenTest extends FunSuiteInvertedAssert {
       unwrapped `observe` (log ::= _)
 
       e1.fire(0)
-      assert(log == List("level 2"))
+      assertEquals(log, List("level 2"))
       e1.fire(1)
-      assert(log == List("level 1", "level 2"))
+      assertEquals(log, List("level 1", "level 2"))
     }
 
     test("flatten Event Same Level") {
@@ -134,7 +138,10 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val level2Condition = e1.hold(-1).map(identity)
       val level1EventA    = e1.map(_ => "A")
       val level1EventB    = e1.map(_ => "B")
-      val dynamicSignal   = Signal { if level2Condition.value == 1 then level1EventA else level1EventB }
+      val dynamicSignal = Signal {
+        if level2Condition.value == 1 then level1EventA
+        else level1EventB
+      }
 
       val unwrapped = dynamicSignal.flatten
 
@@ -142,9 +149,9 @@ class FlattenTest extends FunSuiteInvertedAssert {
       unwrapped `observe` (log ::= _)
 
       e1.fire(0)
-      assert(log == List("B"))
+      assertEquals(log, List("B"))
       e1.fire(1)
-      assert(log == List("A", "B"))
+      assertEquals(log, List("A", "B"))
     }
 
     test("unwrap  Event") {
@@ -158,16 +165,16 @@ class FlattenTest extends FunSuiteInvertedAssert {
       unwrapped `observe` { lastEvent = _ }
 
       e1.fire(1)
-      assert(lastEvent == 1)
+      assertEquals(lastEvent, 1)
       e2.fire(2)
-      assert(lastEvent == 1)
+      assertEquals(lastEvent, 1)
       eventSelector `set` e2 // select new event source
       e2.fire(3)
-      assert(lastEvent == 3)
+      assertEquals(lastEvent, 3)
       e1.fire(4)
-      assert(lastEvent == 3)
+      assertEquals(lastEvent, 3)
       e2.fire(5)
-      assert(lastEvent == 5)
+      assertEquals(lastEvent, 5)
     }
 
     test("dynamic Level") {
@@ -179,29 +186,35 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val level2 = level1.map(_ + 1)
       val level3 = level2.map(_ + 1)
 
-      val combined = Signal { if v1.value == 10 then level3.value else derived.value }
+      val combined = Signal {
+        if v1.value == 10 then level3.value
+        else derived.value
+      }
 
       var log = List[Int]()
 
       combined.changed `observe` (log ::= _)
 
       v1.set(10)
-      assert(log == List(13))
+      assertEquals(log, List(13))
       v1.set(1)
-      assert(log == List(1, 13))
+      assertEquals(log, List(1, 13))
 
-      val higherOrder = Signal { if v1.value == 10 then level3 else derived }
-      val flattened   = higherOrder.flatten
+      val higherOrder = Signal {
+        if v1.value == 10 then level3
+        else derived
+      }
+      val flattened = higherOrder.flatten
 
       var higherOrderLog = List[Int]()
 
       flattened.changed `observe` (higherOrderLog ::= _)
 
       v1.set(10)
-      assert(higherOrderLog == List(13))
+      assertEquals(higherOrderLog, List(13))
       v1.set(1)
-      assert(higherOrderLog == List(1, 13))
-      assert(log == List(1, 13, 1, 13))
+      assertEquals(higherOrderLog, List(1, 13))
+      assertEquals(log, List(1, 13, 1, 13))
     }
 
     test("basic Higher Order Signal can be dereferenced") {
@@ -210,10 +223,10 @@ class FlattenTest extends FunSuiteInvertedAssert {
       val s2: Signal[Signal[Int]] = Signal.dynamic() { _ => s1 }
       val sDeref                  = s2.flatten
 
-      assert(sDeref.readValueOnce == 42)
+      assertEquals(sDeref.readValueOnce, 42)
 
       v.set(0)
-      assert(sDeref.readValueOnce == 0)
+      assertEquals(sDeref.readValueOnce, 0)
     }
 
     test("basic Higher Order Signal deref Fires Change") {
@@ -267,7 +280,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       assert(sDerefChanged)
       assert(sHigherChanged)
 
-      assert(sDeref.readValueOnce == 1234)
+      assertEquals(sDeref.readValueOnce, 1234)
     }
 
     test("order3 Signal") {
@@ -298,7 +311,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
       assert(!sDeref2_aChanged) // 2_a is not completely dereferenced, and thus did not change
       assert(sDeref2_bChanged)
 
-      assert(s2.readValueOnce.readValueOnce.readValueOnce == 0)
+      assertEquals(s2.readValueOnce.readValueOnce.readValueOnce, 0)
     }
 
     test("list Of Signals Section") {
@@ -315,22 +328,22 @@ class FlattenTest extends FunSuiteInvertedAssert {
       dereferenced.changed `observe` { _ => dereferencedChanged = true }
 
       tick.fire()
-      assert(count.readValueOnce == 1)
-      assert(doubled.readValueOnce == 2)
-      assert(mod2.readValueOnce == 1)
-      assert(selected.readValueOnce == count)
+      assertEquals(count.readValueOnce, 1)
+      assertEquals(doubled.readValueOnce, 2)
+      assertEquals(mod2.readValueOnce, 1)
+      assertEquals(selected.readValueOnce, count)
       assert(dereferencedChanged)
       dereferencedChanged = false
-      assert(dereferenced.readValueOnce == 1)
+      assertEquals(dereferenced.readValueOnce, 1)
 
       tick.fire()
-      assert(count.readValueOnce == 2)
-      assert(doubled.readValueOnce == 4)
-      assert(mod2.readValueOnce == 0)
-      assert(selected.readValueOnce == doubled)
+      assertEquals(count.readValueOnce, 2)
+      assertEquals(doubled.readValueOnce, 4)
+      assertEquals(mod2.readValueOnce, 0)
+      assertEquals(selected.readValueOnce, doubled)
       assert(dereferencedChanged)
       dereferencedChanged = false
-      assert(dereferenced.readValueOnce == 4)
+      assertEquals(dereferenced.readValueOnce, 4)
     }
 
     test("event of options") {
@@ -341,20 +354,19 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
       res.observe { _ => count += 1 }
 
-      assert(count == 0)
+      assertEquals(count, 0)
 
       someInput.fire(Some("Hello"))
-      assert(count == 1, "first some")
-      assert(res.readValueOnce == "Hello", "flatten some")
+      assertEquals(count, 1, "first some")
+      assertEquals(res.readValueOnce, "Hello", "flatten some")
 
       someInput.fire(None)
-      assert(count == 1, "first none")
-      assert(res.readValueOnce == "Hello", "flatten none")
+      assertEquals(count, 1, "first none")
+      assertEquals(res.readValueOnce, "Hello", "flatten none")
 
       someInput.fire(Some("World"))
-      assert(count == 2, "second some")
-      assert(res.readValueOnce == "World", "flatten some again")
-
+      assertEquals(count, 2, "second some")
+      assertEquals(res.readValueOnce, "World", "flatten some again")
     }
 
     test("flatten from future type inference") {
@@ -365,7 +377,7 @@ class FlattenTest extends FunSuiteInvertedAssert {
 
       joined.fire("test")
 
-      assert(res.readValueOnce == "test")
+      assertEquals(res.readValueOnce, "test")
     }
 
   }
