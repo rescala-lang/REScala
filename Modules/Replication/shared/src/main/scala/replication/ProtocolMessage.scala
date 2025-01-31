@@ -31,7 +31,7 @@ object ProtocolMessage {
 
 sealed trait ProtocolMessage[+T]
 
-trait CachedMessage[T] {
+trait CachedMessage[+T] {
   def messageBuffer: MessageBuffer
   def payload: T
 }
