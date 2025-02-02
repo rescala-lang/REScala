@@ -10,7 +10,9 @@ import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.*
 
+import java.util.concurrent.Semaphore
 import scala.annotation.targetName
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
 import scala.util.{Failure, Success, Try}
 
 trait Aead {
@@ -28,7 +30,6 @@ class DeltaDissemination[State](
   type Message = CachedMessage[ProtocolMessage[State]]
 
   given LocalUid = replicaId
-
 
   def pmscodec[T <: ProtocolMessage[State]]: JsonValueCodec[T] = {
     val pmscodecInv: JsonValueCodec[ProtocolMessage[State]] = JsonCodecMaker.make
@@ -48,7 +49,28 @@ class DeltaDissemination[State](
 
   val globalAbort = Abort()
 
-  var connections: List[ConnectionContext] = Nil
+  val sendingActor: ExecutionContext = {
+
+    val disseminateInBackground = true
+
+    if disseminateInBackground
+    then {
+
+      import java.util.concurrent.{Executors, ExecutorService}
+
+      val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
+        val thread = new Thread(r)
+        thread.setDaemon(true)
+        thread
+      })
+
+      ExecutionContext.fromExecutorService(singleThreadExecutor)
+    } else {
+      ExecutionContext.fromExecutor((command: Runnable) => command.run())
+    }
+  }
+
+  @volatile var connections: List[ConnectionContext] = Nil
 
   def debugCallbackAndRemoveCon(con: ConnectionContext): Callback[Any] =
     case Success(value) => ()
@@ -97,7 +119,10 @@ class DeltaDissemination[State](
         lock.synchronized {
           connections = conn :: connections
         }
-        conn.send(SentCachedMessage(Request(replicaId.uid, selfContext))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(conn))
+        conn.send(SentCachedMessage(Request(
+          replicaId.uid,
+          selfContext
+        ))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(conn))
       case Failure(ex) =>
         println(s"exception during connection activation")
         ex.printStackTrace()
@@ -105,7 +130,7 @@ class DeltaDissemination[State](
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  val lock: AnyRef                               = new {}
+  val lock: AnyRef                                              = new {}
   private var pastPayloads: List[CachedMessage[Payload[State]]] = Nil
 
   def allPayloads: List[CachedMessage[Payload[State]]] = pastPayloads
@@ -140,7 +165,9 @@ class DeltaDissemination[State](
       case Request(uid, knows) =>
         val relevant = lock.synchronized(pastPayloads).filterNot { dt => dt.payload.dots <= knows }
         relevant.foreach: msg =>
-          from.send(SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(from))
+          from.send(
+            SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec)
+          ).run(using ())(debugCallbackAndRemoveCon(from))
         updateContext(uid, selfContext `merge` knows)
       case payload @ Payload(uid, context, data) =>
         if context <= selfContext then return
@@ -158,8 +185,12 @@ class DeltaDissemination[State](
   }
 
   def disseminate(payload: Message, except: Set[ConnectionContext] = Set.empty): Unit = {
-    connections.filterNot(con => except.contains(con)).foreach: con =>
-      con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+    val cons = lock.synchronized(connections)
+    sendingActor.execute { () =>
+      cons.filterNot(con => except.contains(con)).foreach: con =>
+        con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+    }
+
   }
 
 }
