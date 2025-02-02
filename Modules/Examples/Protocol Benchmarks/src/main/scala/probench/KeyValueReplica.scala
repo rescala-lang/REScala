@@ -16,6 +16,8 @@ import scala.collection.mutable
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
+  val timer = new java.util.Timer()
+
   inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
 
@@ -25,6 +27,10 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   val currentStateLock: AnyRef   = new {}
   var clusterState: ClusterState = MultiPaxos.empty
+
+  timer.schedule(() => {
+    println(s"[$uid] current state ${clusterState.hashCode()}")
+  }, 1000, 1000)
 
   var clientState: ClientState = RequestResponseQueue.empty
 
