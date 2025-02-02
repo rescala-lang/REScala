@@ -10,9 +10,10 @@ import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.*
 
-import java.util.concurrent.Semaphore
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.annotation.targetName
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutorService}
+import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 trait Aead {
@@ -56,7 +57,6 @@ class DeltaDissemination[State](
     if disseminateInBackground
     then {
 
-      import java.util.concurrent.{Executors, ExecutorService}
 
       val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
         val thread = new Thread(r)
@@ -131,11 +131,17 @@ class DeltaDissemination[State](
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
   val lock: AnyRef                                              = new {}
-  private var pastPayloads: List[CachedMessage[Payload[State]]] = Nil
+  private val pastPayloads: mutable.Queue[CachedMessage[Payload[State]]] = mutable.Queue.empty
 
-  def allPayloads: List[CachedMessage[Payload[State]]] = pastPayloads
-  private def rememberPayload(payload: CachedMessage[Payload[State]]): Unit =
-    pastPayloads = payload :: pastPayloads
+  val keepPastPayloads = 100
+
+  def allPayloads: List[CachedMessage[Payload[State]]] = lock.synchronized(pastPayloads.toList)
+  private def rememberPayload(payload: CachedMessage[Payload[State]]): Unit = lock.synchronized {
+    pastPayloads.enqueue(payload)
+    if pastPayloads.sizeIs > keepPastPayloads then
+      pastPayloads.dequeue()
+      ()
+  }
 
   private var contexts: Map[Uid, Dots] = Map.empty
 
@@ -163,7 +169,7 @@ class DeltaDissemination[State](
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
-        val relevant = lock.synchronized(pastPayloads).filterNot { dt => dt.payload.dots <= knows }
+        val relevant = allPayloads.filterNot { dt => dt.payload.dots <= knows }
         relevant.foreach: msg =>
           from.send(
             SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec)
