@@ -57,7 +57,6 @@ class DeltaDissemination[State](
     if disseminateInBackground
     then {
 
-
       val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
         val thread = new Thread(r)
         thread.setDaemon(true)
@@ -130,7 +129,7 @@ class DeltaDissemination[State](
   }
 
   // note that deltas are not guaranteed to be ordered the same in the buffers
-  val lock: AnyRef                                              = new {}
+  val lock: AnyRef                                                       = new {}
   private val pastPayloads: mutable.Queue[CachedMessage[Payload[State]]] = mutable.Queue.empty
 
   val keepPastPayloads = 100
@@ -170,6 +169,15 @@ class DeltaDissemination[State](
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
       case Request(uid, knows) =>
         val relevant = allPayloads.filterNot { dt => dt.payload.dots <= knows }
+        {
+          val newknowledge =
+            knows.merge(relevant.map { dt => dt.payload.dots }.reduceOption(Lattice.merge).getOrElse(Dots.empty))
+          val diff =  selfContext `subtract` newknowledge
+          if !diff.isEmpty then
+            throw IllegalStateException(
+              s"could not answer request, missing deltas for: ${diff}\n  relevant: ${relevant}\n knows: ${knows}\n  selfcontext: ${selfContext}}"
+            )
+        }
         relevant.foreach: msg =>
           from.send(
             SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec)
