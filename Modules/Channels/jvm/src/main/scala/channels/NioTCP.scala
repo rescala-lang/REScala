@@ -1,7 +1,7 @@
 package channels
 
 import de.rmgk.delay
-import de.rmgk.delay.{Async, Callback}
+import de.rmgk.delay.{Async, Callback, Sync}
 
 import java.io.IOException
 import java.net.{SocketAddress, SocketException, StandardProtocolFamily, StandardSocketOptions, UnixDomainSocketAddress}
@@ -19,18 +19,20 @@ case class ReceiveAttachment(
     callback: Callback[MessageBuffer]
 )
 
+/** [[loopSelection]] and [[runSelection]] should not be called from multiple threads at the same time.
+  * Only one thread should send on a single connection at the same time.
+  */
 class NioTCP {
 
-  val lock     = new AnyRef {}
   val selector = Selector.open()
 
-  def loopSelection(abort: Abort) = lock.synchronized {
+  def loopSelection(abort: Abort) = {
     while !abort.closeRequest do
       selector.select()
       runSelection()
   }
 
-  def runSelection() = lock.synchronized {
+  def runSelection() = {
 
     selector.selectedKeys().forEach {
       case key if key.isReadable =>
@@ -74,26 +76,22 @@ class NioTCP {
 
   class NioTCPConnection(clientChannel: SocketChannel) extends Connection[MessageBuffer] {
 
-    val sizeBuffer = ByteBuffer.allocate(4)
-
-    override def send(message: MessageBuffer): Async[Any, Unit] = Async {
+    override def send(message: MessageBuffer): Async[Any, Unit] = Sync {
 
       val bytes         = message.asArray
       val messageLength = bytes.length
 
       val buffer = ByteBuffer.wrap(bytes)
 
-      synchronized {
+      val sizeBuffer = ByteBuffer.allocate(4)
+      sizeBuffer.putInt(messageLength)
+      sizeBuffer.flip()
 
-        sizeBuffer.clear().putInt(messageLength)
-        sizeBuffer.flip()
+      val buffers = Array(sizeBuffer, buffer)
 
-        val buffers = Array(sizeBuffer, buffer)
-
-        while buffer.hasRemaining() do {
-          val res = clientChannel.write(buffers)
-          ()
-        }
+      while buffer.hasRemaining() do {
+        val res = clientChannel.write(buffers)
+        ()
       }
       ()
 
@@ -157,7 +155,8 @@ class NioTCP {
 
   private def configureChannel(channel: SocketChannel) = {
     channel.configureBlocking(false)
-    try channel.setOption(StandardSocketOptions.TCP_NODELAY, true)
+    try
+      channel.setOption(StandardSocketOptions.TCP_NODELAY, true)
     catch
       case _: UnsupportedOperationException =>
         println(s"TCP nodelay not supported on this socket")
