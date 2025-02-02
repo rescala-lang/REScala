@@ -167,6 +167,7 @@ class DeltaDissemination[State](
         from.send(SentCachedMessage(Pong(time))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(from))
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
+        println(s"current state is ${selfContext}")
       case Request(uid, knows) =>
         val relevant = allPayloads.filterNot { dt => dt.payload.dots <= knows }
         {
