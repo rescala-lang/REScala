@@ -107,6 +107,8 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       // else log(s"upkept: ${pprint(upkept)}")
       val newState = publish(upkept)
       maybeAnswerClient(old, newState)
+      // try to propose a new value in case voting is decided
+      maybeProposeNewValue(newState, clientState)
     }
   }
 
@@ -121,16 +123,16 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
     }
     if old != changed then {
       assert(changed == clientState)
-      maybeProposeNewValue(old, changed)
+      maybeProposeNewValue(clusterState, changed)
       // else log(s"upkept: ${pprint(upkept)}")
     }
   }
 
-  private def maybeProposeNewValue(oldState: ClientState, newState: ClientState)(using LocalUid): Unit = {
+  private def maybeProposeNewValue(cluster: ClusterState, client: ClientState)(using LocalUid): Unit = {
     // check if we are the leader and ready to handle a request
-    if clusterState.leader.contains(replicaId) && clusterState.phase == MultipaxosPhase.Idle then
+    if cluster.leader.contains(replicaId) && cluster.phase == MultipaxosPhase.Idle then
       // ready to propose value
-      newState.firstUnansweredRequest match
+      client.firstUnansweredRequest match
         case Some(req) =>
           log(s"Proposing new value $req.")
           val _ = transformCluster(_.proposeIfLeader(req))
