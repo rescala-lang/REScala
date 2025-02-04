@@ -206,6 +206,7 @@ lazy val microbenchmarks = project.in(file("Modules/Microbenchmarks"))
 
 lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
   .dependsOn(reactives.jvm, rdts.jvm, channels.jvm, rdts.jvm % "compile->compile;test->test", replication.jvm)
+  .enablePlugins(JavaAppPackaging)
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(17),
@@ -217,6 +218,8 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
     Dependencies.slips.options,
     Dependencies.jetcd,
     Dependencies.pprint,
+    Universal / packageName := "probench",
+    Universal / name := "probench",
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)

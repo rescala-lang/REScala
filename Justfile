@@ -162,7 +162,7 @@ runProtoBenchClientEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-r
 		cat args/$args[3] | java --class-path "$jarspath/*" probench.cli etcd-client --name $args[1] --endpoints https://$args[2] &
 	end
 
-	trap 'kill $(jobs -p)' SIGINsT
+	trap 'kill $(jobs -p)' SIGINT
 	sleep $last_pid
 
 

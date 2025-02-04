@@ -7,6 +7,8 @@ import java.nio.file.Path
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
+
+
 class ClientCLI(name: Uid, client: Client) {
 
   private val commented: Regex     = """#.*""".r
@@ -37,22 +39,7 @@ class ClientCLI(name: Uid, client: Client) {
         case Some(benchmark()) =>
           client.doBenchmark = true
         case Some(saveBenchmark()) =>
-          val env           = System.getenv()
-          val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
-          val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(runId)
-          val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
-          client.benchmarkData.foreach { row =>
-            writer.writeRow(
-              s"${row.name}",
-              row.op,
-              row.args,
-              row.sendTime.toString,
-              row.receiveTime.toString,
-              row.latency.toString,
-              row.unit
-            )
-          }
-          writer.close()
+          client.saveBenchmark(name)
         case None | Some("exit") => running = false
         case _ =>
           println("assuming put")

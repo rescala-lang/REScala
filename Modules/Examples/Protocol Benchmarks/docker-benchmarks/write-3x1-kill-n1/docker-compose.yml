@@ -1,0 +1,44 @@
+services:
+  peer1:
+    image: probench_app
+    container_name: peer1
+    command: node --name peer1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids peer1 peer2 peer3
+    network_mode: host
+  #    ports:
+  #      - "8010:8010"
+  #      - "8011:8011"
+  peer2:
+    image: probench_app
+    container_name: peer2
+    command: node --name peer2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids peer1 peer2 peer3
+    network_mode: host
+    #    ports:
+    #      - "8020:8020"
+    #      - "8021:8021"
+    depends_on:
+      - peer1
+  peer3:
+    image: probench_app
+    container_name: peer3
+    command: node --name peer3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids peer1 peer2 peer3
+    network_mode: host
+    #    ports:
+    #      - "8030:8030"
+    #      - "8031:8031"
+    depends_on:
+      - peer1
+      - peer2
+  client:
+    image: probench_app
+    container_name: client1
+    command: benchmark-client --name client1 --node localhost:8010 --warmup ${WARMUP} --measurement ${MEASUREMENT} --mode ${MODE}
+    network_mode: host
+    depends_on:
+      - peer1
+      - peer2
+      - peer3
+    environment:
+      - RUN_ID=${RUN_ID}
+      - BENCH_RESULTS_DIR=${BENCH_RESULTS_DIR}
+    volumes:
+      - ../../benchmark-results/pb:/project/benchmark-results

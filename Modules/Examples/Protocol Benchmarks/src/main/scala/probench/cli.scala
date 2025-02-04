@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
-import probench.clients.{ClientCLI, EtcdClient, ProBenchClient}
+import probench.clients.{BenchmarkMode, ClientCLI, EtcdClient, ProBenchClient}
 import probench.data.{ClientState, ClusterState, KVOperation, KVState}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.MultiPaxos
@@ -30,7 +30,6 @@ object Codecs {
 }
 
 import probench.Codecs.given
-
 
 object cli {
 
@@ -65,6 +64,19 @@ object cli {
 
     end uidParser
 
+    given benchmarkModeParser: ArgumentValueParser[BenchmarkMode] with
+      override def parse(args: List[String]): Result[BenchmarkMode] =
+        args match {
+          case "read" :: rest => Result.Ok(BenchmarkMode.Read, rest)
+          case "write" :: rest => Result.Ok(BenchmarkMode.Write, rest)
+          case "mixed" :: rest => Result.Ok(BenchmarkMode.Mixed, rest)
+          case _ => Result.Err("not a valid benchmark mode", descriptor)
+        }
+
+      override def descriptor: Descriptor = Descriptor("mode", "read|write|mixed")
+
+    end benchmarkModeParser
+
     def socketPath(host: String, port: Int) = {
 //      val p = Path.of(s"target/sockets/$name")
 //      Files.createDirectories(p.getParent)
@@ -80,6 +92,10 @@ object cli {
     val name              = named[Uid]("--name", "", Uid.gen())
     val endpoints         = named[List[String]]("--endpoints", "")
 
+    val warmup      = named[Int]("--warmup", "warmup period for the benchmark in seconds")
+    val measurement = named[Int]("--measurement", "measurement period for the benchmark in seconds")
+    val mode        = named[BenchmarkMode]("--mode", "mode for the benchmark")
+
     val argparse = composedParser {
 
       alternatives(
@@ -88,7 +104,9 @@ object cli {
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
           val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
           primary.clusterDataManager.addLatentConnection(connection.server)
-          secondaries.foreach { node => node.clusterDataManager.addLatentConnection(connection.client(node.uid.toString)) }
+          secondaries.foreach { node =>
+            node.clusterDataManager.addLatentConnection(connection.client(node.uid.toString))
+          }
 
           val persist = flag("--persistence", "enable persistence").value
 
@@ -131,9 +149,16 @@ object cli {
 
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
-          cluster.value.foreach { (ip, port) =>
-            node.clusterDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
-            node.clientDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port - 1))))
+          cluster.value.foreach { (host, port) =>
+            println(s"Connecting to $host:$port")
+            node.clusterDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(
+              host,
+              port
+            ))))
+            node.clientDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(
+              host,
+              port - 1
+            ))))
           }
         },
         subcommand("udp-node", "starts a cluster node") {
@@ -145,7 +170,11 @@ object cli {
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
-            node.clusterDataManager.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
+            node.clusterDataManager.addLatentConnection(UDP.connect(
+              InetSocketAddress(ip, port),
+              () => new DatagramSocket(),
+              ec
+            ))
           }
         },
         subcommand("client", "starts a client to interact with a node") {
@@ -154,7 +183,7 @@ object cli {
           val (ip, port) = clientNode.value
 
           val nioTCP = NioTCP()
-          val abort = Abort()
+          val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
           client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
@@ -163,7 +192,6 @@ object cli {
 
           abort.closeRequest = true
           executor.shutdownNow()
-
         },
         subcommand("udp-client", "starts a client to interact with a node") {
           val client = ProBenchClient(name.value)
@@ -173,6 +201,22 @@ object cli {
           client.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
 
           ClientCLI(name.value, client).startCLI()
+          executor.shutdownNow()
+        },
+        subcommand("benchmark-client", "starts a benchmark client") {
+          val client = ProBenchClient(name.value)
+
+          val (ip, port) = clientNode.value
+
+          val nioTCP = NioTCP()
+          val abort  = Abort()
+          ec.execute(() => nioTCP.loopSelection(abort))
+
+          client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+
+          client.benchmark(warmup.value, measurement.value, mode.value)
+
+          abort.closeRequest = true
           executor.shutdownNow()
         },
         subcommand("etcd-client", "starts a client to interact with an etcd cluster") {

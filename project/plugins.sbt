@@ -17,8 +17,9 @@ addSbtPlugin("com.github.sbt" % "sbt-dynver"    % "5.1.0") // https://github.com
 addSbtPlugin("com.eed3si9n"   % "sbt-buildinfo" % "0.13.1")
 
 // packaging
-addSbtPlugin("com.github.sbt" % "sbt-pgp"      % "2.3.1")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.12.2")
+addSbtPlugin("com.github.sbt" % "sbt-pgp"             % "2.3.1")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype"        % "3.12.2")
+addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.11.0")
 
 // tooling
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"             % "0.4.7")

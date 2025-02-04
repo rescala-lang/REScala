@@ -16,12 +16,12 @@ class EtcdClient(val name: Uid, val endpoints: List[String]) extends Client(name
       case data.KVOperation.Read(opKey) =>
         val key = ByteSequence.from(opKey.getBytes)
         val res = kvClient.get(key).get().getKvs.get(0)
-        println(s"${res.getKey}=${res.getValue}")
+        onResultValue(s"${res.getKey}=${res.getValue}")
       case data.KVOperation.Write(opKey, opValue) =>
         val key   = ByteSequence.from(opKey.getBytes)
         val value = ByteSequence.from(opValue.getBytes)
         kvClient.put(key, value).get()
-        println(s"$opKey=$opValue; OK")
+        onResultValue(s"$opKey=$opValue; OK")
   }
 
 }

@@ -1,0 +1,20 @@
+FROM sbtscala/scala-sbt:eclipse-temurin-21.0.5_11_1.10.7_3.6.3
+
+WORKDIR /src
+COPY . .
+
+RUN sbt proBench/Universal/packageBin
+
+FROM openjdk:21-jdk-slim
+
+RUN apt-get update -y
+RUN apt-get install unzip
+
+WORKDIR /project
+
+
+COPY --from=0 ["/src/Modules/Examples/Protocol Benchmarks/target/universal/probench.zip", "."]
+RUN unzip probench.zip
+RUN rm probench.zip
+
+ENTRYPOINT ["/probench/bin/probench"]

@@ -1,13 +1,21 @@
 package probench.clients
 
-import probench.benchmark.BenchmarkData
+import probench.benchmark.{BenchmarkData, CSVWriter}
 import probench.data.KVOperation
 import rdts.base.Uid
 
+import java.nio.file.Path
 import scala.collection.mutable
+
+enum BenchmarkMode {
+  case Read
+  case Write
+  case Mixed
+}
 
 trait Client(name: Uid) {
 
+  var printResults                                     = false
   var doBenchmark: Boolean                             = false
   val benchmarkData: mutable.ListBuffer[BenchmarkData] = mutable.ListBuffer.empty
 
@@ -38,6 +46,41 @@ trait Client(name: Uid) {
     println(s"Did $times mixed queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }
 
+  def benchmark(warmup: Int, measurement: Int, mode: BenchmarkMode): Unit = {
+    printResults = false
+
+    println("Initializing")
+
+    mode match
+      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput(s"${name.delegate}-key", "value", 1000)
+      case BenchmarkMode.Write                      =>
+
+    println("Warmup")
+
+    val warmupStart = System.currentTimeMillis()
+
+    while (System.currentTimeMillis() - warmupStart) < warmup * 1000 do {
+      mode match
+        case BenchmarkMode.Read  => multiget(s"${name.delegate}-key", 1000)
+        case BenchmarkMode.Write => multiput(s"${name.delegate}-key", "value", 1000)
+        case BenchmarkMode.Mixed => mixed(1, 1000, 1000)
+    }
+
+    println("Measurement")
+
+    val measurementStart = System.currentTimeMillis()
+    doBenchmark = true
+
+    while (System.currentTimeMillis() - measurementStart) < measurement * 1000 do {
+      mode match
+        case BenchmarkMode.Read  => multiget(s"${name.delegate}-key", 1000)
+        case BenchmarkMode.Write => multiput(s"${name.delegate}-key", "value", 1000)
+        case BenchmarkMode.Mixed => mixed(1, 1000, 1000)
+    }
+
+    saveBenchmark(name)
+  }
+
   def handleOp(op: KVOperation[String, String]): Unit = {
     val start = if doBenchmark then System.nanoTime() else 0
 
@@ -63,6 +106,30 @@ trait Client(name: Uid) {
     }
   }
 
+  def saveBenchmark(name: Uid): Unit = {
+    println("Saving Benchmark Data")
+    val env           = System.getenv()
+    val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
+    val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(runId)
+    val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
+    benchmarkData.foreach { row =>
+      writer.writeRow(
+        s"${row.name}",
+        row.op,
+        row.args,
+        row.sendTime.toString,
+        row.receiveTime.toString,
+        row.latency.toString,
+        row.unit
+      )
+    }
+    writer.close()
+  }
+
   def handleOpImpl(op: KVOperation[String, String]): Unit
+
+  def onResultValue(result: String): Unit = {
+    if printResults then println(result)
+  }
 
 }

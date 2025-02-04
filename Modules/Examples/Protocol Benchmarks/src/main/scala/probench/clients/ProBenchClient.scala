@@ -61,7 +61,7 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
     } {
       responses.get(timestamp) match
         case Some(res) =>
-          println(res.value)
+          onResultValue(res.value)
           transform(_.complete(req))
           if blocking then requestSemaphore.release(1)
         case None => ()
