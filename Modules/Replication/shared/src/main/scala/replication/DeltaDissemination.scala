@@ -26,6 +26,10 @@ class DeltaDissemination[State](
     receiveCallback: State => Unit,
     crypto: Option[Aead] = None,
     immediateForward: Boolean = false,
+    sendingActor: ExecutionContext = new ExecutionContext {
+      override def execute(runnable: Runnable): Unit     = runnable.run()
+      override def reportFailure(cause: Throwable): Unit = throw cause
+    }
 )(using JsonValueCodec[State]) {
 
   type Message = CachedMessage[ProtocolMessage[State]]
@@ -49,25 +53,6 @@ class DeltaDissemination[State](
   type ConnectionContext = Connection[Message]
 
   val globalAbort = Abort()
-
-  val sendingActor: ExecutionContext = {
-
-    val disseminateInBackground = true
-
-    if disseminateInBackground
-    then {
-
-      val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
-        val thread = new Thread(r)
-        thread.setDaemon(true)
-        thread
-      })
-
-      ExecutionContext.fromExecutorService(singleThreadExecutor)
-    } else {
-      ExecutionContext.fromExecutor((command: Runnable) => command.run())
-    }
-  }
 
   @volatile var connections: List[ConnectionContext] = Nil
 
@@ -173,7 +158,7 @@ class DeltaDissemination[State](
         {
           val newknowledge =
             knows.merge(relevant.map { dt => dt.payload.dots }.reduceOption(Lattice.merge).getOrElse(Dots.empty))
-          val diff =  selfContext `subtract` newknowledge
+          val diff = selfContext `subtract` newknowledge
           if !diff.isEmpty then
             throw IllegalStateException(
               s"could not answer request, missing deltas for: ${diff}\n  relevant: ${relevant}\n knows: ${knows}\n  selfcontext: ${selfContext}}"

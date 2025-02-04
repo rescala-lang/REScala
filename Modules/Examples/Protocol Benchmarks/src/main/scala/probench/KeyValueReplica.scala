@@ -8,11 +8,11 @@ import rdts.base.LocalUid.replicaId
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 import replication.DeltaDissemination
-
 import probench.Codecs.given
 
-
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
@@ -28,23 +28,40 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
   val currentStateLock: AnyRef   = new {}
   var clusterState: ClusterState = MultiPaxos.empty
 
-  timer.schedule(() => {
-    println(s"[$uid] current state ${clusterState.hashCode()}")
-  }, 1000, 1000)
+  timer.schedule(
+    () => {
+      println(s"[$uid] current state ${clusterState.hashCode()}")
+    },
+    1000,
+    1000
+  )
 
   var clientState: ClientState = RequestResponseQueue.empty
+
+  val sendingActor: ExecutionContext = {
+
+    val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
+      val thread = new Thread(r)
+      thread.setDaemon(true)
+      thread
+    })
+
+    ExecutionContext.fromExecutorService(singleThreadExecutor)
+  }
 
   val clusterDataManager: DeltaDissemination[ClusterState] =
     DeltaDissemination(
       localUid,
       handleIncoming,
-      immediateForward = true
+      immediateForward = true,
+      sendingActor = sendingActor
     )
   val clientDataManager: DeltaDissemination[ClientState] =
     DeltaDissemination(
       localUid,
       handleClientStateChange,
-      immediateForward = true
+      immediateForward = true,
+      sendingActor = sendingActor
     )
 
   // propose myself as leader if I have the lowest id
