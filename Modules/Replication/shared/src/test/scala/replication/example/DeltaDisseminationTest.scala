@@ -1,14 +1,18 @@
 package replication.example
 
 import channels.SynchronousLocalConnection
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rdts.base.LocalUid
 import replication.{DeltaDissemination, ProtocolMessage}
 
 class DeltaDisseminationTest extends munit.FunSuite {
   test("basics") {
 
+    given JsonValueCodec[Set[String]] = JsonCodecMaker.make
+
     // I have no clue why this syntax is still not deprecated xD
-    val dd1, dd2, dd3 = DeltaDissemination[Set[String]](LocalUid.gen(), _ => (), None, true)(using null)
+    val dd1, dd2, dd3 = DeltaDissemination[Set[String]](LocalUid.gen(), _ => (), None, true)
 
     val sync = SynchronousLocalConnection[ProtocolMessage[Set[String]]]()
 
