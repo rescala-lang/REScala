@@ -1,6 +1,6 @@
 package probench
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import probench.Codecs.given
 import probench.data.RequestResponseQueue.Req
 import probench.data.{ClientState, ClusterState, KVOperation, RequestResponseQueue}
 import rdts.base.Lattice.syntax
@@ -8,15 +8,12 @@ import rdts.base.LocalUid.replicaId
 import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 import replication.DeltaDissemination
-import probench.Codecs.given
 
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
 class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
-
-  val timer = new java.util.Timer()
 
   inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
@@ -27,14 +24,6 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   val currentStateLock: AnyRef   = new {}
   var clusterState: ClusterState = MultiPaxos.empty
-
-  timer.schedule(
-    () => {
-      println(s"[$uid] current state ${clusterState.hashCode()}")
-    },
-    1000,
-    1000
-  )
 
   var clientState: ClientState = RequestResponseQueue.empty
 
