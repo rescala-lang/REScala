@@ -121,7 +121,7 @@ class DeltaDissemination[State](
   val lock: AnyRef                                               = new {}
   private var pastPayloads: Queue[CachedMessage[Payload[State]]] = Queue.empty
 
-  val keepPastPayloads = 100
+  val keepPastPayloads = 108
 
   def allPayloads: List[CachedMessage[Payload[State]]] = lock.synchronized(pastPayloads.toList)
   private def rememberPayload(payload: CachedMessage[Payload[State]]): Unit = lock.synchronized {
