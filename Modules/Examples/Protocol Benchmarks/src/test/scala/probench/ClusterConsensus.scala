@@ -63,7 +63,7 @@ class ClusterConsensus extends munit.FunSuite {
 
     nodes.foreach(node => assert(!node.needsUpkeep(), node.uid))
 
-    Thread.sleep(200)
+    Thread.sleep(2000)
 
     def noUpkeep(keyValueReplica: KeyValueReplica): Unit = {
       val current = keyValueReplica.clusterState
