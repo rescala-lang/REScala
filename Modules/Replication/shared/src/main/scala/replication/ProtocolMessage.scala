@@ -37,9 +37,9 @@ trait CachedMessage[+T] {
 }
 
 class ReceivedCachedMessage[T: JsonValueCodec](val messageBuffer: MessageBuffer) extends CachedMessage[T] {
-  val payload: T = readFromArray(messageBuffer.asArray)
+  def payload: T = readFromArray(messageBuffer.asArray)
 }
 
 class SentCachedMessage[T: JsonValueCodec](val payload: T) extends CachedMessage[T] {
-  val messageBuffer: MessageBuffer = ArrayMessageBuffer(writeToArray(payload))
+  def messageBuffer: MessageBuffer = ArrayMessageBuffer(writeToArray(payload))
 }
