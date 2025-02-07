@@ -12,7 +12,6 @@ import replication.ProtocolMessage.*
 
 import scala.annotation.targetName
 import scala.collection.immutable.Queue
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
