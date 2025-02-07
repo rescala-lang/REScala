@@ -1,7 +1,7 @@
 package replication.example
 
 import channels.SynchronousLocalConnection
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, writeToArray}
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import rdts.base.LocalUid
 import replication.{DeltaDissemination, ProtocolMessage}
@@ -30,6 +30,16 @@ class DeltaDisseminationTest extends munit.FunSuite {
 
     assertEquals(dd1.allPayloads.map(_.payload.data).toSet, dd2.allPayloads.map(_.payload.data).toSet)
     assertEquals(dd2.allPayloads.map(_.payload.data).toSet, dd3.allPayloads.map(_.payload.data).toSet)
+
+  }
+
+  test ("long ???") {
+
+    given JsonValueCodec[Long] = JsonCodecMaker.make
+
+    writeToArray(1405345091900L)
+
+    assert(true)
 
   }
 }
