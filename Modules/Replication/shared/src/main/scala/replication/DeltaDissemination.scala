@@ -10,7 +10,6 @@ import rdts.time.Dots
 import replication.JsoniterCodecs.given
 import replication.ProtocolMessage.*
 
-import java.util.concurrent.{ExecutorService, Executors}
 import scala.annotation.targetName
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
