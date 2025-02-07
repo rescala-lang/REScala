@@ -45,5 +45,8 @@ class SentCachedMessage[T: JsonValueCodec](val payload: T) extends CachedMessage
     try
       ArrayMessageBuffer(writeToArray(payload))
     catch
-      case e: Exception => throw new RuntimeException(s"Error serializing payload $payload", e)
+      case e: Exception =>
+        println(s"Error serializing payload $payload")
+        println(e.printStackTrace())
+        throw new RuntimeException(s"Error serializing payload $payload", e)
 }
