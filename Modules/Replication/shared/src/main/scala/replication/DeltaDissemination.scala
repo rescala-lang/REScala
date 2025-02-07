@@ -20,15 +20,19 @@ trait Aead {
   def decrypt(cypher: Array[Byte], associated: Array[Byte]): Try[Array[Byte]]
 }
 
+object DeltaDissemination {
+  val executeImmediately = new ExecutionContext {
+    override def execute(runnable: Runnable): Unit = runnable.run()
+    override def reportFailure(cause: Throwable): Unit = throw cause
+  }
+}
+
 class DeltaDissemination[State](
     val replicaId: LocalUid,
     receiveCallback: State => Unit,
     crypto: Option[Aead] = None,
     immediateForward: Boolean = false,
-    sendingActor: ExecutionContext = new ExecutionContext {
-      override def execute(runnable: Runnable): Unit     = runnable.run()
-      override def reportFailure(cause: Throwable): Unit = throw cause
-    }
+    sendingActor: ExecutionContext = DeltaDissemination.executeImmediately
 )(using JsonValueCodec[State]) {
 
   type Message = CachedMessage[ProtocolMessage[State]]

@@ -13,7 +13,7 @@ import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
+class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending: Boolean = true) {
 
   inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
@@ -29,13 +29,17 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
 
   val sendingActor: ExecutionContext = {
 
-    val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
-      val thread = new Thread(r)
-      thread.setDaemon(true)
-      thread
-    })
+    if !offloadSending
+    then DeltaDissemination.executeImmediately
+    else
 
-    ExecutionContext.fromExecutorService(singleThreadExecutor)
+      val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
+        val thread = new Thread(r)
+        thread.setDaemon(true)
+        thread
+      })
+
+      ExecutionContext.fromExecutorService(singleThreadExecutor)
   }
 
   val clusterDataManager: DeltaDissemination[ClusterState] =
@@ -43,7 +47,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid]) {
       localUid,
       handleIncoming,
       immediateForward = true,
-      sendingActor = sendingActor
+      sendingActor =  sendingActor
     )
   val clientDataManager: DeltaDissemination[ClientState] =
     DeltaDissemination(
