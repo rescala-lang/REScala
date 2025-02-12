@@ -3,8 +3,12 @@
 set -lx BENCH_RESULTS_DIR benchmark-results
 set -lx MODE write
 
-cd ../../../
-set -l jarspath (sbt --error "print proBench/packageJars")
+if not set -q jarspath
+	set -l oldPath $PWD
+	cd ../../../
+	set -g jarspath (sbt --error "print proBench/packageJars")
+	cd $oldPath
+end
 
 for i in (seq $ITERATIONS);
 	set -lx RUN_ID cluster3-put-{$WARMUP}_{$MEASUREMENT}-run$i
