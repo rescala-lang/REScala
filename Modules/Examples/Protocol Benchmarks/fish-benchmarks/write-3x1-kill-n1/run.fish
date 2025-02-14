@@ -1,18 +1,9 @@
 #!/usr/bin/env fish
 
-set -lx BENCH_RESULTS_DIR benchmark-results
-set -lx MODE write
-
-if not set -q jarspath
-	set -l oldPath $PWD
-	cd ../../../
-	set -g jarspath (sbt --error "print proBench/packageJars")
-	cd $oldPath
-end
-
 for i in (seq $ITERATIONS);
 	set -lx RUN_ID cluster3-put-{$WARMUP}_{$MEASUREMENT}-run$i
-	set -l timeout (math (math $WARMUP + $MEASUREMENT) + 5)
+	set -l killtime (math $WARMUP + $KILL_AFTER)
+	set -l timeout (math (math (math $WARMUP + $MEASUREMENT) + 5) - $killtime)
 
 	echo $jarspath
 	echo Iteration $i
@@ -34,9 +25,14 @@ for i in (seq $ITERATIONS);
     java --class-path "$jarspath/*" probench.cli benchmark-client --name client1 --node localhost:8010 --warmup $WARMUP --measurement $MEASUREMENT --mode $MODE &
     set -l CLIENT (jobs -pl)
 
+	# kill leader at killtime
+	sleep $killtime
+	kill -s SIGKILL $NODE1
+	echo "killing NODE1"
+
 	# stop everything after timeout
 	sleep $timeout
-	wait $CLIENT
+	echo "killing cluster"
 	jobs
 	kill $NODE1 $NODE2 $NODE3 $CLIENT
 	sleep 5
