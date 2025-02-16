@@ -7,8 +7,6 @@ import java.nio.file.Path
 import scala.io.StdIn.readLine
 import scala.util.matching.Regex
 
-
-
 class ClientCLI(name: Uid, client: Client) {
 
   private val commented: Regex     = """#.*""".r

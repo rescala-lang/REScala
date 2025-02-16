@@ -33,7 +33,7 @@ class DeltaDisseminationTest extends munit.FunSuite {
 
   }
 
-  test ("long ???") {
+  test("long ???") {
 
     given JsonValueCodec[Long] = JsonCodecMaker.make
 

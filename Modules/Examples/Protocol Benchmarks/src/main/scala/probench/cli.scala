@@ -67,10 +67,10 @@ object cli {
     given benchmarkModeParser: ArgumentValueParser[BenchmarkMode] with
       override def parse(args: List[String]): Result[BenchmarkMode] =
         args match {
-          case "read" :: rest => Result.Ok(BenchmarkMode.Read, rest)
+          case "read" :: rest  => Result.Ok(BenchmarkMode.Read, rest)
           case "write" :: rest => Result.Ok(BenchmarkMode.Write, rest)
           case "mixed" :: rest => Result.Ok(BenchmarkMode.Mixed, rest)
-          case _ => Result.Err("not a valid benchmark mode", descriptor)
+          case _               => Result.Err("not a valid benchmark mode", descriptor)
         }
 
       override def descriptor: Descriptor = Descriptor("mode", "read|write|mixed")

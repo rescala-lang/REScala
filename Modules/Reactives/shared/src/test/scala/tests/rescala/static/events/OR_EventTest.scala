@@ -11,9 +11,9 @@ class OR_EventTest extends munit.FunSuite {
   {
 
     test("handler Of OR Is Executed If Any Of The Events Fires") {
-      var test = 0
-      val e1 = Evt[Int]()
-      val e2 = Evt[Int]()
+      var test     = 0
+      val e1       = Evt[Int]()
+      val e2       = Evt[Int]()
       val e1_OR_e2 = e1 || e2
       e1_OR_e2 observe { _ => test += 1 }
 
@@ -27,10 +27,10 @@ class OR_EventTest extends munit.FunSuite {
 
     test("handler Of OR Is Executed Only Once") {
 
-      val test = new AtomicInteger(0)
-      val e1 = Evt[Int]()
-      val e2 = e1 `map` (_ * 2)
-      val e3 = e1 `map` (_ * 2)
+      val test     = new AtomicInteger(0)
+      val e1       = Evt[Int]()
+      val e2       = e1 `map` (_ * 2)
+      val e3       = e1 `map` (_ * 2)
       val e2_OR_e3 = e2 || e3
       e1 observe { _ =>
         test.incrementAndGet(); ()

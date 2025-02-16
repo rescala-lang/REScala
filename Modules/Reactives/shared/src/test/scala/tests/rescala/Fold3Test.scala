@@ -9,13 +9,13 @@ class Fold3Test extends FunSuite {
 
     test("scala 3 fold expressions") {
 
-      val word = Evt[String]()
+      val word  = Evt[String]()
       val count = Evt[Int]()
       val reset = Evt[Unit]()
 
       val resetB = reset `branch` (_ => "")
 
-      val wordB = word `branch` identity
+      val wordB  = word `branch` identity
       val countB = count `branch` (Fold.current * _)
 
       val res = Fold("")(resetB, wordB, countB)

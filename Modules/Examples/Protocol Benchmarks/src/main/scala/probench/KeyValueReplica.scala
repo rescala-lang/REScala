@@ -47,7 +47,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending
       localUid,
       handleIncoming,
       immediateForward = true,
-      sendingActor =  sendingActor
+      sendingActor = sendingActor
     )
   val clientDataManager: DeltaDissemination[ClientState] =
     DeltaDissemination(

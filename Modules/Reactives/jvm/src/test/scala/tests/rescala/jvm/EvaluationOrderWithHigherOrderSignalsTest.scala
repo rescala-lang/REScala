@@ -3,9 +3,9 @@ package tests.rescala.jvm
 import munit.FunSuite
 
 sealed trait ChangeX
-case object DontSet extends ChangeX
+case object DontSet      extends ChangeX
 case object SetUnchanged extends ChangeX
-case object SetChanged extends ChangeX
+case object SetChanged   extends ChangeX
 
 class EvaluationOrderWithHigherOrderSignalsTest extends FunSuite {
   def run(engine: reactives.default.type, changeX: ChangeX): Unit = {
@@ -18,10 +18,10 @@ class EvaluationOrderWithHigherOrderSignalsTest extends FunSuite {
     val results =
       for _ <- 0 to 10 yield {
 
-        val x = Var(initialX)
+        val x  = Var(initialX)
         val x4 = x.map(identity).map(identity).map(identity).map(identity)
 
-        val ho = Var(x: Signal[String])
+        val ho                         = Var(x: Signal[String])
         var reevaluationRestartTracker = List.empty[String]
         val flatten = Signal.dynamic {
           val res = ho.value.value
@@ -32,9 +32,9 @@ class EvaluationOrderWithHigherOrderSignalsTest extends FunSuite {
         changeX match {
           case DontSet => ho.set(x4)
           case _ => transaction(x, ho) { tx ?=>
-            x.admit(newX)(using tx)
-            ho.admit(x4)(using tx)
-          }
+              x.admit(newX)(using tx)
+              ho.admit(x4)(using tx)
+            }
         }
 
         // final value should be correct

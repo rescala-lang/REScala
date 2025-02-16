@@ -15,7 +15,7 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
 
   given localUid: LocalUid = LocalUid(name)
 
-  private val dataManager  = DeltaDissemination[State](localUid, handleIncoming, immediateForward = true)
+  private val dataManager = DeltaDissemination[State](localUid, handleIncoming, immediateForward = true)
 
   inline def log(inline msg: String): Unit =
     if false then println(s"[$name] $msg")
