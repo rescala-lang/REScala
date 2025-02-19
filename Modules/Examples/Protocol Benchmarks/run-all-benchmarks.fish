@@ -4,6 +4,7 @@ set -lx WARMUP 10
 set -lx MEASUREMENT 30
 #set -lx KILL_AFTER (math $MEASUREMENT / 4)
 set -lx KILL_AFTER 10
+set -lx TIMES 1000000
 
 if not set -q ITERATIONS
 	set -gx ITERATIONS 5
@@ -20,6 +21,6 @@ if not set -q jarspath
 end
 
 #fish ./docker-benchmarks/write-3x1/run.sh
-#fish ./fish-benchmarks/write-3x1/run.fish
-fish ./fish-benchmarks/write-3x1-kill-n1/run.fish
+fish ./fish-benchmarks/write-3x1/run.fish
+#fish ./fish-benchmarks/write-3x1-kill-n1/run.fish
 # fish ./docker-benchmarks/write-3x1-kill-n1/run.sh

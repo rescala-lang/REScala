@@ -46,13 +46,43 @@ trait Client(name: Uid) {
     println(s"Did $times mixed queries in ${(System.nanoTime() - start) / 1_000_000}ms")
   }
 
-  def benchmark(warmup: Int, measurement: Int, mode: BenchmarkMode): Unit = {
+  def benchmark(mode: BenchmarkMode, times: Int, min: Int = 1, max: Int = 10000): Unit = {
     printResults = false
 
     println("Initializing")
 
     mode match
-      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput(s"${name.delegate}-key", "value", 1000)
+      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput("key%n", "value", max)
+      case BenchmarkMode.Write                      =>
+
+    println("Warmup")
+
+    val warmupStart = System.currentTimeMillis()
+
+    mode match
+      case BenchmarkMode.Read  => multiget("key%n", 100000)
+      case BenchmarkMode.Write => multiput("warmup%n", "value%n", 100000)
+      case BenchmarkMode.Mixed => mixed(1, 1000, 100000)
+
+    println("Measurement")
+
+    doBenchmark = true
+
+    mode match
+      case BenchmarkMode.Read  => multiget("key%n", times)
+      case BenchmarkMode.Write => multiput("key%n", "value%n", times)
+      case BenchmarkMode.Mixed => mixed(min, max, times)
+
+    saveBenchmark(name)
+  }
+
+  def benchmarkTimed(warmup: Int, measurement: Int, mode: BenchmarkMode): Unit = {
+    printResults = false
+
+    println("Initializing")
+
+    mode match
+      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput(s"${name.delegate}-key%n", "value%n", 1000)
       case BenchmarkMode.Write                      =>
 
     println("Warmup")
@@ -110,7 +140,8 @@ trait Client(name: Uid) {
     println("Saving Benchmark Data")
     val env           = System.getenv()
     val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
-    val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(runId)
+    val system = env.getOrDefault("SYSTEM_ID", "pb")
+    val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(system).resolve(runId)
     val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
     benchmarkData.foreach { row =>
       writer.writeRow(

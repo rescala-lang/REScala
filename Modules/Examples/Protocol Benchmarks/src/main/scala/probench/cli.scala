@@ -94,6 +94,7 @@ object cli {
 
     val warmup      = named[Int]("--warmup", "warmup period for the benchmark in seconds")
     val measurement = named[Int]("--measurement", "measurement period for the benchmark in seconds")
+    val times       = named[Int]("--times", "number of operations for the benchmark")
     val mode        = named[BenchmarkMode]("--mode", "mode for the benchmark")
 
     val argparse = composedParser {
@@ -214,7 +215,23 @@ object cli {
 
           client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
 
-          client.benchmark(warmup.value, measurement.value, mode.value)
+          client.benchmark(mode = mode.value, times = times.value)
+
+          abort.closeRequest = true
+          executor.shutdownNow()
+        },
+        subcommand("benchmark-client-timed", "starts a benchmark client") {
+          val client = ProBenchClient(name.value)
+
+          val (ip, port) = clientNode.value
+
+          val nioTCP = NioTCP()
+          val abort  = Abort()
+          ec.execute(() => nioTCP.loopSelection(abort))
+
+          client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+
+          client.benchmarkTimed(warmup.value, measurement.value, mode.value)
 
           abort.closeRequest = true
           executor.shutdownNow()

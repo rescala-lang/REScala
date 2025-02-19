@@ -2,6 +2,8 @@
 
 set -lx BENCH_RESULTS_DIR benchmark-results
 set -lx MODE write
+set -lx ID (random)
+set -lx SYSTEM_ID pb
 
 if not set -q jarspath
 	set -l oldPath $PWD
@@ -11,7 +13,7 @@ if not set -q jarspath
 end
 
 for i in (seq $ITERATIONS);
-	set -lx RUN_ID cluster3-put-{$WARMUP}_{$MEASUREMENT}-run$i
+	set -lx RUN_ID cluster3-put-$TIMES-id{$ID}_run$i
 	set -l timeout (math (math $WARMUP + $MEASUREMENT) + 5)
 
 	echo $jarspath
@@ -31,14 +33,14 @@ for i in (seq $ITERATIONS);
 	sleep 1
 
 	# start client
-    java --class-path "$jarspath/*" probench.cli benchmark-client --name client1 --node localhost:8010 --warmup $WARMUP --measurement $MEASUREMENT --mode $MODE &
+    java --class-path "$jarspath/*" probench.cli benchmark-client --name client1 --node localhost:8010 --times $TIMES --mode $MODE &
     set -l CLIENT (jobs -pl)
 
 	# stop everything after timeout
-	sleep $timeout
+	#sleep $timeout
 	wait $CLIENT
 	jobs
-	kill $NODE1 $NODE2 $NODE3 $CLIENT
+	kill $NODE1 $NODE2 $NODE3
 	sleep 5
 	jobs
 end
