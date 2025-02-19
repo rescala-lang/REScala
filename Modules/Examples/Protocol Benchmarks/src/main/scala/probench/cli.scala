@@ -140,11 +140,11 @@ object cli {
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
           node.clientDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
-            "localhost",
+            "0",
             clientPort.value
           ))))
           node.clusterDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
-            "localhost",
+            "0",
             peerPort.value
           ))))
 
