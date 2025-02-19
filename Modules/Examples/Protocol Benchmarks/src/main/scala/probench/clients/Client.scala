@@ -15,7 +15,7 @@ enum BenchmarkMode {
 
 trait Client(name: Uid) {
 
-  var printResults                                     = false
+  var printResults                                     = true
   var doBenchmark: Boolean                             = false
   val benchmarkData: mutable.ListBuffer[BenchmarkData] = mutable.ListBuffer.empty
 
