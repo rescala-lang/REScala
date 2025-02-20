@@ -1,0 +1,14 @@
+multiput key%n value%n 100
+benchmark
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+multiget key%n 100
+save-benchmark
+exit

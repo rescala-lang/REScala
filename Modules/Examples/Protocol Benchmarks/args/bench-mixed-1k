@@ -1,0 +1,5 @@
+multiput key%n value%n 100
+benchmark
+mixed 1 100 1000
+save-benchmark
+exit

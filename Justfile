@@ -111,8 +111,9 @@ runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResult
 
 	cd "Modules/Examples/Protocol Benchmarks"
 
+	set -lx RUN_ID {{runId}}-id(random)_run1
+	set -lx SYSTEM_ID pb
 	set -lx BENCH_RESULTS_DIR {{benchResultsDir}}
-	set -lx RUN_ID {{runId}}
 
 	for clientArgs in $(cat ./benchmarks/{{benchmark}})
 		set -l args (string split ';' $clientArgs)
@@ -146,15 +147,17 @@ runProtoBenchEtcdCluster node="node":
 	trap 'kill $(jobs -p)' SIGINT
 	sleep $last_pid
 
-runProtoBenchClientEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
+runProtoBenchClientsEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
 	#!/usr/bin/env fish
 
 	set -l jarspath (sbt --error "print proBench/packageJars")
 
+	set -lx RUN_ID {{runId}}-id(random)_run1
+	set -lx SYSTEM_ID etcd
+
 	cd "Modules/Examples/Protocol Benchmarks"
 
 	set -lx BENCH_RESULTS_DIR {{benchResultsDir}}
-	set -lx RUN_ID {{runId}}
 
 	for clientArgs in $(cat ./benchmarks/{{benchmark}})
 		set -l args (string split ';' $clientArgs)
