@@ -287,7 +287,7 @@ class FilteringAntiEntropy[RDT](
             val acl                     = aclReference.get()._2
             val authorsWritePermissions = acl.write(dot.place.toPublicIdentity)
             val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localPublicId))
-            if sendersPermissions <= requiredPermissions
+            if requiredPermissions <= sendersPermissions
             then // Immediately applicable
               rdtDeltas = rdtDeltas.addDelta(dot, delta)
               syncInstance.receivedDelta(dot, delta)
@@ -487,5 +487,6 @@ class FilteringAntiEntropy[RDT](
 }
 
 object FilteringAntiEntropy {
+  // TODO: extract
   case class PartialDelta[RDT](delta: RDT, includedParts: PermissionTree, requiredPermissions: PermissionTree)
 }
