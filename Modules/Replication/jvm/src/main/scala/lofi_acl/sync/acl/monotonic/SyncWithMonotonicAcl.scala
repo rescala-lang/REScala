@@ -6,6 +6,7 @@ import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
+import lofi_acl.sync.acl.Sync
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.{access, sync}
 import rdts.base.{Bottom, Lattice}

@@ -7,6 +7,7 @@ import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
 import lofi_acl.crypto.PublicIdentity.toPublicIdentity
 import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
+import lofi_acl.sync.acl.Sync
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.PartialDelta
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.sync.{ConnectionManager, MessageReceiver}
