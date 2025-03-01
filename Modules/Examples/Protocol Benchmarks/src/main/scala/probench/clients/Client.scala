@@ -140,7 +140,7 @@ trait Client(name: Uid) {
     println("Saving Benchmark Data")
     val env           = System.getenv()
     val runId         = env.getOrDefault("RUN_ID", Uid.gen().delegate)
-    val system = env.getOrDefault("SYSTEM_ID", "pb")
+    val system        = env.getOrDefault("SYSTEM_ID", "pb")
     val benchmarkPath = Path.of(env.getOrDefault("BENCH_RESULTS_DIR", "bench-results")).resolve(system).resolve(runId)
     val writer        = new CSVWriter(";", benchmarkPath, s"${name.delegate}-$runId", BenchmarkData.header)
     benchmarkData.foreach { row =>

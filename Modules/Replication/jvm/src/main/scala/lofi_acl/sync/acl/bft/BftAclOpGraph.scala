@@ -91,7 +91,7 @@ object BftAclOpGraph:
       parents = Set.empty
     )
     val opBytes = writeToArray(rootAclDelta)
-    val sig = Ed25519Util.sign(opBytes, rootIdentity.identityKey.getPrivate)
+    val sig     = Ed25519Util.sign(opBytes, rootIdentity.identityKey.getPrivate)
     EncodedDelegation(sig, opBytes)
   }
 
@@ -108,7 +108,7 @@ object BftAclOpGraph:
   ) {
     def encode(signature: Signature)(using JsonValueCodec[Delegation]): EncodedDelegation = {
       val delegationBytes = writeToArray(this)
-      val signatureBytes = Base64.getDecoder.decode(signature)
+      val signatureBytes  = Base64.getDecoder.decode(signature)
       assert(Ed25519Util.checkEd25519Signature(delegationBytes, signatureBytes, delegator))
       EncodedDelegation(signatureBytes, delegationBytes)
     }

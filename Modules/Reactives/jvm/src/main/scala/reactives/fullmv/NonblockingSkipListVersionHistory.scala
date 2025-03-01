@@ -646,10 +646,9 @@ class NonblockingSkipListVersionHistory[V, T <: FullMVTurn](init: T, val valuePe
         NotificationBranchResult.ReevOutBranchResult.NotifyAndReevaluationReadySuccessor(outgoings, newFirstFrame.txn)
       } else if newFirstFrame.pending > 0 then {
         NotificationBranchResult.ReevOutBranchResult.NotifyAndNonReadySuccessor(outgoings, newFirstFrame.txn)
-      } else
-        /* if(maybeNewFirstFrame.pending < 0) */ {
-          NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
-        }
+      } else /* if(maybeNewFirstFrame.pending < 0) */ {
+        NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
+      }
     } else {
       NotificationBranchResult.ReevOutBranchResult.PureNotifyOnly(outgoings)
     }
