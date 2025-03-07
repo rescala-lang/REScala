@@ -12,7 +12,7 @@ object Dependencies {
   val conscript   = libraryDependencies += "org.conscrypt"           % "conscrypt-openjdk-uber" % "2.5.2"
   val decline     = libraryDependencies += "com.monovore"          %%% "decline"                % "2.5.0"
   val fansi       = libraryDependencies += "com.lihaoyi"           %%% "fansi"                  % "0.5.0"
-  val jetcd       = libraryDependencies += "io.etcd"                 % "jetcd-core"             % "0.8.4"
+  val jetcd       = libraryDependencies += "io.etcd"                 % "jetcd-core"             % "0.8.5"
   val monocleCore = libraryDependencies += "dev.optics"            %%% "monocle-core"           % "3.3.0"
   val scalaSwing  = libraryDependencies += "org.scala-lang.modules" %% "scala-swing"            % "3.0.0"
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
@@ -25,8 +25,8 @@ object Dependencies {
       // Note, jdk18 means JDK 1.8
       "org.bouncycastle"  % "bcprov-jdk18on"               % "1.80",
       "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.80",
-      "io.github.hakky54" % "sslcontext-kickstart"         % "9.0.0",
-      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.0.0",
+      "io.github.hakky54" % "sslcontext-kickstart"         % "9.1.0",
+      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.1.0",
     )
 
   def borer = libraryDependencies ++= Seq(
@@ -35,7 +35,7 @@ object Dependencies {
   )
 
   def jetty = {
-    val jettyVersion = "12.0.16"
+    val jettyVersion = "12.0.17"
     Seq(
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-server" % jettyVersion,
       "org.eclipse.jetty.websocket" % "jetty-websocket-jetty-client" % jettyVersion,
