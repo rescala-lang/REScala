@@ -1,0 +1,4 @@
+# sooo hear me out:
+# This repo compiles kinda fine with 1GB of memory (the sbt default) sometimes, but most of the time more is required. How much more? Well, the CI seems to run fine with 4GB, but ultimately more is always better™, yet setting this to gigantic values is bad for systems that don’t have that much RAM installed. I’d really prefer to just use the Java default, which uses some portion of the maximum ram, thus scaling to the target machine. It’s very unfortunate, that SBT does not just use that as the default.
+# Now, setting *any* of the memory related options for SBT makes it so that none of the SBT built ins are used, so we set the stack size to what seems to be the default most of the time, thus causing -Xmx (and other memory flags) to not be passed to the JVM, thus falling back to the defaults.
+-Xss1M
