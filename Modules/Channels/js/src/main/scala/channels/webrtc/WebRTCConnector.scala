@@ -1,7 +1,7 @@
 package channels.webrtc
 
 import de.rmgk.delay
-import de.rmgk.delay.{Async, Sync, syntax}
+import de.rmgk.delay.{Async, Sync, toAsync}
 import org.scalajs.dom
 import org.scalajs.dom.*
 

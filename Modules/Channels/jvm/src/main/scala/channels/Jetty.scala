@@ -1,7 +1,7 @@
 package channels.jettywebsockets
 
 import channels.{Abort, ArrayMessageBuffer, Connection, LatentConnection, MessageBuffer, Receive as ChannelHandler}
-import de.rmgk.delay.{Async, syntax, Callback as DelayCallback}
+import de.rmgk.delay.{Async, toAsync, Callback as DelayCallback}
 import org.eclipse.jetty.http.pathmap.PathSpec
 import org.eclipse.jetty.server.handler.{ContextHandler, ContextHandlerCollection}
 import org.eclipse.jetty.server.{Server, ServerConnector}

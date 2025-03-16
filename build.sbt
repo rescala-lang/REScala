@@ -81,7 +81,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     Settings.javaOutputVersion(17),
     Settings.explicitNulls(Compile / compile),
     Settings.safeInit(Compile / compile),
-    Dependencies.slips.delay,
+    Dependencies.slips,
     Dependencies.munit,
     SettingsLocal.publishSonatype
   )
@@ -215,7 +215,7 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
     Dependencies.jsoniterScala,
     Dependencies.munitCheck,
     Dependencies.munit,
-    Dependencies.slips.options,
+    Dependencies.slips,
     Dependencies.jetcd,
     Dependencies.pprint,
     Universal / packageName := "probench",

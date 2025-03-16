@@ -16,6 +16,7 @@ object Dependencies {
   val monocleCore = libraryDependencies += "dev.optics"            %%% "monocle-core"           % "3.3.0"
   val scalaSwing  = libraryDependencies += "org.scala-lang.modules" %% "scala-swing"            % "3.0.0"
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
+  val slips       = libraryDependencies += "de.rmgk.slips"         %%% "partypack"              % "0.12.0"
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.17" % Test
   val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-RC1"
   val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.17.0"
@@ -56,10 +57,5 @@ object Dependencies {
   val scalatest = libraryDependencies ++= Seq("flatspec", "shouldmatchers").map(m =>
     "org.scalatest" %%% s"scalatest-$m" % "3.2.19" % Test
   )
-
-  object slips {
-    def delay   = libraryDependencies += "de.rmgk.slips" %%% "delay"   % "0.9.0"
-    def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.11.0"
-  }
 
 }

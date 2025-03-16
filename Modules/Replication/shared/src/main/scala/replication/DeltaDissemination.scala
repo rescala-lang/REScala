@@ -3,7 +3,7 @@ package replication
 import channels.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import de.rmgk.delay.{Callback, syntax}
+import de.rmgk.delay.Callback
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.time.Dots

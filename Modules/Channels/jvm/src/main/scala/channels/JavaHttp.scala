@@ -1,7 +1,8 @@
 package channels
 
 import com.sun.net.httpserver.{HttpExchange, HttpHandler}
-import de.rmgk.delay.{Async, Callback, Sync, syntax}
+import de.rmgk.delay.toAsync
+import de.rmgk.delay.{Async, Callback, Sync}
 import rdts.base.{LocalUid, Uid}
 
 import java.net.URI
