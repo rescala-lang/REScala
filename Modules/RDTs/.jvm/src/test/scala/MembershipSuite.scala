@@ -13,6 +13,7 @@ class MembershipSuite extends munit.ScalaCheckSuite {
   // TODO: failing seed
   // override def scalaCheckInitialSeed = "sw9ZNlZ9x0YrVuK2jCaUjc2Im3gi9os7yJbRCA1n8eP="
   // override def scalaCheckInitialSeed = "tuRJ9FeHxNhcTdcocDyhBEuXIokYg0Jyp6Rk9E-KGGF="
+  // override def scalaCheckInitialSeed = "JxUkfCJH212GD2NHRYliPeBttGpBvXSqoxX8CP8yhiG="
 
   override def scalaCheckTestParameters =
     super.scalaCheckTestParameters
