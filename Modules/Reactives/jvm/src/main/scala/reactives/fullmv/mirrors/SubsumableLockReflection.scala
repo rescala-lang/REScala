@@ -49,7 +49,7 @@ class SubsumableLockReflection(
       case RemoteGCd =>
         assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
         GarbageCollected0
-    }(FullMVUtil.notWorthToMoveToTaskpool)
+    }(using FullMVUtil.notWorthToMoveToTaskpool)
   }
 
   override def trySubsume0(hopCount: Int, lockedNewParent: SubsumableLock): Future[TrySubsumeResult0] = {
@@ -97,7 +97,7 @@ class SubsumableLockReflection(
         case RemoteGCd =>
           assert(this.refCount.get <= 0, s"remote was gc'd while $this still holds a reference")
           GarbageCollected0
-      }(FullMVUtil.notWorthToMoveToTaskpool)
+      }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -115,7 +115,7 @@ class SubsumableLockReflection(
       if Host.DEBUG then
         println(s"[${Thread.currentThread().getName}] $this passing through tryLock result $res")
       res
-    }(FullMVUtil.notWorthToMoveToTaskpool)
+    }(using FullMVUtil.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[RemoteTrySubsumeResult] = {
     if Host.DEBUG then
@@ -126,7 +126,7 @@ class SubsumableLockReflection(
       if Host.DEBUG then
         println(s"[${Thread.currentThread().getName}] $this passing through trySubsume $lockedNewParent result $res")
       res
-    }(FullMVUtil.notWorthToMoveToTaskpool)
+    }(using FullMVUtil.notWorthToMoveToTaskpool)
   }
 
   override protected def dumped(): Unit = {

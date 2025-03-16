@@ -59,7 +59,7 @@ abstract class DecomposePropertyChecks[A](
           t.withBodyMap(_.transformCompat {
             case Failure(exception) => Success(new TestValues.FlakyFailure(exception))
             case succ               => succ
-          }(munitExecutionContext))
+          }(using munitExecutionContext))
       }
     )
   )

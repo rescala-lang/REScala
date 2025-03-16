@@ -154,7 +154,7 @@ def run(): Unit =
     given LocalUid = replica.id.convert
 
     val bundleString = sget(URI.create(s"$api/status/bundles")).bind
-    val bundles = traverse(readFromString[List[String]](bundleString)(JsonCodecMaker.make).map { id =>
+    val bundles = traverse(readFromString[List[String]](bundleString)(using JsonCodecMaker.make).map { id =>
       bget(URI.create(s"$api/download?$id"))
     }).bind
 

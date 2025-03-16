@@ -167,7 +167,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
                 s"[${Thread.currentThread().getName}] retrying tryLock $this after parent was concurrently deallocated"
               )
             tryLock0NoTail(hopCount)
-        }(FullMVUtil.notWorthToMoveToTaskpool)
+        }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -248,7 +248,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
                   s"[${Thread.currentThread().getName}] retrying trySubsume $this after parent was concurrently deallocated"
                 )
               trySubsume0NoTail(hopCount, lockedNewParent)
-          }(FullMVUtil.notWorthToMoveToTaskpool)
+          }(using FullMVUtil.notWorthToMoveToTaskpool)
       }
     }
   }
@@ -365,7 +365,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
                 s"[${Thread.currentThread().getName}] retrying remote tryLock $this after parent was concurrently deallocated"
               )
             remoteTryLockNoTail()
-        }(FullMVUtil.notWorthToMoveToTaskpool)
+        }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -442,7 +442,7 @@ class SubsumableLockImpl(override val host: SubsumableLockHost, override val gui
                 s"[${Thread.currentThread().getName}] retrying remote trySubsume $this after parent was concurrently deallocated"
               )
             this.remoteTrySubsumeNoTail(lockedNewParent)
-        }(FullMVUtil.notWorthToMoveToTaskpool)
+        }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 

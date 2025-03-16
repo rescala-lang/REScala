@@ -58,6 +58,6 @@ object FullMVUtil {
   }
   def condenseCallResults(accumulator: Iterable[Future[Unit]]): Future[Unit] = {
     // TODO this should collect exceptions..
-    accumulator.foldLeft(Future.successful(())) { (fu, call) => fu.flatMap(_ => call)(notWorthToMoveToTaskpool) }
+    accumulator.foldLeft(Future.successful(())) { (fu, call) => fu.flatMap(_ => call)(using notWorthToMoveToTaskpool) }
   }
 }

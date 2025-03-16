@@ -30,7 +30,7 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
   inviteText.editable = false
 
   private val createInviteButton = Button("Create Invite")
-  createInviteButton.onAction = _ => {
+  createInviteButton.onAction() = _ => {
     val clipboard = Clipboard.systemClipboard
     val content   = new ClipboardContent()
     content.putString(inviteText.getText)
@@ -55,7 +55,7 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
   }
 
   private val delegatePermissionsButton = Button("Delegate permissions")
-  delegatePermissionsButton.onAction = _ => {
+  delegatePermissionsButton.onAction() = _ => {
     val permissionReceiverComboBox = {
       val otherReplicas = travelPlanModel.currentAcl.read.keySet.filterNot(_ == travelPlanModel.publicId).toSeq
       val comboBox      = ComboBox(otherReplicas)
@@ -69,7 +69,7 @@ class InvitationDialogScene(invitation: Invitation, travelPlanModel: TravelPlanM
     confirmationButton.disable <== permissionReceiverComboBox.selectionModel.value.selectedItemProperty().isNull
     rootPane.bottom = HBox(permissionReceiverComboBox, confirmationButton)
 
-    confirmationButton.onAction = _ => {
+    confirmationButton.onAction() = _ => {
       val receivingReplica = permissionReceiverComboBox.getValue
       Platform.runLater { () =>
         try {

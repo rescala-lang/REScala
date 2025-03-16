@@ -57,7 +57,7 @@ class SyncedTodoListCrdt(val replicaId: LocalUid) {
   private def runInCrdtExecContext[Ret](op: () => Ret): Ret = Await.result[Ret](
     Future {
       op()
-    }(crdtExecContext),
+    }(using crdtExecContext),
     100.milliseconds
   )
 

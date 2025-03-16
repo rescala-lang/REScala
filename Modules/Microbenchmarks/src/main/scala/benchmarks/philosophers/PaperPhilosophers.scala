@@ -276,7 +276,7 @@ object PaperPhilosophers {
 
     val executor    = Executors.newFixedThreadPool(threadCount)
     val execContext = scala.concurrent.ExecutionContext.fromExecutor(executor)
-    val threads     = for i <- 0 until threadCount yield Future { driver(i) }(execContext)
+    val threads     = for i <- 0 until threadCount yield Future { driver(i) }(using execContext)
 
     while threads.exists(!_.isCompleted) && !abort && continue() do { Thread.sleep(10) }
     val timeout = System.currentTimeMillis() + 3000

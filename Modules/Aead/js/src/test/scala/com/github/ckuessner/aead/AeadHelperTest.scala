@@ -35,7 +35,7 @@ class AeadHelperTest extends munit.FunSuite {
   )
 
   test("initialization should not fail") {
-    AeadHelper.ready().map(_ => ())(executionContext)
+    AeadHelper.ready().map(_ => ())(using executionContext)
   }
 
   test("generateKey should not fail") {

@@ -24,7 +24,7 @@ class TodoListApp extends JFXApp3 {
 
     val addTodoButton = new Button {
       text = "+"
-      onAction = () => {
+      onAction() = () => {
         TodoListController.addTodo(TodoEntry(newTodoTextField.text.value))
         newTodoTextField.clear()
       }
@@ -48,7 +48,7 @@ class TodoListApp extends JFXApp3 {
     )
 
     val addConnectionButton = new Button("Connect")
-    addConnectionButton.onAction = () => {
+    addConnectionButton.onAction() = () => {
       val connectionString = connectionTextField.getText
       if !connectionString.forall(Character.isWhitespace) then
         TodoListController.connect(connectionString)

@@ -24,7 +24,7 @@ object AutomergyOpGraphLWW {
 
     def values: List[T] =
       def getTerminals(cur: Map[Id, Entry[T]]): List[T] =
-        cur.toList.sortBy(_._1)(CausalTime.ordering.reverse).map(_._2.op).flatMap:
+        cur.toList.sortBy(_._1)(using CausalTime.ordering.reverse).map(_._2.op).flatMap:
           case Op.set(v) => List(v)
           case Op.del    => Nil
           case Op.undo(anchor) => elements.get(anchor).toList.flatMap: pred =>

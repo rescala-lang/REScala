@@ -19,7 +19,7 @@ class MainScene extends Scene {
 
   private val createNewDocumentButton: Button = new Button("Create new Travel Plan Document")
   createNewDocumentButton.alignment = Pos.Center
-  createNewDocumentButton.onAction = _ => createNewDocumentButtonPressed()
+  createNewDocumentButton.onAction() = _ => createNewDocumentButtonPressed()
   createNewDocumentButton.disable <== documentIsOpen
 
   private val invitationTextField = new TextField {
@@ -29,7 +29,7 @@ class MainScene extends Scene {
 
   private val joinDocumentButton: Button = new Button("Join")
   joinDocumentButton.alignment = Pos.Center
-  joinDocumentButton.onAction = _ => joinDocumentButtonPressed()
+  joinDocumentButton.onAction() = _ => joinDocumentButtonPressed()
   joinDocumentButton.disable <== documentIsOpen || invitationTextField.text.isEmpty
 
   rootPane.center = VBox(

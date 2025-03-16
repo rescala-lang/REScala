@@ -344,7 +344,7 @@ class FullMVTurnImpl(
 
       FullMVUtil.broadcast(successorsIncludingSelf)(_.maybeNewReachableSubtree(this, predecessorSpanningTree)).map(_ =>
         predecessor.phase == TurnPhase.Completed
-      )(FullMVUtil.notWorthToMoveToTaskpool)
+      )(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -450,7 +450,7 @@ class FullMVTurnImpl(
         case x @ LockedState(lock)  => Future.successful(x)
         case UnlockedState          => UnlockedState.futured
         case ConcurrentDeallocation => getLockedRoot
-      }(FullMVUtil.notWorthToMoveToTaskpool)
+      }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
   override def tryLock(): Future[TryLockResult] = {
@@ -484,7 +484,7 @@ class FullMVTurnImpl(
         case GarbageCollected0 =>
           assert(subsumableLock.get() != l, s"$l tryLock returned GC'd although it is still referenced")
           tryLock0(hopCount)
-      }(FullMVUtil.notWorthToMoveToTaskpool)
+      }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -519,7 +519,7 @@ class FullMVTurnImpl(
         case GarbageCollected0 =>
           assert(subsumableLock.get() != l, s"$l trySubsume returned GC'd although it is still referenced")
           trySubsume0(hopCount, lockedNewParent)
-      }(FullMVUtil.notWorthToMoveToTaskpool)
+      }(using FullMVUtil.notWorthToMoveToTaskpool)
     }
   }
 
@@ -532,7 +532,7 @@ class FullMVTurnImpl(
           s"[${Thread.currentThread().getName}] $this returning tryLock result $res to remote (retaining thread reference as remote transfer reference)"
         )
       res
-    }(FullMVUtil.notWorthToMoveToTaskpool)
+    }(using FullMVUtil.notWorthToMoveToTaskpool)
   }
   override def remoteTrySubsume(lockedNewParent: SubsumableLock): Future[TrySubsumeResult] = {
     if SubsumableLockImpl.DEBUG then
@@ -544,7 +544,7 @@ class FullMVTurnImpl(
         )
       lockedNewParent.localSubRefs(1)
       res
-    }(FullMVUtil.notWorthToMoveToTaskpool)
+    }(using FullMVUtil.notWorthToMoveToTaskpool)
   }
 
   private def trySwap(from: SubsumableLock, to: SubsumableLock): Int = {

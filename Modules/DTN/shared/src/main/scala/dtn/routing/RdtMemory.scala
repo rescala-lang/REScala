@@ -17,7 +17,7 @@ object BundleIdAgeOrdering extends Ordering[String] {
 object GarbageCollector {
   val SOFT_MAX_BUNDLE_COUNT = 20
 
-  var sortedIds: SortedSet[String] = TreeSet[String]()(BundleIdAgeOrdering)
+  var sortedIds: SortedSet[String] = TreeSet[String]()(using BundleIdAgeOrdering)
 
   def shouldKeep(bundleId: String): Boolean = {
     sortedIds = sortedIds + bundleId

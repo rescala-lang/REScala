@@ -167,7 +167,7 @@ class WebRTCHandling(readyChannel: Option[Callback[SessionDescription]]) {
         placeholder := "remote session description",
         oninput := { (ev: UIEvent) =>
           try
-            val cs = readFromString(ev.target.asInstanceOf[dom.html.TextArea].value)(codec)
+            val cs = readFromString(ev.target.asInstanceOf[dom.html.TextArea].value)(using codec)
             println(s"pending resolved, setting connector")
             peer.updateRemoteDescription(cs).run(using ())(errorReporter)
           catch
@@ -190,7 +190,7 @@ class WebRTCHandling(readyChannel: Option[Callback[SessionDescription]]) {
         onfocus := { (ev: UIEvent) =>
           ev.target.asInstanceOf[dom.html.TextArea].select()
         },
-        writeToString(sessionDescription)(codec)
+        writeToString(sessionDescription)(using codec)
       ).render
     }
 
