@@ -50,7 +50,7 @@ object Lattice {
   /** Some types have multiple structural representations for semantically the same value, e.g., they may contain redundant or replaced parts. This can lead to semantically equivalent values that are not structurally equal. Normalize tries to fix this. */
   def normalize[A: Lattice](v: A): A = v `merge` v
 
-  def diff[A: {Lattice, Decompose}](state: A, delta: A): Option[A] = {
+  def diff[A: {Lattice as A, Decompose}](state: A, delta: A): Option[A] = {
     delta.decomposed.filter(!A.subsumption(_, state)).reduceOption(merge)
   }
 
@@ -59,17 +59,17 @@ object Lattice {
   // Thus, we put the extension into this implicit object, when `Lattice.syntax` is imported (or otherwise in the implicit scope) then it is eligible as the receiver for the extension method rewrite. For some reason, this never causes conflicts even if multiple objects are named `syntax` (as opposed to name conflicts with the extension method, which does cause conflicts).
   // also, intellij does find these, but not the ones on the trait … ?
   given syntax: {} with
-    extension [A: Lattice](left: A) {
-      def merge(right: A): A = Lattice[A].merge(left, right)
+    extension [A: Lattice as A](left: A) {
+      def merge(right: A): A = A.merge(left, right)
 
       /** Convenience method to apply delta mutation to grow current value */
-      def grow(f: A => A): A = Lattice[A].merge(left, f(left))
+      def grow(f: A => A): A = A.merge(left, f(left))
 
       inline def inflates(right: A): Boolean = !A.subsumption(left, right)
       inline def subsumes(right: A): Boolean = A.subsumption(right, left)
     }
 
-  def latticeOrder[A: Lattice]: PartialOrdering[A] = new {
+  def latticeOrder[A: Lattice as A]: PartialOrdering[A] = new {
     override def lteq(x: A, y: A): Boolean = A.subsumption(x, y)
     override def tryCompare(x: A, y: A): Option[Int] =
       val lr = lteq(x, y)
