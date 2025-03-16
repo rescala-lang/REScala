@@ -17,7 +17,7 @@ abstract class UntrustedReplica(initialStates: Set[EncryptedState]) extends Repl
   def decrypt[T: Lattice](aead: Aead)(using tCodec: JsonValueCodec[T]): DecryptedState[T] = {
     stateStore
       .map(encState => encState.decrypt[T](aead))
-      .reduce((l, r) => Lattice[DecryptedState[T]].merge(l, r))
+      .reduce((l, r) => Lattice.merge(l, r))
   }
 
   def receive(newState: EncryptedState): Unit = {

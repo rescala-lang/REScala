@@ -463,7 +463,7 @@ class FilteringAntiEntropy[RDT](
             val requiredPerms =
               if partialDeltas.size < 100
               then // Only need to reconstruct what is missing
-                partialDeltas.values.map(_.requiredPermissions).reduce(Lattice[PermissionTree].merge)
+                partialDeltas.values.map(_.requiredPermissions).reduce(Lattice.merge)
               else // Request everything that is readable
                 aclReference.get()._2.read.getOrElse(localPublicId, PermissionTree.empty)
 

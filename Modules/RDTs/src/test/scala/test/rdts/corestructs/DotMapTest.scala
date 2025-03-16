@@ -47,7 +47,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         val ccB   = dotsB `union` deletedB
 
         val Dotted(dmMerged, ccMerged) =
-          Lattice[Dotted[TestedMap]].merge(
+          Lattice.merge(
             Dotted(dmA, (ccA)),
             Dotted(dmB, (ccB))
           )
@@ -105,7 +105,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
         )
 
         val merged =
-          Lattice[Dotted[TestedMap]].merge(
+          Lattice.merge(
             dottedA,
             dottedB
           )
@@ -144,7 +144,7 @@ class DotMapTest extends munit.ScalaCheckSuite {
       val wc: Dotted[TestedMap] =
         decomposed.foldLeft(Dotted(Map.empty[Int, Dots], Dots.empty)) {
           case (Dotted(dmA, ccA), Dotted(dmB, ccB)) =>
-            Lattice[Dotted[TestedMap]].merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
+            Lattice.merge(Dotted(dmA, ccA), Dotted(dmB, ccB))
         }
 
       val dmMerged: TestedMap = wc.data

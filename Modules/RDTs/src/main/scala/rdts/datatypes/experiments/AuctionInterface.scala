@@ -46,7 +46,7 @@ object AuctionInterface {
     given AuctionDataAsUIJDLattice: Lattice[AuctionData] with Decompose[AuctionData] with {
       override def subsumption(left: AuctionData, right: AuctionData): Boolean = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          Lattice[Set[Bid]].subsumption(lb, rb) && Lattice[Status].subsumption(ls, rs)
+          summon[Lattice[Set[Bid]]].subsumption(lb, rb) && Lattice.subsumption(ls, rs)
       }
 
       extension (a: AuctionData)
@@ -62,8 +62,8 @@ object AuctionInterface {
 
       override def merge(left: AuctionData, right: AuctionData): AuctionData = (left, right) match {
         case (AuctionData(lb, ls, _), AuctionData(rb, rs, _)) =>
-          val bidsMerged   = Lattice[Set[Bid]].merge(lb, rb)
-          val statusMerged = Lattice[Status].merge(ls, rs)
+          val bidsMerged   = Lattice.merge(lb, rb)
+          val statusMerged = Lattice.merge(ls, rs)
           val winnerMerged = statusMerged match {
             case Open   => None
             case Closed => bidsMerged.maxByOption(_.bid).map(_.userId)

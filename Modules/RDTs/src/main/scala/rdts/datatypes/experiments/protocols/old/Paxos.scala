@@ -155,7 +155,7 @@ object Paxos {
   given lattice[A]: Lattice[Paxos[A]] with
     override def merge(left: Paxos[A], right: Paxos[A]): Paxos[A] =
       require(
-        Lattice[Set[Uid]].merge(left.members, right.members) == left.members,
+        Lattice.merge(left.members, right.members) == left.members,
         "cannot merge two Paxos instances with differing members"
       ) // members should remain fixed
 

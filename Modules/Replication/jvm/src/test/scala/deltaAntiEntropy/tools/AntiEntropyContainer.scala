@@ -38,7 +38,7 @@ class AntiEntropyContainer[State](
       case Named(origin, deltaCtx) =>
         Lattice.diff(state, deltaCtx) match {
           case Some(stateDiff) =>
-            val stateMerged = Lattice[Dotted[State]].merge(state, stateDiff)
+            val stateMerged = Lattice.merge(state, stateDiff)
             antiEntropy.recordChange(Named(origin, stateDiff), stateMerged)
           case None =>
         }

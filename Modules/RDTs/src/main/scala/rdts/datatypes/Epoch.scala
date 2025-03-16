@@ -33,11 +33,11 @@ object Epoch {
   given decomposeInstance[E: Decompose]: Decompose[Epoch[E]] =
     case Epoch(c, v) => Decompose.decompose(v).map(Epoch(c, _))
 
-  given latticeInstance[E: Lattice]: Lattice[Epoch[E]] = new Lattice[Epoch[E]] {
+  given latticeInstance[E: Lattice as E]: Lattice[Epoch[E]] = new Lattice[Epoch[E]] {
 
     override def subsumption(left: Epoch[E], right: Epoch[E]): Boolean = (left, right) match {
       case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
-        cLeft < cRight || (cLeft == cRight && Lattice[E].subsumption(vLeft, vRight))
+        cLeft < cRight || (cLeft == cRight && E.subsumption(vLeft, vRight))
     }
 
     /** By assumption: associative, commutative, idempotent. */
@@ -45,7 +45,7 @@ object Epoch {
       case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
         if cLeft > cRight then left
         else if cRight > cLeft then right
-        else Epoch(cLeft, Lattice[E].merge(vLeft, vRight))
+        else Epoch(cLeft, E.merge(vLeft, vRight))
     }
   }
 }

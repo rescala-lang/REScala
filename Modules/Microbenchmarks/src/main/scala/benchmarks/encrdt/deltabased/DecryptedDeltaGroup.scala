@@ -23,7 +23,7 @@ object DecryptedDeltaGroup {
       tLattice: Lattice[T]
   ): Lattice[DecryptedDeltaGroup[T]] = (l, r) =>
     DecryptedDeltaGroup(
-      Lattice[T].merge(l.deltaGroup, r.deltaGroup),
+      Lattice.merge(l.deltaGroup, r.deltaGroup),
       l.dottedVersionVector.union(r.dottedVersionVector)
     )
 }

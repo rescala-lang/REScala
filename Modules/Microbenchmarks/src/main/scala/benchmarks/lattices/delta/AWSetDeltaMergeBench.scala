@@ -36,15 +36,15 @@ class AWSetDeltaMergeBench {
     val baseState = Dotted(ReplicatedSet.empty[Long])
 
     val deltaState = baseState.mod(_.addAll(using "".asId)(0L to size))
-    fullState = Lattice[Dotted[ReplicatedSet[Long]]].merge(baseState, deltaState)
+    fullState = Lattice.merge(baseState, deltaState)
 
     plusOneDeltaState = fullState.mod(_.add(using "".asId)(size))
-    plusOneState = Lattice[Dotted[ReplicatedSet[Long]]].merge(fullState, plusOneDeltaState)
+    plusOneState = Lattice.merge(fullState, plusOneDeltaState)
   }
 
   @Benchmark
   def fullMerge: Dotted[ReplicatedSet[Long]] = {
-    Lattice[Dotted[ReplicatedSet[Long]]].merge(fullState, plusOneState)
+    Lattice.merge(fullState, plusOneState)
   }
 
   @Benchmark

@@ -78,7 +78,7 @@ class DotSetTest extends munit.ScalaCheckSuite {
       val ccA = dsA `union` deletedA
       val ccB = dsB `union` deletedB
 
-      val Dotted(dsMerged, ccMerged) = Lattice[Dotted[Dots]].merge(
+      val Dotted(dsMerged, ccMerged) = Lattice.merge(
         Dotted(dsA, ccA),
         Dotted(dsB, ccB)
       )

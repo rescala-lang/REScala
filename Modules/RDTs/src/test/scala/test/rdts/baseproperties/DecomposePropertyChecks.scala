@@ -79,7 +79,7 @@ abstract class DecomposePropertyChecks[A](
           s"naive order broken:\n ${d}\n $theValue\n${decomposed.mkString("   ", "\n   ", "\n")}"
         )
         assert(
-          Lattice[A].subsumption(d, normalized),
+          Lattice.subsumption(d, normalized),
           s"decompose not smaller: »$d« <= »$theValue«\nmerge: ${d `merge` normalized}"
         )
         if decomposed.sizeIs > 1

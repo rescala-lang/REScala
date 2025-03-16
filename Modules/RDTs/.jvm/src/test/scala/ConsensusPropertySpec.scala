@@ -44,8 +44,8 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
 
     def nextLocalState(states: Map[LocalUid, C[A]]) =
       given Participants = Participants(states.keySet.map(_.uid))
-      val written        = Lattice[C[A]].merge(states(writer), states(writer).propose(value)(using writer))
-      Lattice[C[A]].merge(written, written.upkeep()(using writer))
+      val written        = Lattice.merge(states(writer), states(writer).propose(value)(using writer))
+      Lattice.merge(written, written.upkeep()(using writer))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]) =
       given Participants = Participants(state.keySet.map(_.uid))
@@ -57,8 +57,8 @@ class ConsensusPropertySpec[A: Arbitrary, C[_]: Consensus](
 
     def nextLocalState(states: Map[LocalUid, C[A]]) =
       given Participants = Participants(states.keySet.map(_.uid))
-      val merged: C[A]   = Lattice[C[A]].merge(states(left), states(right))
-      Lattice[C[A]].merge(merged, merged.upkeep()(using left))
+      val merged: C[A]   = Lattice.merge(states(left), states(right))
+      Lattice.merge(merged, merged.upkeep()(using left))
 
     override def postCondition(state: Map[LocalUid, C[A]], result: Try[Map[LocalUid, C[A]]]): Prop =
       given Participants = Participants(state.keySet.map(_.uid))

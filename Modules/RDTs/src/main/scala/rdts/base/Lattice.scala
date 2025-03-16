@@ -42,7 +42,8 @@ trait Lattice[A] {
 }
 
 object Lattice {
-  def apply[A](using ev: Lattice[A]): Lattice[A] = ev
+
+  def subsumption[A: Lattice as A](left: A, right: A): Boolean = A.subsumption(left, right)
 
   // forwarder for better syntax/type inference
   def merge[A: Lattice as A](left: A, right: A): A = A.merge(left, right)

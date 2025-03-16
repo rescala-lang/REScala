@@ -111,7 +111,7 @@ object Paxos:
       override def propose(value: A)(using LocalUid, Participants): Paxos[A] =
         // check if I can propose a value
         val afterProposal = c.phase2a
-        if Lattice[Paxos[A]].subsumption(afterProposal, c) then
+        if Lattice.subsumption(afterProposal, c) then
           // proposing did not work, try to become leader
           c.phase1a(value)
         else

@@ -35,7 +35,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val ccB   = dotsB `union` deletedB
 
       val Dotted(dfMerged, ccMerged) =
-        Lattice[Dotted[Map[Dot, Int]]].merge(
+        Lattice.merge(
           Dotted(dfA, ccA),
           Dotted(dfB, ccB)
         )
@@ -60,10 +60,10 @@ class DotFunTest extends munit.ScalaCheckSuite {
 
       (dotsA `intersect` dotsB).iterator.foreach { d =>
         assert(
-          dfMerged(d) == Lattice[Int].merge(dfA(d), dfB(d)),
+          dfMerged(d) == Lattice.merge(dfA(d), dfB(d)),
           s"If a dot is used as key in both DotFuns then the corresponding values should be merged in the result of DotFun.merge, but ${dfMerged(
               d
-            )} does not equal ${Lattice[Int].merge(dfA(d), dfB(d))}"
+            )} does not equal ${Lattice.merge(dfA(d), dfB(d))}"
         )
       }
 
@@ -94,7 +94,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       )
 
       val Dotted(dfMerged, ccMerged) =
-        Lattice[Dotted[Map[Dot, Int]]].merge(
+        Lattice.merge(
           Dotted(dfA, (ccA)),
           Dotted(dfB, (ccB))
         )
@@ -150,7 +150,7 @@ class DotFunTest extends munit.ScalaCheckSuite {
       val Dotted(dfMerged, ccMerged) =
         decomposed.foldLeft(Dotted(Map.empty[Dot, Int], Dots.empty)) {
           case (Dotted(dfA, ccA), Dotted(dfB, ccB)) =>
-            Lattice[Dotted[Map[Dot, Int]]].merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
+            Lattice.merge(Dotted(dfA, ccA), Dotted(dfB, ccB))
         }
 
       assertEquals(dfMerged, df)

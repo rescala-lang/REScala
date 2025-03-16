@@ -30,7 +30,7 @@ object MergeImpl {
       right.foreach { case (k, r) =>
         aggregate.updateWith(k) {
           case None    => Some(r)
-          case Some(l) => Some(Lattice[V].merge(l, r))
+          case Some(l) => Some(Lattice.merge(l, r))
         }
       }
       aggregate.toMap

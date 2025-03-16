@@ -137,7 +137,7 @@ object Paxos:
             case Some(proposal) =>
               // check if proposing does anything (i.e. I am the leader)
               val proposed = c.phase2a(proposal, value)
-              if Lattice[Paxos[A]].subsumption(proposed, c) then
+              if Lattice.subsumption(proposed, c) then
                 // proposing did not work, try to become leader
                 becomeLeader
               else
@@ -170,7 +170,7 @@ object Paxos:
             // we are in phase 1
             // start by promising
             val promise  = c.promise(proposal)
-            val newState = Lattice[Paxos[A]].merge(c, c.promise(proposal))
+            val newState = Lattice.merge(c, c.promise(proposal))
 
             // check if we have become the leader and can start phase 2 by proposing a value
             if {
@@ -179,7 +179,7 @@ object Paxos:
               newState.members(proposal.proposer).nonEmpty                          // we know what value to propose
             } then
               // combine deltas for promise and propose
-              Lattice[Paxos[A]].merge(
+              Lattice.merge(
                 promise,
                 newState.phase2a(proposal, newState.members(proposal.proposer).get.value)
               )

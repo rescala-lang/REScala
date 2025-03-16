@@ -25,7 +25,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val delta_2: GrowOnlyCounter = empty.inc()(using r2)
     assertEquals(delta_2.value, 1)
 
-    val merged: GrowOnlyCounter = Lattice[GrowOnlyCounter].merge(delta_1, delta_2)
+    val merged: GrowOnlyCounter = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.value, 2)
 
     val decomposed: Seq[GrowOnlyCounter] = Decompose.decompose(merged).toSeq
@@ -46,7 +46,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val delta_2: PosNegCounter = empty.dec()(using r2)
     assertEquals(delta_2.value, -1)
 
-    val merged: PosNegCounter = Lattice[PosNegCounter].merge(delta_1, delta_2)
+    val merged: PosNegCounter = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.value, 0)
 
     val decomposed: Seq[PosNegCounter] = Decompose.decompose(merged).toSeq.sortBy(_.value)
@@ -71,7 +71,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(delta_2.context.internal, Map.empty)
     assertEquals(delta_2.data.read, false)
 
-    val merged: Dotted[EnableWinsFlag] = Lattice[Dotted[EnableWinsFlag]].merge(delta_1, delta_2)
+    val merged: Dotted[EnableWinsFlag] = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.context.internal.size, 1)
     assertEquals(merged.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(merged.data.read, true)
@@ -147,7 +147,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val delta_2: Dotted[MultiVersionRegister[Int]] = empty.mod(_.write(using r2)(2))
     assertEquals(delta_2.data.read, Set(2))
 
-    val merged: Dotted[MultiVersionRegister[Int]] = Lattice[Dotted[MultiVersionRegister[Int]]].merge(delta_1, delta_2)
+    val merged: Dotted[MultiVersionRegister[Int]] = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.data.read, Set(1, 2))
 
     val decomposed: Seq[Dotted[MultiVersionRegister[Int]]] =
@@ -173,7 +173,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val delta_2: Dotted[LastWriterWins[Int]] = empty.write(2)
     assertEquals(delta_2.read, 2)
 
-    val merged: Dotted[LastWriterWins[Int]] = Lattice[Dotted[LastWriterWins[Int]]].merge(delta_1, delta_2)
+    val merged: Dotted[LastWriterWins[Int]] = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.read, 2)
 
     val decomposed: Seq[Dotted[LastWriterWins[Int]]] =
@@ -197,7 +197,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     val delta_2: GrowOnlySet[Int] = empty.insert(2)
     assertEquals(delta_2.elements, Set(2))
 
-    val merged: GrowOnlySet[Int] = Lattice[GrowOnlySet[Int]].merge(delta_1, delta_2)
+    val merged: GrowOnlySet[Int] = Lattice.merge(delta_1, delta_2)
     assertEquals(merged.elements, Set(1, 2))
 
     val decomposed: Seq[GrowOnlySet[Int]] =
@@ -246,7 +246,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(delta_2.data.get(2).map(_.payload), Some("two"))
 
     val merged: Dotted[GrowOnlyMap[Int, LastWriterWins[String]]] =
-      Lattice[Dotted[GrowOnlyMap[Int, LastWriterWins[String]]]].merge(delta_1, delta_2)
+      Lattice.merge(delta_1, delta_2)
     assertEquals(merged.context.internal, Map.empty)
     assertEquals(merged.data.keySet, Set(1, 2))
     assertEquals(merged.data.get(1).map(_.payload), Some("one"))
@@ -293,7 +293,7 @@ class DecomposeManualTests extends munit.ScalaCheckSuite {
     assertEquals(delta_2.data.get(2).map(_.read), Some(true))
 
     val merged: Dotted[GrowOnlyMap[Int, EnableWinsFlag]] =
-      Lattice[Dotted[GrowOnlyMap[Int, EnableWinsFlag]]].merge(delta_1, delta_2)
+      Lattice.merge(delta_1, delta_2)
     assertEquals(merged.context.internal.size, 2)
     assertEquals(merged.context.max(r1.uid), Some(Dot(r1.uid, 0)))
     assertEquals(merged.context.max(r2.uid), Some(Dot(r2.uid, 0)))

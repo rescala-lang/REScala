@@ -30,7 +30,7 @@ class EncryptedCrdt(initialState: MultiValueRegister[EncryptedState] = MultiValu
     } reduce ((leftTry: Try[DecryptedState[T]], rightTry: Try[DecryptedState[T]]) => {
       (leftTry, rightTry) match {
         case (Success(left), Success(right)) => Success(
-            DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merge(right.versionVector))
+            DecryptedState(Lattice.merge(left.state, right.state), left.versionVector.merge(right.versionVector))
           )
         case (Failure(e), _) => Failure(e)
         case (_, Failure(e)) => Failure(e)
@@ -38,7 +38,7 @@ class EncryptedCrdt(initialState: MultiValueRegister[EncryptedState] = MultiValu
     })
 
   def merge(other: MultiValueRegister[EncryptedState]): Unit = {
-    _state = Lattice[MultiValueRegister[EncryptedState]].merge(_state, other)
+    _state = Lattice.merge(_state, other)
   }
 }
 
@@ -72,6 +72,6 @@ object DecryptedState {
   given vectorClockJsonCodec: JsonValueCodec[VectorClock] = JsonCodecMaker.make
 
   given lattice[T](using tLattice: Lattice[T]): Lattice[DecryptedState[T]] = (left, right) => {
-    DecryptedState(Lattice[T].merge(left.state, right.state), left.versionVector.merge(right.versionVector))
+    DecryptedState(Lattice.merge(left.state, right.state), left.versionVector.merge(right.versionVector))
   }
 }

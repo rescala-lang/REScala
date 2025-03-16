@@ -105,7 +105,7 @@ class AntiEntropy[A](
       deltaBufferOut.collect {
         case (n, Named(origin, deltaState)) if n >= ackMap(to) && Uid.unwrap(origin) != to => deltaState
       } reduceOption { (left: Dotted[A], right: Dotted[A]) =>
-        Lattice[Dotted[A]].merge(left, right)
+        Lattice.merge(left, right)
       } map { deltaState => DeltaMsg(Named(replicaID.asId, deltaState), nextSeqNum) }
     }
   }
