@@ -4,7 +4,7 @@ import channels.NioTCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
 import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization}
+import com.google.crypto.tink.{Aead, CleartextKeysetHandle, JsonKeysetReader, JsonKeysetWriter, KeyTemplates, KeysetHandle, LegacyKeysetSerialization, RegistryConfiguration}
 import rdts.base.{Bottom, Lattice, LocalUid}
 import rdts.dotted.{Dotted, HasDots, Obrem}
 import replication.DeltaDissemination
@@ -40,7 +40,7 @@ class DataManagerConnectionManager[State: {JsonValueCodec, Lattice, Bottom, HasD
 
   private val keyset =
     CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(Files.newInputStream(keysetFilePath)))
-  private val aead: Aead = keyset.getPrimitive(classOf[Aead])
+  private val aead: Aead = keyset.getPrimitive(RegistryConfiguration.get(), classOf[Aead])
 
   println(LegacyKeysetSerialization.getKeysetInfo(keyset))
 

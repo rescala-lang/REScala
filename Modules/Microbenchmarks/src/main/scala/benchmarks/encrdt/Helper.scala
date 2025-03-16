@@ -1,7 +1,7 @@
 package benchmarks.encrdt
 
 import com.google.crypto.tink.aead.AeadConfig
-import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle}
+import com.google.crypto.tink.{Aead, KeyTemplates, KeysetHandle, RegistryConfiguration}
 import org.conscrypt.Conscrypt
 
 import java.security.Security
@@ -24,6 +24,6 @@ object Helper {
       System.err.println("Conscrypt could not be loaded, continuing anyway")
     AeadConfig.register()
     val keyset: KeysetHandle = KeysetHandle.generateNew(KeyTemplates.get(keyTemplateString))
-    keyset.getPrimitive(classOf[Aead])
+    keyset.getPrimitive(RegistryConfiguration.get, classOf[Aead])
   }
 }

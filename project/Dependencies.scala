@@ -18,7 +18,7 @@ object Dependencies {
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.17" % Test
   val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-RC1"
-  val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.15.0"
+  val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.17.0"
 
   val bouncyCastle = libraryDependencies ++=
     List(
@@ -30,8 +30,8 @@ object Dependencies {
     )
 
   def borer = libraryDependencies ++= Seq(
-    "io.bullet" %%% "borer-core"       % "1.15.0",
-    "io.bullet" %%% "borer-derivation" % "1.15.0"
+    "io.bullet" %%% "borer-core"       % "1.16.0",
+    "io.bullet" %%% "borer-derivation" % "1.16.0"
   )
 
   def jetty = {
