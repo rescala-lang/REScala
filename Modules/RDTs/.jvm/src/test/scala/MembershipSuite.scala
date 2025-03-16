@@ -10,6 +10,9 @@ import scala.util.Try
 class MembershipSuite extends munit.ScalaCheckSuite {
 //  override def scalaCheckInitialSeed = "6Y9lv63LraBdJTHwHFLm3ItFEF7sm6Ok2D3S22VQcTO="
 
+  // TODO: failing seed
+  // override def scalaCheckInitialSeed = "sw9ZNlZ9x0YrVuK2jCaUjc2Im3gi9os7yJbRCA1n8eP="
+
   override def scalaCheckTestParameters =
     super.scalaCheckTestParameters
       .withMinSuccessfulTests(1000)
