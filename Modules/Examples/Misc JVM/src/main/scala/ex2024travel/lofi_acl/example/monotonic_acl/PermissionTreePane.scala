@@ -228,14 +228,15 @@ class PermissionTreePane(
             PARTIAL,
             Map(
               "data"     -> PermissionTree(PARTIAL, entries),
-              "observed" -> PermissionTree.allow
+              "observed" -> PermissionTree.allow,
+              "deletions" -> PermissionTree.allow
             )
           ))
         ))
       case _ =>
 
     inline def expenseWildcardSubPermissionTree(field: String): IArray[String] = {
-      IArray(s"expenses.data.*.value.$field", "expenses.data.*.dots", "expenses.observed")
+      IArray(s"expenses.data.*.value.$field", "expenses.data.*.dots", "expenses.observed", "expenses.deletions")
     }
 
     // Expenses wildcard
@@ -292,6 +293,8 @@ class PermissionTreePane(
     read = filter.minimizePermissionTree(read)
     filter.validatePermissionTree(write)
     write = filter.minimizePermissionTree(write)
+    println(s"Read: ${read.toPathStringSet}")
+    println(s"Write: ${write.toPathStringSet}")
     (read, write)
   }
 }

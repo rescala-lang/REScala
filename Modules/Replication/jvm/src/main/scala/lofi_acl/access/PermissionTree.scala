@@ -5,6 +5,7 @@ import lofi_acl.access.PermissionTree.{allow, lattice}
 import rdts.base.{Bottom, Lattice}
 
 import scala.annotation.{tailrec, targetName}
+import scala.collection.immutable.Queue
 
 case class PermissionTree(permission: Permission, children: Map[String, PermissionTree]) {
 
@@ -34,6 +35,19 @@ case class PermissionTree(permission: Permission, children: Map[String, Permissi
         label -> leftChildren(label).intersect(rightChildren(label))
       )
       lattice.normalizeWildcards(PermissionTree(PARTIAL, intersectionOfChildren.toMap))
+
+  def toPathStringSet: Set[String] = {
+    if permission == ALLOW then return Set("*")
+    val result = Set.empty[String]
+    extension (p: PermissionTree)
+      def pathStringsRec(pathElements: Queue[String]): Set[String] = p match
+        case PermissionTree(ALLOW, _)                              => Set(pathElements.mkString("", ".", ".*"))
+        case PermissionTree(PARTIAL, children) if children.isEmpty => Set()
+        case PermissionTree(PARTIAL, children) =>
+          children.flatMap((childName, childPerm) => childPerm.pathStringsRec(pathElements.appended(childName))).toSet
+
+    this.pathStringsRec(Queue.empty)
+  }
 }
 
 object PermissionTree {
