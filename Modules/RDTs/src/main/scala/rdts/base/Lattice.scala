@@ -33,7 +33,6 @@ trait Lattice[A] {
     /** Merging `right` into `left` has no effect */
     inline def subsumes(right: A): Boolean = Lattice.this.subsumption(right, left)
 
-    /** Merging `left` and `right` would be strictly larger than right */
     inline def inflates(right: A): Boolean = !Lattice.this.subsumption(left, right)
 
     @targetName("mergeInfix")
@@ -148,11 +147,16 @@ object Lattice {
     */
   inline given tupleLattice[T <: Tuple](using pm: Mirror.ProductOf[T]): Lattice[T] = derived
 
+  inline def derived[T <: Product : Mirror.ProductOf]: Lattice[T] = productLattice
+
+  /** Sum Lattice merges considers later defined (those with larger ordinals) constructors as larger.
+   * Notably, this implies `None < Some` for Option and `Left < Right` for Either.
+   * For an `enum E { case A, B, C }` it will be `A < B < C` */
   inline def sumLattice[T](using sm: Mirror.SumOf[T]): Lattice[T] =
     val lattices: Tuple = summonAll[Tuple.Map[sm.MirroredElemTypes, Lattice]]
     new Derivation.SumLattice[T](sm, lattices)
 
-  inline def derived[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
+  inline def productLattice[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]]
     val bottoms: Tuple  = Derivation.summonAllMaybe[Tuple.Map[pm.MirroredElemTypes, Bottom]]
     new Derivation.ProductLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
