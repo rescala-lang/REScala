@@ -236,10 +236,18 @@ object cli {
           abort.closeRequest = true
           executor.shutdownNow()
         },
+        subcommand("etcd-client-timed", "starts a benchmark client") {
+          val client = EtcdClient(name.value, endpoints.value)
+
+          client.benchmarkTimed(warmup.value, measurement.value, mode.value)
+
+          executor.shutdownNow()
+        },
         subcommand("etcd-client", "starts a client to interact with an etcd cluster") {
           val client = EtcdClient(name.value, endpoints.value)
 
           ClientCLI(name.value, client).startCLI()
+
           executor.shutdownNow()
         },
       )

@@ -22,16 +22,18 @@ trait Client(name: Uid) {
   def read(key: String): Unit                 = handleOp(KVOperation.Read(key))
   def write(key: String, value: String): Unit = handleOp(KVOperation.Write(key, value))
 
-  def multiget(key: String, times: Int): Unit = {
+  def multiget(key: String, times: Int, offset: Int = 0): Unit = {
     val start = System.nanoTime()
-    for i <- 1 to times do read(key.replace("%n", i.toString))
+    for i <- (offset + 1) to (times + offset) do read(key.replace("%n", i.toString))
     println(s"Did $times get queries in ${(System.nanoTime() - start) / 1_000_000}ms")
+    println(s"Did ${times.toDouble / ((System.nanoTime() - start) / 1_000_000_000d)} ops/s")
   }
 
-  def multiput(key: String, value: String, times: Int): Unit = {
+  def multiput(key: String, value: String, times: Int, offset: Int = 0): Unit = {
     val start = System.nanoTime()
-    for i <- 1 to times do write(key.replace("%n", i.toString), value.replace("%n", i.toString))
+    for i <- (offset + 1) to (times + offset) do write(key.replace("%n", i.toString), value.replace("%n", i.toString))
     println(s"Did $times put queries in ${(System.nanoTime() - start) / 1_000_000}ms")
+    println(s"Did ${times.toDouble / ((System.nanoTime() - start) / 1_000_000_000d)} ops/s")
   }
 
   def mixed(min: Int, max: Int, times: Int = 1): Unit = {
@@ -44,10 +46,11 @@ trait Client(name: Uid) {
         write(f"key$num", f"value$num")
     }
     println(s"Did $times mixed queries in ${(System.nanoTime() - start) / 1_000_000}ms")
+    println(s"Did ${times.toDouble / ((System.nanoTime() - start) / 1_000_000_000d)} ops/s")
   }
 
   def benchmark(mode: BenchmarkMode, times: Int, min: Int = 1, max: Int = 10000): Unit = {
-    printResults = false
+    // printResults = false
 
     println("Initializing")
 
@@ -68,10 +71,17 @@ trait Client(name: Uid) {
 
     doBenchmark = true
 
+    val start = System.currentTimeMillis()
+
     mode match
       case BenchmarkMode.Read  => multiget("key%n", times)
       case BenchmarkMode.Write => multiput("key%n", "value%n", times)
       case BenchmarkMode.Mixed => mixed(min, max, times)
+
+    val duration = System.currentTimeMillis() - start
+
+    println(s"Did $times queries in ${duration}ms")
+    println(s"Did ${times / (duration / 1000)} op/s")
 
     saveBenchmark(name)
   }
@@ -82,7 +92,7 @@ trait Client(name: Uid) {
     println("Initializing")
 
     mode match
-      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput(s"${name.delegate}-key%n", "value%n", 1000)
+      case BenchmarkMode.Read | BenchmarkMode.Mixed => multiput("key%n", "value%n", 1000)
       case BenchmarkMode.Write                      =>
 
     println("Warmup")
@@ -91,9 +101,9 @@ trait Client(name: Uid) {
 
     while (System.currentTimeMillis() - warmupStart) < warmup * 1000 do {
       mode match
-        case BenchmarkMode.Read  => multiget(s"${name.delegate}-key", 1000)
-        case BenchmarkMode.Write => multiput(s"${name.delegate}-key", "value", 1000)
-        case BenchmarkMode.Mixed => mixed(1, 1000, 1000)
+        case BenchmarkMode.Read  => multiget("key%n", 10, Math.round(Math.random() * 990).toInt)
+        case BenchmarkMode.Write => multiput("key%n", "value%n", 10, Math.round(Math.random() * 990).toInt)
+        case BenchmarkMode.Mixed => mixed(1, 1000, 10)
     }
 
     println("Measurement")
@@ -101,12 +111,20 @@ trait Client(name: Uid) {
     val measurementStart = System.currentTimeMillis()
     doBenchmark = true
 
+    var queries = 0
+
     while (System.currentTimeMillis() - measurementStart) < measurement * 1000 do {
       mode match
-        case BenchmarkMode.Read  => multiget(s"${name.delegate}-key", 1000)
-        case BenchmarkMode.Write => multiput(s"${name.delegate}-key", "value", 1000)
-        case BenchmarkMode.Mixed => mixed(1, 1000, 1000)
+        case BenchmarkMode.Read  => multiget("key%n", 10, Math.round(Math.random() * 990).toInt)
+        case BenchmarkMode.Write => multiput("key%n", "value%n", 10, Math.round(Math.random() * 990).toInt)
+        case BenchmarkMode.Mixed => mixed(1, 10)
+      queries += 10
     }
+
+    val duration = System.currentTimeMillis() - measurementStart
+
+    println(s"\nDid $queries queries in ${duration}ms")
+    println(s"Did ${queries / (duration / 1000)} op/s")
 
     saveBenchmark(name)
   }

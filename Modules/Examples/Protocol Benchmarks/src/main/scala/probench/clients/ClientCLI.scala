@@ -18,6 +18,7 @@ class ClientCLI(name: Uid, client: Client) {
   private val mp: Regex            = """mp ([\d_]+)""".r
   private val benchmark: Regex     = """benchmark""".r
   private val saveBenchmark: Regex = """save-benchmark""".r
+  private val printResults: Regex  = """print-results""".r
 
   private def parseInt(str: String): Int = str.replace("_", "").toInt
 
@@ -38,6 +39,9 @@ class ClientCLI(name: Uid, client: Client) {
           client.doBenchmark = true
         case Some(saveBenchmark()) =>
           client.saveBenchmark(name)
+        case Some(printResults()) =>
+          client.printResults = !client.printResults
+          println(s"Printing Results: ${client.printResults}")
         case None | Some("exit") => running = false
         case _ =>
           println("assuming put")
