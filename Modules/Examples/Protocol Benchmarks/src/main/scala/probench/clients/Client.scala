@@ -36,7 +36,7 @@ trait Client(name: Uid) {
     println(s"Did ${times.toDouble / ((System.nanoTime() - start) / 1_000_000_000d)} ops/s")
   }
 
-  def mixed(min: Int, max: Int, times: Int = 1): Unit = {
+  def mixed(min: Int, max: Int, times: Int): Unit = {
     val start = System.nanoTime()
     for i <- 1 to times do {
       val num = Math.round(Math.random() * (max - min) + min).toInt
@@ -117,7 +117,7 @@ trait Client(name: Uid) {
       mode match
         case BenchmarkMode.Read  => multiget("key%n", 10, Math.round(Math.random() * 990).toInt)
         case BenchmarkMode.Write => multiput("key%n", "value%n", 10, Math.round(Math.random() * 990).toInt)
-        case BenchmarkMode.Mixed => mixed(1, 10)
+        case BenchmarkMode.Mixed => mixed(1, 10, 10)
       queries += 10
     }
 
