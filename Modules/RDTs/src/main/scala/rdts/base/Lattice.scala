@@ -154,7 +154,7 @@ object Lattice {
    * For an `enum E { case A, B, C }` it will be `A < B < C` */
   inline def sumLattice[T](using sm: Mirror.SumOf[T]): Lattice[T] =
     val lattices: Tuple = summonAll[Tuple.Map[sm.MirroredElemTypes, Lattice]]
-    new Derivation.SumLattice[T](sm, lattices)
+    new Derivation.SumLattice[T](Derivation.MirrorOrdinal(sm, lattices))
 
   inline def productLattice[T <: Product](using pm: Mirror.ProductOf[T]): Lattice[T] = {
     val lattices: Tuple = summonAll[Tuple.Map[pm.MirroredElemTypes, Lattice]]
@@ -162,25 +162,31 @@ object Lattice {
     new Derivation.ProductLattice[T](lattices, bottoms, pm, valueOf[pm.MirroredLabel])
   }
 
+  trait OrdinalLattices[T] {
+    def compare(left: T, right: T): Int
+    def lattice(elem: T): Lattice[T]
+  }
+
+
   object Derivation {
 
-    class SumLattice[T](sm: Mirror.SumOf[T], lattices: Tuple) extends Lattice[T] {
+    case class MirrorOrdinal[T](sm: Mirror.SumOf[T], lattices: Tuple) extends OrdinalLattices[T] {
+      def compare(left: T, right: T): Int = Integer.compare(sm.ordinal(left), sm.ordinal(right))
+      override def lattice(elem: T): Lattice[T] = lattices.productElement(sm.ordinal(elem)).asInstanceOf[Lattice[T]]
+    }
 
-      private def lat(i: Int): Lattice[T] = lattices.productElement(i).asInstanceOf[Lattice[T]]
+
+    class SumLattice[T](ol: OrdinalLattices[T]) extends Lattice[T] {
 
       def merge(left: T, right: T): T =
-        val lo = sm.ordinal(left)
-        val ro = sm.ordinal(right)
-        Integer.compare(lo, ro) match
-          case 0          => lat(lo).merge(left, right)
+        ol.compare(left, right) match
+          case 0          => ol.lattice(left).merge(left, right)
           case x if x < 0 => right
           case x if x > 0 => left
 
       override def subsumption(left: T, right: T): Boolean =
-        val lo = sm.ordinal(left)
-        val ro = sm.ordinal(right)
-        Integer.compare(lo, ro) match
-          case 0     => lat(lo).subsumption(left, right)
+        ol.compare(left, right) match
+          case 0     => ol.lattice(left).subsumption(left, right)
           case other => other < 0
     }
 

@@ -1,5 +1,6 @@
 package rdts.datatypes
 
+import rdts.base.Lattice.OrdinalLattices
 import rdts.base.{Bottom, Decompose, Lattice}
 import rdts.dotted.HasDots
 import rdts.time.{Dots, Time}
@@ -33,19 +34,12 @@ object Epoch {
   given decomposeInstance[E: Decompose]: Decompose[Epoch[E]] =
     case Epoch(c, v) => Decompose.decompose(v).map(Epoch(c, _))
 
-  given latticeInstance[E: Lattice as E]: Lattice[Epoch[E]] = new Lattice[Epoch[E]] {
-
-    override def subsumption(left: Epoch[E], right: Epoch[E]): Boolean = (left, right) match {
-      case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
-        cLeft < cRight || (cLeft == cRight && E.subsumption(vLeft, vRight))
-    }
-
-    /** By assumption: associative, commutative, idempotent. */
-    override def merge(left: Epoch[E], right: Epoch[E]): Epoch[E] = (left, right) match {
-      case (Epoch(cLeft, vLeft), Epoch(cRight, vRight)) =>
-        if cLeft > cRight then left
-        else if cRight > cLeft then right
-        else Epoch(cLeft, E.merge(vLeft, vRight))
-    }
+  given latticeInstance[E: Lattice as E]: Lattice[Epoch[E]] = {
+    given Lattice[Time] = Lattice.assertEquals
+    val prodEpoche = Lattice.productLattice[Epoch[E]]
+    Lattice.Derivation.SumLattice[Epoch[E]](new OrdinalLattices[Epoch[E]] {
+      override def compare(left: Epoch[E], right: Epoch[E]): Int = java.lang.Long.compare(left.counter, right.counter)
+      override def lattice(elem: Epoch[E]): Lattice[Epoch[E]]         = prodEpoche
+    })
   }
 }
