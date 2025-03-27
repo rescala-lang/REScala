@@ -3,7 +3,7 @@ package loreCompilerPlugin
 import dotty.tools.dotc.plugins.PluginPhase
 import dotty.tools.dotc.transform.Inlining
 import ujson.Obj
-import loreCompilerPlugin.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
+import loreCompilerPlugin.lsp.LSPDataTypes.*
 
 object DafnyPhase {
   val name: String        = "Dafny"
@@ -15,8 +15,6 @@ class DafnyPhase extends PluginPhase {
   override val description: String     = DafnyPhase.description
   override val runsAfter: Set[String]  = Set(LoRePhase.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
-
-  println(s"entered $phaseName compiler phase")
 
   // TODO: Begin of test embedding for lsp code
   private val folderPath: String = "file:///D:/Repositories/thesis-code/dafny"

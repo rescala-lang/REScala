@@ -1,10 +1,8 @@
-package loreCompilerPlugin
+package loreCompilerPlugin.lsp
 
-import DafnyLSPClient.constructLSPMessage
 import os.{SubProcess, spawn}
 import ujson.{Null, Obj, Str, Value, read as ujsonRead}
 import upickle.default.{read as upickleRead, write as upickleWrite}
-
 import java.nio.charset.StandardCharsets
 import scala.collection.mutable.ArrayBuffer
 import LSPDataTypes.*
@@ -29,7 +27,7 @@ class DafnyLSPClient {
     val lspProcess: SubProcess = spawn(cmd = ("dafny", "server"))
     process = Some(lspProcess)
 
-    val initializeMessage: String = constructLSPMessage("initialize", Some(initId))(
+    val initializeMessage: String = DafnyLSPClient.constructLSPMessage("initialize", Some(initId))(
       ("processId", Null),
       ("rootUri", Str(rootUri)),
       ("capabilities", Obj())
@@ -43,7 +41,7 @@ class DafnyLSPClient {
       println("Successfully initialized a connection with the language server.")
     }
 
-    val initializedNotification: String = constructLSPMessage("initialized")()
+    val initializedNotification: String = DafnyLSPClient.constructLSPMessage("initialized")()
     sendMessage(initializedNotification)
   }
 

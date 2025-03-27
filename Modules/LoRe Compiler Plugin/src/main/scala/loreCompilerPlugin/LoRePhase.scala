@@ -25,7 +25,6 @@ class LoRePhase extends PluginPhase {
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
-  println(s"entered $phaseName compiler phase")
   private var loreTerms: Map[(SourceFile, Symbol), List[Term]] = Map()
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.

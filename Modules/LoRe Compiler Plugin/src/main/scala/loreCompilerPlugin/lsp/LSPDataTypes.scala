@@ -1,4 +1,4 @@
-package loreCompilerPlugin
+package loreCompilerPlugin.lsp
 
 import upickle.default.ReadWriter
 import ujson.Value
