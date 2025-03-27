@@ -15,11 +15,11 @@ class DafnyLSPClient {
   private var process: Option[SubProcess] = None
 
   /** Initializes the internal instance running the Dafny language server, if not running.
-   * If there is already a running instance present, this method does nothing.
-   *
-   * @param rootUri The root URI of the project the LS is being booted for.
-   * @param initId The id to use for the LSP initialization message.
-   */
+    * If there is already a running instance present, this method does nothing.
+    *
+    * @param rootUri The root URI of the project the LS is being booted for.
+    * @param initId The id to use for the LSP initialization message.
+    */
   def initializeLSP(rootUri: String, initId: Int = 0): Unit = {
     if process.isDefined && process.get.isAlive() then {
       println("Attempted to initialize LSP when active process already exists")
@@ -37,25 +37,34 @@ class DafnyLSPClient {
     sendMessage(initializeMessage)
     val initRes: LSPResponse = waitForResponse(initId)
 
+    if initRes.error.isDefined then {
+      throw new Error(s"An error occurred initializing the LSP client:\n${upickleWrite(initRes.error.get)}")
+    } else {
+      println("Successfully initialized a connection with the language server.")
+    }
+
     val initializedNotification: String = constructLSPMessage("initialized")()
     sendMessage(initializedNotification)
   }
 
   /** Shut down the internal instance running the Dafny language server, if running. */
   def shutdownLSP(): Unit = {
-    if process.isDefined && process.get.isAlive() then {
-      process.get.destroy()
+    if process.isDefined then {
+      // Only try to destroy if it wasn't already
+      if process.get.isAlive() then process.get.destroy()
+
+      // Reset value regardless of whether it was alive or not
       process = None
     }
   }
 
   /** Sends a JSON-RPC message to the language server.
-   *
-   * The required message header is automatically prepended to the
-   * input string and must not already be included in it.
-   *
-   * @param message The message to write.
-   */
+    *
+    * The required message header is automatically prepended to the
+    * input string and must not already be included in it.
+    *
+    * @param message The message to write.
+    */
   def sendMessage(message: String): Unit = {
     val proc: SubProcess = process.getOrElse(throw new Error("LSP Client not initialized"))
 
@@ -74,9 +83,9 @@ class DafnyLSPClient {
   }
 
   /** Reads a message from the language server.
-   *
-   * @return The read message.
-   */
+    *
+    * @return The read message.
+    */
   def readMessage(): LSPMessage = {
     val msgString: String = readStringMessage()
 
@@ -84,12 +93,12 @@ class DafnyLSPClient {
   }
 
   /** Reads an JSON-RPC message from the language server by first reading the header until the two CRLF
-   * sequences ("\r\n\r\n") are found, and then reading the JSON payload of the expected length.
-   * This ignores any Content-Type headers, if included, and only processes Content-Length.
-   * If there are no messages to be read, this will block until there is one.
-   *
-   * @return The read message.
-   */
+    * sequences ("\r\n\r\n") are found, and then reading the JSON payload of the expected length.
+    * This ignores any Content-Type headers, if included, and only processes Content-Length.
+    * If there are no messages to be read, this will block until there is one.
+    *
+    * @return The read message.
+    */
   private def readStringMessage(): String = {
     val proc: SubProcess = process.getOrElse(throw new Error("LSP Client not initialized"))
 
@@ -134,10 +143,10 @@ class DafnyLSPClient {
   }
 
   /** Parses a string containing a JSON message into a LSPMessage value. Used to read message from the server.
-   *
-   * @param message The JSON message to parse as a string.
-   * @return The parsed JSON message as a LSPMessage value.
-   */
+    *
+    * @param message The JSON message to parse as a string.
+    * @return The parsed JSON message as a LSPMessage value.
+    */
   private def parseLSPMessage(message: String): LSPMessage = {
     val json: Value            = ujsonRead(message)
     var lspMessage: LSPMessage = null
@@ -188,11 +197,11 @@ class DafnyLSPClient {
   }
 
   /** Reads messages from the language server until a message with the "dafny/textDocument/symbolStatus"
-   * method is found, in which the "status" parameter of all entries in the namedVerifiables list are either
-   * "Error" or "Correct". Any messages read while waiting that don't match will be discarded.
-   *
-   * @return The symbol status notification.
-   */
+    * method is found, in which the "status" parameter of all entries in the namedVerifiables list are either
+    * "Error" or "Correct". Any messages read while waiting that don't match will be discarded.
+    *
+    * @return The symbol status notification.
+    */
   def waitForVerificationResult(): (SymbolStatusNotification, Option[LSPNotification]) = {
     println(s"Waiting for a \"dafny/textDocument/symbolStatus\"-Notification of all status 4 or 5...")
     var latestReadMessage: LSPMessage                    = readMessage()
@@ -202,8 +211,8 @@ class DafnyLSPClient {
     // notification, or any of the named verifiables are not on status 4/5 yet
     while !latestReadMessage.isInstanceOf[SymbolStatusNotification]
       || latestReadMessage.asInstanceOf[SymbolStatusNotification].params.namedVerifiables.exists(nv =>
-      nv.status != VerificationStatus.Error && nv.status != VerificationStatus.Correct
-    )
+        nv.status != VerificationStatus.Error && nv.status != VerificationStatus.Correct
+      )
     do {
       // If a diagnostics message was read, check if it contains a fatal error (e.g. syntax) or just verification errors
       // If it contains a fatal error, throw an error. If it's just verification errors, save the message to return after.
@@ -226,11 +235,11 @@ class DafnyLSPClient {
   }
 
   /** Reads messages from the language server until a notification using the given method is found.
-   * Any messages read while waiting that aren't notifications or don't match the given method will be discarded.
-   *
-   * @param method The method which is being waited for.
-   * @return The notification using the given method.
-   */
+    * Any messages read while waiting that aren't notifications or don't match the given method will be discarded.
+    *
+    * @param method The method which is being waited for.
+    * @return The notification using the given method.
+    */
   def waitForNotification(method: String): LSPNotification = {
     println(s"Waiting for a notification with method $method...")
     var msg: LSPMessage = readMessage()
@@ -245,11 +254,11 @@ class DafnyLSPClient {
   }
 
   /** Reads messages from the language server until a message using the given id is found.
-   * Any messages read while waiting that don't match the given id will be discarded.
-   *
-   * @param id           The id which is being waited for.
-   * @return The message using the given id.
-   */
+    * Any messages read while waiting that don't match the given id will be discarded.
+    *
+    * @param id           The id which is being waited for.
+    * @return The message using the given id.
+    */
   def waitForResponse(id: Int): LSPResponse = {
     println(s"Waiting for a response with id $id...")
     var msg: LSPMessage = readMessage()
@@ -264,15 +273,15 @@ class DafnyLSPClient {
   }
 
   /** Send the given message with the given id and wait for a response to it.
-   *
-   * @param message      The message to send.
-   * @param id           The id of the message being sent.
-   * @return The response to the message that was sent.
-   */
+    *
+    * @param message      The message to send.
+    * @param id           The id of the message being sent.
+    * @return The response to the message that was sent.
+    */
   def sendAndWaitForResponse(
-                              message: String,
-                              id: Int
-                            ): LSPDataTypes.LSPResponse = {
+      message: String,
+      id: Int
+  ): LSPDataTypes.LSPResponse = {
     sendMessage(message)
     waitForResponse(id)
   }
@@ -281,14 +290,14 @@ class DafnyLSPClient {
 object DafnyLSPClient {
 
   /** Creates a JSON string representation of the given LSP message parameters.
-   * Used to build requests and notifications for the server.
-   *
-   * @param method The method of the message.
-   * @param id     The id of the message. Required for requests, omitted for notifications.
-   * @param params A list of message parameters. For primitive parameters such as a string or an integer,
-   *               rather than a list of named parameters, specify said parameter's name to be "_primitive".
-   * @return The string representing the message as a JSON object.
-   */
+    * Used to build requests and notifications for the server.
+    *
+    * @param method The method of the message.
+    * @param id     The id of the message. Required for requests, omitted for notifications.
+    * @param params A list of message parameters. For primitive parameters such as a string or an integer,
+    *               rather than a list of named parameters, specify said parameter's name to be "_primitive".
+    * @return The string representing the message as a JSON object.
+    */
   def constructLSPMessage(method: String, id: Option[Int] = None)(params: (String, Value)*): String = {
     val jsonObject: Value = Obj(
       "jsonrpc" -> "2.0",
