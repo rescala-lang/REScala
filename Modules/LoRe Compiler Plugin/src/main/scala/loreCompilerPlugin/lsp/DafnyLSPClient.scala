@@ -1,11 +1,11 @@
 package loreCompilerPlugin.lsp
 
+import java.nio.charset.StandardCharsets
+import LSPDataTypes.*
 import os.{SubProcess, spawn}
+import scala.collection.mutable.ArrayBuffer
 import ujson.{Null, Obj, Str, Value, read as ujsonRead}
 import upickle.default.{read as upickleRead, write as upickleWrite}
-import java.nio.charset.StandardCharsets
-import scala.collection.mutable.ArrayBuffer
-import LSPDataTypes.*
 
 class DafnyLSPClient {
 

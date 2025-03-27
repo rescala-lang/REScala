@@ -2,8 +2,9 @@ package loreCompilerPlugin
 
 import dotty.tools.dotc.plugins.PluginPhase
 import dotty.tools.dotc.transform.Inlining
-import ujson.Obj
+import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.*
+import ujson.Obj
 
 object DafnyPhase {
   val name: String        = "Dafny"
