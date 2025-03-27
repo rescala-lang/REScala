@@ -25,6 +25,8 @@ class LoRePhase extends PluginPhase {
   override val runsAfter: Set[String]  = Set(Pickler.name)
   override val runsBefore: Set[String] = Set(Inlining.name)
 
+  println("lore phase initialized")
+
   private var loreTerms: Map[(SourceFile, Symbol), List[Term]] = Map()
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
@@ -410,5 +412,10 @@ class LoRePhase extends PluginPhase {
             val newList: List[Term] = List(loreTerm)
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
         tree // Return the original tree to further compiler phases
+  }
+
+  override def run(using ctx: Context): Unit = {
+    println("lore phase running")
+//    print(ctx.toString)
   }
 }
