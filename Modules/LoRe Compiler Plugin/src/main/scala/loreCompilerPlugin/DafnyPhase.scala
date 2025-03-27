@@ -1,10 +1,12 @@
 package loreCompilerPlugin
 
+import dotty.tools.dotc.CompilationUnit
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.plugins.PluginPhase
 import dotty.tools.dotc.transform.Inlining
 import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.*
+import scala.util.matching.Regex
 import ujson.Obj
 
 object DafnyPhase {
@@ -20,51 +22,66 @@ class DafnyPhase extends PluginPhase {
 
   println("dafny phase initialized")
 
-  private val folderPath: String = "file:///D:/Repositories/thesis-code/dafny"
-  private val lspClient: DafnyLSPClient = new DafnyLSPClient()
-  lspClient.initializeLSP(folderPath)
+  // Run phase once for all compilation units ("run" is ran for each compilation unit individually)
+  override def runOn(units: List[CompilationUnit])(using ctx: Context): List[CompilationUnit] = {
+    // First, run the default runOn method for regular Scala compilation (do not remove this).
+    val result = super.runOn(units)
 
-  override def run(using ctx: Context): Unit = {
     println("dafny phase running")
-//    println(ctx.toString)
-    // Once implemented properly, this file path and dafny code is constructed based on the given context
-    val filePath: String = "file:///D:/Repositories/thesis-code/dafny/test.dfy"
-    val dafnyCode: String =
-      """method Test(x: int) returns (y: int)
-        |  ensures {:error "Error on LoRe ln X, col Y"} y == 0
-        |  {
-        |    y := x;
-        |  }
-        |
-        |method Main()
-        |{
-        |  var a: int := Test(0);
-        |  print a;
-        |}""".stripMargin
 
-    val didOpenMessage: String = DafnyLSPClient.constructLSPMessage("textDocument/didOpen")(
-      (
-        "textDocument",
-        Obj(
-          "uri" -> filePath,
-          "languageId" -> "dafny",
-          "version" -> 1,
-          "text" -> dafnyCode
-        )
-      ),
-    )
-    lspClient.sendMessage(didOpenMessage)
+    // Only need to initialize the LSP client once
+    val lspClient: DafnyLSPClient = new DafnyLSPClient()
+//    val folderPath: String = units.head.source.path.substring(0, units.head.source.path.indexOf(units.head.source.name))
+    val folderPath: String = "file:///D:/Repositories/thesis-code/dafny"
+    lspClient.initializeLSP(folderPath)
+    var counter: Int = 0
 
-    val (verificationResult: SymbolStatusNotification, diagnosticsNotification: Option[LSPNotification]) =
-      lspClient.waitForVerificationResult()
+    // Then, run the unit-specific code for each unit individually
+    for unit <- units do {
+      counter += 1
+//      val filePath: String = unit.source.path.replace(".scala", ".dfy")
+      val filePath: String = s"file:///D:/Repositories/thesis-code/dafny/test${counter}.dfy"
+      // todo: this is dummy code, normally output by the to-be-implemented dafny generator
+      val dafnyCode: String =
+        s"""method Test(x: int) returns (y: int)
+          |  ensures {:error "Error on LoRe ln X, col Y"} y == ${if counter == 1 then "x" else counter}
+          |  {
+          |    y := x;
+          |  }
+          |
+          |method Main()
+          |{
+          |  var a: int := Test(0);
+          |  print a;
+          |}""".stripMargin
 
-    val erroneousVerifiables: List[NamedVerifiable] =
-      verificationResult.params.namedVerifiables.filter(nv => nv.status == VerificationStatus.Error)
+      val didOpenMessage: String = DafnyLSPClient.constructLSPMessage("textDocument/didOpen")(
+        (
+          "textDocument",
+          Obj(
+            "uri"        -> filePath,
+            "languageId" -> "dafny",
+            "version"    -> 1,
+            "text"       -> dafnyCode
+          )
+        ),
+      )
+      lspClient.sendMessage(didOpenMessage)
 
-    if erroneousVerifiables.isEmpty then {
-      println("No unverifiable claims could be found in the program.")
-    } else {
-      println("Some claims in the program could not be verified.")
+      val (verificationResult: SymbolStatusNotification, diagnosticsNotification: Option[LSPNotification]) =
+        lspClient.waitForVerificationResult()
+
+      val erroneousVerifiables: List[NamedVerifiable] =
+        verificationResult.params.namedVerifiables.filter(nv => nv.status == VerificationStatus.Error)
+
+      if erroneousVerifiables.isEmpty then {
+        println("No unverifiable claims could be found in the program.")
+      } else {
+        println("Some claims in the program could not be verified.")
+      }
     }
+
+    // Always return result of default runOn method for regular Scala compilation, as we do not modify it.
+    result
   }
 }

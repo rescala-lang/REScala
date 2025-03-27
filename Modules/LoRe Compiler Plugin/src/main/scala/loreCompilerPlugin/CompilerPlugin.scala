@@ -8,5 +8,5 @@ class CompilerPlugin extends StandardPlugin {
   val description: String = "Verifies Scala-embedded LoRe code through Dafny"
 
   @nowarn // which variant to override depends on the scala version, use the old one until 3.5 is more stable
-  override def init(options: List[String]): List[PluginPhase] = List(new LoRePhase, new DafnyPhase)
+  override def init(options: List[String]): List[PluginPhase] = List(new LoRePhase)
 }

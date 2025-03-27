@@ -9,10 +9,13 @@ import dotty.tools.dotc.core.StdNames.nme
 import dotty.tools.dotc.core.Symbols.Symbol
 import dotty.tools.dotc.core.Types.{AppliedType, CachedTypeRef, TypeRef, Type as ScalaType}
 import dotty.tools.dotc.plugins.PluginPhase
-import dotty.tools.dotc.report
+import dotty.tools.dotc.{CompilationUnit, report}
 import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
 import lore.ast.{Type as LoReType, *}
+import loreCompilerPlugin.lsp.DafnyLSPClient
+import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
+import ujson.Obj
 
 object LoRePhase {
   val name: String        = "LoRe"
@@ -414,8 +417,71 @@ class LoRePhase extends PluginPhase {
         tree // Return the original tree to further compiler phases
   }
 
-  override def run(using ctx: Context): Unit = {
-    println("lore phase running")
-//    print(ctx.toString)
+  override def runOn(units: List[CompilationUnit])(using ctx: Context): List[CompilationUnit] = {
+    // First, run the runOn method for regular Scala compilation (do not remove this or this phase breaks).
+    // This will cause the compiler to call above-defined methods which will generate the LoRe AST nodes.
+    val result = super.runOn(units)
+
+    println("lore ast node generation was run for all compilation units")
+    println(
+      s"processed ${loreTerms.size} compilation units with lengths ${loreTerms.map(cu => cu._2.size).concat(",")}"
+    )
+
+    // Move on to initializing LSP
+    val lspClient: DafnyLSPClient = new DafnyLSPClient()
+    // below doesn't work to get the root path, just removes the immediate file name, not any nested folders beyond root
+    //    val folderPath: String = units.head.source.path.substring(0, units.head.source.path.indexOf(units.head.source.name))
+    val folderPath: String = "file:///D:/Repositories/thesis-code/dafny"
+    lspClient.initializeLSP(folderPath)
+    var counter: Int = 0
+
+    // Iterate through all term lists
+    for termList <- loreTerms do {
+      counter += 1
+      println(s"now processing lore ast parts for unit: ${termList._1}")
+      val filePath: String = termList._1._1.path.replace(".scala", ".dfy").prependedAll("file:///")
+//      val filePath: String = s"file:///D:/Repositories/thesis-code/dafny/test${counter}.dfy"
+      // todo: this is dummy code, normally output by the to-be-implemented dafny generator
+      val dafnyCode: String =
+        s"""method Test(x: int) returns (y: int)
+           |  ensures {:error "Error on LoRe ln X, col Y"} y == ${if counter == 1 then "x" else counter}
+           |  {
+           |    y := x;
+           |  }
+           |
+           |method Main()
+           |{
+           |  var a: int := Test(0);
+           |  print a;
+           |}""".stripMargin
+
+      val didOpenMessage: String = DafnyLSPClient.constructLSPMessage("textDocument/didOpen")(
+        (
+          "textDocument",
+          Obj(
+            "uri"        -> filePath,
+            "languageId" -> "dafny",
+            "version"    -> 1,
+            "text"       -> dafnyCode
+          )
+        ),
+      )
+      lspClient.sendMessage(didOpenMessage)
+
+      val (verificationResult: SymbolStatusNotification, diagnosticsNotification: Option[LSPNotification]) =
+        lspClient.waitForVerificationResult()
+
+      val erroneousVerifiables: List[NamedVerifiable] =
+        verificationResult.params.namedVerifiables.filter(nv => nv.status == VerificationStatus.Error)
+
+      if erroneousVerifiables.isEmpty then {
+        println("No unverifiable claims could be found in the program.")
+      } else {
+        println("Some claims in the program could not be verified.")
+      }
+    }
+
+    // Always return result of default runOn method for regular Scala compilation, as we do not modify it.
+    result
   }
 }
