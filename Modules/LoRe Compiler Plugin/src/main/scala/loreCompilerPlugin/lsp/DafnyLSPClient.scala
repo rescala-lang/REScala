@@ -24,8 +24,7 @@ class DafnyLSPClient {
       return
     }
 
-    val lspProcess: SubProcess = spawn(cmd = ("dafny", "server"))
-    process = Some(lspProcess)
+    process = Some(spawn(cmd = ("dafny", "server")))
 
     val initializeMessage: String = DafnyLSPClient.constructLSPMessage("initialize", Some(initId))(
       ("processId", Null),
