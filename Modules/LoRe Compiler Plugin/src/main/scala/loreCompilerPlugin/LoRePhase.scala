@@ -38,12 +38,12 @@ class LoRePhase extends PluginPhase {
     * @param rhsType The type of the RHS in question
     * @param rhsValue The value of the RHS in question
     */
-  private def logRhsInfo(indentLevel: Integer, operandSide: String, rhsType: String, rhsValue: String): Unit =
+  private def logRhsInfo(indentLevel: Integer, operandSide: String, rhsType: String, rhsValue: String): Unit = {
     if operandSide.nonEmpty then
       println(s"${"\t".repeat(indentLevel)}The $operandSide parameter is a $rhsType $rhsValue")
     else
       println(s"${"\t".repeat(indentLevel)}The parameter is a $rhsType $rhsValue")
-  end logRhsInfo
+  }
 
   /** Builds a LoRe Type node based on a scala type tree
     * @param typeTree The scala type tree
@@ -346,7 +346,6 @@ class LoRePhase extends PluginPhase {
         )
         TVar("<error>")
   }
-  end buildLoreRhsTerm
 
   override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree = {
     var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
@@ -424,7 +423,7 @@ class LoRePhase extends PluginPhase {
 
     println("lore ast node generation was run for all compilation units")
     println(
-      s"processed ${loreTerms.size} compilation units with lengths ${loreTerms.map(cu => cu._2.size).concat(",")}"
+      s"processed ${loreTerms.size} compilation units with ${loreTerms.map(cu => cu._2.size).mkString(",")} terms respectively"
     )
 
     // Move on to initializing LSP
