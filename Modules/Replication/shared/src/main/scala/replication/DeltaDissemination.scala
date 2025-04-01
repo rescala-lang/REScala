@@ -188,15 +188,16 @@ class DeltaDissemination[State](
   }
 
   def send(con: ConnectionContext, payload: Message): Unit =
-    con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+    if globalAbort.closeRequest then return ()
+    else
+      sendingActor.execute { () =>
+        con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+      }
 
   def disseminate(payload: Message, except: Set[ConnectionContext] = Set.empty): Unit = {
-    if globalAbort.closeRequest then return ()
     val cons = lock.synchronized(connections)
-    sendingActor.execute { () =>
-      cons.filterNot(con => except.contains(con)).foreach: con =>
-        send(con, payload)
-    }
+    cons.filterNot(con => except.contains(con)).foreach: con =>
+      send(con, payload)
 
   }
 
