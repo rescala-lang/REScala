@@ -32,7 +32,8 @@ class DeltaDissemination[State](
     receiveCallback: State => Unit,
     crypto: Option[Aead] = None,
     immediateForward: Boolean = false,
-    sendingActor: ExecutionContext = DeltaDissemination.executeImmediately
+    sendingActor: ExecutionContext = DeltaDissemination.executeImmediately,
+    val globalAbort: Abort = Abort(),
 )(using JsonValueCodec[State]) {
 
   type Message = CachedMessage[ProtocolMessage[State]]
@@ -55,8 +56,6 @@ class DeltaDissemination[State](
 
   type ConnectionContext = Connection[Message]
 
-  val globalAbort = Abort()
-
   @volatile var connections: List[ConnectionContext] = Nil
 
   def debugCallbackAndRemoveCon(con: ConnectionContext): Callback[Any] =
@@ -70,13 +69,13 @@ class DeltaDissemination[State](
   def requestData(): Unit = {
     val msg = SentCachedMessage(Request(replicaId.uid, selfContext))(using pmscodec)
     connections.foreach: con =>
-      con.send(msg).run(using ())(debugCallbackAndRemoveCon(con))
+      send(con, msg)
   }
 
   def pingAll(): Unit = {
     val msg = SentCachedMessage(Ping(System.nanoTime()))(using pmscodec)
     connections.foreach { conn =>
-      conn.send(msg).run(using ())(debugCallbackAndRemoveCon(conn))
+      send(conn, msg)
     }
   }
 
@@ -106,10 +105,13 @@ class DeltaDissemination[State](
         lock.synchronized {
           connections = conn :: connections
         }
-        conn.send(SentCachedMessage(Request(
-          replicaId.uid,
-          selfContext
-        ))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(conn))
+        send(
+          conn,
+          SentCachedMessage(Request(
+            replicaId.uid,
+            selfContext
+          ))(using pmscodec)
+        )
       case Failure(ex) =>
         println(s"exception during connection activation")
         ex.printStackTrace()
@@ -152,7 +154,7 @@ class DeltaDissemination[State](
   def handleMessage(msg: Message, from: ConnectionContext): Unit = {
     msg.payload match
       case Ping(time) =>
-        from.send(SentCachedMessage(Pong(time))(using pmscodec)).run(using ())(debugCallbackAndRemoveCon(from))
+        send(from, SentCachedMessage(Pong(time))(using pmscodec))
       case Pong(time) =>
         println(s"ping took ${(System.nanoTime() - time.toLong).doubleValue / 1000_000}ms")
         println(s"current state is ${selfContext}")
@@ -168,9 +170,7 @@ class DeltaDissemination[State](
             )
         }
         relevant.foreach: msg =>
-          from.send(
-            SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec)
-          ).run(using ())(debugCallbackAndRemoveCon(from))
+          send(from, SentCachedMessage(msg.payload.addSender(replicaId.uid))(using pmscodec))
         updateContext(uid, selfContext `merge` knows)
       case payload @ Payload(uid, context, data) =>
         if context <= selfContext then return
@@ -187,11 +187,15 @@ class DeltaDissemination[State](
 
   }
 
+  def send(con: ConnectionContext, payload: Message): Unit =
+    con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+
   def disseminate(payload: Message, except: Set[ConnectionContext] = Set.empty): Unit = {
+    if globalAbort.closeRequest then return ()
     val cons = lock.synchronized(connections)
     sendingActor.execute { () =>
       cons.filterNot(con => except.contains(con)).foreach: con =>
-        con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
+        send(con, payload)
     }
 
   }
