@@ -188,7 +188,7 @@ class DeltaDissemination[State](
   }
 
   def send(con: ConnectionContext, payload: Message): Unit =
-    if globalAbort.closeRequest then return ()
+    if globalAbort.closeRequest then ()
     else
       sendingActor.execute { () =>
         con.send(payload).run(using ())(debugCallbackAndRemoveCon(con))
