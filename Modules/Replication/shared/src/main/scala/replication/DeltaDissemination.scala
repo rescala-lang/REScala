@@ -64,6 +64,7 @@ class DeltaDissemination[State](
       lock.synchronized {
         connections = connections.filter(cc => cc != con)
       }
+      println(s"exception during message handling, removing connection $con from list of connections")
       exception.printStackTrace()
 
   def requestData(): Unit = {
@@ -96,8 +97,10 @@ class DeltaDissemination[State](
   def addLatentConnection(latentConnection: LatentConnection[Message]): Unit = {
     val preparedConnection = latentConnection.prepare { from =>
       {
-        case Success(msg)   => handleMessage(msg, from)
-        case Failure(error) => error.printStackTrace()
+        case Success(msg) => handleMessage(msg, from)
+        case Failure(error) =>
+          println(s"exception during message handling")
+          error.printStackTrace()
       }
     }
     preparedConnection.run(using globalAbort) {
@@ -152,8 +155,8 @@ class DeltaDissemination[State](
   }
 
   def handleMessage(msg: Message, from: ConnectionContext): Unit = {
-    if globalAbort.closeRequest then ()
-    else msg.payload match
+    if globalAbort.closeRequest then return
+    msg.payload match
       case Ping(time) =>
         send(from, SentCachedMessage(Pong(time))(using pmscodec))
       case Pong(time) =>
