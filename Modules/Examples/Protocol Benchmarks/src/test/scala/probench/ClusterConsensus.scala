@@ -89,9 +89,6 @@ class ClusterConsensus extends munit.FunSuite {
 
     nodes.foreach(noUpkeep)
 
-    pprint.pprintln(secondaries.last.clusterState)
-    pprint.pprintln(secondaries.head.clusterState)
-
     assertEquals(nodes(0).clusterState.log(3).value, KVOperation.Read("test2"))
     assertEquals(nodes(2).clusterState.log.size, 2)
 
