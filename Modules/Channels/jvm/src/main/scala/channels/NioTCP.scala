@@ -24,7 +24,7 @@ case class ReceiveAttachment(
   */
 class NioTCP {
 
-  val selector = Selector.open()
+  val selector: Selector = Selector.open()
 
   def loopSelection(abort: Abort) = {
     while !abort.closeRequest do
