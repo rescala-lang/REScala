@@ -3,7 +3,7 @@ package loreCompilerPlugin
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import scala.annotation.nowarn
 
-class CompilerPlugin extends StandardPlugin {
+class LoRePlugin extends StandardPlugin {
   val name: String        = "LoRe Compiler Plugin"
   val description: String = "Verifies Scala-embedded LoRe code through Dafny"
 
