@@ -1,4 +1,4 @@
-package loreCompilerPlugin
+package loreCompilerPlugin.codegen
 
 import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
@@ -6,37 +6,19 @@ import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Names.Name
 import dotty.tools.dotc.core.StdNames.nme
-import dotty.tools.dotc.core.Symbols.Symbol
 import dotty.tools.dotc.core.Types.{AppliedType, CachedTypeRef, TypeRef, Type as ScalaType}
-import dotty.tools.dotc.plugins.PluginPhase
 import dotty.tools.dotc.{CompilationUnit, report}
-import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.{SourceFile, SourcePosition}
 import lore.ast.{Type as LoReType, *}
-import loreCompilerPlugin.lsp.DafnyLSPClient
-import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
-import ujson.Obj
 
-object LoRePhase {
-  val name: String        = "LoRe"
-  val description: String = "constructs LoRe AST nodes from eligible Scala AST nodes"
-}
-
-class LoRePhase extends PluginPhase {
-  val phaseName: String                = LoRePhase.name
-  override val description: String     = LoRePhase.description
-  override val runsAfter: Set[String]  = Set(Pickler.name)
-  override val runsBefore: Set[String] = Set(Inlining.name)
-
-  println("lore phase initialized")
-
-  private var loreTerms: Map[(SourceFile, Symbol), List[Term]] = Map()
+object LoReGen {
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
+    *
     * @param indentLevel How many tabs should be placed before the text that will be logged
     * @param operandSide Additional text to indicate more information about the parameter (e.g. "left" will result in "left parameter")
-    * @param rhsType The type of the RHS in question
-    * @param rhsValue The value of the RHS in question
+    * @param rhsType     The type of the RHS in question
+    * @param rhsValue    The value of the RHS in question
     */
   private def logRhsInfo(indentLevel: Integer, operandSide: String, rhsType: String, rhsValue: String): Unit = {
     if operandSide.nonEmpty then
@@ -46,11 +28,12 @@ class LoRePhase extends PluginPhase {
   }
 
   /** Builds a LoRe Type node based on a scala type tree
-    * @param typeTree The scala type tree
+    *
+    * @param typeTree  The scala type tree
     * @param sourcePos A SourcePosition for the type tree
     * @return The LoRe Type node
     */
-  private def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
+  def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
     // May need to also support LoRe TupleTypes at one point in the future
     typeTree match
       case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
@@ -78,12 +61,13 @@ class LoRePhase extends PluginPhase {
         SimpleType("<error>", List())
 
   /** Takes the tree for a Scala RHS value and builds a LoRe term for it.
-    * @param tree The Scala AST Tree node for a RHS expression to convert
+    *
+    * @param tree        The Scala AST Tree node for a RHS expression to convert
     * @param indentLevel How many tabs to add before the logs of this call (none by default)
     * @param operandSide Which side to refer to in logs if expressing binary expressions (none by default)
     * @return The corresponding LoRe AST Tree node of the RHS
     */
-  private def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using
+  def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using
       Context
   ): Term = {
     tree match
@@ -244,7 +228,7 @@ class LoRePhase extends PluginPhase {
               argumentType
             )
           case TupleType(_) => // TODO tuple types?
-            println("surprise tuple type")
+            println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")
             report.error("LoRe Tuple Types are not currently supported", rawInteractionTree.sourcePos)
             TVar("<error>")
           case _ =>
@@ -345,142 +329,5 @@ class LoRePhase extends PluginPhase {
           s"${"\t".repeat(indentLevel)}Unsupported RHS form used:\n${"\t".repeat(indentLevel)}$tree"
         )
         TVar("<error>")
-  }
-
-  override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree = {
-    var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
-
-    tree match
-      case ValDef(name, tpt, rhs) =>
-        rhs match
-          case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
-          case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
-          case _ => // Other definitions, these are the ones we care about
-            val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
-            // Several notes to make here regarding handling the RHS of reactives for future reference:
-            // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
-            //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
-            //   and the expressions being handled here use types that get inlined in REScala.
-            // * Because the RHS is wrapped in a call to the respective reactive type, within that unknown Apply layer,
-            //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
-            //   actual RHS tree we want is inside the second Apply parameter list (i.e. real RHS is 2 Apply layers deep).
-            // * As the Derived type uses curly brackets in definitions on top, it additionally wraps its RHS in a Block type.
-            // * The Source and Derived parameter lists always have length 1, those of Interactions always have length 2.
-            // * Typechecking for whether all of this is correct is already done by the Scala type-checker before this phase,
-            //   so we can assume everything we see here is of suitable types instead of doing any further checks.
-            loreTypeNode match
-              case SimpleType(typeName, typeArgs) =>
-                println(s"Detected $typeName definition with name \"$name\"")
-                rhs match
-                  case tpd.EmptyTree => () // Ignore func args (ArgT) outside of arrow functions for now
-                  case Apply(Apply(_, List(properRhs)), _)
-                      if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
-                    newLoreTerm = Some(TAbs( // foo: Source[Bar] = Source(baz)
-                      name.toString, // foo
-                      loreTypeNode, // Source[Bar]
-                      TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
-                    ))
-                  case Apply(Apply(_, List(Block(_, properRhs))), _)
-                      if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
-                    newLoreTerm = Some(TAbs( // foo: Derived[Bar] = Derived { baz }
-                      name.toString, // foo
-                      loreTypeNode, // Derived[Bar]
-                      TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
-                    ))
-                  case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
-                    newLoreTerm = Some(TAbs( // foo: Bar = baz
-                      name.toString, // foo (any valid Scala identifier)
-                      loreTypeNode, // Bar
-                      buildLoreRhsTerm(rhs, 1) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-                    ))
-              case TupleType(_) => // TODO tuple types?
-                println("surprise tuple type")
-                report.error("LoRe Tuple Types are not currently supported", tree.sourcePos)
-
-    // Add the newly generated LoRe term to the respective source file's term list (if one was generated)
-    newLoreTerm match
-      case None =>
-        tree // No term created, return tree to further compiler phases
-      case Some(loreTerm) =>
-        // Find term list for this source file and append new term to it
-        // Alternatively, make new term list for this file if it doesn't exist
-        val fileTermList: Option[List[Term]] = loreTerms.get((tree.source, ctx.owner))
-        fileTermList match
-          case Some(list) =>
-            val newList: List[Term] = list :+ loreTerm
-            loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
-          case None =>
-            println(s"Adding new term list to Map for the ${ctx.owner.toString} in ${tree.source.name}")
-            val newList: List[Term] = List(loreTerm)
-            loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
-        tree // Return the original tree to further compiler phases
-  }
-
-  override def runOn(units: List[CompilationUnit])(using ctx: Context): List[CompilationUnit] = {
-    // First, run the runOn method for regular Scala compilation (do not remove this or this phase breaks).
-    // This will cause the compiler to call above-defined methods which will generate the LoRe AST nodes.
-    val result = super.runOn(units)
-
-    println("lore ast node generation was run for all compilation units")
-    println(
-      s"processed ${loreTerms.size} compilation units with ${loreTerms.map(cu => cu._2.size).mkString(",")} terms respectively"
-    )
-
-    // Move on to initializing LSP
-    val lspClient: DafnyLSPClient = new DafnyLSPClient()
-    // below doesn't work to get the root path, just removes the immediate file name, not any nested folders beyond root
-    //    val folderPath: String = units.head.source.path.substring(0, units.head.source.path.indexOf(units.head.source.name))
-    val folderPath: String = "file:///D:/Repositories/thesis-code/dafny"
-    lspClient.initializeLSP(folderPath)
-    var counter: Int = 0
-
-    // Iterate through all term lists
-    for termList <- loreTerms do {
-      counter += 1
-      println(s"now processing lore ast parts for unit: ${termList._1}")
-      val filePath: String = termList._1._1.path.replace(".scala", ".dfy").prependedAll("file:///")
-//      val filePath: String = s"file:///D:/Repositories/thesis-code/dafny/test${counter}.dfy"
-      // todo: this is dummy code, normally output by the to-be-implemented dafny generator
-      val dafnyCode: String =
-        s"""method Test(x: int) returns (y: int)
-           |  ensures {:error "Error on LoRe ln X, col Y"} y == ${if counter == 1 then "x" else counter}
-           |  {
-           |    y := x;
-           |  }
-           |
-           |method Main()
-           |{
-           |  var a: int := Test(0);
-           |  print a;
-           |}""".stripMargin
-
-      val didOpenMessage: String = DafnyLSPClient.constructLSPMessage("textDocument/didOpen")(
-        (
-          "textDocument",
-          Obj(
-            "uri"        -> filePath,
-            "languageId" -> "dafny",
-            "version"    -> 1,
-            "text"       -> dafnyCode
-          )
-        ),
-      )
-      lspClient.sendMessage(didOpenMessage)
-
-      val (verificationResult: SymbolStatusNotification, diagnosticsNotification: Option[LSPNotification]) =
-        lspClient.waitForVerificationResult()
-
-      val erroneousVerifiables: List[NamedVerifiable] =
-        verificationResult.params.namedVerifiables.filter(nv => nv.status == VerificationStatus.Error)
-
-      if erroneousVerifiables.isEmpty then {
-        println("No unverifiable claims could be found in the program.")
-      } else {
-        println("Some claims in the program could not be verified.")
-      }
-    }
-
-    // Always return result of default runOn method for regular Scala compilation, as we do not modify it.
-    result
   }
 }
