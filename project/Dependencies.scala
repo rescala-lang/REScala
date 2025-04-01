@@ -17,7 +17,7 @@ object Dependencies {
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
   val scalajsDom  = libraryDependencies += "org.scala-js"          %%% "scalajs-dom"            % "2.8.0"
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.17" % Test
-  val slips       = libraryDependencies += "de.rmgk.slips"         %%% "partypack"              % "0.12.0"
+  val slips       = libraryDependencies += "de.rmgk.slips"         %%% "partypack"              % "0.12.1"
   val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-RC3"
   val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.17.0"
 
