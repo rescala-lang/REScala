@@ -152,7 +152,8 @@ class DeltaDissemination[State](
   }
 
   def handleMessage(msg: Message, from: ConnectionContext): Unit = {
-    msg.payload match
+    if globalAbort.closeRequest then ()
+    else msg.payload match
       case Ping(time) =>
         send(from, SentCachedMessage(Pong(time))(using pmscodec))
       case Pong(time) =>
