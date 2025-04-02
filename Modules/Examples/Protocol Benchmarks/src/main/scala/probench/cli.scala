@@ -152,14 +152,17 @@ object cli {
 
           cluster.value.foreach { (host, port) =>
             println(s"Connecting to $host:$port")
-            node.clusterDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(
-              host,
-              port
-            ))))
-            node.clientDataManager.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(
-              host,
-              port - 1
-            ))))
+            node.clusterDataManager.addLatentConnection(nioTCP.connectRetrying(
+              nioTCP.defaultSocketChannel(socketPath(host, port)),
+              1000,
+              10
+            ))
+            println(s"Connecting to $host:${port - 1}")
+            node.clientDataManager.addLatentConnection(nioTCP.connectRetrying(
+              nioTCP.defaultSocketChannel(socketPath(host, port - 1)),
+              1000,
+              10
+            ))
           }
         },
         subcommand("udp-node", "starts a cluster node") {
@@ -187,7 +190,11 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+          client.addLatentConnection(nioTCP.connectRetrying(
+            nioTCP.defaultSocketChannel(socketPath(ip, port)),
+            1000,
+            10
+          ))
 
           ClientCLI(name.value, client).startCLI()
 
@@ -213,7 +220,11 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+          client.addLatentConnection(nioTCP.connectRetrying(
+            nioTCP.defaultSocketChannel(socketPath(ip, port)),
+            1000,
+            10
+          ))
 
           client.benchmark(mode = mode.value, times = times.value)
 
@@ -229,7 +240,7 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))))
+          client.addLatentConnection(nioTCP.connectRetrying(nioTCP.defaultSocketChannel(socketPath(ip, port)), 1000, 10))
 
           client.benchmarkTimed(warmup.value, measurement.value, mode.value)
 

@@ -13,7 +13,11 @@ import java.util.concurrent.{ExecutorService, Executors}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
-class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending: Boolean = true) {
+class KeyValueReplica(
+    val uid: Uid,
+    val votingReplicas: Set[Uid],
+    offloadSending: Boolean = true
+) {
 
   inline def log(inline msg: String): Unit =
     if false then println(s"[$uid] $msg")
@@ -28,11 +32,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending
   var clientState: ClientState = RequestResponseQueue.empty
 
   val sendingActor: ExecutionContext = {
-
-    if !offloadSending
-    then DeltaDissemination.executeImmediately
-    else
-
+    if offloadSending then
       val singleThreadExecutor: ExecutorService = Executors.newSingleThreadExecutor(r => {
         val thread = new Thread(r)
         thread.setDaemon(true)
@@ -40,6 +40,8 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending
       })
 
       ExecutionContext.fromExecutorService(singleThreadExecutor)
+    else
+      DeltaDissemination.executeImmediately
   }
 
   val clusterDataManager: DeltaDissemination[ClusterState] =
@@ -49,6 +51,7 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending
       immediateForward = true,
       sendingActor = sendingActor
     )
+
   val clientDataManager: DeltaDissemination[ClientState] =
     DeltaDissemination(
       localUid,
@@ -57,11 +60,17 @@ class KeyValueReplica(val uid: Uid, val votingReplicas: Set[Uid], offloadSending
       sendingActor = sendingActor
     )
 
-  // propose myself as leader if I have the lowest id
-  votingReplicas.minOption match
-    case Some(id) if id == uid =>
-      transformCluster(_.startLeaderElection)
-    case _ => ()
+  maybeLeaderElection()
+
+  /**
+   * propose myself as leader if I have the lowest id
+   */
+  private def maybeLeaderElection(): Unit = {
+    votingReplicas.minOption match
+      case Some(id) if id == uid =>
+        transformCluster(_.startLeaderElection): Unit
+      case _ => ()
+  }
 
   def publish(delta: ClusterState): ClusterState = currentStateLock.synchronized {
     if delta `inflates` clusterState then {

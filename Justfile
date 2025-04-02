@@ -59,9 +59,7 @@ protoBenchRunNativeImage node="node" client="client" args="bench-1-1":
 	#!/usr/bin/env fish
 
 	kitty ./probench {{node}} --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
-	sleep 1;
 	kitty ./probench {{node}} --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
-	sleep 1;
 	kitty ./probench {{node}} --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
 
 	sleep 1;
@@ -71,40 +69,48 @@ runProtoBenchNoNet args="bench-1-1":
 	sbt --client 'set proBench/JarExport.packageJarsPath := "target/probench/jars"; proBench/packageJars'
 	cat "Modules/Examples/Protocol Benchmarks/args/bench-1-1" | java --class-path "target/probench/jars/*" probench.cli easy-setup
 
-runProtoBench node="node" client="client" args="bench-1-1":
+create-jar:
 	#!/usr/bin/env fish
 
-	sbt --client 'set proBench/JarExport.packageJarsPath := "target/probench/jars"; proBench/packageJars'
+	sbt -client proBench/Universal/packageBin
 
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name peer1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids peer1 peer2 peer3  &
-	sleep 1;
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name peer2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids peer1 peer2 peer3 &
-	sleep 1;
-	kitty java --class-path "target/probench/jars/*" probench.cli {{node}} --name peer3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids peer1 peer2 peer3 &
+	cd "Modules/Examples/Protocol Benchmarks"
+	rm -rf target/bin
+	unzip -qq target/universal/probench.zip -d target/bin
 
-	sleep 1;
-	cat "Modules/Examples/Protocol Benchmarks/args/{{args}}" | java --class-path "target/probench/jars/*" probench.cli {{client}} --node localhost:8030 --name client3
-	# java --class-path "target/probench/jars/*" probench.cli client --node localhost:8010 --name Client2
-	# java --class-path "target/probench/jars/*" probench.cli client --node localhost:8010 --name Client3
+[working-directory: 'Modules/Examples/Protocol Benchmarks']
+runProtoBench node="node" client="client" args="bench-1-1": create-jar
+	#!/usr/bin/env fish
+
+	kitty target/bin/probench/bin/probench {{node}} --name peer1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids peer1 peer2 peer3 &
+	kitty target/bin/probench/bin/probench {{node}} --name peer2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids peer1 peer2 peer3 &
+	kitty target/bin/probench/bin/probench {{node}} --name peer3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids peer1 peer2 peer3 &
+
+	cat "Modules/Examples/Protocol Benchmarks/args/{{args}}" | target/bin/probench/bin/probench {{client}} --node localhost:8030 --name client3
 
 	trap 'kill $(jobs -p)' EXIT
 	rm -r "target/probench/"
 
-runProtoBenchCluster node="node":
+
+[working-directory: 'Modules/Examples/Protocol Benchmarks']
+runProtoBenchCluster node="node": create-jar
 	#!/usr/bin/env fish
 
-	set -l jarspath (sbt --error "print proBench/packageJars")
-
-	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids NODE1 NODE2 NODE3 &
-	sleep 1;
-	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids NODE1 NODE2 NODE3 &
-	sleep 1;
-	kitty java --class-path "$jarspath/*" probench.cli {{node}} --name NODE3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids NODE1 NODE2 NODE3 &
+	kitty target/bin/probench/bin/probench {{node}} --name peer3 --listen-client-port 8030 --listen-peer-port 8031 --cluster localhost:8011 localhost:8021 --initial-cluster-ids peer1 peer2 peer3 &
+	kitty target/bin/probench/bin/probench {{node}} --name peer2 --listen-client-port 8020 --listen-peer-port 8021 --cluster localhost:8011 --initial-cluster-ids peer1 peer2 peer3 &
+	kitty target/bin/probench/bin/probench {{node}} --name peer1 --listen-client-port 8010 --listen-peer-port 8011 --cluster --initial-cluster-ids peer1 peer2 peer3 &
 
 	trap 'kill $(jobs -p)' SIGINT
-	sleep $last_pid
+	# sleep $last_pid
 
-runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
+[working-directory: 'Modules/Examples/Protocol Benchmarks']
+runProtoBenchClient: create-jar
+	#!/usr/bin/env fish
+
+	kitty target/bin/probench/bin/probench client --name client3 --node localhost:8030
+
+[working-directory: 'Modules/Examples/Protocol Benchmarks']
+runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResultsDir="bench-results/": create-jar
 	#!/usr/bin/env fish
 
 	set -l jarspath (sbt --error "print proBench/packageJars")
@@ -118,7 +124,7 @@ runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResult
 	for clientArgs in $(cat ./benchmarks/{{benchmark}})
 		set -l args (string split ';' $clientArgs)
 
-		cat args/$args[3] | java --class-path "$jarspath/*" probench.cli {{client}} --node $args[2] --name $args[1] &
+		cat args/$args[3] | target/bin/probench/bin/probench {{client}} --node $args[2] --name $args[1] &
 	end
 
 	trap 'kill $(jobs -p)' SIGINT
@@ -126,6 +132,7 @@ runProtoBenchClients runId client="client" benchmark="put-100k-1C1N" benchResult
 
 runProtoBenchEtcdCluster node="node":
 	#!/usr/bin/env fish
+
 	set -lx TOKEN token-01
 	set -lx CLUSTER_STATE new
 	set -lx NAME_1 machine-1
@@ -147,7 +154,8 @@ runProtoBenchEtcdCluster node="node":
 	trap 'kill $(jobs -p)' SIGINT
 	sleep $last_pid
 
-runProtoBenchClientsEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-results/":
+[working-directory: 'Modules/Examples/Protocol Benchmarks']
+runProtoBenchClientsEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-results/": create-jar
 	#!/usr/bin/env fish
 
 	set -l jarspath (sbt --error "print proBench/packageJars")
@@ -162,7 +170,7 @@ runProtoBenchClientsEtcd runId benchmark="put-100k-1C1N" benchResultsDir="bench-
 	for clientArgs in $(cat ./benchmarks/{{benchmark}})
 		set -l args (string split ';' $clientArgs)
 
-		cat args/$args[3] | java --class-path "$jarspath/*" probench.cli etcd-client --name $args[1] --endpoints https://$args[2] &
+		cat args/$args[3] | target/bin/probench/bin/probench etcd-client --name $args[1] --endpoints https://$args[2] &
 	end
 
 	trap 'kill $(jobs -p)' SIGINT

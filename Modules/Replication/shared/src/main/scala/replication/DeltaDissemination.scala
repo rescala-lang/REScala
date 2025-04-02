@@ -47,7 +47,6 @@ class DeltaDissemination[State](
 
   def cachedMessages(conn: LatentConnection[MessageBuffer])
       : LatentConnection[CachedMessage[ProtocolMessage[State]]] = {
-
     LatentConnection.adapt(
       (mb: MessageBuffer) => ReceivedCachedMessage[ProtocolMessage[State]](mb)(using pmscodec),
       (pm: CachedMessage[ProtocolMessage[State]]) => pm.messageBuffer
