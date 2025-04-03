@@ -124,7 +124,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTNeg(node: TNeg): String = {
-    s"!${generate(node.body)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(!${generate(node.body)})"
   }
 
   /** Generates Dafny code for the given LoRe TFCall.
@@ -148,7 +149,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAdd(node: TAdd): String = {
-    s"${generate(node.left)} + ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} + ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TSub.
@@ -157,7 +159,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTSub(node: TSub): String = {
-    s"${generate(node.left)} - ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} - ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TMul.
@@ -166,7 +169,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTMul(node: TMul): String = {
-    s"${generate(node.left)} * ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} * ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TDiv.
@@ -175,7 +179,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDiv(node: TDiv): String = {
-    s"${generate(node.left)} / ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} / ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TConj.
@@ -184,7 +189,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTConj(node: TConj): String = {
-    s"${generate(node.left)} && ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} && ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TDisj.
@@ -193,7 +199,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDisj(node: TDisj): String = {
-    s"${generate(node.left)} || ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} || ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TLt.
@@ -202,7 +209,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTLt(node: TLt): String = {
-    s"${generate(node.left)} < ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} < ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TGt.
@@ -211,7 +219,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTGt(node: TGt): String = {
-    s"${generate(node.left)} > ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} > ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TLeq.
@@ -220,7 +229,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTLeq(node: TLeq): String = {
-    s"${generate(node.left)} <= ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} <= ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TGeq.
@@ -229,7 +239,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTGeq(node: TGeq): String = {
-    s"${generate(node.left)} >= ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} >= ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TEq.
@@ -238,7 +249,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTEq(node: TEq): String = {
-    s"${generate(node.left)} == ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} == ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TIneq.
@@ -247,7 +259,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTIneq(node: TIneq): String = {
-    s"${generate(node.left)} != ${generate(node.right)}"
+    // Surround with braces to respect nesting as instructed by the AST node nesting
+    s"(${generate(node.left)} != ${generate(node.right)})"
   }
 
   /** Generates Dafny code for the given LoRe TFunC.
