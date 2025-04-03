@@ -2,8 +2,6 @@ package loreCompilerPlugin.codegen
 
 import lore.ast.*
 
-import scala.annotation.tailrec
-
 object DafnyGen {
 
   /* Code Generation entry point method */
@@ -14,7 +12,48 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   def generate(node: Term): String = {
-    generateFromNode(node)
+    node match
+      case n: TAbs         => generateFromTAbs(n)
+      case n: TNum         => generateFromTNum(n)
+      case n: TString      => generateFromTString(n)
+      case n: TTrue        => generateFromTTrue(n)
+      case n: TFalse       => generateFromTFalse(n)
+      case n: TVar         => generateFromTVar(n)
+      case n: TNeg         => generateFromTNeg(n)
+      case n: TFCall       => generateFromTFCall(n)
+      case n: TAdd         => generateFromTAdd(n)
+      case n: TSub         => generateFromTSub(n)
+      case n: TMul         => generateFromTMul(n)
+      case n: TDiv         => generateFromTDiv(n)
+      case n: TConj        => generateFromTConj(n)
+      case n: TDisj        => generateFromTDisj(n)
+      case n: TLt          => generateFromTLt(n)
+      case n: TGt          => generateFromTGt(n)
+      case n: TLeq         => generateFromTLeq(n)
+      case n: TGeq         => generateFromTGeq(n)
+      case n: TEq          => generateFromTEq(n)
+      case n: TIneq        => generateFromTIneq(n)
+      case n: TFunC        => generateFromTFunC(n)
+      case n: TInteraction => generateFromTInteraction(n)
+      case n: TSource      => generateFromTSource(n)
+      case n: TDerived     => generateFromTDerived(n)
+      case n: TArrow       => generateFromTArrow(n)
+      case n: TTuple       => generateFromTTuple(n)
+      case n: TArgT        => generateFromTArgT(n)
+      case n: TInvariant   => generateFromTInvariant(n)
+      case n: TViperImport => generateFromTViperImport(n)
+      case n: TAssert      => generateFromTAssert(n)
+      case n: TAssume      => generateFromTAssume(n)
+      case n: TImpl        => generateFromTImpl(n)
+      case n: TBImpl       => generateFromTBImpl(n)
+      case n: TInSet       => generateFromTInSet(n)
+      case n: TForall      => generateFromTForall(n)
+      case n: TExists      => generateFromTExists(n)
+      case n: TTypeAl      => generateFromTTypeAl(n)
+      case n: TIf          => generateFromTIf(n)
+      case n: TSeq         => generateFromTSeq(n)
+      case n: TParens      => generateFromTParens(n)
+      case n: TFCurly      => generateFromTFCurly(n)
   }
 
   /* Method overloads for covered term types */
@@ -25,7 +64,7 @@ object DafnyGen {
     * @param node The LoRe TAbs node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TAbs): String = {
+  private def generateFromTAbs(node: TAbs): String = {
     ""
   }
 
@@ -35,7 +74,7 @@ object DafnyGen {
     * @param node The LoRe TNum node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TNum): String = {
+  private def generateFromTNum(node: TNum): String = {
     ""
   }
 
@@ -45,7 +84,7 @@ object DafnyGen {
     * @param node The LoRe TString node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TString): String = {
+  private def generateFromTString(node: TString): String = {
     ""
   }
 
@@ -55,7 +94,7 @@ object DafnyGen {
     * @param node The LoRe TTrue node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TTrue): String = {
+  private def generateFromTTrue(node: TTrue): String = {
     ""
   }
 
@@ -65,7 +104,7 @@ object DafnyGen {
     * @param node The LoRe TFalse node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TFalse): String = {
+  private def generateFromTFalse(node: TFalse): String = {
     ""
   }
 
@@ -75,7 +114,7 @@ object DafnyGen {
     * @param node The LoRe TVar node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TVar): String = {
+  private def generateFromTVar(node: TVar): String = {
     ""
   }
 
@@ -85,7 +124,7 @@ object DafnyGen {
     * @param node The LoRe TNeg node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TNeg): String = {
+  private def generateFromTNeg(node: TNeg): String = {
     ""
   }
 
@@ -95,7 +134,7 @@ object DafnyGen {
     * @param node The LoRe TFCall node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TFCall): String = {
+  private def generateFromTFCall(node: TFCall): String = {
     ""
   }
 
@@ -105,7 +144,7 @@ object DafnyGen {
     * @param node The LoRe TAdd node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TAdd): String = {
+  private def generateFromTAdd(node: TAdd): String = {
     ""
   }
 
@@ -115,7 +154,7 @@ object DafnyGen {
     * @param node The LoRe TSub node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TSub): String = {
+  private def generateFromTSub(node: TSub): String = {
     ""
   }
 
@@ -125,7 +164,7 @@ object DafnyGen {
     * @param node The LoRe TMul node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TMul): String = {
+  private def generateFromTMul(node: TMul): String = {
     ""
   }
 
@@ -135,7 +174,7 @@ object DafnyGen {
     * @param node The LoRe TDiv node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TDiv): String = {
+  private def generateFromTDiv(node: TDiv): String = {
     ""
   }
 
@@ -145,7 +184,7 @@ object DafnyGen {
     * @param node The LoRe TConj node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TConj): String = {
+  private def generateFromTConj(node: TConj): String = {
     ""
   }
 
@@ -155,7 +194,7 @@ object DafnyGen {
     * @param node The LoRe TDisj node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TDisj): String = {
+  private def generateFromTDisj(node: TDisj): String = {
     ""
   }
 
@@ -165,7 +204,7 @@ object DafnyGen {
     * @param node The LoRe TLt node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TLt): String = {
+  private def generateFromTLt(node: TLt): String = {
     ""
   }
 
@@ -175,7 +214,7 @@ object DafnyGen {
     * @param node The LoRe TGt node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TGt): String = {
+  private def generateFromTGt(node: TGt): String = {
     ""
   }
 
@@ -185,7 +224,7 @@ object DafnyGen {
     * @param node The LoRe TLeq node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TLeq): String = {
+  private def generateFromTLeq(node: TLeq): String = {
     ""
   }
 
@@ -195,7 +234,7 @@ object DafnyGen {
     * @param node The LoRe TGeq node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TGeq): String = {
+  private def generateFromTGeq(node: TGeq): String = {
     ""
   }
 
@@ -205,7 +244,7 @@ object DafnyGen {
     * @param node The LoRe TEq node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TEq): String = {
+  private def generateFromTEq(node: TEq): String = {
     ""
   }
 
@@ -215,7 +254,7 @@ object DafnyGen {
     * @param node The LoRe TIneq node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TIneq): String = {
+  private def generateFromTIneq(node: TIneq): String = {
     ""
   }
 
@@ -225,7 +264,7 @@ object DafnyGen {
     * @param node The LoRe TFunc node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TFunC): String = {
+  private def generateFromTFunC(node: TFunC): String = {
     ""
   }
 
@@ -235,7 +274,7 @@ object DafnyGen {
     * @param node The LoRe TInteraction node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TInteraction): String = {
+  private def generateFromTInteraction(node: TInteraction): String = {
     ""
   }
 
@@ -245,7 +284,7 @@ object DafnyGen {
     * @param node The LoRe TSource node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TSource): String = {
+  private def generateFromTSource(node: TSource): String = {
     ""
   }
 
@@ -255,7 +294,7 @@ object DafnyGen {
     * @param node The LoRe TDerived node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TDerived): String = {
+  private def generateFromTDerived(node: TDerived): String = {
     ""
   }
 
@@ -265,7 +304,7 @@ object DafnyGen {
     * @param node The LoRe TArrow node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TArrow): String = {
+  private def generateFromTArrow(node: TArrow): String = {
     ""
   }
 
@@ -275,7 +314,7 @@ object DafnyGen {
     * @param node The LoRe TTuple node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TTuple): String = {
+  private def generateFromTTuple(node: TTuple): String = {
     ""
   }
 
@@ -285,7 +324,7 @@ object DafnyGen {
     * @param node The LoRe TArgT node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TArgT): String = {
+  private def generateFromTArgT(node: TArgT): String = {
     ""
   }
 
@@ -296,7 +335,7 @@ object DafnyGen {
     * @param node The LoRe TInvariant node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TInvariant): String = {
+  private def generateFromTInvariant(node: TInvariant): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -307,7 +346,7 @@ object DafnyGen {
     * @param node The LoRe TViperImport node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TViperImport): String = {
+  private def generateFromTViperImport(node: TViperImport): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -316,7 +355,7 @@ object DafnyGen {
     * @param node The LoRe TAssert node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TAssert): String = {
+  private def generateFromTAssert(node: TAssert): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -325,36 +364,7 @@ object DafnyGen {
     * @param node The LoRe TAssume node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TAssume): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /* ---------- Terms for types ----------  */
-
-  /** Generates Dafny code for the given LoRe SimpleType.
-    *
-    * @param node The LoRe SimpleType node.
-    * @return The generated Dafny code.
-    */
-  def generateFromNode(node: SimpleType): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TupleType.
-    *
-    * @param node The LoRe TupleType node.
-    * @return The generated Dafny code.
-    */
-  def generateFromNode(node: TupleType): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TTypeAl.
-    *
-    * @param node The LoRe TTypeAl node.
-    * @return The generated Dafny code.
-    */
-  def generateFromNode(node: TTypeAl): String = {
+  private def generateFromTAssume(node: TAssume): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -365,7 +375,7 @@ object DafnyGen {
     * @param node The LoRe TImpl node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TImpl): String = {
+  private def generateFromTImpl(node: TImpl): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -374,27 +384,27 @@ object DafnyGen {
     * @param node The LoRe TBImpl node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TBImpl): String = {
+  private def generateFromTBImpl(node: TBImpl): String = {
     throw new Error("Term type not implemented")
   }
-
-  /* ---------- Quantifier term types ----------  */
 
   /** Generates Dafny code for the given LoRe TInSet.
     *
     * @param node The LoRe TInSet node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TInSet): String = {
+  private def generateFromTInSet(node: TInSet): String = {
     throw new Error("Term type not implemented")
   }
+
+  /* ---------- Quantifier term types ----------  */
 
   /** Generates Dafny code for the given LoRe TForall.
     *
     * @param node The LoRe TForall node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TForall): String = {
+  private def generateFromTForall(node: TForall): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -403,18 +413,27 @@ object DafnyGen {
     * @param node The LoRe TExists node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TExists): String = {
+  private def generateFromTExists(node: TExists): String = {
     throw new Error("Term type not implemented")
   }
 
   /* ---------- Other term types ----------  */
+
+  /** Generates Dafny code for the given LoRe TTypeAl.
+    *
+    * @param node The LoRe TTypeAl node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTTypeAl(node: TTypeAl): String = {
+    throw new Error("Term type not implemented")
+  }
 
   /** Generates Dafny code for the given LoRe TIf.
     *
     * @param node The LoRe TIf node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TIf): String = {
+  private def generateFromTIf(node: TIf): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -423,7 +442,7 @@ object DafnyGen {
     * @param node The LoRe TSeq node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TSeq): String = {
+  private def generateFromTSeq(node: TSeq): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -432,7 +451,7 @@ object DafnyGen {
     * @param node The LoRe TParens node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TParens): String = {
+  private def generateFromTParens(node: TParens): String = {
     throw new Error("Term type not implemented")
   }
 
@@ -441,7 +460,7 @@ object DafnyGen {
     * @param node The LoRe TFCurly node.
     * @return The generated Dafny code.
     */
-  def generateFromNode(node: TFCurly): String = {
+  private def generateFromTFCurly(node: TFCurly): String = {
     throw new Error("Term type not implemented")
   }
 }

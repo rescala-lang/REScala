@@ -137,7 +137,7 @@ class LoRePhase extends PluginPhase {
       // Turn the filepath into an URI and then sneakily change the file extension the LSP gets to see
       val filePath: String = File(termList._1._1.path).toURI.toString.replace(".scala", ".dfy")
 
-      val test: String = DafnyGen.generate(termList._2.head)
+      val test = termList._2.map(t => DafnyGen.generate(t))
 
       counter += 1
       // Generate dafny code from term list
