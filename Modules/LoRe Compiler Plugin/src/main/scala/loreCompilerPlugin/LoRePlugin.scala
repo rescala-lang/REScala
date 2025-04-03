@@ -121,11 +121,11 @@ class LoRePhase extends PluginPhase {
     // Get the root path of the project these compilation units are from.
     // Basically, cut off anything that comes after "src/main/scala".
     // Have to do some messing around with escaping slashes and URIs here.
-    val unitPath: String          = units.head.source.path
-    val projectRootFolder: String = List("src", "main", "scala").mkString(File.separator) // Windows/Unix separators
-    val projectRootEscaped: String = projectRootFolder.replace("\\", "\\\\") // Gotta escape since split takes regex
+    val unitPath: String    = units.head.source.path
+    val rootPattern: String = List("src", "main", "scala").mkString(File.separator) // Windows/Unix separators
+    val rootPatternEscaped: String = rootPattern.replace("\\", "\\\\") // Gotta escape since split takes regex
     // Take the first half of the split, then add the split off separator back on and get the path as an URI string
-    val folderPath: String = File(unitPath.split(projectRootEscaped).head.concat(projectRootFolder)).toURI.toString
+    val folderPath: String = File(unitPath.split(rootPatternEscaped).head.concat(rootPattern)).toURI.toString
     lspClient.initializeLSP(folderPath)
 
     var counter: Int = 0
