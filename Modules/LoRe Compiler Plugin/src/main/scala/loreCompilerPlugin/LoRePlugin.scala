@@ -11,6 +11,7 @@ import dotty.tools.dotc.util.SourceFile
 import java.io.File // For getting URIs and the system-independent path separator
 import lore.ast.{SimpleType, TAbs, TDerived, TSource, Term, TupleType}
 import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode}
+import loreCompilerPlugin.codegen.DafnyGen
 import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
 import ujson.Obj
@@ -135,6 +136,8 @@ class LoRePhase extends PluginPhase {
       println(s"Now processing LoRe AST parts for compilation unit: ${termList._1}.")
       // Turn the filepath into an URI and then sneakily change the file extension the LSP gets to see
       val filePath: String = File(termList._1._1.path).toURI.toString.replace(".scala", ".dfy")
+
+      val test: String = DafnyGen.generate(termList._2.head)
 
       counter += 1
       // Generate dafny code from term list

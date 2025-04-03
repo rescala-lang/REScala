@@ -5,12 +5,15 @@ import lore.ast.*
 object DafnyGen {
 
   /** Generates Dafny code for the given LoRe term.
+    *
     * @param node The LoRe AST node.
     * @return The generated Dafny code.
     */
   def generate(node: Term): String = {
     ""
   }
+
+  /* Method overloads for covered term types */
 
   // TODO: Implement
   /** Generates Dafny code for the given LoRe TAbs.
@@ -280,5 +283,160 @@ object DafnyGen {
     */
   def generate(node: TArgT): String = {
     ""
+  }
+
+  /* Term types that are not covered currently, and should error */
+
+  /** Generates Dafny code for the given LoRe TViperImport.
+    *
+    * @param node The LoRe TViperImport node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TViperImport): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TupleType.
+    *
+    * @param node The LoRe TupleType node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TupleType): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TIf.
+    *
+    * @param node The LoRe TIf node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TIf): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TSeq.
+    *
+    * @param node The LoRe TSeq node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TSeq): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TTypeAl.
+    *
+    * @param node The LoRe TTypeAl node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TTypeAl): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TAssert.
+    *
+    * @param node The LoRe TAssert node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TAssert): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TAssume.
+    *
+    * @param node The LoRe TAssume node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TAssume): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TInvariant.
+    *
+    * @param node The LoRe TInvariant node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TInvariant): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TImpl.
+    *
+    * @param node The LoRe TImpl node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TImpl): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TBImpl.
+    *
+    * @param node The LoRe TBImpl node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TBImpl): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TInSet.
+    *
+    * @param node The LoRe TInSet node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TInSet): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TQuantifier.
+    *
+    * @param node The LoRe TQuantifier node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TQuantifier): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TForall.
+    *
+    * @param node The LoRe TForall node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TForall): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TExists.
+    *
+    * @param node The LoRe TExists node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TExists): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TParens.
+    *
+    * @param node The LoRe TParens node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TParens): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TFAcc.
+    *
+    * @param node The LoRe TFAcc node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TFAcc): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TFCurly.
+    *
+    * @param node The LoRe TFCurly node.
+    * @return The generated Dafny code.
+    */
+  def generate(node: TFCurly): String = {
+    throw new Error("Term type not implemented")
   }
 }
