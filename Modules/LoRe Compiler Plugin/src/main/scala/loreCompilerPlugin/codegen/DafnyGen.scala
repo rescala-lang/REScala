@@ -4,8 +4,6 @@ import lore.ast.*
 
 object DafnyGen {
 
-  /* Code Generation entry point method */
-
   /** Generates Dafny code for the given LoRe term.
     *
     * @param node The LoRe AST node.
@@ -14,49 +12,26 @@ object DafnyGen {
   def generate(node: Term): String = {
     node match
       case n: TAbs         => generateFromTAbs(n)
-      case n: TNum         => generateFromTNum(n)
       case n: TString      => generateFromTString(n)
-      case n: TTrue        => generateFromTTrue(n)
-      case n: TFalse       => generateFromTFalse(n)
       case n: TVar         => generateFromTVar(n)
-      case n: TNeg         => generateFromTNeg(n)
-      case n: TFCall       => generateFromTFCall(n)
-      case n: TAdd         => generateFromTAdd(n)
-      case n: TSub         => generateFromTSub(n)
-      case n: TMul         => generateFromTMul(n)
-      case n: TDiv         => generateFromTDiv(n)
-      case n: TConj        => generateFromTConj(n)
-      case n: TDisj        => generateFromTDisj(n)
-      case n: TLt          => generateFromTLt(n)
-      case n: TGt          => generateFromTGt(n)
-      case n: TLeq         => generateFromTLeq(n)
-      case n: TGeq         => generateFromTGeq(n)
-      case n: TEq          => generateFromTEq(n)
-      case n: TIneq        => generateFromTIneq(n)
+      case n: TFAcc        => generateFromTFAcc(n)
+      case n: TArith       => generateFromTArith(n)
+      case n: TBoolean     => generateFromTBoolean(n)
       case n: TFunC        => generateFromTFunC(n)
+      case n: TReactive    => generateFromTReactive(n)
       case n: TInteraction => generateFromTInteraction(n)
-      case n: TSource      => generateFromTSource(n)
-      case n: TDerived     => generateFromTDerived(n)
+      case n: TInvariant   => generateFromTInvariant(n)
       case n: TArrow       => generateFromTArrow(n)
       case n: TTuple       => generateFromTTuple(n)
       case n: TArgT        => generateFromTArgT(n)
-      case n: TInvariant   => generateFromTInvariant(n)
       case n: TViperImport => generateFromTViperImport(n)
       case n: TAssert      => generateFromTAssert(n)
       case n: TAssume      => generateFromTAssume(n)
-      case n: TImpl        => generateFromTImpl(n)
-      case n: TBImpl       => generateFromTBImpl(n)
-      case n: TInSet       => generateFromTInSet(n)
-      case n: TForall      => generateFromTForall(n)
-      case n: TExists      => generateFromTExists(n)
       case n: TTypeAl      => generateFromTTypeAl(n)
       case n: TIf          => generateFromTIf(n)
       case n: TSeq         => generateFromTSeq(n)
       case n: TParens      => generateFromTParens(n)
-      case n: TFCurly      => generateFromTFCurly(n)
   }
-
-  /* Method overloads for covered term types */
 
   // TODO: Implement
   /** Generates Dafny code for the given LoRe TAbs.
@@ -124,8 +99,22 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTNeg(node: TNeg): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(!${generate(node.body)})"
+    // Body can be any term
+    s"!${generate(node.body)}"
+  }
+
+  /** Generates Dafny code for the given LoRe TFAcc.
+    *
+    * @param node The LoRe TFAcc node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTFAcc(node: TFAcc): String = {
+    val fieldAccess: String = node match
+      case n: TFCall  => generateFromTFCall(n)
+      case n: TFCurly => generateFromTFCurly(n)
+
+    // TODO: Check if it's fine to simply return the field access like this
+    fieldAccess
   }
 
   /** Generates Dafny code for the given LoRe TFCall.
@@ -143,14 +132,31 @@ object DafnyGen {
     }
   }
 
+  /** Generates Dafny code for the given LoRe TArith.
+    *
+    * @param node The LoRe TArith node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTArith(node: TArith): String = {
+    val expr: String = node match
+      case n: TNum => generateFromTNum(n)
+      case n: TAdd => generateFromTAdd(n)
+      case n: TSub => generateFromTSub(n)
+      case n: TMul => generateFromTMul(n)
+      case n: TDiv => generateFromTDiv(n)
+
+    node match
+      case n: TNum => expr // Simple numbers don't need braces
+      case _ => s"($expr)" // Surround with braces to respect expression nesting as instructed by the AST node nesting
+  }
+
   /** Generates Dafny code for the given LoRe TAdd.
     *
     * @param node The LoRe TAdd node.
     * @return The generated Dafny code.
     */
   private def generateFromTAdd(node: TAdd): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} + ${generate(node.right)})"
+    s"${generate(node.left)} + ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TSub.
@@ -159,8 +165,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTSub(node: TSub): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} - ${generate(node.right)})"
+    s"${generate(node.left)} - ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TMul.
@@ -169,8 +174,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTMul(node: TMul): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} * ${generate(node.right)})"
+    s"${generate(node.left)} * ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TDiv.
@@ -179,8 +183,35 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDiv(node: TDiv): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} / ${generate(node.right)})"
+    s"${generate(node.left)} / ${generate(node.right)}"
+  }
+
+  /** Generates Dafny code for the given LoRe TBoolean.
+    *
+    * @param node The LoRe TBoolean node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTBoolean(node: TBoolean): String = {
+    val expr: String = node match
+      case n: TTrue       => generateFromTTrue(n)
+      case n: TFalse      => generateFromTFalse(n)
+      case n: TNeg        => generateFromTNeg(n)
+      case n: TLt         => generateFromTLt(n)
+      case n: TGt         => generateFromTGt(n)
+      case n: TLeq        => generateFromTLeq(n)
+      case n: TGeq        => generateFromTGeq(n)
+      case n: TEq         => generateFromTEq(n)
+      case n: TIneq       => generateFromTIneq(n)
+      case n: TDisj       => generateFromTDisj(n)
+      case n: TConj       => generateFromTConj(n)
+      case n: TImpl       => generateFromTImpl(n)
+      case n: TBImpl      => generateFromTBImpl(n)
+      case n: TInSet      => generateFromTInSet(n)
+      case n: TQuantifier => generateFromTQuantifier(n)
+
+    node match
+      case n: (TTrue | TFalse) => expr // Simple booleans don't need braces
+      case _ => s"($expr)" // Surround with braces to respect expression nesting as instructed by the AST node nesting
   }
 
   /** Generates Dafny code for the given LoRe TConj.
@@ -189,8 +220,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTConj(node: TConj): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} && ${generate(node.right)})"
+    s"${generate(node.left)} && ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TDisj.
@@ -199,8 +229,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDisj(node: TDisj): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} || ${generate(node.right)})"
+    s"${generate(node.left)} || ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TLt.
@@ -209,8 +238,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTLt(node: TLt): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} < ${generate(node.right)})"
+    s"${generate(node.left)} < ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TGt.
@@ -219,8 +247,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTGt(node: TGt): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} > ${generate(node.right)})"
+    s"${generate(node.left)} > ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TLeq.
@@ -229,8 +256,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTLeq(node: TLeq): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} <= ${generate(node.right)})"
+    s"${generate(node.left)} <= ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TGeq.
@@ -239,8 +265,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTGeq(node: TGeq): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} >= ${generate(node.right)})"
+    s"${generate(node.left)} >= ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TEq.
@@ -249,8 +274,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTEq(node: TEq): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} == ${generate(node.right)})"
+    s"${generate(node.left)} == ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TIneq.
@@ -259,8 +283,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTIneq(node: TIneq): String = {
-    // Surround with braces to respect nesting as instructed by the AST node nesting
-    s"(${generate(node.left)} != ${generate(node.right)})"
+    s"${generate(node.left)} != ${generate(node.right)}"
   }
 
   /** Generates Dafny code for the given LoRe TFunC.
@@ -271,6 +294,21 @@ object DafnyGen {
   private def generateFromTFunC(node: TFunC): String = {
     val args: Seq[String] = node.args.map(arg => generate(arg))
     s"${node.name}(${args.mkString(", ")})"
+  }
+
+  /** Generates Dafny code for the given LoRe TReactive.
+    *
+    * @param node The LoRe TReactive node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTReactive(node: TReactive): String = {
+    // TInteraction isn't considered a TReactive so it has to be separate
+    val reactive: String = node match
+      case n: TSource  => generateFromTSource(n)
+      case n: TDerived => generateFromTDerived(n)
+
+    // TODO: Check if it's fine to simply return the reactive like this
+    reactive
   }
 
   // TODO: Implement
@@ -331,6 +369,19 @@ object DafnyGen {
     */
   private def generateFromTArgT(node: TArgT): String = {
     ""
+  }
+
+  /** Generates Dafny code for the given LoRe TQuantifier.
+    *
+    * @param node The LoRe TQuantifier node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTQuantifier(node: TQuantifier): String = {
+    val expr: String = node match
+      case n: TForall => generateFromTForall(n)
+      case n: TExists => generateFromTExists(n)
+
+    s"(${expr})" // Surround with braces to respect expression nesting as instructed by the AST node nesting
   }
 
   /* Term types that are not covered currently, and should error */
