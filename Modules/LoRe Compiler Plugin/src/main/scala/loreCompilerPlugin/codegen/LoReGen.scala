@@ -207,11 +207,8 @@ object LoReGen {
         )
       case Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]) =>
         // Tuple definitions, may also catch currently unknown other cases (and has to stay below type instant. case)
-        logRhsInfo(indentLevel, operandSide, s"type call to ${typeName.toString}  with ${params.length} params", "")
-        TFunC(
-          typeName.toString,
-          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
-        )
+        logRhsInfo(indentLevel, operandSide, s"tuple call to $typeName with ${params.length} members", "")
+        TTuple(params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)))
       case rawInteractionTree @ TypeApply(Select(Ident(tpName), _), _) if tpName.toString == "Interaction" =>
         // Raw Interaction definitions (without method calls) on the RHS, e.g. Interaction[Int, String]
         // This probably breaks if you alias/import Interaction as a different name, not sure how to handle that

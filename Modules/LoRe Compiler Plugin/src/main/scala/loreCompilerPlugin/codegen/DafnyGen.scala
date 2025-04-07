@@ -16,6 +16,7 @@ object DafnyGen {
       case "Int"              => "int"
       case "Float" | "Double" => "real"
       case "String"           => "string" // Technically, this is seq<char>, string is syntactic sugar
+      case "Map"              => "map"
       // TODO: Add others...
       case _ => typeName
   }
@@ -68,10 +69,15 @@ object DafnyGen {
     */
   private def generateFromSimpleType(node: SimpleType): String = {
     val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
-    val inner: String           = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
-    val dafnyType: String       = getDafnyType(node.name)
 
-    s"$dafnyType$inner"
+    if dafnyType.matches("Tuple\\d+") then {
+      // The name of Dafny's tuple type is blank, and instead of angled brackets uses square ones, e.g. (string, int).
+      // That means we just concat the inner types surrounded by parens for building tuple type annotations.
+      s"(${innerList.mkString(", ")})"
+    } else {
+      val inner: String = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
+      s"$dafnyType$inner"
+    }
   }
 
   /** Generates Dafny code for the given LoRe TArgT.
@@ -420,7 +426,7 @@ object DafnyGen {
       s"${generate(node.parent)}.${node.field}"
     } else {
       // Method access
-      val args: Seq[String] = node.args.map(arg => generate(arg))
+      val args: List[String] = node.args.map(arg => generate(arg))
       s"${generate(node.parent)}.${node.field}(${args.mkString(", ")})"
     }
   }
@@ -431,8 +437,22 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFunC(node: TFunC): String = {
-    val args: Seq[String] = node.args.map(arg => generate(arg))
-    s"${node.name}(${args.mkString(", ")})"
+    node.name match
+      case "Map" =>
+        // Map instantiations differ from regular function calls
+        // Each map pair is a 2-tuple (i.e. length 2 TTuple in LoRe)
+        val mapKeyValues: Seq[String] = node.args.map(arg => {
+          // Simply throwing these TTuples to generate would give us tuple syntax, not map syntax
+          // Therefore, generate key and value separately and combine them with appropriate Dafny syntax
+          val keyValueTuple: TTuple = arg.asInstanceOf[TTuple]
+          val key: String           = generate(keyValueTuple.factors.head)
+          val value: String         = generate(keyValueTuple.factors.last)
+          s"$key := $value"
+        })
+        s"map[${mapKeyValues.mkString(", ")}]"
+      case _ =>
+        val args: Seq[String] = node.args.map(arg => generate(arg))
+        s"${node.name}(${args.mkString(", ")})"
   }
 
   /* Term types that are not covered currently, and should error */
