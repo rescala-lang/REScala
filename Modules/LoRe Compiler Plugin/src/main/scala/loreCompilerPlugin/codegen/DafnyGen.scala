@@ -34,7 +34,30 @@ object DafnyGen {
       case n: TFunC        => generateFromTFunC(n)
   }
 
-  // TODO: Implement
+  /** Generates a Dafny Type annotation for the given LoRe Type node.
+    *
+    * @param node The LoRe Type node.
+    * @return The generated Dafny Type annotation.
+    */
+  private def generateFromTypeNode(node: Type): String = {
+    node match
+      case n: SimpleType => generateFromSimpleType(n)
+      case n: TupleType  => generateFromTupleType(n)
+  }
+
+  // TODO
+  /** Generates a Dafny Type annotation for the given LoRe SimpleType node.
+    *
+    * @param node The LoRe SimpleType node.
+    * @return The generated Dafny Type annotation.
+    */
+  private def generateFromSimpleType(node: SimpleType): String = {
+    val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
+    val inner: String           = if innerList.isEmpty then "" else s"[${innerList.mkString(", ")}]"
+
+    s"${node.name}$inner"
+  }
+
   /** Generates Dafny code for the given LoRe TArgT.
     *
     * @param node The LoRe TArgT node.
@@ -51,6 +74,7 @@ object DafnyGen {
     */
   private def generateFromTVar(node: TVar): String = {
     // Just place the variable name in the code
+    // TODO: Depending on implementation of the reactives, this may need branching output depending on type of the var
     node.name
   }
 
@@ -394,6 +418,15 @@ object DafnyGen {
     */
   private def generateFromTViperImport(node: TViperImport): String = {
     throw new Error("Term type not implemented")
+  }
+
+  /** Generates a Dafny Type annotation for the given LoRe TupleType node.
+    *
+    * @param node The LoRe TupleType node.
+    * @return The generated Dafny Type annotation.
+    */
+  private def generateFromTupleType(node: TupleType): String = {
+    throw new Error("Tuples types not implemented")
   }
 
   /** Generates Dafny code for the given LoRe TIf.
