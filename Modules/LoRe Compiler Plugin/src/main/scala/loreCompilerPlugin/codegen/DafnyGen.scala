@@ -4,6 +4,22 @@ import lore.ast.*
 
 object DafnyGen {
 
+  /** Takes a Scala/LoRe type name and returns the corresponding Dafny type name, if one exists.
+    * E.g. the corresponding Dafny type for the Scala/LoRe type "String" is "string" (note the casing).
+    * @param typeName The name of the Scala/LoRe type.
+    * @return The name of the corresponding Dafny type, or the original parameter if no such correspondence exists.
+    */
+  private def getDafnyType(typeName: String): String = {
+    typeName match
+      case "Boolean"          => "bool"
+      case "Char"             => "char"
+      case "Int"              => "int"
+      case "Float" | "Double" => "real"
+      case "String"           => "string" // Technically, this is seq<char>, string is syntactic sugar
+      // TODO: Add others...
+      case _ => typeName
+  }
+
   /** Generates Dafny code for the given LoRe term.
     *
     * @param node The LoRe AST node.
@@ -45,7 +61,6 @@ object DafnyGen {
       case n: TupleType  => generateFromTupleType(n)
   }
 
-  // TODO
   /** Generates a Dafny Type annotation for the given LoRe SimpleType node.
     *
     * @param node The LoRe SimpleType node.
@@ -53,9 +68,10 @@ object DafnyGen {
     */
   private def generateFromSimpleType(node: SimpleType): String = {
     val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
-    val inner: String           = if innerList.isEmpty then "" else s"[${innerList.mkString(", ")}]"
+    val inner: String           = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
+    val dafnyType: String       = getDafnyType(node.name)
 
-    s"${node.name}$inner"
+    s"$dafnyType$inner"
   }
 
   /** Generates Dafny code for the given LoRe TArgT.
@@ -87,7 +103,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAbs(node: TAbs): String = {
-    // TODO: This is not properly functional, as it only generates the body, but not the definition!
     val typeAnnot: String = generateFromTypeNode(node._type)
     val body: String      = generate(node.body)
 
