@@ -113,14 +113,15 @@ object DafnyGen {
       case _ => if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TTuple.
     *
     * @param node The LoRe TTuple node.
     * @return The generated Dafny code.
     */
   private def generateFromTTuple(node: TTuple): String = {
-    ""
+    val elems: List[String] = node.factors.map(t => generate(t))
+
+    s"(${elems.mkString(", ")})"
   }
 
   // TODO: Implement
@@ -414,12 +415,13 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFCall(node: TFCall): String = {
-    // TODO: 0-argument methods vs properties?
-    if node.args.nonEmpty then {
+    if node.args == null then {
+      // Property access
+      s"${generate(node.parent)}.${node.field}"
+    } else {
+      // Method access
       val args: Seq[String] = node.args.map(arg => generate(arg))
       s"${generate(node.parent)}.${node.field}(${args.mkString(", ")})"
-    } else {
-      s"${generate(node.parent)}.${node.field}"
     }
   }
 

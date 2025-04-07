@@ -107,7 +107,7 @@ object LoReGen {
             TFCall(                                                // foo.bar
               buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
               field.toString,                                      // bar
-              List()                                               // Always empty as these are field accesses
+              null // null instead of empty list to differentiate between properties and methods without arguments
             )
       case methodBinaryTree @ Apply(Select(leftArg, opOrMethod), params: List[?]) =>
         // Method calls and binary operator applications
