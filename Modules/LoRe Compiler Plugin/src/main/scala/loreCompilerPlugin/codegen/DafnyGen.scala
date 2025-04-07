@@ -68,6 +68,7 @@ object DafnyGen {
     * @return The generated Dafny Type annotation.
     */
   private def generateFromSimpleType(node: SimpleType): String = {
+    val dafnyType: String       = getDafnyType(node.name)
     val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
 
     if dafnyType.matches("Tuple\\d+") then {
