@@ -17,6 +17,7 @@ object DafnyGen {
       case "Float" | "Double" => "real"
       case "String"           => "string" // Technically, this is seq<char>, string is syntactic sugar
       case "Map"              => "map"
+      case "List"             => "seq"
       // TODO: Add others...
       case _ => typeName
   }
@@ -442,15 +443,19 @@ object DafnyGen {
       case "Map" =>
         // Map instantiations differ from regular function calls
         // Each map pair is a 2-tuple (i.e. length 2 TTuple in LoRe)
-        val mapKeyValues: Seq[String] = node.args.map(arg => {
+        val mapKeyValues: Seq[String] = node.args.map(kv => {
           // Simply throwing these TTuples to generate would give us tuple syntax, not map syntax
           // Therefore, generate key and value separately and combine them with appropriate Dafny syntax
-          val keyValueTuple: TTuple = arg.asInstanceOf[TTuple]
+          val keyValueTuple: TTuple = kv.asInstanceOf[TTuple]
           val key: String           = generate(keyValueTuple.factors.head)
           val value: String         = generate(keyValueTuple.factors.last)
           s"$key := $value"
         })
         s"map[${mapKeyValues.mkString(", ")}]"
+      case "List" =>
+        // List instantiations also differ, these are turned into Dafny sets
+        val items: Seq[String] = node.args.map(i => generate(i))
+        s"[${items.mkString(", ")}]"
       case _ =>
         val args: Seq[String] = node.args.map(arg => generate(arg))
         s"${node.name}(${args.mkString(", ")})"
