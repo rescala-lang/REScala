@@ -64,7 +64,9 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArgT(node: TArgT): String = {
-    ""
+    val typeAnnot: String = generateFromTypeNode(node._type)
+
+    s"${node.name}: $typeAnnot"
   }
 
   /** Generates Dafny code for the given LoRe TVar.
@@ -86,7 +88,14 @@ object DafnyGen {
     */
   private def generateFromTAbs(node: TAbs): String = {
     // TODO: This is not properly functional, as it only generates the body, but not the definition!
-    generate(node.body)
+    val typeAnnot: String = generateFromTypeNode(node._type)
+    val body: String      = generate(node.body)
+
+    // TODO: Depending on the type, output must differ, debug for now
+    node.body match
+      case n: TReactive    => ""
+      case n: TInteraction => ""
+      case _ => if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
   }
 
   // TODO: Implement
