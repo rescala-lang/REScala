@@ -14,8 +14,8 @@ object DafnyGen {
       case "Boolean"          => "bool"
       case "Char"             => "char"
       case "Int"              => "int"
-      case "Float" | "Double" => "real"   // Dafny "real" follows SMT-Lib "Real" theory, so should be fine to map onto
-      case "String"           => "string" // Technically seq<char> (String is Seq[Char]), syntactic sugar respectively
+      case "Float" | "Double" => "real"   // Dafny "real" follows SMT-Lib "Real" theory, so should be fine to map onto.
+      case "String"           => "string" // Technically seq<char> (String is Seq[Char]), syntactic sugar respectively.
       case "Map"              => "map"
       case "List"             => "seq"    // This does confer some changes in semantics regarding mutability etc.
       // TODO: Add others...
@@ -29,7 +29,7 @@ object DafnyGen {
     */
   def generate(node: Term): String = {
     node match
-      // Cases ordered by order in LoRe AST definition
+      // Cases ordered by order in LoRe AST definition.
       case n: TViperImport => generateFromTViperImport(n) // Viper
       case n: TArgT        => generateFromTArgT(n)
       case n: TVar         => generateFromTVar(n)
@@ -73,7 +73,7 @@ object DafnyGen {
     val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
 
     if dafnyType.matches("Tuple\\d+") then {
-      // The name of Dafny's tuple type is blank, and instead of angled brackets uses square ones, e.g. (string, int).
+      // The name of Dafny's tuple type is blank, and instead of angled brackets uses parens, i.e. (string, int).
       // That means we just concat the inner types surrounded by parens for building tuple type annotations.
       s"(${innerList.mkString(", ")})"
     } else {
@@ -99,7 +99,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTVar(node: TVar): String = {
-    // Just place the variable name in the code
+    // Just place the variable name in the code.
     // TODO: Depending on implementation of the reactives, this may need branching output depending on type of the var
     node.name
   }
@@ -172,7 +172,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTReactive(node: TReactive): String = {
-    // TInteraction isn't considered a TReactive so it has to be separate
+    // FYI: TInteraction isn't considered a TReactive so it has to be separate.
     val reactive: String = node match
       case n: TSource  => generateFromTSource(n)
       case n: TDerived => generateFromTDerived(n)
@@ -208,7 +208,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTInteraction(node: TInteraction): String = {
-    // TInteraction is not a part of TReactive
+    // FYI: TInteraction is not a part of TReactive.
     ""
   }
 
@@ -226,8 +226,8 @@ object DafnyGen {
       case n: TDiv => generateFromTDiv(n)
 
     node match
-      case n: TNum => expr // Simple numbers don't need braces
-      case _ => s"($expr)" // Surround with braces to respect expression nesting as instructed by the AST node nesting
+      case n: TNum => expr // Simple numbers don't need parens as there is no nesting at this level.
+      case _ => s"($expr)" // Surround with parens to respect expression nesting as instructed by the AST node nesting.
   }
 
   /** Generates Dafny code for the given LoRe TNum.
@@ -236,8 +236,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTNum(node: TNum): String = {
-    // Transforming to string may seem odd but in reality it'll be a number
-    // in code because it's not surrounded by quotes, like a string would be
+    // Transforming an integer into a string to output a number may seem odd,
+    // but in reality it'll be a number in code as it's not surrounded by quotes.
     node.value.toString
   }
 
@@ -301,8 +301,8 @@ object DafnyGen {
       case n: TQuantifier => generateFromTQuantifier(n)
 
     node match
-      case n: (TTrue | TFalse) => expr // Simple booleans don't need braces
-      case _ => s"($expr)" // Surround with braces to respect expression nesting as instructed by the AST node nesting
+      case n: (TTrue | TFalse) => expr // Simple booleans don't need parens because there is no nesting at this level.
+      case _ => s"($expr)" // Surround with parens to respect expression nesting as instructed by the AST node nesting.
   }
 
   /** Generates Dafny code for the given LoRe TTrue.
@@ -311,7 +311,10 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTTrue(node: TTrue): String = {
-    true.toString
+    // Returning the String "true" instead of the String representation of Scala's true boolean,
+    // as this would break if Scala was to hypothetically ever change its true/false booleans.
+    // This is most certainly an irrelevant choice as that situation is highly unlikely, but it is technically safer.
+    "true"
   }
 
   /** Generates Dafny code for the given LoRe TFalse.
@@ -320,7 +323,10 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFalse(node: TFalse): String = {
-    false.toString
+    // Returning the String "false" instead of the String representation of Scala's true boolean,
+    // as this would break if Scala was to hypothetically ever change its true/false booleans.
+    // This is most certainly an irrelevant choice as that situation is highly unlikely, but it is technically safer.
+    "false"
   }
 
   /** Generates Dafny code for the given LoRe TNeg.
@@ -431,6 +437,7 @@ object DafnyGen {
     */
   private def generateFromTInSet(node: TInSet): String = {
     // TODO: Test
+    // FYI: Dafny has a syntactic shorthand for in-set negation: "x !in y". This does not exist in LoRe.
     s"${generate(node.left)} in ${generate(node.right)}"
   }
 
@@ -444,7 +451,7 @@ object DafnyGen {
       case n: TForall => generateFromTForall(n)
       case n: TExists => generateFromTExists(n)
 
-    s"(${expr})" // Surround with braces to respect expression nesting as instructed by the AST node nesting
+    s"(${expr})" // Surround with parens to respect expression nesting as instructed by the AST node nesting.
   }
 
   /** Generates Dafny code for the given LoRe TParens.
@@ -454,6 +461,7 @@ object DafnyGen {
     */
   private def generateFromTParens(node: TParens): String = {
     // TODO: Test
+    // This node simply surrounds the contained expression with parens.
     s"(${generate(node.inner)})"
   }
 
@@ -463,7 +471,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTString(node: TString): String = {
-    // Surround by quotes so it's an actual string within the code
+    // Surround by quotes so it's an actual string within the resulting Dafny code.
+    // Could technically also be output as a set of chars, if this was desired.
     s"\"${node.value}\""
   }
 
@@ -504,7 +513,7 @@ object DafnyGen {
     */
   private def generateFromTFCurly(node: TFCurly): String = {
     // TODO: Test
-    s"${generate(node.parent)}.${node.field} { ${generate(node.body)} }"
+    s"""${generate(node.parent)}.${node.field} { ${generate(node.body)} }"""
   }
 
   /** Generates Dafny code for the given LoRe TFunC.
@@ -515,11 +524,11 @@ object DafnyGen {
   private def generateFromTFunC(node: TFunC): String = {
     node.name match
       case "Map" =>
-        // Map instantiations differ from regular function calls
-        // Each map pair is a 2-tuple (i.e. length 2 TTuple in LoRe)
+        // Map instantiations differ from regular function calls.
+        // Each map pair is a 2-tuple (i.e. length 2 TTuple in LoRe).
         val mapKeyValues: Seq[String] = node.args.map(kv => {
-          // Simply throwing these TTuples to generate would give us tuple syntax, not map syntax
-          // Therefore, generate key and value separately and combine them with appropriate Dafny syntax
+          // Simply throwing these TTuples to generate would give us tuple syntax, not map syntax.
+          // Therefore, generate key and value separately and combine them with appropriate Dafny syntax.
           val keyValueTuple: TTuple = kv.asInstanceOf[TTuple]
           val key: String           = generate(keyValueTuple.factors.head)
           val value: String         = generate(keyValueTuple.factors.last)
@@ -527,7 +536,7 @@ object DafnyGen {
         })
         s"map[${mapKeyValues.mkString(", ")}]"
       case "List" =>
-        // List instantiations also differ, these are turned into Dafny sets
+        // List instantiations also differ, these are turned into Dafny sets.
         val items: Seq[String] = node.args.map(i => generate(i))
         s"[${items.mkString(", ")}]"
       case _ =>
