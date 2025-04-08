@@ -75,6 +75,7 @@ object DafnyGen {
     if dafnyType.matches("Tuple\\d+") then {
       // The name of Dafny's tuple type is blank, and instead of angled brackets uses parens, i.e. (string, int).
       // That means we just concat the inner types surrounded by parens for building tuple type annotations.
+      // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
       s"(${innerList.mkString(", ")})"
     } else {
       val inner: String = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
@@ -116,7 +117,8 @@ object DafnyGen {
 
     // TODO: Depending on the type, output must differ, debug for now
     node.body match
-      case n: TReactive    => ""
+      case n: TSource      => ""
+      case n: TDerived     => ""
       case n: TInteraction => ""
       case _ => if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
   }
@@ -129,6 +131,7 @@ object DafnyGen {
   private def generateFromTTuple(node: TTuple): String = {
     val elems: List[String] = node.factors.map(t => generate(t))
 
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
     s"(${elems.mkString(", ")})"
   }
 
@@ -143,6 +146,7 @@ object DafnyGen {
     val thenExpr: String = generate(node._then)
     val elseExpr: String = if node._else.isDefined then generate(node._else.get) else ""
 
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-if-statement
     if elseExpr.isEmpty then {
       s"""if $cond {
          |  $thenExpr
@@ -163,6 +167,7 @@ object DafnyGen {
     */
   private def generateFromTSeq(node: TSeq): String = {
     // TODO: Test
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-sequences
     s"[${node.body.map(t => generate(t)).toList.mkString(", ")}]"
   }
 
@@ -229,6 +234,7 @@ object DafnyGen {
     */
   private def generateFromTInvariant(node: TInvariant): String = {
     // TODO: Test
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-invariant-clause
     s"invariant ${generateFromTBoolean(node.condition)}"
   }
 
@@ -238,6 +244,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArith(node: TArith): String = {
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-numeric-types
     val expr: String = node match
       case n: TNum => generateFromTNum(n)
       case n: TAdd => generateFromTAdd(n)
@@ -303,6 +310,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTBoolean(node: TBoolean): String = {
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-booleans
     val expr: String = node match
       case n: TTrue       => generateFromTTrue(n)
       case n: TFalse      => generateFromTFalse(n)
@@ -467,6 +475,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTQuantifier(node: TQuantifier): String = {
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-quantifier-expression
     val expr: String = node match
       case n: TForall => generateFromTForall(n)
       case n: TExists => generateFromTExists(n)
@@ -492,7 +501,8 @@ object DafnyGen {
     */
   private def generateFromTString(node: TString): String = {
     // Surround by quotes so it's an actual string within the resulting Dafny code.
-    // Could technically also be output as a set of chars, if this was desired.
+    // Could technically also be output as a sequence of chars, if this was desired.
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-strings
     s"\"${node.value}\""
   }
 
@@ -502,6 +512,9 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFAcc(node: TFAcc): String = {
+    // References:
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-method-declaration
     val fieldAccess: String = node match
       case n: TFCall  => generateFromTFCall(n)
       case n: TFCurly => generateFromTFCurly(n)
@@ -542,6 +555,10 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFunC(node: TFunC): String = {
+    // References:
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration (Warning: "Function" has special meaning)
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-maps
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-sets
     node.name match
       case "Map" =>
         // Map instantiations differ from regular function calls.
