@@ -77,6 +77,19 @@ object DafnyGen {
       // That means we just concat the inner types surrounded by parens for building tuple type annotations.
       // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
       s"(${innerList.mkString(", ")})"
+    } else if dafnyType.matches("Function\\d+") then {
+      // Anonymous functions
+
+      // The input and output types for FunctionN types aren't split in its parameter list.
+      // The name of the type however tells you the number of inputs, and there's always only one output in Scala/LoRe.
+      // Therefore, grab the number from the type name and that many elements, and then the last element as output.
+      val functionArity: Int   = dafnyType.split("Function").last.toInt
+      val inputs: List[String] = node.inner.take(functionArity).map(p => generateFromTypeNode(p))
+      val output: String       = generateFromTypeNode(node.inner.last)
+
+      // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-arrow-types
+      // TODO: Can be one of three arrow types: "->", "-->" or "~>". Look into these.
+      s"(${inputs.mkString(", ")}) -> $output"
     } else {
       val inner: String = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
       s"$dafnyType$inner"
@@ -171,7 +184,6 @@ object DafnyGen {
     s"[${node.body.map(t => generate(t)).toList.mkString(", ")}]"
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TArrow.
     *
     * @param node The LoRe TArrow node.
