@@ -132,6 +132,30 @@ object DafnyGen {
     s"(${elems.mkString(", ")})"
   }
 
+  /** Generates Dafny code for the given LoRe TIf.
+    *
+    * @param node The LoRe TIf node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTIf(node: TIf): String = {
+    // TODO: Test
+    val cond: String     = generate(node.cond)
+    val thenExpr: String = generate(node._then)
+    val elseExpr: String = if node._else.isDefined then generate(node._else.get) else ""
+
+    if elseExpr.isEmpty then {
+      s"""if $cond {
+         |  $thenExpr
+         |}""".stripMargin
+    } else {
+      s"""if $cond {
+         |  $thenExpr
+         |} else {
+         |  $elseExpr
+         |}""".stripMargin
+    }
+  }
+
   // TODO: Implement
   /** Generates Dafny code for the given LoRe TArrow.
     *
@@ -380,6 +404,36 @@ object DafnyGen {
     s"${generate(node.left)} && ${generate(node.right)}"
   }
 
+  /** Generates Dafny code for the given LoRe TImpl.
+    *
+    * @param node The LoRe TImpl node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTImpl(node: TImpl): String = {
+    // TODO: Test
+    s"${generate(node.left)} ==> ${generate(node.right)}"
+  }
+
+  /** Generates Dafny code for the given LoRe TBImpl.
+    *
+    * @param node The LoRe TBImpl node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTBImpl(node: TBImpl): String = {
+    // TODO: Test
+    s"${generate(node.left)} <==> ${generate(node.right)}"
+  }
+
+  /** Generates Dafny code for the given LoRe TInSet.
+    *
+    * @param node The LoRe TInSet node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTInSet(node: TInSet): String = {
+    // TODO: Test
+    s"${generate(node.left)} in ${generate(node.right)}"
+  }
+
   /** Generates Dafny code for the given LoRe TQuantifier.
     *
     * @param node The LoRe TQuantifier node.
@@ -391,6 +445,16 @@ object DafnyGen {
       case n: TExists => generateFromTExists(n)
 
     s"(${expr})" // Surround with braces to respect expression nesting as instructed by the AST node nesting
+  }
+
+  /** Generates Dafny code for the given LoRe TParens.
+    *
+    * @param node The LoRe TParens node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTParens(node: TParens): String = {
+    // TODO: Test
+    s"(${generate(node.inner)})"
   }
 
   /** Generates Dafny code for the given LoRe TString.
@@ -431,6 +495,16 @@ object DafnyGen {
       val args: List[String] = node.args.map(arg => generate(arg))
       s"${generate(node.parent)}.${node.field}(${args.mkString(", ")})"
     }
+  }
+
+  /** Generates Dafny code for the given LoRe TFCurly.
+    *
+    * @param node The LoRe TFCurly node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTFCurly(node: TFCurly): String = {
+    // TODO: Test
+    s"${generate(node.parent)}.${node.field} { ${generate(node.body)} }"
   }
 
   /** Generates Dafny code for the given LoRe TFunC.
@@ -481,15 +555,6 @@ object DafnyGen {
     throw new Error("Tuples types not implemented")
   }
 
-  /** Generates Dafny code for the given LoRe TIf.
-    *
-    * @param node The LoRe TIf node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTIf(node: TIf): String = {
-    throw new Error("Term type not implemented")
-  }
-
   /** Generates Dafny code for the given LoRe TSeq.
     *
     * @param node The LoRe TSeq node.
@@ -535,33 +600,6 @@ object DafnyGen {
     throw new Error("Term type not implemented")
   }
 
-  /** Generates Dafny code for the given LoRe TImpl.
-    *
-    * @param node The LoRe TImpl node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTImpl(node: TImpl): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TBImpl.
-    *
-    * @param node The LoRe TBImpl node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTBImpl(node: TBImpl): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TInSet.
-    *
-    * @param node The LoRe TInSet node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTInSet(node: TInSet): String = {
-    throw new Error("Term type not implemented")
-  }
-
   /** Generates Dafny code for the given LoRe TForall.
     *
     * @param node The LoRe TForall node.
@@ -577,24 +615,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTExists(node: TExists): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TParens.
-    *
-    * @param node The LoRe TParens node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTParens(node: TParens): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TFCurly.
-    *
-    * @param node The LoRe TFCurly node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTFCurly(node: TFCurly): String = {
     throw new Error("Term type not implemented")
   }
 }
