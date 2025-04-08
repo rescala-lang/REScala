@@ -211,6 +211,15 @@ object DafnyGen {
     // FYI: TInteraction is not a part of TReactive.
     ""
   }
+  /** Generates Dafny code for the given LoRe TInvariant.
+    *
+    * @param node The LoRe TInvariant node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTInvariant(node: TInvariant): String = {
+    // TODO: Test
+    s"invariant ${generateFromTBoolean(node.condition)}"
+  }
 
   /** Generates Dafny code for the given LoRe TArith.
     *
