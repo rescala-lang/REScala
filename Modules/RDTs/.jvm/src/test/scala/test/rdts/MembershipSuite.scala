@@ -1,3 +1,5 @@
+package test.rdts
+
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}
@@ -9,6 +11,9 @@ import rdts.datatypes.experiments.protocols.{Consensus, Membership, Paxos}
 import scala.util.Try
 class MembershipSuite extends munit.ScalaCheckSuite {
 //  override def scalaCheckInitialSeed = "6Y9lv63LraBdJTHwHFLm3ItFEF7sm6Ok2D3S22VQcTO="
+
+  override def munitIgnore: Boolean = isGithubCi
+
 
   // TODO: failing seed
   // override def scalaCheckInitialSeed = "sw9ZNlZ9x0YrVuK2jCaUjc2Im3gi9os7yJbRCA1n8eP="

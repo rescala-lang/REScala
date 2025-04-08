@@ -1,3 +1,4 @@
+package test.rdts
 import org.scalacheck.commands.Commands
 import org.scalacheck.{Gen, Prop}
 import rdts.base.{Lattice, LocalUid}

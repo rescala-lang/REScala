@@ -1,3 +1,4 @@
+package test.rdts
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.{Arbitrary, Gen, Prop}

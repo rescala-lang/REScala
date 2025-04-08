@@ -1,3 +1,5 @@
+package test.rdts
+
 import rdts.datatypes.experiments.protocols.Paxos
 class PaperPaxosSuite extends munit.ScalaCheckSuite:
 
