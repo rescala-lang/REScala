@@ -90,7 +90,7 @@ object JettyWsConnection {
         client.start()
         println(s"client started")
         // this returns a future
-        client.connect(new JettyWsHandler(incomingHandler, Async.handler[Connection[MessageBuffer]]), uri).toAsync.run {
+        client.connect(new JettyWsHandler(incomingHandler, Async.handler[Connection[MessageBuffer]]), uri).toAsync.run(using ()) {
           sess =>
             println(s"connect returned $sess")
         }
