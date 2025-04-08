@@ -93,7 +93,7 @@ class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using Json
               case BroadcastCommunication.Hello(id) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(Async.handler)
+                    conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(using())(Async.handler)
                   case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(id, handling)
@@ -103,16 +103,16 @@ class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using Json
               case BroadcastCommunication.Request(from, `selfId`, sessionDescription) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(Async.handler)
+                    conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(using())(Async.handler)
                   case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(from, handling)
                 renderedConnectionTable.appendChild(handling.controlRow().render)
                 addDataChannel(handling)
-                handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
+                handling.peer.updateRemoteDescription(sessionDescription).run(using ())(Async.handler)
               case BroadcastCommunication.Response(from, `selfId`, sessionDescription) =>
                 autoconnections.get(from).foreach: handling =>
-                  handling.peer.updateRemoteDescription(sessionDescription).run(Async.handler)
+                  handling.peer.updateRemoteDescription(sessionDescription).run(using ())(Async.handler)
 
               // ignore messages to other peers
               case BroadcastCommunication.Request(from, to, desc)  =>

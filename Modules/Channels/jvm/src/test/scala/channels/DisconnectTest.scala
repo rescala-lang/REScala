@@ -35,7 +35,7 @@ class DisconnectTest extends munit.FunSuite {
     listen.prepare(conn =>
       TestUtil.printErrors { mb =>
         println(s"server pong received: ${new String(mb.asArray)}")
-        conn.send(mb).run(TestUtil.printErrors(mb => ()))
+        conn.send(mb).run(using ())(TestUtil.printErrors(mb => ()))
       }
     ).run(using Abort()) {
       case Success(_) => println("connection successful")
