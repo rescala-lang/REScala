@@ -178,7 +178,12 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArrow(node: TArrow): String = {
-    ""
+    val arrowHead: String = generate(node.left)
+    val arrowBody: String = generate(node.right)
+
+    // Anonymous function body always uses "=>" in Dafny. Differentiation between "->", "-->" and "~>" is for types.
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-lambda-expression
+    s"$arrowHead => $arrowBody"
   }
 
   /** Generates Dafny code for the given LoRe TReactive.
