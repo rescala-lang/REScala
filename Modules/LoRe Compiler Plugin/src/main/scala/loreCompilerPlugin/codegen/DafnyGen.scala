@@ -156,6 +156,16 @@ object DafnyGen {
     }
   }
 
+  /** Generates Dafny code for the given LoRe TSeq.
+    *
+    * @param node The LoRe TSeq node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTSeq(node: TSeq): String = {
+    // TODO: Test
+    s"[${node.body.map(t => generate(t)).toList.mkString(", ")}]"
+  }
+
   // TODO: Implement
   /** Generates Dafny code for the given LoRe TArrow.
     *
@@ -211,6 +221,7 @@ object DafnyGen {
     // FYI: TInteraction is not a part of TReactive.
     ""
   }
+
   /** Generates Dafny code for the given LoRe TInvariant.
     *
     * @param node The LoRe TInvariant node.
@@ -573,15 +584,6 @@ object DafnyGen {
     throw new Error("Tuples types not implemented")
   }
 
-  /** Generates Dafny code for the given LoRe TSeq.
-    *
-    * @param node The LoRe TSeq node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTSeq(node: TSeq): String = {
-    throw new Error("Term type not implemented")
-  }
-
   /** Generates Dafny code for the given LoRe TTypeAl.
     *
     * @param node The LoRe TTypeAl node.
@@ -606,15 +608,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAssume(node: TAssume): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TInvariant.
-    *
-    * @param node The LoRe TInvariant node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTInvariant(node: TInvariant): String = {
     throw new Error("Term type not implemented")
   }
 
