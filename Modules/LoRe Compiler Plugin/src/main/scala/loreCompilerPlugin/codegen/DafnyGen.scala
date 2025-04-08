@@ -14,10 +14,10 @@ object DafnyGen {
       case "Boolean"          => "bool"
       case "Char"             => "char"
       case "Int"              => "int"
-      case "Float" | "Double" => "real"
-      case "String"           => "string" // Technically, this is seq<char>, string is syntactic sugar
+      case "Float" | "Double" => "real"   // Dafny "real" follows SMT-Lib "Real" theory, so should be fine to map onto
+      case "String"           => "string" // Technically seq<char> (String is Seq[Char]), syntactic sugar respectively
       case "Map"              => "map"
-      case "List"             => "seq"
+      case "List"             => "seq"    // This does confer some changes in semantics regarding mutability etc.
       // TODO: Add others...
       case _ => typeName
   }
