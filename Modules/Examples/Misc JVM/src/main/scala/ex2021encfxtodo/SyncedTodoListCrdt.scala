@@ -1,9 +1,9 @@
-package ex2021encfixtodo
+package ex2021encfxtodo
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import ex2021encfixtodo.SyncedTodoListCrdt.StateType
-import ex2021encfixtodo.sync.ConnectionManager
+import ex2021encfxtodo.SyncedTodoListCrdt.StateType
+import ex2021encfxtodo.sync.ConnectionManager
 import rdts.base.LocalUid
 import rdts.syntax.DeltaAWLWWMContainer
 import scalafx.application.Platform

@@ -1,7 +1,7 @@
-package ex2021encfixtodo
+package ex2021encfxtodo
 
-import ex2021encfixtodo.SyncedTodoListCrdt.{InnerStateType, StateType, given}
-import ex2021encfixtodo.sync.{ConnectionManager, DataManagerConnectionManager}
+import ex2021encfxtodo.SyncedTodoListCrdt.{InnerStateType, StateType, given}
+import ex2021encfxtodo.sync.{ConnectionManager, DataManagerConnectionManager}
 import rdts.base.LocalUid
 import rdts.dotted.Dotted
 

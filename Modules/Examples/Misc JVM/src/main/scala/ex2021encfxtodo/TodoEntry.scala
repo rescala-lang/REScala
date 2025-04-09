@@ -1,3 +1,3 @@
-package ex2021encfixtodo
+package ex2021encfxtodo
 
 case class TodoEntry(description: String, completed: Boolean = false)

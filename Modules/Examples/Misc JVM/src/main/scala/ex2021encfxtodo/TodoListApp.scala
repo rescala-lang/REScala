@@ -1,4 +1,4 @@
-package ex2021encfixtodo
+package ex2021encfxtodo
 
 import scalafx.Includes.*
 import scalafx.application.{JFXApp3, Platform}

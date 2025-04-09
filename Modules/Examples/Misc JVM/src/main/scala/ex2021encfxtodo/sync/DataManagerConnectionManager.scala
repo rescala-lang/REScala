@@ -1,4 +1,4 @@
-package ex2021encfixtodo.sync
+package ex2021encfxtodo.sync
 
 import channels.NioTCP
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
