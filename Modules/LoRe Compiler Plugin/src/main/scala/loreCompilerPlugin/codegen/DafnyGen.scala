@@ -354,9 +354,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTTrue(node: TTrue): String = {
-    // Returning the String "true" instead of the String representation of Scala's true boolean,
-    // as this would break if Scala was to hypothetically ever change its true/false booleans.
-    // This is most certainly an irrelevant choice as that situation is highly unlikely, but it is technically safer.
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-booleans
     "true"
   }
 
@@ -366,9 +364,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFalse(node: TFalse): String = {
-    // Returning the String "false" instead of the String representation of Scala's true boolean,
-    // as this would break if Scala was to hypothetically ever change its true/false booleans.
-    // This is most certainly an irrelevant choice as that situation is highly unlikely, but it is technically safer.
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-booleans
     "false"
   }
 
