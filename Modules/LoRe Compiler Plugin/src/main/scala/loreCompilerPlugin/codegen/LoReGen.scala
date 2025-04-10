@@ -38,7 +38,7 @@ object LoReGen {
     typeTree match
       case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
         SimpleType(typeTree.asInstanceOf[CachedTypeRef].name.toString, List())
-      case AppliedType(outerType: CachedTypeRef, args: List[?]) => // Parameterized types like List, Map, etc
+      case AppliedType(outerType: CachedTypeRef, args: List[ScalaType]) => // Parameterized types like List, Map, etc
         // For some reason, probably due to the type definitions in UnboundInteraction, Interactions with requires show
         // up as type "T" and those with executes as type "E", so manually do some digging here to get the proper name
         // Also keep UnboundInteraction consistent as "Interaction", just so it's not as much of a mess with the above
@@ -46,16 +46,7 @@ object LoReGen {
         else if outerType.prefix.typeConstructor.show.contains("Interaction") then "Interaction"
         else outerType.name.toString
 
-        SimpleType(
-          typeString,
-          args.map {
-            case tp @ TypeRef(_, _)     => SimpleType(tp.asInstanceOf[CachedTypeRef].name.toString, List())
-            case tp @ AppliedType(_, _) => buildLoreTypeNode(tp, sourcePos)
-            case _ =>
-              report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
-              SimpleType("<error>", List())
-          }
-        )
+        SimpleType(typeString, args.map(t => buildLoreTypeNode(t, sourcePos)))
       case _ =>
         report.error(s"An error occurred building the LoRe type for the following tree:\n$typeTree", sourcePos)
         SimpleType("<error>", List())
