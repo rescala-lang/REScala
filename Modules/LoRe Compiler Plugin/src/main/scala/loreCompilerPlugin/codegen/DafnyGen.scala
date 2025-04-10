@@ -118,7 +118,6 @@ object DafnyGen {
     node.name
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TAbs.
     *
     * @param node The LoRe TAbs node.
@@ -128,7 +127,7 @@ object DafnyGen {
     val typeAnnot: String = generateFromTypeNode(node._type)
     val body: String      = generate(node.body)
 
-    // TODO: Depending on the type, output must differ, debug for now
+    // TODO: Finish implementing. Depending on the type, output must differ, debug for now
     node.body match
       case n: TSource      => ""
       case n: TDerived     => ""
@@ -154,7 +153,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTIf(node: TIf): String = {
-    // TODO: Test
     val cond: String     = generate(node.cond)
     val thenExpr: String = generate(node._then)
     val elseExpr: String = if node._else.isDefined then generate(node._else.get) else ""
@@ -179,7 +177,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTSeq(node: TSeq): String = {
-    // TODO: Test
     // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-sequences
     s"[${node.body.map(t => generate(t)).toList.mkString(", ")}]"
   }
@@ -242,17 +239,6 @@ object DafnyGen {
   private def generateFromTInteraction(node: TInteraction): String = {
     // FYI: TInteraction is not a part of TReactive.
     ""
-  }
-
-  /** Generates Dafny code for the given LoRe TInvariant.
-    *
-    * @param node The LoRe TInvariant node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTInvariant(node: TInvariant): String = {
-    // TODO: Test
-    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-invariant-clause
-    s"invariant ${generateFromTBoolean(node.condition)}"
   }
 
   /** Generates Dafny code for the given LoRe TArith.
@@ -497,7 +483,7 @@ object DafnyGen {
       case n: TForall => generateFromTForall(n)
       case n: TExists => generateFromTExists(n)
 
-    s"(${expr})" // Surround with parens to respect expression nesting as instructed by the AST node nesting.
+    s"($expr)" // Surround with parens to respect expression nesting as instructed by the AST node nesting.
   }
 
   /** Generates Dafny code for the given LoRe TParens.
@@ -642,6 +628,16 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAssume(node: TAssume): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  // TODO: Implement. These are _not_ Dafny's loop invariants.
+  /** Generates Dafny code for the given LoRe TInvariant.
+    *
+    * @param node The LoRe TInvariant node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTInvariant(node: TInvariant): String = {
     throw new Error("Term type not implemented")
   }
 
