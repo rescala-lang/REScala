@@ -504,7 +504,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTParens(node: TParens): String = {
-    // TODO: Test
     // This node simply surrounds the contained expression with parens.
     s"(${generate(node.inner)})"
   }
@@ -552,16 +551,6 @@ object DafnyGen {
       val args: List[String] = node.args.map(arg => generate(arg))
       s"${generate(node.parent)}.${node.field}(${args.mkString(", ")})"
     }
-  }
-
-  /** Generates Dafny code for the given LoRe TFCurly.
-    *
-    * @param node The LoRe TFCurly node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTFCurly(node: TFCurly): String = {
-    // TODO: Test
-    s"""${generate(node.parent)}.${node.field} { ${generate(node.body)} }"""
   }
 
   /** Generates Dafny code for the given LoRe TFunC.
@@ -659,6 +648,15 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTExists(node: TExists): String = {
+    throw new Error("Term type not implemented")
+  }
+
+  /** Generates Dafny code for the given LoRe TFCurly.
+    *
+    * @param node The LoRe TFCurly node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTFCurly(node: TFCurly): String = {
     throw new Error("Term type not implemented")
   }
 }
