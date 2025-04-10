@@ -96,6 +96,18 @@ object DafnyGen {
     }
   }
 
+  /** Generates a Dafny Type annotation for the given LoRe TupleType node.
+    *
+    * @param node The LoRe TupleType node.
+    * @return The generated Dafny Type annotation.
+    */
+  private def generateFromTupleType(node: TupleType): String = {
+    val tupleElements: List[String] = node.inner.map(t => generateFromTypeNode(t)).toList
+
+    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
+    s"(${tupleElements.mkString(", ")})"
+  }
+
   /** Generates Dafny code for the given LoRe TArgT.
     *
     * @param node The LoRe TArgT node.
@@ -593,15 +605,6 @@ object DafnyGen {
     */
   private def generateFromTViperImport(node: TViperImport): String = {
     throw new Error("Term type not implemented")
-  }
-
-  /** Generates a Dafny Type annotation for the given LoRe TupleType node.
-    *
-    * @param node The LoRe TupleType node.
-    * @return The generated Dafny Type annotation.
-    */
-  private def generateFromTupleType(node: TupleType): String = {
-    throw new Error("Tuples types not implemented")
   }
 
   /** Generates Dafny code for the given LoRe TTypeAl.
