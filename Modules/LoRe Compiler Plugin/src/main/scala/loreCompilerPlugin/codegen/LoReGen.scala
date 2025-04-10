@@ -1,5 +1,6 @@
 package loreCompilerPlugin.codegen
 
+import cats.parse.Caret
 import dotty.tools.dotc.ast.Trees.*
 import dotty.tools.dotc.ast.tpd
 import dotty.tools.dotc.core.Constants.Constant
@@ -12,6 +13,14 @@ import dotty.tools.dotc.util.{SourceFile, SourcePosition}
 import lore.ast.{Type as LoReType, *}
 
 object LoReGen {
+
+  def loreSourcePosFromScala(pos: SourcePosition): SourcePos = {
+    // TODO: Offset hardcoded to 0 because of uncertainty; see question in notes.
+    val startPos: Caret = Caret(pos.startLine, pos.startColumn, 0)
+    val endPos: Caret   = Caret(pos.endLine, pos.endColumn, 0)
+
+    SourcePos(startPos, endPos)
+  }
 
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
     *
@@ -62,28 +71,32 @@ object LoReGen {
       Context
   ): Term = {
     tree match
-      case Literal(Constant(num: Int)) => // Basic int values like 0 or 1
+      case number @ Literal(Constant(num: Int)) => // Basic int values like 0 or 1
         logRhsInfo(indentLevel, operandSide, "literal integer value", num.toString)
-        TNum(num)
-      case Literal(Constant(str: String)) => // Basic string values like "foo"
+        TNum(num, Some(loreSourcePosFromScala(number.sourcePos)))
+      case string @ Literal(Constant(str: String)) => // Basic string values like "foo"
         logRhsInfo(indentLevel, operandSide, "literal string value", str)
-        TString(str)
-      case Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
+        TString(str, Some(loreSourcePosFromScala(string.sourcePos)))
+      case boolean @ Literal(Constant(bool: Boolean)) => // Basic boolean values true or false
         logRhsInfo(indentLevel, operandSide, "literal boolean value", bool.toString)
-        if bool then TTrue() else TFalse()
-      case Ident(referenceName: Name) => // References to variables (any type)
+        if bool then TTrue(Some(loreSourcePosFromScala(boolean.sourcePos)))
+        else TFalse(Some(loreSourcePosFromScala(boolean.sourcePos)))
+      case ident @ Ident(referenceName: Name) => // References to variables (any type)
         logRhsInfo(indentLevel, operandSide, "reference to variable", referenceName.toString)
         // No need to check whether the reference specified here actually exists, because if it didn't
         // then the original Scala code would not have compiled due to invalid reference and this
         // point would not have been reached either way, so just pass on the reference name to a TVar
-        TVar(referenceName.toString)
+        TVar(referenceName.toString, Some(loreSourcePosFromScala(ident.sourcePos)))
       case fieldUnaryTree @ Select(arg, opOrField) => // Field access and unary operator applications
         opOrField match
           case nme.UNARY_! => // Overall case catching supported unary operators, add other unary operators via |s here
             logRhsInfo(indentLevel, operandSide, "unary operator application of", opOrField.show)
             opOrField match // Match individual unary operators
               // This specifically has to be nme.UNARY_! and not e.g. nme.NOT
-              case nme.UNARY_! => TNeg(buildLoreRhsTerm(arg, indentLevel + 1, operandSide)) // !operand
+              case nme.UNARY_! => TNeg(
+                  buildLoreRhsTerm(arg, indentLevel + 1, operandSide),
+                  Some(loreSourcePosFromScala(fieldUnaryTree.sourcePos))
+                ) // !operand
               case _ => // Unsupported unary operators
                 report.error(
                   s"${"\t".repeat(indentLevel)}Unsupported unary operator ${opOrField.show} used:\n$tree",
@@ -98,7 +111,8 @@ object LoReGen {
             TFCall(                                                // foo.bar
               buildLoreRhsTerm(arg, indentLevel + 1, operandSide), // foo (might be a more complex expression)
               field.toString,                                      // bar
-              null // null instead of empty list to differentiate between properties and methods without arguments
+              null, // null instead of empty list to differentiate between properties and methods without arguments
+              Some(loreSourcePosFromScala(fieldUnaryTree.sourcePos))
             )
       case methodBinaryTree @ Apply(Select(leftArg, opOrMethod), params: List[?]) =>
         // Method calls and binary operator applications
@@ -111,60 +125,72 @@ object LoReGen {
               case nme.ADD =>
                 TAdd( // left + right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.SUB =>
                 TSub( // left - right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.MUL =>
                 TMul( // left * right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.DIV =>
                 TDiv( // left / right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.And => TConj( // left && right, Important: nme.AND is & and nme.And is &&
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.Or => TDisj( // left || right, Important: nme.OR is | and nme.Or is ||
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.LT =>
                 TLt( // left < right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.GT =>
                 TGt( // left > right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.LE =>
                 TLeq( // left <= right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.GE =>
                 TGeq( // left >= right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.EQ =>
                 TEq( // left == right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case nme.NE =>
                 TIneq( // left != right
                   buildLoreRhsTerm(leftArg, indentLevel + 1, "left"),
-                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right")
+                  buildLoreRhsTerm(rightArg, indentLevel + 1, "right"),
+                  Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
                 )
               case _ => // Unsupported binary operators
                 report.error(
@@ -179,27 +205,36 @@ object LoReGen {
               methodName.toString,                                     // bar
               params.map(p =>                                          // baz, qux, ... (each can be more complex terms)
                 buildLoreRhsTerm(p, indentLevel + 1, operandSide)
-              )
+              ),
+              Some(loreSourcePosFromScala(methodBinaryTree.sourcePos))
             )
-      case Apply(Ident(name: Name), params: List[?]) => // Function calls
+      case funcCallTree @ Apply(Ident(name: Name), params: List[?]) => // Function calls
         logRhsInfo(indentLevel, operandSide, s"call to a function with ${params.size} params:", name.toString)
         TFunC(            // foo(bar, baz)
           name.toString,  // foo
           params.map(p => // bar, baz, ... (might each be more complex terms)
             buildLoreRhsTerm(p, indentLevel + 1, operandSide)
-          )
+          ),
+          Some(loreSourcePosFromScala(funcCallTree.sourcePos))
         )
-      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), List(Typed(SeqLiteral(params: List[?], _), _))) =>
+      case instTree @ Apply(
+            TypeApply(Select(Ident(typeName: Name), _), _),
+            List(Typed(SeqLiteral(params: List[?], _), _))
+          ) =>
         // Type instantiations like Lists etc, i.e. specifically "List(...)" and so forth
         logRhsInfo(indentLevel, operandSide, s"type call to ${typeName.toString} with ${params.length} params", "")
         TFunC(
           typeName.toString,
-          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide))
+          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)),
+          Some(loreSourcePosFromScala(instTree.sourcePos))
         )
-      case Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]) =>
+      case tupleTree @ Apply(TypeApply(Select(Ident(typeName: Name), _), _), params: List[?]) =>
         // Tuple definitions, may also catch currently unknown other cases (and has to stay below type instant. case)
         logRhsInfo(indentLevel, operandSide, s"tuple call to $typeName with ${params.length} members", "")
-        TTuple(params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)))
+        TTuple(
+          params.map(p => buildLoreRhsTerm(p, indentLevel + 1, operandSide)),
+          Some(loreSourcePosFromScala(tupleTree.sourcePos))
+        )
       case rawInteractionTree @ TypeApply(Select(Ident(tpName), _), _) if tpName.toString == "Interaction" =>
         // Raw Interaction definitions (without method calls) on the RHS, e.g. Interaction[Int, String]
         // This probably breaks if you alias/import Interaction as a different name, not sure how to handle that
@@ -213,7 +248,8 @@ object LoReGen {
             logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
             TInteraction(
               reactiveType,
-              argumentType
+              argumentType,
+              sourcePos = Some(loreSourcePosFromScala(rawInteractionTree.sourcePos))
             )
           case TupleType(_) => // TODO tuple types?
             println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")
@@ -251,10 +287,16 @@ object LoReGen {
             loreTypeName match
               case "Var" =>
                 logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
-                TSource(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
+                TSource(
+                  buildLoreRhsTerm(params.head, indentLevel + 1, operandSide),
+                  Some(loreSourcePosFromScala(reactiveTree.sourcePos))
+                )
               case "Signal" =>
                 logRhsInfo(indentLevel, operandSide, s"definition of a $loreTypeName reactive", "")
-                TDerived(buildLoreRhsTerm(params.head, indentLevel + 1, operandSide))
+                TDerived(
+                  buildLoreRhsTerm(params.head, indentLevel + 1, operandSide),
+                  Some(loreSourcePosFromScala(reactiveTree.sourcePos))
+                )
               case "Interaction" =>
                 logRhsInfo(indentLevel, operandSide, s"call to the $methodName method", "")
                 var interactionTerm = buildLoreRhsTerm(innerNode, indentLevel + 1, operandSide)   // Build Interaction
@@ -287,10 +329,11 @@ object LoReGen {
             logRhsInfo(indentLevel, operandSide, s"arrow function with ${arrowLhs.length} arguments", "")
             TArrow(                 // (foo: Int) => foo + 1
               TTuple(arrowLhs.map { // (foo: Int)
-                case ValDef(paramName, paramType, tpd.EmptyTree) =>
+                case argTree @ ValDef(paramName, paramType, tpd.EmptyTree) =>
                   TArgT(
                     paramName.toString,
-                    buildLoreTypeNode(paramType.tpe, paramType.sourcePos)
+                    buildLoreTypeNode(paramType.tpe, paramType.sourcePos),
+                    Some(loreSourcePosFromScala(argTree.sourcePos))
                   )
                 case _ =>
                   report.error(
@@ -299,7 +342,8 @@ object LoReGen {
                   )
                   TVar("<error>")
               }),
-              buildLoreRhsTerm(arrowRhs, indentLevel + 1, operandSide) // foo + 1
+              buildLoreRhsTerm(arrowRhs, indentLevel + 1, operandSide), // foo + 1
+              Some(loreSourcePosFromScala(arrowTree.sourcePos))
             )
           case _ =>
             report.error(

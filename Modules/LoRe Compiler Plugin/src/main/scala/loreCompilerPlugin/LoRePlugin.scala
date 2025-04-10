@@ -1,5 +1,6 @@
 package loreCompilerPlugin
 
+import cats.parse.Caret
 import dotty.tools.dotc.{CompilationUnit, report}
 import dotty.tools.dotc.ast.Trees.{Apply, Block, Select, ValDef}
 import dotty.tools.dotc.ast.tpd
@@ -9,8 +10,8 @@ import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.SourceFile
 import java.io.File // For getting URIs and the system-independent path separator
-import lore.ast.{SimpleType, TAbs, TDerived, TSource, Term, TupleType}
-import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode}
+import lore.ast.{SimpleType, SourcePos, TAbs, TDerived, TSource, Term, TupleType}
+import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode, loreSourcePosFromScala}
 import loreCompilerPlugin.codegen.DafnyGen
 import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
@@ -48,7 +49,8 @@ class LoRePhase extends PluginPhase {
           case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
           case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
           case _ => // Other definitions, these are the ones we care about
-            val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
+            val loreTypeNode         = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
+            val sourcePos: SourcePos = loreSourcePosFromScala(tree.sourcePos)
             // Several notes to make here regarding handling the RHS of reactives for future reference:
             // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
             //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
@@ -65,25 +67,34 @@ class LoRePhase extends PluginPhase {
                 println(s"Detected $typeName definition with name \"$name\"")
                 rhs match
                   case tpd.EmptyTree => () // Ignore func args (ArgT) outside of arrow functions for now
-                  case Apply(Apply(_, List(properRhs)), _)
+                  case Apply(source @ Apply(_, List(properRhs)), _)
                       if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
                     newLoreTerm = Some(TAbs( // foo: Source[Bar] = Source(baz)
                       name.toString, // foo
                       loreTypeNode, // Source[Bar]
-                      TSource(buildLoreRhsTerm(properRhs, 1)) // Source(baz)
+                      TSource( // Source(baz)
+                        buildLoreRhsTerm(properRhs, 1),
+                        Some(loreSourcePosFromScala(source.sourcePos))
+                      ),
+                      Some(sourcePos)
                     ))
-                  case Apply(Apply(_, List(Block(_, properRhs))), _)
+                  case Apply(derived @ Apply(_, List(Block(_, properRhs))), _)
                       if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
                     newLoreTerm = Some(TAbs( // foo: Derived[Bar] = Derived { baz }
                       name.toString, // foo
                       loreTypeNode, // Derived[Bar]
-                      TDerived(buildLoreRhsTerm(properRhs, 1)) // Derived { baz }
+                      TDerived( // Derived { baz }
+                        buildLoreRhsTerm(properRhs, 1),
+                        Some(loreSourcePosFromScala(derived.sourcePos))
+                      ),
+                      Some(sourcePos)
                     ))
                   case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
                     newLoreTerm = Some(TAbs( // foo: Bar = baz
                       name.toString, // foo (any valid Scala identifier)
                       loreTypeNode, // Bar
-                      buildLoreRhsTerm(rhs, 1) // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+                      buildLoreRhsTerm(rhs, 1), // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+                      Some(sourcePos)
                     ))
               case TupleType(_) => // TODO tuple types?
                 println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")
