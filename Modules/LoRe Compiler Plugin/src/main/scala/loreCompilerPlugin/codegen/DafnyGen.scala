@@ -259,6 +259,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArith(node: TArith): String = {
+    // FYI: Modulo and Unary Minus do not exist in LoRe, but do in Dafny
     // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-numeric-types
     val expr: String = node match
       case n: TNum => generateFromTNum(n)
@@ -455,7 +456,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTImpl(node: TImpl): String = {
-    // TODO: Test
+    // FYI: Dafny also supports a "reverse implication", i.e. right implies left, but this doesn't exist in LoRe.
     s"${generate(node.left)} ==> ${generate(node.right)}"
   }
 
@@ -465,7 +466,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTBImpl(node: TBImpl): String = {
-    // TODO: Test
     s"${generate(node.left)} <==> ${generate(node.right)}"
   }
 
@@ -475,7 +475,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTInSet(node: TInSet): String = {
-    // TODO: Test
     // FYI: Dafny has a syntactic shorthand for in-set negation: "x !in y". This does not exist in LoRe.
     s"${generate(node.left)} in ${generate(node.right)}"
   }
@@ -524,7 +523,7 @@ object DafnyGen {
   private def generateFromTFAcc(node: TFAcc): String = {
     // References:
     // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
-    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-method-declaration
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-method-declaration (Warning: "Method" has distinct meaning)
     val fieldAccess: String = node match
       case n: TFCall  => generateFromTFCall(n)
       case n: TFCurly => generateFromTFCurly(n)
@@ -556,7 +555,7 @@ object DafnyGen {
     */
   private def generateFromTFunC(node: TFunC): String = {
     // References:
-    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration (Warning: "Function" has special meaning)
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration (Warning: "Function" has distinct meaning)
     // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-maps
     // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-sets
     node.name match
