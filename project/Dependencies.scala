@@ -21,13 +21,15 @@ object Dependencies {
   val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-RC3"
   val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.17.0"
 
+  val sslcontextKickstart = libraryDependencies ++=List(
+    "io.github.hakky54" % "sslcontext-kickstart"         % "9.1.0",
+    "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.1.0",
+  )
   val bouncyCastle = libraryDependencies ++=
     List(
       // Note, jdk18 means JDK 1.8
       "org.bouncycastle"  % "bcprov-jdk18on"               % "1.80",
       "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.80",
-      "io.github.hakky54" % "sslcontext-kickstart"         % "9.1.0",
-      "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.1.0",
     )
 
   def borer = libraryDependencies ++= Seq(

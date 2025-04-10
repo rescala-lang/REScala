@@ -1,9 +1,10 @@
 package lofi_acl.sync.acl.bft
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray, writeToArrayReentrant}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import crypto.{Ed25519Util, PublicIdentity}
 import lofi_acl.access.PermissionTree
-import lofi_acl.crypto.{Ed25519Util, PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.bft.BftAclOpGraph.{Delegation, EncodedDelegation, Signature, opCodec}
 
 import java.security.PrivateKey

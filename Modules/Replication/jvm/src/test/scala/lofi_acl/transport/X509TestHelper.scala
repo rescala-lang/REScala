@@ -1,5 +1,6 @@
-package lofi_acl.crypto
+package lofi_acl.transport
 
+import crypto.Ed25519Util
 import org.bouncycastle.asn1.edec.EdECObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500NameBuilder
 import org.bouncycastle.asn1.x500.style.BCStyle

@@ -1,13 +1,14 @@
 package lofi_acl.sync.acl.bft
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import crypto.PublicIdentity
 import lofi_acl.access.{Filter, Operation, PermissionTree}
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.acl.Sync
 import lofi_acl.sync.acl.bft.BftAclOpGraph.{Delegation, EncodedDelegation, Signature}
 import lofi_acl.{access, sync}
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.atomic.AtomicReference
@@ -30,7 +31,7 @@ class SyncWithBftMonotonicAcl[RDT](
   private val localPublicId = localIdentity.getPublic
 
   private val rdtReference: AtomicReference[(Dots, RDT)] = AtomicReference(Dots.empty -> Bottom[RDT].empty)
-  private val lastLocalRdtDot: AtomicReference[Dot]      = AtomicReference(Dot(localPublicId.toUid, -1))
+  private val lastLocalRdtDot: AtomicReference[Dot]      = AtomicReference(Dot(Uid(localPublicId.id), -1))
 
   def state: RDT                       = rdtReference.get()._2
   def currentAcl: (BftAclOpGraph, Acl) = localAcl.get()

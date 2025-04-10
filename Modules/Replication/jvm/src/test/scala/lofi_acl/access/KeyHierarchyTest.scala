@@ -2,38 +2,45 @@ package lofi_acl.access
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import crypto.{Ed25519Util, PublicIdentity}
 import lofi_acl.ardt.datatypes.LWW
-import lofi_acl.crypto.{Ed25519Util, KeyDerivationKey, PublicIdentity}
 import munit.FunSuite
-import rdts.base.Bottom
+import rdts.base.{Bottom, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.time.Dot
 
+case class CompoundTest(a: LastWriterWins[Option[String]], b: String)
+
 class KeyHierarchyTest extends FunSuite {
+  given stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
+  given stringBottom: Bottom[String]        = Bottom.provide("")
+  given DeltaSurgeon[String]                = DeltaSurgeon.ofTerminalValue
+
   private given lwwSurgeon: DeltaSurgeon[LastWriterWins[Option[String]]] = {
     import DeltaSurgeon.given
-    given stringCodec: JsonValueCodec[String] = JsonCodecMaker.make
-    given stringBottom: Bottom[String]        = Bottom.provide("")
-    given DeltaSurgeon[String]                = DeltaSurgeon.ofTerminalValue
     LWW.deltaSurgeon[Option[String]]
   }
 
-  private val replicaId = PublicIdentity.fromPublicKey(Ed25519Util.generateNewKeyPair.getPublic)
+  private given DeltaSurgeon[CompoundTest] = {
+    given compoundTestBottom: Bottom[CompoundTest] = Bottom.derived
+    DeltaSurgeon.derived
+  }
+
+  private val replicaId        = PublicIdentity.fromPublicKey(Ed25519Util.generateNewKeyPair.getPublic)
+  private val fullKeyHierarchy = FullKeyHierarchy(KeyDerivationKey())
 
   test("FullKeyHierarchy with LastWriterWins[String]") {
-    val key = FullKeyHierarchy(KeyDerivationKey())
-
     Seq(
       LastWriterWins.empty[Option[String]],
       LastWriterWins.now(Some("Test")),
       LastWriterWins.now(None),
     ).foreach { delta =>
-      testEncryptDecrypt(key, delta)
+      testEncryptDecrypt(fullKeyHierarchy, delta)
     }
   }
 
   def testEncryptDecrypt(keyHierarchy: KeyHierarchy, delta: LastWriterWins[Option[String]]): Unit = {
-    val dot       = Dot(replicaId.toUid, 42)
+    val dot       = Dot(Uid(replicaId.id), 42)
     val isolated  = lwwSurgeon.isolate(delta)
     val encrypted = keyHierarchy.encryptDelta(dot, isolated)
     val decrypted = keyHierarchy.decryptDelta(dot, encrypted)

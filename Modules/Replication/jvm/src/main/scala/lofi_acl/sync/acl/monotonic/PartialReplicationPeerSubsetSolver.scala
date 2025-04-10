@@ -1,7 +1,7 @@
 package lofi_acl.sync.acl.monotonic
 
+import crypto.PublicIdentity
 import lofi_acl.access.PermissionTree
-import lofi_acl.crypto.PublicIdentity
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -23,7 +23,7 @@ object PartialReplicationPeerSubsetSolver {
       // Drop all replicas whose permissions are <= than another replica from the set.
       // This is still not necessarily a minimal set (e.g., A can write a1,a2; B can write a1;b1; C can write a2;b1).
       val maximalReplicas = replicas.filter(r1 =>
-        replicas.forall(r2 => (r2 eq r1) || contributingPermissions(r1) <= contributingPermissions(r2))
+        replicas.forall(r2 => (r2 `eq` r1) || contributingPermissions(r1) <= contributingPermissions(r2))
       )
       (maximalReplicas, achievedPermission)
   }

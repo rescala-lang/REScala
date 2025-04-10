@@ -1,6 +1,6 @@
 package lofi_acl.sync
 
-import lofi_acl.crypto.PublicIdentity
+import crypto.PublicIdentity
 
 import java.util.concurrent.LinkedBlockingQueue
 import scala.collection.mutable

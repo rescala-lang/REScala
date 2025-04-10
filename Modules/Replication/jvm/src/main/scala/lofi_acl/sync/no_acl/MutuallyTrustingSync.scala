@@ -1,11 +1,12 @@
 package lofi_acl.sync.no_acl
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import crypto.PublicIdentity
 import lofi_acl.collections.DeltaStore
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.no_acl.MutuallyTrustingSyncMessage.*
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.Executors
@@ -28,10 +29,10 @@ class MutuallyTrustingSync[RDT](
 
   private val rdtReference: AtomicReference[(Dots, RDT)] = AtomicReference(initialRdt)
   private val lastLocalRdtDot: AtomicReference[Dot] =
-    AtomicReference(initialRdt._1.max(localPublicId.toUid).getOrElse(Dot(localPublicId.toUid, -1)))
+    AtomicReference(initialRdt._1.max(Uid(localPublicId.id)).getOrElse(Dot(Uid(localPublicId.id), -1)))
   private val permissionsReference: AtomicReference[(Dots, Set[PublicIdentity])] = AtomicReference(initialPermissions)
   private val lastLocalPermissionsDot: AtomicReference[Dot] =
-    AtomicReference(initialPermissions._1.max(localPublicId.toUid).getOrElse(Dot(localPublicId.toUid, -1)))
+    AtomicReference(initialPermissions._1.max(Uid(localPublicId.id)).getOrElse(Dot(Uid(localPublicId.id), -1)))
 
   @volatile private var stopped = false
 

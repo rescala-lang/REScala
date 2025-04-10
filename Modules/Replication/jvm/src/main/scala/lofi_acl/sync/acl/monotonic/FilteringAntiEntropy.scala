@@ -1,12 +1,12 @@
 package lofi_acl.sync.acl.monotonic
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import crypto.PublicIdentity
 import lofi_acl.access
 import lofi_acl.access.Operation.WRITE
 import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
-import lofi_acl.crypto.PublicIdentity.toPublicIdentity
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.Sync
 import lofi_acl.sync.acl.monotonic.FilteringAntiEntropy.PartialDelta
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
@@ -285,7 +285,7 @@ class FilteringAntiEntropy[RDT](
 
           if existingPartialDelta.isEmpty then {
             val acl                     = aclReference.get()._2
-            val authorsWritePermissions = acl.write(dot.place.toPublicIdentity)
+            val authorsWritePermissions = acl.write(PublicIdentity(dot.place.delegate))
             val requiredPermissions     = authorsWritePermissions.intersect(acl.read(localPublicId))
             if requiredPermissions <= sendersPermissions
             then // Immediately applicable
@@ -318,7 +318,7 @@ class FilteringAntiEntropy[RDT](
       // Update ACL
       val (_, oldAcl) = aclReference.getAndUpdate {
         case (dots, acl) =>
-          acl.addPermissionIfAllowed(principal, PublicIdentity.fromUid(dot.place), realm, operation) match
+          acl.addPermissionIfAllowed(principal, PublicIdentity(dot.place.delegate), realm, operation) match
             case Some(updatedAcl) =>
               updateValidAndNew = !dots.contains(dot) // Check if update is new
               (dots.add(dot), updatedAcl)

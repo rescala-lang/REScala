@@ -1,15 +1,16 @@
 package lofi_acl.sync.acl.monotonic
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import crypto.PublicIdentity
 import lofi_acl.access.{Filter, Operation, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.*
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.Sync
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.*
 import lofi_acl.{access, sync}
-import rdts.base.{Bottom, Lattice}
+import rdts.base.{Bottom, Lattice, Uid}
 import rdts.time.{Dot, Dots}
 
 import java.util.concurrent.atomic.AtomicReference
@@ -38,7 +39,7 @@ class SyncWithMonotonicAcl[RDT](
     initialRdt.prefix.merge(initialRdt.deltas.foldLeft(bottom.empty) { case (l, (_, r)) => l.merge(r) })
   )
   private val lastLocalRdtDot: AtomicReference[Dot] =
-    AtomicReference(initialRdt._1.max(localPublicId.toUid).getOrElse(Dot(localPublicId.toUid, -1)))
+    AtomicReference(initialRdt._1.max(Uid(localPublicId.id)).getOrElse(Dot(Uid(localPublicId.id), -1)))
 
   private val lastLocalAclDot: AtomicReference[Dot] = {
     val localId = localIdentity.getPublic.id
@@ -47,7 +48,7 @@ class SyncWithMonotonicAcl[RDT](
         .filter(_.dot.place.delegate == localId)
         .maxByOption(_.dot.time)
         .map(_.dot)
-        .getOrElse(Dot(localIdentity.getPublic.toUid, -1))
+        .getOrElse(Dot(Uid(localIdentity.getPublic.id), -1))
     )
   }
 

@@ -1,6 +1,6 @@
 package lofi_acl.sync.no_acl
 
-import lofi_acl.crypto.PublicIdentity
+import crypto.PublicIdentity
 import rdts.time.Dots
 
 enum MutuallyTrustingSyncMessage[RDT]:

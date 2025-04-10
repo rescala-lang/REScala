@@ -1,6 +1,7 @@
-package lofi_acl.crypto
+package channels.tls
 
-import lofi_acl.crypto.X509Util.toPem
+import channels.tls.X509Util.toPem
+import crypto.Ed25519Util
 import munit.FunSuite
 import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.cert.X509CertificateHolder

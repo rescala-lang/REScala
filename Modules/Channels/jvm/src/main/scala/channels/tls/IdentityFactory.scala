@@ -1,5 +1,6 @@
-package lofi_acl.crypto
+package channels.tls
 
+import crypto.Ed25519Util
 import org.bouncycastle.cert.X509CertificateHolder
 
 import java.security.KeyPair

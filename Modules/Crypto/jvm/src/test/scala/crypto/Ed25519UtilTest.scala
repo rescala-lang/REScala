@@ -1,4 +1,4 @@
-package lofi_acl.crypto
+package crypto
 
 import munit.FunSuite
 import org.bouncycastle.crypto.params.{Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters}

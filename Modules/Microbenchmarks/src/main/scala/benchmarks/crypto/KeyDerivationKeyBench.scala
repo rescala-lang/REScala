@@ -1,6 +1,6 @@
 package benchmarks.crypto
 
-import lofi_acl.crypto.KeyDerivationKey
+import lofi_acl.access.KeyDerivationKey
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit

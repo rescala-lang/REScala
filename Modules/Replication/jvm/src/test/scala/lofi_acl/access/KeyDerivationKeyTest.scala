@@ -1,8 +1,10 @@
-package lofi_acl.crypto
+package lofi_acl.access
 
 import com.google.crypto.tink.subtle.ChaCha20Poly1305
-import lofi_acl.crypto.KeyDerivationKeyTest.{keysAreEqualAccordingToSignatureSubkey, testData}
+import crypto.{Ed25519Util, PublicIdentity}
+import lofi_acl.access.KeyDerivationKeyTest.{keysAreEqualAccordingToSignatureSubkey, testData}
 import munit.FunSuite
+import rdts.base.Uid
 import rdts.time.Dot
 
 import java.nio.charset.StandardCharsets
@@ -33,7 +35,7 @@ class KeyDerivationKeyTest extends FunSuite {
 
   test("Encryption key derivation") {
     val id            = PublicIdentity(Base64.getEncoder.encodeToString(Random().nextBytes(32)))
-    val encryptionKey = ChaCha20Poly1305(kdk.encryptionKey(Dot(id.toUid, 0)))
+    val encryptionKey = ChaCha20Poly1305(kdk.encryptionKey(Dot(Uid(id.id), 0)))
     assertEquals(
       encryptionKey.decrypt(encryptionKey.encrypt("AE".getBytes(), "AD".getBytes()), "AD".getBytes()).toSeq,
       "AE".getBytes().toSeq

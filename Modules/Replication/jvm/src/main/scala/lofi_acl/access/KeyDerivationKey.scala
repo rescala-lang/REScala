@@ -1,6 +1,7 @@
-package lofi_acl.crypto
+package lofi_acl.access
 
-import lofi_acl.crypto.KeyDerivationKey.*
+import crypto.Ed25519Util
+import lofi_acl.access.KeyDerivationKey.*
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator
 import org.bouncycastle.crypto.params.HKDFParameters
 import org.bouncycastle.crypto.util.DigestFactory

@@ -1,5 +1,6 @@
-package lofi_acl.crypto
+package channels.tls
 
+import crypto.{CertificatePem, Ed25519Util, PublicIdentity}
 import org.bouncycastle.asn1.DERUTF8String
 import org.bouncycastle.asn1.edec.EdECObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -7,7 +8,6 @@ import org.bouncycastle.asn1.x500.style.BCStyle
 import org.bouncycastle.asn1.x509.{AlgorithmIdentifier, SubjectPublicKeyInfo}
 import org.bouncycastle.cert.jcajce.{JcaX500NameUtil, JcaX509CertificateConverter}
 import org.bouncycastle.cert.{X509CertificateHolder, X509v3CertificateBuilder}
-import org.bouncycastle.crypto.params.{Ed25519PrivateKeyParameters, Ed25519PublicKeyParameters}
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter
 import org.bouncycastle.operator.bc.BcEdECContentSignerBuilder

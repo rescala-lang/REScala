@@ -1,6 +1,7 @@
 package lofi_acl.sync
 
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
+import channels.tls.PrivateIdentity
+import crypto.PublicIdentity
 import lofi_acl.transport.P2PTlsTcpConnector
 
 import java.io.{DataInputStream, DataOutputStream, IOException}

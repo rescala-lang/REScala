@@ -1,4 +1,4 @@
-package lofi_acl.crypto
+package crypto
 
 import com.google.crypto.tink.subtle.{ChaCha20Poly1305, X25519}
 import munit.FunSuite

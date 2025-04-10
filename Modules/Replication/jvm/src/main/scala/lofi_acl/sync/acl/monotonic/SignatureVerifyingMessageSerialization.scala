@@ -1,7 +1,7 @@
 package lofi_acl.sync.acl.monotonic
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonValueCodec, readFromArray, writeToArray}
-import lofi_acl.crypto.{Ed25519Util, PublicIdentity}
+import crypto.{Ed25519Util, PublicIdentity}
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.{AclDelta, Signature}
 import lofi_acl.sync.{InvalidMessageException, MessageSerialization}
 import rdts.time.Dot
@@ -39,7 +39,7 @@ class SignatureVerifyingMessageSerialization[RDT](
 
     deserializedMsg match
       case aclEntry @ AclDelta(_, _, _, Dot(author, _), _, _) => // Authorship is derived from dot
-        if !Ed25519Util.checkEd25519Signature(msgBytes, signature, PublicIdentity.fromUid(author))
+        if !Ed25519Util.checkEd25519Signature(msgBytes, signature, PublicIdentity(author.delegate))
         then throw SignatureException("Failed to verify signature of received message")
         // Splice (verified) signature into object (null in serialized version so signature doesn't depend on itself)
         aclEntry.copy(signature = Signature(signature))

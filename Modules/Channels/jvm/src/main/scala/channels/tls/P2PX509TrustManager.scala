@@ -1,6 +1,5 @@
-package lofi_acl.transport
+package channels.tls
 
-import lofi_acl.crypto.X509Util
 
 import java.security.cert.{CertificateException, X509Certificate}
 import javax.net.ssl.X509TrustManager

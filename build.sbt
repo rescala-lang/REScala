@@ -73,9 +73,22 @@ lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
     )
   )
 
+lazy val crypto = crossProject(/*JSPlatform,*/ JVMPlatform).in(file("Modules/Crypto"))
+  .settings(
+    scala3defaults,
+    Settings.explicitNulls(Compile / compile),
+    Settings.safeInit(Compile / compile),
+    Dependencies.munit,
+    Dependencies.munitCheck,
+  ).jvmSettings(
+    Dependencies.bouncyCastle,
+    Dependencies.tink
+  )
+
 lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossType(CrossType.Full)
   .in(file("Modules/Channels"))
   .dependsOn(rdts)
+  .jvmConfigure(_.dependsOn(crypto.jvm))
   .settings(
     Settings.scala3defaults,
     Settings.javaOutputVersion(17),
@@ -94,6 +107,7 @@ lazy val channels = crossProject(JSPlatform, JVMPlatform, NativePlatform).crossT
     Test / fork := true,
     libraryDependencies ++= Dependencies.jetty.map(_ % Provided),
     Dependencies.slf4jSimple,
+    Dependencies.sslcontextKickstart
   )
 
 lazy val deltalens = project.in(file("Modules/Deltalens"))
@@ -156,7 +170,6 @@ lazy val loCal = project.in(file("Modules/Examples/Lore Calendar"))
     SettingsLocal.deployTask
   )
 
-
 lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).in(file("Modules/Lore"))
   .dependsOn(reactives)
   .settings(
@@ -176,8 +189,8 @@ lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
   .settings(
     scala3defaults,
     libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
-    libraryDependencies += "com.lihaoyi" %% "os-lib"  % "0.11.3",
-    libraryDependencies += "com.lihaoyi" %% "upickle" % "4.1.0",
+    libraryDependencies += "com.lihaoyi"    %% "os-lib"          % "0.11.3",
+    libraryDependencies += "com.lihaoyi"    %% "upickle"         % "4.1.0",
     Dependencies.munit
   )
 
@@ -221,7 +234,7 @@ lazy val proBench = project.in(file("Modules/Examples/Protocol Benchmarks"))
     Dependencies.jetcd,
     Dependencies.pprint,
     Universal / packageName := "probench",
-    Universal / name := "probench",
+    Universal / name        := "probench",
   )
 
 lazy val rdts = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)

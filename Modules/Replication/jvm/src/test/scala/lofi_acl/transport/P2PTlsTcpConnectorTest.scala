@@ -1,6 +1,7 @@
 package lofi_acl.transport
 
-import lofi_acl.crypto.{IdentityFactory, PrivateIdentity, X509TestHelper}
+import X509TestHelper.genCertSignedByWrongKey
+import channels.tls.{IdentityFactory, PrivateIdentity}
 import munit.FunSuite
 
 import java.io.IOException
@@ -41,7 +42,7 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     var clientId: PrivateIdentity = IdentityFactory.createNewIdentity
 
     // Use invalid cert
-    val clientCert = X509TestHelper.genCertSignedByWrongKey(clientId.identityKey, clientId.tlsKey)
+    val clientCert = genCertSignedByWrongKey(clientId.identityKey, clientId.tlsKey)
     clientId = clientId.copy(certificateHolder = clientCert)
 
     val serverConnector = P2PTlsTcpConnector(serverId)
@@ -62,7 +63,7 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     var serverId: PrivateIdentity = IdentityFactory.createNewIdentity
     val clientId: PrivateIdentity = IdentityFactory.createNewIdentity
 
-    val serverCert = X509TestHelper.genCertSignedByWrongKey(serverId.identityKey, serverId.tlsKey)
+    val serverCert = genCertSignedByWrongKey(serverId.identityKey, serverId.tlsKey)
     serverId = serverId.copy(certificateHolder = serverCert)
 
     val serverConnector = P2PTlsTcpConnector(serverId)
@@ -85,7 +86,7 @@ class P2PTlsTcpConnectorTest extends FunSuite {
     var serverId: PrivateIdentity = IdentityFactory.createNewIdentity
     val clientId: PrivateIdentity = IdentityFactory.createNewIdentity
 
-    val serverCert = X509TestHelper.genCertSignedByWrongKey(serverId.identityKey, serverId.tlsKey)
+    val serverCert = genCertSignedByWrongKey(serverId.identityKey, serverId.tlsKey)
     serverId = serverId.copy(certificateHolder = serverCert)
 
     val serverConnector = P2PTlsTcpConnector(serverId)

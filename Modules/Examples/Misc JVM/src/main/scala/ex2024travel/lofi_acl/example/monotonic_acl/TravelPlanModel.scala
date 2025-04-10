@@ -1,15 +1,16 @@
 package ex2024travel.lofi_acl.example.monotonic_acl
 
+import channels.tls.{IdentityFactory, PrivateIdentity}
+import crypto.{Ed25519Util, PublicIdentity}
 import lofi_acl.access.Operation.{READ, WRITE}
 import lofi_acl.access.PermissionTree
 import lofi_acl.collections.DeltaMapWithPrefix
-import lofi_acl.crypto.{Ed25519Util, IdentityFactory, PrivateIdentity, PublicIdentity}
 import ex2024travel.lofi_acl.example.travelplanner.TravelPlan
 import ex2024travel.lofi_acl.example.travelplanner.TravelPlan.given
 import lofi_acl.sync.JsoniterCodecs.messageJsonCodec
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.AclDelta
 import lofi_acl.sync.acl.monotonic.{MonotonicAcl, SyncWithMonotonicAcl}
-import rdts.base.LocalUid
+import rdts.base.{LocalUid, Uid}
 import rdts.datatypes.LastWriterWins
 import scalafx.application.Platform
 import scalafx.beans.property.StringProperty
@@ -24,7 +25,7 @@ class TravelPlanModel(
     initialAclDeltas: List[AclDelta[TravelPlan]] = List.empty
 ) {
   val publicId: PublicIdentity     = localIdentity.getPublic
-  private given localUid: LocalUid = LocalUid(publicId.toUid)
+  private given localUid: LocalUid = LocalUid(Uid(publicId.id))
 
   def state: TravelPlan                    = sync.state
   def currentAcl: MonotonicAcl[TravelPlan] = sync.currentAcl

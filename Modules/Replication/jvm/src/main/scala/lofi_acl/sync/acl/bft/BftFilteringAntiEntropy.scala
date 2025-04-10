@@ -1,12 +1,12 @@
 package lofi_acl.sync.acl.bft
 
+import channels.tls.PrivateIdentity
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
+import crypto.PublicIdentity
 import lofi_acl.access
 import lofi_acl.access.{Filter, PermissionTree}
 import lofi_acl.collections.DeltaMapWithPrefix
-import lofi_acl.crypto.PublicIdentity.toPublicIdentity
-import lofi_acl.crypto.{PrivateIdentity, PublicIdentity}
 import lofi_acl.sync.acl.bft.BftAclOpGraph.{Delegation, EncodedDelegation, Signature}
 import lofi_acl.sync.acl.bft.BftFilteringAntiEntropy.SyncMsg
 import lofi_acl.sync.acl.bft.BftFilteringAntiEntropy.SyncMsg.*
@@ -210,7 +210,7 @@ class BftFilteringAntiEntropy[RDT](
           if senderAclHeads == aclOpGraph.heads then localAcl
           else if senderAclHeads == authorAclHeads then authorAcl
           else aclOpGraph.reconstruct(senderAclHeads).get
-        val effectivePermissions = authorAcl.write(dot.place.toPublicIdentity)
+        val effectivePermissions = authorAcl.write(PublicIdentity(dot.place.delegate))
           .intersect(senderAcl.write(sender))
           .intersect(localAcl.read(localPublicId))
 
@@ -220,7 +220,8 @@ class BftFilteringAntiEntropy[RDT](
 
         val existingPartialDelta = partialDeltaStore.get(dot)
         if existingPartialDelta.isEmpty then {
-          val requiredPermissions = authorAcl.write(dot.place.toPublicIdentity).intersect(localAcl.read(localPublicId))
+          val requiredPermissions =
+            authorAcl.write(PublicIdentity(dot.place.delegate)).intersect(localAcl.read(localPublicId))
           if requiredPermissions <= senderAcl.write(sender)
           then // Immediately applicable
             rdtDeltas = rdtDeltas.addDelta(dot, (delta, authorAclHeads))

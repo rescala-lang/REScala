@@ -2,7 +2,7 @@ package lofi_acl.sync
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
-import lofi_acl.crypto.PublicIdentity
+import crypto.PublicIdentity
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage
 import lofi_acl.sync.acl.monotonic.MonotonicAclSyncMessage.Signature
 import rdts.base.Uid
@@ -13,7 +13,7 @@ object JsoniterCodecs {
     override def decodeKey(in: JsonReader): Uid             = Uid(in.readKeyAsString())
     override def encodeKey(uid: Uid, out: JsonWriter): Unit = out.writeKey(uid.delegate)
 
-  given pubIdentityKeyCodec: JsonKeyCodec[lofi_acl.crypto.PublicIdentity] = new JsonKeyCodec[PublicIdentity]:
+  given pubIdentityKeyCodec: JsonKeyCodec[PublicIdentity] = new JsonKeyCodec[PublicIdentity]:
     override def decodeKey(in: JsonReader): PublicIdentity               = PublicIdentity(in.readKeyAsString())
     override def encodeKey(pubId: PublicIdentity, out: JsonWriter): Unit = out.writeKey(pubId.id)
 

@@ -1,7 +1,7 @@
 package lofi_acl.sync.acl.monotonic
 
+import crypto.PublicIdentity
 import lofi_acl.access.{Operation, PermissionTree}
-import lofi_acl.crypto.PublicIdentity
 import rdts.time.{Dot, Dots}
 
 object MonotonicAclSyncMessage {

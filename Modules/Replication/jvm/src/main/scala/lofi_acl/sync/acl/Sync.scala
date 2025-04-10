@@ -1,6 +1,6 @@
 package lofi_acl.sync.acl
 
-import lofi_acl.crypto.PublicIdentity
+import crypto.PublicIdentity
 import rdts.time.Dot
 
 trait Sync[RDT] {

@@ -1,4 +1,4 @@
-package lofi_acl.crypto
+package crypto
 
 import org.bouncycastle.asn1.edec.EdECObjectIdentifiers
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo
@@ -30,9 +30,7 @@ object Ed25519Util {
   }
 
   // The keyPairGenerator is thread safe, since the nextBytes(…) method of the SecureRandom is thread safe.
-  private val keyPairGenerator: KeyPairGenerator = {
-    KeyPairGenerator.getInstance("Ed25519", "BC")
-  }
+  private val keyPairGenerator: KeyPairGenerator = KeyPairGenerator.getInstance("Ed25519", "BC")
 
   /** Generates a new Ed25519 KeyPair.
     *
@@ -43,12 +41,12 @@ object Ed25519Util {
     keyPairGenerator.generateKeyPair()
   }
 
-  private[crypto] def generateNewKeyParameters: (Ed25519PublicKeyParameters, Ed25519PrivateKeyParameters) = {
+  def generateNewKeyParameters: (Ed25519PublicKeyParameters, Ed25519PrivateKeyParameters) = {
     val key = keyParamGenerator.generateKeyPair()
     (key.getPublic.asInstanceOf[Ed25519PublicKeyParameters], key.getPrivate.asInstanceOf[Ed25519PrivateKeyParameters])
   }
 
-  private[crypto] def keyPairToKeyParameters(
+  def keyPairToKeyParameters(
       keyPair: KeyPair
   ): (Ed25519PublicKeyParameters, Ed25519PrivateKeyParameters) = {
     if "Ed25519" != keyPair.getPrivate.getAlgorithm && "EdDSA" != keyPair.getPrivate.getAlgorithm then {
