@@ -107,7 +107,7 @@ object ViperBackend {
       case t: TArgT => TArgT(t.name, replaceType(t._type))
       case t: TAbs =>
         TAbs(t.name, replaceType(t._type), t.body)
-      case TInteraction(rt, at, m, r, en, ex, _, _) =>
+      case TInteraction(rt, at, m, r, en, ex, _) =>
         TInteraction(replaceType(rt), replaceType(at), m, r, en, ex)
       case t => t
     }
@@ -222,9 +222,9 @@ object ViperBackend {
     val numReactiveTypes = countTypes(interaction.reactiveType)
     // extract names from body
     val allNames = interaction.executes match {
-      case None                            => List()
-      case Some(term @ TArrow(_, _, _, _)) => term.args
-      case Some(term)                      => List()
+      case None                         => List()
+      case Some(term @ TArrow(_, _, _)) => term.args
+      case Some(term)                   => List()
     }
     val argNames =
       allNames.drop(numReactiveTypes)
@@ -454,7 +454,6 @@ object ViperBackend {
         case TFunC(
               setOp,
               x :: y :: Nil,
-              _,
               _
             )
             if Set("setminus", "union", "subset", "intersection").contains(
@@ -464,7 +463,6 @@ object ViperBackend {
         case TFunC(
               name,
               x :: Nil,
-              _,
               _
             )
             if name == "size" || name == "length" => // handle set arithmetics. TODO: support more cases

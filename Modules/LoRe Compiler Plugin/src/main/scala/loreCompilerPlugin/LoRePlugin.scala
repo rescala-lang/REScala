@@ -11,7 +11,7 @@ import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.SourceFile
 import java.io.File // For getting URIs and the system-independent path separator
 import lore.ast.{SimpleType, SourcePos, TAbs, TDerived, TSource, Term, TupleType}
-import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode}
+import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode, loreSourcePosFromScala}
 import loreCompilerPlugin.codegen.DafnyGen
 import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
@@ -49,7 +49,8 @@ class LoRePhase extends PluginPhase {
           case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
           case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
           case _ => // Other definitions, these are the ones we care about
-            val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
+            val loreTypeNode         = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
+            val sourcePos: SourcePos = loreSourcePosFromScala(tree.sourcePos)
             // Several notes to make here regarding handling the RHS of reactives for future reference:
             // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
             //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
@@ -73,9 +74,9 @@ class LoRePhase extends PluginPhase {
                       loreTypeNode, // Source[Bar]
                       TSource( // Source(baz)
                         buildLoreRhsTerm(properRhs, 1),
-                        scalaSourcePos = Some(source.sourcePos)
+                        Some(loreSourcePosFromScala(source.sourcePos))
                       ),
-                      scalaSourcePos = Some(tree.sourcePos)
+                      Some(sourcePos)
                     ))
                   case Apply(derived @ Apply(_, List(Block(_, properRhs))), _)
                       if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
@@ -84,16 +85,16 @@ class LoRePhase extends PluginPhase {
                       loreTypeNode, // Derived[Bar]
                       TDerived( // Derived { baz }
                         buildLoreRhsTerm(properRhs, 1),
-                        scalaSourcePos = Some(derived.sourcePos)
+                        Some(loreSourcePosFromScala(derived.sourcePos))
                       ),
-                      scalaSourcePos = Some(tree.sourcePos)
+                      Some(sourcePos)
                     ))
                   case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
                     newLoreTerm = Some(TAbs( // foo: Bar = baz
                       name.toString, // foo (any valid Scala identifier)
                       loreTypeNode, // Bar
                       buildLoreRhsTerm(rhs, 1), // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-                      scalaSourcePos = Some(tree.sourcePos)
+                      Some(sourcePos)
                     ))
               case TupleType(_) => // TODO tuple types?
                 println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")

@@ -24,12 +24,12 @@ private case class CompilationContext(
   })
   val interactions: Map[String, TInteraction] = allInteractions(ast)
   val typeAliases: Map[String, Type] = ast.collect {
-    case TTypeAl(name, _type, _, _) =>
+    case TTypeAl(name, _type, _) =>
       (name, _type)
   }.toMap
 
   def viperImports: List[TViperImport] = ast.collect {
-    case i @ TViperImport(_, _, _) => i
+    case i @ TViperImport(_, _) => i
   }.toList
 
   def reactivesPerInvariant: Map[TInvariant, Set[ID]] = invariants
@@ -75,19 +75,19 @@ def flattenInteractions(ctx: CompilationContext): CompilationContext = {
           case _ => t
         }
       // is modifies call
-      case TFCall(parent, "modifies", args, _, _) =>
+      case TFCall(parent, "modifies", args, _) =>
         flatten(parent, ctx) match {
           // parent is an interaction
           case i: TInteraction =>
             args.foldLeft(i) {
-              case (i, TVar(id, _, _)) => i.copy(modifies = i.modifies :+ id)
+              case (i, TVar(id, _)) => i.copy(modifies = i.modifies :+ id)
               case e =>
                 throw Exception(
                   s"Invalid argumeViperCompilationExceptionnt for modifies statement: $e"
                 )
             }
           // parent is variable that refers to an interaction
-          case TVar(name, _, _) if ctx.interactions.keys.toList.contains(name) =>
+          case TVar(name, _) if ctx.interactions.keys.toList.contains(name) =>
             flatten(
               TFCall(ctx.interactions(name), "modifies", args),
               ctx
@@ -287,12 +287,12 @@ def rename(from: ID, to: ID, term: Term): Term = {
 }
 
 private def allReactives(ast: Seq[Term]): Map[String, (TReactive, Type)] =
-  ast.collect { case TAbs(name, _type, r: TReactive, _, _) =>
+  ast.collect { case TAbs(name, _type, r: TReactive, _) =>
     (name, (r, _type))
   }.toMap
 
 private def allInteractions(ast: Seq[Term]): Map[String, TInteraction] =
-  ast.collect { case TAbs(name, _type, t: TInteraction, _, _) =>
+  ast.collect { case TAbs(name, _type, t: TInteraction, _) =>
     (name, t)
   }.toMap
 
@@ -301,9 +301,9 @@ def uses: Term => Set[ID] = {
   // these cases mark usage of an id
   case t: TInteraction =>
     t.modifies.toSet ++ t.children.flatMap(uses).toSet
-  case TVar("_", _, _)  => Set.empty
-  case TVar(name, _, _) => Set(name)
-  case t: TFunC         => t.args.flatMap(uses).toSet
+  case TVar("_", _)  => Set.empty
+  case TVar(name, _) => Set(name)
+  case t: TFunC      => t.args.flatMap(uses).toSet
   // these cases do not
   case t: (TNum | TString | TTrue | TFalse | TArgT | TTypeAl | TViperImport) =>
     Set.empty
