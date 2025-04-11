@@ -181,6 +181,7 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).
     Dependencies.fansi,
     Dependencies.monocleCore,
     Dependencies.munit,
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
     Compile / mainClass := Some("lore.Compiler")
   )
 
