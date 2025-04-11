@@ -12,8 +12,8 @@ object derivedExamplesObject:
     val stringLiteral: String        = "foo"
     val booleanLiteral: Boolean      = true
     val functionCall: Int            = foo(1, "foobar")
-    val methodCallNoBraces: Int      = 1.toInt
-    val methodCallWithBraces: String = "foo".strip()
+    val methodCallNoParens: Int      = 1.toInt
+    val methodCallWithParens: String = "foo".strip()
     val methodCallWithParams: String = "foo".repeat(5)
 
     val integerLiteralSource1: Source[Int]  = Source(1)

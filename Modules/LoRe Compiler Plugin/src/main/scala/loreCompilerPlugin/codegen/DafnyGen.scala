@@ -588,6 +588,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTViperImport(node: TViperImport): String = {
+    // Viper-specific (by name at least). Leave out for now.
     throw new Error("Term type not implemented")
   }
 
@@ -597,6 +598,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTTypeAl(node: TTypeAl): String = {
+    // Leave out for now. Maybe in a later work.
     throw new Error("Term type not implemented")
   }
 
@@ -652,6 +654,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFCurly(node: TFCurly): String = {
+    // Probably not needed for Dafny.
     throw new Error("Term type not implemented")
   }
 }
