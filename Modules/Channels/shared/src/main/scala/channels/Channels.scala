@@ -1,6 +1,7 @@
 package channels
 
 import de.rmgk.delay.{Async, Callback}
+import rdts.base.Uid
 
 import java.nio.charset.StandardCharsets
 
@@ -29,6 +30,7 @@ case class ConnectionInfo(hostname: Option[String], port: Option[Int])
 trait Connection[T] {
   // TODO: currently not consistently implemented
   def info: ConnectionInfo = ConnectionInfo(None, None)
+  def authenticatedPeerReplicaId: Option[Uid] = None
   def send(message: T): Async[Any, Unit]
   def close(): Unit
 }
