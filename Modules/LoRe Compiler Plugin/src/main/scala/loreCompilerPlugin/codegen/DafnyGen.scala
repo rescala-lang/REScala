@@ -4,9 +4,10 @@ import lore.ast.*
 
 object DafnyGen {
 
-  /** Takes a Scala/LoRe type name and returns the corresponding Dafny type name, if one exists.
-    * E.g. the corresponding Dafny type for the Scala/LoRe type "String" is "string" (note the casing).
-    * @param typeName The name of the Scala/LoRe type.
+  /** Takes a Scala type name and returns the corresponding Dafny type name, if one exists.
+    * E.g. the corresponding Dafny type for the Scala type "String" is "string" (note the casing),
+    * and the corresponding type for both the Float and Double types in Scala is the Dafny "real" type.
+    * @param typeName The name of the Scala type.
     * @return The name of the corresponding Dafny type, or the original parameter if no such correspondence exists.
     */
   private def getDafnyType(typeName: String): String = {
@@ -22,15 +23,15 @@ object DafnyGen {
       case _ => typeName
   }
 
-  /** Generates Dafny code for the given LoRe term.
+  /** Generates Dafny code for the given LoRe Term node.
     *
-    * @param node The LoRe AST node.
+    * @param node The LoRe Term node.
     * @return The generated Dafny code.
     */
   def generate(node: Term): String = {
     node match
       // Cases ordered by order in LoRe AST definition.
-      case n: TViperImport => generateFromTViperImport(n) // Viper
+      case n: TViperImport => generateFromTViperImport(n)
       case n: TArgT        => generateFromTArgT(n)
       case n: TVar         => generateFromTVar(n)
       case n: TAbs         => generateFromTAbs(n)
@@ -39,10 +40,10 @@ object DafnyGen {
       case n: TSeq         => generateFromTSeq(n)
       case n: TArrow       => generateFromTArrow(n)
       case n: TTypeAl      => generateFromTTypeAl(n)
-      case n: TAssert      => generateFromTAssert(n)      // Viper
-      case n: TAssume      => generateFromTAssume(n)      // Viper
+      case n: TAssert      => generateFromTAssert(n)
+      case n: TAssume      => generateFromTAssume(n)
       case n: TReactive    => generateFromTReactive(n)
-      case n: TInteraction => generateFromTInteraction(n) // Attention: Not a part of TReactive
+      case n: TInteraction => generateFromTInteraction(n)
       case n: TInvariant   => generateFromTInvariant(n)
       case n: TArith       => generateFromTArith(n)
       case n: TBoolean     => generateFromTBoolean(n)
@@ -52,12 +53,12 @@ object DafnyGen {
       case n: TFunC        => generateFromTFunC(n)
   }
 
-  /** Generates a Dafny Type annotation for the given LoRe Type node.
+  /** Generates a Dafny type annotation for the given LoRe Type node.
     *
     * @param node The LoRe Type node.
-    * @return The generated Dafny Type annotation.
+    * @return The generated Dafny type annotation.
     */
-  private def generateFromTypeNode(node: Type): String = {
+  def generate(node: Type): String = {
     node match
       case n: SimpleType => generateFromSimpleType(n)
       case n: TupleType  => generateFromTupleType(n)
@@ -70,7 +71,7 @@ object DafnyGen {
     */
   private def generateFromSimpleType(node: SimpleType): String = {
     val dafnyType: String       = getDafnyType(node.name)
-    val innerList: List[String] = node.inner.map(t => generateFromTypeNode(t))
+    val innerList: List[String] = node.inner.map(t => generate(t))
 
     if dafnyType.matches("Tuple\\d+") then {
       // The name of Dafny's tuple type is blank, and instead of angled brackets uses parens, i.e. (string, int).
@@ -84,8 +85,8 @@ object DafnyGen {
       // The name of the type however tells you the number of inputs, and there's always only one output in Scala/LoRe.
       // Therefore, grab the number from the type name and that many elements, and then the last element as output.
       val functionArity: Int   = dafnyType.split("Function").last.toInt
-      val inputs: List[String] = node.inner.take(functionArity).map(p => generateFromTypeNode(p))
-      val output: String       = generateFromTypeNode(node.inner.last)
+      val inputs: List[String] = node.inner.take(functionArity).map(p => generate(p))
+      val output: String       = generate(node.inner.last)
 
       // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-arrow-types
       // TODO: Can be one of three arrow types: "->", "-->" or "~>". Look into these.
@@ -102,7 +103,7 @@ object DafnyGen {
     * @return The generated Dafny Type annotation.
     */
   private def generateFromTupleType(node: TupleType): String = {
-    val tupleElements: List[String] = node.inner.map(t => generateFromTypeNode(t)).toList
+    val tupleElements: List[String] = node.inner.map(t => generate(t)).toList
 
     // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
     s"(${tupleElements.mkString(", ")})"
@@ -114,7 +115,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArgT(node: TArgT): String = {
-    val typeAnnot: String = generateFromTypeNode(node._type)
+    val typeAnnot: String = generate(node._type)
 
     s"${node.name}: $typeAnnot"
   }
@@ -136,7 +137,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAbs(node: TAbs): String = {
-    val typeAnnot: String = generateFromTypeNode(node._type)
+    val typeAnnot: String = generate(node._type)
     val body: String      = generate(node.body)
 
     // TODO: Finish implementing. Depending on the type, output must differ, debug for now
@@ -213,7 +214,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTReactive(node: TReactive): String = {
-    // FYI: TInteraction isn't considered a TReactive so it has to be separate.
     val reactive: String = node match
       case n: TSource  => generateFromTSource(n)
       case n: TDerived => generateFromTDerived(n)
@@ -249,7 +249,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTInteraction(node: TInteraction): String = {
-    // FYI: TInteraction is not a part of TReactive.
     ""
   }
 
