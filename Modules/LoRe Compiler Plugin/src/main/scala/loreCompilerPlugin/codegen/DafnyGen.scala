@@ -23,6 +23,42 @@ object DafnyGen {
       case _ => typeName
   }
 
+  /** Recursively gathers the names of all references used in the given LoRe Term node.
+    * @param node The node to search.
+    * @return The names of all references used in this node.
+    */
+  private def usedReferences(node: Term): Set[String] = {
+    // This uses sets to avoid duplicate entries.
+
+    node match
+      // Direct reference term (recursion anchor 1)
+      case n: TVar => Set(n.name)
+      // Branches into "left" and "right" terms
+      case n: TDiv   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TMul   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TAdd   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TSub   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TLt    => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TGt    => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TLeq   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TGeq   => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TEq    => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TIneq  => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TDisj  => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TConj  => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TImpl  => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TBImpl => usedReferences(n.left) ++ usedReferences(n.right)
+      case n: TInSet => usedReferences(n.left) ++ usedReferences(n.right)
+      // Has a "body" term
+      case n: TNeg        => usedReferences(n.body)
+      case n: TQuantifier => usedReferences(n.body) // Quantifier vars are ArgTs, so not relevant
+      // Has a "parent" term
+      case n: TFCall  => usedReferences(n.parent) // TODO: might need to also recurse into n.args
+      case n: TFCurly => usedReferences(n.parent) ++ usedReferences(n.body)
+      // Anything else is not and does not have references (recursion anchor 2)
+      case _ => Set()
+  }
+
   /** Generates Dafny code for the given LoRe Term node.
     *
     * @param node The LoRe Term node.
@@ -262,10 +298,10 @@ object DafnyGen {
     // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-numeric-types
     val expr: String = node match
       case n: TNum => generateFromTNum(n)
+      case n: TDiv => generateFromTDiv(n)
+      case n: TMul => generateFromTMul(n)
       case n: TAdd => generateFromTAdd(n)
       case n: TSub => generateFromTSub(n)
-      case n: TMul => generateFromTMul(n)
-      case n: TDiv => generateFromTDiv(n)
 
     node match
       case n: TNum => expr // Simple numbers don't need parens as there is no nesting at this level.
