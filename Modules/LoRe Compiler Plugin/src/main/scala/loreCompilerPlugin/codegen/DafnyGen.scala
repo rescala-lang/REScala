@@ -106,14 +106,23 @@ object DafnyGen {
     * @return The generated Dafny Type annotation.
     */
   private def generateFromSimpleType(node: SimpleType): String = {
-    val dafnyType: String       = getDafnyType(node.name)
-    val innerList: List[String] = node.inner.map(t => generate(t))
+    val dafnyType: String = getDafnyType(node.name)
 
-    if dafnyType.matches("Tuple\\d+") then {
+    if dafnyType == "Source" || dafnyType == "Var" then {
+      // Source terms are modeled as Dafny fields typed after the inner type of the Source in LoRe.
+      // That is to say, a "Source[Int]" is just an "int" type field in Dafny - the Source types does not appear.
+      // A Source always only has one type parameter, so generate the annotation for it and return that value.
+      generate(node.inner.head)
+    } else if dafnyType == "Derived" || dafnyType == "Signal" then {
+      // Derived terms are modeled as Dafny functions whose return type is the type parameter of the Derived in LoRe.
+      // That is to say, a "foo: Derived[Int]" is a "function foo(...): int { ... }", with no mention of a Derived type.
+      // A Derived always only has one type parameter, so generate the annotation for it and return that value.
+      generate(node.inner.head)
+    } else if dafnyType.matches("Tuple\\d+") then {
       // The name of Dafny's tuple type is blank, and instead of angled brackets uses parens, i.e. (string, int).
       // That means we just concat the inner types surrounded by parens for building tuple type annotations.
       // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-tuple-types
-      s"(${innerList.mkString(", ")})"
+      s"(${node.inner.map(t => generate(t)).mkString(", ")})"
     } else if dafnyType.matches("Function\\d+") then {
       // Anonymous functions
 
@@ -127,8 +136,8 @@ object DafnyGen {
       // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-arrow-types
       // TODO: Can be one of three arrow types: "->", "-->" or "~>". Look into these.
       s"(${inputs.mkString(", ")}) -> $output"
-    } else {
-      val inner: String = if innerList.isEmpty then "" else s"<${innerList.mkString(", ")}>"
+    } else { // All other types are simply output according to regular Dafny type syntax
+      val inner: String = if node.inner.isEmpty then "" else s"<${node.inner.map(t => generate(t)).mkString(", ")}>"
       s"$dafnyType$inner"
     }
   }
@@ -173,15 +182,32 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAbs(node: TAbs): String = {
-    val typeAnnot: String = generate(node._type)
-    val body: String      = generate(node.body)
-
     // TODO: Finish implementing. Depending on the type, output must differ, debug for now
     node.body match
-      case n: TSource      => ""
-      case n: TDerived     => ""
-      case n: TInteraction => ""
-      case _ => if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
+      case n: TSource =>
+        // Source terms are realized as Dafny fields, which can be modified post-definition.
+        // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
+        s"var ${node.name}: ${generate(node._type)} := ${generateFromTSource(n)};"
+      case n: TDerived =>
+        // Derived terms are realized as Dafny functions. Functions do not have side-effects.
+        // The return type of these functions is the type parameter of the Derived, while any
+        // references included in the body of the Derived are turned into function parameters.
+        // TODO: Figure out how to find the types of used references so parameters can be formed.
+        val references: Set[String] = usedReferences(n.body)
+        val parameters: Set[String] = references.map(ref => s"$ref: DEBUG")
+
+        // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration
+        s"""function ${node.name}(${parameters.mkString(", ")}): ${generate(node._type)} {
+           |  ${generateFromTDerived(n)}
+           |}
+           |""".stripMargin
+      case n: TInteraction =>
+        ""
+      case _ =>
+        val typeAnnot: String = generate(node._type)
+        val body: String      = generate(node.body)
+        // TODO: Body should never be able to be empty. It can be currently because of unimplemented parts.
+        if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
   }
 
   /** Generates Dafny code for the given LoRe TTuple.
@@ -265,7 +291,9 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTSource(node: TSource): String = {
-    ""
+    // Sources are realized as Dafny fields. This method however just generates the body,
+    // since the TSource node only contains that information (see TABs for the field definition).
+    generate(node.body)
   }
 
   // TODO: Implement
@@ -275,7 +303,9 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDerived(node: TDerived): String = {
-    ""
+    // Derived terms are realized as Dafny functions. This method however just generates the body,
+    // since the TDerived node only contains that information (see TABs for the function definition).
+    generate(node.body)
   }
 
   // TODO: Implement
