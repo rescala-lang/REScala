@@ -215,7 +215,6 @@ object DafnyGen {
         // Derived terms are realized as Dafny functions. Functions do not have side-effects.
         // The return type of these functions is the type parameter of the Derived, while any
         // references included in the body of the Derived are turned into function parameters.
-        // TODO: Figure out how to find the types of used references so parameters can be formed.
         val references: Set[String] = usedReferences(n.body)
         val parameters: Set[String] = references.map(ref => s"$ref: ${ctx(ref)}")
 
@@ -227,10 +226,10 @@ object DafnyGen {
       case n: TInteraction =>
         ""
       case _ =>
+        // Default into generic field declarations for other types
         val typeAnnot: String = generate(node._type, ctx)
         val body: String      = generate(node.body, ctx)
-        // TODO: Body should never be able to be empty. It can be currently because of unimplemented parts.
-        if body.isEmpty then s"var ${node.name}: $typeAnnot;" else s"var ${node.name}: $typeAnnot := $body;"
+        s"var ${node.name}: $typeAnnot := $body;"
   }
 
   /** Generates Dafny code for the given LoRe TTuple.
@@ -299,15 +298,16 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTReactive(node: TReactive, ctx: Map[String, String]): String = {
+    // These methods only generate the body of the reactive terms, not the surrounding structure.
+    // E.g. for a Source(1+2), this only processes the 1+2 part. For a Derived { foo }, only the foo part.
+    // For the structure, such as the function modelling of Derived, see the generation of TAbs.
     val reactive: String = node match
       case n: TSource  => generateFromTSource(n, ctx)
       case n: TDerived => generateFromTDerived(n, ctx)
 
-    // TODO: Check if it's fine to simply return the reactive like this
     reactive
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TSource.
     *
     * @param node The LoRe TSource node.
@@ -319,7 +319,6 @@ object DafnyGen {
     generate(node.body, ctx)
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TDerived.
     *
     * @param node The LoRe TDerived node.
@@ -609,14 +608,10 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFAcc(node: TFAcc, ctx: Map[String, String]): String = {
-    // References:
-    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
-    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-method-declaration (Warning: "Method" has distinct meaning)
     val fieldAccess: String = node match
       case n: TFCall  => generateFromTFCall(n, ctx)
       case n: TFCurly => generateFromTFCurly(n, ctx)
 
-    // TODO: Check if it's fine to simply return the field access like this
     fieldAccess
   }
 
@@ -627,10 +622,16 @@ object DafnyGen {
     */
   private def generateFromTFCall(node: TFCall, ctx: Map[String, String]): String = {
     if node.args == null then {
-      // Property access
+      // Property (field) access
+
+      // References:
+      // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
+      // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-class-types
       s"${generate(node.parent, ctx)}.${node.field}"
     } else {
       // Method access
+
+      // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-method-declaration
       val args: List[String] = node.args.map(arg => generate(arg, ctx))
       s"${generate(node.parent, ctx)}.${node.field}(${args.mkString(", ")})"
     }
@@ -643,7 +644,7 @@ object DafnyGen {
     */
   private def generateFromTFunC(node: TFunC, ctx: Map[String, String]): String = {
     // References:
-    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration (Warning: "Function" has distinct meaning)
+    // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration
     // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-maps
     // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-sets
     node.name match
