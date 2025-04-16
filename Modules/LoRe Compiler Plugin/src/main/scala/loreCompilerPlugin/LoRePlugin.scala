@@ -145,13 +145,14 @@ class LoRePhase extends PluginPhase {
     // Iterate through all term lists and generate Dafny code for them + verify it
     for termList <- loreTerms do {
       println(s"Now processing LoRe AST parts for compilation unit: ${termList._1}.")
+
       // Turn the filepath into an URI and then sneakily change the file extension the LSP gets to see
       val filePath: String = File(termList._1._1.path).toURI.toString.replace(".scala", ".dfy")
 
-      val test = termList._2.map(t => DafnyGen.generate(t))
+      // Generate Dafny code from term list
+      val dafnyRes: String = DafnyGen.generate(termList._2)
 
       counter += 1
-      // Generate dafny code from term list
       // todo: this is dummy code, normally output by the to-be-implemented dafny generator
       val dafnyCode: String =
         s"""method Test(x: int) returns (y: int)
