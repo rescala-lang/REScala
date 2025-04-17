@@ -42,32 +42,39 @@ object DafnyGen {
     // This uses sets to avoid duplicate entries.
 
     node match
-      // Direct reference term (recursion anchor 1)
-      case n: TVar => Set(n.name)
-      // Branches into "left" and "right" terms
-      case n: TDiv   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TMul   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TAdd   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TSub   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TLt    => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TGt    => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TLeq   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TGeq   => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TEq    => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TIneq  => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TDisj  => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TConj  => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TImpl  => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TBImpl => usedReferences(n.left) ++ usedReferences(n.right)
-      case n: TInSet => usedReferences(n.left) ++ usedReferences(n.right)
-      // Has a "body" term
-      case n: TNeg        => usedReferences(n.body)
-      case n: TQuantifier => usedReferences(n.body) // Quantifier vars are ArgTs, so not relevant
-      // Has a "parent" term
-      case n: TFCall  => usedReferences(n.parent) // TODO: might need to also recurse into n.args
-      case n: TFCurly => usedReferences(n.parent) ++ usedReferences(n.body)
-      // Anything else is not and does not have references (recursion anchor 2)
-      case _ => Set()
+      case t: (TViperImport | TArgT | TTypeAl | TNum | TTrue | TFalse | TString) => Set.empty // No references in these
+      case TVar(name, _)                                                         => Set(name) // Direct reference here
+      case TAbs(_, _, body, _)                                                   => usedReferences(body)
+      case TTuple(factors, _) => factors.flatMap(usedReferences).toSet
+      case TIf(cond, _then, _else, _) =>
+        val refs: Set[String] = usedReferences(cond) ++ usedReferences(_then)
+        if _else.isDefined then refs ++ usedReferences(_else.get) else refs
+      case TSeq(body, _)          => body.map(usedReferences).toList.flatten.toSet
+      case TArrow(left, right, _) =>
+        // TODO: Only add those references to the list that weren't just newly defined in the arrow function parameters
+        usedReferences(left) ++ usedReferences(right)
+      case t: BinaryOp      => usedReferences(t.left) ++ usedReferences(t.right) // Arithmetic expr and Boolean expr
+      case TAssert(body, _) => usedReferences(body)
+      case TAssume(body, _) => usedReferences(body)
+      case t: TReactive     => usedReferences(t.body)
+      case TInteraction(_, _, m, r, e, ex, _) =>
+        // TODO: Only add those references to the list that weren't just newly defined in the body of the r/e/ex parts
+        val refs: Set[String] = m.toSet ++ r.flatMap(usedReferences).toSet ++ e.flatMap(usedReferences).toSet
+        if ex.isDefined then refs ++ usedReferences(ex.get) else refs
+      case TInvariant(condition, _) => usedReferences(condition)
+      case TNeg(body, _)            => usedReferences(body)
+      case t: TQuantifier           =>
+        // TODO: Triggers? Only TForall has those, though.
+        // vars are new definitions of TArgTs, they do not contain references, so skip those.
+        usedReferences(t.body)
+      case TParens(inner, _) => usedReferences(inner)
+      case TFCall(parent, _, args, _) =>
+        val refs: Set[String] = usedReferences(parent)
+        // The called field/method is not a standalone reference, so don't include it.
+        // If this is a field call, args will be null, otherwise contains method parameters.
+        if args != null then refs ++ args.flatMap(usedReferences).toSet else refs
+      case TFCurly(parent, _, body, _) => usedReferences(parent) ++ usedReferences(body)
+      case TFunC(_, args, _)           => args.flatMap(usedReferences).toSet
   }
 
   /** Compiles a list of LoRe terms into Dafny code.
