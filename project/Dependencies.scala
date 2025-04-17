@@ -12,24 +12,26 @@ object Dependencies {
   val monocleCore = libraryDependencies += "dev.optics"            %%% "monocle-core"           % "3.3.0"
   val munit       = libraryDependencies += "org.scalameta"         %%% "munit"                  % "1.1.0"  % Test
   val munitCheck  = libraryDependencies += "org.scalameta"         %%% "munit-scalacheck"       % "1.1.0"  % Test
+  val osLib       = libraryDependencies += "com.lihaoyi"           %%% "os-lib"                 % "0.11.4"
   val pprint      = libraryDependencies += "com.lihaoyi"           %%% "pprint"                 % "0.9.0"
   val scalaSwing  = libraryDependencies += "org.scala-lang.modules" %% "scala-swing"            % "3.0.0"
   val scalaXml    = libraryDependencies += "org.scala-lang.modules" %% "scala-xml"              % "2.3.0"
   val scalajsDom  = libraryDependencies += "org.scala-js"          %%% "scalajs-dom"            % "2.8.0"
   val slf4jSimple = libraryDependencies += "org.slf4j"               % "slf4j-simple"           % "2.0.17" % Test
   val slips       = libraryDependencies += "de.rmgk.slips"         %%% "partypack"              % "0.12.1"
-  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core" % "4.0.3"
-  val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink" % "1.17.0"
+  val sttpCore = libraryDependencies += "com.softwaremill.sttp.client4" %%% "core"    % "4.0.3"
+  val tink     = libraryDependencies += "com.google.crypto.tink"          % "tink"    % "1.17.0"
+  val upickle  = libraryDependencies += "com.lihaoyi"                   %%% "upickle" % "4.1.0"
 
-  val sslcontextKickstart = libraryDependencies ++=List(
+  val sslcontextKickstart = libraryDependencies ++= List(
     "io.github.hakky54" % "sslcontext-kickstart"         % "9.1.0",
     "io.github.hakky54" % "sslcontext-kickstart-for-pem" % "9.1.0",
   )
   val bouncyCastle = libraryDependencies ++=
     List(
       // Note, jdk18 means JDK 1.8
-      "org.bouncycastle"  % "bcprov-jdk18on"               % "1.80",
-      "org.bouncycastle"  % "bcpkix-jdk18on"               % "1.80",
+      "org.bouncycastle" % "bcprov-jdk18on" % "1.80",
+      "org.bouncycastle" % "bcpkix-jdk18on" % "1.80",
     )
 
   def borer = libraryDependencies ++= Seq(
