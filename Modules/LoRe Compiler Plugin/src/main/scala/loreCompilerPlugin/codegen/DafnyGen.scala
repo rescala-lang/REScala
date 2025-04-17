@@ -641,6 +641,17 @@ object DafnyGen {
     if node.args == null then {
       // Property (field) access
 
+      // Accesses to the "value" property of a Source reference in LoRe are simply references to the Dafny field.
+      // Therefore, the call to the "value" property has to be replaced by a simple reference.
+      if node.parent.isInstanceOf[TVar] && node.field == "value" then {
+        val reference: String = generate(node.parent, ctx)
+        val refType: Type     = ctx(reference).loreType
+
+        refType match
+          case simpleType: SimpleType if simpleType.name == "Var" => return reference // Source is REScala "Var" type
+          case _                                                  => ()
+      }
+
       // References:
       // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
       // https://dafny.org/dafny/DafnyRef/DafnyRef#sec-class-types
