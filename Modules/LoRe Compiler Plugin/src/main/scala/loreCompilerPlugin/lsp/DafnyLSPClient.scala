@@ -120,7 +120,7 @@ class DafnyLSPClient {
       }
     }
 
-    val replyHeader: String = new String(headerBytes.toArray(), StandardCharsets.UTF_8)
+    val replyHeader: String = new String(headerBytes.toArray, StandardCharsets.UTF_8)
     println(s"Header read:\n$replyHeader")
 
     println("Checking header for message length...")
