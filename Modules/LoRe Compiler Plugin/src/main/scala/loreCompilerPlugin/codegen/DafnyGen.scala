@@ -253,7 +253,7 @@ object DafnyGen {
         // TODO: Add the Scala Source Position to this error, and get instance of Scala Compiler Context.
         // report.error("Derived reactives may not be referenced directly, apart from calling the \"value\" property.")
 
-        // TODO: Simply returning reference name until the above is fixed (won't compile while missing context).
+        // Simply returning reference name until the above is fixed (won't compile while missing context).
         // !! This produces invalid Dafny code, as the type will be the return type but the RHS a function type !!
         node.name
       case _ => node.name // Simply place the reference for other types
@@ -391,7 +391,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTSource(node: TSource, ctx: Map[String, NodeInfo]): String = {
-    // Sources are realized as Dafny fields. This method however just generates the body,
+    // Sources are realized as Dafny fields. This method however just generates the body of the definition,
     // since the TSource node only contains that information (see generateFromTAbs for the field definition).
     generate(node.body, ctx)
   }
@@ -402,7 +402,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTDerived(node: TDerived, ctx: Map[String, NodeInfo]): String = {
-    // Derived terms are realized as Dafny functions. This method however just generates the body,
+    // Derived terms are realized as Dafny functions. This method however just generates the body of the function,
     // since the TDerived node only contains that information (see generateFromTAbs for the function definition).
     generate(node.body, ctx)
   }
@@ -414,6 +414,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTInteraction(node: TInteraction, ctx: Map[String, NodeInfo]): String = {
+    // TODO: This requires finding all relevant existing Invariants and adding them as requires and ensures conditions!
     ""
   }
 
@@ -792,6 +793,7 @@ object DafnyGen {
     throw new Error("Term type not implemented")
   }
 
+  // TODO: Implement
   /** Generates Dafny code for the given LoRe TForall.
     *
     * @param node The LoRe TForall node.
@@ -801,6 +803,7 @@ object DafnyGen {
     throw new Error("Term type not implemented")
   }
 
+  // TODO: Implement
   /** Generates Dafny code for the given LoRe TExists.
     *
     * @param node The LoRe TExists node.
