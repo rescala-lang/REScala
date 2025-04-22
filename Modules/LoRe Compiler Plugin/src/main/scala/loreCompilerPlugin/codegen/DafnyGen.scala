@@ -1,5 +1,6 @@
 package loreCompilerPlugin.codegen
 
+import dotty.tools.dotc.report
 import lore.ast.*
 
 /** Information about a definition in Dafny generated from a LoRe AST node.
@@ -243,21 +244,17 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTVar(node: TVar, ctx: Map[String, NodeInfo]): String = {
-    if !ctx.isDefinedAt(node.name) then node.name // Reference to non-top-level definition (e.g. arrow func param)
-    else {
-      // TODO: Depending on implementation of the reactives, this may need branching output depending on type of the var
-      val refType: Type = ctx(node.name).loreType
+    ctx(node.name).loreType match
+      case SimpleType(typeName, inner) if typeName == "Signal" =>
+        // Derived fields, which are functions in Dafny, may not be referenced plainly.
+        // When accessed, it must be via access to the "value" property, which becomes a function call.
+        // TODO: Add the Scala Source Position to this error, and get instance of Scala Compiler Context.
+        // report.error("Derived reactives may not be referenced directly, apart from calling the \"value\" property.")
 
-      refType match
-        case simpleType: SimpleType if simpleType.name == "Signal" => // Derived is REScala "Signal" type
-          // Derived terms are modeled as Dafny functions. This means that when they're referenced anywhere, a
-          // function call to them needs to be generated in that spot rather than simply referencing their name.
-          val refs: Set[String] = usedReferences(node, ctx)
-          s"${node.name}(${refs.mkString(", ")})"
-        case _ =>
-          // In other cases, just place the variable name in the code.
-          node.name
-    }
+        // TODO: Simply returning reference name until the above is fixed (won't compile while missing context).
+        // !! This produces invalid Dafny code, as the type will be the return type but the RHS a function type !!
+        node.name
+      case _ => node.name // Simply place the reference for other types
   }
 
   /** Generates Dafny code for the given LoRe TAbs.
@@ -704,12 +701,15 @@ object DafnyGen {
       // For Sources, it simply represents a field access to the Source. For Derived, it's a call to the function.
       // Therefore, the call to the "value" property has to be replaced by the respectively generated parent code.
       if node.parent.isInstanceOf[TVar] && node.field == "value" then {
-        val refType: Type = ctx(node.parent.asInstanceOf[TVar].name).loreType // Safe cast because of prior check
+        val n: TVar       = node.parent.asInstanceOf[TVar]
+        val refType: Type = ctx(n.name).loreType // Safe cast because of prior check
 
         refType match
-          // Source is REScala "Var" type, Derived is REScala "Signal" type
-          case simpleType: SimpleType if simpleType.name == "Var" || simpleType.name == "Signal" =>
-            return generate(node.parent, ctx)
+          case simpleType: SimpleType if simpleType.name == "Var" => // Source is REScala "Var" type
+            return n.name
+          case simpleType: SimpleType if simpleType.name == "Signal" => // Derived is REScala "Signal" type
+            val refs: Set[String] = usedReferences(node.parent, ctx)
+            return s"${n.name}(${refs.mkString(", ")})"
           case _ => () // Fall through to below regular TFCall generation if this isn't a Source or Derived
       }
 
