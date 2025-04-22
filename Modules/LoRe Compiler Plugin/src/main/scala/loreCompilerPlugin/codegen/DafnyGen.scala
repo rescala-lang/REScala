@@ -32,8 +32,7 @@ object DafnyGen {
       case "String"           => "string" // Technically seq<char> (String is Seq[Char]), syntactic sugar respectively.
       case "Map"              => "map"
       case "List"             => "seq"    // This does confer some changes in semantics regarding mutability etc.
-      // TODO: Add others...
-      case _ => typeName
+      case _                  => typeName
   }
 
   /** Recursively gathers the names of all references used in the given LoRe Term node.
@@ -255,7 +254,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTAbs(node: TAbs, ctx: Map[String, NodeInfo]): String = {
-    // TODO: Finish implementing. Depending on the type, output must differ, debug for now
     node.body match
       case n: TSource =>
         // Source terms are realized as Dafny fields, which can be modified post-definition.
@@ -265,7 +263,7 @@ object DafnyGen {
         // Derived terms are realized as Dafny functions. Functions do not have side-effects.
         // The return type of these functions is the type parameter of the Derived, while any
         // references included in the body of the Derived are turned into function parameters.
-        val references: Set[String] = usedReferences(n.body)
+        val references: Set[String] = usedReferences(n.body, ctx)
         val parameters: Set[String] = references.map(ref => s"$ref: ${ctx(ref).dafnyType}")
 
         // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-function-declaration
@@ -273,9 +271,10 @@ object DafnyGen {
            |  ${generateFromTDerived(n, ctx)}
            |}""".stripMargin
       case n: TInteraction =>
+        // TODO: Implement in tandem with Interactions.
         ""
       case _ =>
-        // Default into generic field declarations for other types
+        // Default into generic field declarations for other types.
         val typeAnnot: String = generate(node._type, ctx)
         val body: String      = generate(node.body, ctx)
         s"var ${node.name}: $typeAnnot := $body;"
@@ -341,6 +340,24 @@ object DafnyGen {
     s"$arrowHead => $arrowBody"
   }
 
+  /** Generates Dafny code for the given LoRe TAssert.
+    *
+    * @param node The LoRe TAssert node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTAssert(node: TAssert, ctx: Map[String, NodeInfo]): String = {
+    s"assert ${generate(node.body, ctx)};"
+  }
+
+  /** Generates Dafny code for the given LoRe TAssume.
+    *
+    * @param node The LoRe TAssume node.
+    * @return The generated Dafny code.
+    */
+  private def generateFromTAssume(node: TAssume, ctx: Map[String, NodeInfo]): String = {
+    s"assume ${generate(node.body, ctx)};"
+  }
+
   /** Generates Dafny code for the given LoRe TReactive.
     *
     * @param node The LoRe TReactive node.
@@ -349,7 +366,7 @@ object DafnyGen {
   private def generateFromTReactive(node: TReactive, ctx: Map[String, NodeInfo]): String = {
     // These methods only generate the body of the reactive terms, not the surrounding structure.
     // E.g. for a Source(1+2), this only processes the 1+2 part. For a Derived { foo }, only the foo part.
-    // For the structure, such as the function modelling of Derived, see the generation of TAbs.
+    // For the structure, such as the function modelling of Derived, see the generateFromTAbs function.
     val reactive: String = node match
       case n: TSource  => generateFromTSource(n, ctx)
       case n: TDerived => generateFromTDerived(n, ctx)
@@ -364,7 +381,7 @@ object DafnyGen {
     */
   private def generateFromTSource(node: TSource, ctx: Map[String, NodeInfo]): String = {
     // Sources are realized as Dafny fields. This method however just generates the body,
-    // since the TSource node only contains that information (see TABs for the field definition).
+    // since the TSource node only contains that information (see generateFromTAbs for the field definition).
     generate(node.body, ctx)
   }
 
@@ -375,7 +392,7 @@ object DafnyGen {
     */
   private def generateFromTDerived(node: TDerived, ctx: Map[String, NodeInfo]): String = {
     // Derived terms are realized as Dafny functions. This method however just generates the body,
-    // since the TDerived node only contains that information (see TABs for the function definition).
+    // since the TDerived node only contains that information (see generateFromTAbs for the function definition).
     generate(node.body, ctx)
   }
 
@@ -395,7 +412,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTArith(node: TArith, ctx: Map[String, NodeInfo]): String = {
-    // FYI: Modulo and Unary Minus do not exist in LoRe, but do in Dafny
+    // FYI: Modulo and Unary Minus do not exist in LoRe, but do in Dafny.
     // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-numeric-types
     val expr: String = node match
       case n: TNum => generateFromTNum(n, ctx)
@@ -491,7 +508,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTTrue(node: TTrue, ctx: Map[String, NodeInfo]): String = {
-    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-booleans
     "true"
   }
 
@@ -501,7 +517,6 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFalse(node: TFalse, ctx: Map[String, NodeInfo]): String = {
-    // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-booleans
     "false"
   }
 
@@ -737,7 +752,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTViperImport(node: TViperImport, ctx: Map[String, NodeInfo]): String = {
-    // Viper-specific (by name at least). Leave out for now.
+    // Viper-specific (by name at least). Leave out for now, maybe reused for Dafny imports in later work.
     throw new Error("Term type not implemented")
   }
 
@@ -747,25 +762,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTTypeAl(node: TTypeAl, ctx: Map[String, NodeInfo]): String = {
-    // Leave out for now. Maybe in a later work.
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TAssert.
-    *
-    * @param node The LoRe TAssert node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTAssert(node: TAssert, ctx: Map[String, NodeInfo]): String = {
-    throw new Error("Term type not implemented")
-  }
-
-  /** Generates Dafny code for the given LoRe TAssume.
-    *
-    * @param node The LoRe TAssume node.
-    * @return The generated Dafny code.
-    */
-  private def generateFromTAssume(node: TAssume, ctx: Map[String, NodeInfo]): String = {
+    // Leave out for now. Maybe in later work.
     throw new Error("Term type not implemented")
   }
 
@@ -803,7 +800,7 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTFCurly(node: TFCurly, ctx: Map[String, NodeInfo]): String = {
-    // Probably not needed for Dafny.
+    // Probably not needed for Dafny. Leave out for now, maybe revisited in later work.
     throw new Error("Term type not implemented")
   }
 }
