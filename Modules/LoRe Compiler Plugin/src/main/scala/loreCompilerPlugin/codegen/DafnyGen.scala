@@ -244,6 +244,8 @@ object DafnyGen {
     * @return The generated Dafny code.
     */
   private def generateFromTVar(node: TVar, ctx: Map[String, NodeInfo]): String = {
+    if !ctx.isDefinedAt(node.name) then return node.name // Skip non-top-level definition references
+
     ctx(node.name).loreType match
       case SimpleType(typeName, inner) if typeName == "Signal" =>
         // Derived fields, which are functions in Dafny, may not be referenced plainly.
