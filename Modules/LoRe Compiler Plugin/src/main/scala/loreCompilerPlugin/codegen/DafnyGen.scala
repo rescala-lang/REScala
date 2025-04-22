@@ -4,13 +4,15 @@ import lore.ast.*
 
 /** Information about a definition in Dafny generated from a LoRe AST node.
   * @param name The name of the definition, equal across Dafny and LoRe
-  * @param loreType The type node in the LoRe AST
+  * @param loreNode The original LoRe Node of this definition
+  * @param loreType The type node of this definition in the LoRe AST
   * @param dafnyType The name of the type used in Dafny
   */
 case class NodeInfo(
     name: String,
+    loreNode: Term,
     loreType: Type,
-    dafnyType: String,
+    dafnyType: String
 )
 
 object DafnyGen {
@@ -85,11 +87,11 @@ object DafnyGen {
     var compilationContext: Map[String, NodeInfo] = Map()
 
     val dafnyCode: List[String] = ast.map(term => {
-      // Before entering code generation, record name and type of new definitions
+      // Before entering code generation, record the name, original term and type (lore+dafny) of new definitions
       term match
         case TAbs(name, _type, body, _) =>
           val tp: String = generate(_type, compilationContext)
-          compilationContext = compilationContext.updated(name, NodeInfo(name, _type, tp))
+          compilationContext = compilationContext.updated(name, NodeInfo(name, term, _type, tp))
         case _ => ()
 
       // Generate Dafny code and map term to it
