@@ -84,6 +84,11 @@ class DeltaDissemination[State](
     addLatentConnection(cachedMessages(latentConnection))
   }
 
+  @targetName("addRetryingLatentConnectionCaching")
+  def addRetryingLatentConnection(connection: () => LatentConnection[MessageBuffer], delay: Long, tries: Int): Unit = {
+    addRetryingLatentConnection(() => cachedMessages(connection()), delay, tries)
+  }
+
   @targetName("addLatentConnectionPlain")
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
     addLatentConnection(LatentConnection.adapt[ProtocolMessage[State], Message](
@@ -92,8 +97,31 @@ class DeltaDissemination[State](
     )(latentConnection))
   }
 
+  @targetName("addRetryingLatentConnectionPlain")
+  def addRetryingLatentConnection(
+      connection: () => LatentConnection[ProtocolMessage[State]],
+      delay: Long,
+      tries: Int
+  ): Unit = {
+    addRetryingLatentConnection(
+      () =>
+        LatentConnection.adapt[ProtocolMessage[State], Message](
+          pm => SentCachedMessage(pm)(using pmscodec),
+          cm => cm.payload
+        )(connection()),
+      delay,
+      tries
+    )
+  }
+
   @targetName("addLatentConnectionCached")
-  def addLatentConnection(latentConnection: LatentConnection[Message]): Unit = {
+  def addLatentConnection(latentConnection: LatentConnection[Message]): Unit =
+    addRetryingLatentConnection(() => latentConnection, 0L, 0)
+
+  @targetName("addRetryingLatentConnectionCached")
+  def addRetryingLatentConnection(connection: () => LatentConnection[Message], delay: Long, tries: Int): Unit = {
+    val latentConnection = connection()
+
     val preparedConnection = latentConnection.prepare { from =>
       {
         case Success(msg) => handleMessage(msg, from)
@@ -117,6 +145,13 @@ class DeltaDissemination[State](
       case Failure(ex) =>
         println(s"exception during connection activation")
         ex.printStackTrace()
+
+        if tries > 0 then {
+          println(s"Failed to establish latent connection, retrying in ${delay}ms")
+          Thread.sleep(delay)
+
+          addRetryingLatentConnection(connection, delay, tries - 1)
+        }
     }
   }
 

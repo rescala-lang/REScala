@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodec
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{BenchmarkMode, ClientCLI, EtcdClient, ProBenchClient}
-import probench.data.{ClientState, ClusterState, KVOperation, KVState}
+import probench.data.{ClientState, ClusterState, KVOperation, KVState, ConnInformation}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.MultiPaxos
 import replication.{FileConnection, ProtocolMessage}
@@ -152,17 +152,17 @@ object cli {
 
           cluster.value.foreach { (host, port) =>
             println(s"Connecting to $host:$port")
-            node.clusterDataManager.addLatentConnection(nioTCP.connectRetrying(
-              nioTCP.defaultSocketChannel(socketPath(host, port)),
+            node.clusterDataManager.addRetryingLatentConnection(
+              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port))),
               1000,
               10
-            ))
+            )
             println(s"Connecting to $host:${port - 1}")
-            node.clientDataManager.addLatentConnection(nioTCP.connectRetrying(
-              nioTCP.defaultSocketChannel(socketPath(host, port - 1)),
+            node.clientDataManager.addRetryingLatentConnection(
+              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port - 1))),
               1000,
               10
-            ))
+            )
           }
         },
         subcommand("udp-node", "starts a cluster node") {
@@ -190,11 +190,11 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connectRetrying(
-            nioTCP.defaultSocketChannel(socketPath(ip, port)),
+          client.addRetryingLatentConnection(
+            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
             1000,
             10
-          ))
+          )
 
           ClientCLI(name.value, client).startCLI()
 
@@ -220,11 +220,11 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connectRetrying(
-            nioTCP.defaultSocketChannel(socketPath(ip, port)),
+          client.addRetryingLatentConnection(
+            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
             1000,
             10
-          ))
+          )
 
           client.benchmark(mode = mode.value, times = times.value)
 
@@ -240,7 +240,11 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addLatentConnection(nioTCP.connectRetrying(nioTCP.defaultSocketChannel(socketPath(ip, port)), 1000, 10))
+          client.addRetryingLatentConnection(
+            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
+            1000,
+            10
+          )
 
           client.benchmarkTimed(warmup.value, measurement.value, mode.value)
 

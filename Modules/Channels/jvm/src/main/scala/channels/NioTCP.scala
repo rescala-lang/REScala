@@ -7,7 +7,6 @@ import java.io.IOException
 import java.net.{SocketAddress, SocketException, StandardProtocolFamily, StandardSocketOptions, UnixDomainSocketAddress}
 import java.nio.ByteBuffer
 import java.nio.channels.{SelectionKey, Selector, ServerSocketChannel, SocketChannel}
-import scala.annotation.tailrec
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
@@ -133,32 +132,14 @@ class NioTCP {
   def connect(
       bindsocket: () => SocketChannel,
   ): LatentConnection[MessageBuffer] =
-    connectRetrying(bindsocket, 1000, 0)
-
-  def connectRetrying(
-      bindsocket: () => SocketChannel,
-      delay: Long,
-      tries: Int
-  ): LatentConnection[MessageBuffer] =
     new LatentConnection {
-      override def prepare(incoming: Receive[MessageBuffer]): Async[Abort, Connection[MessageBuffer]] =
+      override def prepare(incoming: Receive[MessageBuffer]): Async[Any, Connection[MessageBuffer]] =
         Async.fromCallback {
-          @tailrec
-          def retry(delay: Long, tries: Int): Unit = {
-            try
-              Async.handler.succeed {
-                handleConnection(bindsocket(), incoming)
-              }
-            catch
-              case NonFatal(exception) =>
-                if tries == 0
-                then Async.handler.fail(exception)
-                else
-                  println(s"Failed to connect to socket, retrying in ${delay}ms")
-                  Thread.sleep(delay)
-                  retry(delay, tries - 1)
-          }
-          retry(delay, tries)
+          try
+            Async.handler.succeed {
+              handleConnection(bindsocket(), incoming)
+            }
+          catch case NonFatal(exception) => Async.handler.fail(exception)
         }
     }
 
