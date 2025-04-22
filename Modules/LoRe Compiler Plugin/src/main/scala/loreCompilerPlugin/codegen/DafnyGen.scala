@@ -37,46 +37,76 @@ object DafnyGen {
   }
 
   /** Recursively gathers the names of all references used in the given LoRe Term node.
+    * This skips references to non-top-level definitions (e.g. references to parameters of arrow functions).
     * @param node The node to search.
     * @return The names of all references used in this node.
     */
-  private def usedReferences(node: Term): Set[String] = {
+  private def usedReferences(node: Term, ctx: Map[String, NodeInfo]): Set[String] = {
     // This uses sets to avoid duplicate entries.
 
-    node match
-      case t: (TViperImport | TArgT | TTypeAl | TNum | TTrue | TFalse | TString) => Set.empty // No references in these
-      case TVar(name, _)                                                         => Set(name) // Direct reference here
-      case TAbs(_, _, body, _)                                                   => usedReferences(body)
-      case TTuple(factors, _) => factors.flatMap(usedReferences).toSet
+    val refs: Set[String] = node match
+      case t: (TViperImport | TArgT | TTypeAl | TNum | TTrue | TFalse | TString) => Set.empty // No references here
+      case TVar(name, _) =>
+        if !ctx.isDefinedAt(name) then Set.empty // Skip non-top-level definition references (e.g. arrow func params)
+        else Set(name)                           // Regular reference to a top-level definition
+      case TAbs(_, _, body, _) => usedReferences(body, ctx)
+      case TTuple(factors, _)  => factors.flatMap((n: Term) => usedReferences(n, ctx)).toSet
       case TIf(cond, _then, _else, _) =>
-        val refs: Set[String] = usedReferences(cond) ++ usedReferences(_then)
-        if _else.isDefined then refs ++ usedReferences(_else.get) else refs
-      case TSeq(body, _)          => body.map(usedReferences).toList.flatten.toSet
-      case TArrow(left, right, _) =>
-        // TODO: Only add those references to the list that weren't just newly defined in the arrow function parameters
-        usedReferences(left) ++ usedReferences(right)
-      case t: BinaryOp      => usedReferences(t.left) ++ usedReferences(t.right) // Arithmetic expr and Boolean expr
-      case TAssert(body, _) => usedReferences(body)
-      case TAssume(body, _) => usedReferences(body)
-      case t: TReactive     => usedReferences(t.body)
+        val refs: Set[String] = usedReferences(cond, ctx) ++ usedReferences(_then, ctx)
+        if _else.isDefined then refs ++ usedReferences(_else.get, ctx) else refs
+      case TSeq(body, _) => body.toList.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+      case t: BinaryOp   => usedReferences(t.left, ctx) ++ usedReferences(t.right, ctx) // Arith., Bool expr, Arrow func
+      case TAssert(body, _) => usedReferences(body, ctx)
+      case TAssume(body, _) => usedReferences(body, ctx)
+      case t: TReactive     => usedReferences(t.body, ctx)
       case TInteraction(_, _, m, r, e, ex, _) =>
-        // TODO: Only add those references to the list that weren't just newly defined in the body of the r/e/ex parts
-        val refs: Set[String] = m.toSet ++ r.flatMap(usedReferences).toSet ++ e.flatMap(usedReferences).toSet
-        if ex.isDefined then refs ++ usedReferences(ex.get) else refs
-      case TInvariant(condition, _) => usedReferences(condition)
-      case TNeg(body, _)            => usedReferences(body)
+        val reqs: Set[String] = r.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+        val ens: Set[String]  = e.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+        val refs: Set[String] = m.toSet ++ reqs ++ ens
+
+        if ex.isDefined then refs ++ usedReferences(ex.get, ctx) else refs
+      case TInvariant(condition, _) => usedReferences(condition, ctx)
+      case TNeg(body, _)            => usedReferences(body, ctx)
       case t: TQuantifier           =>
         // TODO: Triggers? Only TForall has those, though.
         // vars are new definitions of TArgTs, they do not contain references, so skip those.
-        usedReferences(t.body)
-      case TParens(inner, _) => usedReferences(inner)
+        usedReferences(t.body, ctx)
+      case TParens(inner, _) => usedReferences(inner, ctx)
       case TFCall(parent, _, args, _) =>
-        val refs: Set[String] = usedReferences(parent)
+        val refs: Set[String] = usedReferences(parent, ctx)
         // The called field/method is not a standalone reference, so don't include it.
         // If this is a field call, args will be null, otherwise contains method parameters.
-        if args != null then refs ++ args.flatMap(usedReferences).toSet else refs
-      case TFCurly(parent, _, body, _) => usedReferences(parent) ++ usedReferences(body)
-      case TFunC(_, args, _)           => args.flatMap(usedReferences).toSet
+        if args != null then refs ++ args.flatMap((n: Term) => usedReferences(n, ctx)).toSet else refs
+      case TFCurly(parent, _, body, _) => usedReferences(parent, ctx) ++ usedReferences(body, ctx)
+      case TFunC(_, args, _)           => args.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+
+    // Some LoRe types, which are defined as regular variables, are modelled differently in Dafny.
+    // For example, Derived terms are modelled as functions in Dafny but regular variables in LoRe.
+    // So whenever they are referenced in Dafny, they are not a variable reference, but a function call with parameters.
+    // This means the reference list shouldn't include the plain name of that node, but instead its references within.
+    // E.g. For foo = Derived { bar + someRef } with bar = Derived { otherRef + anotherRef }, the list of references for
+    // "bar" is "otherRef" and "anotherRef", but the references for "foo" are the refs of "bar" and "someRef", i.e.
+    // "otherRef", "anotherRef" and "someRef" instead of the refs being "bar" itself in addition to "someRef".
+    // Therefore, these "deep" references have to be resolved down into their bare components and replaced in the list.
+    val deepRefs: Set[String] =
+      refs.filter((ref: String) => {
+        // This check is for skipping non-top-level definition references (e.g. arrow func parameters)
+        if ctx.isDefinedAt(ref) then {
+          // TupleType is not currently implemented in the frontend, so this cast is safe.
+          val tp: SimpleType = ctx(ref).loreType.asInstanceOf[SimpleType]
+          // TODO: Probably need to add Invariant and Interaction type names to this check. Those are not implemented.
+          tp.name == "Signal"
+        } else false
+      })
+
+    if deepRefs.isEmpty then refs
+    else {
+      val deepRefsFlat: Set[String] = deepRefs.flatMap((ref: String) => usedReferences(ctx(ref).loreNode, ctx))
+
+      // Remove direct Derived references (e.g. "foo" and "bar" above) and add their
+      // flattened references (e.g. "someRef", "otherRef" and "anotherRef" in the above).
+      refs -- deepRefs ++ deepRefsFlat
+    }
   }
 
   /** Compiles a list of LoRe terms into Dafny code.
