@@ -25,12 +25,12 @@ class ClusterConsensus extends munit.FunSuite {
     val nodes @ primary :: secondaries =
       ids.map { id => KeyValueReplica(id, ids, offloadSending = false) }.toList: @unchecked
     val connection = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
-    primary.clusterDataManager.addLatentConnection(connection.server)
-    secondaries.foreach { node => node.clusterDataManager.addLatentConnection(connection.client(node.uid.toString)) }
+    primary.cluster.dataManager.addLatentConnection(connection.server)
+    secondaries.foreach { node => node.cluster.dataManager.addLatentConnection(connection.client(node.uid.toString)) }
 
     val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
-    primary.clientDataManager.addLatentConnection(clientConnection.server)
+    primary.client.dataManager.addLatentConnection(clientConnection.server)
 
     val clientUid = Uid.gen()
     val client    = ProBenchClient(clientUid, blocking = true)
@@ -39,9 +39,9 @@ class ClusterConsensus extends munit.FunSuite {
     client.write("test", "Hi")
     client.read("test")
 
-    assertEquals(nodes(0).clusterState, nodes(1).clusterState)
-    assertEquals(nodes(1).clusterState, nodes(2).clusterState)
-    assertEquals(nodes(2).clusterState, nodes(0).clusterState)
+    assertEquals(nodes(0).cluster.state, nodes(1).cluster.state)
+    assertEquals(nodes(1).cluster.state, nodes(2).cluster.state)
+    assertEquals(nodes(2).cluster.state, nodes(0).cluster.state)
 
     def investigateUpkeep(state: ClusterState)(using LocalUid) = {
       val delta  = state.upkeep
@@ -51,20 +51,20 @@ class ClusterConsensus extends munit.FunSuite {
     }
 
     def runUpkeep() = while {
-      nodes.filter(_.needsUpkeep()).exists { n =>
+      nodes.filter(_.cluster.needsUpkeep()).exists { n =>
         println(s"forcing upkeep on $n")
-        investigateUpkeep(n.clusterState)(using n.localUid)
-        n.forceUpkeep()
+        investigateUpkeep(n.cluster.state)(using n.localUid)
+        n.cluster.forceUpkeep()
         true
       }
     } do ()
 
     runUpkeep()
 
-    nodes.foreach(node => assert(!node.needsUpkeep(), node.uid))
+    nodes.foreach(node => assert(!node.cluster.needsUpkeep(), node.uid))
 
     def noUpkeep(keyValueReplica: KeyValueReplica): Unit = {
-      val current = keyValueReplica.clusterState
+      val current = keyValueReplica.cluster.state
       assertEquals(
         current `merge` current.upkeep(using keyValueReplica.localUid),
         current,
@@ -74,13 +74,13 @@ class ClusterConsensus extends munit.FunSuite {
 
     nodes.foreach(noUpkeep)
 
-    assertEquals(nodes(0).clusterState, nodes(1).clusterState)
-    assertEquals(nodes(1).clusterState, nodes(2).clusterState)
-    assertEquals(nodes(2).clusterState, nodes(0).clusterState)
+    assertEquals(nodes(0).cluster.state, nodes(1).cluster.state)
+    assertEquals(nodes(1).cluster.state, nodes(2).cluster.state)
+    assertEquals(nodes(2).cluster.state, nodes(0).cluster.state)
 
     // simulate crash
 
-    secondaries.last.clusterDataManager.globalAbort.closeRequest = true
+    secondaries.last.cluster.dataManager.globalAbort.closeRequest = true
 
     client.write("test2", "Hi")
     client.read("test2")
@@ -89,8 +89,8 @@ class ClusterConsensus extends munit.FunSuite {
 
     nodes.foreach(noUpkeep)
 
-    assertEquals(nodes(0).clusterState.log(3).value, KVOperation.Read("test2"))
-    assertEquals(nodes(2).clusterState.log.size, 2)
+    assertEquals(nodes(0).cluster.state.log(3).value, KVOperation.Read("test2"))
+    assertEquals(nodes(2).cluster.state.log.size, 2)
 
   }
 }

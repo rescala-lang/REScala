@@ -107,9 +107,9 @@ object cli {
           val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
           val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
-          primary.clusterDataManager.addLatentConnection(connection.server)
+          primary.cluster.dataManager.addLatentConnection(connection.server)
           secondaries.foreach { node =>
-            node.clusterDataManager.addLatentConnection(connection.client(node.uid.toString))
+            node.cluster.dataManager.addLatentConnection(connection.client(node.uid.toString))
           }
 
           val persist = flag("--persistence", "enable persistence").value
@@ -119,7 +119,7 @@ object cli {
             Files.createDirectories(persistencePath)
 
             nodes.foreach { node =>
-              node.clusterDataManager.addLatentConnection(
+              node.cluster.dataManager.addLatentConnection(
                 FileConnection[ClusterState](persistencePath.resolve(node.uid.toString + ".jsonl"))
               )
             }
@@ -127,7 +127,7 @@ object cli {
 
           val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
-          primary.clientDataManager.addLatentConnection(clientConnection.server)
+          primary.client.dataManager.addLatentConnection(clientConnection.server)
 
           val clientUid = Uid.gen()
           val client    = ProBenchClient(clientUid)
@@ -142,36 +142,39 @@ object cli {
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
-          node.clientDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.client.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
             clientPort.value
           ))))
-          node.clusterDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          
+          val peerPortVal = peerPort.value
+          
+          node.cluster.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
-            peerPort.value
+            peerPortVal
           ))))
-          node.connectionInformationDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.connInf.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
-            peerPort.value + 1
+            peerPortVal + 1
           ))))
 
-          Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
+          Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (host, port) =>
             println(s"Connecting to $host:${port + 1}")
-            node.connectionInformationDataManager.addRetryingLatentConnection(
+            node.connInf.dataManager.addRetryingLatentConnection(
               () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port + 1))),
               1000,
               10
             )
             println(s"Connecting to $host:$port")
-            node.clusterDataManager.addRetryingLatentConnection(
+            node.cluster.dataManager.addRetryingLatentConnection(
               () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port))),
               1000,
               10
             )
             println(s"Connecting to $host:${port - 1}")
-            node.clientDataManager.addRetryingLatentConnection(
+            node.client.dataManager.addRetryingLatentConnection(
               () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port - 1))),
               1000,
               10
@@ -181,19 +184,19 @@ object cli {
         subcommand("udp-node", "starts a cluster node") {
           val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
-          node.clientDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
-          node.clusterDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
-          node.connectionInformationDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value + 1), ec))
+          node.client.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
+          node.cluster.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
+          node.connInf.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value + 1), ec))
 
-          Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
+          Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
-            node.clusterDataManager.addLatentConnection(UDP.connect(
+            node.cluster.dataManager.addLatentConnection(UDP.connect(
               InetSocketAddress(ip, port),
               () => new DatagramSocket(),
               ec
             ))
-            node.connectionInformationDataManager.addLatentConnection(UDP.connect(
+            node.connInf.dataManager.addLatentConnection(UDP.connect(
               InetSocketAddress(ip, port + 1),
               () => new DatagramSocket(),
               ec
