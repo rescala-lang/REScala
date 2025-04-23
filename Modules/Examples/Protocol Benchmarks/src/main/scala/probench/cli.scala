@@ -27,6 +27,9 @@ object Codecs {
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
   given clientCodec: JsonValueCodec[ProtocolMessage[ClientState]] =
     JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+  given JsonValueCodec[ConnInformation] =
+    JsonCodecMaker.make(CodecMakerConfig.withMapAsArray(true))
+
 }
 
 import probench.Codecs.given
@@ -147,10 +150,20 @@ object cli {
             "0",
             peerPort.value
           ))))
+          node.connectionInformationDataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+            "0",
+            peerPort.value + 1
+          ))))
 
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (host, port) =>
+            println(s"Connecting to $host:${port + 1}")
+            node.connectionInformationDataManager.addRetryingLatentConnection(
+              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port + 1))),
+              1000,
+              10
+            )
             println(s"Connecting to $host:$port")
             node.clusterDataManager.addRetryingLatentConnection(
               () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port))),
@@ -170,12 +183,18 @@ object cli {
 
           node.clientDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
           node.clusterDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
+          node.connectionInformationDataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value + 1), ec))
 
           Timer().schedule(() => node.clusterDataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
             node.clusterDataManager.addLatentConnection(UDP.connect(
               InetSocketAddress(ip, port),
+              () => new DatagramSocket(),
+              ec
+            ))
+            node.connectionInformationDataManager.addLatentConnection(UDP.connect(
+              InetSocketAddress(ip, port + 1),
               () => new DatagramSocket(),
               ec
             ))

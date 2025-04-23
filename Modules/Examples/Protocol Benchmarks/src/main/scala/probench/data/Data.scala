@@ -2,6 +2,7 @@ package probench.data
 
 import probench.data.RequestResponseQueue.Req
 import rdts.base.{Bottom, Lattice, LocalUid}
+import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{MultiPaxos, Participants}
 
 enum KVOperation[Key, Value] {
@@ -11,6 +12,7 @@ enum KVOperation[Key, Value] {
   case Write(key: Key, value: Value)
 }
 
+type ConnInformation = Map[LocalUid, LastWriterWins[Long]]
 type ClusterState = MultiPaxos[Req[KVOperation[String, String]]]
 type ClientState  = RequestResponseQueue[KVOperation[String, String], String]
 
