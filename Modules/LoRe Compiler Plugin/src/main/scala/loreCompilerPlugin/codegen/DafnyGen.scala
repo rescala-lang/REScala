@@ -267,7 +267,7 @@ object DafnyGen {
   private def generateFromTAbs(node: TAbs, ctx: Map[String, NodeInfo]): String = {
     node.body match
       case n: TSource =>
-        // Source terms are realized as Dafny fields, which can be modified post-definition.
+        // Source terms are realized as Dafny fields that can be modified post-definition.
         // Reference: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-field-declaration
         s"var ${node.name}: ${generate(node._type, ctx)} := ${generateFromTSource(n, ctx)};"
       case n: TDerived =>
@@ -285,10 +285,10 @@ object DafnyGen {
         // TODO: Implement in tandem with Interactions.
         ""
       case _ =>
-        // Default into generic field declarations for other types.
+        // Default into generic *const* declarations for other types, as all TAbs are by default non-mutable.
         val typeAnnot: String = generate(node._type, ctx)
         val body: String      = generate(node.body, ctx)
-        s"var ${node.name}: $typeAnnot := $body;"
+        s"const ${node.name}: $typeAnnot := $body;"
   }
 
   /** Generates Dafny code for the given LoRe TTuple.
@@ -704,8 +704,8 @@ object DafnyGen {
       // For Sources, it simply represents a field access to the Source. For Derived, it's a call to the function.
       // Therefore, the call to the "value" property has to be replaced by the respectively generated parent code.
       if node.parent.isInstanceOf[TVar] && node.field == "value" then {
-        val n: TVar       = node.parent.asInstanceOf[TVar]
-        val refType: Type = ctx(n.name).loreType // Safe cast because of prior check
+        val n: TVar       = node.parent.asInstanceOf[TVar] // Safe cast because of prior check
+        val refType: Type = ctx(n.name).loreType
 
         refType match
           case simpleType: SimpleType if simpleType.name == "Var" => // Source is REScala "Var" type
