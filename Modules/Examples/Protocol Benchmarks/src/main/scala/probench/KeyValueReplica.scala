@@ -1,14 +1,12 @@
 package probench
 
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
-import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import probench.Codecs.given
 import probench.data.RequestResponseQueue.Req
-import probench.data.{ClientState, ClusterState, ConnInformation, KVOperation, RequestResponseQueue}
+import probench.data.*
 import rdts.base.Lattice.syntax
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.datatypes.{GrowOnlyCounter, LastWriterWins}
+import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 import replication.DeltaDissemination
 
