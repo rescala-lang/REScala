@@ -4,6 +4,7 @@ import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.report
 import dotty.tools.dotc.util.SourcePosition
 import lore.ast.*
+import scala.util.matching.Regex
 
 /** Information about a definition in Dafny generated from a LoRe AST node.
   * @param name The name of the definition, equal across Dafny and LoRe
@@ -118,19 +119,80 @@ object DafnyGen {
   def generate(ast: List[Term])(using scalaCtx: Context): String = {
     var compilationContext: Map[String, NodeInfo] = Map()
 
-    val dafnyCode: List[String] = ast.map(term => {
-      // Before entering code generation, record the name, original term and type (lore+dafny) of new definitions
-      term match
-        case TAbs(name, _type, body, _) =>
+    // Split term list into sublists that require different handling
+    val termGroups: Map[String, List[Term]] = ast.groupBy {
+      case TAbs(_, _type, _, _) =>
+        if _type.asInstanceOf[SimpleType].name == "Var" then "sourceDefs"
+        else if _type.asInstanceOf[SimpleType].name == "Signal" then "derivedDefs"
+        else if _type.asInstanceOf[SimpleType].name == "Interaction" then "interactionDefs"
+        else "otherDefs"
+      case _ => "otherTerms"
+    }
+
+    // Record compilation context info of all definitions (name, lore term, lore + dafny type) before generation
+    termGroups.values.foreach(termList => {
+      termList.foreach {
+        case term @ TAbs(name, _type, body, _) =>
           val tp: String = generate(_type, compilationContext)
           compilationContext = compilationContext.updated(name, NodeInfo(name, term, _type, tp))
         case _ => ()
-
-      // Generate Dafny code and map term to it
-      generate(term, compilationContext)
+      }
     })
 
-    dafnyCode.mkString("\n\n")
+    // Generate Dafny code for all term groups
+    val dafnyCode: Map[String, List[String]] = termGroups.map((termType, termList) => {
+      val generated: List[String] = termList.map(term => generate(term, compilationContext))
+
+      (termType, generated)
+    })
+
+    // Sources have to be split into declaration and definition, since they're modelled as Dafny class fields.
+    // Class fields can't be initialized immediately, only declared, and must be defined in a constructor.
+    // The shape of the generated code for Sources is "var foo: bar := baz;", whereas declarations are of the
+    // shape "var foo: bar" (no semicolon) and definitions are of the shape "foo := baz;" (with semicolon).
+    val sourceRegex: Regex = """var (.*): (.*) := (.*);""".r
+    val sourceDecls: List[String] = dafnyCode.getOrElse("sourceDefs", List()).map {
+      case sourceRegex(name, _type, _) => s"var $name: $_type"
+      case _                           => ""
+    }
+    val sourceDefs: List[String] = dafnyCode.getOrElse("sourceDefs", List()).map {
+      case sourceRegex(name, _, value) => s"$name := $value;"
+      case _                           => ""
+    }
+
+    // Splice together generated Dafny code of all term groups appropriately
+    s"""// Main object containing all fields
+       |class LoReFields {
+       |  // Constant field definitions
+       |  ${dafnyCode.getOrElse("otherDefs", List()).mkString("\n  ")}
+       |
+       |  // Source declarations
+       |  ${sourceDecls.mkString("\n  ")}
+       |
+       |  constructor () {
+       |    // Definition of Source values (initial values)
+       |    ${sourceDefs.mkString("\n    ")}
+       |  }
+       |}
+       |
+       |// Derived definitions
+       |${dafnyCode.getOrElse("derivedDefs", List()).mkString("\n")}
+       |
+       |// Interaction definitions
+       |${dafnyCode.getOrElse("interactionDefs", List()).mkString("\n")}
+       |
+       |// Invariant definitions
+       |${dafnyCode.getOrElse("invariantDefs", List()).mkString("\n")}
+       |
+       |// Main method
+       |method {:main} Main() {
+       |  // Main object reference
+       |  var LoReFields := new LoReFields();
+       |
+       |  // Function calls, source value updates, etc.
+       |  ${dafnyCode.getOrElse("otherTerms", List()).mkString("\n  ")}
+       |}
+       |""".stripMargin
   }
 
   /** Generates Dafny code for the given LoRe Term node.
