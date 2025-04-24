@@ -8,7 +8,7 @@ import probench.data.{ClientState, ClusterState, ConnInformation, KVOperation, R
 import rdts.base.Lattice.syntax
 import rdts.base.LocalUid.replicaId
 import rdts.base.{Lattice, LocalUid, Uid}
-import rdts.datatypes.LastWriterWins
+import rdts.datatypes.{GrowOnlyCounter, LastWriterWins}
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
 import replication.DeltaDissemination
 
@@ -63,7 +63,7 @@ class KeyValueReplica(
   val cluster: Cluster = new Cluster(currentStateLock, localUid, sendingActor)
 
   cluster.maybeLeaderElection()
-  
+
   class Cluster(
       override val lock: AnyRef,
       localUid: LocalUid,
@@ -212,15 +212,16 @@ class KeyValueReplica(
   // ============== CONN-INF ==============
 
   val connInf: ConnInf = new ConnInf(currentStateLock, localUid, sendingActor)
-  
+
   class ConnInf(
       override val lock: AnyRef,
       localUid: LocalUid,
       sendingActor: ExecutionContext,
-      var state: ConnInformation = Map.empty
+      var state: ConnInformation = Map.empty,
+      val timeoutThreshold: Long = 5000
   ) extends State[ConnInformation] {
 
-    override val dataManager: DeltaDissemination[ConnInformation] =     DeltaDissemination(
+    override val dataManager: DeltaDissemination[ConnInformation] = DeltaDissemination(
       localUid,
       handleIncoming,
       immediateForward = false,
@@ -245,6 +246,20 @@ class KeyValueReplica(
 
       state
     }
+
+    def sendHeartbeat(): ConnInformation = {
+      currentStateLock.synchronized {
+        publish(Map.from(List((localUid, LastWriterWins.now(System.currentTimeMillis())))))
+      }
+    }
+
+    def checkLiveness(): Unit = {
+      state
+        .map((uid, llw) => (uid, llw.value))
+        .filter((_, time) => time < (System.currentTimeMillis() - timeoutThreshold))
+        .foreach((uid, _) => println(s"$uid timed out"))
+    }
+
   }
 
 }
