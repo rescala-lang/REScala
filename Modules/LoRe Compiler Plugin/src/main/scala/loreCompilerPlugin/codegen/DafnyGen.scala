@@ -68,8 +68,8 @@ object DafnyGen {
       case TInvariant(condition, _) => usedReferences(condition, ctx)
       case TNeg(body, _)            => usedReferences(body, ctx)
       case t: TQuantifier           =>
-        // TODO: Triggers? Only TForall has those, though.
         // vars are new definitions of TArgTs, they do not contain references, so skip those.
+        // triggers should not contain any references that don't also appear in the body already, so skip too.
         usedReferences(t.body, ctx)
       case TParens(inner, _) => usedReferences(inner, ctx)
       case TFCall(parent, _, args, _) =>
@@ -94,7 +94,7 @@ object DafnyGen {
         if ctx.isDefinedAt(ref) then {
           // TupleType is not currently implemented in the frontend, so this cast is safe.
           val tp: SimpleType = ctx(ref).loreType.asInstanceOf[SimpleType]
-          // TODO: Probably need to add Invariant and Interaction type names to this check. Those are not implemented.
+          // TODO: Add Interaction and Invariant type names to this check. Those are not implemented yet.
           tp.name == "Signal"
         } else false
       })
@@ -288,7 +288,7 @@ object DafnyGen {
         // Default into generic *const* declarations for other types, as all TAbs are by default non-mutable.
         val typeAnnot: String = generate(node._type, ctx)
         val body: String      = generate(node.body, ctx)
-        s"const ${node.name}: $typeAnnot := $body;"
+        s"const ${node.name}: $typeAnnot := $body"
   }
 
   /** Generates Dafny code for the given LoRe TTuple.
@@ -415,6 +415,7 @@ object DafnyGen {
     */
   private def generateFromTInteraction(node: TInteraction, ctx: Map[String, NodeInfo]): String = {
     // TODO: This requires finding all relevant existing Invariants and adding them as requires and ensures conditions!
+    // TODO: Implement. Requires finding relevant existing Invariants and adding them as requires/ensures conditions!
     ""
   }
 
@@ -783,33 +784,33 @@ object DafnyGen {
     throw new Error("Term type not implemented")
   }
 
-  // TODO: Implement. These are _not_ Dafny's loop invariants.
   /** Generates Dafny code for the given LoRe TInvariant.
     *
     * @param node The LoRe TInvariant node.
     * @return The generated Dafny code.
     */
   private def generateFromTInvariant(node: TInvariant, ctx: Map[String, NodeInfo]): String = {
+    // To be implemented later, but out of scope for the current project.
     throw new Error("Term type not implemented")
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TForall.
     *
     * @param node The LoRe TForall node.
     * @return The generated Dafny code.
     */
   private def generateFromTForall(node: TForall, ctx: Map[String, NodeInfo]): String = {
+    // To be implemented later, but out of scope for the current project.
     throw new Error("Term type not implemented")
   }
 
-  // TODO: Implement
   /** Generates Dafny code for the given LoRe TExists.
     *
     * @param node The LoRe TExists node.
     * @return The generated Dafny code.
     */
   private def generateFromTExists(node: TExists, ctx: Map[String, NodeInfo]): String = {
+    // To be implemented later, but out of scope for the current project.
     throw new Error("Term type not implemented")
   }
 
