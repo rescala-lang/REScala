@@ -158,7 +158,7 @@ object cli {
             peerPortVal + 1
           ))))
 
-          Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
+//          Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
           Timer().schedule(() => {
             node.connInf.sendHeartbeat()
             node.connInf.checkLiveness()

@@ -21,7 +21,7 @@ trait Aead {
 }
 
 object DeltaDissemination {
-  val executeImmediately = new ExecutionContext {
+  val executeImmediately: ExecutionContext = new ExecutionContext {
     override def execute(runnable: Runnable): Unit     = runnable.run()
     override def reportFailure(cause: Throwable): Unit = throw cause
   }
@@ -159,7 +159,7 @@ class DeltaDissemination[State](
   val lock: AnyRef                                               = new {}
   private var pastPayloads: Queue[CachedMessage[Payload[State]]] = Queue.empty
 
-  val keepPastPayloads = 108
+  val keepPastPayloads: Int = 108
 
   def allPayloads: List[CachedMessage[Payload[State]]] = lock.synchronized(pastPayloads.toList)
   private def rememberPayload(payload: CachedMessage[Payload[State]]): Unit = lock.synchronized {

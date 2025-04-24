@@ -8,6 +8,7 @@ import rdts.base.LocalUid.replicaId
 import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.datatypes.LastWriterWins
 import rdts.datatypes.experiments.protocols.{MultiPaxos, MultipaxosPhase, Participants}
+import rdts.time.Time
 import replication.DeltaDissemination
 
 import java.util.concurrent.{ExecutorService, Executors}
@@ -59,8 +60,10 @@ class KeyValueReplica(
   // ============== CLUSTER ==============
 
   val cluster: Cluster = new Cluster(currentStateLock, localUid, sendingActor)
+  val client: Client = new Client(currentStateLock, localUid, sendingActor)
+  val connInf: ConnInf = new ConnInf(currentStateLock, localUid, sendingActor)
 
-  cluster.maybeLeaderElection()
+  cluster.maybeLeaderElection(votingReplicas)
 
   class Cluster(
       override val lock: AnyRef,
@@ -91,7 +94,7 @@ class KeyValueReplica(
         assert(changed == state)
         // else log(s"upkept: ${pprint(upkept)}")
         val newState = publish(upkept)
-        maybeAnswerClient(old)
+        maybeAnswerClient(old.rounds.counter)
         // try to propose a new value in case voting is decided
         maybeProposeNewValue(client.state)
       }
@@ -118,8 +121,8 @@ class KeyValueReplica(
     }
 
     /** propose myself as leader if I have the lowest id */
-    def maybeLeaderElection(): Unit = {
-      votingReplicas.minOption match
+    def maybeLeaderElection(peers: Set[Uid]): Unit = {
+      peers.minOption match
         case Some(id) if id == uid =>
           transform(_.startLeaderElection): Unit
         case _ => ()
@@ -137,11 +140,11 @@ class KeyValueReplica(
             log("I am the leader but request queue is empty.")
     }
 
-    def maybeAnswerClient(oldState: ClusterState): Unit = {
+    private def maybeAnswerClient(previousRound: Time): Unit = {
       log(s"log: ${state.log}")
       // println(s"${pprint.tokenize(newState).mkString("")}")
 
-      for req @ Req(op, _, _) <- state.readDecisionsSince(oldState.rounds.counter) do {
+      for req @ Req(op, _, _) <- state.readDecisionsSince(previousRound) do {
         val decision: String = op match {
           case KVOperation.Read(key) =>
             kvCache.synchronized {
@@ -164,7 +167,6 @@ class KeyValueReplica(
 
   // ============== CLIENT ==============
 
-  val client: Client = new Client(currentStateLock, localUid, sendingActor)
 
   class Client(
       override val lock: AnyRef,
@@ -209,7 +211,6 @@ class KeyValueReplica(
 
   // ============== CONN-INF ==============
 
-  val connInf: ConnInf = new ConnInf(currentStateLock, localUid, sendingActor)
 
   class ConnInf(
       override val lock: AnyRef,
@@ -218,6 +219,8 @@ class KeyValueReplica(
       var state: ConnInformation = Map.empty,
       val timeoutThreshold: Long = 5000
   ) extends State[ConnInformation] {
+
+    var alivePeers: Set[Uid] = Set.empty
 
     override val dataManager: DeltaDissemination[ConnInformation] = DeltaDissemination(
       localUid,
@@ -252,10 +255,20 @@ class KeyValueReplica(
     }
 
     def checkLiveness(): Unit = {
-      state
-        .map((uid, llw) => (uid, llw.value))
-        .filter((_, time) => time < (System.currentTimeMillis() - timeoutThreshold))
-        .foreach((uid, _) => println(s"$uid timed out"))
+      val newAlivePeers = state
+        .filter((_, llw) => llw.value >= (System.currentTimeMillis() - timeoutThreshold))
+        .map((uid, _) => uid.uid)
+        .toSet
+
+      (alivePeers -- newAlivePeers).foreach(id => println(s"Peer $id timed out"))
+      alivePeers = newAlivePeers
+
+      println(s"Alive peers: $alivePeers")
+
+      if !alivePeers.exists(cluster.state.leader.contains) then {
+        println("Detected leader failure, triggering new election")
+        cluster.maybeLeaderElection(alivePeers)
+      }
     }
 
   }
