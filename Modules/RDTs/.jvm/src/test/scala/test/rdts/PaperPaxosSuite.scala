@@ -1,6 +1,7 @@
 package test.rdts
 
 import rdts.datatypes.experiments.protocols.Paxos
+import rdts.datatypes.experiments.protocols.paper.Paxos as PaperPaxos
 class PaperPaxosSuite extends munit.ScalaCheckSuite:
 
   //  override def scalaCheckInitialSeed = "ZcBq5Oa3t8-hWG0Snkx22h6nivxFRCvp27NO4tFKzbN="
@@ -12,6 +13,14 @@ class PaperPaxosSuite extends munit.ScalaCheckSuite:
       .withMaxSize(200)
 
   property("Paper Paxos")(ConsensusPropertySpec[Int, Paxos](
+    logging = false,
+    minDevices = 3,
+    maxDevices = 7,
+    writeFreq = 20,
+    mergeFreq = 70
+  ).property())
+
+  property("Paper Paxos new")(ConsensusPropertySpec[Int, PaperPaxos](
     logging = false,
     minDevices = 3,
     maxDevices = 7,
