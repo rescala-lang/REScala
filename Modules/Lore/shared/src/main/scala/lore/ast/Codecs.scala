@@ -3,6 +3,7 @@ package lore.ast
 import cats.data.NonEmptyList
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
+import dotty.tools.dotc.util.SourceFile
 
 import java.nio.file.Path
 import scala.util.{Failure, Success, Try}
@@ -33,6 +34,13 @@ object Codecs {
       .withCirceLikeObjectEncoding(true)
   )
   given typeNeListC: JsonValueCodec[NonEmptyList[Type]] = nelCodec[Type]
+
+  // dummy codec to prevent compilation error. We do not want to serialize source files
+  given sourceFileC: JsonValueCodec[SourceFile] = new JsonValueCodec[SourceFile]:
+    override def decodeValue(in: JsonReader, default: SourceFile): SourceFile = default
+    override def encodeValue(x: SourceFile, out: JsonWriter): Unit            = ()
+    override def nullValue: SourceFile                                        = null
+
   given targTListC: JsonValueCodec[List[TArgT]] = JsonCodecMaker.make(
     CodecMakerConfig
       .withAllowRecursiveTypes(true)
