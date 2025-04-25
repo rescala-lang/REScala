@@ -175,6 +175,7 @@ lazy val lore = crossProject(JSPlatform, JVMPlatform).crossType(CrossType.Full).
   .settings(
     scala3defaults,
     Settings.javaOutputVersion(17),
+    libraryDependencies += "org.scala-lang" %% "scala3-compiler" % scalaVersion.value % "provided",
     Dependencies.jsoniterScala,
     Dependencies.decline,
     Dependencies.catsParse,
