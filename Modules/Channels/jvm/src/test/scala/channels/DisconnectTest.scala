@@ -7,7 +7,7 @@ import scala.util.{Failure, Success}
 
 class DisconnectTest extends munit.FunSuite {
 
-  lazy val isMacOS: Boolean = sys.props.get("os.name").exists(_.toLowerCase.contains("mac"))
+  lazy val isMacOS: Boolean         = sys.props.get("os.name").exists(_.toLowerCase.contains("mac"))
   override def munitIgnore: Boolean = isMacOS
 
   test("disconnect nioTCP") {

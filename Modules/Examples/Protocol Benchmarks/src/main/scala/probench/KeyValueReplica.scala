@@ -60,7 +60,7 @@ class KeyValueReplica(
   // ============== CLUSTER ==============
 
   val cluster: Cluster = new Cluster(currentStateLock, localUid, sendingActor)
-  val client: Client = new Client(currentStateLock, localUid, sendingActor)
+  val client: Client   = new Client(currentStateLock, localUid, sendingActor)
   val connInf: ConnInf = new ConnInf(currentStateLock, localUid, sendingActor)
 
   cluster.maybeLeaderElection(votingReplicas)
@@ -167,7 +167,6 @@ class KeyValueReplica(
 
   // ============== CLIENT ==============
 
-
   class Client(
       override val lock: AnyRef,
       localUid: LocalUid,
@@ -210,7 +209,6 @@ class KeyValueReplica(
   }
 
   // ============== CONN-INF ==============
-
 
   class ConnInf(
       override val lock: AnyRef,

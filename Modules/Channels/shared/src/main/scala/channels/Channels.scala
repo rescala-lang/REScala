@@ -29,7 +29,7 @@ case class ConnectionInfo(hostname: Option[String], port: Option[Int])
 /** Connections are bidirectional. Receiving is handled by the incoming handler of the latent connection. */
 trait Connection[T] {
   // TODO: currently not consistently implemented
-  def info: ConnectionInfo = ConnectionInfo(None, None)
+  def info: ConnectionInfo                    = ConnectionInfo(None, None)
   def authenticatedPeerReplicaId: Option[Uid] = None
   def send(message: T): Async[Any, Unit]
   def close(): Unit

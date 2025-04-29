@@ -36,10 +36,10 @@ object Epoch {
 
   given latticeInstance[E: Lattice as E]: Lattice[Epoch[E]] = {
     given Lattice[Time] = Lattice.assertEquals
-    val prodEpoche = Lattice.productLattice[Epoch[E]]
+    val prodEpoche      = Lattice.productLattice[Epoch[E]]
     Lattice.Derivation.SumLattice[Epoch[E]](new OrdinalLattices[Epoch[E]] {
       override def compare(left: Epoch[E], right: Epoch[E]): Int = java.lang.Long.compare(left.counter, right.counter)
-      override def lattice(elem: Epoch[E]): Lattice[Epoch[E]]         = prodEpoche
+      override def lattice(elem: Epoch[E]): Lattice[Epoch[E]]    = prodEpoche
     })
   }
 }

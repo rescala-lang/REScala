@@ -22,7 +22,6 @@ class PaperPaxosTest2 extends munit.FunSuite {
 
   var emptyPaxosObject: Paxos[Int] = Paxos()
 
-
   test("Paxos for 3 participants without errors") {
     var a: Paxos[Int] = emptyPaxosObject
 

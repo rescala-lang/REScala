@@ -159,10 +159,14 @@ object cli {
           ))))
 
 //          Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
-          Timer().schedule(() => {
-            node.connInf.sendHeartbeat()
-            node.connInf.checkLiveness()
-          }, 1000, 1000)
+          Timer().schedule(
+            () => {
+              node.connInf.sendHeartbeat()
+              node.connInf.checkLiveness()
+            },
+            1000,
+            1000
+          )
 
           cluster.value.foreach { (host, port) =>
             println(s"Connecting to $host:${port + 1}")

@@ -8,7 +8,7 @@ case class PublicIdentity(id: String) {
 
   def publicKey: PublicKey = Ed25519Util.base64PublicKeyBytesToPublicKey(id)
 
-  //def toUid: Uid = Uid(id)
+  // def toUid: Uid = Uid(id)
 }
 
 object PublicIdentity {
@@ -21,7 +21,7 @@ object PublicIdentity {
     require(pubKeyBytes.length == 32)
     PublicIdentity(base64Encoder.encodeToString(pubKeyBytes))
 
-  //def fromUid(uid: Uid): PublicIdentity = PublicIdentity(uid.delegate)
+  // def fromUid(uid: Uid): PublicIdentity = PublicIdentity(uid.delegate)
 
-  //extension (uid: Uid) inline def toPublicIdentity: PublicIdentity = PublicIdentity.fromUid(uid)
+  // extension (uid: Uid) inline def toPublicIdentity: PublicIdentity = PublicIdentity.fromUid(uid)
 }

@@ -1,6 +1,5 @@
 package channels.tls
 
-
 import java.security.cert.{CertificateException, X509Certificate}
 import javax.net.ssl.X509TrustManager
 

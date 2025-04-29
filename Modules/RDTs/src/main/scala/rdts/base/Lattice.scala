@@ -147,11 +147,12 @@ object Lattice {
     */
   inline given tupleLattice[T <: Tuple](using pm: Mirror.ProductOf[T]): Lattice[T] = derived
 
-  inline def derived[T <: Product : Mirror.ProductOf]: Lattice[T] = productLattice
+  inline def derived[T <: Product: Mirror.ProductOf]: Lattice[T] = productLattice
 
   /** Sum Lattice merges considers later defined (those with larger ordinals) constructors as larger.
-   * Notably, this implies `None < Some` for Option and `Left < Right` for Either.
-   * For an `enum E { case A, B, C }` it will be `A < B < C` */
+    * Notably, this implies `None < Some` for Option and `Left < Right` for Either.
+    * For an `enum E { case A, B, C }` it will be `A < B < C`
+    */
   inline def sumLattice[T](using sm: Mirror.SumOf[T]): Lattice[T] =
     val lattices: Tuple = summonAll[Tuple.Map[sm.MirroredElemTypes, Lattice]]
     new Derivation.SumLattice[T](Derivation.MirrorOrdinal(sm, lattices))
@@ -167,14 +168,12 @@ object Lattice {
     def lattice(elem: T): Lattice[T]
   }
 
-
   object Derivation {
 
     case class MirrorOrdinal[T](sm: Mirror.SumOf[T], lattices: Tuple) extends OrdinalLattices[T] {
-      def compare(left: T, right: T): Int = Integer.compare(sm.ordinal(left), sm.ordinal(right))
+      def compare(left: T, right: T): Int       = Integer.compare(sm.ordinal(left), sm.ordinal(right))
       override def lattice(elem: T): Lattice[T] = lattices.productElement(sm.ordinal(elem)).asInstanceOf[Lattice[T]]
     }
-
 
     class SumLattice[T](ol: OrdinalLattices[T]) extends Lattice[T] {
 

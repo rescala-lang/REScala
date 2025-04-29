@@ -227,8 +227,8 @@ class PermissionTreePane(
           Map("bucketList" -> PermissionTree(
             PARTIAL,
             Map(
-              "data"     -> PermissionTree(PARTIAL, entries),
-              "observed" -> PermissionTree.allow,
+              "data"      -> PermissionTree(PARTIAL, entries),
+              "observed"  -> PermissionTree.allow,
               "deletions" -> PermissionTree.allow
             )
           ))

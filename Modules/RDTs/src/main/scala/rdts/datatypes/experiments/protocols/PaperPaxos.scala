@@ -13,49 +13,48 @@ import util.Agreement.*
 // Paxos PRDT
 type LeaderElection = Voting[Uid]
 case class PaxosRound[A](
-                          leaderElection: LeaderElection =
-                          Voting(Set.empty[Vote[Uid]]),
-                          proposals: Voting[A] = Voting[A](Set.empty[Vote[A]])
-                        )
+    leaderElection: LeaderElection =
+      Voting(Set.empty[Vote[Uid]]),
+    proposals: Voting[A] = Voting[A](Set.empty[Vote[A]])
+)
 case class BallotNum(uid: Uid, counter: Long)
 
 case class Paxos[A](
-                     rounds: Map[BallotNum, PaxosRound[A]] =
-                     Map.empty[BallotNum, PaxosRound[A]]
-                   ) {
+    rounds: Map[BallotNum, PaxosRound[A]] =
+      Map.empty[BallotNum, PaxosRound[A]]
+) {
   // voting
   def voteLeader(leader: Uid)(using
-                              LocalUid,
-                              Participants
+      LocalUid,
+      Participants
   ): PaxosRound[A] =
     PaxosRound(leaderElection =
       currentRound.getOrElse(PaxosRound()).leaderElection.voteFor(leader)
     )
   def voteValue(value: A)(using
-                          LocalUid,
-                          Participants
+      LocalUid,
+      Participants
   ): PaxosRound[A] =
     PaxosRound(proposals =
       currentRound.getOrElse(PaxosRound()).proposals.voteFor(value)
     )
 
-
   // boolean threshold queries
   def currentRoundHasCandidate: Boolean = currentRound match
     case Some(PaxosRound(leaderElection, _))
-      if leaderElection.votes.nonEmpty => true
+        if leaderElection.votes.nonEmpty => true
     case _ => false
   def isCurrentLeader(using
-                      Participants,
-                      LocalUid
-                     ): Boolean = currentRound match
+      Participants,
+      LocalUid
+  ): Boolean = currentRound match
     case Some(PaxosRound(leaderElection, _))
-      if leaderElection.decision == Decided(replicaId) =>
+        if leaderElection.decision == Decided(replicaId) =>
       true
     case _ => false
-  def currentRoundHasProposal: Boolean  = currentRound match
+  def currentRoundHasProposal: Boolean = currentRound match
     case Some(PaxosRound(_, proposals))
-      if proposals.votes.nonEmpty => true
+        if proposals.votes.nonEmpty => true
     case _ => false
 
   // protocol actions:
@@ -76,7 +75,7 @@ case class Paxos[A](
             currentBallotNum -> voteLeader(leaderCandidate),
             promisedBallot   -> acceptedVal
           )) // previously accepted value
-        case None                              =>
+        case None =>
           // no value voted for, just vote for candidate
           Paxos(Map(
             currentBallotNum -> voteLeader(leaderCandidate)
@@ -108,31 +107,31 @@ case class Paxos[A](
   def dec(using Participants): Agreement[A] =
     rounds.collectFirst {
       case (b, PaxosRound(_, proposals))
-        if proposals.decision != Undecided =>
+          if proposals.decision != Undecided =>
         proposals.decision
     }.getOrElse(Undecided)
 
   // helper functions
-  def nextBallotNum(using LocalUid): BallotNum          =
+  def nextBallotNum(using LocalUid): BallotNum =
     val maxCounter: Long = rounds
       .map((b, _) => b.counter)
       .maxOption
       .getOrElse(-1)
     BallotNum(replicaId, maxCounter + 1)
-  def currentRound: Option[PaxosRound[A]]               =
+  def currentRound: Option[PaxosRound[A]] =
     rounds.maxOption.map(_._2)
-  def currentBallotNum: BallotNum                       =
+  def currentBallotNum: BallotNum =
     rounds.maxOption.map(_._1).get
-  def leaderCandidate: Uid                              =
+  def leaderCandidate: Uid =
     currentLeaderElection.map(_.votes.head.value).get
-  def currentLeaderElection: Option[LeaderElection]     =
+  def currentLeaderElection: Option[LeaderElection] =
     currentRound match
       case Some(PaxosRound(leaderElection, _)) =>
         Some(leaderElection)
-      case None                                => None
+      case None => None
   def lastValueVote: Option[(BallotNum, PaxosRound[A])] =
     rounds.filter(_._2.proposals.votes.nonEmpty).maxOption
-  def newestReceivedVal(using LocalUid)                 =
+  def newestReceivedVal(using LocalUid) =
     lastValueVote.map(_._2.proposals.votes.head.value)
   def myValue(using LocalUid): A = rounds(BallotNum(
     replicaId,
@@ -151,9 +150,9 @@ object Paxos {
       else Ordering[Uid].compare(x.uid, y.uid)
   given [A]: Ordering[(BallotNum, PaxosRound[A])] with
     override def compare(
-                          x: (BallotNum, PaxosRound[A]),
-                          y: (BallotNum, PaxosRound[A])
-                        ): Int = (x, y) match
+        x: (BallotNum, PaxosRound[A]),
+        y: (BallotNum, PaxosRound[A])
+    ): Int = (x, y) match
       case ((x, _), (y, _)) =>
         Ordering[BallotNum].compare(x, y)
 
@@ -170,9 +169,9 @@ object Paxos {
     extension [A](c: Paxos[A])
       override def decision(using protocols.Participants): Option[A] =
         c.dec match
-          case Agreement.Invalid => None
+          case Agreement.Invalid        => None
           case Agreement.Decided(value) => Some(value)
-          case Agreement.Undecided => None
+          case Agreement.Undecided      => None
     extension [A](c: Paxos[A])
       override def upkeep()(using LocalUid, protocols.Participants): Paxos[A] =
         if c.currentRoundHasProposal then
@@ -197,7 +196,7 @@ case class Voting[A](votes: Set[Vote[A]]) {
     }
 
   // decision function
-  def hasDuplicateVotes: Boolean          =
+  def hasDuplicateVotes: Boolean =
     votes.groupBy(
       _.voter
     ).values.filter(_.size > 1).nonEmpty
@@ -205,7 +204,7 @@ case class Voting[A](votes: Set[Vote[A]]) {
     votes.groupBy(_.value).map((value, vts) =>
       (value, vts.size)
     ).maxByOption(_._2)
-  def majority(using Participants)        =
+  def majority(using Participants) =
     participants.size / 2 + 1
 
   def decision(using Participants): Agreement[A] =
@@ -225,7 +224,7 @@ case class Voting[A](votes: Set[Vote[A]]) {
 
 object Voting {
   given [A]: Lattice[Voting[A]] = Lattice.derived
-  given [A]: Bottom[Voting[A]]  =
+  given [A]: Bottom[Voting[A]] =
     Bottom.provide(Voting(Set.empty[Vote[A]]))
 }
 
@@ -237,8 +236,8 @@ object util:
     case Undecided
 
   def updateIf[P: Bottom](condition: Boolean)(update: => P)
-  : P =
-    if (condition) then
+      : P =
+    if condition then
       update
     else
       Bottom[P].empty

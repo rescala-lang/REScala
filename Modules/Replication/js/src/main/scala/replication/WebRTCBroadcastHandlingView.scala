@@ -93,7 +93,7 @@ class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using Json
               case BroadcastCommunication.Hello(id) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(using())(Async.handler)
+                    conn.send(BroadcastCommunication.Request(selfId, id, sd).convert).run(using ())(Async.handler)
                   case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(id, handling)
@@ -103,7 +103,7 @@ class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using Json
               case BroadcastCommunication.Request(from, `selfId`, sessionDescription) =>
                 val handling = WebRTCHandling(Some {
                   case Success(sd) =>
-                    conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(using())(Async.handler)
+                    conn.send(BroadcastCommunication.Response(selfId, from, sd).convert).run(using ())(Async.handler)
                   case Failure(ex) => Async.handler.fail(ex)
                 })
                 autoconnections = autoconnections.updated(from, handling)

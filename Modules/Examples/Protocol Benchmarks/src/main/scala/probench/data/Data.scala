@@ -13,8 +13,8 @@ enum KVOperation[Key, Value] {
 }
 
 type ConnInformation = Map[LocalUid, LastWriterWins[Long]]
-type ClusterState = MultiPaxos[Req[KVOperation[String, String]]]
-type ClientState  = RequestResponseQueue[KVOperation[String, String], String]
+type ClusterState    = MultiPaxos[Req[KVOperation[String, String]]]
+type ClientState     = RequestResponseQueue[KVOperation[String, String], String]
 
 case class KVState(
     requests: RequestResponseQueue[KVOperation[String, String], String] = RequestResponseQueue.empty,
