@@ -126,7 +126,7 @@ object DafnyGen {
         else if _type.asInstanceOf[SimpleType].name == "Signal" then "derivedDefs"
         else if _type.asInstanceOf[SimpleType].name == "Interaction" then "interactionDefs"
         else "otherDefs"
-      case _ => "otherTerms"
+      case _ => "statements"
     }
 
     // Record compilation context info of all definitions (name, lore term, lore + dafny type) before generation
@@ -143,7 +143,16 @@ object DafnyGen {
     val dafnyCode: Map[String, List[String]] = termGroups.map((termType, termList) => {
       val generated: List[String] = termList.map(term => generate(term, compilationContext))
 
-      (termType, generated)
+      if termType == "statements" then {
+        // Statements end with a curly brace or a semicolon: https://dafny.org/dafny/DafnyRef/DafnyRef#sec-statements
+        // Therefore, if this statement doesn't end with a curly brace already, it has to end with a semicolon.
+        // This semicolon isn't already added in generation as it is not appropriate in all situations.
+        // The curly brace however would always already have been added as part of always-required syntax.
+        (termType, generated.map(t => if t.endsWith("}") then t else s"$t;"))
+      } else {
+        // All other term types are taken as generated
+        (termType, generated)
+      }
     })
 
     // Sources have to be split into declaration and definition, since they're modelled as Dafny class fields.
@@ -191,8 +200,8 @@ object DafnyGen {
        |  // Main object reference
        |  var LoReFields := new LoReFields();
        |
-       |  // Function calls, source value updates, etc.
-       |  ${dafnyCode.getOrElse("otherTerms", List()).mkString("\n  ")}
+       |  // Statements: Function calls, method calls, if-conditions etc.
+       |  ${dafnyCode.getOrElse("statements", List()).mkString("\n  ")}
        |}
        |""".stripMargin
   }
