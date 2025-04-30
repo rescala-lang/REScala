@@ -38,10 +38,17 @@ object LoReGen {
     tree match
       case ap: Apply[?] => // Function or method calls, e.g. "println(...)" or "foo.bar()"
         List(createLoreTermFromApply(ap))
-      case as: Assign[?] => // Assignments of previously-defined names, e.g. "foo = bar" (only for vars)
-        List(createLoreTermFromAssign(as))
+//      case as: Assign[?] => // Assignments of previously-defined names, e.g. "foo = bar" (only for vars)
+//        List(createLoreTermFromAssign(as))
       case bl: Block[?] => // Blocks of trees
-        bl.stats.flatMap(t => createLoreTermFromTree(t))
+        val blockTerms: List[Term] = bl.stats.flatMap(t => createLoreTermFromTree(t))
+
+        // All of the block's trees, apart from the very last (which is used as return value), are included
+        // in the "stats" property. We also want the last one however, so add it to the list manually.
+        // The exception to this is when the last tree is a definition, where expr is an Constant Literal of Unit.
+        bl.expr match
+          case Literal(Constant(_: Unit)) => blockTerms
+          case _                          => blockTerms :++ createLoreTermFromTree(bl.expr)
       case se: Select[?] => // Property access, e.g. "foo.bar"
         List(createLoreTermFromSelect(se))
       case vd: ValDef[?] => // Val definitions, i.e. "val foo: Bar = baz" where baz is any valid RHS
