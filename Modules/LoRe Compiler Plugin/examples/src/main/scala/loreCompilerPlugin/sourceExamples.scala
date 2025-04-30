@@ -1,9 +1,11 @@
 package loreCompilerPlugin
 
 import lore.dsl.*
+import loreCompilerPlugin.annotation.LoReProgram
 import reactives.default.Var as Source
 
 object sourceExamplesObject:
+  @LoReProgram
   def sourceExamplesFunction(): Unit = {
     // ========= Non-Source Values to use in below tests =========
     val integerLiteral: Int     = 1

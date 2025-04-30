@@ -1,18 +1,19 @@
 package loreCompilerPlugin
 
-import cats.parse.Caret
 import dotty.tools.dotc.{CompilationUnit, report}
-import dotty.tools.dotc.ast.Trees.{Apply, Block, Select, ValDef}
+import dotty.tools.dotc.ast.Trees.{Block, DefDef, Tree, Literal}
 import dotty.tools.dotc.ast.tpd
+import dotty.tools.dotc.core.Constants.Constant
 import dotty.tools.dotc.core.Contexts.Context
 import dotty.tools.dotc.core.Symbols.Symbol
 import dotty.tools.dotc.plugins.{PluginPhase, StandardPlugin}
 import dotty.tools.dotc.transform.{Inlining, Pickler}
 import dotty.tools.dotc.util.SourceFile
 import java.io.File // For getting URIs and the system-independent path separator
-import lore.ast.{SimpleType, SourcePos, TAbs, TDerived, TSource, Term, TupleType}
-import loreCompilerPlugin.codegen.LoReGen.{buildLoreRhsTerm, buildLoreTypeNode}
-import loreCompilerPlugin.codegen.DafnyGen
+import lore.ast.Term
+import loreCompilerPlugin.annotation.LoReProgram
+import loreCompilerPlugin.codegen.LoReGen.*
+import loreCompilerPlugin.codegen.DafnyGen.generate as generateDafnyCode
 import loreCompilerPlugin.lsp.DafnyLSPClient
 import loreCompilerPlugin.lsp.LSPDataTypes.{LSPNotification, NamedVerifiable, SymbolStatusNotification, VerificationStatus}
 import ujson.Obj
@@ -40,82 +41,42 @@ class LoRePhase extends PluginPhase {
 
   private var loreTerms: Map[(SourceFile, Symbol), List[Term]] = Map()
 
-  override def transformValDef(tree: tpd.ValDef)(using ctx: Context): tpd.Tree = {
-    var newLoreTerm: Option[Term] = None // Placeholder, value is defined in below individual cases to avoid code dupe
+  override def transformDefDef(tree: tpd.DefDef)(using ctx: Context): tpd.Tree = {
+    // Only process DefDefs marked as LoreProgram
+    val loreAnnotation = tree.symbol.annotations.find(annot => annot.symbol.name.toString == "LoReProgram")
 
-    tree match
-      case ValDef(name, tpt, rhs) =>
-        rhs match
-          case tpd.EmptyTree => () // Function parameter and Part 1 of object/package definitions, these are ignored
-          case Apply(Select(_, n), _) if n.toString.equals("<init>") => () // Part 2 of Object and package definitions
-          case _ => // Other definitions, these are the ones we care about
-            val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
-            // Several notes to make here regarding handling the RHS of reactives for future reference:
-            // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
-            //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
-            //   and the expressions being handled here use types that get inlined in REScala.
-            // * Because the RHS is wrapped in a call to the respective reactive type, within that unknown Apply layer,
-            //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
-            //   actual RHS tree we want is inside the second Apply parameter list (i.e. real RHS is 2 Apply layers deep).
-            // * As the Derived type uses curly brackets in definitions on top, it additionally wraps its RHS in a Block type.
-            // * The Source and Derived parameter lists always have length 1, those of Interactions always have length 2.
-            // * Typechecking for whether all of this is correct is already done by the Scala type-checker before this phase,
-            //   so we can assume everything we see here is of suitable types instead of doing any further checks.
-            loreTypeNode match
-              case SimpleType(typeName, typeArgs) =>
-                println(s"Detected $typeName definition with name \"$name\"")
-                rhs match
-                  case tpd.EmptyTree => () // Ignore func args (ArgT) outside of arrow functions for now
-                  case Apply(source @ Apply(_, List(properRhs)), _)
-                      if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
-                    newLoreTerm = Some(TAbs( // foo: Source[Bar] = Source(baz)
-                      name.toString, // foo
-                      loreTypeNode, // Source[Bar]
-                      TSource( // Source(baz)
-                        buildLoreRhsTerm(properRhs, 1),
-                        scalaSourcePos = Some(source.sourcePos)
-                      ),
-                      scalaSourcePos = Some(tree.sourcePos)
-                    ))
-                  case Apply(derived @ Apply(_, List(Block(_, properRhs))), _)
-                      if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
-                    newLoreTerm = Some(TAbs( // foo: Derived[Bar] = Derived { baz }
-                      name.toString, // foo
-                      loreTypeNode, // Derived[Bar]
-                      TDerived( // Derived { baz }
-                        buildLoreRhsTerm(properRhs, 1),
-                        scalaSourcePos = Some(derived.sourcePos)
-                      ),
-                      scalaSourcePos = Some(tree.sourcePos)
-                    ))
-                  case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
-                    newLoreTerm = Some(TAbs( // foo: Bar = baz
-                      name.toString, // foo (any valid Scala identifier)
-                      loreTypeNode, // Bar
-                      buildLoreRhsTerm(rhs, 1), // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
-                      scalaSourcePos = Some(tree.sourcePos)
-                    ))
-              case TupleType(_) => // TODO tuple types?
-                println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")
-                report.error("LoRe Tuple Types are not currently supported", tree.sourcePos)
+    if loreAnnotation.isDefined then {
+      val programContents: List[Tree[?]] =
+        tree.rhs match
+          case block: Block[?] =>
+            // All of the block's trees, apart from the very last (which is used as return value), are included
+            // in the "stats" property. We also want the last one however, so add it to the list manually.
+            // The exception to this is when the last tree is a definition, where expr is an Constant Literal of Unit.
+            block.expr match
+              case Literal(Constant(_: Unit)) => block.stats
+              case _                          => block.stats :+ block.expr
+          case _ => List()
 
-    // Add the newly generated LoRe term to the respective source file's term list (if one was generated)
-    newLoreTerm match
-      case None =>
-        tree // No term created, return the original tree to further compiler phases
-      case Some(loreTerm) =>
-        // Find term list for this source file and append new term to it
-        // Alternatively, make new term list for this file if it doesn't exist
-        val fileTermList: Option[List[Term]] = loreTerms.get((tree.source, ctx.owner))
-        fileTermList match
+      // Process each individual part of this LoRe program
+      for tree <- programContents do {
+        // Generate LoRe term for this tree
+        val loreTerm: List[Term] = createLoreTermFromTree(tree)
+
+        // Add LoRe term to the respective program's term list, or create a term list if it doesn't exist yet
+        val programTermList: Option[List[Term]] = loreTerms.get((tree.source, ctx.owner))
+        programTermList match
           case Some(list) =>
-            val newList: List[Term] = list :+ loreTerm
+            val newList: List[Term] = list :++ loreTerm // Append list with loreTerm list
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
           case None =>
             println(s"Adding new term list to Map for ${ctx.owner.toString} in ${tree.source.name}")
-            val newList: List[Term] = List(loreTerm)
+            val newList: List[Term] = loreTerm // loreTerm is already a list
             loreTerms = loreTerms.updated((tree.source, ctx.owner), newList)
-        tree // Return the original tree to further compiler phases
+      }
+    }
+
+    // Original Scala tree is returned for regular Scala compilation to proceed
+    tree
   }
 
   override def runOn(units: List[CompilationUnit])(using ctx: Context): List[CompilationUnit] = {
@@ -149,7 +110,7 @@ class LoRePhase extends PluginPhase {
       val filePath: String = File(termList._1._1.path).toURI.toString.replace(".scala", ".dfy")
 
       // Generate Dafny code from term list
-      val dafnyRes: String = DafnyGen.generate(termList._2, termList._1._2.name.toString)
+      val dafnyRes: String = generateDafnyCode(termList._2, termList._1._2.name.toString)
 
       counter += 1
       // todo: this is dummy code, normally output by the to-be-implemented dafny generator

@@ -14,14 +14,6 @@ import lore.ast.{Type as LoReType, *}
 
 object LoReGen {
 
-  def loreSourcePosFromScala(pos: SourcePosition): SourcePos = {
-    // TODO: Offset hardcoded to 0 because of uncertainty; see question in notes.
-    val startPos: Caret = Caret(pos.startLine, pos.startColumn, 0)
-    val endPos: Caret   = Caret(pos.endLine, pos.endColumn, 0)
-
-    SourcePos(startPos, endPos)
-  }
-
   /** Logs info about a RHS value. Not very robust, rather a (temporary?) solution to prevent large logging code duplication.
     *
     * @param indentLevel How many tabs should be placed before the text that will be logged
@@ -36,13 +28,126 @@ object LoReGen {
       println(s"${"\t".repeat(indentLevel)}The parameter is a $rhsType $rhsValue")
   }
 
-  /** Builds a LoRe Type node based on a scala type tree
+  /** Creates a LoRe Term from a Scala Tree.
     *
-    * @param typeTree  The scala type tree
+    * @param tree The Scala Tree.
+    * @return The LoRe Term.
+    */
+  def createLoreTermFromTree(tree: tpd.Tree)(using ctx: Context): List[Term] = {
+    // Returns a List instead of a singular term because of blocks
+    tree match
+      case ap: Apply[?] => // Function or method calls, e.g. "println(...)" or "foo.bar()"
+        List(createLoreTermFromApply(ap))
+      case as: Assign[?] => // Assignments of previously-defined names, e.g. "foo = bar" (only for vars)
+        List(createLoreTermFromAssign(as))
+      case bl: Block[?] => // Blocks of trees
+        bl.stats.flatMap(t => createLoreTermFromTree(t))
+      case se: Select[?] => // Property access, e.g. "foo.bar"
+        List(createLoreTermFromSelect(se))
+      case vd: ValDef[?] => // Val definitions, i.e. "val foo: Bar = baz" where baz is any valid RHS
+        List(createLoreTermFromValDef(vd))
+      // Implement other Tree types for the frontend here, such as If, etc.
+      case _ =>
+        report.error(s"This syntax is not supported in LoRe.", tree.sourcePos)
+        List(TVar("<error>")) // Make compiler happy
+  }
+
+  /** Creates a LoRe Term from a Scala ValDef Tree.
+    *
+    * @param tree The Scala ValDef Tree.
+    * @return The LoRe Term.
+    */
+  private def createLoreTermFromValDef(tree: tpd.ValDef)(using ctx: Context): Term = {
+    tree match
+      case ValDef(name, tpt, rhs) =>
+        val loreTypeNode = buildLoreTypeNode(tpt.tpe, tpt.sourcePos)
+        // Several notes to make here regarding handling the RHS of reactives for future reference:
+        // * There's an Apply around the whole RHS whose significance I'm not exactly sure of.
+        //   Maybe it's related to a call for Inlining or such, as this plugin runs before that phase
+        //   and the expressions being handled here use types that get inlined in REScala.
+        // * Because the RHS is wrapped in a call to the respective reactive type, within that unknown Apply layer,
+        //   there's one layer of an Apply call to the REScala type wrapping the RHS we want, and the
+        //   actual RHS tree we want is inside the second Apply parameter list (i.e. real RHS is 2 Apply layers deep).
+        // * As the Derived type uses curly brackets in definitions on top, it additionally wraps its RHS in a Block type.
+        // * The Source and Derived parameter lists always have length 1, those of Interactions always have length 2.
+        // * Typechecking for whether all of this is correct is already done by the Scala type-checker before this phase,
+        //   so we can assume everything we see here is of suitable types instead of doing any further checks.
+        loreTypeNode match
+          case SimpleType(typeName, typeArgs) =>
+            println(s"Detected $typeName definition with name \"$name\"")
+            rhs match
+              case Apply(source @ Apply(_, List(properRhs)), _)
+                  if typeName == "Var" => // E.g. "foo: Source[bar] = Source(baz)"
+                TAbs( // foo: Source[Bar] = Source(baz)
+                  name.toString, // foo
+                  loreTypeNode, // Source[Bar]
+                  TSource( // Source(baz)
+                    buildLoreRhsTerm(properRhs, 1),
+                    scalaSourcePos = Some(source.sourcePos)
+                  ),
+                  scalaSourcePos = Some(tree.sourcePos)
+                )
+              case Apply(derived @ Apply(_, List(Block(_, properRhs))), _)
+                  if typeName == "Signal" => // E.g. "foo: Derived[bar] = Derived { baz } "
+                TAbs( // foo: Derived[Bar] = Derived { baz }
+                  name.toString, // foo
+                  loreTypeNode, // Derived[Bar]
+                  TDerived( // Derived { baz }
+                    buildLoreRhsTerm(properRhs, 1),
+                    scalaSourcePos = Some(derived.sourcePos)
+                  ),
+                  scalaSourcePos = Some(tree.sourcePos)
+                )
+              case _ => // Interactions (UnboundInteraction, ...) and any non-reactive RHS (Int, String, Bool, ...)
+                TAbs( // foo: Bar = baz
+                  name.toString, // foo (any valid Scala identifier)
+                  loreTypeNode, // Bar
+                  buildLoreRhsTerm(rhs, 1), // baz (e.g. 0, 1 + 2, "test", true, 2 > 1, bar as a reference, etc)
+                  scalaSourcePos = Some(tree.sourcePos)
+                )
+          case TupleType(_) => // TODO tuple types?
+            println(s"Detected tuple type, these are currently unsupported. Tree:\n$tree")
+            report.error("LoRe Tuple Types are not currently supported", tree.sourcePos)
+            TVar("<error>") // Make compiler happy
+  }
+
+  /** Creates a LoRe Term from a Scala Apply Tree.
+    *
+    * @param tree The Scala Apply Tree.
+    * @return The LoRe Term.
+    */
+  private def createLoreTermFromApply(tree: tpd.Apply)(using ctx: Context): Term = {
+    // Apply statements are covered as part of RHS term building for ValDefs
+    buildLoreRhsTerm(tree)
+  }
+
+  /** Creates a LoRe Term from a Scala Assign Tree.
+    *
+    * @param tree The Scala Assign Tree.
+    * @return The LoRe Term.
+    */
+  private def createLoreTermFromAssign(tree: tpd.Assign)(using ctx: Context): Term = {
+    // TODO?
+    TVar("<not implemented>")
+  }
+
+  /** Creates a LoRe Term from a Scala Select Tree.
+    *
+    * @param tree The Scala Select Tree.
+    * @return The LoRe Term.
+    */
+  private def createLoreTermFromSelect(tree: tpd.Select)(using ctx: Context): Term = {
+    // Select statements are covered as part of RHS term building for ValDefs
+    buildLoreRhsTerm(tree)
+  }
+
+  /** Builds a LoRe Type node based on a Scala type tree
+    *
+    * @param typeTree  The Scala type tree
     * @param sourcePos A SourcePosition for the type tree
     * @return The LoRe Type node
     */
-  def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
+  private def buildLoreTypeNode(typeTree: ScalaType, sourcePos: SourcePosition)(using ctx: Context): LoReType =
     // May need to also support LoRe TupleTypes at one point in the future
     typeTree match
       case TypeRef(_, _) => // Non-parameterized types (e.g. Int, String)
@@ -67,7 +172,7 @@ object LoReGen {
     * @param operandSide Which side to refer to in logs if expressing binary expressions (none by default)
     * @return The corresponding LoRe AST Tree node of the RHS
     */
-  def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using
+  private def buildLoreRhsTerm(tree: tpd.LazyTree, indentLevel: Integer = 0, operandSide: String = "")(using
       Context
   ): Term = {
     tree match

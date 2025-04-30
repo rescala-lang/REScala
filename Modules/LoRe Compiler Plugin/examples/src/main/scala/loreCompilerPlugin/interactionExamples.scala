@@ -1,11 +1,13 @@
 package loreCompilerPlugin
 
 import lore.dsl.*
+import loreCompilerPlugin.annotation.LoReProgram
 import reactives.default.{Signal as Derived, Var as Source}
 
 import scala.collection.immutable.Map
 
 object interactionExamplesObject:
+  @LoReProgram
   def interactionExamplesFunction(): Unit =
     // ========= Misc tests =========
     val arrowFun = (x: Int, y: String) => x * 2
