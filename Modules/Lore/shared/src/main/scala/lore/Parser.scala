@@ -331,7 +331,7 @@ object Parser {
     withSourcePos(
       P.defer((bindingLeftSide <* ws ~ P.char('=') ~ wsOrNl) ~ term)
     )
-      .map { case ((TArgT(name, _type, _), term), s) =>
+      .map { case ((TArgT(name, _type, _, _), term), s) =>
         TAbs(name = name, _type = _type, body = term, sourcePos = Some(s))
       }
 

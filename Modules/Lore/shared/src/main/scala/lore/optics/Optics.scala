@@ -27,19 +27,19 @@ import monocle.{Fold, Lens, Traversal}
 //   }
 
 val sourcePosLens = Lens[Term, Option[SourcePos]](_.sourcePos)(s => {
-  case t @ TViperImport(path, sourcePos)      => t.copy(sourcePos = s)
-  case t @ TArgT(name, _type, sourcePos)      => t.copy(sourcePos = s)
-  case t @ TVar(name, sourcePos)              => t.copy(sourcePos = s)
-  case t @ TAbs(name, _type, body, sourcePos) => t.copy(sourcePos = s)
-  case t @ TTuple(factors, sourcePos)         => t.copy(sourcePos = s)
-  case t @ TIf(cond, _then, _else, sourcePos) => t.copy(sourcePos = s)
-  case t @ TSeq(body, sourcePos)              => t.copy(sourcePos = s)
-  case t @ TArrow(left, right, sourcePos)     => t.copy(sourcePos = s)
-  case t @ TTypeAl(name, _type, sourcePos)    => t.copy(sourcePos = s)
-  case t @ TAssert(body, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TAssume(body, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TSource(body, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TDerived(body, sourcePos)          => t.copy(sourcePos = s)
+  case t @ TViperImport(path, sourcePos, _)      => t.copy(sourcePos = s)
+  case t @ TArgT(name, _type, sourcePos, _)      => t.copy(sourcePos = s)
+  case t @ TVar(name, sourcePos, _)              => t.copy(sourcePos = s)
+  case t @ TAbs(name, _type, body, sourcePos, _) => t.copy(sourcePos = s)
+  case t @ TTuple(factors, sourcePos, _)         => t.copy(sourcePos = s)
+  case t @ TIf(cond, _then, _else, sourcePos, _) => t.copy(sourcePos = s)
+  case t @ TSeq(body, sourcePos, _)              => t.copy(sourcePos = s)
+  case t @ TArrow(left, right, sourcePos, _)     => t.copy(sourcePos = s)
+  case t @ TTypeAl(name, _type, sourcePos, _)    => t.copy(sourcePos = s)
+  case t @ TAssert(body, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TAssume(body, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TSource(body, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TDerived(body, sourcePos, _)          => t.copy(sourcePos = s)
   case t @ TInteraction(
         reactiveType,
         argumentType,
@@ -47,36 +47,37 @@ val sourcePosLens = Lens[Term, Option[SourcePos]](_.sourcePos)(s => {
         requires,
         ensures,
         executes,
-        sourcePos
+        sourcePos,
+        _
       ) =>
     t.copy(sourcePos = s)
-  case t @ TInvariant(condition, sourcePos)         => t.copy(sourcePos = s)
-  case t @ TNum(value, sourcePos)                   => t.copy(sourcePos = s)
-  case t @ TDiv(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TMul(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TAdd(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TSub(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TTrue(sourcePos)                         => t.copy(sourcePos = s)
-  case t @ TFalse(sourcePos)                        => t.copy(sourcePos = s)
-  case t @ TNeg(body, sourcePos)                    => t.copy(sourcePos = s)
-  case t @ TLt(left, right, sourcePos)              => t.copy(sourcePos = s)
-  case t @ TGt(left, right, sourcePos)              => t.copy(sourcePos = s)
-  case t @ TLeq(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TGeq(left, right, sourcePos)             => t.copy(sourcePos = s)
-  case t @ TEq(left, right, sourcePos)              => t.copy(sourcePos = s)
-  case t @ TIneq(left, right, sourcePos)            => t.copy(sourcePos = s)
-  case t @ TDisj(left, right, sourcePos)            => t.copy(sourcePos = s)
-  case t @ TConj(left, right, sourcePos)            => t.copy(sourcePos = s)
-  case t @ TImpl(left, right, sourcePos)            => t.copy(sourcePos = s)
-  case t @ TBImpl(left, right, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TInSet(left, right, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TForall(vars, triggers, body, sourcePos) => t.copy(sourcePos = s)
-  case t @ TExists(vars, body, sourcePos)           => t.copy(sourcePos = s)
-  case t @ TParens(inner, sourcePos)                => t.copy(sourcePos = s)
-  case t @ TString(value, sourcePos)                => t.copy(sourcePos = s)
-  case t @ TFCall(parent, field, args, sourcePos)   => t.copy(sourcePos = s)
-  case t @ TFCurly(parent, field, body, sourcePos)  => t.copy(sourcePos = s)
-  case t @ TFunC(name, args, sourcePos)             => t.copy(sourcePos = s)
+  case t @ TInvariant(condition, sourcePos, _)         => t.copy(sourcePos = s)
+  case t @ TNum(value, sourcePos, _)                   => t.copy(sourcePos = s)
+  case t @ TDiv(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TMul(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TAdd(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TSub(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TTrue(sourcePos, _)                         => t.copy(sourcePos = s)
+  case t @ TFalse(sourcePos, _)                        => t.copy(sourcePos = s)
+  case t @ TNeg(body, sourcePos, _)                    => t.copy(sourcePos = s)
+  case t @ TLt(left, right, sourcePos, _)              => t.copy(sourcePos = s)
+  case t @ TGt(left, right, sourcePos, _)              => t.copy(sourcePos = s)
+  case t @ TLeq(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TGeq(left, right, sourcePos, _)             => t.copy(sourcePos = s)
+  case t @ TEq(left, right, sourcePos, _)              => t.copy(sourcePos = s)
+  case t @ TIneq(left, right, sourcePos, _)            => t.copy(sourcePos = s)
+  case t @ TDisj(left, right, sourcePos, _)            => t.copy(sourcePos = s)
+  case t @ TConj(left, right, sourcePos, _)            => t.copy(sourcePos = s)
+  case t @ TImpl(left, right, sourcePos, _)            => t.copy(sourcePos = s)
+  case t @ TBImpl(left, right, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TInSet(left, right, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TForall(vars, triggers, body, sourcePos, _) => t.copy(sourcePos = s)
+  case t @ TExists(vars, body, sourcePos, _)           => t.copy(sourcePos = s)
+  case t @ TParens(inner, sourcePos, _)                => t.copy(sourcePos = s)
+  case t @ TString(value, sourcePos, _)                => t.copy(sourcePos = s)
+  case t @ TFCall(parent, field, args, sourcePos, _)   => t.copy(sourcePos = s)
+  case t @ TFCurly(parent, field, body, sourcePos, _)  => t.copy(sourcePos = s)
+  case t @ TFunC(name, args, sourcePos, _)             => t.copy(sourcePos = s)
 })
 
 trait HasChildren[A] {
@@ -85,21 +86,21 @@ trait HasChildren[A] {
 given HasChildren[Term] with {
   extension (t: Term) {
     def children: List[Term] = t match {
-      case TViperImport(path, sourcePos)      => List.empty
-      case TArgT(name, _type, sourcePos)      => List.empty
-      case TVar(name, sourcePos)              => List.empty
-      case TAbs(name, _type, body, sourcePos) => List(body)
-      case TTuple(factors, sourcePos)         => factors.toList
-      case TIf(cond, _then, _else, sourcePos) =>
+      case TViperImport(path, sourcePos, _)      => List.empty
+      case TArgT(name, _type, sourcePos, _)      => List.empty
+      case TVar(name, sourcePos, _)              => List.empty
+      case TAbs(name, _type, body, sourcePos, _) => List(body)
+      case TTuple(factors, sourcePos, _)         => factors.toList
+      case TIf(cond, _then, _else, sourcePos, _) =>
         (List(cond, _then).map(Some(_)) :+ _else).flatten
-      case TSeq(body, sourcePos)           => body.toList
-      case TArrow(left, right, sourcePos)  => List(left, right)
-      case t: BinaryOp                     => List(t.left, t.right)
-      case TTypeAl(name, _type, sourcePos) => List.empty
-      case TAssert(body, sourcePos)        => List(body)
-      case TAssume(body, sourcePos)        => List(body)
-      case TSource(body, sourcePos)        => List(body)
-      case TDerived(body, sourcePos)       => List(body)
+      case TSeq(body, sourcePos, _)           => body.toList
+      case TArrow(left, right, sourcePos, _)  => List(left, right)
+      case t: BinaryOp                        => List(t.left, t.right)
+      case TTypeAl(name, _type, sourcePos, _) => List.empty
+      case TAssert(body, sourcePos, _)        => List(body)
+      case TAssume(body, sourcePos, _)        => List(body)
+      case TSource(body, sourcePos, _)        => List(body)
+      case TDerived(body, sourcePos, _)       => List(body)
       case TInteraction(
             reactiveType,
             argumentType,
@@ -107,22 +108,23 @@ given HasChildren[Term] with {
             requires,
             ensures,
             executes,
-            sourcePos
+            sourcePos,
+            _
           ) =>
         ((requires ++ ensures).map(Some(_)) :+ executes).flatten
-      case TInvariant(condition, sourcePos) => List(condition)
-      case TNum(value, sourcePos)           => List.empty
-      case TTrue(sourcePos)                 => List.empty
-      case TFalse(sourcePos)                => List.empty
-      case TNeg(body, sourcePos)            => List(body)
-      case TForall(vars, triggers, body, sourcePos) =>
+      case TInvariant(condition, sourcePos, _) => List(condition)
+      case TNum(value, sourcePos, _)           => List.empty
+      case TTrue(sourcePos, _)                 => List.empty
+      case TFalse(sourcePos, _)                => List.empty
+      case TNeg(body, sourcePos, _)            => List(body)
+      case TForall(vars, triggers, body, sourcePos, _) =>
         vars.toList ++ triggers.map(_.toList).flatten :+ body
-      case TExists(vars, body, sourcePos)          => vars.toList :+ body
-      case TParens(inner, sourcePos)               => List(inner)
-      case TString(value, sourcePos)               => List.empty
-      case TFCall(parent, field, args, sourcePos)  => List(parent) ++ args
-      case TFCurly(parent, field, body, sourcePos) => List(parent) :+ body
-      case TFunC(name, args, sourcePos)            => args.toList
+      case TExists(vars, body, sourcePos, _)          => vars.toList :+ body
+      case TParens(inner, sourcePos, _)               => List(inner)
+      case TString(value, sourcePos, _)               => List.empty
+      case TFCall(parent, field, args, sourcePos, _)  => List(parent) ++ args
+      case TFCurly(parent, field, body, sourcePos, _) => List(parent) :+ body
+      case TFunC(name, args, sourcePos, _)            => args.toList
     }
   }
 }
@@ -151,19 +153,19 @@ val children: Fold[Term, Term] = {
         case _: (TViperImport | TArgT | TVar | TTypeAl | TNum | TTrue | TFalse |
             TString) =>
           Monoid[M].empty
-        case TAbs(name, _type, body, sourcePos) => f(body)
+        case TAbs(name, _type, body, sourcePos, _) => f(body)
         case x: TTuple =>
           Monoid[M].combineAll(x.factors.toList.map(f))
-        case TIf(cond, _then, _else, sourcePos) =>
+        case TIf(cond, _then, _else, sourcePos, _) =>
           Monoid[M].combineAll(
             (List(cond, _then).map(Some(_)) :+ _else).flatten.map(f)
           )
-        case TSeq(body, sourcePos)     => Monoid[M].combineAll(body.toList.map(f))
-        case t: BinaryOp               => f(t.left) combine f(t.right)
-        case TAssert(body, sourcePos)  => f(body)
-        case TAssume(body, sourcePos)  => f(body)
-        case TSource(body, sourcePos)  => f(body)
-        case TDerived(body, sourcePos) => f(body)
+        case TSeq(body, sourcePos, _)     => Monoid[M].combineAll(body.toList.map(f))
+        case t: BinaryOp                  => f(t.left) combine f(t.right)
+        case TAssert(body, sourcePos, _)  => f(body)
+        case TAssume(body, sourcePos, _)  => f(body)
+        case TSource(body, sourcePos, _)  => f(body)
+        case TDerived(body, sourcePos, _) => f(body)
         case TInteraction(
               reactiveType,
               argumentType,
@@ -171,25 +173,26 @@ val children: Fold[Term, Term] = {
               requires,
               ensures,
               executes,
-              sourcePos
+              sourcePos,
+              _
             ) =>
           Monoid[M].combineAll(
             ((requires ++ ensures).map(Some(_)) :+ executes).flatten.map(f)
           )
-        case TInvariant(condition, sourcePos) => f(condition)
-        case TNeg(body, sourcePos)            => f(body)
-        case TForall(vars, triggers, body, sourcePos) =>
+        case TInvariant(condition, sourcePos, _) => f(condition)
+        case TNeg(body, sourcePos, _)            => f(body)
+        case TForall(vars, triggers, body, sourcePos, _) =>
           Monoid[M].combineAll(
             (vars.toList ++ triggers.map(_.toList).flatten :+ body).map(f)
           )
-        case TExists(vars, body, sourcePos) =>
+        case TExists(vars, body, sourcePos, _) =>
           Monoid[M].combineAll(((vars.toList :+ body).map(f)))
-        case TParens(inner, sourcePos) => f(inner)
-        case TFCall(parent, field, args, sourcePos) =>
+        case TParens(inner, sourcePos, _) => f(inner)
+        case TFCall(parent, field, args, sourcePos, _) =>
           Monoid[M].combineAll((List(parent) ++ args).map(f))
-        case TFCurly(parent, field, body, sourcePos) =>
+        case TFCurly(parent, field, body, sourcePos, _) =>
           Monoid[M].combineAll((List(parent) :+ body).map(f))
-        case TFunC(name, args, sourcePos) =>
+        case TFunC(name, args, sourcePos, _) =>
           Monoid[M].combineAll(args.toList.map(f))
       }
     }
