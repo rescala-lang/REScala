@@ -116,7 +116,7 @@ object DafnyGen {
     * @param ast The list of LoRe terms to compile to Dafny.
     * @return The generated Dafny code.
     */
-  def generate(ast: List[Term])(using scalaCtx: Context): String = {
+  def generate(ast: List[Term], loreMethodName: String)(using scalaCtx: Context): String = {
     var compilationContext: Map[String, NodeInfo] = Map()
 
     // Split term list into sublists that require different handling
@@ -161,7 +161,9 @@ object DafnyGen {
     }
 
     // Splice together generated Dafny code of all term groups appropriately
-    s"""// Main object containing all fields
+    s"""// Generated from Scala: $loreMethodName
+       |
+       |// Main object containing all fields
        |class LoReFields {
        |  // Constant field definitions
        |  ${dafnyCode.getOrElse("otherDefs", List()).mkString("\n  ")}
@@ -311,11 +313,12 @@ object DafnyGen {
     if !ctx.isDefinedAt(node.name) then return node.name // Skip non-top-level definition references
 
     ctx(node.name).loreType match
-      case SimpleType(typeName, inner) if typeName == "Signal" =>
-        // Derived fields, which are functions in Dafny, may not be referenced plainly.
-        // When accessed, it must be via access to the "value" property, which becomes a function call.
+      case SimpleType(typeName, inner) if typeName == "Signal" || typeName == "Var" =>
+        // Reactives (i.e. Sources and Derived) may not be referenced plainly.
+        // When accessed, it must be via access to the "value" property.
+        // For Sources, this turns into a simple reference, for Deriveds into a function call.
         report.error(
-          "Derived reactives may not be referenced directly, apart from calling the \"value\" property.",
+          "Reactives may not be referenced directly, apart from calling the \"value\" property.",
           node.scalaSourcePos.orNull
         )
         "<error>" // Still return a string value to satisfy compiler (this is invalid code but compilation fails anyway)

@@ -149,7 +149,7 @@ class LoRePhase extends PluginPhase {
       val filePath: String = File(termList._1._1.path).toURI.toString.replace(".scala", ".dfy")
 
       // Generate Dafny code from term list
-      val dafnyRes: String = DafnyGen.generate(termList._2)
+      val dafnyRes: String = DafnyGen.generate(termList._2, termList._1._2.name.toString)
 
       counter += 1
       // todo: this is dummy code, normally output by the to-be-implemented dafny generator
