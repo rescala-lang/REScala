@@ -49,39 +49,39 @@ object DafnyGen {
 
     val refs: Set[String] = node match
       case t: (TViperImport | TArgT | TTypeAl | TNum | TTrue | TFalse | TString) => Set.empty // No references here
-      case TVar(name, _) =>
+      case TVar(name, _, _) =>
         if !ctx.isDefinedAt(name) then Set.empty // Skip non-top-level definition references (e.g. arrow func params)
         else Set(name)                           // Regular reference to a top-level definition
-      case TAbs(_, _, body, _) => usedReferences(body, ctx)
-      case TTuple(factors, _)  => factors.flatMap((n: Term) => usedReferences(n, ctx)).toSet
-      case TIf(cond, _then, _else, _) =>
+      case TAbs(_, _, body, _, _) => usedReferences(body, ctx)
+      case TTuple(factors, _, _)  => factors.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+      case TIf(cond, _then, _else, _, _) =>
         val refs: Set[String] = usedReferences(cond, ctx) ++ usedReferences(_then, ctx)
         if _else.isDefined then refs ++ usedReferences(_else.get, ctx) else refs
-      case TSeq(body, _) => body.toList.flatMap((n: Term) => usedReferences(n, ctx)).toSet
-      case t: BinaryOp   => usedReferences(t.left, ctx) ++ usedReferences(t.right, ctx) // Arith., Bool expr, Arrow func
-      case TAssert(body, _) => usedReferences(body, ctx)
-      case TAssume(body, _) => usedReferences(body, ctx)
-      case t: TReactive     => usedReferences(t.body, ctx)
-      case TInteraction(_, _, m, r, e, ex, _) =>
+      case TSeq(body, _, _) => body.toList.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+      case t: BinaryOp => usedReferences(t.left, ctx) ++ usedReferences(t.right, ctx) // Arith., Bool expr, Arrow func
+      case TAssert(body, _, _) => usedReferences(body, ctx)
+      case TAssume(body, _, _) => usedReferences(body, ctx)
+      case t: TReactive        => usedReferences(t.body, ctx)
+      case TInteraction(_, _, m, r, e, ex, _, _) =>
         val reqs: Set[String] = r.flatMap((n: Term) => usedReferences(n, ctx)).toSet
         val ens: Set[String]  = e.flatMap((n: Term) => usedReferences(n, ctx)).toSet
         val refs: Set[String] = m.toSet ++ reqs ++ ens
 
         if ex.isDefined then refs ++ usedReferences(ex.get, ctx) else refs
-      case TInvariant(condition, _) => usedReferences(condition, ctx)
-      case TNeg(body, _)            => usedReferences(body, ctx)
-      case t: TQuantifier           =>
+      case TInvariant(condition, _, _) => usedReferences(condition, ctx)
+      case TNeg(body, _, _)            => usedReferences(body, ctx)
+      case t: TQuantifier              =>
         // vars are new definitions of TArgTs, they do not contain references, so skip those.
         // triggers should not contain any references that don't also appear in the body already, so skip too.
         usedReferences(t.body, ctx)
-      case TParens(inner, _) => usedReferences(inner, ctx)
-      case TFCall(parent, _, args, _) =>
+      case TParens(inner, _, _) => usedReferences(inner, ctx)
+      case TFCall(parent, _, args, _, _) =>
         val refs: Set[String] = usedReferences(parent, ctx)
         // The called field/method is not a standalone reference, so don't include it.
         // If this is a field call, args will be null, otherwise contains method parameters.
         if args != null then refs ++ args.flatMap((n: Term) => usedReferences(n, ctx)).toSet else refs
-      case TFCurly(parent, _, body, _) => usedReferences(parent, ctx) ++ usedReferences(body, ctx)
-      case TFunC(_, args, _)           => args.flatMap((n: Term) => usedReferences(n, ctx)).toSet
+      case TFCurly(parent, _, body, _, _) => usedReferences(parent, ctx) ++ usedReferences(body, ctx)
+      case TFunC(_, args, _, _)           => args.flatMap((n: Term) => usedReferences(n, ctx)).toSet
 
     // Some LoRe types, which are defined as regular variables, are modelled differently in Dafny.
     // For example, Derived terms are modelled as functions in Dafny but regular variables in LoRe.
@@ -121,7 +121,7 @@ object DafnyGen {
 
     // Split term list into sublists that require different handling
     val termGroups: Map[String, List[Term]] = ast.groupBy {
-      case TAbs(_, _type, _, _) =>
+      case TAbs(_, _type, _, _, _) =>
         if _type.asInstanceOf[SimpleType].name == "Var" then "sourceDefs"
         else if _type.asInstanceOf[SimpleType].name == "Signal" then "derivedDefs"
         else if _type.asInstanceOf[SimpleType].name == "Interaction" then "interactionDefs"
@@ -132,7 +132,7 @@ object DafnyGen {
     // Record compilation context info of all definitions (name, lore term, lore + dafny type) before generation
     termGroups.values.foreach(termList => {
       termList.foreach {
-        case term @ TAbs(name, _type, body, _) =>
+        case term @ TAbs(name, _type, body, _, _) =>
           val tp: String = generate(_type, compilationContext)
           compilationContext = compilationContext.updated(name, NodeInfo(name, term, _type, tp))
         case _ => ()
@@ -314,9 +314,11 @@ object DafnyGen {
       case SimpleType(typeName, inner) if typeName == "Signal" =>
         // Derived fields, which are functions in Dafny, may not be referenced plainly.
         // When accessed, it must be via access to the "value" property, which becomes a function call.
-        // TODO: Add Scala SourcePosition to this call (requires adding Scala SourcePosition to LoRe AST)
-        report.error("Derived reactives may not be referenced directly, apart from calling the \"value\" property.")
-        "<error>" // Make compiler happy by still returning a string value
+        report.error(
+          "Derived reactives may not be referenced directly, apart from calling the \"value\" property.",
+          node.scalaSourcePos.orNull
+        )
+        "<error>" // Still return a string value to satisfy compiler (this is invalid code but compilation fails anyway)
       case _ => node.name // Simply place the reference for other types
   }
 
