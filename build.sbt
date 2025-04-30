@@ -197,6 +197,7 @@ lazy val loreCompilerPlugin = project.in(file("Modules/LoRe Compiler Plugin"))
 
 lazy val loreCompilerPluginExamples = project.in(file("Modules/LoRe Compiler Plugin/examples"))
   .dependsOn(lore.jvm)
+  .dependsOn(loreCompilerPlugin)
   .settings(
     scala3defaults,
     Dependencies.munit,

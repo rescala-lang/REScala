@@ -1,12 +1,14 @@
 package loreCompilerPlugin
 
 import lore.dsl.*
+import loreCompilerPlugin.annotation.LoReProgram
 import reactives.default.{Var as Source, Signal as Derived}
 
 def foo(bar: Int, baz: String): Int = 0
 
 object derivedExamplesObject:
-  def derivedExamplesFunction(): Unit =
+  @LoReProgram
+  def derivedExamplesFunction(): Unit = {
     // ========= Plain values and sources to use in below tests =========
     val integerLiteral: Int          = 1
     val stringLiteral: String        = "foo"
@@ -32,5 +34,6 @@ object derivedExamplesObject:
     val integerSourceDerived1: Derived[Int] = Derived { integerLiteralSource1.value + 2 }
     val integerSourceDerived2: Derived[Int] = Derived { 1 + integerLiteralSource2.value }
     val integerSourceDerived3: Derived[Int] = Derived { integerLiteralSource1.value + integerLiteralSource2.value }
-  end derivedExamplesFunction
+
+  }
 end derivedExamplesObject
