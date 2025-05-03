@@ -25,16 +25,16 @@ class ClusterConsensus extends munit.FunSuite {
     val nodes @ primary :: secondaries =
       ids.map { id => KeyValueReplica(id, ids, offloadSending = false) }.toList: @unchecked
     val connection = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
-    primary.cluster.dataManager.addLatentConnection(connection.server)
-    secondaries.foreach { node => node.cluster.dataManager.addLatentConnection(connection.client(node.uid.toString)) }
+    primary.cluster.dataManager.addObjectConnection(connection.server)
+    secondaries.foreach { node => node.cluster.dataManager.addObjectConnection(connection.client(node.uid.toString)) }
 
     val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
-    primary.client.dataManager.addLatentConnection(clientConnection.server)
+    primary.client.dataManager.addObjectConnection(clientConnection.server)
 
     val clientUid = Uid.gen()
     val client    = ProBenchClient(clientUid, blocking = true)
-    client.addLatentConnection(clientConnection.client(clientUid.toString))
+    client.dataManager.addObjectConnection(clientConnection.client(clientUid.toString))
 
     client.write("test", "Hi")
     client.read("test")

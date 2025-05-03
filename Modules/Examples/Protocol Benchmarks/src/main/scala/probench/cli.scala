@@ -128,9 +128,9 @@ object cli {
           val ids                            = Set("Node1", "Node2", "Node3").map(Uid.predefined)
           val nodes @ primary :: secondaries = ids.map { id => KeyValueReplica(id, ids) }.toList: @unchecked
           val connection                     = channels.SynchronousLocalConnection[ProtocolMessage[ClusterState]]()
-          primary.cluster.dataManager.addLatentConnection(connection.server)
+          primary.cluster.dataManager.addObjectConnection(connection.server)
           secondaries.foreach { node =>
-            node.cluster.dataManager.addLatentConnection(connection.client(node.uid.toString))
+            node.cluster.dataManager.addObjectConnection(connection.client(node.uid.toString))
           }
 
           val persist = flag("--persistence", "enable persistence").value
@@ -140,7 +140,7 @@ object cli {
             Files.createDirectories(persistencePath)
 
             nodes.foreach { node =>
-              node.cluster.dataManager.addLatentConnection(
+              node.cluster.dataManager.addObjectConnection(
                 FileConnection[ClusterState](persistencePath.resolve(node.uid.toString + ".jsonl"))
               )
             }
@@ -148,11 +148,11 @@ object cli {
 
           val clientConnection = channels.SynchronousLocalConnection[ProtocolMessage[ClientState]]()
 
-          primary.client.dataManager.addLatentConnection(clientConnection.server)
+          primary.client.dataManager.addObjectConnection(clientConnection.server)
 
           val clientUid = Uid.gen()
           val client    = ProBenchClient(clientUid)
-          client.addLatentConnection(clientConnection.client(clientUid.toString))
+          client.dataManager.addObjectConnection(clientConnection.client(clientUid.toString))
 
           ClientCLI(clientUid, client).startCLI()
 
@@ -163,18 +163,18 @@ object cli {
           val nioTCP = NioTCP()
           ec.execute(() => nioTCP.loopSelection(Abort()))
 
-          node.client.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.client.dataManager.addBinaryConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
             clientPort.value
           ))))
 
           val peerPortVal = peerPort.value
 
-          node.cluster.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.cluster.dataManager.addBinaryConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
             peerPortVal
           ))))
-          node.connInf.dataManager.addLatentConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
+          node.connInf.dataManager.addBinaryConnection(nioTCP.listen(nioTCP.defaultServerSocketChannel(socketPath(
             "0",
             peerPortVal + 1
           ))))
@@ -216,19 +216,19 @@ object cli {
         subcommand("udp-node", "starts a cluster node") {
           val node = KeyValueReplica(name.value, initialClusterIds.value.toSet)
 
-          node.client.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
-          node.cluster.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
-          node.connInf.dataManager.addLatentConnection(UDP.listen(() => new DatagramSocket(peerPort.value + 1), ec))
+          node.client.dataManager.addBinaryConnection(UDP.listen(() => new DatagramSocket(clientPort.value), ec))
+          node.cluster.dataManager.addBinaryConnection(UDP.listen(() => new DatagramSocket(peerPort.value), ec))
+          node.connInf.dataManager.addBinaryConnection(UDP.listen(() => new DatagramSocket(peerPort.value + 1), ec))
 
           Timer().schedule(() => node.cluster.dataManager.pingAll(), 1000, 1000)
 
           cluster.value.foreach { (ip, port) =>
-            node.cluster.dataManager.addLatentConnection(UDP.connect(
+            node.cluster.dataManager.addBinaryConnection(UDP.connect(
               InetSocketAddress(ip, port),
               () => new DatagramSocket(),
               ec
             ))
-            node.connInf.dataManager.addLatentConnection(UDP.connect(
+            node.connInf.dataManager.addBinaryConnection(UDP.connect(
               InetSocketAddress(ip, port + 1),
               () => new DatagramSocket(),
               ec
@@ -261,7 +261,7 @@ object cli {
 
           val (ip, port) = clientNode.value
 
-          client.addLatentConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
+          client.dataManager.addBinaryConnection(UDP.connect(InetSocketAddress(ip, port), () => new DatagramSocket(), ec))
 
           ClientCLI(name.value, client).startCLI()
           executor.shutdownNow()

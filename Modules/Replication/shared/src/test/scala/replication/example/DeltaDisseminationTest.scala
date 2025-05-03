@@ -16,9 +16,9 @@ class DeltaDisseminationTest extends munit.FunSuite {
 
     val sync = SynchronousLocalConnection[ProtocolMessage[Set[String]]]()
 
-    dd2.addLatentConnection(sync.client("2"))
-    dd1.addLatentConnection(sync.server)
-    dd3.addLatentConnection(sync.client("3"))
+    dd2.addObjectConnection(sync.client("2"))
+    dd1.addObjectConnection(sync.server)
+    dd3.addObjectConnection(sync.client("3"))
 
     dd1.pingAll()
     dd2.pingAll()

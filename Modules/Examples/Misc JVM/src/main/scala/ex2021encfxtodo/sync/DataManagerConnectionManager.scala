@@ -60,7 +60,7 @@ class DataManagerConnectionManager[State: {JsonValueCodec, Lattice, Bottom, HasD
 
   val niotcp = new NioTCP {}
 
-  dataManager.addLatentConnection(niotcp.listen(
+  dataManager.addBinaryConnection(niotcp.listen(
     niotcp.defaultServerSocketChannel(new InetSocketAddress("127.0.0.1", port))
   ))
 
@@ -71,7 +71,7 @@ class DataManagerConnectionManager[State: {JsonValueCodec, Lattice, Bottom, HasD
   }
 
   override def connectToReplica(remoteReplicaId: String, uri: URI): Unit = {
-    dataManager.addLatentConnection(niotcp.connect(niotcp.defaultSocketChannel(new InetSocketAddress(
+    dataManager.addBinaryConnection(niotcp.connect(niotcp.defaultSocketChannel(new InetSocketAddress(
       uri.getHost,
       uri.getPort
     ))))

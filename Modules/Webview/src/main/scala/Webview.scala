@@ -40,7 +40,7 @@ object Webview {
     val dataManager = DeltaDissemination[TodoRepState](LocalUid.gen(), receiveCallback)
 
     val w = WebView()
-    dataManager.addLatentConnection(WebviewNativeChannel.listen(w))
+    dataManager.addBinaryConnection(WebviewNativeChannel.listen(w))
     w.navigate(Path.of(args.head).toUri)
 
     w.run()

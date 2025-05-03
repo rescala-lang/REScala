@@ -79,6 +79,4 @@ class ProBenchClient(val name: Uid, blocking: Boolean = true) extends Client(nam
 
     if blocking then requestSemaphore.acquire(1)
 
-  export dataManager.addLatentConnection
-
 }

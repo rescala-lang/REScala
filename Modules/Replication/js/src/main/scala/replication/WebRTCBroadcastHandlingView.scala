@@ -136,7 +136,7 @@ class WebRTCConnectionView[S](val dataManager: DeltaDissemination[S])(using Json
       }
     )
 
-    dataManager.addLatentConnection(WebRTCConnection.openLatent(channel))
+    dataManager.addBinaryConnection(WebRTCConnection.openLatent(channel))
 
   }
 

@@ -79,24 +79,18 @@ class DeltaDissemination[State](
     }
   }
 
-  @targetName("addLatentConnectionCaching")
-  def addLatentConnection(latentConnection: LatentConnection[MessageBuffer]): Unit = {
-    prepareBinaryConnection(latentConnection).run(using ()) {
-      case Failure(ex) =>
-        println(s"exception during connection activation")
-        ex.printStackTrace()
-      case Success(()) => ()
-    }
+  val printExceptionHandler: Callback[Any] =
+    case Failure(ex) =>
+      println(s"exception during connection activation")
+      ex.printStackTrace()
+    case Success(_) => ()
+
+  def addBinaryConnection(latentConnection: LatentConnection[MessageBuffer]): Unit = {
+    prepareBinaryConnection(latentConnection).run(using ())(printExceptionHandler)
   }
 
-  @targetName("addLatentConnectionPlain")
-  def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
-    prepareObjectConnection(latentConnection).run(using ()) {
-      case Failure(ex) =>
-        println(s"exception during connection activation")
-        ex.printStackTrace()
-      case Success(()) => ()
-    }
+  def addObjectConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
+    prepareObjectConnection(latentConnection).run(using ())(printExceptionHandler)
   }
 
   /** prepare a connection that serializes to some binary format. Primary means of network communication. Adds a serialization and caching layer */
