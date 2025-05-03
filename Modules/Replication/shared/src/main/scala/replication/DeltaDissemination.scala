@@ -3,7 +3,7 @@ package replication
 import channels.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.JsonCodecMaker
-import de.rmgk.delay.Callback
+import de.rmgk.delay.{Async, Callback}
 import rdts.base.Lattice.optionLattice
 import rdts.base.{Lattice, LocalUid, Uid}
 import rdts.time.Dots
@@ -81,48 +81,40 @@ class DeltaDissemination[State](
 
   @targetName("addLatentConnectionCaching")
   def addLatentConnection(latentConnection: LatentConnection[MessageBuffer]): Unit = {
-    addLatentConnection(cachedMessages(latentConnection))
-  }
-
-  @targetName("addRetryingLatentConnectionCaching")
-  def addRetryingLatentConnection(connection: () => LatentConnection[MessageBuffer], delay: Long, tries: Int): Unit = {
-    addRetryingLatentConnection(() => cachedMessages(connection()), delay, tries)
+    prepareBinaryConnection(latentConnection).run(using ()) {
+      case Failure(ex) =>
+        println(s"exception during connection activation")
+        ex.printStackTrace()
+      case Success(()) => ()
+    }
   }
 
   @targetName("addLatentConnectionPlain")
   def addLatentConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Unit = {
-    addLatentConnection(LatentConnection.adapt[ProtocolMessage[State], Message](
+    prepareObjectConnection(latentConnection).run(using ()) {
+      case Failure(ex) =>
+        println(s"exception during connection activation")
+        ex.printStackTrace()
+      case Success(()) => ()
+    }
+  }
+
+  /** prepare a connection that serializes to some binary format. Primary means of network communication. Adds a serialization and caching layer */
+  def prepareBinaryConnection(latentConnection: LatentConnection[MessageBuffer]): Async[Any, Unit] = {
+    prepareLatentConnection(cachedMessages(latentConnection))
+  }
+
+  /** prepare a connection that passes objects around somewhere in memory. For in prozess communication or custom serialization. */
+  def prepareObjectConnection(latentConnection: LatentConnection[ProtocolMessage[State]]): Async[Any, Unit] = {
+    prepareLatentConnection(LatentConnection.adapt[ProtocolMessage[State], Message](
       pm => SentCachedMessage(pm)(using pmscodec),
       cm => cm.payload
     )(latentConnection))
   }
 
-  @targetName("addRetryingLatentConnectionPlain")
-  def addRetryingLatentConnection(
-      connection: () => LatentConnection[ProtocolMessage[State]],
-      delay: Long,
-      tries: Int
-  ): Unit = {
-    addRetryingLatentConnection(
-      () =>
-        LatentConnection.adapt[ProtocolMessage[State], Message](
-          pm => SentCachedMessage(pm)(using pmscodec),
-          cm => cm.payload
-        )(connection()),
-      delay,
-      tries
-    )
-  }
+  def prepareLatentConnection(latentConnection: LatentConnection[Message]): Async[Any, Unit] = {
 
-  @targetName("addLatentConnectionCached")
-  def addLatentConnection(latentConnection: LatentConnection[Message]): Unit =
-    addRetryingLatentConnection(() => latentConnection, 0L, 0)
-
-  @targetName("addRetryingLatentConnectionCached")
-  def addRetryingLatentConnection(connection: () => LatentConnection[Message], delay: Long, tries: Int): Unit = {
-    val latentConnection = connection()
-
-    val preparedConnection = latentConnection.prepare { from =>
+    val preparedConnection: Async[Abort, Connection[Message]] = latentConnection.prepare { from =>
       {
         case Success(msg) => handleMessage(msg, from)
         case Failure(error) =>
@@ -130,31 +122,25 @@ class DeltaDissemination[State](
           error.printStackTrace()
       }
     }
-    preparedConnection.run(using globalAbort) {
-      case Success(conn) =>
-        lock.synchronized {
-          connections = conn :: connections
-        }
-        send(
-          conn,
-          SentCachedMessage(Request(
-            replicaId.uid,
-            selfContext
-          ))(using pmscodec)
-        )
-      case Failure(ex) =>
-        println(s"exception during connection activation")
-        ex.printStackTrace()
+    Async.provided(globalAbort) {
+      val conn: Connection[Message] = preparedConnection.bind
+      lock.synchronized {
+        connections = conn :: connections
+      }
 
-        if tries > 0 then {
-          println(s"Failed to establish latent connection, retrying in ${delay}ms")
-          Thread.sleep(delay)
-
-          addRetryingLatentConnection(connection, delay, tries - 1)
-        }
+      sendInitialSyncRequest(conn)
     }
   }
 
+  private def sendInitialSyncRequest(conn: ConnectionContext): Unit = {
+    send(
+      conn,
+      SentCachedMessage(Request(
+        replicaId.uid,
+        selfContext
+      ))(using pmscodec)
+    )
+  }
   // note that deltas are not guaranteed to be ordered the same in the buffers
   val lock: AnyRef                                               = new {}
   private var pastPayloads: Queue[CachedMessage[Payload[State]]] = Queue.empty

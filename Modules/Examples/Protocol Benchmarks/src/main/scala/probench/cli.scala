@@ -1,21 +1,22 @@
 package probench
 
-import channels.{Abort, NioTCP, UDP}
+import channels.{Abort, LatentConnection, MessageBuffer, NioTCP, UDP}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.github.plokhotnyuk.jsoniter_scala.macros.{CodecMakerConfig, JsonCodecMaker}
 import de.rmgk.options.*
 import de.rmgk.options.Result.{Err, Ok}
 import probench.clients.{BenchmarkMode, ClientCLI, EtcdClient, ProBenchClient}
-import probench.data.{ClientState, ClusterState, KVOperation, KVState, ConnInformation}
+import probench.data.{ClientState, ClusterState, ConnInformation, KVOperation, KVState}
 import rdts.base.Uid
 import rdts.datatypes.experiments.protocols.MultiPaxos
-import replication.{FileConnection, ProtocolMessage}
+import replication.{DeltaDissemination, FileConnection, ProtocolMessage}
 
 import java.net.{DatagramSocket, InetSocketAddress}
 import java.nio.file.{Files, Path}
 import java.util.Timer
 import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 object Codecs {
   // codecs
@@ -38,6 +39,26 @@ object cli {
 
   private val executor: ExecutorService = Executors.newCachedThreadPool()
   private val ec: ExecutionContext      = ExecutionContext.fromExecutor(executor)
+
+  def addRetryingLatentConnection(
+      dataManager: DeltaDissemination[?],
+      connection: LatentConnection[MessageBuffer],
+      delay: Long,
+      tries: Int
+  ): Unit = {
+
+    dataManager.prepareBinaryConnection(connection).run(using ()) {
+      case Success(_) => ()
+      case Failure(ex) =>
+        println(s"Failed to connect to $connection, retrying in $delay ms, retries: $tries")
+        if tries > 0 then
+          Thread.sleep(delay)
+          addRetryingLatentConnection(dataManager, connection, delay, tries - 1)
+        else
+          throw ex
+    }
+
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -170,20 +191,23 @@ object cli {
 
           cluster.value.foreach { (host, port) =>
             println(s"Connecting to $host:${port + 1}")
-            node.connInf.dataManager.addRetryingLatentConnection(
-              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port + 1))),
+            addRetryingLatentConnection(
+              node.connInf.dataManager,
+              nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port + 1))),
               1000,
               10
             )
             println(s"Connecting to $host:$port")
-            node.cluster.dataManager.addRetryingLatentConnection(
-              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port))),
+            addRetryingLatentConnection(
+              node.cluster.dataManager,
+              nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port))),
               1000,
               10
             )
             println(s"Connecting to $host:${port - 1}")
-            node.client.dataManager.addRetryingLatentConnection(
-              () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port - 1))),
+            addRetryingLatentConnection(
+              node.client.dataManager,
+              nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(host, port - 1))),
               1000,
               10
             )
@@ -220,8 +244,9 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addRetryingLatentConnection(
-            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
+          addRetryingLatentConnection(
+            client.dataManager,
+            nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
             1000,
             10
           )
@@ -250,8 +275,9 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addRetryingLatentConnection(
-            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
+          addRetryingLatentConnection(
+            client.dataManager,
+            nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
             1000,
             10
           )
@@ -270,8 +296,9 @@ object cli {
           val abort  = Abort()
           ec.execute(() => nioTCP.loopSelection(abort))
 
-          client.addRetryingLatentConnection(
-            () => nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
+          addRetryingLatentConnection(
+            client.dataManager,
+            nioTCP.connect(nioTCP.defaultSocketChannel(socketPath(ip, port))),
             1000,
             10
           )
