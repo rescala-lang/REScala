@@ -2,7 +2,10 @@ package compiler
 
 import compiler.context.TranslationContext
 
+import scala.annotation.nowarn
+
 trait CompilerFragment {
+  @nowarn("msg=New anonymous class definition will be duplicated at each inline site")
   inline def ensureCtx[T <: TranslationContext]
       : [A, R] => (T ?=> PartialFunction[A, R]) => TranslationContext ?=> PartialFunction[A, R] =
     [A, R] =>

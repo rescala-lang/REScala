@@ -1,6 +1,6 @@
 package compiler
 
-import scala.annotation.{tailrec, targetName}
+import scala.annotation.{nowarn, tailrec, targetName}
 
 class FragmentedCompiler(val fragments: List[CompilerFragment]) {
   @targetName("append")
@@ -9,12 +9,14 @@ class FragmentedCompiler(val fragments: List[CompilerFragment]) {
   @targetName("prepend")
   def +:(fragment: CompilerFragment): FragmentedCompiler = new FragmentedCompiler(fragment +: this.fragments)
 
+  @nowarn("msg=New anonymous class definition will be duplicated at each inline site")
   inline def dispatch[S <: CompilerFragment]: [A, R] => (S => PartialFunction[A, R]) => A => R =
     [A, R] =>
       (f: S => PartialFunction[A, R]) =>
         (a: A) =>
           dispatchRec(fragments.collect { case s: S => f(s) }, a).getOrElse(throw new MatchError(a))
 
+  @nowarn("msg=New anonymous class definition will be duplicated at each inline site")
   inline def dispatchLifted[S <: CompilerFragment]: [A, R] => (S => PartialFunction[A, R]) => A => Option[R] =
     [A, R] =>
       (f: S => PartialFunction[A, R]) =>

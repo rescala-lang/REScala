@@ -69,7 +69,7 @@ object Settings {
   }
 
   val commonScalacOptions =
-    featureOptions ++ valueDiscard(Compile / compile)
+    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
 
   val scala3defaults = Def.settings(
     scalaVersion := Versions.scala3,
