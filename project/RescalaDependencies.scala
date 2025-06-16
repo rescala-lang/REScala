@@ -4,12 +4,12 @@ import sbt.Keys.*
 
 object RescalaDependencies {
 
-  val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.18" % Test
-  val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-17" % "3.2.18.0" % "test"
+  val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
+  val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % "test"
   val circe = libraryDependencies ++= Seq("core", "generic", "parser").map(n => "io.circe" %%% s"circe-$n" % "0.14.3")
 
   def jetty11 = {
-    val jettyVersion = "11.0.20"
+    val jettyVersion = "11.0.25"
     libraryDependencies ++= Seq(
       "org.eclipse.jetty"           % "jetty-server"           % jettyVersion,
       "org.eclipse.jetty.websocket" % "websocket-jetty-api"    % jettyVersion,
@@ -20,7 +20,7 @@ object RescalaDependencies {
   }
 
   // warning, maven/coursier seems to think tere is a version 1.8.0, but that is not officially released
-  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.7.0"
+  val tink = libraryDependencies += "com.google.crypto.tink" % "tink" % "1.17.0"
 
   val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 
@@ -41,7 +41,7 @@ object RescalaDependencies {
         "org.scalafx" %% "scalafx" % "21.0.0-R32",
       ),
       libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
-        "org.openjfx" % s"javafx-$m" % "21.0.2" classifier osName
+        "org.openjfx" % s"javafx-$m" % "21.0.7" classifier osName
       )
     )
   }

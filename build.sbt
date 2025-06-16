@@ -11,8 +11,6 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   kofre.js,
   kofre.jvm,
   kofre.native,
-  aead.js,
-  aead.jvm,
   // research & eval
   compileMacros.js,
   compileMacros.jvm,
@@ -87,25 +85,6 @@ lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType
   )
   .jsSettings(
     sourcemapFromEnv()
-  )
-
-lazy val aead = crossProject(JSPlatform, JVMPlatform).in(file("Modules/Aead"))
-  .settings(
-    scala3defaults,
-    noPublish,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
-    Dependencies.munit,
-    Dependencies.munitCheck,
-  )
-  .jvmSettings(
-    RescalaDependencies.tink
-  )
-  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
-  .jsSettings(
-    Compile / npmDependencies ++= Seq(
-      "libsodium-wrappers"        -> "0.7.13",
-    )
   )
 
 // =====================================================================================
@@ -187,7 +166,7 @@ lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
 
 lazy val replicationExamples =
   crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(rescala, kofre, aead, kofre % "compile->compile;test->test")
+    .dependsOn(rescala, kofre, kofre % "compile->compile;test->test")
     .settings(
       scala3defaults,
       noPublish,

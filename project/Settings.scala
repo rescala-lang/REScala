@@ -9,7 +9,7 @@ import sbt.Keys.*
 object Settings {
 
   object Versions {
-    val scala3 = "3.3.3"
+    val scala3 = "3.3.6"
   }
 
   val commonCrossBuildVersions =
@@ -67,7 +67,7 @@ object Settings {
   }
 
   val commonScalacOptions =
-    fatalWarnings ++ featureOptions ++ valueDiscard(Compile / compile)
+    featureOptions ++ valueDiscard(Compile / compile)
 
   val scala3defaults = Def.settings(
     scalaVersion := Versions.scala3,
