@@ -1,3 +1,10 @@
+# Development of this repo has moved
+
+This repository has moved to https://github.com/stg-tud/Bismuth
+
+REScala started as a reactive programming implementation for Scala, but evolved to focus on distributed and replicated systems research. This repository contains a snapshot of the core REScala project to preserve history. For current development, please use the new repository above which contains the full REScala lineage.
+
+
 # REScala
 
 REScala is a set of libraries for principled reactive programming,
@@ -16,7 +23,6 @@ and [NICER](http://nicer.network/) projects.
 
 This repository contains multiple subprojects in the __Modules__ folder:
 
-* __Aead__: This is a simple Scala library that provides authenticated encryption with associated data using the same interfaces on the JVM and for Scala.js.
 * __Example EncryptedTodoFx__
 * __Example Misc 2015__: various example applications.
   * __examples__: misc examples involving swing, time, datastructures (no reswing, using swing directly)
@@ -27,7 +33,6 @@ This repository contains multiple subprojects in the __Modules__ folder:
     * __reshapes__: reswing drawing application
     * __texteditor__: basic text editor in different implementation styles (imperative, to full reactive)
   * __universe__: console application demoing parallel execution of simulations
-* __Example Replication__: This case study demonstrates how the REScala project and replicated data types can be used to design an interactive application that makes use of one or more services within an arbitrary ad-hoc network.
 * __Example Todolist__: Rescalatags todo application in the style of common todo applications
 * __Graph-Compiler__
 * __Javafx__
