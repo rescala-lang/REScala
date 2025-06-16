@@ -1,26 +1,16 @@
 package todo
 
-import kofre.datatypes.contextual.ReplicatedList
 import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
 import rescala.default.*
 import rescala.extra.Tags.*
-import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom
 import scalatags.JsDom.all.*
 import scalatags.JsDom.tags2.section
 import scalatags.JsDom.{Attr, TypedTag}
-import todo.Codecs.given
-import todo.Todolist.replicaId
-import kofre.dotted.Dotted
-import kofre.syntax.DeltaBuffer
-import loci.serializer.jsoniterScala.given
 
 class TodoAppUI(val storagePrefix: String) {
-
-  val tasklistBinding    = Binding[DeltaFor[ReplicatedList[TaskRef]] => Unit]("tasklist")
-  val tasklistReplicator = new ReplicationGroup(rescala.default, Todolist.registry, tasklistBinding)
 
   def getContents(): TypedTag[Div] = {
 
@@ -46,27 +36,22 @@ class TodoAppUI(val storagePrefix: String) {
     }
 
     val taskrefs = TaskReferences(toggleAll.event, storagePrefix)
-    val taskOps  = new TaskOps(taskrefs, replicaId)
+    val taskOps  = new TaskOps(taskrefs)
 
-    val deltaEvt = Evt[Dotted[ReplicatedList[TaskRef]]]()
-
-    val tasksRDT: Signal[DeltaBuffer[Dotted[ReplicatedList[TaskRef]]]] =
-      Storing.storedAs(storagePrefix, DeltaBuffer(Dotted(ReplicatedList.empty[TaskRef]))) { init =>
+    val tasksRDT: Signal[List[TaskRef]] =
+      Storing.storedAs(storagePrefix, List.empty[TaskRef]) { init =>
         Fold(init)(
           taskOps.handleCreateTodo(createTodo.event),
           taskOps.handleRemoveAll(removeAll.event),
           Fold.branch {
             current.toList.flatMap(_.removed.value).foldLeft(current) { (c, e) => taskOps.handleRemove(c)(e) }
           },
-          taskOps.handleDelta(deltaEvt)
         )
-      }(using Codecs.codecRGA)
+      }(using Codecs.codecState)
 
-    tasklistReplicator.distributeDeltaRDT("tasklist", tasksRDT, deltaEvt)
 
     val tasksList: Signal[List[TaskRef]] = tasksRDT.map { _.toList }
-    val tasksData: Signal[List[TaskData]] =
-      Signal.dynamic { tasksList.value.flatMap(l => l.task.value.read) }
+    val tasksData: Signal[List[TaskData]] = Signal.dynamic { tasksList.value.flatMap(l => l.task.value) }
     val taskTags: Signal[List[TypedTag[LI]]] = Signal { tasksList.value.map(_.tag) }
 
     val largeheader = window.location.hash.drop(1)

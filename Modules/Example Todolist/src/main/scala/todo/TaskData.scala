@@ -1,20 +1,11 @@
 package todo
 
-import kofre.base.Bottom
-import kofre.datatypes.LastWriterWins
-import kofre.dotted.{Dotted, DottedLattice}
-import kofre.syntax.{DeltaBuffer, ReplicaId}
-import loci.registry.Binding
-import loci.serializer.jsoniterScala.given
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.html.{Input, LI}
 import rescala.default.*
 import rescala.extra.Tags.*
-import rescala.extra.replication.{DeltaFor, ReplicationGroup}
 import scalatags.JsDom.TypedTag
 import scalatags.JsDom.all.*
-import todo.Codecs.given
-import todo.Todolist.replicaId
 
 import scala.Function.const
 import scala.collection.mutable
@@ -28,18 +19,16 @@ case class TaskData(
   def edit(str: String): TaskData = copy(desc = str)
 }
 
-given [A]: DottedLattice[LastWriterWins[A]] = Dotted.liftLattice
-
 case class TaskRef(id: String) {
   lazy val cached: TaskRefData = TaskReferences.lookupOrCreateTaskRef(id, None)
 
-  def task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]] = cached.task
-  def tag: TypedTag[LI]                                                   = cached.tag
-  def removed: Event[String]                                              = cached.removed
+  def task: Signal[Option[TaskData]] = cached.task
+  def tag: TypedTag[LI]              = cached.tag
+  def removed: Event[String]         = cached.removed
 }
 
 final class TaskRefData(
-    val task: Signal[DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]]],
+    val task: Signal[Option[TaskData]],
     val tag: TypedTag[LI],
     val removed: Event[String],
     val id: String,
@@ -66,25 +55,14 @@ object TaskReferences {
     taskrefs
   }
 
-  val taskBinding = Binding[DeltaFor[LastWriterWins[Option[TaskData]]] => Unit]("todo task")
-  val taskReplicator =
-    given Bottom[LastWriterWins[Option[TaskData]]] with {
-      override def empty: LastWriterWins[Option[TaskData]] = null
-    }
-    ReplicationGroup(rescala.default, Todolist.registry, taskBinding)
 }
 
 class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
-  given fixedId: ReplicaId = replicaId
 
   def createTaskRef(
       taskID: String,
       task: Option[TaskData],
   ): TaskRefData = {
-    val lww: DeltaBuffer[Dotted[LastWriterWins[Option[TaskData]]]] =
-      if task.isEmpty
-      then DeltaBuffer(Dotted(LastWriterWins.fallback(task)))
-      else DeltaBuffer(Dotted(LastWriterWins.now(task)))
 
     val edittext: Event.CBR[UIEvent, HtmlTag] = Event.fromCallback {
       input(`class` := "edit", `type` := "text", onchange := Event.handle[UIEvent], onblur := Event.handle[UIEvent])
@@ -106,20 +84,15 @@ class TaskReferences(toggleAll: Event[UIEvent], storePrefix: String) {
 
     val doneEv = toggleAll || doneClick.event
 
-    val deltaEvt = Evt[Dotted[LastWriterWins[Option[TaskData]]]]()
-
-    val crdt = Storing.storedAs(s"$storePrefix$taskID", lww) { init =>
+    val crdt = Storing.storedAs(s"$storePrefix$taskID", task) { init =>
       Fold(init)(
-        doneEv act { _ => current.clearDeltas().map(_.toggle()) },
-        edittextStr act { v => current.clearDeltas().map(_.edit(v)) },
-        deltaEvt act { delta => current.clearDeltas().applyDelta(delta) }
+        doneEv act { _ => current.map(_.toggle()) },
+        edittextStr act { v => current.map(_.edit(v)) },
       )
     }(using Codecs.codecLww)
 
-    TaskReferences.taskReplicator.distributeDeltaRDT(taskID, crdt, deltaEvt)
-
     val taskData =
-      crdt.map(x => x.read.getOrElse(TaskData(desc = "LWW Empty")))
+      crdt.map(x => x.getOrElse(TaskData(desc = "LWW Empty")))
 
     val removeButton =
       Event.fromCallback(button(`class` := "destroy", onclick := Event.handle))

@@ -8,9 +8,6 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   rescala.native,
   rescalafx,
   reswing,
-  kofre.js,
-  kofre.jvm,
-  kofre.native,
   // research & eval
   compileMacros.js,
   compileMacros.jvm,
@@ -19,9 +16,6 @@ lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
   // examples & case studies
   examples,
   todolist,
-  encryptedTodo,
-  // replicationExamples.js,
-  // replicationExamples.jvm,
 )
 
 lazy val rescalaAggregate =
@@ -64,29 +58,6 @@ lazy val rescalafx = project.in(file("Modules/Javafx"))
   .dependsOn(rescala.jvm)
   .settings(scala3defaults, noPublish, scalaFxDependencies, fork := true)
 
-lazy val kofreAggregate =
-  project.in(file("target/PhonyBuilds/kofreAggregate")).settings(
-    crossScalaVersions := Nil,
-    noPublish,
-    scala3defaults
-  ).aggregate(
-    kofre.js,
-    kofre.jvm,
-    kofre.native,
-  )
-
-lazy val kofre = crossProject(JVMPlatform, JSPlatform, NativePlatform).crossType(CrossType.Pure)
-  .in(file("Modules/RDTs"))
-  .settings(
-    scala3defaults,
-    publishSonatype,
-    Dependencies.munit,
-    Dependencies.munitCheck,
-  )
-  .jsSettings(
-    sourcemapFromEnv()
-  )
-
 // =====================================================================================
 // evaluation and experimental
 
@@ -109,7 +80,7 @@ lazy val microbench = project.in(file("Modules/Microbenchmarks"))
     Dependencies.jsoniterScala,
     jolSettings,
   )
-  .dependsOn(rescala.jvm, kofre.jvm)
+  .dependsOn(rescala.jvm)
 
 // =====================================================================================
 // Examples
@@ -128,7 +99,7 @@ lazy val examples = project.in(file("Modules/Example Misc 2015"))
 
 lazy val todolist = project.in(file("Modules/Example Todolist"))
   .enablePlugins(ScalaJSPlugin)
-  .dependsOn(kofre.js, rescala.js)
+  .dependsOn(rescala.js)
   .settings(
     scala3defaults,
     noPublish,
@@ -150,56 +121,3 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     }
   )
 
-lazy val encryptedTodo = project.in(file("Modules/Example EncryptedTodoFx"))
-  .enablePlugins(JmhPlugin)
-  .dependsOn(kofre.jvm)
-  .settings(
-    scala3defaults,
-    noPublish,
-    scalaFxDependencies,
-    fork := true,
-    Dependencies.jsoniterScala,
-    RescalaDependencies.jetty11,
-    RescalaDependencies.tink,
-    libraryDependencies += "org.conscrypt" % "conscrypt-openjdk-uber" % "2.5.2",
-  )
-
-lazy val replicationExamples =
-  crossProject(JVMPlatform, JSPlatform).crossType(CrossType.Full).in(file("Modules/Example Replication"))
-    .dependsOn(rescala, kofre, kofre % "compile->compile;test->test")
-    .settings(
-      scala3defaults,
-      noPublish,
-      run / fork         := true,
-      run / connectInput := true,
-      resolverJitpack,
-      Dependencies.loci.tcp,
-      Dependencies.loci.jsoniterScala,
-      Dependencies.munitCheck,
-      Dependencies.munit,
-      Dependencies.scalacheck,
-      Dependencies.slips.options,
-      Dependencies.slips.delay,
-      Dependencies.jsoniterScala
-    )
-    .jvmSettings(
-      Dependencies.loci.wsJetty12,
-      Dependencies.scribeSlf4j2,
-      Dependencies.slips.script,
-      Dependencies.sqliteJdbc,
-    )
-    .jsSettings(
-      Dependencies.scalatags,
-      Dependencies.loci.wsWeb,
-      TaskKey[File]("deploy", "generates a correct index.html") := {
-        val fastlink   = (Compile / fastLinkJS).value
-        val jspath     = (Compile / fastLinkJS / scalaJSLinkerOutputDirectory).value
-        val bp         = baseDirectory.value.toPath
-        val tp         = jspath.toPath
-        val template   = IO.read(bp.resolve("index.template.html").toFile)
-        val targetpath = tp.resolve("index.html").toFile
-        IO.write(targetpath, template.replace("JSPATH", s"main.js"))
-        IO.copyFile(bp.resolve("style.css").toFile, tp.resolve("style.css").toFile)
-        targetpath
-      }
-    )

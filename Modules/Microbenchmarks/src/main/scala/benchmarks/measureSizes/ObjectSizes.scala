@@ -1,6 +1,5 @@
 package rescala.benchmarks.measureSizes
 
-import kofre.time.ArrayRanges
 import org.openjdk.jol.info.GraphLayout
 import rescala.core.{AccessHandler, ReSource, ReevTicket}
 import rescala.default
@@ -15,8 +14,6 @@ object ObjectSizes {
   }
 
   def main(args: Array[String]): Unit = {
-    measure("empty range", ArrayRanges.empty)
-    measure("6 elem range", ArrayRanges.empty.add(1).add(2).add(3).add(4).add(5).add(6))
     measure("var empty", rescala.default.Var.empty)
     measure("var 5", rescala.default.Var(5))
     measure("default empty signal", rescala.default.Signal {})
