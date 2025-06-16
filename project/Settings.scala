@@ -98,8 +98,9 @@ object Settings {
   // see https://www.scala-js.org/doc/project/js-environments.html
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
-  // use `publishSigned` to publish
-  // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
+  // publishSigned: to generate bundle to be published into a local staging repo
+  // sonaUpload: upload to sonatype and publish and verify manually
+  // sonaRelease: to (upload?) and release the bundle automatically
   val publishSonatype = Def.settings(
     organization         := "de.tu-darmstadt.stg",
     organizationName     := "Software Technology Group",
@@ -124,13 +125,14 @@ object Settings {
     // no binary compatibility for 0.Y.z releases
     versionScheme := Some("semver-spec"),
 
+    // sonatype sbt plugin settings
+    // sonatypeCredentialHost := sonatypeCentralHost,
+    // sonatypeProfileName    := "de.tu-darmstadt.stg",
+
     // Remove all additional repository other than Maven Central from POM
     pomIncludeRepository := { _ => false },
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value) Some("snapshots" at s"${nexus}content/repositories/snapshots")
-      else Some("releases" at s"${nexus}service/local/staging/deploy/maven2")
-    },
+    // change to sonatypePublishTo to not use the bundle feature
+    publishTo         := localStaging.value,
     publishMavenStyle := true
   )
 
