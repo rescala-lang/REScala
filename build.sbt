@@ -51,7 +51,7 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     RescalaDependencies.scalatestpluscheck,
   )
   .jsSettings(
-    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.12.0" % "provided,test",
+    libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1" % "provided,test",
     jsEnvDom,
     sourcemapFromEnv(),
   )
