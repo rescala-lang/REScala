@@ -7,57 +7,41 @@ import sbt.Keys.libraryDependencies
 
 object Dependencies {
 
-  def directories   = libraryDependencies += "dev.dirs"                     % "directories"      % "26"
-  def jol           = libraryDependencies += "org.openjdk.jol"              % "jol-core"         % "0.17"
-  def jsoup         = libraryDependencies += "org.jsoup"                    % "jsoup"            % "1.17.2"
-  def munit         = libraryDependencies += "org.scalameta"              %%% "munit"            % "1.1.1" % Test
-  def munitCheck    = libraryDependencies += "org.scalameta"              %%% "munit-scalacheck" % "1.1.0" % Test
-  def okHttp        = libraryDependencies += "com.squareup.okhttp3"         % "okhttp"           % "4.10.0"
-  def pprint        = libraryDependencies += "com.lihaoyi"                %%% "pprint"           % "0.8.1"
-  def quicklens     = libraryDependencies += "com.softwaremill.quicklens" %%% "quicklens"        % "1.9.0"
-  def scalacheck    = libraryDependencies += "org.scalacheck"             %%% "scalacheck"       % "1.17.0"    % Test
-  def scalaJavaTime = libraryDependencies += "io.github.cquiroz"          %%% "scala-java-time"  % "2.3.0"
-  def scalajsDom    = libraryDependencies += "org.scala-js"               %%% "scalajs-dom"      % "2.8.0"
-  def scalatags     = libraryDependencies += "com.lihaoyi"                %%% "scalatags"        % "0.13.1"
-  def scribe        = libraryDependencies += "com.outr"                   %%% "scribe"           % "3.10.7"
-  def scribeSlf4j   = libraryDependencies += "com.outr"                    %% "scribe-slf4j"     % "3.10.7"
-  def scribeSlf4j2  = libraryDependencies += "com.outr"                    %% "scribe-slf4j2"    % "3.10.7"
-  def sourcecode    = libraryDependencies += "com.lihaoyi"                %%% "sourcecode"       % "0.4.2"
-  def sqliteJdbc    = libraryDependencies += "org.xerial"                   % "sqlite-jdbc"      % "3.45.1.0"
-  def upickle       = libraryDependencies += "com.lihaoyi"                %%% "upickle"          % "3.1.4"
+  def jol = libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.17"
+  def scalatags = libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1"
+  def sourcecode = libraryDependencies += "com.lihaoyi" %%% "sourcecode" % "0.4.2"
+  def upickle = libraryDependencies += "com.lihaoyi" %%% "upickle" % "3.1.4"
   def jsoniterScala =
     libraryDependencies ++= Seq(
-      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core"   % "2.36.4",
+      "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-core" % "2.36.4",
       "com.github.plokhotnyuk.jsoniter-scala" %%% "jsoniter-scala-macros" % "2.36.4" % "provided"
     )
 
-  object slips {
-    def chain   = libraryDependencies += "de.rmgk.slips" %%% "chain"   % "0.5.0"
-    def delay   = libraryDependencies += "de.rmgk.slips" %%% "delay"   % "0.8.0"
-    def logging = libraryDependencies += "de.rmgk.slips" %%% "logging" % "0.5.0"
-    def options = libraryDependencies += "de.rmgk.slips" %%% "options" % "0.7.0"
-    def scip    = libraryDependencies += "de.rmgk.slips" %%% "scip"    % "0.8.0"
-    def script  = libraryDependencies += "de.rmgk.slips" %%% "script"  % "0.8.0"
+  val scalatest = libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test
+  val scalatestpluscheck = libraryDependencies += "org.scalatestplus" %%% "scalacheck-1-18" % "3.2.19.0" % "test"
+
+  val scalaSwing = libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
+
+  // Add JavaFX dependencies, should probably match whatever the scalafx version was tested against:
+  // https://www.scalafx.org/news/releases/
+  // then again, the announcement for 12.0.2 seems incorrect …
+  lazy val scalaFxDependencies = {
+    // Determine OS version of JavaFX binaries
+    val osName = System.getProperty("os.name") match {
+      case n if n.startsWith("Linux") => "linux"
+      case n if n.startsWith("Mac") => "mac"
+      case n if n.startsWith("Windows") => "win"
+      case _ => throw new Exception("Unknown platform!")
+    }
+    Seq(
+      scalaSwing,
+      libraryDependencies ++= Seq(
+        "org.scalafx" %% "scalafx" % "21.0.0-R32",
+      ),
+      libraryDependencies ++= Seq("base", "controls", "fxml", "graphics", "media", "swing", "web").map(m =>
+        "org.openjfx" % s"javafx-$m" % "21.0.7" classifier osName
+      )
+    )
   }
 
-  object loci {
-    def generic(n: String) =
-      // use maven (true) jitpack (false)?
-      if (false)
-        libraryDependencies += "io.github.scala-loci" %%% s"scala-loci-$n" % "0.5.0-62-gd313a2f"
-      else
-        libraryDependencies += "com.github.scala-loci.scala-loci" %%% s"scala-loci-$n" % "b9809c9c2d"
-
-    def communication = generic("communication")
-    def circe         = generic("serializer-circe")
-    def tcp           = generic("communicator-tcp")
-    def upickle       = generic("serializer-upickle")
-    def jsoniterScala = generic("serializer-jsoniter-scala")
-    def webrtc        = generic("communicator-webrtc")
-    def wsAkka        = generic("communicator-ws-akka")
-    def wsWeb         = generic("communicator-ws-webnative")
-    def wsJavalin     = generic("communicator-ws-javalin")
-    def wsJetty       = generic("communicator-ws-jetty")
-    def wsJetty12     = generic("communicator-ws-jetty12")
-  }
 }

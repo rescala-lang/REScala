@@ -3,7 +3,7 @@
 
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.jsEnv
-import sbt.*
+import sbt.{url, *}
 import sbt.Keys.*
 
 object Settings {
@@ -29,8 +29,10 @@ object Settings {
       "-language:implicitConversions",
       "-language:existentials",
       "-deprecation",
-      "-source", "3.3",
-      "-java-output-version", "11"
+      "-source",
+      "3.3",
+      "-java-output-version",
+      "11"
     )
   )
 
@@ -96,20 +98,40 @@ object Settings {
   // see https://www.scala-js.org/doc/project/js-environments.html
   val jsEnvDom = jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
-  def sourcemapFromEnv() = {
-    val customSourcePrefix = scala.sys.env.get("CUSTOM_SCALAJS_SOURCE_MAP_PREFIX")
-    customSourcePrefix match {
-      case Some(targetUrl) if !targetUrl.isEmpty =>
-        Def.settings(
-          scalacOptions += {
+  // use `publishSigned` to publish
+  // go to https://oss.sonatype.org/#stagingRepositories to move from staging to maven central
+  val publishSonatype = Def.settings(
+    organization         := "de.tu-darmstadt.stg",
+    organizationName     := "Software Technology Group",
+    organizationHomepage := Some(url("https://www.stg.tu-darmstadt.de/")),
+    homepage             := Some(url("https://www.rescala-lang.com/")),
+    licenses             := List("Apache 2" -> new URI("http://www.apache.org/licenses/LICENSE-2.0.txt").toURL),
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/rescala-lang/REScala"),
+        "scm:git@github.com:rescala-lang/REScala.git"
+      )
+    ),
+    developers := List(
+      Developer(
+        id = "ragnar",
+        name = "Ragnar Mogk",
+        email = "mogk@cs.tu-darmstadt.de",
+        url = url("https://www.stg.tu-darmstadt.de/")
+      )
+    ),
 
-            def gitHash: String = sys.process.Process("git rev-parse HEAD").lineStream_!.head
-            def baseUrl: String = (LocalRootProject / baseDirectory).value.toURI.toString
+    // no binary compatibility for 0.Y.z releases
+    versionScheme := Some("semver-spec"),
 
-            s"-scalajs-mapSourceURI:$baseUrl->$targetUrl$gitHash/"
-          }
-        )
-      case _ => Def.settings()
-    }
-  }
+    // Remove all additional repository other than Maven Central from POM
+    pomIncludeRepository := { _ => false },
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value) Some("snapshots" at s"${nexus}content/repositories/snapshots")
+      else Some("releases" at s"${nexus}service/local/staging/deploy/maven2")
+    },
+    publishMavenStyle := true
+  )
+
 }

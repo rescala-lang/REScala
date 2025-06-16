@@ -1,4 +1,4 @@
-import RescalaDependencies.*
+import Dependencies.*
 import Settings.*
 
 lazy val rescalaProject = project.in(file(".")).settings(noPublish).aggregate(
@@ -41,17 +41,16 @@ lazy val rescala = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
     publishSonatype,
     resolverJitpack,
     Dependencies.sourcecode,
-    RescalaDependencies.scalatest,
-    RescalaDependencies.scalatestpluscheck,
+    Dependencies.scalatest,
+    Dependencies.scalatestpluscheck,
   )
   .jsSettings(
     libraryDependencies += "com.lihaoyi" %%% "scalatags" % "0.13.1" % "provided,test",
     jsEnvDom,
-    sourcemapFromEnv(),
   )
 
 lazy val reswing = project.in(file("Modules/Swing"))
-  .settings(scala3defaults, noPublish, RescalaDependencies.scalaSwing)
+  .settings(scala3defaults, noPublish, Dependencies.scalaSwing)
   .dependsOn(rescala.jvm)
 
 lazy val rescalafx = project.in(file("Modules/Javafx"))
@@ -104,8 +103,6 @@ lazy val todolist = project.in(file("Modules/Example Todolist"))
     scala3defaults,
     noPublish,
     Dependencies.scalatags,
-    Dependencies.loci.webrtc,
-    Dependencies.loci.jsoniterScala,
     Dependencies.jsoniterScala,
     TaskKey[File]("deploy", "generates a correct index.html for the todolist app") := {
       val fastlink   = (Compile / fastLinkJS).value

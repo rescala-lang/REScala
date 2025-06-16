@@ -1,6 +1,5 @@
 package todo
 
-import loci.registry.Binding
 import org.scalajs.dom.html.{Div, Input, LI}
 import org.scalajs.dom.{UIEvent, window}
 import rescala.default.*

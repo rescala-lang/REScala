@@ -1,13 +1,10 @@
 package todo
 
-import loci.registry.Registry
 import org.scalajs.dom.{document, window}
 
 import scala.scalajs.js.annotation.JSExportTopLevel
 
 object Todolist {
-
-  val registry = new Registry
 
   @JSExportTopLevel("Todolist")
   def run(): Unit = main(Array.empty[String])
